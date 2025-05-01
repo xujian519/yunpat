@@ -1,0 +1,159 @@
+groups:
+  - name: api_alerts
+    interval: 30s
+    rules:
+      # API 响应时间告警
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: api-gateway
+        annotations:
+          summary: 'API 响应时间过高'
+          description: '95分位响应时间超过 1 秒，当前值: {{ $value }}s'
+
+      # API 错误率告警
+      - alert: HighAPIErrorRate
+        expr: |
+          sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: api-gateway
+        annotations:
+          summary: 'API 错误率过高'
+          description: '错误率超过 5%，当前值: {{ $value | humanizePercentage }}'
+
+  - name: agent_alerts
+    interval: 1m
+    rules:
+      # Agent 任务失败率告警
+      - alert: HighAgentFailureRate
+        expr: |
+          sum(rate(agent_tasks_total{status="failure"}[5m]))
+          /
+          sum(rate(agent_tasks_total[5m]))
+          > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: orchestrator
+        annotations:
+          summary: 'Agent 任务失败率过高'
+          description: '5分钟内失败率超过 10%'
+
+      # Agent 任务堆积告警
+      - alert: AgentTaskBacklog
+        expr: |
+          sum(increase(agent_tasks_total[5m]))
+          /
+          sum(increase(agent_tasks_total{status="success"}[5m]))
+          > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: orchestrator
+        annotations:
+          summary: 'Agent 任务堆积'
+          description: '任务生成速度超过处理速度的 2 倍'
+
+  - name: llm_alerts
+    interval: 1m
+    rules:
+      # LLM 响应时间告警
+      - alert: HighLLMResponseTime
+        expr: |
+          histogram_quantile(0.95, rate(llm_response_time_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: llm-gateway
+        annotations:
+          summary: 'LLM 响应时间过长'
+          description: '95分位响应时间超过 30 秒'
+
+      # LLM 错误率告警
+      - alert: HighLLMErrorRate
+        expr: |
+          sum(rate(llm_calls_total{status="failure"}[5m]))
+          /
+          sum(rate(llm_calls_total[5m]))
+          > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: llm-gateway
+        annotations:
+          summary: 'LLM 调用失败率过高'
+          description: '5分钟内失败率超过 10%'
+
+  - name: database_alerts
+    interval: 1m
+    rules:
+      # 数据库连接池告警
+      - alert: HighDBConnections
+        expr: db_connections_active / db_connections_max > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: '数据库连接池使用率过高'
+          description: '连接池使用率超过 80%'
+
+      # 数据库查询慢告警
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: '数据库查询慢'
+          description: '95分位查询时间超过 1 秒'
+
+  - name: cache_alerts
+    interval: 1m
+    rules:
+      # 缓存命中率低告警
+      - alert: LowCacheHitRate
+        expr: |
+          sum(rate(cache_hits_total[5m]))
+          /
+          (sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m])))
+          < 0.7
+        for: 10m
+        labels:
+          severity: info
+          service: cache
+        annotations:
+          summary: '缓存命中率过低'
+          description: '5分钟内命中率低于 70%，当前: {{ $value | humanizePercentage }}'
+
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # CPU 使用率告警
+      - alert: HighCPUUsage
+        expr: (100 - (avg by (instance) (rate(process_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'CPU 使用率过高'
+          description: 'CPU 使用率超过 80%'
+
+      # 内存使用率告警
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / node_memory_MemTotal_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: '内存使用率过高'
+          description: '内存使用率超过 80%'

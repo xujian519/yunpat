@@ -1,0 +1,52 @@
+{
+  "name": "@yunpat/skills",
+  "version": "0.1.0",
+  "description": "YunPat Skills System - 模块化提示词管理",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./types": "./dist/types/index.js"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "vitest --run",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "ignore": "^5.3.1",
+    "minimatch": "^10.2.5"
+  },
+  "devDependencies": {
+    "@types/minimatch": "^6.0.0",
+    "@types/node": "^20.19.39",
+    "vitest": "^2.0.5"
+  },
+  "peerDependencies": {
+    "@yunpat/core": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "yunpat",
+    "skills",
+    "prompts",
+    "agent"
+  ],
+  "author": "YunPat Team",
+  "license": "MIT"
+}

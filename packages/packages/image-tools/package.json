@@ -1,0 +1,42 @@
+{
+  "name": "@yunpat/image-tools",
+  "version": "0.1.0",
+  "description": "YunPat 图像识别工具集 - 化学结构、数学公式识别",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest --run",
+    "test:watch": "vitest watch"
+  },
+  "keywords": [
+    "yunpat",
+    "image",
+    "ocr",
+    "chemical",
+    "formula"
+  ],
+  "author": "YunPat Team",
+  "license": "MIT",
+  "dependencies": {
+    "@yunpat/core": "workspace:*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "typescript": "^5.x",
+    "vitest": "^4.1.5"
+  }
+}

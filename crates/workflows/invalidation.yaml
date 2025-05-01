@@ -1,0 +1,68 @@
+flow_id: invalidation
+flow_name: 无效宣告
+description: 从目标专利分析到无效宣告请求书撰写的完整流程
+steps:
+  - step_id: target_analysis
+    step_name: 目标专利分析
+    order: 1
+    agent_calls:
+      - agent_id: invalidation
+        output_key: patent_analysis
+    requires_approval: false
+
+  - step_id: evidence_collection
+    step_name: 证据收集
+    order: 2
+    agent_calls:
+      - agent_id: invalidation
+        output_key: evidence
+    requires_approval: false
+
+  - step_id: grounds_analysis
+    step_name: 无效理由分析
+    order: 3
+    agent_calls:
+      - agent_id: invalidation
+        output_key: invalidity_grounds
+    requires_approval: true
+    approval_prompt: 请确认无效理由分析是否准确？
+
+  - step_id: strategy_development
+    step_name: 策略制定与论证
+    order: 4
+    agent_calls:
+      - agent_id: invalidation
+        output_key: strategy
+    requires_approval: false
+
+  - step_id: petition_drafting
+    step_name: 无效宣告请求书撰写
+    order: 5
+    agent_calls:
+      - agent_id: invalidation
+        output_key: petition
+    requires_approval: true
+    approval_prompt: 无效宣告请求书是否可以提交？
+    quality_check:
+      dimensions:
+        - 法律依据充分性
+        - 证据链完整性
+        - 逻辑严密性
+        - 程序合规性
+      threshold: 7.5
+      max_auto_retries: 2
+      escalate_to_human: true
+
+quality_dimensions:
+  - name: 法律依据充分性
+    description: 无效理由是否引用了正确的法律条文
+    weight: 0.30
+  - name: 证据链完整性
+    description: 证据是否形成完整的证据链
+    weight: 0.25
+  - name: 逻辑严密性
+    description: 论证逻辑是否严密无漏洞
+    weight: 0.25
+  - name: 程序合规性
+    description: 是否符合无效宣告的程序要求
+    weight: 0.20

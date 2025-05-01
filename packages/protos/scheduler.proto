@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package yunpat.scheduler;
+
+import "common.proto";
+
+// 任务调度服务
+service SchedulerService {
+  // 提交任务
+  rpc SubmitTask(SubmitTaskRequest) returns (SubmitTaskResponse);
+
+  // 批量提交任务
+  rpc SubmitTasks(SubmitTasksRequest) returns (SubmitTasksResponse);
+
+  // 获取任务结果
+  rpc GetTaskResult(GetTaskResultRequest) returns (GetTaskResultResponse);
+
+  // 取消任务
+  rpc CancelTask(CancelTaskRequest) returns (CancelTaskResponse);
+
+  // 列出任务
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+
+  // 获取队列状态
+  rpc GetQueueStatus(GetQueueStatusRequest) returns (GetQueueStatusResponse);
+}
+
+// 提交任务请求
+message SubmitTaskRequest {
+  string task_type = 1;          // 任务类型
+  bytes payload = 2;             // 任务负载（序列化数据）
+  yunpat.common.Priority priority = 3; // 优先级
+  int32 timeout_ms = 4;          // 超时时间
+  map<string, string> metadata = 5;
+}
+
+// 提交任务响应
+message SubmitTaskResponse {
+  string task_id = 1;
+  yunpat.common.StatusCode status = 2;
+  int64 estimated_start_time_ms = 3; // 预计开始时间
+}
+
+// 批量提交任务请求
+message SubmitTasksRequest {
+  repeated SubmitTaskRequest tasks = 1;
+}
+
+// 批量提交任务响应
+message SubmitTasksResponse {
+  repeated string task_ids = 1;
+  repeated string failed_tasks = 2;
+}
+
+// 获取任务结果请求
+message GetTaskResultRequest {
+  string task_id = 1;
+}
+
+// 获取任务结果响应
+message GetTaskResultResponse {
+  string task_id = 1;
+  yunpat.common.StatusCode status = 2;
+  bytes result = 3;
+  string error_message = 4;
+  TaskMetrics metrics = 5;
+}
+
+// 任务指标
+message TaskMetrics {
+  int64 queue_time_ms = 1;      // 排队时间
+  int64 execution_time_ms = 2;  // 执行时间
+  int64 total_time_ms = 3;      // 总时间
+  int32 retry_count = 4;        // 重试次数
+}
+
+// 取消任务请求
+message CancelTaskRequest {
+  string task_id = 1;
+  string reason = 2;
+}
+
+// 取消任务响应
+message CancelTaskResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 列出任务请求
+message ListTasksRequest {
+  yunpat.common.PageRequest page = 1;
+  yunpat.common.Priority priority = 2; // 按优先级过滤
+  string status_filter = 3;           // 状态过滤
+}
+
+// 列出任务响应
+message ListTasksResponse {
+  repeated TaskInfo tasks = 1;
+  yunpat.common.PageResponse page = 2;
+}
+
+// 任务信息
+message TaskInfo {
+  string task_id = 1;
+  string task_type = 2;
+  yunpat.common.Priority priority = 3;
+  string status = 4;            // pending, running, completed, failed
+  int64 created_at = 5;
+  int64 started_at = 6;
+  int64 completed_at = 7;
+  map<string, string> metadata = 8;
+}
+
+// 获取队列状态请求
+message GetQueueStatusRequest {
+  // 空请求
+}
+
+// 获取队列状态响应
+message GetQueueStatusResponse {
+  int32 pending_tasks = 1;
+  int32 running_tasks = 2;
+  int32 completed_tasks = 3;
+  int32 failed_tasks = 4;
+  map<string, int32> tasks_by_type = 5;
+  map<string, int32> tasks_by_priority = 6;
+}

@@ -1,0 +1,127 @@
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 敏感配置
+config/secrets.yml
+config/production.yml
+
+# 日志文件
+*.log
+logs/
+
+# 缓存
+.cache/
+*.cache
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Dev server PIDs
+.dev-pids/
+
+# Claude Code 配置
+.claude/
+
+# 构建产物
+dist/
+build/
+*.tsbuildinfo
+
+# config 目录中的编译产物（保留源代码 .ts）
+config/*.js
+config/*.d.ts
+config/*.map
+
+# examples 目录中的编译产物（保留源代码 .ts）
+examples/dist/
+examples/*.js
+examples/*.d.ts
+examples/*.map
+
+# 依赖
+node_modules/
+
+# 数据文件
+data/
+*.db
+*.sqlite
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+
+# 知识库本地路径（不要提交个人路径）
+*.local.json
+
+# OMC 工作目录
+.omc/
+
+# macOS
+.DS_Store
+
+# 知识库（个人学习资料，不提交）
+knowledge-base/
+
+# 工具使用数据
+data/tool-usage.json
+
+# 资产引入报告文档
+docs/资产引入/
+
+# Rust 编译产物
+rust/**/target/
+
+# Rust 编译产物
+packages/rust-tools/target/
+packages/rust-tools/crates/*/target/
+
+**/.DS_Store
+.tsbuildinfo
+# 有语法错误的开发文件，暂时忽略
+patents/agents/writer/PatentWriterAgent.js
+test/enhanced-oa-responder.test.js
+
+# TypeScript declaration maps
+*.d.ts.map
+*.js.map
+
+# Backup files
+*.bak
+
+# 构建产物
+packages/*/dist/
+packages/*/*.js
+packages/*/*.d.ts
+packages/*/*.map
+packages/agents/*/*.js
+packages/agents/*/*.d.ts
+packages/agents/*/*.map
+
+# 测试编译产物
+test/**/*.js
+test/**/*.d.ts
+test/**/*.map
+**/*.test.js
+
+# 构建临时文件
+.eslintcache
+.vitest
+.parcel-cache/
+
+# 存档目录
+_archive/
+
+# 考试试卷（不提交git）
+exam-papers/
+exam-papers（不提交git）/

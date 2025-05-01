@@ -1,0 +1,119 @@
+/**
+ * Skills 系统集成测试
+ *
+ * 测试 Skills 系统与 Agent 的集成
+ *
+ * @package @yunpat/skills
+ */
+
+import { describe, it, expect, beforeEach } from 'vitest'
+import { join } from 'path'
+import { SkillsProfessionalAgent } from '@yunpat/agent-base'
+import { loadSkillsFromDir } from '../src/index.js'
+import type { SkillContext } from '../src/types/SkillContext.js'
+
+// Mock LLM Adapter
+class MockLLMAdapter {
+  async chat(params: any): Promise<{ message: { content: string } }> {
+    return {
+      message: {
+        content: `Mock response for ${params.messages[params.messages.length - 1].content}`,
+      },
+    }
+  }
+}
+
+describe('Skills Integration', () => {
+  let agent: TestAgent
+  const skillsDir = join(process.cwd(), '../../.yunpat/skills')
+
+  // 定义测试 Agent 类
+  class TestAgent extends SkillsProfessionalAgent {
+    protected async act(plan: unknown, context: any): Promise<any> {
+      // 简单的 act 实现
+      return { success: true, data: 'test' }
+    }
+  }
+
+  beforeEach(() => {
+    // 创建测试 Agent
+    agent = new TestAgent({
+      name: 'TestAgent',
+      description: 'Test Agent',
+      llm: new MockLLMAdapter() as any,
+      eventBus: {},
+      memory: {},
+      tools: {},
+      skillsDirs: [skillsDir],
+      autoLoadSkills: false, // 手动加载以控制测试时机
+      skillsSource: 'project' as const,
+    })
+  })
+
+  describe('loadSkills', () => {
+    it('should load skills from directory', async () => {
+      await agent.loadSkills()
+
+      expect(agent.getLoadedSkillNames().length).toBeGreaterThan(0)
+    })
+
+    it('should get skill by name', async () => {
+      await agent.loadSkills()
+
+      const skill = agent.getSkill('patent-analysis')
+      expect(skill).toBeDefined()
+      expect(skill?.name).toBe('patent-analysis')
+    })
+
+    it('should check if skill exists', async () => {
+      await agent.loadSkills()
+
+      expect(agent.hasSkill('patent-analysis')).toBe(true)
+      expect(agent.hasSkill('nonexistent')).toBe(false)
+    })
+  })
+
+  describe('callSkill', () => {
+    it('should call skill and return prompt', async () => {
+      await agent.loadSkills()
+
+      const result = await agent.callSkill('patent-analysis', {
+        patent_file: '/path/to/patent.pdf',
+        analysis_depth: 1,
+      })
+
+      expect(result.system).toBeDefined()
+      expect(result.user).toBeDefined()
+      expect(result.metadata).toBeDefined()
+    })
+
+    it('should throw error for non-existent skill', async () => {
+      await agent.loadSkills()
+
+      await expect(agent.callSkill('nonexistent', {})).rejects.toThrow()
+    })
+
+    it('should pass args to skill', async () => {
+      await agent.loadSkills()
+
+      const result = await agent.callSkill('patent-analysis', {
+        patent_file: '/path/to/patent.pdf',
+        analysis_depth: 2,
+      })
+
+      expect(result.user).toContain('/path/to/patent.pdf')
+      expect(result.user).toContain('2')
+    })
+  })
+
+  describe('buildSkillContext', () => {
+    it('should build context with agent info', async () => {
+      const context = await agent.buildSkillContext()
+
+      expect(context.agentName).toBe('TestAgent')
+      expect(context.tools).toBeDefined()
+      expect(context.env.cwd).toBeDefined()
+      expect(context.env.sessionId).toBeDefined()
+    })
+  })
+})

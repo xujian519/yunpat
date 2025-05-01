@@ -1,0 +1,53 @@
+{
+  "name": "@yunpat/mcp-server",
+  "version": "0.1.0",
+  "description": "YunPat MCP Server - 为 Claude Desktop 等 MCP 客户端提供专利工具",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "yunpat-mcp": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js",
+    "test": "vitest --run"
+  },
+  "keywords": [
+    "yunpat",
+    "mcp",
+    "model-context-protocol",
+    "patent",
+    "claude"
+  ],
+  "author": "YunPat Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@yunpat/core": "workspace:*",
+    "@yunpat/agent-search": "workspace:*",
+    "@yunpat/agent-invention": "workspace:*",
+    "@yunpat/agent-prior-art-search": "workspace:*",
+    "@yunpat/agent-claim-generator": "workspace:*",
+    "@yunpat/agent-quality": "workspace:*",
+    "@yunpat/agent-patent-analyzer": "workspace:*",
+    "@yunpat/agent-patent-responder": "workspace:*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "typescript": "^5.x",
+    "vitest": "^4.1.5"
+  }
+}

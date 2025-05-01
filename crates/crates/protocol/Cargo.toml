@@ -1,0 +1,11 @@
+[package]
+name = "yunpat-protocol"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "App-server protocol frames for YunPat TUI workspace architecture"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true

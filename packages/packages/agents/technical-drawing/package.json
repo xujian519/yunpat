@@ -1,0 +1,44 @@
+{
+  "name": "@yunpat/technical-drawing",
+  "version": "1.0.0",
+  "description": "技术图纸识别智能体 - 支持化学结构、数学公式、OCR",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest --run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "patent",
+    "technical-drawing",
+    "ocr",
+    "chemical-structure",
+    "math-formula",
+    "agent"
+  ],
+  "author": "YunPat Team",
+  "license": "MIT",
+  "dependencies": {
+    "@yunpat/core": "workspace:*",
+    "@yunpat/image-tools": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.2"
+  }
+}

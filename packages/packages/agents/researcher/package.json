@@ -1,0 +1,39 @@
+{
+  "name": "@yunpat/agent-researcher",
+  "version": "0.1.0",
+  "description": "研究分析师智能体 - 信息搜集、数据整理、报告生成",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@yunpat/core": "workspace:*",
+    "@langchain/core": "^0.2.26"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "agent",
+    "researcher",
+    "analysis",
+    "yunpat"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT"
+}

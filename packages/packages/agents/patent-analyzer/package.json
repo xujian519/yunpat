@@ -1,0 +1,42 @@
+{
+  "name": "@yunpat/agent-patent-analyzer",
+  "version": "0.1.0",
+  "description": "专利分析智能体 - 专利文献深度分析",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@yunpat/agent-analysis": "workspace:*",
+    "@yunpat/agent-base": "workspace:*",
+    "@yunpat/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^1.2.0"
+  },
+  "keywords": [
+    "agent",
+    "patent",
+    "analyzer",
+    "yunpat"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT"
+}

@@ -1,0 +1,43 @@
+{
+  "name": "@yunpat/agent-search",
+  "version": "0.1.0",
+  "description": "专利检索智能体 - 检索策略生成与执行",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@yunpat/agent-base": "workspace:*",
+    "@yunpat/core": "workspace:*",
+    "@yunpat/patent-tools": "workspace:*",
+    "@yunpat/builtin-tools": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^1.2.0"
+  },
+  "keywords": [
+    "agent",
+    "patent",
+    "search",
+    "yunpat"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT"
+}

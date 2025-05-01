@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+pnpm-lock.yml
+*.min.js
+*.min.css
+dist/
+coverage/
+node_modules/
+.tsbuildinfo

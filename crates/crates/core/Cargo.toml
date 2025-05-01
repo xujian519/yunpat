@@ -1,0 +1,21 @@
+[package]
+name = "yunpat-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core runtime boundaries for YunPat TUI workspace architecture"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+yunpat-agent = { path = "../agent", version = "0.8.15" }
+yunpat-config = { path = "../config", version = "0.8.15" }
+yunpat-execpolicy = { path = "../execpolicy", version = "0.8.15" }
+yunpat-hooks = { path = "../hooks", version = "0.8.15" }
+yunpat-mcp = { path = "../mcp", version = "0.8.15" }
+yunpat-protocol = { path = "../protocol", version = "0.8.15" }
+yunpat-state = { path = "../state", version = "0.8.15" }
+yunpat-tools = { path = "../tools", version = "0.8.15" }
+serde_json.workspace = true
+uuid.workspace = true

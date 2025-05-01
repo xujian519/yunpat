@@ -1,0 +1,14 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false
+  },
+  "include": ["src/ComparisonAnalyzerAgent.ts", "src/index.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "test", "src/CreativeAnalyzerAgent.ts"]
+}

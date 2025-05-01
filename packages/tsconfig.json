@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/dist/**",
+    "packages/**",
+    "patents/**",
+    "_archive/**",
+    "**/_archive/**",
+    "cli/**",
+    "examples/**",
+    "knowledge-base/**",
+    "protos/**",
+    "scripts/**",
+    "docker/**",
+    "test/**",
+    "**/*.js",
+    "esbuild.config.mjs"
+  ]
+}

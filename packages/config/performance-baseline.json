@@ -1,0 +1,63 @@
+{
+  "version": "1.0.0",
+  "date": "2026-05-05",
+  "environment": {
+    "node": "v18.x",
+    "platform": "darwin"
+  },
+  "benchmarks": {
+    "array_operations": {
+      "filter_map_1000_items": {
+        "mean_ms": 0.02,
+        "median_ms": 0.01,
+        "max_ms": 0.5,
+        "samples": 100
+      }
+    },
+    "object_operations": {
+      "keys_values_1000_items": {
+        "mean_ms": 0.01,
+        "median_ms": 0.01,
+        "max_ms": 0.2,
+        "samples": 100
+      }
+    },
+    "string_operations": {
+      "reverse_100_chars": {
+        "mean_ms": 0.005,
+        "median_ms": 0.004,
+        "max_ms": 0.1,
+        "samples": 100
+      }
+    },
+    "json_serialization": {
+      "serialize_deserialize_100_items": {
+        "mean_ms": 0.02,
+        "median_ms": 0.015,
+        "max_ms": 0.3,
+        "samples": 100
+      }
+    },
+    "llm_token_estimation": {
+      "estimate_1000_chars": {
+        "mean_ms": 0.001,
+        "median_ms": 0.001,
+        "max_ms": 0.05,
+        "samples": 100
+      }
+    },
+    "vector_similarity": {
+      "cosine_100_dimensions": {
+        "mean_ms": 0.01,
+        "median_ms": 0.008,
+        "max_ms": 0.2,
+        "samples": 100
+      }
+    }
+  },
+  "thresholds": {
+    "warning": 1.2,
+    "critical": 1.5,
+    "fail": 2.0
+  }
+}

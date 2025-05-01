@@ -1,0 +1,42 @@
+{
+  "name": "@yunpat/agent-writer",
+  "version": "0.1.0",
+  "description": "专利撰写智能体 - 集成知识库和分步加载提示词模板",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@yunpat/core": "workspace:*",
+    "@yunpat/patent-core": "workspace:*",
+    "@yunpat/patent-knowledge": "workspace:*",
+    "@yunpat/patent-prompts": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "agent",
+    "patent",
+    "writer",
+    "yunpat"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT"
+}

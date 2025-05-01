@@ -1,0 +1,134 @@
+{
+  "name": "@yunpat/orchestrator",
+  "version": "0.1.0",
+  "description": "YunPat Orchestrator Agent - 中枢层智能调度系统",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest --run",
+    "test:coverage": "vitest --coverage",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "orchestrator",
+    "agent",
+    "llm",
+    "patent",
+    "yunpat"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@yunpat/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.5",
+    "@vitest/coverage-v8": "^4.1.5"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@yunpat/agent-patent-analyzer": "workspace:*",
+    "@yunpat/agent-patent-responder": "workspace:*",
+    "@yunpat/agent-search": "workspace:*",
+    "@yunpat/agent-invention": "workspace:*",
+    "@yunpat/agent-prior-art-search": "workspace:*",
+    "@yunpat/agent-claim-generator": "workspace:*",
+    "@yunpat/agent-specification-drafter": "workspace:*",
+    "@yunpat/agent-abstract-drafter": "workspace:*",
+    "@yunpat/agent-writer": "workspace:*",
+    "@yunpat/agent-analysis": "workspace:*",
+    "@yunpat/agent-researcher": "workspace:*",
+    "@yunpat/agent-quality": "workspace:*",
+    "@yunpat/agent-image-understanding": "workspace:*",
+    "@yunpat/agent-patent-manager": "workspace:*",
+    "@yunpat/technical-drawing": "workspace:*",
+    "@yunpat/spec-formality-checker": "workspace:*",
+    "@yunpat/comparison-report-generator": "workspace:*",
+    "@yunpat/quality-checker": "workspace:*",
+    "@yunpat/subject-matter-checker": "workspace:*",
+    "@yunpat/unity-checker": "workspace:*",
+    "@yunpat/format-converter": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@yunpat/agent-patent-analyzer": {
+      "optional": true
+    },
+    "@yunpat/agent-patent-responder": {
+      "optional": true
+    },
+    "@yunpat/agent-search": {
+      "optional": true
+    },
+    "@yunpat/agent-invention": {
+      "optional": true
+    },
+    "@yunpat/agent-prior-art-search": {
+      "optional": true
+    },
+    "@yunpat/agent-claim-generator": {
+      "optional": true
+    },
+    "@yunpat/agent-specification-drafter": {
+      "optional": true
+    },
+    "@yunpat/agent-abstract-drafter": {
+      "optional": true
+    },
+    "@yunpat/agent-writer": {
+      "optional": true
+    },
+    "@yunpat/agent-analysis": {
+      "optional": true
+    },
+    "@yunpat/agent-researcher": {
+      "optional": true
+    },
+    "@yunpat/agent-quality": {
+      "optional": true
+    },
+    "@yunpat/agent-image-understanding": {
+      "optional": true
+    },
+    "@yunpat/agent-patent-manager": {
+      "optional": true
+    },
+    "@yunpat/technical-drawing": {
+      "optional": true
+    },
+    "@yunpat/spec-formality-checker": {
+      "optional": true
+    },
+    "@yunpat/comparison-report-generator": {
+      "optional": true
+    },
+    "@yunpat/quality-checker": {
+      "optional": true
+    },
+    "@yunpat/subject-matter-checker": {
+      "optional": true
+    },
+    "@yunpat/unity-checker": {
+      "optional": true
+    },
+    "@yunpat/format-converter": {
+      "optional": true
+    }
+  }
+}

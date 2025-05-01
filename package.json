@@ -1,0 +1,46 @@
+{
+  "name": "yunpat-agent",
+  "version": "0.1.0",
+  "description": "云熙知识产权智能体 - 知识产权全生命周期智能体操作系统",
+  "private": true,
+  "author": "徐健 <xujian519@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "make build",
+    "build:rust": "make build-rust",
+    "build:ts": "make build-ts",
+    "test": "make test",
+    "test:rust": "make test-rust",
+    "test:ts": "make test-ts",
+    "dev": "make dev",
+    "lint": "make lint",
+    "format": "make format",
+    "clean": "make clean",
+    "install:all": "make install"
+  },
+  "workspaces": [
+    "packages/*",
+    "packages/agents/*"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "keywords": [
+    "patent",
+    "ip",
+    "ai",
+    "agent",
+    "llm",
+    "rust",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xujian519/yunpat-agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xujian519/yunpat-agent/issues"
+  },
+  "homepage": "https://github.com/xujian519/yunpat-agent#readme"
+}

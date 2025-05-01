@@ -1,0 +1,39 @@
+{
+  "name": "@yunpat/agent-abstract-drafter",
+  "version": "0.1.0",
+  "description": "专利摘要撰写智能体 - 撰写专利摘要",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest --run",
+    "test:watch": "vitest watch"
+  },
+  "keywords": [
+    "patent",
+    "abstract",
+    "drafting",
+    "agent"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@yunpat/core": "workspace:*",
+    "@yunpat/agent-invention": "workspace:*",
+    "@yunpat/agent-specification-drafter": "workspace:*",
+    "@yunpat/agent-claim-generator": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.6.1"
+  }
+}

@@ -1,0 +1,47 @@
+name: 自动化任务
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+jobs:
+  stale-issues:
+    name: 清理旧的 Issue
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          days-before-issue-stale: 30
+          days-before-issue-close: 14
+          stale-issue-label: 'stale'
+          stale-issue-message: |
+            这个 Issue 已经 30 天没有活动了。如果没有进一步的进展，它将在 14 天后被自动关闭。
+            如果这个问题仍然相关，请添加评论以防止它被关闭。
+          close-issue-message: |
+            由于缺乏活动，这个 Issue 已被自动关闭。如果需要，可以重新打开。
+
+  stats-report:
+    name: 生成项目统计
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 生成统计信息
+        run: |
+          echo "# 项目统计报告" > stats.md
+          echo "" >> stats.md
+          echo "生成时间: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> stats.md
+          echo "" >> stats.md
+          echo "## 代码统计" >> stats.md
+          echo "- 总提交数: $(git rev-list --count HEAD)" >> stats.md
+          echo "- TypeScript 文件数: $(find . -name '*.ts' -not -path '*/node_modules/*' | wc -l)" >> stats.md
+          echo "- Rust 文件数: $(find . -name '*.rs' -not -path '*/target/*' | wc -l)" >> stats.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-stats
+          path: stats.md

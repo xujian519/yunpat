@@ -1,0 +1,119 @@
+const path = require("path");
+const os = require("os");
+
+const CHECKSUM_MANIFEST = "yunpat-artifacts-sha256.txt";
+
+const ASSET_MATRIX = {
+  linux: {
+    x64: ["yunpat-linux-x64", "yunpat-tui-linux-x64"],
+    arm64: ["yunpat-linux-arm64", "yunpat-tui-linux-arm64"],
+  },
+  darwin: {
+    x64: ["yunpat-macos-x64", "yunpat-tui-macos-x64"],
+    arm64: ["yunpat-macos-arm64", "yunpat-tui-macos-arm64"],
+  },
+  win32: {
+    x64: ["yunpat-windows-x64.exe", "yunpat-tui-windows-x64.exe"],
+  },
+};
+
+function detectBinaryNames() {
+  const platform = os.platform();
+  const arch = os.arch();
+  const defaults = ASSET_MATRIX[platform];
+  if (!defaults) {
+    const supported = Object.keys(ASSET_MATRIX).map(p => `'${p}'`).join(', ');
+    throw new Error(
+      `Unsupported platform: ${platform}. Supported platforms: ${supported}.\n\n` +
+      unsupportedBuildHint(),
+    );
+  }
+  const pair = defaults[arch];
+  if (!pair) {
+    const supported = Object.keys(defaults).map(a => `'${a}'`).join(', ');
+    throw new Error(
+      `Unsupported architecture: ${arch} on platform ${platform}. ` +
+      `Supported architectures: ${supported}.\n\n` +
+      unsupportedBuildHint(),
+    );
+  }
+  return {
+    platform,
+    arch,
+    yunpat: pair[0],
+    tui: pair[1],
+  };
+}
+
+function unsupportedBuildHint() {
+  return [
+    "No prebuilt binary is available for this platform/architecture combo.",
+    "You can still run DeepSeek TUI by building from source with Cargo:",
+    "",
+    "  # Requires Rust 1.88+ (https://rustup.rs)",
+    "  cargo install yunpat-tui-cli --locked   # provides `yunpat`",
+    "  cargo install yunpat-tui     --locked   # provides `yunpat-tui`",
+    "",
+    "Or build from a checkout:",
+    "",
+    "  git clone https://github.com/Hmbown/DeepSeek-TUI.git",
+    "  cd DeepSeek-TUI",
+    "  cargo install --path crates/cli --locked",
+    "  cargo install --path crates/tui --locked",
+    "",
+    "See https://github.com/Hmbown/DeepSeek-TUI/blob/main/docs/INSTALL.md",
+    "for cross-compilation, mirror, and Linux ARM64 specifics.",
+  ].join("\n");
+}
+
+function executableName(base, platform) {
+  return platform === "win32" ? `${base}.exe` : base;
+}
+
+function releaseBaseUrl(version, repo = "Hmbown/DeepSeek-TUI") {
+  const override =
+    process.env.DEEPSEEK_TUI_RELEASE_BASE_URL || process.env.DEEPSEEK_RELEASE_BASE_URL;
+  if (override) {
+    const trimmed = String(override).trim();
+    return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
+  }
+  return `https://github.com/${repo}/releases/download/v${version}/`;
+}
+
+function releaseAssetUrl(baseName, version, repo = "Hmbown/DeepSeek-TUI") {
+  return new URL(baseName, releaseBaseUrl(version, repo)).toString();
+}
+
+function checksumManifestUrl(version, repo = "Hmbown/DeepSeek-TUI") {
+  return releaseAssetUrl(CHECKSUM_MANIFEST, version, repo);
+}
+
+function releaseBinaryDirectory() {
+  return path.join(__dirname, "..", "bin", "downloads");
+}
+
+function allAssetNames() {
+  const names = [];
+  for (const platformAssets of Object.values(ASSET_MATRIX)) {
+    for (const pair of Object.values(platformAssets)) {
+      names.push(pair[0], pair[1]);
+    }
+  }
+  return Array.from(new Set(names));
+}
+
+function allReleaseAssetNames() {
+  return [...allAssetNames(), CHECKSUM_MANIFEST];
+}
+
+module.exports = {
+  allAssetNames,
+  allReleaseAssetNames,
+  CHECKSUM_MANIFEST,
+  checksumManifestUrl,
+  detectBinaryNames,
+  executableName,
+  releaseAssetUrl,
+  releaseBaseUrl,
+  releaseBinaryDirectory,
+};

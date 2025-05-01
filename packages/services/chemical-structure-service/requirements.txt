@@ -1,0 +1,12 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# 化学结构识别
+imago>=2.0.0
+
+# 数学公式识别
+pix2tex>=0.1.0
+pillow>=10.0.0
+torch>=2.0.0
+torchvision>=0.15.0

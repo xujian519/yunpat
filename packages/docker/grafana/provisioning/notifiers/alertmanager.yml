@@ -1,0 +1,31 @@
+apiVersion: 1
+
+notifiers:
+  - name: 'Alertmanager'
+    type: 'alertmanager'
+    uid: 'alertmanager'
+    # 如果使用真实的 Alertmanager
+    # url: http://alertmanager:9093
+
+    # 设置告警级别
+    settings:
+      # 可以在这里配置不同的通知方式
+      # 例如: email, slack, webhook 等
+
+      # 示例: Webhook 通知
+      # url: http://localhost:8080/webhook
+
+      # 示例: 邮件通知
+      # addresses: alerts@yunpat.com
+
+      # 示例: Slack 通知
+      # url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+
+      # 示例: 钉钉通知
+      # url: https://oapi.dingtalk.com/robot/send?access_token=YOUR_TOKEN
+
+      # 示例: 企业微信通知
+      # url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY
+
+      # 设置告警状态
+      # send_resolved: true

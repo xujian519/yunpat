@@ -1,0 +1,22 @@
+[package]
+name = "tools-service"
+version = "0.1.0"
+edition = "2021"
+description = "YunPat 工具服务 - Rust 实现的 ML 工具 gRPC 服务，替代 Python tools"
+
+[dependencies]
+tokio = { version = "1.35", features = ["rt-multi-thread", "macros", "time", "sync"] }
+tonic = "0.11"
+prost = "0.12"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# HTTP 客户端（调用 BGE-M3 API）
+reqwest = { version = "0.12", features = ["json"] }
+# 并行执行
+futures = "0.3"
+
+[build-dependencies]
+tonic-build = "0.11"

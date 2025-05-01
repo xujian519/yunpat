@@ -1,0 +1,122 @@
+name: Documentation Sync Check
+
+on:
+  pull_request:
+    paths:
+      - 'packages/**/*.ts'
+      - 'docs/**/*.md'
+      - 'scripts/check/check-doc-sync.js'
+
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'packages/**/*.ts'
+      - 'docs/**/*.md'
+
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  doc-sync:
+    name: Check Documentation Sync
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          pnpm install --no-frozen-lockfile
+
+      - name: Run documentation sync check
+        run: |
+          node scripts/check/check-doc-sync.js
+        continue-on-error: false
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+
+            try {
+              // 运行检查并捕获输出
+              const output = execSync('node scripts/check/check-doc-sync.js', { encoding: 'utf-8' });
+
+              // 如果检查通过，输出成功消息
+              if (output.includes('✅ 所有检查通过')) {
+                const comment = `## ✅ 文档同步检查通过
+
+                所有文档与代码保持同步！
+
+                <details>
+                <summary>查看详细报告</summary>
+
+                \`\`\`
+                ${output}
+                \`\`\`
+                </details>`;
+
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              }
+            } catch (error) {
+              // 检查失败，输出失败消息
+              const comment = `## ❌ 文档同步检查失败
+
+              检测到文档与代码不同步的问题，请查看详细报告：
+
+              <details>
+              <summary>查看详细报告</summary>
+
+              \`\`\`
+              ${error.stdout || error.message}
+              \`\`\`
+              </details>
+
+              请修复以下问题后再提交 PR：
+
+              1. 更新 PROJECT_STRUCTURE.md 中的包数量
+              2. 为新增的包添加 README.md
+              3. 为新增的 agent 添加测试
+              4. 更新相关 API 文档`;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+
+              // 设置 PR 为失败状态
+              core.setFailed(error.message);
+            }
+
+      - name: Upload report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-sync-report
+          path: |
+            docs/**/*.md
+            scripts/check/check-doc-sync.js
+          retention-days: 30

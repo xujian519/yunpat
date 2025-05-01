@@ -1,0 +1,496 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .panel { display: flex; flex-direction: column; gap: 0; }
+  .tab-row { display: flex; gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 0; }
+  .tab { padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s; background: none; border-left: none; border-right: none; border-top: none; }
+  .tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+  .tab:hover:not(.active) { color: var(--color-text-primary); }
+  .view { display: none; padding-top: 16px; }
+  .view.active { display: block; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .badge-purple { background: #EEEDFE; color: #3C3489; }
+  .badge-teal { background: #E1F5EE; color: #0F6E56; }
+  .badge-coral { background: #FAECE7; color: #993C1D; }
+  .badge-gray { background: #F1EFE8; color: #5F5E5A; }
+  .badge-amber { background: #FAEEDA; color: #854F0B; }
+  @media (prefers-color-scheme: dark) {
+    .badge-purple { background: #26215C; color: #CECBF6; }
+    .badge-teal { background: #04342C; color: #9FE1CB; }
+    .badge-coral { background: #4A1B0C; color: #F5C4B3; }
+    .badge-gray { background: #2C2C2A; color: #B4B2A9; }
+    .badge-amber { background: #412402; color: #FAC775; }
+  }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; }
+  .layer-block { border-radius: var(--border-radius-lg); padding: 14px 16px; margin-bottom: 8px; border: 0.5px solid var(--color-border-tertiary); cursor: pointer; transition: border-color .15s; }
+  .layer-block:hover { border-color: var(--color-border-secondary); }
+  .layer-label { font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--color-text-tertiary); margin-bottom: 6px; }
+  .layer-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+  .layer-sub { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+  .agent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; }
+  .agent-chip { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; transition: all .15s; }
+  .agent-chip:hover { border-color: var(--color-border-primary); color: var(--color-text-primary); }
+  .agent-chip strong { display: block; font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+  .arrow-down { text-align: center; color: var(--color-text-tertiary); font-size: 18px; margin: 2px 0; line-height: 1; }
+  .detail-panel { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 16px; margin-top: 12px; display: none; }
+  .detail-panel.visible { display: block; }
+  .detail-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 10px; }
+  .prop-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; gap: 12px; }
+  .prop-row:last-child { border-bottom: none; }
+  .prop-key { color: var(--color-text-secondary); flex-shrink: 0; }
+  .prop-val { color: var(--color-text-primary); text-align: right; line-height: 1.5; }
+  .flow-step { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .flow-step:last-child { border-bottom: none; }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; color: var(--color-text-secondary); }
+  .step-body { flex: 1; }
+  .step-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+  .step-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+  .code-block { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; font-family: var(--font-mono); font-size: 11px; color: var(--color-text-secondary); line-height: 1.7; overflow-x: auto; margin-top: 8px; white-space: pre; }
+  .msg-bubble { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 10px 14px; font-size: 13px; color: var(--color-text-primary); margin-bottom: 8px; line-height: 1.6; }
+  .msg-bubble.user { background: var(--color-background-info); }
+  .msg-label { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px; font-weight: 500; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin: 14px 0 8px; text-transform: uppercase; letter-spacing: .04em; font-size: 11px; }
+</style>
+
+<div class="panel">
+  <div class="tab-row">
+    <button class="tab active" onclick="switchTab('arch')">架构总览</button>
+    <button class="tab" onclick="switchTab('orchestrator')">中枢设计</button>
+    <button class="tab" onclick="switchTab('domain')">专业智能体</button>
+    <button class="tab" onclick="switchTab('execution')">执行层</button>
+    <button class="tab" onclick="switchTab('flow')">任务流</button>
+  </div>
+
+  <!-- 架构总览 -->
+  <div id="view-arch" class="view active">
+    <div onclick="selectLayer('user')" class="layer-block" style="border-color: var(--color-border-secondary); background: var(--color-background-secondary);">
+      <div class="layer-label">入口</div>
+      <div class="layer-title">用户 / 外部系统</div>
+      <div class="layer-sub">专利代理所 · 律师事务所 · 企业 IP 部门 · API 接入</div>
+    </div>
+    <div class="arrow-down">↓</div>
+
+    <div onclick="selectLayer('orchestrator')" class="layer-block" id="lb-orch" style="border-color: #534AB7;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="layer-label" style="color:#7F77DD;">中枢层 · Layer 0</div>
+          <div class="layer-title">OrchestratorAgent</div>
+          <div class="layer-sub">意图识别 · 任务分解 · 对话管理 · 结果聚合 · 异常降级</div>
+        </div>
+        <span class="badge badge-purple">唯一用户接触点</span>
+      </div>
+    </div>
+    <div class="arrow-down">↓</div>
+
+    <div onclick="selectLayer('domain')" class="layer-block" id="lb-domain" style="border-color: #0F6E56;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div class="layer-label" style="color:#1D9E75;">专业层 · Layer 1</div>
+          <div class="layer-title">Domain Agents</div>
+          <div class="layer-sub">面向业务场景，负责策略决策与任务编排</div>
+        </div>
+        <span class="badge badge-teal">业务策略</span>
+      </div>
+      <div class="agent-grid">
+        <div class="agent-chip" onclick="event.stopPropagation();showAgent('writer')"><strong>PatentWriterAgent</strong>专利撰写 · 85%</div>
+        <div class="agent-chip" onclick="event.stopPropagation();showAgent('responder')"><strong>PatentResponderAgent</strong>审查答复 · 60%</div>
+        <div class="agent-chip" onclick="event.stopPropagation();showAgent('manager')"><strong>PatentManagerAgent</strong>专利管理 · 40%</div>
+        <div class="agent-chip" onclick="event.stopPropagation();showAgent('fto')"><strong>FTOAgent</strong>自由实施 · 规划中</div>
+        <div class="agent-chip" onclick="event.stopPropagation();showAgent('monitor')"><strong>MonitorAgent</strong>竞对监控 · 规划中</div>
+        <div class="agent-chip" onclick="event.stopPropagation();showAgent('portfolio')"><strong>PortfolioAgent</strong>组合分析 · 规划中</div>
+      </div>
+    </div>
+    <div class="arrow-down">↓</div>
+
+    <div onclick="selectLayer('execution')" class="layer-block" id="lb-exec" style="border-color: #993C1D;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div class="layer-label" style="color:#D85A30;">执行层 · Layer 2</div>
+          <div class="layer-title">Execution Agents</div>
+          <div class="layer-sub">无业务判断，单一职责，可并行调度</div>
+        </div>
+        <span class="badge badge-coral">原子能力</span>
+      </div>
+      <div class="agent-grid">
+        <div class="agent-chip"><strong>SearchAgent</strong>先现技术检索</div>
+        <div class="agent-chip"><strong>AnalysisAgent</strong>特征比对分析</div>
+        <div class="agent-chip"><strong>QualityAgent</strong>质量评估</div>
+        <div class="agent-chip"><strong>KnowledgeAgent</strong>知识库查询</div>
+        <div class="agent-chip"><strong>DocumentAgent</strong>文档解析</div>
+        <div class="agent-chip"><strong>ResearchAgent</strong>技术研究</div>
+      </div>
+    </div>
+    <div class="arrow-down">↓</div>
+
+    <div class="layer-block" style="border-color: var(--color-border-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div class="layer-label">工具层 · Layer 3</div>
+          <div class="layer-title">Tools &amp; External APIs</div>
+          <div class="layer-sub">patent-tools · document-tools · builtin-tools · 外部专利数据库</div>
+        </div>
+        <span class="badge badge-gray">基础设施</span>
+      </div>
+    </div>
+
+    <div id="detail-arch" class="detail-panel"></div>
+  </div>
+
+  <!-- 中枢设计 -->
+  <div id="view-orchestrator" class="view">
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px;line-height:1.6;">OrchestratorAgent 是系统唯一的用户接触点。它不包含任何专利业务逻辑，只负责理解意图、编排任务、管理上下文。</p>
+    
+    <div class="section-title">核心职责接口</div>
+    <div class="code-block">interface OrchestratorAgent {
+  // 1. 意图识别（不理解专利，只分类）
+  classify(input: UserMessage): Intent
+  
+  // 2. 路由决策
+  route(intent: Intent): 'direct' | 'orchestrate'
+  
+  // 3. 简单路由 — 单智能体直达
+  directRoute(intent: Intent): DomainAgent | ExecutionAgent
+  
+  // 4. 复杂编排 — 生成任务计划
+  plan(intent: Intent, ctx: Context): TaskPlan
+  
+  // 5. 执行计划（含 HITL 节点）
+  execute(plan: TaskPlan): AsyncGenerator&lt;TaskEvent&gt;
+  
+  // 6. 结果聚合
+  aggregate(results: TaskResult[]): FinalResponse
+  
+  // 7. 异常降级
+  fallback(error: AgentError): FallbackResponse
+}</div>
+
+    <div class="section-title">意图分类表</div>
+    <div class="card" style="margin-bottom:8px;">
+      <div class="prop-row"><span class="prop-key">draft_simple</span><span class="prop-val">单步撰写请求 → 直接路由 PatentWriterAgent</span></div>
+      <div class="prop-row"><span class="prop-key">draft_full</span><span class="prop-val">完整申请文件 → 编排多步计划</span></div>
+      <div class="prop-row"><span class="prop-key">respond_oa</span><span class="prop-val">审查意见答复 → 直接路由 PatentResponderAgent</span></div>
+      <div class="prop-row"><span class="prop-key">search</span><span class="prop-val">现有技术检索 → 直接路由 SearchAgent（跳过专业层）</span></div>
+      <div class="prop-row"><span class="prop-key">analyze</span><span class="prop-val">分析/FTO → 路由 FTOAgent 或 PortfolioAgent</span></div>
+      <div class="prop-row"><span class="prop-key">manage</span><span class="prop-val">年费/状态/组合 → 路由 PatentManagerAgent</span></div>
+      <div class="prop-row"><span class="prop-key">chitchat</span><span class="prop-val">闲聊/询问 → 中枢直接回复，不派发</span></div>
+    </div>
+
+    <div class="section-title">上下文结构（中枢维护）</div>
+    <div class="code-block">interface OrchestratorContext {
+  sessionId: string
+  userId: string
+  conversationHistory: Message[]   // 多轮对话
+  activeTaskPlan?: TaskPlan        // 当前任务计划
+  pendingHITL?: HITLCheckpoint     // 等待用户确认
+  agentSnapshots: Map&lt;string, AgentState&gt;  // 各智能体快照
+  knowledgeScope: string[]         // 本次会话激活的知识域
+}</div>
+
+    <div class="section-title">EventBus 通信协议（复用你现有的 53 个测试用例）</div>
+    <div class="code-block">// 中枢 → 专业层（通过事件，不是直接调用）
+eventBus.emit('agent:dispatch', {
+  agentId: 'patent-writer',
+  taskId: uuid(),
+  payload: contextSnapshot,   // 完整上下文快照
+  timeout: 30_000
+})
+
+// 专业层 → 中枢（结果回传）
+eventBus.emit('agent:complete', {
+  taskId,
+  agentId: 'patent-writer',
+  result: DraftResult,
+  requiresHITL: true,         // 是否需要用户确认
+  hitlCheckpoint: 'review-claims'
+})
+
+// 执行层并行任务
+eventBus.emitAll([
+  { event: 'exec:search', payload: query },
+  { event: 'exec:knowledge', payload: templateQuery }
+])</div>
+  </div>
+
+  <!-- 专业智能体 -->
+  <div id="view-domain" class="view">
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px;line-height:1.6;">专业层智能体面向业务场景，不直接与用户对话，不直接调用工具层。它们的职责是：理解业务目标、编排执行层、合成最终结果。</p>
+    
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <button onclick="showDomain('writer')" id="dt-writer" class="tab active" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 12px;">PatentWriterAgent</button>
+      <button onclick="showDomain('responder')" id="dt-responder" class="tab" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 12px;">PatentResponderAgent</button>
+      <button onclick="showDomain('manager')" id="dt-manager" class="tab" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 12px;">PatentManagerAgent</button>
+      <button onclick="showDomain('fto')" id="dt-fto" class="tab" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 12px;">FTOAgent</button>
+      <button onclick="showDomain('monitor')" id="dt-monitor" class="tab" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 12px;">MonitorAgent</button>
+    </div>
+    <div id="domain-detail"></div>
+  </div>
+
+  <!-- 执行层 -->
+  <div id="view-execution" class="view">
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px;line-height:1.6;">执行层智能体是无状态的原子能力单元。它们不做业务判断，只把一件事做到最好，并且支持并行调度。</p>
+    
+    <div class="section-title">设计原则</div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="prop-row"><span class="prop-key">无状态</span><span class="prop-val">每次调用独立，结果只依赖输入，不依赖历史</span></div>
+      <div class="prop-row"><span class="prop-key">单一职责</span><span class="prop-val">每个执行体只做一件事，不做跨域判断</span></div>
+      <div class="prop-row"><span class="prop-key">可并行</span><span class="prop-val">中枢可同时派发多个执行体，通过 Promise.all 聚合</span></div>
+      <div class="prop-row"><span class="prop-key">无业务逻辑</span><span class="prop-val">SearchAgent 返回结果但不判断"有没有用"</span></div>
+      <div class="prop-row"><span class="prop-key">超时可控</span><span class="prop-val">每个执行体有独立超时，失败不阻塞其他并行任务</span></div>
+    </div>
+
+    <div class="section-title">执行体规范接口</div>
+    <div class="code-block">// 所有执行体继承此基类
+abstract class BaseExecutionAgent {
+  abstract execute(input: ExecutionInput): Promise&lt;ExecutionResult&gt;
+  
+  // 标准化输出，不抛出，错误在 result 里
+  protected wrap(fn: () => Promise&lt;T&gt;): Promise&lt;ExecutionResult&lt;T&gt;&gt;
+}
+
+// SearchAgent 示例
+class SearchAgent extends BaseExecutionAgent {
+  async execute(input: SearchInput): Promise&lt;SearchResult[]&gt; {
+    // 只管搜索，不判断结果好坏
+    // 不决定下一步，只返回数据
+    return this.patentTools.search(input.query, input.options)
+  }
+}</div>
+
+    <div class="section-title">并行调度示例</div>
+    <div class="code-block">// PatentWriterAgent 内部编排执行层
+async orchestrateExecution(plan: DraftPlan) {
+  // Step 1: 并行拉取资源
+  const [searchResult, templates, priorArt] = await Promise.all([
+    searchAgent.execute({ query: plan.features }),       // 先现技术
+    knowledgeAgent.execute({ domain: plan.field }),      // 知识模板
+    searchAgent.execute({ query: plan.invention, db: 'cn_patent' }) // 中国专利库
+  ])
+  
+  // Step 2: 串行分析（依赖上一步结果）
+  const analysis = await analysisAgent.execute({
+    features: plan.features,
+    priorArt: searchResult
+  })
+  
+  // Step 3: 质量评估（独立）
+  const quality = await qualityAgent.execute({ claims: draft.claims })
+}</div>
+  </div>
+
+  <!-- 任务流 -->
+  <div id="view-flow" class="view">
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px;line-height:1.6;">选择一个典型业务场景，查看完整的跨层任务流转。</p>
+    
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <button onclick="showFlow('draft')" id="fl-draft" class="tab active" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 12px;">完整专利撰写</button>
+      <button onclick="showFlow('oa')" id="fl-oa" class="tab" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 12px;">审查意见答复</button>
+      <button onclick="showFlow('search')" id="fl-search" class="tab" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 12px;">快速检索</button>
+      <button onclick="showFlow('fto')" id="fl-fto" class="tab" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 12px;">FTO 分析</button>
+    </div>
+    <div id="flow-detail"></div>
+  </div>
+</div>
+
+<script>
+const agentData = {
+  writer: {
+    name: 'PatentWriterAgent', status: '85%', layer: '专业层',
+    badge: 'badge-teal', badgeText: '最成熟',
+    responsibilities: [
+      ['输入处理', '解析技术交底书，提取发明要点、技术特征、应用场景'],
+      ['撰写策略', '决定权利要求保护策略（宽 vs 窄）、独立项数量布局'],
+      ['章节规划', '规划说明书结构：背景、发明内容、附图说明、具体实施'],
+      ['编排执行层', '调度 SearchAgent / KnowledgeAgent / QualityAgent'],
+      ['结果合成', '将各执行层输出合并为完整专利文件，不直接调用工具'],
+    ],
+    callsDown: ['SearchAgent（先现技术）', 'KnowledgeAgent（模板）', 'QualityAgent（审查）', 'AnalysisAgent（特征分析）'],
+    calledBy: ['OrchestratorAgent（draft_full / draft_simple 意图）'],
+    existing: '已有 PatentWriterAgent，需重构职责边界：去掉直接工具调用，改为编排执行层'
+  },
+  responder: {
+    name: 'PatentResponderAgent', status: '60%', layer: '专业层',
+    badge: 'badge-teal', badgeText: '进行中',
+    responsibilities: [
+      ['OA 解析', '理解审查员的拒绝理由类型（新颖性/创造性/书面缺陷）'],
+      ['答复策略', '决定修改权利要求 vs 争辩 vs 补充实施例'],
+      ['证据编排', '调度 SearchAgent 检索支持证据、AnalysisAgent 做比对'],
+      ['文件生成', '生成完整的意见陈述书和修改后的权利要求书'],
+    ],
+    callsDown: ['SearchAgent（反证检索）', 'AnalysisAgent（技术比对）', 'KnowledgeAgent（答复模板）'],
+    calledBy: ['OrchestratorAgent（respond_oa 意图）'],
+    existing: '已有雏形，缺真实先验检索集成；patent-core 集成需要完善'
+  },
+  manager: {
+    name: 'PatentManagerAgent', status: '40%', layer: '专业层',
+    badge: 'badge-amber', badgeText: '待完善',
+    responsibilities: [
+      ['状态跟踪', '跟踪专利申请各阶段状态（申请/审查/授权/年费）'],
+      ['年费预警', '计算年费截止日，提前 3/6/12 个月提醒'],
+      ['组合视图', '生成专利组合的技术覆盖图和时间轴'],
+      ['维持决策', '根据商业价值评分建议维持/放弃/转让'],
+    ],
+    callsDown: ['SearchAgent（专利状态查询）', 'AnalysisAgent（价值评估）'],
+    calledBy: ['OrchestratorAgent（manage 意图）'],
+    existing: '目前无数据库后端；建议先用 KV 存储 + 规则引擎实现基础版，不必等 DB'
+  },
+  fto: {
+    name: 'FTOAgent', status: '规划中', layer: '专业层',
+    badge: 'badge-purple', badgeText: '高优先级',
+    responsibilities: [
+      ['产品特征解析', '将待实施产品分解为技术特征清单'],
+      ['专利检索编排', '调度 SearchAgent 按技术特征检索相关专利'],
+      ['权利要求比对', '逐项比对（字面侵权 + 等同原则），调 AnalysisAgent'],
+      ['风险分级', '将比对结果分为高/中/低风险'],
+      ['报告生成', '输出 FTO 报告，包含规避建议'],
+    ],
+    callsDown: ['SearchAgent（相关专利检索）', 'AnalysisAgent（权利要求比对）', 'KnowledgeAgent（法律标准查询）'],
+    calledBy: ['OrchestratorAgent（analyze 意图）'],
+    existing: '新建；建议先做"初筛报告"降低期望，人工复核兜底。T2/T3 客户核心需求'
+  },
+  monitor: {
+    name: 'MonitorAgent', status: '规划中', layer: '专业层',
+    badge: 'badge-purple', badgeText: '高优先级',
+    responsibilities: [
+      ['监控配置管理', '维护监控主题：技术关键词 + 竞争对手名单'],
+      ['定时检索', '通过 EventBus 调度定期触发 SearchAgent'],
+      ['变化检测', '与已知专利去重，识别新申请/授权/失效'],
+      ['摘要生成', '将变化压缩成可读摘要，支持邮件/推送分发'],
+    ],
+    callsDown: ['SearchAgent（定时检索）', 'AnalysisAgent（变化对比）'],
+    calledBy: ['OrchestratorAgent（定时任务触发）', '外部调度器（cron）'],
+    existing: '新建；技术实现最简单，但客户粘性最强。EventBus + 任务调度可直接支撑'
+  }
+}
+
+const flowData = {
+  draft: {
+    title: '完整专利撰写流程',
+    steps: [
+      { layer: '用户', color: '#5F5E5A', title: '输入技术交底书', desc: '"根据这份交底书写一份完整的专利申请"' },
+      { layer: '中枢', color: '#534AB7', title: '意图识别 → draft_full', desc: '分类为复杂任务，创建 TaskPlan，不是直接路由' },
+      { layer: '中枢', color: '#534AB7', title: '生成任务计划', desc: '[理解发明] → [并行检索+模板] → [撰写权利要求] → [HITL] → [撰写说明书] → [摘要]' },
+      { layer: '专业层', color: '#0F6E56', title: 'PatentWriterAgent.understand()', desc: '提取技术特征、发明点、技术效果，输出结构化 DisclosureModel' },
+      { layer: '执行层(并行)', color: '#993C1D', title: 'SearchAgent + KnowledgeAgent（并行）', desc: 'Promise.all 同时执行先现技术检索和知识模板拉取，节省 40-60% 时间' },
+      { layer: '专业层', color: '#0F6E56', title: 'PatentWriterAgent.draftClaims()', desc: '基于检索结果制定保护策略，撰写独立权利要求和从属项' },
+      { layer: '中枢', color: '#534AB7', title: 'HITL 检查点', desc: '暂停执行，将权利要求草稿返回用户确认。用户修改后继续' },
+      { layer: '专业层', color: '#0F6E56', title: 'PatentWriterAgent.draftSpec()', desc: '以确认后的权利要求为基础，撰写完整说明书' },
+      { layer: '执行层', color: '#993C1D', title: 'QualityAgent.review()', desc: '对全文进行格式检查、逻辑一致性校验、法律语言合规审查' },
+      { layer: '中枢', color: '#534AB7', title: '结果聚合 → 用户', desc: '将所有部分合并，生成可下载的专利申请文件包' },
+    ]
+  },
+  oa: {
+    title: '审查意见答复流程',
+    steps: [
+      { layer: '用户', color: '#5F5E5A', title: '上传审查意见通知书', desc: '"这是专利局发来的审查意见，帮我准备答复"' },
+      { layer: '中枢', color: '#534AB7', title: '意图识别 → respond_oa', desc: '识别为 OA 答复，直接路由到 PatentResponderAgent' },
+      { layer: '专业层', color: '#0F6E56', title: 'PatentResponderAgent.parseOA()', desc: '解析审查意见类型：新颖性拒绝/创造性拒绝/书面缺陷/其他，复用 patent-core 集成' },
+      { layer: '专业层', color: '#0F6E56', title: '答复策略决策', desc: '根据 OA 类型选择策略：修改权利要求 / 争辩 / 补充实施例 / 组合策略' },
+      { layer: '执行层(并行)', color: '#993C1D', title: 'SearchAgent（反证）+ AnalysisAgent（比对）', desc: '并行：检索支持争辩的技术文献；对比引证文件与本申请的技术特征差异' },
+      { layer: '专业层', color: '#0F6E56', title: '生成修改后权利要求 + 意见陈述', desc: '合成最终答复文件，确保修改不超出原始公开范围' },
+      { layer: '中枢', color: '#534AB7', title: 'HITL → 用户确认 → 输出', desc: '律师/代理人确认后，生成可直接提交的答复包' },
+    ]
+  },
+  search: {
+    title: '快速检索流程（跳过专业层）',
+    steps: [
+      { layer: '用户', color: '#5F5E5A', title: '发起检索请求', desc: '"检索\'神经网络图像识别\'的现有技术"' },
+      { layer: '中枢', color: '#534AB7', title: '意图识别 → search（简单任务）', desc: '识别为单步任务，直接路由，无需经过专业层' },
+      { layer: '执行层', color: '#993C1D', title: 'SearchAgent.execute()', desc: '直接调用专利数据库工具，返回结构化检索结果' },
+      { layer: '中枢', color: '#534AB7', title: '聚合 → 用户', desc: '格式化检索报告，附上摘要和相关度排序' },
+    ]
+  },
+  fto: {
+    title: 'FTO 自由实施分析流程',
+    steps: [
+      { layer: '用户', color: '#5F5E5A', title: '输入待分析产品', desc: '"我们的新产品有这些技术特征，请做 FTO 分析"' },
+      { layer: '中枢', color: '#534AB7', title: '意图识别 → analyze → fto', desc: '识别为 FTO 分析，路由到 FTOAgent，创建长任务计划' },
+      { layer: '专业层', color: '#0F6E56', title: 'FTOAgent.decomposeFeatures()', desc: '将产品分解为可检索的技术特征清单（5-15 个特征点）' },
+      { layer: '执行层(并行)', color: '#993C1D', title: '多路 SearchAgent 并行检索', desc: '按每个技术特征并行检索相关专利，合并去重' },
+      { layer: '专业层', color: '#0F6E56', title: 'FTOAgent 编排 AnalysisAgent 逐项比对', desc: '对每个相关专利，逐权利要求比对，判断字面侵权和等同原则' },
+      { layer: '专业层', color: '#0F6E56', title: '风险分级与规避建议', desc: '将结果分为 高/中/低 风险，对高风险项提供技术规避方案' },
+      { layer: '中枢', color: '#534AB7', title: 'HITL → 法律确认 → 报告输出', desc: '律师确认风险判断后，输出正式 FTO 报告' },
+    ]
+  }
+}
+
+const domainDetails = {
+  writer: agentData.writer,
+  responder: agentData.responder,
+  manager: agentData.manager,
+  fto: agentData.fto,
+  monitor: agentData.monitor
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
+  document.querySelectorAll('.tab-row .tab').forEach(t => {
+    if (t.getAttribute('onclick') === `switchTab('${id}')`) t.classList.add('active')
+  })
+  document.getElementById('view-' + id).classList.add('active')
+  if (id === 'domain') showDomain('writer')
+  if (id === 'flow') showFlow('draft')
+}
+
+function showAgent(id) {
+  switchTab('domain')
+  showDomain(id)
+}
+
+function selectLayer(id) {
+  if (id === 'orchestrator') { switchTab('orchestrator'); return }
+  if (id === 'domain') { switchTab('domain'); return }
+  if (id === 'execution') { switchTab('execution'); return }
+}
+
+function showDomain(id) {
+  document.querySelectorAll('[id^="dt-"]').forEach(b => b.classList.remove('active'))
+  const btn = document.getElementById('dt-' + id)
+  if (btn) btn.classList.add('active')
+  const d = agentData[id]
+  if (!d) return
+  let html = `<div class="card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+    <span style="font-size:15px;font-weight:500;color:var(--color-text-primary);">${d.name}</span>
+    <span class="badge ${d.badge}">${d.badgeText}</span>
+    <span class="badge badge-gray">${d.status}</span>
+  </div>`
+  html += `<div class="section-title" style="margin-top:0;">核心职责</div>`
+  d.responsibilities.forEach(([k,v]) => {
+    html += `<div class="prop-row"><span class="prop-key">${k}</span><span class="prop-val" style="text-align:left;">${v}</span></div>`
+  })
+  html += `<div class="section-title">调用关系</div>`
+  html += `<div class="prop-row"><span class="prop-key">被谁调用</span><span class="prop-val" style="text-align:left;">${d.calledBy.join('<br>')}</span></div>`
+  html += `<div class="prop-row"><span class="prop-key">调用谁</span><span class="prop-val" style="text-align:left;">${d.callsDown.join('<br>')}</span></div>`
+  html += `<div class="section-title">对应现有代码</div>`
+  html += `<div style="font-size:12px;color:var(--color-text-secondary);line-height:1.6;padding-bottom:4px;">${d.existing}</div>`
+  html += `</div>`
+  document.getElementById('domain-detail').innerHTML = html
+}
+
+function showFlow(id) {
+  document.querySelectorAll('[id^="fl-"]').forEach(b => b.classList.remove('active'))
+  const btn = document.getElementById('fl-' + id)
+  if (btn) btn.classList.add('active')
+  const f = flowData[id]
+  if (!f) return
+  let html = `<div class="card">`
+  f.steps.forEach((s, i) => {
+    html += `<div class="flow-step">
+      <div class="step-num">${i+1}</div>
+      <div class="step-body">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+          <span class="step-title">${s.title}</span>
+          <span class="badge badge-gray" style="font-size:10px;padding:1px 6px;">${s.layer}</span>
+        </div>
+        <div class="step-desc">${s.desc}</div>
+      </div>
+    </div>`
+  })
+  html += `</div>`
+  document.getElementById('flow-detail').innerHTML = html
+}
+
+showDomain('writer')
+showFlow('draft')
+</script>

@@ -1,0 +1,192 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # OrchestratorAgent - 核心编排服务
+  # ============================================================================
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: yunpat-orchestrator
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - QWEN_API_KEY=${QWEN_API_KEY}
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - yunpat-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs:/app/logs
+
+  # ============================================================================
+  # PatentResponderAgent - 审查答复服务
+  # ============================================================================
+  patent-responder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: yunpat-patent-responder
+    environment:
+      - NODE_ENV=production
+      - AGENT_TYPE=patent-responder
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - orchestrator
+      - redis
+      - postgres
+    networks:
+      - yunpat-network
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+
+  # ============================================================================
+  # PatentAnalyzerAgent - 专利分析服务
+  # ============================================================================
+  patent-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: yunpat-patent-analyzer
+    environment:
+      - NODE_ENV=production
+      - AGENT_TYPE=patent-analyzer
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - orchestrator
+      - redis
+      - postgres
+    networks:
+      - yunpat-network
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+
+  # ============================================================================
+  # PatentSearchAgent - 专利检索服务
+  # ============================================================================
+  patent-search:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: yunpat-patent-search
+    environment:
+      - NODE_ENV=production
+      - AGENT_TYPE=patent-search
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - orchestrator
+      - redis
+      - postgres
+    networks:
+      - yunpat-network
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+
+  # ============================================================================
+  # Redis - 缓存和消息队列
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: yunpat-redis
+    ports:
+      - '6379:6379'
+    networks:
+      - yunpat-network
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+  # ============================================================================
+  # PostgreSQL - 数据库
+  # ============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: yunpat-postgres
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=yunpat
+      - POSTGRES_USER=yunpat
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-yunpat_password}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    networks:
+      - yunpat-network
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # ============================================================================
+  # Prometheus - 监控指标收集
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: yunpat-prometheus
+    ports:
+      - '9090:9090'
+    networks:
+      - yunpat-network
+    restart: unless-stopped
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  # ============================================================================
+  # Grafana - 监控面板
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: yunpat-grafana
+    ports:
+      - '3001:3000'
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - yunpat-network
+    restart: unless-stopped
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+
+networks:
+  yunpat-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:

@@ -1,0 +1,78 @@
+flow_id: oa-response
+flow_name: 审查意见答复
+description: 从审查意见解析到答复文件打包的完整流程
+steps:
+  - step_id: parse_oa
+    step_name: 审查意见解读
+    order: 1
+    agent_calls:
+      - agent_id: oa-response
+        output_key: oa_analysis
+    requires_approval: false
+
+  - step_id: analyze_rejection
+    step_name: 驳回理由深度分析
+    order: 2
+    agent_calls:
+      - agent_id: oa-response
+        output_key: rejection_analysis
+    requires_approval: true
+    approval_prompt: 请确认驳回理由分析是否准确，是否需要补充？
+
+  - step_id: response_strategy
+    step_name: 答复策略制定
+    order: 3
+    agent_calls:
+      - agent_id: oa-response
+        output_key: strategy
+    requires_approval: true
+    approval_prompt: 请审核答复策略，确认是否同意此方案？
+
+  - step_id: draft_response
+    step_name: 答复文本撰写
+    order: 4
+    agent_calls:
+      - agent_id: oa-response
+        output_key: response_draft
+    requires_approval: false
+
+  - step_id: verify_package
+    step_name: 验证与打包
+    order: 5
+    agent_calls:
+      - agent_id: oa-response
+        output_key: final_package
+    requires_approval: true
+    approval_prompt: 最终答复文件是否可以提交？
+    quality_check:
+      dimensions:
+        - 法律依据充分性
+        - 技术事实准确性
+        - 逻辑完整性
+        - 权利要求支持
+        - 答复策略一致性
+        - 格式规范性
+        - 审查员说服力
+      threshold: 7.5
+      max_auto_retries: 2
+      escalate_to_human: true
+
+quality_dimensions:
+  - name: 法律依据充分性
+    description: 答复是否引用了正确的法律条文和审查指南
+    weight: 0.20
+  - name: 技术事实准确性
+    description: 对技术方案的理解和表述是否准确
+    weight: 0.20
+  - name: 逻辑完整性
+    description: 论证逻辑是否完整，是否存在遗漏
+    weight: 0.15
+  - name: 权利要求支持
+    description: 修改后的权利要求是否得到说明书支持
+    weight: 0.15
+  - name: 审查员说服力
+    description: 答复是否具有说服力
+    weight: 0.15
+  - name: 格式规范性
+    description: 文件格式是否符合规范要求
+    weight: 0.15

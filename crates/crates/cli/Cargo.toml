@@ -1,0 +1,33 @@
+[package]
+name = "yunpat-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI facade for YunPat TUI workspace architecture"
+
+[[bin]]
+name = "yunpat"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+clap_complete.workspace = true
+yunpat-agent = { path = "../agent", version = "0.8.15" }
+yunpat-app-server = { path = "../app-server", version = "0.8.15" }
+yunpat-config = { path = "../config", version = "0.8.15" }
+yunpat-execpolicy = { path = "../execpolicy", version = "0.8.15" }
+yunpat-mcp = { path = "../mcp", version = "0.8.15" }
+yunpat-secrets = { path = "../secrets", version = "0.8.15" }
+yunpat-state = { path = "../state", version = "0.8.15" }
+chrono.workspace = true
+dirs.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+sha2.workspace = true
+tempfile = "3.16"
+tracing.workspace = true
+
+[dev-dependencies]

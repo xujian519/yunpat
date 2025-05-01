@@ -1,0 +1,39 @@
+{
+  "name": "@yunpat/agent-specification-drafter",
+  "version": "0.1.0",
+  "description": "说明书撰写智能体 - 分章节撰写专利说明书",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest --run",
+    "test:watch": "vitest watch"
+  },
+  "keywords": [
+    "patent",
+    "specification",
+    "drafting",
+    "agent"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@yunpat/core": "workspace:*",
+    "@yunpat/agent-invention": "workspace:*",
+    "@yunpat/agent-prior-art-search": "workspace:*",
+    "@yunpat/agent-claim-generator": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.6.1"
+  }
+}

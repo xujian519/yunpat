@@ -1,0 +1,14 @@
+[package]
+name = "yunpat-similarity"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# 并行处理
+rayon = "1.10"
+
+# SIMD 加速
+wide = "0.7"
+
+# FFI 支持
+libc = "0.2"

@@ -1,0 +1,20 @@
+{
+  "name": "@yunpat/workflow-tests",
+  "version": "0.1.0",
+  "description": "工作流测试 - 验证专利申请工作流",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@yunpat/core": "workspace:*",
+    "@yunpat/agent-specification-drafter": "workspace:*",
+    "@yunpat/agent-patent-analyzer": "workspace:*",
+    "@yunpat/agent-patent-responder": "workspace:*",
+    "@yunpat/agent-patent-manager": "workspace:*"
+  },
+  "devDependencies": {
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^1.2.0"
+  }
+}

@@ -18,6 +18,8 @@ import {
   ExecutionContext,
 } from '../types/index.js'
 
+import { errorToAgentError } from '@yunpat/agent-base'
+
 import type { AgentRegistry } from '../registry/AgentRegistry.js'
 
 interface DAGLayer {
@@ -174,7 +176,7 @@ export class TaskExecutor {
         return {
           success: false,
           data: {},
-          error: new Error('AgentRegistry not configured'),
+          error: errorToAgentError(new Error('AgentRegistry not configured')),
           executionTime: Date.now() - startTime,
         }
       }
@@ -184,7 +186,7 @@ export class TaskExecutor {
         return {
           success: false,
           data: {},
-          error: new Error(`Agent not found: ${step.agentId}`),
+          error: errorToAgentError(new Error(`Agent not found: ${step.agentId}`)),
           executionTime: Date.now() - startTime,
         }
       }
@@ -212,7 +214,7 @@ export class TaskExecutor {
       return {
         success: false,
         data: {},
-        error: error as Error,
+        error: errorToAgentError(error as Error),
         executionTime: Date.now() - startTime,
       }
     }
@@ -230,7 +232,7 @@ export class TaskExecutor {
       return {
         success: false,
         data: {},
-        error: new Error(`Max retries exceeded for step ${step.stepId}`),
+        error: errorToAgentError(new Error(`Max retries exceeded for step ${step.stepId}`)),
         executionTime: 0,
       }
     }

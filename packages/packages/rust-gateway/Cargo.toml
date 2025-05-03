@@ -1,6 +1,6 @@
 [package]
 name = "yunpat-gateway"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 description = "YunPat Rust Gateway - 统一网关服务"
 authors = ["Xu Jian <xujian519@gmail.com>"]

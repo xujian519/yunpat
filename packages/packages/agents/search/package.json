@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-search",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "专利检索智能体 - 检索策略生成与执行",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,9 +22,10 @@
   },
   "dependencies": {
     "@yunpat/agent-base": "workspace:*",
+    "@yunpat/builtin-tools": "workspace:*",
     "@yunpat/core": "workspace:*",
     "@yunpat/patent-tools": "workspace:*",
-    "@yunpat/builtin-tools": "workspace:*"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

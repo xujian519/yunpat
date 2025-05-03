@@ -2,32 +2,29 @@
  * 所有工具的完整实现（集成真实智能体）
  *
  * v3.0 - 集成真实的 YunPat 智能体，替换硬编码数据
+ * v3.1 - Schema 下沉到 agent packages
  */
 
 import { z } from 'zod'
 import { BaseMcpTool } from './BaseMcpTool.js'
 import type { McpToolContext } from '../types.js'
+import { patentSearchToolSchema } from '@yunpat/agent-search'
+import { claimsGeneratorToolSchema } from '@yunpat/agent-claim-generator'
+import { qualityCheckerToolSchema } from '@yunpat/agent-quality'
+import {
+  legalKnowledgeSearchToolSchema,
+  invalidDecisionSearchToolSchema,
+  patentRuleSearchToolSchema,
+} from '@yunpat/agent-legal-qa'
 
 // ============= PatentSearchTool（集成真实智能体）============
 export class PatentSearchTool extends BaseMcpTool<any, any> {
   readonly metadata = {
-    name: 'patent_search',
-    description: '专利检索工具 v3.0 - 集成真实的 PatentSearchAgent 智能体',
-    inputSchema: z.object({
-      inventionTitle: z.string().min(1),
-      technicalField: z.string().min(1),
-      technicalProblem: z.string().min(1),
-      technicalSolution: z.string().min(1),
-      keyFeatures: z.array(z.string()).min(1),
-      searchOptions: z
-        .object({
-          keywords: z.array(z.string()).optional(),
-          limit: z.number().min(1).max(100).default(20),
-        })
-        .optional(),
-    }),
-    version: '3.0.0',
-  }
+    name: patentSearchToolSchema.name,
+    description: patentSearchToolSchema.description,
+    version: patentSearchToolSchema.version,
+    inputSchema: patentSearchToolSchema.inputSchema,
+  } satisfies import('./BaseMcpTool.js').McpToolMetadata
 
   protected async executeInternal(input: any, context: McpToolContext) {
     // 如果有 LLM 和完整的上下文，使用真实的 PatentSearchAgent
@@ -186,21 +183,11 @@ export class PatentSearchTool extends BaseMcpTool<any, any> {
 // ============= ClaimsGeneratorTool（集成真实智能体）============
 export class ClaimsGeneratorTool extends BaseMcpTool<any, any> {
   readonly metadata = {
-    name: 'claims_generator',
-    description: '权利要求生成工具 v3.0 - 集成真实的 ClaimGeneratorAgent 智能体',
-    inputSchema: z.object({
-      inventionTitle: z.string().min(1),
-      technicalField: z.string().min(1),
-      technicalProblem: z.string().min(1),
-      technicalSolution: z.string().min(1),
-      beneficialEffects: z.string().min(1),
-      keyFeatures: z.array(z.string()).min(1),
-      patentType: z.enum(['invention', 'utilityModel', 'design']).default('invention'),
-      enableDependentClaims: z.boolean().default(true),
-      dependentClaimCount: z.number().min(0).max(20).default(5),
-    }),
-    version: '3.0.0',
-  }
+    name: claimsGeneratorToolSchema.name,
+    description: claimsGeneratorToolSchema.description,
+    version: claimsGeneratorToolSchema.version,
+    inputSchema: claimsGeneratorToolSchema.inputSchema,
+  } satisfies import('./BaseMcpTool.js').McpToolMetadata
 
   protected async executeInternal(input: any, context: McpToolContext) {
     // 如果有 LLM 和完整的上下文，使用真实的 ClaimGeneratorAgent
@@ -350,47 +337,11 @@ export class ClaimsGeneratorTool extends BaseMcpTool<any, any> {
 // ============= QualityCheckerTool（集成真实智能体）============
 export class QualityCheckerTool extends BaseMcpTool<any, any> {
   readonly metadata = {
-    name: 'quality_checker',
-    description: '质量检查工具 v3.0 - 集成真实的 QualityCheckerAgent 智能体',
-    inputSchema: z.object({
-      inventionTitle: z.string(),
-      claims: z.object({
-        independentClaims: z.array(
-          z.object({
-            claimNumber: z.number(),
-            fullText: z.string(),
-            claimType: z.string(),
-            essentialFeatures: z.array(z.string()).optional(),
-          })
-        ),
-        dependentClaims: z.array(
-          z.object({
-            claimNumber: z.number(),
-            content: z.string(),
-            parentClaim: z.number(),
-            additionalFeatures: z.array(z.string()).optional(),
-          })
-        ),
-      }),
-      specification: z.object({
-        technicalField: z.string().optional(),
-        backgroundArt: z.string().optional(),
-        inventionContent: z
-          .object({
-            technicalProblem: z.string().optional(),
-            technicalSolution: z.string().optional(),
-            beneficialEffects: z.string().optional(),
-          })
-          .optional(),
-        drawingsDescription: z.string().optional(),
-        detailedDescription: z.string().optional(),
-        abstract: z.string().optional(),
-      }),
-      patentType: z.enum(['invention', 'utilityModel', 'design']).default('invention'),
-      checkLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(2),
-    }),
-    version: '3.0.0',
-  }
+    name: qualityCheckerToolSchema.name,
+    description: qualityCheckerToolSchema.description,
+    version: qualityCheckerToolSchema.version,
+    inputSchema: qualityCheckerToolSchema.inputSchema,
+  } satisfies import('./BaseMcpTool.js').McpToolMetadata
 
   protected async executeInternal(input: any, context: McpToolContext) {
     // 如果有 LLM 和完整的上下文，使用真实的 QualityCheckerAgent
@@ -658,6 +609,268 @@ export class PatentResponderTool extends BaseMcpTool<any, any> {
         metrics: { wordCount: 500, argumentCount: issues.length, amendmentCount: 0 },
       },
       nextSteps: ['提交答复意见陈述书', '关注审查员的后续审查意见'],
+    }
+  }
+}
+
+// ============= LegalKnowledgeSearchTool =============
+export class LegalKnowledgeSearchTool extends BaseMcpTool<any, any> {
+  readonly metadata = {
+    name: legalKnowledgeSearchToolSchema.name,
+    description: legalKnowledgeSearchToolSchema.description,
+    version: legalKnowledgeSearchToolSchema.version,
+    inputSchema: legalKnowledgeSearchToolSchema.inputSchema,
+  } satisfies import('./BaseMcpTool.js').McpToolMetadata
+
+  protected async executeInternal(input: any, context: McpToolContext) {
+    // 如果有 LLM，使用 LegalQAAgent
+    if (context.llm) {
+      try {
+        const { LegalQAAgent } = await import('@yunpat/agent-legal-qa')
+
+        const legalAgent = new LegalQAAgent({
+          name: 'legal-qa',
+          description: '法律知识问答智能体',
+          llm: context.llm,
+          eventBus: context.eventBus!,
+          memory: context.memory!,
+          tools: context.registry!,
+        })
+
+        const result = await legalAgent.execute({
+          question: input.question,
+          domain: input.domain,
+          sources: input.sources,
+        })
+
+        return {
+          version: '1.0.0',
+          integrationMode: 'real_agent',
+          ...result,
+        }
+      } catch (error) {
+        console.warn('[LegalKnowledgeSearchTool] 真实智能体调用失败，回退到规则模式:', error)
+      }
+    }
+
+    // 回退模式：使用 PostgreSQLClient
+    try {
+      const { PostgreSQLClient } = await import('@yunpat/unified-knowledge-graph')
+
+      const client = new PostgreSQLClient()
+      const topK = input.topK || 10
+
+      // 并行查询多个数据源
+      const [structuredSearchResult, invalidDecisionsResult, patentRulesResult] = await Promise.allSettled([
+        client.structuredSearch(input.question, topK),
+        input.sources?.includes('invalid_decision')
+          ? client.queryInvalidDecisions(input.question, topK)
+          : Promise.resolve([]),
+        input.sources?.includes('patent_rule')
+          ? client.searchPatentRules({
+              query: input.question,
+              topK,
+            })
+          : Promise.resolve([]),
+      ])
+
+      const results = []
+
+      // 处理结构化搜索结果
+      if (structuredSearchResult.status === 'fulfilled' && structuredSearchResult.value) {
+        results.push(
+          ...structuredSearchResult.value.map((item) => ({
+            type: item.category || 'legal_article',
+            documentNumber: item.metadata?.documentNumber,
+            title: item.title,
+            content: item.content,
+            domain: item.metadata?.domain,
+            relevance: 0.8, // 默认相关性分数
+            source: '法律文章数据库',
+          }))
+        )
+      }
+
+      // 处理无效决定结果
+      if (invalidDecisionsResult.status === 'fulfilled') {
+        results.push(
+          ...invalidDecisionsResult.value.map((item) => ({
+            type: 'invalid_decision',
+            documentNumber: item.metadata?.documentNumber,
+            title: item.title,
+            content: item.content,
+            domain: item.metadata?.domain,
+            relevance: 0.9,
+            source: '无效决定数据库',
+          }))
+        )
+      }
+
+      // 处理审查指南结果
+      if (patentRulesResult.status === 'fulfilled') {
+        results.push(
+          ...patentRulesResult.value.map((item) => ({
+            type: 'patent_rule',
+            articleId: item.articleId,
+            title: item.title,
+            content: item.content,
+            corePrinciple: item.corePrinciple,
+            relevance: item.similarity || 0.85,
+            source: '专利审查指南',
+          }))
+        )
+      }
+
+      // 按相关性排序并取前 topK 个结果
+      results.sort((a, b) => (b.relevance || 0) - (a.relevance || 0))
+      const topResults = results.slice(0, topK)
+
+      return {
+        version: '1.0.0',
+        integrationMode: 'rule_based',
+        query: input.question,
+        domain: input.domain,
+        totalFound: results.length,
+        results: topResults,
+        citations: topResults.map((r, i) => ({
+          id: i + 1,
+          type: r.type,
+          source: r.source,
+          reference: (r as any).documentNumber || (r as any).articleId,
+        })),
+      }
+    } catch (error) {
+      return {
+        version: '1.0.0',
+        integrationMode: 'rule_based',
+        error: `查询失败: ${error instanceof Error ? error.message : String(error)}`,
+        results: [],
+      }
+    }
+  }
+}
+
+// ============= InvalidDecisionSearchTool =============
+export class InvalidDecisionSearchTool extends BaseMcpTool<any, any> {
+  readonly metadata = {
+    name: invalidDecisionSearchToolSchema.name,
+    description: invalidDecisionSearchToolSchema.description,
+    version: invalidDecisionSearchToolSchema.version,
+    inputSchema: invalidDecisionSearchToolSchema.inputSchema,
+  } satisfies import('./BaseMcpTool.js').McpToolMetadata
+
+  protected async executeInternal(input: any, _context: McpToolContext) {
+    try {
+      const { PostgreSQLClient } = await import('@yunpat/unified-knowledge-graph')
+
+      const client = new PostgreSQLClient()
+      const topK = input.topK || 10
+
+      // 并行查询无效决定和实体搜索
+      const [queryResult, entityResult] = await Promise.allSettled([
+        client.queryInvalidDecisions(input.query, topK),
+        client.searchInvalidEntities({
+          entityText: input.query,
+          topK,
+        }),
+      ])
+
+      const results = []
+
+      // 处理查询结果
+      if (queryResult.status === 'fulfilled') {
+        results.push(
+          ...queryResult.value.map((item) => ({
+            documentNumber: item.metadata?.documentNumber,
+            title: item.title,
+            content: item.content,
+            domain: item.metadata?.domain,
+            relevance: 0.9,
+            decisionType: item.category,
+            decisionDate: item.metadata?.decisionDate,
+          }))
+        )
+      }
+
+      // 处理实体搜索结果
+      if (entityResult.status === 'fulfilled') {
+        results.push(
+          ...entityResult.value.map((item) => ({
+            documentNumber: item.decisionId,
+            title: `实体：${item.entityText}`,
+            content: `实体类型：${item.entityType}，置信度：${item.confidence}`,
+            domain: item.domain,
+            relevance: item.confidence,
+            decisionType: 'entity',
+            decisionDate: item.metadata?.decisionDate,
+          }))
+        )
+      }
+
+      // 去重并排序
+      const uniqueResults = Array.from(
+        new Map(results.map((item) => [item.documentNumber, item])).values()
+      )
+      uniqueResults.sort((a, b) => (b.relevance || 0) - (a.relevance || 0))
+
+      return {
+        version: '1.0.0',
+        query: input.query,
+        domain: input.domain,
+        totalFound: uniqueResults.length,
+        results: uniqueResults.slice(0, topK),
+      }
+    } catch (error) {
+      return {
+        version: '1.0.0',
+        error: `查询失败: ${error instanceof Error ? error.message : String(error)}`,
+        results: [],
+      }
+    }
+  }
+}
+
+// ============= PatentRuleSearchTool =============
+export class PatentRuleSearchTool extends BaseMcpTool<any, any> {
+  readonly metadata = {
+    name: patentRuleSearchToolSchema.name,
+    description: patentRuleSearchToolSchema.description,
+    version: patentRuleSearchToolSchema.version,
+    inputSchema: patentRuleSearchToolSchema.inputSchema,
+  } satisfies import('./BaseMcpTool.js').McpToolMetadata
+
+  protected async executeInternal(input: any, _context: McpToolContext) {
+    try {
+      const { PostgreSQLClient } = await import('@yunpat/unified-knowledge-graph')
+
+      const client = new PostgreSQLClient()
+
+      const results = await client.searchPatentRules({
+        query: input.query,
+        articleType: input.articleType,
+        topK: input.topK || 10,
+      })
+
+      return {
+        version: '1.0.0',
+        query: input.query,
+        articleType: input.articleType,
+        totalFound: results.length,
+        results: results.map((item) => ({
+          articleId: item.articleId,
+          title: item.title,
+          content: item.content,
+          corePrinciple: item.corePrinciple,
+          relevance: item.similarity || 0.85,
+          articleType: item.articleType,
+        })),
+      }
+    } catch (error) {
+      return {
+        version: '1.0.0',
+        error: `查询失败: ${error instanceof Error ? error.message : String(error)}`,
+        results: [],
+      }
     }
   }
 }

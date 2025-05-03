@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-tech-unit",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "最小技术单元提取智能体 - 专利技术特征划分与最小技术单元识别",
   "type": "module",
   "main": "./dist/index.js",

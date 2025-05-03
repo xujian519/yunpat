@@ -1,7 +1,8 @@
 {
   "name": "@yunpat/tui",
-  "version": "0.1.0",
-  "description": "Terminal User Interface for YunPat - 自然语言交互的专利业务 TUI",
+  "version": "0.0.1",
+  "deprecated": true,
+  "description": "[DEPRECATED] 此包已废弃，请使用 Rust TUI (crates/tui)。参见 crates/tui 目录。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

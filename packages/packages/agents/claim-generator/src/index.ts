@@ -9,3 +9,10 @@ export {
 } from './ClaimGeneratorAgent.js'
 
 export { ClaimsRenderer } from './ClaimsRenderer.js'
+
+export {
+  claimsGeneratorToolSchema,
+  claimsGeneratorToolMetadata,
+  claimsGeneratorToolInputSchema,
+  type ClaimsGeneratorToolInput,
+} from './schema.js'

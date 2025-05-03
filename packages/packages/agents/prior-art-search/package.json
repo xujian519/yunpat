@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-prior-art-search",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "先导技术检索智能体 - 构建检索策略并分析现有技术",
   "type": "module",
   "main": "dist/index.js",

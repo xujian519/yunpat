@@ -43,6 +43,109 @@ export interface EntityResult {
 }
 
 /**
+ * 无效实体查询结果
+ */
+export interface InvalidEntityResult {
+  id: number
+  decisionId: string
+  entityText: string
+  entityType: string
+  domain: string
+  confidence: number
+  metadata: Record<string, any>
+}
+
+/**
+ * 法院查询结果
+ */
+export interface CourtResult {
+  id: number
+  judgmentId: string
+  courtName: string
+  courtLevel: string
+}
+
+/**
+ * 法条查询结果
+ */
+export interface LawArticleResult {
+  id: number
+  judgmentId: string
+  lawArticleId: string
+  lawArticleText: string
+}
+
+/**
+ * 判决专利号查询结果
+ */
+export interface JudgmentPatentResult {
+  id: number
+  judgmentId: string
+  patentNumber: string
+  patentType: string
+}
+
+/**
+ * 关系查询结果
+ */
+export interface RelationResult {
+  id: number
+  judgmentId: string
+  subjectEntity: string
+  relationType: string
+  objectEntity: string
+  confidence: number
+}
+
+/**
+ * 法律文档查询结果
+ */
+export interface LegalDocumentResult {
+  id: number
+  title: string
+  content: string
+  category: string
+  source: string
+  createdAt: Date
+}
+
+/**
+ * 判决案例查询结果
+ */
+export interface JudgmentCaseResult {
+  judgmentId: string
+  fileName: string
+  title: string
+  filePath: string
+  caseCause: string
+  plaintiff: string
+  defendant: string
+  entitiesCount: number
+  relationsCount: number
+  hasEmbeddings: boolean
+  processedAt: Date
+}
+
+/**
+ * 专利规则查询结果
+ */
+export interface PatentRuleResult {
+  id: string
+  articleId: string
+  articleType: string
+  hierarchyLevel: number
+  fullPath: string
+  articleNumber: string
+  title: string
+  content: string
+  corePrinciple: string
+  keyRequirements: Record<string, any>
+  metadata: Record<string, any>
+  hasVectors: boolean
+  similarity?: number // 向量搜索时返回
+}
+
+/**
  * PostgreSQL 客户端配置
  */
 export interface PostgreSQLClientConfig {
@@ -51,6 +154,8 @@ export interface PostgreSQLClientConfig {
   database?: string
   user?: string
   password?: string
+  /** Optional embedding function for vector search */
+  embeddingFn?: (text: string) => Promise<number[]>
 }
 
 /**
@@ -70,17 +175,19 @@ export class PostgreSQLClient {
   private pool: Pool
   private config: PostgreSQLClientConfig
   private initialized = false
+  private embeddingFn?: (text: string) => Promise<number[]>
 
   constructor(config?: PostgreSQLClientConfig) {
     this.config = config || {}
+    this.embeddingFn = config?.embeddingFn
 
     // 连接 legal_world_model 数据库
     this.pool = new Pool({
-      host: this.config.host || process.env.PG_HOST || 'localhost',
-      port: this.config.port || parseInt(process.env.PG_PORT || '5432'),
+      host: this.config.host || process.env.PG_HOST || '127.0.0.1',
+      port: this.config.port || parseInt(process.env.PG_PORT || '6432'),
       database: this.config.database || process.env.PG_DATABASE || 'legal_world_model',
-      user: this.config.user || process.env.PG_USER || 'postgres',
-      password: this.config.password || process.env.PG_PASSWORD,
+      user: this.config.user || process.env.PG_USER || 'xujian',
+      password: this.config.password || process.env.PG_PASSWORD || '',
       max: 20,
       idleTimeoutMillis: 30000,
     })
@@ -153,8 +260,35 @@ export class PostgreSQLClient {
         return []
       }
 
-      // 注意：这里简化处理，实际应该先将 queryText 转换为向量
-      // 暂时使用文本匹配作为替代
+      // 如果提供了 embeddingFn，使用真实的向量搜索
+      if (this.embeddingFn) {
+        try {
+          const embedding = await this.embeddingFn(queryText)
+          const embeddingArray = `[${embedding.join(',')}]`
+
+          const result = await this.pool.query(
+            `
+            SELECT
+              id,
+              article_id as "articleId",
+              chunk_type as "chunkType",
+              chunk_text as "chunkText",
+              weight,
+              1 - (embedding <=> $1::real[]) as similarity
+            FROM ${table}
+            ORDER BY embedding <=> $1::real[]
+            LIMIT $2
+            `,
+            [embeddingArray, topK]
+          )
+
+          return result.rows
+        } catch (embeddingErr) {
+          console.warn('[PostgreSQL] 向量嵌入生成失败，回退到文本搜索:', embeddingErr)
+        }
+      }
+
+      // 否则使用文本匹配（回退方案）
       // 使用 plainto_tsquery 而不是 to_tsquery，因为它能更好地处理中文
       const result = await this.pool.query(
         `
@@ -491,6 +625,488 @@ export class PostgreSQLClient {
       console.log('[PostgreSQL] 连接已关闭')
     } catch (err) {
       console.error('[PostgreSQL] 关闭连接失败:', err)
+    }
+  }
+
+  /**
+   * 搜索无效实体（最大表，2,363,891 行）
+   */
+  async searchInvalidEntities(params: {
+    entityText?: string
+    entityType?: string
+    domain?: string
+    topK?: number
+  }): Promise<InvalidEntityResult[]> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+
+    const { entityText, entityType, domain, topK = 10 } = params
+
+    try {
+      let sql = `
+        SELECT
+          id,
+          decision_id as "decisionId",
+          entity_text as "entityText",
+          entity_type as "entityType",
+          domain,
+          confidence,
+          metadata
+        FROM patent_invalid_entities
+        WHERE 1=1
+      `
+      const queryParams: any[] = []
+      let paramIndex = 1
+
+      if (entityText) {
+        sql += ` AND entity_text LIKE $${paramIndex}`
+        queryParams.push(`%${entityText}%`)
+        paramIndex++
+      }
+
+      if (entityType) {
+        sql += ` AND entity_type = $${paramIndex}`
+        queryParams.push(entityType)
+        paramIndex++
+      }
+
+      if (domain) {
+        sql += ` AND domain = $${paramIndex}`
+        queryParams.push(domain)
+        paramIndex++
+      }
+
+      sql += ` ORDER BY confidence DESC LIMIT $${paramIndex}`
+      queryParams.push(topK)
+
+      const result = await this.pool.query(sql, queryParams)
+      return result.rows
+    } catch (err) {
+      console.error('[PostgreSQL] 无效实体搜索失败:', err)
+      return []
+    }
+  }
+
+  /**
+   * 搜索法院（12,497 行）
+   */
+  async searchCourts(params: {
+    courtName?: string
+    courtLevel?: string
+    topK?: number
+  }): Promise<CourtResult[]> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+
+    const { courtName, courtLevel, topK = 10 } = params
+
+    try {
+      let sql = `
+        SELECT
+          id,
+          judgment_id as "judgmentId",
+          court_name as "courtName",
+          court_level as "courtLevel"
+        FROM judgment_courts
+        WHERE 1=1
+      `
+      const queryParams: any[] = []
+      let paramIndex = 1
+
+      if (courtName) {
+        sql += ` AND court_name LIKE $${paramIndex}`
+        queryParams.push(`%${courtName}%`)
+        paramIndex++
+      }
+
+      if (courtLevel) {
+        sql += ` AND court_level = $${paramIndex}`
+        queryParams.push(courtLevel)
+        paramIndex++
+      }
+
+      sql += ` ORDER BY id LIMIT $${paramIndex}`
+      queryParams.push(topK)
+
+      const result = await this.pool.query(sql, queryParams)
+      return result.rows
+    } catch (err) {
+      console.error('[PostgreSQL] 法院搜索失败:', err)
+      return []
+    }
+  }
+
+  /**
+   * 搜索法条（20,306 行）
+   */
+  async searchLawArticles(params: {
+    lawArticleId?: string
+    judgmentId?: string
+    topK?: number
+  }): Promise<LawArticleResult[]> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+
+    const { lawArticleId, judgmentId, topK = 10 } = params
+
+    try {
+      let sql = `
+        SELECT
+          id,
+          judgment_id as "judgmentId",
+          law_article_id as "lawArticleId",
+          law_article_text as "lawArticleText"
+        FROM judgment_law_articles
+        WHERE 1=1
+      `
+      const queryParams: any[] = []
+      let paramIndex = 1
+
+      if (lawArticleId) {
+        sql += ` AND law_article_id = $${paramIndex}`
+        queryParams.push(lawArticleId)
+        paramIndex++
+      }
+
+      if (judgmentId) {
+        sql += ` AND judgment_id = $${paramIndex}`
+        queryParams.push(judgmentId)
+        paramIndex++
+      }
+
+      sql += ` ORDER BY id LIMIT $${paramIndex}`
+      queryParams.push(topK)
+
+      const result = await this.pool.query(sql, queryParams)
+      return result.rows
+    } catch (err) {
+      console.error('[PostgreSQL] 法条搜索失败:', err)
+      return []
+    }
+  }
+
+  /**
+   * 搜索判决专利号（4,243 行）
+   */
+  async searchJudgmentPatents(params: {
+    patentNumber?: string
+    judgmentId?: string
+    topK?: number
+  }): Promise<JudgmentPatentResult[]> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+
+    const { patentNumber, judgmentId, topK = 10 } = params
+
+    try {
+      let sql = `
+        SELECT
+          id,
+          judgment_id as "judgmentId",
+          patent_number as "patentNumber",
+          patent_type as "patentType"
+        FROM judgment_patent_numbers
+        WHERE 1=1
+      `
+      const queryParams: any[] = []
+      let paramIndex = 1
+
+      if (patentNumber) {
+        sql += ` AND patent_number LIKE $${paramIndex}`
+        queryParams.push(`%${patentNumber}%`)
+        paramIndex++
+      }
+
+      if (judgmentId) {
+        sql += ` AND judgment_id = $${paramIndex}`
+        queryParams.push(judgmentId)
+        paramIndex++
+      }
+
+      sql += ` ORDER BY id LIMIT $${paramIndex}`
+      queryParams.push(topK)
+
+      const result = await this.pool.query(sql, queryParams)
+      return result.rows
+    } catch (err) {
+      console.error('[PostgreSQL] 判决专利号搜索失败:', err)
+      return []
+    }
+  }
+
+  /**
+   * 搜索关系（45,770 行）
+   */
+  async searchRelations(params: {
+    judgmentId?: string
+    relationType?: string
+    topK?: number
+  }): Promise<RelationResult[]> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+
+    const { judgmentId, relationType, topK = 10 } = params
+
+    try {
+      let sql = `
+        SELECT
+          id,
+          judgment_id as "judgmentId",
+          subject_entity as "subjectEntity",
+          relation_type as "relationType",
+          object_entity as "objectEntity",
+          confidence
+        FROM judgment_relations
+        WHERE 1=1
+      `
+      const queryParams: any[] = []
+      let paramIndex = 1
+
+      if (judgmentId) {
+        sql += ` AND judgment_id = $${paramIndex}`
+        queryParams.push(judgmentId)
+        paramIndex++
+      }
+
+      if (relationType) {
+        sql += ` AND relation_type = $${paramIndex}`
+        queryParams.push(relationType)
+        paramIndex++
+      }
+
+      sql += ` ORDER BY confidence DESC LIMIT $${paramIndex}`
+      queryParams.push(topK)
+
+      const result = await this.pool.query(sql, queryParams)
+      return result.rows
+    } catch (err) {
+      console.error('[PostgreSQL] 关系搜索失败:', err)
+      return []
+    }
+  }
+
+  /**
+   * 获取法律文档（25 行）
+   */
+  async getLegalDocuments(params: {
+    category?: string
+    topK?: number
+  }): Promise<LegalDocumentResult[]> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+
+    const { category, topK = 10 } = params
+
+    try {
+      let sql = `
+        SELECT
+          id,
+          title,
+          content,
+          category,
+          source,
+          created_at as "createdAt"
+        FROM legal_documents
+        WHERE 1=1
+      `
+      const queryParams: any[] = []
+      let paramIndex = 1
+
+      if (category) {
+        sql += ` AND category = $${paramIndex}`
+        queryParams.push(category)
+        paramIndex++
+      }
+
+      sql += ` ORDER BY created_at DESC LIMIT $${paramIndex}`
+      queryParams.push(topK)
+
+      const result = await this.pool.query(sql, queryParams)
+      return result.rows
+    } catch (err) {
+      console.error('[PostgreSQL] 法律文档查询失败:', err)
+      return []
+    }
+  }
+
+  /**
+   * 搜索判决案例（5,906 行）
+   */
+  async searchJudgmentCases(params: {
+    caseCause?: string
+    plaintiff?: string
+    defendant?: string
+    topK?: number
+  }): Promise<JudgmentCaseResult[]> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+
+    const { caseCause, plaintiff, defendant, topK = 10 } = params
+
+    try {
+      let sql = `
+        SELECT
+          judgment_id as "judgmentId",
+          file_name as "fileName",
+          title,
+          file_path as "filePath",
+          case_cause as "caseCause",
+          plaintiff,
+          defendant,
+          entities_count as "entitiesCount",
+          relations_count as "relationsCount",
+          has_embeddings as "hasEmbeddings",
+          processed_at as "processedAt"
+        FROM patent_judgments
+        WHERE 1=1
+      `
+      const queryParams: any[] = []
+      let paramIndex = 1
+
+      if (caseCause) {
+        sql += ` AND case_cause LIKE $${paramIndex}`
+        queryParams.push(`%${caseCause}%`)
+        paramIndex++
+      }
+
+      if (plaintiff) {
+        sql += ` AND plaintiff LIKE $${paramIndex}`
+        queryParams.push(`%${plaintiff}%`)
+        paramIndex++
+      }
+
+      if (defendant) {
+        sql += ` AND defendant LIKE $${paramIndex}`
+        queryParams.push(`%${defendant}%`)
+        paramIndex++
+      }
+
+      sql += ` ORDER BY processed_at DESC LIMIT $${paramIndex}`
+      queryParams.push(topK)
+
+      const result = await this.pool.query(sql, queryParams)
+      return result.rows
+    } catch (err) {
+      console.error('[PostgreSQL] 判决案例搜索失败:', err)
+      return []
+    }
+  }
+
+  /**
+   * 搜索专利规则（1,371 行，支持向量搜索）
+   */
+  async searchPatentRules(params: {
+    query?: string
+    articleType?: string
+    hierarchyLevel?: number
+    topK?: number
+  }): Promise<PatentRuleResult[]> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+
+    const { query, articleType, hierarchyLevel, topK = 10 } = params
+
+    try {
+      // 如果提供了 embeddingFn 和 query，使用向量搜索
+      if (this.embeddingFn && query) {
+        const embedding = await this.embeddingFn(query)
+        const embeddingArray = `[${embedding.join(',')}]`
+
+        let sql = `
+          SELECT
+            id::text,
+            article_id as "articleId",
+            article_type as "articleType",
+            hierarchy_level as "hierarchyLevel",
+            full_path as "fullPath",
+            article_number as "articleNumber",
+            title,
+            content,
+            core_principle as "corePrinciple",
+            key_requirements as "keyRequirements",
+            metadata,
+            has_vectors as "hasVectors",
+            1 - (embedding <=> $1::real[]) as similarity
+          FROM patent_rules_unified
+          WHERE has_vectors = true
+        `
+        const queryParams: any[] = [embeddingArray]
+        let paramIndex = 2
+
+        if (articleType) {
+          sql += ` AND article_type = $${paramIndex}`
+          queryParams.push(articleType)
+          paramIndex++
+        }
+
+        if (hierarchyLevel !== undefined) {
+          sql += ` AND hierarchy_level = $${paramIndex}`
+          queryParams.push(hierarchyLevel)
+          paramIndex++
+        }
+
+        sql += ` ORDER BY embedding <=> $1::real[] LIMIT $${paramIndex}`
+        queryParams.push(topK)
+
+        const result = await this.pool.query(sql, queryParams)
+        return result.rows
+      }
+
+      // 否则使用文本搜索
+      let sql = `
+        SELECT
+          id::text,
+          article_id as "articleId",
+          article_type as "articleType",
+          hierarchy_level as "hierarchyLevel",
+          full_path as "fullPath",
+          article_number as "articleNumber",
+          title,
+          content,
+          core_principle as "corePrinciple",
+          key_requirements as "keyRequirements",
+          metadata,
+          has_vectors as "hasVectors"
+        FROM patent_rules_unified
+        WHERE 1=1
+      `
+      const queryParams: any[] = []
+      let paramIndex = 1
+
+      if (query) {
+        sql += ` AND (title LIKE $${paramIndex} OR content LIKE $${paramIndex})`
+        queryParams.push(`%${query}%`)
+        paramIndex++
+      }
+
+      if (articleType) {
+        sql += ` AND article_type = $${paramIndex}`
+        queryParams.push(articleType)
+        paramIndex++
+      }
+
+      if (hierarchyLevel !== undefined) {
+        sql += ` AND hierarchy_level = $${paramIndex}`
+        queryParams.push(hierarchyLevel)
+        paramIndex++
+      }
+
+      sql += ` ORDER BY hierarchy_level, article_number LIMIT $${paramIndex}`
+      queryParams.push(topK)
+
+      const result = await this.pool.query(sql, queryParams)
+      return result.rows
+    } catch (err) {
+      console.error('[PostgreSQL] 专利规则搜索失败:', err)
+      return []
     }
   }
 }

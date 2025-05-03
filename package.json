@@ -1,6 +1,6 @@
 {
   "name": "yunpat-agent",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "云熙知识产权智能体 - 知识产权全生命周期智能体操作系统",
   "private": true,
   "author": "徐健 <xujian519@gmail.com>",
@@ -42,5 +42,8 @@
   "bugs": {
     "url": "https://github.com/xujian519/yunpat-agent/issues"
   },
-  "homepage": "https://github.com/xujian519/yunpat-agent#readme"
+  "homepage": "https://github.com/xujian519/yunpat-agent#readme",
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
 }

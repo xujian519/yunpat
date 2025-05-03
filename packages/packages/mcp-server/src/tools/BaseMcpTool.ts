@@ -11,8 +11,8 @@ import type { McpToolContext } from '../types.js'
 export interface McpToolMetadata {
   name: string
   description: string
-  inputSchema: z.ZodType<any>
-  outputSchema?: z.ZodType<any>
+  inputSchema: any
+  outputSchema?: any
   version?: string
   author?: string
 }

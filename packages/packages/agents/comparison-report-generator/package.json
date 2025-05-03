@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/comparison-report-generator",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "对比报告生成Agent - 生成专利申请与现有技术的对比分析报告",
   "type": "module",
   "main": "dist/index.js",

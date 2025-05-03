@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/unified-knowledge-graph",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "统一知识图谱服务 - 整合 OpenClaw、YunPat、Athena 三方专利知识图谱",
   "type": "module",
   "main": "./dist/index.js",

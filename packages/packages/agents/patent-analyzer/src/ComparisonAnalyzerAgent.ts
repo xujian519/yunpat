@@ -13,6 +13,8 @@
 
 import { ProfessionalAgent, type ExtendedExecutionContext } from '@yunpat/agent-base'
 import type { PriorArtAnalysis, PriorArtDocumentType } from '@yunpat/agent-analysis'
+import type { BaseAgentInput, BaseAgentOutput } from '@yunpat/agent-base'
+import { PostgreSQLClient, type PatentRuleResult } from '@yunpat/unified-knowledge-graph'
 
 /**
  * 分析场景
@@ -36,7 +38,7 @@ export interface InventionSummary {
 /**
  * 对比分析输入
  */
-export interface ComparisonAnalyzerInput {
+export interface ComparisonAnalyzerInput extends BaseAgentInput {
   /** 发明理解（可选，来自 InventionUnderstandingAgent） */
   inventionUnderstanding?: InventionSummary
   /** 对比文件分析结果（必需，来自 PriorArtAnalyzerAgent） */
@@ -92,7 +94,7 @@ export interface RiskAssessment {
 /**
  * 对比分析输出
  */
-export interface ComparisonAnalyzerOutput {
+export interface ComparisonAnalyzerOutput extends BaseAgentOutput {
   /** 分析场景 */
   scenario: ComparisonScenario
   /** 是否有发明理解 */
@@ -105,6 +107,14 @@ export interface ComparisonAnalyzerOutput {
   creativityAssessment?: CreativityAssessment
   /** 风险评估 */
   riskAssessment?: RiskAssessment
+  /** 审查规则 */
+  examinationRules?: Array<{
+    articleId: string
+    title: string
+    content: string
+    corePrinciple?: string
+    similarity?: number
+  }>
   /** 综合建议 */
   recommendations: string[]
   /** 元数据 */
@@ -139,6 +149,29 @@ export class ComparisonAnalyzerAgent extends ProfessionalAgent<
   ComparisonAnalyzerInput,
   ComparisonAnalyzerOutput
 > {
+  private legalDb?: PostgreSQLClient
+
+  constructor(
+    config: ConstructorParameters<typeof ProfessionalAgent>[0] & { enableLegalKnowledge?: boolean }
+  ) {
+    super(config)
+    if (config.enableLegalKnowledge !== false) {
+      this.legalDb = new PostgreSQLClient()
+    }
+  }
+
+  /**
+   * 搜索审查规则
+   */
+  private async searchExaminationRules(
+    query: string,
+    topK: number = 5
+  ): Promise<PatentRuleResult[]> {
+    if (!this.legalDb) return []
+    await this.legalDb.initialize()
+    const results = await this.legalDb.searchPatentRules({ query, topK })
+    return results
+  }
   protected async plan(
     input: ComparisonAnalyzerInput,
     _context: ExtendedExecutionContext
@@ -172,6 +205,8 @@ export class ComparisonAnalyzerAgent extends ProfessionalAgent<
   ): Promise<ComparisonAnalyzerOutput> {
     console.log('\n📊 [对比分析] 步骤2: 分析阶段')
 
+    const startTime = Date.now()
+
     const { input, hasInvention, stages } = plan
     const output: Partial<ComparisonAnalyzerOutput> = {
       scenario: input.scenario || 'new_application',
@@ -179,6 +214,8 @@ export class ComparisonAnalyzerAgent extends ProfessionalAgent<
       comparisons: [],
       recommendations: [],
     }
+
+    const examinationRules = await this.searchRelevantExaminationRules(input, output)
 
     for (const stage of stages) {
       switch (stage) {
@@ -212,6 +249,8 @@ export class ComparisonAnalyzerAgent extends ProfessionalAgent<
       }
     }
 
+    const executionTime = Date.now() - startTime
+
     const result: ComparisonAnalyzerOutput = {
       scenario: output.scenario!,
       hasInventionUnderstanding: output.hasInventionUnderstanding!,
@@ -219,7 +258,9 @@ export class ComparisonAnalyzerAgent extends ProfessionalAgent<
       closestPriorArt: output.closestPriorArt,
       creativityAssessment: output.creativityAssessment,
       riskAssessment: output.riskAssessment,
+      examinationRules: examinationRules,
       recommendations: output.recommendations || [],
+      executionTime,
       metadata: {
         priorArtCount: input.priorArtAnalyses.length,
         timestamp: Date.now(),
@@ -335,6 +376,59 @@ export class ComparisonAnalyzerAgent extends ProfessionalAgent<
   }
 
   /**
+   * 搜索相关审查规则
+   */
+  private async searchRelevantExaminationRules(
+    input: ComparisonAnalyzerInput,
+    output: Partial<ComparisonAnalyzerOutput>
+  ): Promise<
+    Array<{
+      articleId: string
+      title: string
+      content: string
+      corePrinciple?: string
+      similarity?: number
+    }> | undefined
+  > {
+    if (!this.legalDb) return undefined
+
+    const searchQueries: string[] = []
+
+    if (input.inventionUnderstanding) {
+      if (output.comparisons && output.comparisons.length > 0) {
+        searchQueries.push('新颖性 判断标准 对比文件 技术方案')
+      }
+      if (input.inventionUnderstanding.keyFeatures.length > 0) {
+        searchQueries.push('创造性 三步法 区别特征 技术效果')
+      }
+    }
+
+    if (output.riskAssessment) {
+      searchQueries.push('专利性风险 无效宣告 现有技术')
+    }
+
+    const uniqueQueries = [...new Set(searchQueries)].slice(0, 3)
+
+    const allResults: PatentRuleResult[] = []
+    for (const query of uniqueQueries) {
+      const results = await this.searchExaminationRules(query, 3)
+      allResults.push(...results)
+    }
+
+    const seen = new Set<string>()
+    return allResults
+      .filter((r) => !seen.has(r.articleId) && seen.add(r.articleId))
+      .map((r) => ({
+        articleId: r.articleId,
+        title: r.title,
+        content: r.content,
+        corePrinciple: r.corePrinciple,
+        similarity: r.similarity,
+      }))
+      .slice(0, 5)
+  }
+
+  /**
    * 创造性评估（LLM）
    */
   private async assessCreativity(
@@ -352,6 +446,11 @@ export class ComparisonAnalyzerAgent extends ProfessionalAgent<
       )
       .join('\n')
 
+    const examinationRules = await this.searchExaminationRules('创造性 三步法', 3)
+    const rulesText = examinationRules.length > 0
+      ? `\n\n## 相关审查规则\n${examinationRules.map((r) => `- [${r.articleId}] ${r.title}\n  ${r.corePrinciple || r.content.substring(0, 100)}...`).join('\n')}`
+      : ''
+
     const prompt = `请评估目标发明相对于以下对比文件的创造性：
 
 ## 目标发明
@@ -368,8 +467,9 @@ ${
 区别特征: ${closest.distinctFeatures.map((d) => d.feature).join('、')}`
     : ''
 }
+${rulesText}
 
-请基于三步法评估创造性，以JSON格式返回：
+请基于三步法评估创造性，并参考上述审查规则，以JSON格式返回：
 {
   "level": "inventive" | "obvious" | "lacks_inventiveness",
   "score": 0-100,
@@ -446,7 +546,6 @@ ${
   ): Promise<RiskAssessment> {
     const riskFactors: string[] = []
 
-    // 基于对比结果的风险因素
     const highSimilarity = output.comparisons?.filter((c) => c.similarity > 0.7).length || 0
     if (highSimilarity > 0) {
       riskFactors.push(`${highSimilarity} 篇对比文件相似度超过70%`)
@@ -468,13 +567,18 @@ ${
       riskFactors.push('与最接近对比文件无主要区别特征')
     }
 
-    // 如果有 LLM，进行增强评估
     if (_context.llm && riskFactors.length > 0) {
       try {
         const riskSummary = riskFactors.map((r) => `- ${r}`).join('\n')
+        const examinationRules = await this.searchExaminationRules('无效宣告 专利性风险', 3)
+        const rulesText = examinationRules.length > 0
+          ? `\n\n## 相关审查规则\n${examinationRules.map((r) => `- [${r.articleId}] ${r.title}\n  ${r.corePrinciple || r.content.substring(0, 100)}...`).join('\n')}`
+          : ''
+
         const prompt = `基于以下风险因素，评估专利风险：
 
 ${riskSummary}
+${rulesText}
 
 请以JSON格式返回：
 {

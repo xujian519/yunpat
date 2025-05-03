@@ -12,3 +12,10 @@ export {
   type SearchInput as SearchInputV3,
   type SearchOutput as SearchOutputV3,
 } from './PatentSearchAgent.v3.js'
+
+export {
+  patentSearchToolSchema,
+  patentSearchToolMetadata,
+  patentSearchToolInputSchema,
+  type PatentSearchToolInput,
+} from './schema.js'

@@ -6,13 +6,14 @@ import {
 } from '@yunpat/core'
 import type { InventionUnderstandingOutput } from '@yunpat/agent-invention'
 import type { PriorArtSearchResult } from '@yunpat/agent-prior-art-search'
+import type { BaseAgentInput, BaseAgentOutput } from '@yunpat/agent-base'
 import { readFile } from 'fs/promises'
 import { resolve } from 'path'
 
 /**
  * 权利要求生成智能体输入
  */
-export interface ClaimGeneratorInput {
+export interface ClaimGeneratorInput extends BaseAgentInput {
   /** 发明理解结果（来自Phase 2） */
   inventionUnderstanding: InventionUnderstandingOutput
   /** 先导技术检索结果（来自Phase 3） */
@@ -110,7 +111,7 @@ export interface ClaimsSet {
 /**
  * 权利要求生成输出
  */
-export interface ClaimGeneratorOutput {
+export interface ClaimGeneratorOutput extends BaseAgentOutput {
   /** 权利要求集合 */
   claimsSet: ClaimsSet
   /** 生成置信度 */
@@ -219,6 +220,8 @@ export class ClaimGeneratorAgent extends Agent<ClaimGeneratorInput, ClaimGenerat
     context: ExecutionContext
   ): Promise<ClaimGeneratorOutput> {
     console.log('\n📝 [权利要求生成] 步骤2: 撰写阶段')
+
+    const startTime = Date.now()
 
     const systemPrompt = `你是一位资深的专利代理师，拥有15年的专利撰写经验。
 
@@ -334,7 +337,7 @@ ${ctx.featureResolutionHistory.map((h) => `- 第${h.attempt}次：缺少${h.miss
       throw new Error('LLM 未配置，无法执行权利要求生成')
     }
 
-    const result = await this.callLLMWithFallback(context.llm, systemPrompt, userPrompt, plan.input)
+    const result = await this.callLLMWithFallback(context.llm, systemPrompt, userPrompt, plan.input, startTime)
 
     console.log(`\n✅ [权利要求生成] 撰写完成 (置信度: ${result.confidence.toFixed(2)})`)
     console.log(`   独立权利要求: ${result.claimsSet.independent_claims.length} 项`)
@@ -614,7 +617,8 @@ ${ctx.featureResolutionHistory.map((h) => `- 第${h.attempt}次：缺少${h.miss
     llm: NonNullable<ExecutionContext['llm']>,
     systemPrompt: string,
     userPrompt: string,
-    input: ClaimGeneratorInput
+    input: ClaimGeneratorInput,
+    startTime: number
   ): Promise<ClaimGeneratorOutput> {
     const maxRetries = 2
     let lastError: Error | undefined
@@ -637,7 +641,7 @@ ${ctx.featureResolutionHistory.map((h) => `- 第${h.attempt}次：缺少${h.miss
           console.log(
             `[ClaimGeneratorAgent] LLM返回解析成功，独立权利要求数: ${(parsed.independent_claims as any[])?.length ?? 0}`
           )
-          return this.normalizeOutput(parsed, input)
+          return this.normalizeOutput(parsed, input, startTime)
         }
       } catch (e) {
         lastError = e instanceof Error ? e : new Error(String(e))
@@ -648,13 +652,16 @@ ${ctx.featureResolutionHistory.map((h) => `- 第${h.attempt}次：缺少${h.miss
     }
 
     console.error('[ClaimGeneratorAgent] 权利要求生成失败，使用回退输出:', lastError)
-    return this.createFallbackOutput(input)
+    return this.createFallbackOutput(input, startTime)
   }
 
   private normalizeOutput(
     parsed: Record<string, unknown>,
-    input: ClaimGeneratorInput
+    input: ClaimGeneratorInput,
+    startTime: number
   ): ClaimGeneratorOutput {
+    const executionTime = Date.now() - startTime
+
     const getArray = (key: string): any[] => {
       const value = parsed[key]
       return Array.isArray(value) ? value : []
@@ -712,10 +719,12 @@ ${ctx.featureResolutionHistory.map((h) => `- 第${h.attempt}次：缺少${h.miss
     return {
       claimsSet,
       confidence: getNumber('confidence', 0.8),
+      executionTime,
     }
   }
 
-  private createFallbackOutput(input: ClaimGeneratorInput): ClaimGeneratorOutput {
+  private createFallbackOutput(input: ClaimGeneratorInput, startTime: number): ClaimGeneratorOutput {
+    const executionTime = Date.now() - startTime
     const { inventionUnderstanding } = input
 
     // 生成简单的独立权利要求
@@ -743,6 +752,7 @@ ${ctx.featureResolutionHistory.map((h) => `- 第${h.attempt}次：缺少${h.miss
         },
       },
       confidence: 0.5,
+      executionTime,
     }
   }
 }

@@ -11,6 +11,7 @@
 
 import { Agent, type ExecutionContext, SkillLoader } from '@yunpat/core'
 import { join } from 'path'
+import type { BaseAgentInput, BaseAgentOutput } from '@yunpat/agent-base'
 
 export interface OAOfficeAction {
   /** 申请号 */
@@ -79,7 +80,7 @@ export interface ResponseDocument {
   }
 }
 
-export interface PatentResponderInput {
+export interface PatentResponderInput extends BaseAgentInput {
   /** 审查意见信息 */
   officeAction: OAOfficeAction
   /** 原始专利申请文件 */
@@ -97,7 +98,7 @@ export interface PatentResponderInput {
   documentType?: 'cn' | 'pct' | 'us'
 }
 
-export interface PatentResponderOutput {
+export interface PatentResponderOutput extends BaseAgentOutput {
   /** 审查意见分析 */
   analysis: {
     /** 审查意见摘要 */
@@ -211,7 +212,8 @@ export class PatentResponderAgent extends Agent {
     console.log('   4. 生成后续建议...')
     const nextSteps = await this.generateNextSteps(input, analysis, strategy, context)
 
-    const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+    const executionTime = Date.now() - startTime
+    const duration = (executionTime / 1000).toFixed(1)
     console.log(`[PatentResponder] 完成 (耗时 ${duration}s)`)
 
     const output: PatentResponderOutput = {
@@ -219,6 +221,7 @@ export class PatentResponderAgent extends Agent {
       strategy,
       responseDocument,
       nextSteps,
+      executionTime,
     }
 
     return output

@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-quality",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "专利质量检查智能体 - 权利要求/说明书/术语一致性检查",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,7 +21,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@yunpat/core": "workspace:*"
+    "@yunpat/core": "workspace:*",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

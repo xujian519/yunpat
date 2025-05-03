@@ -1,4 +1,5 @@
 /target
+/target/
 Cargo.lock
 **/*.rs.bk
 *.pdb
@@ -28,6 +29,26 @@ coverage/
 packages/*/node_modules/
 packages/*/dist/
 packages/*/.env
+
+# 知识库不提交到Git（太大，且需要单独管理）
+knowledge-base/
+
+# 构建产物
+crates/target/
+*.wasm
+*.o
+*.so
+*.dylib
+*.dll
+
+# 测试产物
+*.profraw
+*.profdata
+
+# 临时文件
+*.tmp
+*.temp
+.cache/
 
 # 保留示例配置
 !.env.example

@@ -13,3 +13,4 @@ export { ResultAggregator } from './aggregation/ResultAggregator.js'
 export { ExceptionHandler } from './exception/ExceptionHandler.js'
 
 export * from './types/index.js'
+export * from './registry/index.js'

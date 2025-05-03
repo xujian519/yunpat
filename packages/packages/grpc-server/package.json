@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/grpc-server",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "YunPat gRPC Server - TypeScript 实现",
   "type": "module",
   "main": "./dist/index.js",

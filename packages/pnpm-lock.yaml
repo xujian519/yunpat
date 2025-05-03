@@ -105,7 +105,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.1
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/analysis:
     dependencies:
@@ -121,7 +121,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/base:
     dependencies:
@@ -144,6 +144,9 @@ importers:
 
   packages/agents/claim-generator:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/agent-invention':
         specifier: workspace:*
         version: link:../invention
@@ -153,6 +156,9 @@ importers:
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@types/node':
         specifier: ^20.11.0
@@ -162,7 +168,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.1
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/comparison-report-generator:
     dependencies:
@@ -178,7 +184,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.1
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/format-converter:
     dependencies:
@@ -200,7 +206,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.2
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/image-understanding:
     dependencies:
@@ -216,7 +222,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/integration-tests:
     dependencies:
@@ -250,7 +256,7 @@ importers:
         version: 5.9.3
       vite-tsconfig-paths:
         specifier: ^6.1.1
-        version: 6.1.1(typescript@5.9.3)(vite@5.4.21(@types/node@24.12.2)(lightningcss@1.32.0))
+        version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@24.12.2)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^2.0.5
         version: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
@@ -269,7 +275,29 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.1
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
+
+  packages/agents/legal-qa:
+    dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@yunpat/unified-knowledge-graph':
+        specifier: workspace:*
+        version: link:../../unified-knowledge-graph
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
 
   packages/agents/patent-analyzer:
     dependencies:
@@ -282,6 +310,9 @@ importers:
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
+      '@yunpat/unified-knowledge-graph':
+        specifier: workspace:*
+        version: link:../../unified-knowledge-graph
     devDependencies:
       '@types/node':
         specifier: ^20.11.0
@@ -294,7 +325,7 @@ importers:
         version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/patent-manager:
     dependencies:
@@ -322,7 +353,7 @@ importers:
         version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/patent-responder:
     dependencies:
@@ -344,6 +375,9 @@ importers:
       '@yunpat/patent-prompts':
         specifier: workspace:*
         version: link:../../patent-prompts
+      '@yunpat/unified-knowledge-graph':
+        specifier: workspace:*
+        version: link:../../unified-knowledge-graph
     devDependencies:
       '@types/node':
         specifier: ^20.11.0
@@ -356,7 +390,7 @@ importers:
         version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/prior-art-search:
     dependencies:
@@ -375,13 +409,16 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.1
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/quality:
     dependencies:
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@types/node':
         specifier: ^20.11.0
@@ -391,7 +428,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/quality-checker:
     dependencies:
@@ -407,7 +444,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.1
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/researcher:
     dependencies:
@@ -439,6 +476,9 @@ importers:
       '@yunpat/patent-tools':
         specifier: workspace:*
         version: link:../../patent-tools
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@types/node':
         specifier: ^20.11.0
@@ -451,7 +491,7 @@ importers:
         version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/spec-formality-checker:
     dependencies:
@@ -495,7 +535,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.1
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/subject-matter-checker:
     dependencies:
@@ -533,7 +573,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/technical-drawing:
     dependencies:
@@ -555,7 +595,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.2
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/test:
     dependencies:
@@ -805,7 +845,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/image-tools:
     dependencies:
@@ -837,6 +877,9 @@ importers:
       '@yunpat/agent-invention':
         specifier: workspace:*
         version: link:../agents/invention
+      '@yunpat/agent-legal-qa':
+        specifier: workspace:*
+        version: link:../agents/legal-qa
       '@yunpat/agent-patent-analyzer':
         specifier: workspace:*
         version: link:../agents/patent-analyzer
@@ -855,6 +898,9 @@ importers:
       '@yunpat/core':
         specifier: workspace:*
         version: link:../core
+      '@yunpat/unified-knowledge-graph':
+        specifier: workspace:*
+        version: link:../unified-knowledge-graph
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -880,6 +926,9 @@ importers:
       '@yunpat/agent-analysis':
         specifier: workspace:*
         version: link:../agents/analysis
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../agents/base
       '@yunpat/agent-claim-generator':
         specifier: workspace:*
         version: link:../agents/claim-generator
@@ -1014,7 +1063,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/patent-knowledge:
     devDependencies:
@@ -5650,6 +5699,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+
   zustand@4.5.7:
     resolution: {integrity: sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw==}
     engines: {node: '>=12.7.0'}
@@ -9590,16 +9642,6 @@ snapshots:
       - supports-color
       - terser
 
-  vite-tsconfig-paths@6.1.1(typescript@5.9.3)(vite@5.4.21(@types/node@24.12.2)(lightningcss@1.32.0)):
-    dependencies:
-      debug: 4.4.3(supports-color@5.5.0)
-      globrex: 0.1.2
-      tsconfck: 3.1.6(typescript@5.9.3)
-      vite: 5.4.21(@types/node@24.12.2)(lightningcss@1.32.0)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   vite-tsconfig-paths@6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.3)):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
@@ -9670,7 +9712,7 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.8.3
 
-  vitest@1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0):
+  vitest@1.6.1(@types/node@20.19.39)(@vitest/ui@4.1.5)(lightningcss@1.32.0):
     dependencies:
       '@vitest/expect': 1.6.1
       '@vitest/runner': 1.6.1
@@ -9953,6 +9995,8 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zod@4.4.3: {}
 
   zustand@4.5.7(@types/react@18.3.28)(react@18.3.1):
     dependencies:

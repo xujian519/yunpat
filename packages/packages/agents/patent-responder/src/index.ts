@@ -16,7 +16,9 @@ export { PatentResponderAgentV5 } from './PatentResponderAgentV5.js'
 export type {
   PatentResponderInputV2,
   PatentResponderOutputV2,
+  PatentResponderOutputV3,
   PrecedentCase,
+  LegalPrecedent,
 } from './PatentResponderAgentV5.js'
 
 // 导出所有子模块

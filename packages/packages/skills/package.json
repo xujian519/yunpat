@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/skills",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "YunPat Skills System - 模块化提示词管理",
   "type": "module",
   "main": "dist/index.js",

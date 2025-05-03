@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/patent-core",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "专利核心算法桥接 - Rust CLI 调用与 TypeScript 降级",
   "type": "module",
   "main": "./dist/index.js",

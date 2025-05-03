@@ -28,6 +28,8 @@ import {
   FileSignal,
 } from './types/index.js'
 
+import { errorToAgentError } from '@yunpat/agent-base'
+
 import { ContextManager } from './context/ContextManager.js'
 import { ContextBuilder } from './context/ContextBuilder.js'
 import { IntentRecognizer } from './intent/IntentRecognizer.js'
@@ -460,7 +462,7 @@ export class OrchestratorAgent {
       } catch (error) {
         results.set(step.stepId, {
           success: false,
-          error: error as Error,
+          error: errorToAgentError(error as Error),
           executionTime: 0,
           data: {},
         })
@@ -500,7 +502,7 @@ export class OrchestratorAgent {
     if (!agent) {
       return {
         success: false,
-        error: new Error(`Agent not found: ${step.agentId}`),
+        error: errorToAgentError(new Error(`Agent not found: ${step.agentId}`)),
         executionTime: Date.now() - startTime,
         data: {},
       }
@@ -517,7 +519,7 @@ export class OrchestratorAgent {
     } catch (error) {
       return {
         success: false,
-        error: error as Error,
+        error: errorToAgentError(error as Error),
         executionTime: Date.now() - startTime,
         data: {},
       }

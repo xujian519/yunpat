@@ -1,0 +1,42 @@
+{
+  "name": "@yunpat/agent-legal-qa",
+  "version": "0.0.1",
+  "description": "法律知识问答智能体 - 基于法律世界模型的三库联动问答",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@yunpat/agent-base": "workspace:*",
+    "@yunpat/core": "workspace:*",
+    "@yunpat/unified-knowledge-graph": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "agent",
+    "legal",
+    "qa",
+    "knowledge",
+    "yunpat"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT"
+}

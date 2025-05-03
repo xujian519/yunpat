@@ -70,7 +70,7 @@ export class PatentDatabase {
     this.connectionString =
       config.connectionString ||
       process.env.DATABASE_URL ||
-      'postgresql://yunpat:yunpat123@localhost:5432/yunpat'
+      'postgresql://xujian@127.0.0.1:6432/yunpat'
 
     // 创建 PostgreSQL 客户端
     this.client = postgres(this.connectionString, {

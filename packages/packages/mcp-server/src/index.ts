@@ -22,7 +22,14 @@ import {
 import { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } from '@yunpat/core'
 
 // 导入工具
-import { PatentSearchTool, ClaimsGeneratorTool, QualityCheckerTool } from './tools/index.js'
+import {
+  PatentSearchTool,
+  ClaimsGeneratorTool,
+  QualityCheckerTool,
+  LegalKnowledgeSearchTool,
+  InvalidDecisionSearchTool,
+  PatentRuleSearchTool,
+} from './tools/index.js'
 
 import type { McpToolContext } from './types.js'
 
@@ -41,9 +48,19 @@ function createServer() {
   const patentSearchTool = new PatentSearchTool()
   const claimsGeneratorTool = new ClaimsGeneratorTool()
   const qualityCheckerTool = new QualityCheckerTool()
+  const legalKnowledgeTool = new LegalKnowledgeSearchTool()
+  const invalidDecisionTool = new InvalidDecisionSearchTool()
+  const patentRuleTool = new PatentRuleSearchTool()
 
   // 所有工具列表
-  const toolsList = [patentSearchTool, claimsGeneratorTool, qualityCheckerTool]
+  const toolsList = [
+    patentSearchTool,
+    claimsGeneratorTool,
+    qualityCheckerTool,
+    legalKnowledgeTool,
+    invalidDecisionTool,
+    patentRuleTool,
+  ]
 
   // 创建 MCP 服务器
   const server = new Server(
@@ -98,6 +115,18 @@ function createServer() {
 
         case 'quality_checker':
           result = await qualityCheckerTool.execute(args, context)
+          break
+
+        case 'legal_knowledge_search':
+          result = await legalKnowledgeTool.execute(args, context)
+          break
+
+        case 'invalid_decision_search':
+          result = await invalidDecisionTool.execute(args, context)
+          break
+
+        case 'patent_rule_search':
+          result = await patentRuleTool.execute(args, context)
           break
 
         default:

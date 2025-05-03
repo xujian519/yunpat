@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/mcp-server",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "YunPat MCP Server - 为 Claude Desktop 等 MCP 客户端提供专利工具",
   "type": "module",
   "main": "./dist/index.js",
@@ -43,6 +43,8 @@
     "@yunpat/agent-quality": "workspace:*",
     "@yunpat/agent-patent-analyzer": "workspace:*",
     "@yunpat/agent-patent-responder": "workspace:*",
+    "@yunpat/agent-legal-qa": "workspace:*",
+    "@yunpat/unified-knowledge-graph": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 [package]
 name = "tools-service"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 description = "YunPat 工具服务 - Rust 实现的 ML 工具 gRPC 服务，替代 Python tools"
 

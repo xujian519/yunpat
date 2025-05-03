@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-base",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "YunPat 专业层Agent基类 - 统一的Agent架构",
   "type": "module",
   "main": "./dist/index.js",

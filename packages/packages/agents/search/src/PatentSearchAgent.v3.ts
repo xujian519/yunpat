@@ -21,6 +21,7 @@ import {
   type PatentDatabaseSearchConfig,
 } from '@yunpat/patent-tools'
 import { AcademicSearchTool } from '@yunpat/builtin-tools'
+import type { BaseAgentInput, BaseAgentOutput } from '@yunpat/agent-base'
 
 export interface SearchStrategy {
   keywords: string[]
@@ -29,7 +30,7 @@ export interface SearchStrategy {
   rationale: string
 }
 
-export interface SearchInput {
+export interface SearchInput extends BaseAgentInput {
   title: string
   field: string
   technicalProblem: string
@@ -37,12 +38,10 @@ export interface SearchInput {
   keyFeatures: string[]
 }
 
-export interface SearchOutput {
+export interface SearchOutput extends BaseAgentOutput {
   strategy: SearchStrategy
   results: StandardPatentRecord[]
   totalFound: number
-  searchTimeMs: number
-  dataSource: 'patent_db' | 'google_patents' | 'mixed'
   academicPapers?: Array<{
     title: string
     authors: string
@@ -175,7 +174,7 @@ export class PatentSearchAgentV3 extends Agent {
       // 学术论文检索失败不影响专利检索结果
     }
 
-    const searchTimeMs = Date.now() - startTime
+    const executionTime = Date.now() - startTime
 
     console.log(`\n✅ [专利检索 v3] 完成`)
     console.log(`   专利: ${searchResult.total} 条`)
@@ -183,13 +182,13 @@ export class PatentSearchAgentV3 extends Agent {
     if (academicPapers) {
       console.log(`   学术论文: ${academicPapers.length} 篇`)
     }
-    console.log(`   耗时: ${searchTimeMs}ms`)
+    console.log(`   耗时: ${executionTime}ms`)
 
     return {
       strategy,
       results: searchResult.patents,
       totalFound: searchResult.total,
-      searchTimeMs,
+      executionTime,
       dataSource: searchResult.dataSource,
       academicPapers,
     }

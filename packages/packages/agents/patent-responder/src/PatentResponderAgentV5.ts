@@ -14,6 +14,11 @@ import {
   type PatentResponderOutput,
 } from './PatentResponderAgent.js'
 import type { PatentDatabaseAdapter, PatentRecord } from '@yunpat/patent-database'
+import {
+  PostgreSQLClient,
+  type StructuredQueryResult,
+  type PatentRuleResult,
+} from '@yunpat/unified-knowledge-graph'
 
 /**
  * 增强的答复输入
@@ -30,6 +35,8 @@ export interface PatentResponderInputV2 extends PatentResponderInput {
     /** 检索数量限制 */
     limit?: number
   }
+  /** 是否启用法律知识库检索 */
+  enableLegalKnowledge?: boolean
 }
 
 /**
@@ -72,10 +79,46 @@ export interface PatentResponderOutputV2 extends PatentResponderOutput {
 }
 
 /**
+ * 法律先例
+ */
+export interface LegalPrecedent {
+  /** 无效决定书 */
+  invalidDecisions: Array<{
+    documentNumber: string
+    title: string
+    content: string
+    relevance: string
+  }>
+  /** 法院案例 */
+  courtCases: Array<{
+    title: string
+    content: string
+    relevance: string
+  }>
+  /** 审查指南规则 */
+  examinationRules: Array<{
+    articleId: string
+    title: string
+    content: string
+  }>
+  /** 总数 */
+  totalFound: number
+}
+
+/**
+ * 增强的答复输出 V3（含法律知识）
+ */
+export interface PatentResponderOutputV3 extends PatentResponderOutputV2 {
+  /** 法律先例 */
+  legalPrecedents?: LegalPrecedent
+}
+
+/**
  * PatentResponderAgent V5 - 集成真实数据库的专利答复智能体
  */
 export class PatentResponderAgentV5 extends PatentResponderAgent {
   private database?: PatentDatabaseAdapter
+  private legalDb?: PostgreSQLClient
 
   constructor(config: {
     name: string
@@ -85,9 +128,15 @@ export class PatentResponderAgentV5 extends PatentResponderAgent {
     tools: any
     llm: any
     patentDatabase?: PatentDatabaseAdapter
+    enableLegalKnowledge?: boolean
   }) {
     super(config)
     this.database = config.patentDatabase
+
+    if (config.enableLegalKnowledge !== false) {
+      this.legalDb = new PostgreSQLClient()
+    }
+
     console.log('[PatentResponderAgentV5] 智能体已初始化')
   }
 
@@ -135,20 +184,94 @@ export class PatentResponderAgentV5 extends PatentResponderAgent {
   }
 
   /**
-   * 重载 act 方法，添加先例信息
+   * 重载 act 方法，添加先例信息和法律知识
    */
-  protected async act(plan: any, context: any): Promise<PatentResponderOutputV2> {
+  protected async act(plan: any, context: any): Promise<PatentResponderOutputV3> {
     // 调用父类的 act 方法
     const result = await super.act(plan, context)
 
-    // 添加先例检索信息
-    const output: PatentResponderOutputV2 = {
+    // 检索法律先例
+    let legalPrecedents: LegalPrecedent | undefined
+    const input = plan.input as PatentResponderInputV2
+
+    if (input.enableLegalKnowledge !== false && this.legalDb) {
+      console.log('[PatentResponderAgentV5] 检索法律先例...')
+
+      // 根据审查意见类型构建查询
+      const query = this.buildLegalQuery(input)
+      const searchResults = await this.searchLegalPrecedents(query, 5)
+
+      legalPrecedents = {
+        invalidDecisions: searchResults.invalidDecisions.map((item) => ({
+          documentNumber: item.id.toString() || '',
+          title: item.title || '',
+          content: item.content || '',
+          relevance: '法律相关',
+        })),
+        courtCases: searchResults.judgments.map((item) => ({
+          title: item.title || '',
+          content: item.content || '',
+          relevance: '案例相关',
+        })),
+        examinationRules: searchResults.rules.map((item) => ({
+          articleId: item.articleId || '',
+          title: item.title || '',
+          content: item.content || '',
+        })),
+        totalFound:
+          searchResults.invalidDecisions.length +
+          searchResults.judgments.length +
+          searchResults.rules.length,
+      }
+
+      console.log(
+        `[PatentResponderAgentV5] 找到 ${legalPrecedents.totalFound} 个法律先例（${legalPrecedents.invalidDecisions.length} 个无效决定，${legalPrecedents.courtCases.length} 个法院案例，${legalPrecedents.examinationRules.length} 个审查规则）`
+      )
+    }
+
+    // 添加先例检索信息和法律先例
+    const output: PatentResponderOutputV3 = {
       ...result,
       precedentSearchInfo: this.precedentSearchInfo,
       precedents: this.foundPrecedents,
+      legalPrecedents,
     }
 
     return output
+  }
+
+  /**
+   * 根据审查意见构建法律知识检索查询
+   */
+  private buildLegalQuery(input: PatentResponderInputV2): string {
+    const { officeAction, originalApplication } = input
+    const queries: string[] = []
+
+    // 添加专利标题
+    if (officeAction.patentTitle) {
+      queries.push(officeAction.patentTitle)
+    }
+
+    // 根据审查意见类型添加关键词
+    const rejectionTypes = officeAction.rejectionTypes || []
+    if (rejectionTypes.includes('inventiveness') || officeAction.officeActionContent.includes('创造性')) {
+      queries.push('创造性 显而易见性 技术启示')
+    }
+    if (rejectionTypes.includes('novelty') || officeAction.officeActionContent.includes('新颖性')) {
+      queries.push('新颖性 现有技术 公开')
+    }
+
+    // 从权利要求书提取关键词
+    const claimsKeywords = originalApplication.claims
+      .split(/\s+/)
+      .filter((word) => word.length > 2)
+      .slice(0, 5)
+      .join(' ')
+    if (claimsKeywords) {
+      queries.push(claimsKeywords)
+    }
+
+    return queries.join(' ')
   }
 
   // ==================== 私有方法 ====================
@@ -278,6 +401,42 @@ export class PatentResponderAgentV5 extends PatentResponderAgent {
     }
 
     return null
+  }
+
+  /**
+   * 检索法律先例（无效决定书、法院案例、审查指南）
+   */
+  private async searchLegalPrecedents(
+    query: string,
+    topK: number = 5
+  ): Promise<{
+    invalidDecisions: StructuredQueryResult[]
+    judgments: StructuredQueryResult[]
+    rules: PatentRuleResult[]
+  }> {
+    if (!this.legalDb) {
+      return { invalidDecisions: [], judgments: [], rules: [] }
+    }
+
+    try {
+      await this.legalDb.initialize()
+
+      const [invalidDecisions, judgments, rules] = await Promise.allSettled([
+        this.legalDb.queryInvalidDecisions(query, topK),
+        this.legalDb.structuredSearch(query, topK, false),
+        this.legalDb.searchPatentRules({ query, topK }),
+      ])
+
+      return {
+        invalidDecisions:
+          invalidDecisions.status === 'fulfilled' ? invalidDecisions.value : [],
+        judgments: judgments.status === 'fulfilled' ? judgments.value : [],
+        rules: rules.status === 'fulfilled' ? rules.value : [],
+      }
+    } catch (error) {
+      console.warn('[PatentResponderAgentV5] 法律先例检索失败:', error)
+      return { invalidDecisions: [], judgments: [], rules: [] }
+    }
   }
 
   /**

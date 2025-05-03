@@ -1,6 +1,9 @@
 /**
- * @file TUI 入口
- * @description 导出 TUI 组件和工具
+ * ⚠️ DEPRECATED - 此包已废弃
+ *
+ * 迁移目标: crates/tui (Rust ratatui TUI)
+ * 所有 TUI 开发请移步 crates/tui 目录
+ * 本文件保留仅供参考
  */
 
 export * from './components/index.js'

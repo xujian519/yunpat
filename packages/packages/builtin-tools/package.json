@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/builtin-tools",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "YunPat 内置工具集 - 文件操作、搜索、网络请求等常用工具",
   "type": "module",
   "main": "dist/index.js",

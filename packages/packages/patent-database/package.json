@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/patent-database",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "专利数据库适配器 - 支持 patent_db (7500万CN专利) 和 Google Patents",
   "type": "module",
   "main": "./dist/index.js",

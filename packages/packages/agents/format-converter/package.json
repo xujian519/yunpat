@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/format-converter",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "专利格式转换智能体 - Markdown/结构化内容转DOCX",
   "type": "module",
   "main": "dist/index.js",

@@ -8,9 +8,25 @@ export { ProfessionalAgent } from './ProfessionalAgent.js'
 export { SkillsProfessionalAgent } from './SkillsProfessionalAgent.js'
 export type {
   ProfessionalAgentConfig,
-  AgentResult,
+  AgentResult as LegacyAgentResult,
   ExtendedExecutionContext,
   LLMCallParams,
   LLMResponse,
 } from './ProfessionalAgent.js'
 export type { SkillsConfig, ExtendedProfessionalAgentConfig } from './SkillsProfessionalAgent.js'
+
+export type {
+  AgentId,
+  BaseAgentInput,
+  BaseAgentOutput,
+  AgentResult,
+  AgentError,
+  RetryStrategy,
+} from './types.js'
+export {
+  AgentErrorCode,
+  RETRY_STRATEGY,
+  inferErrorCode,
+  agentErrorToError,
+  errorToAgentError,
+} from './types.js'

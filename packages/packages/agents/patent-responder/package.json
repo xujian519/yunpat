@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-patent-responder",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "专利答复智能体 - OA 审查意见答复与策略生成",
   "type": "module",
   "main": "./dist/index.js",
@@ -26,7 +26,8 @@
     "@yunpat/patent-core": "workspace:*",
     "@yunpat/patent-database": "workspace:*",
     "@yunpat/patent-knowledge": "workspace:*",
-    "@yunpat/patent-prompts": "workspace:*"
+    "@yunpat/patent-prompts": "workspace:*",
+    "@yunpat/unified-knowledge-graph": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

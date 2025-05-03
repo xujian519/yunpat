@@ -6,6 +6,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { AgentConfig } from '@yunpat/core'
+import type { AgentResult as BaseAgentResult } from '@yunpat/agent-base'
 
 /**
  * 执行上下文（简化版）
@@ -345,24 +346,10 @@ export interface UserProfile {
 // ============================================================================
 
 /**
- * Agent执行结果
+ * Agent执行结果（从 @yunpat/agent-base 重新导出）
+ * 保持向后兼容：data 类型为 Record<string, any>
  */
-export interface AgentResult {
-  /** 是否成功 */
-  success: boolean
-  /** 数据 */
-  data: Record<string, any>
-  /** 错误信息（失败时） */
-  error?: Error
-  /** 是否需要HITL */
-  requiresHITL?: boolean
-  /** HITL检查点（requiresHITL=true时） */
-  hitlCheckpoint?: string
-  /** 执行时长（毫秒） */
-  executionTime: number
-  /** 元数据 */
-  metadata?: Record<string, any>
-}
+export type AgentResult = BaseAgentResult<Record<string, any>>
 
 /**
  * 任务执行结果

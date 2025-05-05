@@ -661,18 +661,19 @@ export class LegalKnowledgeSearchTool extends BaseMcpTool<any, any> {
       const topK = input.topK || 10
 
       // 并行查询多个数据源
-      const [structuredSearchResult, invalidDecisionsResult, patentRulesResult] = await Promise.allSettled([
-        client.structuredSearch(input.question, topK),
-        input.sources?.includes('invalid_decision')
-          ? client.queryInvalidDecisions(input.question, topK)
-          : Promise.resolve([]),
-        input.sources?.includes('patent_rule')
-          ? client.searchPatentRules({
-              query: input.question,
-              topK,
-            })
-          : Promise.resolve([]),
-      ])
+      const [structuredSearchResult, invalidDecisionsResult, patentRulesResult] =
+        await Promise.allSettled([
+          client.structuredSearch(input.question, topK),
+          input.sources?.includes('invalid_decision')
+            ? client.queryInvalidDecisions(input.question, topK)
+            : Promise.resolve([]),
+          input.sources?.includes('patent_rule')
+            ? client.searchPatentRules({
+                query: input.question,
+                topK,
+              })
+            : Promise.resolve([]),
+        ])
 
       const results = []
 
@@ -829,6 +830,9 @@ export class InvalidDecisionSearchTool extends BaseMcpTool<any, any> {
     }
   }
 }
+
+// ============= ProjectScanTool =============
+export { ProjectScanTool } from './ProjectScanTool.js'
 
 // ============= PatentRuleSearchTool =============
 export class PatentRuleSearchTool extends BaseMcpTool<any, any> {

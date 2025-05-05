@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! 专利工作流状态机
 //!
 //! 状态：Draft → Search → Analyze → Respond → Manage

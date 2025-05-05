@@ -11,6 +11,8 @@ export { TaskPlanner } from './planning/TaskPlanner.js'
 export { HITLGenerator } from './hitl/HITLGenerator.js'
 export { ResultAggregator } from './aggregation/ResultAggregator.js'
 export { ExceptionHandler } from './exception/ExceptionHandler.js'
+export { LLMClient } from './llm/LLMClient.js'
+export { PatentIntentConfig } from './intent/PatentIntentConfig.js'
 
 export * from './types/index.js'
 export * from './registry/index.js'

@@ -254,7 +254,10 @@ export class PatentResponderAgentV5 extends PatentResponderAgent {
 
     // 根据审查意见类型添加关键词
     const rejectionTypes = officeAction.rejectionTypes || []
-    if (rejectionTypes.includes('inventiveness') || officeAction.officeActionContent.includes('创造性')) {
+    if (
+      rejectionTypes.includes('inventiveness') ||
+      officeAction.officeActionContent.includes('创造性')
+    ) {
       queries.push('创造性 显而易见性 技术启示')
     }
     if (rejectionTypes.includes('novelty') || officeAction.officeActionContent.includes('新颖性')) {
@@ -428,8 +431,7 @@ export class PatentResponderAgentV5 extends PatentResponderAgent {
       ])
 
       return {
-        invalidDecisions:
-          invalidDecisions.status === 'fulfilled' ? invalidDecisions.value : [],
+        invalidDecisions: invalidDecisions.status === 'fulfilled' ? invalidDecisions.value : [],
         judgments: judgments.status === 'fulfilled' ? judgments.value : [],
         rules: rules.status === 'fulfilled' ? rules.value : [],
       }

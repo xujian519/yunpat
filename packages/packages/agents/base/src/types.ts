@@ -158,7 +158,8 @@ export function inferErrorCode(error: Error): AgentErrorCode {
   if (msg.includes('rate limit') || msg.includes('429')) return AgentErrorCode.LLM_RATE_LIMIT
   if (msg.includes('connection') || msg.includes('econnrefused'))
     return AgentErrorCode.DB_CONNECTION_FAILED
-  if (msg.includes('vector') || msg.includes('embedding')) return AgentErrorCode.VECTOR_SEARCH_FAILED
+  if (msg.includes('vector') || msg.includes('embedding'))
+    return AgentErrorCode.VECTOR_SEARCH_FAILED
   if (msg.includes('not found') || msg.includes('no agent')) return AgentErrorCode.AGENT_NOT_FOUND
   if (msg.includes('llm') || msg.includes('api')) return AgentErrorCode.LLM_UNAVAILABLE
   return AgentErrorCode.UNKNOWN

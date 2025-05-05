@@ -9,6 +9,8 @@ pub const AGENT_DRAFTING: &str = "drafting";
 pub const AGENT_OA_RESPONSE: &str = "oa-response";
 pub const AGENT_REEXAMINATION: &str = "reexamination";
 pub const AGENT_INVALIDATION: &str = "invalidation";
+pub const AGENT_SEARCH: &str = "search";
+pub const AGENT_ANALYSIS: &str = "analysis";
 
 /// Result of routing a user input to an agent.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -78,6 +80,11 @@ impl IntentRecognizer {
                     "专利申请".into(),
                     "说明书".into(),
                     "权利要求书".into(),
+                    "技术交底书".into(),
+                    "发明".into(),
+                    "独立权利要求".into(),
+                    "从属权利要求".into(),
+                    "摘要".into(),
                 ],
                 agent_id: AGENT_DRAFTING.into(),
             },
@@ -91,6 +98,11 @@ impl IntentRecognizer {
                     "答辩".into(),
                     "驳回".into(),
                     "意见陈述".into(),
+                    "审查员".into(),
+                    "通知书".into(),
+                    "一通".into(),
+                    "二通".into(),
+                    "修改权利要求".into(),
                 ],
                 agent_id: AGENT_OA_RESPONSE.into(),
             },
@@ -105,6 +117,37 @@ impl IntentRecognizer {
                 required: vec![],
                 any_of: vec!["无效".into(), "无效宣告".into(), "无效请求".into()],
                 agent_id: AGENT_INVALIDATION.into(),
+            },
+            // Patent Search
+            KeywordRule {
+                required: vec![],
+                any_of: vec![
+                    "检索".into(),
+                    "查专利".into(),
+                    "现有技术".into(),
+                    "对比文件".into(),
+                    "先有技术".into(),
+                    "新颖性".into(),
+                    "查新".into(),
+                    "专利号".into(),
+                    "CN".into(),
+                    "申请号".into(),
+                ],
+                agent_id: AGENT_SEARCH.into(),
+            },
+            // Patent Analysis
+            KeywordRule {
+                required: vec![],
+                any_of: vec![
+                    "侵权".into(),
+                    "侵权分析".into(),
+                    "专利分析".into(),
+                    "技术特征".into(),
+                    "特征对比".into(),
+                    "保护范围".into(),
+                    "无效分析".into(),
+                ],
+                agent_id: AGENT_ANALYSIS.into(),
             },
         ];
 
@@ -181,6 +224,8 @@ impl Router {
         command_map.insert("oa", AGENT_OA_RESPONSE);
         command_map.insert("reexam", AGENT_REEXAMINATION);
         command_map.insert("invalid", AGENT_INVALIDATION);
+        command_map.insert("search", AGENT_SEARCH);
+        command_map.insert("analysis", AGENT_ANALYSIS);
 
         Self {
             recognizer: IntentRecognizer::new(),
@@ -313,5 +358,25 @@ mod tests {
         assert!(router.route_command("oa").is_some());
         assert!(router.route_command("reexam").is_some());
         assert!(router.route_command("invalid").is_some());
+        assert!(router.route_command("search").is_some());
+        assert!(router.route_command("analysis").is_some());
+    }
+
+    #[test]
+    fn test_intent_recognition_search() {
+        let recognizer = IntentRecognizer::new();
+        let (agent_id, score) = recognizer
+            .recognize("帮我检索关于Transformer的专利")
+            .unwrap();
+        assert_eq!(agent_id, AGENT_SEARCH);
+        assert!(score > 0.0);
+    }
+
+    #[test]
+    fn test_intent_recognition_analysis() {
+        let recognizer = IntentRecognizer::new();
+        let (agent_id, score) = recognizer.recognize("分析这件专利的侵权风险").unwrap();
+        assert_eq!(agent_id, AGENT_ANALYSIS);
+        assert!(score > 0.0);
     }
 }

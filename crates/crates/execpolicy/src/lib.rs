@@ -1,4 +1,6 @@
 pub mod bash_arity;
+pub mod constitutional;
+pub mod principles;
 
 use std::collections::HashSet;
 

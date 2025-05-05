@@ -4,7 +4,15 @@ export const legalKnowledgeSearchToolInputSchema = z.object({
   question: z.string().min(1),
   domain: z.enum(['patent', 'trademark', 'copyright', 'trade_secret']).optional(),
   sources: z
-    .array(z.enum(['law_article', 'invalid_decision', 'patent_judgment', 'patent_rule', 'legal_document']))
+    .array(
+      z.enum([
+        'law_article',
+        'invalid_decision',
+        'patent_judgment',
+        'patent_rule',
+        'legal_document',
+      ])
+    )
     .optional(),
   topK: z.number().min(1).max(100).default(10),
 })

@@ -343,6 +343,10 @@ pub struct Engine {
     /// Diagnostics collected during the current step's tool calls. Drained
     /// and forwarded as a synthetic user message before the next API call.
     pending_lsp_blocks: Vec<crate::lsp::DiagnosticBlock>,
+    /// Bidirectional hook pipeline for pre-turn processing (intent recognition, etc.)
+    hook_pipeline: yunpat_hooks::HookPipeline,
+    /// Constitutional engine — patent-specific safety constraints (bypasses YOLO mode)
+    constitutional_engine: yunpat_execpolicy::constitutional::ConstitutionalEngine,
 }
 
 // === Internal tool helpers ===
@@ -547,6 +551,9 @@ impl Engine {
             turn_counter: 0,
             lsp_manager,
             pending_lsp_blocks: Vec::new(),
+            hook_pipeline: yunpat_hooks::HookPipeline::new(),
+            constitutional_engine:
+                yunpat_execpolicy::constitutional::ConstitutionalEngine::with_default_principles(),
             workshop_vars,
             sandbox_backend,
         };
@@ -905,6 +912,94 @@ impl Engine {
         self.session
             .working_set
             .observe_user_message(&content, &self.session.workspace);
+
+        // 2A.1: Bidirectional hook pipeline — intent recognition and pre-turn processing
+        let hook_event = yunpat_hooks::HookEvent::UserMessage {
+            message: content.clone(),
+            mode: format!("{mode:?}"),
+        };
+        if let Ok(instructions) = self.hook_pipeline.process(&hook_event).await {
+            for instruction in &instructions {
+                match instruction {
+                    yunpat_hooks::HookInstruction::SetMode {
+                        mode: new_mode,
+                        reason,
+                    } => {
+                        // Mode 切换通过上下文注入实现（mode 参数不可变）
+                        let mode_ctx = Message {
+                            role: "system".to_string(),
+                            content: vec![ContentBlock::Text {
+                                text: format!(
+                                    "[Hook Mode Suggestion] 推荐切换到 {new_mode} 模式。原因: {reason}。\
+                                   当前模式为 {current_mode}，请在后续交互中考虑此建议。",
+                                    current_mode = match mode {
+                                        AppMode::Agent => "Agent",
+                                        AppMode::Plan => "Plan",
+                                        AppMode::Yolo => "Yolo",
+                                    }
+                                ),
+                                cache_control: None,
+                            }],
+                        };
+                        self.session.add_message(mode_ctx);
+                        tracing::info!(
+                            "Hook suggests mode change to {new_mode} (reason: {reason})"
+                        );
+                    }
+                    yunpat_hooks::HookInstruction::PrependContext { content } => {
+                        // 注入为系统上下文前缀（不污染 user 消息流）
+                        let ctx_msg = Message {
+                            role: "system".to_string(),
+                            content: vec![ContentBlock::Text {
+                                text: format!("[Hook Context]\n{content}"),
+                                cache_control: None,
+                            }],
+                        };
+                        self.session.add_message(ctx_msg);
+                    }
+                    yunpat_hooks::HookInstruction::InjectMessage { role, content } => {
+                        let msg = Message {
+                            role: role.clone(),
+                            content: vec![ContentBlock::Text {
+                                text: content.clone(),
+                                cache_control: None,
+                            }],
+                        };
+                        self.session.add_message(msg);
+                    }
+                    yunpat_hooks::HookInstruction::LoadSkill { skill } => {
+                        let _ = self
+                            .tx_event
+                            .send(Event::status(format!("Hook loads skill: {skill}")))
+                            .await;
+                        tracing::info!("Hook loads skill: {skill}");
+                    }
+                    yunpat_hooks::HookInstruction::SuggestTool { tool, reason } => {
+                        let _ = self
+                            .tx_event
+                            .send(Event::status(format!(
+                                "Hook suggests using tool '{tool}': {reason}"
+                            )))
+                            .await;
+                    }
+                    yunpat_hooks::HookInstruction::RequireApproval { message, .. } => {
+                        let _ = self
+                            .tx_event
+                            .send(Event::status(format!(
+                                "⚠️ Hook requires approval: {message}"
+                            )))
+                            .await;
+                    }
+                    yunpat_hooks::HookInstruction::Warn { message: msg } => {
+                        let _ = self.tx_event.send(Event::status(msg.clone())).await;
+                    }
+                    yunpat_hooks::HookInstruction::Allow => {
+                        // 无操作，继续正常流程
+                    }
+                }
+            }
+        }
+
         let force_update_plan_first = should_force_update_plan_first(mode, &content);
 
         // Add user message to session

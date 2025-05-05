@@ -1,8 +1,6 @@
 # 云熙知识产权智能体 (YunPat Agent)
 
-> **Monorepo** - 云熙知识产权全生命周期智能体操作系统
->
-> **技术栈**: Rust（交互层 + 宪法引擎） + TypeScript（业务层 + Agent编排）
+> **技术栈**: Rust（交互层 + 规则引擎） + TypeScript（业务层 + Agent编排）
 >
 > **作者**: 徐健 <xujian519@gmail.com>
 
@@ -16,7 +14,7 @@ yunpat-agent/                          ← 统一仓库
 │   ├── cli/                            ← CLI 入口
 │   ├── tui/                            ← TUI 终端界面
 │   ├── core/                           ← 核心运行时
-│   ├── constitutional/                 ← 宪法引擎（新增）
+│   ├── constitutional/                 ← 规则引擎（新增）
 │   ├── tools/                          ← 工具注册表
 │   ├── mcp/                            ← MCP 客户端
 │   └── ...
@@ -96,20 +94,20 @@ cargo run --bin deepseek
 
 ## 🛠️ 开发命令
 
-| 命令 | 说明 |
-|------|------|
-| `make install` | 安装 Rust + Node.js 依赖 |
-| `make build` | 构建全部（Rust + TypeScript） |
-| `make build-rust` | 仅构建 Rust |
-| `make build-ts` | 仅构建 TypeScript |
-| `make test` | 运行全部测试 |
-| `make test-rust` | 运行 Rust 测试 |
-| `make test-ts` | 运行 TypeScript 测试 |
-| `make lint` | 代码检查 |
-| `make format` | 代码格式化 |
-| `make clean` | 清理构建产物 |
-| `make dev` | 开发模式（热重载） |
-| `make run` | 运行 TUI |
+| 命令              | 说明                          |
+| ----------------- | ----------------------------- |
+| `make install`    | 安装 Rust + Node.js 依赖      |
+| `make build`      | 构建全部（Rust + TypeScript） |
+| `make build-rust` | 仅构建 Rust                   |
+| `make build-ts`   | 仅构建 TypeScript             |
+| `make test`       | 运行全部测试                  |
+| `make test-rust`  | 运行 Rust 测试                |
+| `make test-ts`    | 运行 TypeScript 测试          |
+| `make lint`       | 代码检查                      |
+| `make format`     | 代码格式化                    |
+| `make clean`      | 清理构建产物                  |
+| `make dev`        | 开发模式（热重载）            |
+| `make run`        | 运行 TUI                      |
 
 ---
 
@@ -117,25 +115,25 @@ cargo run --bin deepseek
 
 ### Rust 层（crates/）
 
-| Crate | 说明 |
-|-------|------|
-| `deepseek-tui` | 终端用户界面（ratatui） |
-| `deepseek-core` | 核心运行时（会话管理、工具调度） |
-| `deepseek-tools` | 工具注册表 |
-| `deepseek-mcp` | MCP 协议客户端 |
-| `deepseek-execpolicy` | 执行策略引擎 |
-| `deepseek-config` | 配置管理 |
+| Crate                 | 说明                             |
+| --------------------- | -------------------------------- |
+| `deepseek-tui`        | 终端用户界面（ratatui）          |
+| `deepseek-core`       | 核心运行时（会话管理、工具调度） |
+| `deepseek-tools`      | 工具注册表                       |
+| `deepseek-mcp`        | MCP 协议客户端                   |
+| `deepseek-execpolicy` | 执行策略引擎                     |
+| `deepseek-config`     | 配置管理                         |
 
 ### TypeScript 层（packages/）
 
-| Package | 说明 |
-|---------|------|
-| `@yunpat/core` | 智能体核心框架 |
-| `@yunpat/orchestrator` | 任务编排器 |
-| `@yunpat/patent-writer` | 专利撰写 Agent |
-| `@yunpat/patent-search` | 专利检索 Agent |
+| Package                    | 说明           |
+| -------------------------- | -------------- |
+| `@yunpat/core`             | 智能体核心框架 |
+| `@yunpat/orchestrator`     | 任务编排器     |
+| `@yunpat/patent-writer`    | 专利撰写 Agent |
+| `@yunpat/patent-search`    | 专利检索 Agent |
 | `@yunpat/patent-responder` | 审查答复 Agent |
-| `@yunpat/mcp-server` | MCP 协议服务端 |
+| `@yunpat/mcp-server`       | MCP 协议服务端 |
 
 ---
 
@@ -176,5 +174,5 @@ Agent 编排器
 
 ---
 
-**作者**: 徐健 <xujian519@gmail.com>  
+**作者**: 徐健 <xujian519@gmail.com>
 **项目**: 云熙知识产权智能体 (YunPat Agent)

@@ -20,7 +20,13 @@ use std::path::{Path, PathBuf};
 /// snapshots cross-worktree if they want, but the `worktree_hash` keeps
 /// commits isolated by default.
 pub fn snapshot_dir_for(workspace: &Path) -> PathBuf {
-    snapshot_dir_with_home(workspace, dirs::home_dir())
+    // Prefer $HOME env var so tests can override via scoped_home().
+    // dirs::home_dir() uses getpwuid on macOS and ignores $HOME.
+    let home = std::env::var("HOME")
+        .ok()
+        .map(PathBuf::from)
+        .or_else(dirs::home_dir);
+    snapshot_dir_with_home(workspace, home)
 }
 
 /// Same as [`snapshot_dir_for`] but with an injectable home directory.

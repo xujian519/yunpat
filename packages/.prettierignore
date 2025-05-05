@@ -1,5 +1,6 @@
 pnpm-lock.yaml
 pnpm-lock.yml
+.pnpm-approve-builds.json
 *.min.js
 *.min.css
 dist/

@@ -21,6 +21,7 @@ export * from './long-term/schema.js'
 export * from './CheckpointManager.js'
 export * from './FileSystemCheckpointStore.js'
 export * from './MemoryStore.js'
+export * from './RustCheckpointBridge.js'
 
 // 集成模块
 export * from './integration/BGEIntegration.js'

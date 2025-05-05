@@ -382,13 +382,14 @@ export class ComparisonAnalyzerAgent extends ProfessionalAgent<
     input: ComparisonAnalyzerInput,
     output: Partial<ComparisonAnalyzerOutput>
   ): Promise<
-    Array<{
-      articleId: string
-      title: string
-      content: string
-      corePrinciple?: string
-      similarity?: number
-    }> | undefined
+    | Array<{
+        articleId: string
+        title: string
+        content: string
+        corePrinciple?: string
+        similarity?: number
+      }>
+    | undefined
   > {
     if (!this.legalDb) return undefined
 
@@ -447,9 +448,10 @@ export class ComparisonAnalyzerAgent extends ProfessionalAgent<
       .join('\n')
 
     const examinationRules = await this.searchExaminationRules('创造性 三步法', 3)
-    const rulesText = examinationRules.length > 0
-      ? `\n\n## 相关审查规则\n${examinationRules.map((r) => `- [${r.articleId}] ${r.title}\n  ${r.corePrinciple || r.content.substring(0, 100)}...`).join('\n')}`
-      : ''
+    const rulesText =
+      examinationRules.length > 0
+        ? `\n\n## 相关审查规则\n${examinationRules.map((r) => `- [${r.articleId}] ${r.title}\n  ${r.corePrinciple || r.content.substring(0, 100)}...`).join('\n')}`
+        : ''
 
     const prompt = `请评估目标发明相对于以下对比文件的创造性：
 
@@ -571,9 +573,10 @@ ${rulesText}
       try {
         const riskSummary = riskFactors.map((r) => `- ${r}`).join('\n')
         const examinationRules = await this.searchExaminationRules('无效宣告 专利性风险', 3)
-        const rulesText = examinationRules.length > 0
-          ? `\n\n## 相关审查规则\n${examinationRules.map((r) => `- [${r.articleId}] ${r.title}\n  ${r.corePrinciple || r.content.substring(0, 100)}...`).join('\n')}`
-          : ''
+        const rulesText =
+          examinationRules.length > 0
+            ? `\n\n## 相关审查规则\n${examinationRules.map((r) => `- [${r.articleId}] ${r.title}\n  ${r.corePrinciple || r.content.substring(0, 100)}...`).join('\n')}`
+            : ''
 
         const prompt = `基于以下风险因素，评估专利风险：
 

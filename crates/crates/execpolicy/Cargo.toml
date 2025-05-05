@@ -10,3 +10,4 @@ description = "Execution policy and approval model for YunPat TUI workspace arch
 anyhow.workspace = true
 yunpat-protocol = { path = "../protocol", version = "0.8.15" }
 serde.workspace = true
+serde_json.workspace = true

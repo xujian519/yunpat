@@ -29,3 +29,7 @@ export { PATENT_PRINCIPLES } from './PatentPrinciples.js'
 export { ConstitutionalAI } from './ConstitutionalAI.js'
 export { ComplianceChecker } from './ComplianceChecker.js'
 export { AutoCorrector } from './AutoCorrector.js'
+
+// 数据主权检测
+export { detectTechnicalDisclosure, createAuditEntry } from './DataSovereigntyChecker.js'
+export type { SovereigntyCheckResult } from './DataSovereigntyChecker.js'

@@ -1,0 +1,77 @@
+# 合规审计规则
+# 定义操作审计和输出审查的规则
+# 版本: 1.0.0
+
+rules:
+  output_review:
+    id: CON-COMP-01
+    name: 生成内容审查
+    description: AI 生成的专利相关内容必须经过合规审查
+    severity: major
+    action: review
+    triggers:
+      - tool: claims_generator
+        phase: post_execution
+      - tool: patent_responder
+        phase: post_execution
+      - tool: specification_drafter
+        phase: post_execution
+    checks:
+      - type: no_invented_content
+        description: 不得编造专利号、法律条款、审查指南引用
+      - type: scope_consistency
+        description: 生成的权利要求范围与输入一致，不得擅自扩大
+      - type: legal_basis_valid
+        description: 引用的法律条款必须真实存在且适用
+
+  sensitive_operation_log:
+    id: CON-COMP-02
+    name: 敏感操作记录
+    description: 以下操作必须记录到审计日志
+    severity: major
+    action: log
+    operations:
+      - event: tool_call
+        tools:
+          - patent_search
+          - claims_generator
+          - quality_checker
+          - patent_analyzer
+          - patent_responder
+          - legal_knowledge_search
+        fields:
+          - timestamp
+          - tool_name
+          - input_summary   # 摘要，非原文
+          - output_summary
+          - routing_path    # local | external
+
+      - event: data_sovereignty_violation
+        description: 数据主权违规事件
+        fields:
+          - timestamp
+          - rule_id
+          - content_type
+          - attempted_route
+          - actual_route
+          - user_notified
+
+      - event: constitutional_violation
+        description: 宪法规则违规事件
+        fields:
+          - timestamp
+          - principle_id
+          - severity
+          - content_location
+          - corrective_action
+
+  retention_policy:
+    id: CON-COMP-03
+    name: 数据保留策略
+    description: 不同类型数据的保留期限
+    retention:
+      audit_logs: 365        # 审计日志保留 1 年
+      session_data: 7         # 会话数据保留 7 天
+      tool_outputs: 30        # 工具输出保留 30 天
+      compliance_reports: 180 # 合规报告保留 6 个月
+    purge_method: secure_delete  # 安全删除（覆写后删除）

@@ -284,15 +284,15 @@ export type AgentTypeMap = {
   }
   'specification-drafter': { input: unknown; output: unknown }
   'abstract-drafter': { input: unknown; output: unknown }
-  'invention': { input: unknown; output: unknown }
+  invention: { input: unknown; output: unknown }
   'tech-unit': { input: unknown; output: unknown }
-  'analysis': { input: unknown; output: unknown }
+  analysis: { input: unknown; output: unknown }
   'prior-art-search': { input: unknown; output: unknown }
-  'quality': { input: unknown; output: unknown }
+  quality: { input: unknown; output: unknown }
   'quality-checker': { input: unknown; output: unknown }
   'image-understanding': { input: unknown; output: unknown }
-  'researcher': { input: unknown; output: unknown }
-  'writer': { input: unknown; output: unknown }
+  researcher: { input: unknown; output: unknown }
+  writer: { input: unknown; output: unknown }
 }
 
 /**
@@ -348,10 +348,9 @@ export class TypedAgentRegistry {
   get<K extends keyof AgentTypeMap>(
     id: K
   ): TypedExecutableAgent<AgentTypeMap[K]['input'], AgentTypeMap[K]['output']> | undefined {
-    return this.agents.get(id as AgentId) as TypedExecutableAgent<
-      AgentTypeMap[K]['input'],
-      AgentTypeMap[K]['output']
-    > | undefined
+    return this.agents.get(id as AgentId) as
+      | TypedExecutableAgent<AgentTypeMap[K]['input'], AgentTypeMap[K]['output']>
+      | undefined
   }
 
   /**

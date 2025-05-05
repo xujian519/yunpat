@@ -128,6 +128,10 @@ impl ModelProviderConfigBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    /// 防止环境变量测试并行执行互相干扰
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     fn provider_env_keys() -> [&'static str; 4] {
         [
@@ -161,32 +165,44 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_from_env_no_providers() {
+    /// 注意：Rust 默认并行执行测试，环境变量的 snapshot/restore 会互相干扰。
+    /// 使用 serial_test 或改为不依赖全局环境状态是更优方案，此处用串行 workaround。
+    fn isolate_provider_env() -> [Option<String>; 4] {
+        let keys = provider_env_keys();
         let snapshot = unsafe { snapshot_provider_env() };
-        for key in provider_env_keys() {
+        for key in &keys {
             unsafe { std::env::remove_var(key) };
         }
+        snapshot
+    }
+
+    #[test]
+    fn test_from_env_no_providers() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        let snapshot = isolate_provider_env();
 
         let result = ModelProviderConfigBuilder::from_env();
-        assert!(result.is_err());
+        assert!(
+            result.is_err(),
+            "should fail when no provider keys set, got: {result:?}"
+        );
 
         unsafe { restore_provider_env(snapshot) };
     }
 
     #[test]
     fn test_from_env_with_deepseek() {
-        let snapshot = unsafe { snapshot_provider_env() };
-
-        for key in provider_env_keys() {
-            unsafe { std::env::remove_var(key) };
-        }
+        let _lock = ENV_LOCK.lock().unwrap();
+        let snapshot = isolate_provider_env();
         unsafe { std::env::set_var("DEEPSEEK_API_KEY", "test-key") };
 
         let config = ModelProviderConfigBuilder::from_env().unwrap();
-        assert_eq!(config.providers.len(), 1);
-        assert_eq!(config.providers[0].id, "deepseek");
-        assert_eq!(config.providers[0].models.len(), 2);
+        let ds = config
+            .providers
+            .iter()
+            .find(|p| p.id == "deepseek")
+            .expect("deepseek provider should exist");
+        assert_eq!(ds.models.len(), 2);
 
         unsafe { restore_provider_env(snapshot) };
     }

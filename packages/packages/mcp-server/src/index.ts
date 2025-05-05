@@ -19,7 +19,13 @@ import {
 } from '@modelcontextprotocol/sdk/types.js'
 
 // 导入核心框架
-import { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } from '@yunpat/core'
+import {
+  EventBus,
+  ShortTermMemory,
+  ToolRegistry,
+  createDeepSeekModel,
+  detectTechnicalDisclosure,
+} from '@yunpat/core'
 
 // 导入工具
 import {
@@ -29,6 +35,8 @@ import {
   LegalKnowledgeSearchTool,
   InvalidDecisionSearchTool,
   PatentRuleSearchTool,
+  ProjectScanTool,
+  PatentDispatchTool,
 } from './tools/index.js'
 
 import type { McpToolContext } from './types.js'
@@ -51,6 +59,8 @@ function createServer() {
   const legalKnowledgeTool = new LegalKnowledgeSearchTool()
   const invalidDecisionTool = new InvalidDecisionSearchTool()
   const patentRuleTool = new PatentRuleSearchTool()
+  const projectScanTool = new ProjectScanTool()
+  const patentDispatchTool = new PatentDispatchTool()
 
   // 所有工具列表
   const toolsList = [
@@ -60,6 +70,8 @@ function createServer() {
     legalKnowledgeTool,
     invalidDecisionTool,
     patentRuleTool,
+    projectScanTool,
+    patentDispatchTool,
   ]
 
   // 创建 MCP 服务器
@@ -93,6 +105,34 @@ function createServer() {
     const { name, arguments: args } = request.params
 
     try {
+      // CON-01: 数据主权检测 — 提取工具参数中的文本内容进行检查
+      const inputText = extractInputText(args)
+      if (inputText) {
+        const sovereigntyCheck = detectTechnicalDisclosure(inputText)
+        if (sovereigntyCheck.isSensitive && sovereigntyCheck.routing === 'local') {
+          // 技术交底书内容 → 拒绝外部处理，返回提示
+          console.error(`[CON-01] 检测到敏感内容: ${sovereigntyCheck.reason}`)
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  notice: '数据主权保护 (CON-01)',
+                  message: sovereigntyCheck.reason,
+                  action: '检测到技术交底书内容，为保护您的技术秘密，该内容不会发送到外部 API。',
+                  suggestion:
+                    '请配置本地 Ollama 模型以使用完整功能，或使用抽象化描述替代原始技术交底。',
+                  rule_id: sovereigntyCheck.ruleId,
+                }),
+              },
+            ],
+            isError: true,
+          }
+        }
+        if (sovereigntyCheck.isSensitive) {
+          console.error(`[CON-01B] 内容需抽象化: ${sovereigntyCheck.reason}`)
+        }
+      }
       // 创建执行上下文（包含真实的 LLM 和框架组件）
       const context: McpToolContext = {
         llm,
@@ -127,6 +167,14 @@ function createServer() {
 
         case 'patent_rule_search':
           result = await patentRuleTool.execute(args, context)
+          break
+
+        case 'project_scan':
+          result = await projectScanTool.execute(args, context)
+          break
+
+        case 'patent_dispatch':
+          result = await patentDispatchTool.execute(args, context)
           break
 
         default:
@@ -192,6 +240,20 @@ function createServer() {
   })
 
   return server
+}
+
+/**
+ * 从工具参数中提取文本内容用于数据主权检测
+ */
+function extractInputText(args: Record<string, unknown> | undefined): string {
+  if (!args) return ''
+  const parts: string[] = []
+  for (const value of Object.values(args)) {
+    if (typeof value === 'string') {
+      parts.push(value)
+    }
+  }
+  return parts.join('\n')
 }
 
 /**

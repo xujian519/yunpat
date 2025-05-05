@@ -63,6 +63,16 @@ pub struct ThreadStartParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PatentResumeContext {
+    pub intent_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub task_plan_summary: Option<String>,
+    pub pending_hitl: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skill: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThreadResumeParams {
     pub thread_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -89,6 +99,8 @@ pub struct ThreadResumeParams {
     pub personality: Option<String>,
     #[serde(default)]
     pub persist_extended_history: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub patent_context: Option<PatentResumeContext>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

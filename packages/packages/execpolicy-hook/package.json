@@ -1,0 +1,41 @@
+{
+  "name": "@yunpat/execpolicy-hook",
+  "version": "0.0.1",
+  "description": "执行策略 Hook - 参数级安全检查和审批门控",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@yunpat/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "execpolicy",
+    "hook",
+    "security",
+    "approval"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT"
+}

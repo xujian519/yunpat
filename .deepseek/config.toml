@@ -1,0 +1,69 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                    YunPat Agent - Project Config                            ║
+# ║  DeepSeek TUI 项目级配置，知识产权智能体系统                                 ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# Model & Reasoning
+# ─────────────────────────────────────────────────────────────────────────────────
+# deepseek-v4-pro: 旗舰推理模型，专利撰写需要高质量输出
+model = "deepseek-v4-pro"
+reasoning_effort = "high"
+
+# 专利文件涉及知识产权，关键操作需要用户确认
+approval_policy = "suggest"
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# Instructions (System Prompt Layering)
+# ─────────────────────────────────────────────────────────────────────────────────
+# 项目级 config 的 instructions 会替换用户级配置（非合并），需显式列出所有文件。
+# yunpat-system.md: 交互协议（意图确认优先、苏格拉底提问、项目上下文）
+# yunpat.md 不在 instructions 中，由 LLM 在会话开始时调用 project_scan 工具自动生成和读取。
+# AGENTS.md: 可用智能体列表
+instructions = [
+  ".deepseek/yunpat-system.md",
+  "packages/AGENTS.md",
+]
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# TUI Locale
+# ─────────────────────────────────────────────────────────────────────────────────
+[tui]
+locale = "zh-Hans"
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# MCP Servers
+# ─────────────────────────────────────────────────────────────────────────────────
+# yunpat MCP Server 提供项目扫描、专利检索、权利要求生成、质量检查等工具。
+# lazy = true: 仅在首次调用工具时建立连接，避免启动时的延迟。
+# 工具前缀 mcp_yunpat_ 对应以下工具:
+#   - project_scan            扫描工作目录，识别文档，生成项目上下文（yunpat.md）
+#   - patent_search           专利检索（75M CN 专利 + Google Patents）
+#   - claims_generator       权利要求生成
+#   - quality_checker        质量检查
+#   - patent_analyzer        专利分析
+#   - patent_responder       审查意见答复
+#   - legal_knowledge_search 法律知识检索（含无效决定、审查指南）
+#   - invalid_decision_search 无效决定检索
+#   - patent_rule_search     审查指南检索
+
+[[mcp_servers]]
+name = "yunpat"
+transport = "stdio"
+command = "npx"
+args = ["-y", "@yunpat/mcp-server"]
+lazy = true
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# Hooks
+# ─────────────────────────────────────────────────────────────────────────────────
+# intent-hook 已移除：意图确认改为 LLM 对话层处理，不再使用关键词匹配。
+# exception-hook: 捕获工具调用异常，敏感操作失败时通知用户而非静默重试。
+
+[hooks]
+enabled = true
+
+[[hooks.hooks]]
+name = "exception-hook"
+event = "on_error"
+command = "bash .deepseek/hooks/exception-handler.sh"

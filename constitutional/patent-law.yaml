@@ -1,0 +1,72 @@
+# 专利法核心规则
+# 定义专利撰写和审查答复的法律约束
+# 版本: 1.0.0
+
+rules:
+  # ── 权利要求约束 ──
+  claim_scope_narrow_only:
+    id: CON-02
+    name: 权利要求范围只能缩小
+    description: 修改权利要求时，保护范围只能缩小或保持，不能扩大
+    severity: critical
+    action: block
+    legal_basis: 专利法第三十三条
+    check:
+      # 比较修改前后的权利要求范围
+      type: scope_comparison
+      direction: narrow_only
+
+  claim_dependency_valid:
+    id: CON-CL-01
+    name: 权利要求引用规范
+    description: 从属权利要求必须引用在前的权利要求，引用号不能跳跃
+    severity: major
+    action: warn
+    legal_basis: 专利法实施细则第二十二条
+    check:
+      type: pattern
+      # 从属权利要求引用格式
+      pattern: "根据权利要求(\\d+)"
+      validate: sequential_reference
+
+  claim_independent_complete:
+    id: CON-CL-02
+    name: 独立权利要求完整性
+    description: 独立权利要求必须包含所有必要技术特征
+    severity: critical
+    action: block
+    legal_basis: 专利法第二十六条第四款
+    check:
+      type: structure
+      requires:
+        - preamble    # 前序部分
+        - characterizing # 特征部分
+
+  # ── 禁令 ──
+  forbidden_content:
+    id: CON-CL-03
+    name: 禁止包含的内容
+    description: 专利文件不得包含贬低他人、违反法律或社会公德的内容
+    severity: critical
+    action: block
+    check:
+      type: keyword_blocklist
+      patterns:
+        - "最好"
+        - "最佳"
+        - "最先进"
+        - "世界领先"
+
+  # ── 引用规范 ──
+  citation_required:
+    id: CON-CL-04
+    name: 引用来源标注
+    description: 引用专利文献、技术标准必须标注完整出处
+    severity: major
+    action: warn
+    check:
+      type: citation_format
+      # 专利号格式: CNXXXXXXA/B/U
+      patent_pattern: "CN\\d{6,}\\s*[ABU]"
+      # 标准格式: GB/T XXXXX-XXXX
+      standard_pattern: "GB/T?\\s*\\d+[-/]\\d+"

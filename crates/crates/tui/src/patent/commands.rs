@@ -1,3 +1,4 @@
+#![allow(dead_code, clippy::manual_map)]
 //! 专利相关命令定义
 //!
 //! TUI 中可用的专利命令：

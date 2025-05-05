@@ -9,9 +9,22 @@ use serde_json::{Value, json};
 use tokio::io::AsyncWriteExt;
 use yunpat_protocol::EventFrame;
 
+// 双向 Hook 协议
+pub mod hook_pipeline;
+pub mod stdio_hook;
+
+// 重新导出主要类型
+pub use hook_pipeline::{BidirectionalHook, HookInstruction, HookPipeline};
+pub use stdio_hook::StdioBidirectionalHook;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum HookEvent {
+    /// 用户提交消息，用于意图识别
+    UserMessage {
+        message: String,
+        mode: String,
+    },
     ResponseStart {
         response_id: String,
     },

@@ -47,6 +47,9 @@ import { LLMClient } from './llm/LLMClient.js'
 import { AgentRegistry } from './registry/AgentRegistry.js'
 import { AgentFactory } from './registry/AgentFactory.js'
 
+// HITL 跨语言持久化桥
+import { RustCheckpointBridge, type HITLCheckpointData } from '@yunpat/core'
+
 /**
  * 性能指标
  */
@@ -117,6 +120,16 @@ export class OrchestratorAgent {
     }
   >()
 
+  // HITL 跨语言持久化桥（懒初始化）
+  private _hitlBridge: RustCheckpointBridge | null
+
+  private get hitlBridge(): RustCheckpointBridge {
+    if (!this._hitlBridge) {
+      this._hitlBridge = new RustCheckpointBridge()
+    }
+    return this._hitlBridge
+  }
+
   /**
    * 构造函数
    */
@@ -159,6 +172,9 @@ export class OrchestratorAgent {
     this.hitlResponseParser = new HITLResponseParser(this.llmClient, this.contextBuilder)
     this.resultAggregator = new ResultAggregator(this.llmClient, this.contextBuilder)
     this.exceptionHandler = new ExceptionHandler(this.llmClient, this.contextBuilder)
+
+    // HITL 跨语言持久化桥（懒初始化，首次使用时创建）
+    this._hitlBridge = null
     this.router = new Router(this.agentRegistry, {
       greetingMessage: config.greetingMessage,
       domainConfig: domainConfig,
@@ -305,6 +321,23 @@ export class OrchestratorAgent {
             metrics,
             stats,
           })
+
+          // 跨语言持久化：写入 Rust StateStore SQLite
+          try {
+            const checkpointId = `hitl-${input.sessionId}-${Date.now()}`
+            const hitlData: HITLCheckpointData = {
+              sessionId: input.sessionId,
+              taskPlan,
+              results: Object.fromEntries(executionResult.results),
+              hitlRequests,
+              metrics,
+              stats,
+            }
+            this.hitlBridge.saveHITLCheckpoint(input.sessionId, checkpointId, hitlData)
+          } catch (bridgeErr) {
+            // 持久化失败不应阻塞主流程，仅记录
+            console.error('[OrchestratorAgent] HITL bridge persist failed:', bridgeErr)
+          }
 
           return {
             response: '请确认以下内容',
@@ -752,6 +785,16 @@ export class OrchestratorAgent {
 
     // 清理暂存状态
     this.pendingHITLState.delete(sessionId)
+
+    // 清理跨语言持久化检查点
+    try {
+      const checkpoints = this.hitlBridge.listHITLCheckpoints(sessionId)
+      for (const cp of checkpoints) {
+        this.hitlBridge.deleteCheckpoint(sessionId, cp.checkpoint_id)
+      }
+    } catch {
+      // 清理失败不影响结果返回
+    }
 
     return {
       response: aggregated.markdown,

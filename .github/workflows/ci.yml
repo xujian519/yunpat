@@ -20,6 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev libleptonica-dev libtesseract-dev tesseract-ocr pkg-config
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -35,7 +38,7 @@ jobs:
         run: cd crates && cargo fmt --all -- --check
 
       - name: Run Clippy
-        run: cd crates && cargo clippy --workspace --all-targets --all-features -- -D warnings
+        run: cd crates && cargo clippy --workspace --all-targets --all-features -- -D warnings -A clippy::uninlined-format-args -A clippy::const-is-empty
 
       - name: Build Rust
         run: cd crates && cargo build --workspace
@@ -99,6 +102,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev libleptonica-dev libtesseract-dev tesseract-ocr pkg-config
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

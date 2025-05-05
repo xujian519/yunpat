@@ -1,3 +1,5 @@
+pub mod checkpoint_schema;
+
 use std::collections::HashMap;
 use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
@@ -8,6 +10,10 @@ use chrono::Utc;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+pub use checkpoint_schema::{
+    CheckpointSource, UNIFIED_CHECKPOINT_SCHEMA_VERSION, UnifiedCheckpoint,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -568,9 +574,35 @@ impl StateStore {
         checkpoint_id: &str,
         state: &Value,
     ) -> Result<()> {
-        let conn = self.conn()?;
+        self.save_checkpoint_v2(
+            thread_id,
+            checkpoint_id,
+            CheckpointSource::RustEngine,
+            state,
+            &Value::Null,
+        )
+    }
+
+    pub fn save_checkpoint_v2(
+        &self,
+        thread_id: &str,
+        checkpoint_id: &str,
+        source: CheckpointSource,
+        engine_state: &Value,
+        metadata: &Value,
+    ) -> Result<()> {
+        let unified = UnifiedCheckpoint::new(
+            checkpoint_id.to_string(),
+            thread_id.to_string(),
+            source,
+            Utc::now().timestamp(),
+        )
+        .with_engine_state(engine_state.clone())
+        .with_metadata(metadata.clone());
+
         let state_json =
-            serde_json::to_string(state).context("failed to encode checkpoint state")?;
+            serde_json::to_string(&unified).context("failed to encode unified checkpoint")?;
+        let conn = self.conn()?;
         conn.execute(
             r#"
             INSERT INTO checkpoints(thread_id, checkpoint_id, state_json, created_at)
@@ -579,10 +611,10 @@ impl StateStore {
                 state_json = excluded.state_json,
                 created_at = excluded.created_at
             "#,
-            params![thread_id, checkpoint_id, state_json, Utc::now().timestamp()],
+            params![thread_id, checkpoint_id, state_json, unified.created_at],
         )
         .with_context(|| {
-            format!("failed to save checkpoint {checkpoint_id} for thread {thread_id}")
+            format!("failed to save checkpoint v2 {checkpoint_id} for thread {thread_id}")
         })?;
         Ok(())
     }
@@ -600,7 +632,7 @@ impl StateStore {
                     params![thread_id, checkpoint_id],
                     |row| {
                         let state_json: String = row.get(2)?;
-                        let state = serde_json::from_str(&state_json).unwrap_or(Value::Null);
+                        let state = parse_checkpoint_state(&state_json);
                         Ok(CheckpointRecord {
                             thread_id: row.get(0)?,
                             checkpoint_id: row.get(1)?,
@@ -621,7 +653,7 @@ impl StateStore {
             params![thread_id],
             |row| {
                 let state_json: String = row.get(2)?;
-                let state = serde_json::from_str(&state_json).unwrap_or(Value::Null);
+                let state = parse_checkpoint_state(&state_json);
                 Ok(CheckpointRecord {
                     thread_id: row.get(0)?,
                     checkpoint_id: row.get(1)?,
@@ -632,6 +664,58 @@ impl StateStore {
         )
         .optional()
         .with_context(|| format!("failed to load latest checkpoint for thread {thread_id}"))
+    }
+
+    pub fn load_unified_checkpoint(
+        &self,
+        thread_id: &str,
+        checkpoint_id: Option<&str>,
+    ) -> Result<Option<UnifiedCheckpoint>> {
+        let conn = self.conn()?;
+        if let Some(checkpoint_id) = checkpoint_id {
+            let row: Option<String> = conn
+                .query_row(
+                    "SELECT state_json FROM checkpoints WHERE thread_id = ?1 AND checkpoint_id = ?2",
+                    params![thread_id, checkpoint_id],
+                    |row| row.get::<_, String>(0),
+                )
+                .optional()
+                .with_context(|| {
+                    format!("failed to load unified checkpoint {checkpoint_id} for thread {thread_id}")
+                })?;
+            return match row {
+                Some(json) => {
+                    let mut cp = parse_unified_checkpoint(&json)?;
+                    if cp.checkpoint_id.is_empty() {
+                        cp.checkpoint_id = checkpoint_id.to_string();
+                    }
+                    if cp.thread_id.is_empty() {
+                        cp.thread_id = thread_id.to_string();
+                    }
+                    Ok(Some(cp))
+                }
+                None => Ok(None),
+            };
+        }
+
+        let row: Option<String> = conn
+            .query_row(
+                "SELECT state_json FROM checkpoints WHERE thread_id = ?1 ORDER BY created_at DESC LIMIT 1",
+                params![thread_id],
+                |row| row.get::<_, String>(0),
+            )
+            .optional()
+            .with_context(|| format!("failed to load latest unified checkpoint for thread {thread_id}"))?;
+        match row {
+            Some(json) => {
+                let mut cp = parse_unified_checkpoint(&json)?;
+                if cp.thread_id.is_empty() {
+                    cp.thread_id = thread_id.to_string();
+                }
+                Ok(Some(cp))
+            }
+            None => Ok(None),
+        }
     }
 
     pub fn list_checkpoints(
@@ -653,13 +737,43 @@ impl StateStore {
         let mut out = Vec::new();
         while let Some(row) = rows.next().context("failed to iterate checkpoint rows")? {
             let state_json: String = row.get(2).context("failed to read checkpoint state json")?;
-            let state = serde_json::from_str(&state_json).unwrap_or(Value::Null);
+            let state = parse_checkpoint_state(&state_json);
             out.push(CheckpointRecord {
                 thread_id: row.get(0).context("failed to read checkpoint thread id")?,
                 checkpoint_id: row.get(1).context("failed to read checkpoint id")?,
                 state,
                 created_at: row.get(3).context("failed to read checkpoint timestamp")?,
             });
+        }
+        Ok(out)
+    }
+
+    pub fn list_unified_checkpoints(
+        &self,
+        thread_id: &str,
+        limit: Option<usize>,
+    ) -> Result<Vec<UnifiedCheckpoint>> {
+        let conn = self.conn()?;
+        let limit = i64::try_from(limit.unwrap_or(100)).unwrap_or(100);
+        let mut stmt = conn
+            .prepare(
+                "SELECT state_json FROM checkpoints WHERE thread_id = ?1 ORDER BY created_at DESC LIMIT ?2",
+            )
+            .context("failed to prepare unified checkpoint list query")?;
+        let mut rows = stmt.query(params![thread_id, limit]).with_context(|| {
+            format!("failed to list unified checkpoints for thread {thread_id}")
+        })?;
+
+        let mut out = Vec::new();
+        while let Some(row) = rows
+            .next()
+            .context("failed to iterate unified checkpoint rows")?
+        {
+            let state_json: String = row
+                .get(0)
+                .context("failed to read unified checkpoint state json")?;
+            let checkpoint = parse_unified_checkpoint(&state_json)?;
+            out.push(checkpoint);
         }
         Ok(out)
     }
@@ -878,6 +992,38 @@ fn default_state_db_path() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("."))
         .join(".deepseek")
         .join("state.db")
+}
+
+fn parse_checkpoint_state(state_json: &str) -> Value {
+    serde_json::from_str(state_json)
+        .and_then(|v: Value| {
+            if v.get("schema_version").is_some() {
+                serde_json::from_value::<UnifiedCheckpoint>(v)
+                    .map(|cp| cp.engine_state.unwrap_or(Value::Null))
+            } else {
+                Ok(v)
+            }
+        })
+        .unwrap_or(Value::Null)
+}
+
+fn parse_unified_checkpoint(state_json: &str) -> Result<UnifiedCheckpoint> {
+    serde_json::from_str(state_json)
+        .and_then(|v: Value| {
+            if v.get("schema_version").is_some() {
+                serde_json::from_value(v)
+            } else {
+                let v1: Value = v;
+                Ok(UnifiedCheckpoint::new(
+                    "migrated".to_string(),
+                    "".to_string(),
+                    CheckpointSource::RustEngine,
+                    0,
+                )
+                .with_engine_state(v1))
+            }
+        })
+        .context("failed to parse unified checkpoint")
 }
 
 fn bool_to_i64(value: bool) -> i64 {
@@ -1353,5 +1499,165 @@ mod case_tests {
         let tasks = store.list_case_tasks("task-001").unwrap();
         assert_eq!(tasks.len(), 1);
         assert_eq!(tasks[0].agent_id, "research");
+    }
+}
+
+#[cfg(test)]
+mod unified_checkpoint_tests {
+    use super::*;
+
+    fn test_store() -> StateStore {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let dir = std::env::temp_dir().join(format!("yunpat_cp_test_{}", n));
+        let _ = std::fs::create_dir_all(&dir);
+        let db = dir.join("test.db");
+        let _ = std::fs::remove_file(&db);
+        StateStore::open(Some(db)).unwrap()
+    }
+
+    fn ensure_thread(store: &StateStore, thread_id: &str) {
+        let now = Utc::now().timestamp();
+        let thread = ThreadMetadata {
+            id: thread_id.to_string(),
+            rollout_path: None,
+            preview: String::new(),
+            ephemeral: false,
+            model_provider: "test".to_string(),
+            created_at: now,
+            updated_at: now,
+            status: ThreadStatus::Running,
+            path: None,
+            cwd: std::env::current_dir().unwrap_or_default(),
+            cli_version: "test".to_string(),
+            source: SessionSource::Interactive,
+            name: None,
+            sandbox_policy: None,
+            approval_mode: None,
+            archived: false,
+            archived_at: None,
+            git_sha: None,
+            git_branch: None,
+            git_origin_url: None,
+            memory_mode: None,
+        };
+        store.upsert_thread(&thread).unwrap();
+    }
+
+    #[test]
+    fn unified_checkpoint_round_trip() {
+        let store = test_store();
+        let thread_id = "thread-unified-001";
+        let checkpoint_id = "cp-unified-001";
+        ensure_thread(&store, thread_id);
+
+        let engine_state = serde_json::json!({
+            "step": 1,
+            "messages": ["hello", "world"]
+        });
+
+        let metadata = serde_json::json!({
+            "intent": "search",
+            "confidence": 0.95
+        });
+
+        store
+            .save_checkpoint_v2(
+                thread_id,
+                checkpoint_id,
+                CheckpointSource::RustEngine,
+                &engine_state,
+                &metadata,
+            )
+            .unwrap();
+
+        let loaded = store
+            .load_unified_checkpoint(thread_id, Some(checkpoint_id))
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(loaded.schema_version, 2);
+        assert_eq!(loaded.checkpoint_id, checkpoint_id);
+        assert_eq!(loaded.thread_id, thread_id);
+        assert!(matches!(loaded.source, CheckpointSource::RustEngine));
+        assert_eq!(loaded.engine_state, Some(engine_state));
+        assert_eq!(loaded.shared_metadata, metadata);
+    }
+
+    #[test]
+    fn checkpoint_migration_v1_to_v2() {
+        let store = test_store();
+        let thread_id = "thread-migrate-001";
+        let checkpoint_id = "cp-v1-001";
+        ensure_thread(&store, thread_id);
+
+        let v1_state = serde_json::json!({
+            "old_field": "old_value",
+            "nested": {"key": "value"}
+        });
+
+        store
+            .save_checkpoint(thread_id, checkpoint_id, &v1_state)
+            .unwrap();
+
+        let loaded_v1 = store.load_checkpoint(thread_id, Some(checkpoint_id));
+        assert!(loaded_v1.is_ok());
+        let record = loaded_v1.unwrap().unwrap();
+        assert_eq!(record.checkpoint_id, checkpoint_id);
+
+        let loaded_v2 = store.load_unified_checkpoint(thread_id, Some(checkpoint_id));
+        assert!(loaded_v2.is_ok());
+        let unified = loaded_v2.unwrap().unwrap();
+        assert_eq!(unified.schema_version, 2);
+        assert_eq!(unified.checkpoint_id, checkpoint_id);
+        assert_eq!(unified.engine_state, Some(v1_state));
+    }
+
+    #[test]
+    fn list_unified_checkpoints() {
+        let store = test_store();
+        let thread_id = "thread-list-001";
+        ensure_thread(&store, thread_id);
+
+        for i in 0..3 {
+            store
+                .save_checkpoint_v2(
+                    thread_id,
+                    &format!("cp-{}", i),
+                    CheckpointSource::Hybrid,
+                    &serde_json::json!({"index": i}),
+                    &serde_json::json!({"seq": i}),
+                )
+                .unwrap();
+        }
+
+        let checkpoints = store.list_unified_checkpoints(thread_id, None).unwrap();
+        assert_eq!(checkpoints.len(), 3);
+        assert!(matches!(checkpoints[0].source, CheckpointSource::Hybrid));
+    }
+
+    #[test]
+    fn checkpoint_source_ts_orchestrator() {
+        let store = test_store();
+        let thread_id = "thread-ts-001";
+        ensure_thread(&store, thread_id);
+
+        store
+            .save_checkpoint_v2(
+                thread_id,
+                "cp-ts-001",
+                CheckpointSource::TsOrchestrator,
+                &serde_json::json!({"plan": "step1"}),
+                &serde_json::json!({"agent": "writer"}),
+            )
+            .unwrap();
+
+        let loaded = store
+            .load_unified_checkpoint(thread_id, Some("cp-ts-001"))
+            .unwrap()
+            .unwrap();
+
+        assert!(matches!(loaded.source, CheckpointSource::TsOrchestrator));
     }
 }

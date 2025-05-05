@@ -1,8 +1,23 @@
+#![allow(dead_code, clippy::type_complexity, clippy::collapsible_if)]
 //! Patent Workflow Tool — bridges TUI tool system to the PatentAgent trait.
 //!
 //! When the TUI routes a user command to a patent agent (via `/research`,
 //! `/oa`, etc.), this tool wraps the agent's `execute()` stream into a
 //! single `ToolResult` consumable by the turn loop.
+//!
+//! ## 路由策略（Phase 2 深度融合）
+//! 1. **优先 MCP 适配器**：如果 MCP pool 可用且有对应工具，委托给 MCP 适配器
+//! 2. **降级本地 Agent**：MCP 不可用时，使用本地 PatentAgent 实现
+//!
+//! ## MCP 工具映射
+//! - `research` → `mcp_yunpat_patent_search`
+//! - `oa-response` → `mcp_yunpat_patent_analyzer`（暂未实现，降级本地）
+//! - `drafting` → 本地 DraftingAgent（MCP 未实现）
+//! - `patent_search` → 本地 PatentSearchTool（Google Patents）
+//! - `paper_search` → 本地 PaperSearchTool（Semantic Scholar）
+//! - `legal_search` → `mcp_yunpat_legal_knowledge_search`
+//! - `patent_db` → 本地 PatentDatabase（PostgreSQL）
+//! - `kb_index` → 本地 KnowledgeBase（向量索引）
 
 use async_trait::async_trait;
 use serde_json::{Value, json};
@@ -223,54 +238,126 @@ impl ToolSpec for PatentWorkflowTool {
     }
 }
 
-/// Execute a patent agent locally.
+/// Agent ID 到 MCP 工具名的映射
 ///
-/// Uses local agent implementations (ResearchAgent, OAResponseAgent).
-/// When an MCP pool is available, also attempts to call MCP server tools
-/// for enhanced processing.
+/// 返回 (mcp_tool_name, args_builder)
+/// - mcp_tool_name: MCP 工具名（None 表示无对应 MCP 工具）
+/// - args_builder: 构建 MCP 工具参数的函数
+fn map_agent_to_mcp_tool(
+    agent_id: &str,
+) -> Option<(&'static str, fn(&str, Option<&str>) -> serde_json::Value)> {
+    match agent_id {
+        "research" => Some(("mcp_yunpat_patent_search", |topic, _case_id| {
+            // 简化映射：实际应用中可能需要更复杂的参数提取
+            json!({
+                "inventionTitle": topic,
+                "technicalField": "通用技术领域",
+                "technicalProblem": "待分析",
+                "technicalSolution": topic,
+                "keyFeatures": [topic],
+            })
+        })),
+        "legal_search" => Some(("mcp_yunpat_legal_knowledge_search", |topic, _case_id| {
+            json!({
+                "question": topic,
+                "domain": "patent",
+                "topK": 10,
+            })
+        })),
+        "oa-response" => Some(("mcp_yunpat_patent_analyzer", |topic, _case_id| {
+            // patent_analyzer 当前未实现，映射为占位
+            json!({
+                "inventionTitle": topic,
+                "claims": [],
+                "specification": {},
+            })
+        })),
+        _ => None,
+    }
+}
+
+/// Execute a patent agent with MCP-first routing strategy.
+///
+/// ## 路由策略（Phase 2 深度融合）
+/// 1. **优先 MCP 适配器**：如果 MCP pool 可用且有对应工具，委托给 MCP 适配器
+/// 2. **降级本地 Agent**：MCP 不可用时，使用本地 PatentAgent 实现
+///
+/// ## MCP 工具映射
+/// - `research` → `mcp_yunpat_patent_search`
+/// - `legal_search` → `mcp_yunpat_legal_knowledge_search`
+/// - `oa-response` → `mcp_yunpat_patent_analyzer`（暂未实现，降级本地）
 async fn execute_agent_locally(
     agent_id: &str,
     topic: &str,
     case_id: Option<&str>,
     mcp_pool: Option<std::sync::Arc<tokio::sync::Mutex<crate::mcp::McpPool>>>,
 ) -> Result<Vec<StageOutput>, String> {
-    // Try MCP tool call first if pool is available.
-    // MCP tool names follow the pattern: mcp_{server}_{tool}
+    // === Step 1: 尝试 MCP 工具调用 ===
     if let Some(pool) = &mcp_pool {
-        let mut pool_guard = pool.lock().await;
+        if let Some((tool_name, args_builder)) = map_agent_to_mcp_tool(agent_id) {
+            let args = args_builder(topic, case_id);
 
-        // Map agent_id to MCP tool name.
-        let mcp_tool_name = match agent_id {
-            "research" => Some("mcp_yunpat_patent_search"),
-            "oa-response" => Some("mcp_yunpat_patent_analyzer"),
-            _ => None,
-        };
-
-        if let Some(tool_name) = mcp_tool_name {
-            let args = serde_json::json!({
-                "query": topic,
-                "topic": topic,
-            });
-
-            if let Ok(result) = pool_guard.call_tool(tool_name, args).await {
-                // MCP call succeeded — wrap the result as a StageOutput.
-                let content: String = result.to_string();
-                return Ok(vec![StageOutput {
-                    stage_id: "mcp_tool_call".to_string(),
-                    stage_name: format!("MCP 工具调用: {}", tool_name),
-                    stage_type: StageType::Analysis,
-                    content,
-                    multimodal_content: vec![],
-                    artifacts: vec![],
-                    requires_approval: false,
-                    approval_request: None,
-                    metadata: Default::default(),
-                }]);
+            let mut pool_guard = pool.lock().await;
+            match pool_guard.call_tool(tool_name, args).await {
+                Ok(result) => {
+                    // MCP 调用成功 — 包装结果为 StageOutput
+                    let content = format_mcp_result(&result);
+                    return Ok(vec![StageOutput {
+                        stage_id: format!("mcp_{}", agent_id),
+                        stage_name: format!("MCP 工具调用: {}", tool_name),
+                        stage_type: StageType::Analysis,
+                        content,
+                        multimodal_content: vec![],
+                        artifacts: vec![],
+                        requires_approval: false,
+                        approval_request: None,
+                        metadata: Default::default(),
+                    }]);
+                }
+                Err(e) => {
+                    // MCP 调用失败 — 记录日志，降级本地
+                    eprintln!(
+                        "[PatentWorkflow] MCP tool '{}' 调用失败，降级本地 Agent: {}",
+                        tool_name, e
+                    );
+                }
             }
-            // MCP call failed — fall through to local agent.
         }
     }
 
+    // === Step 2: 本地 Agent 执行 ===
+    execute_local_agent(agent_id, topic, case_id).await
+}
+
+/// 格式化 MCP 工具结果为字符串
+fn format_mcp_result(result: &serde_json::Value) -> String {
+    if let Some(content_array) = result.get("content").and_then(|v| v.as_array()) {
+        let texts: Vec<String> = content_array
+            .iter()
+            .filter_map(|item| {
+                if item.get("type").and_then(|t| t.as_str()) == Some("text") {
+                    item.get("text").and_then(|v| v.as_str()).map(String::from)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        if !texts.is_empty() {
+            return texts.join("\n");
+        }
+    }
+
+    // Fallback: 直接序列化
+    serde_json::to_string_pretty(result).unwrap_or_else(|_| "Invalid MCP result".to_string())
+}
+
+/// 本地 Agent 执行逻辑（MCP 降级路径）
+async fn execute_local_agent(
+    agent_id: &str,
+    topic: &str,
+    case_id: Option<&str>,
+) -> Result<Vec<StageOutput>, String> {
     // Try AgentExecutor for agents that implement PatentAgent.
     let input = AgentInput {
         intent: UserIntent {
@@ -779,5 +866,43 @@ mod tests {
             tool_result.metadata.as_ref().unwrap()["agent_id"],
             "patent_db"
         );
+    }
+
+    #[test]
+    fn test_map_agent_to_mcp_tool() {
+        // 测试 research → MCP 映射
+        let result = map_agent_to_mcp_tool("research");
+        assert!(result.is_some());
+        let (tool_name, _) = result.unwrap();
+        assert_eq!(tool_name, "mcp_yunpat_patent_search");
+
+        // 测试 legal_search → MCP 映射
+        let result = map_agent_to_mcp_tool("legal_search");
+        assert!(result.is_some());
+        let (tool_name, _) = result.unwrap();
+        assert_eq!(tool_name, "mcp_yunpat_legal_knowledge_search");
+
+        // 测试未知 agent（无 MCP 映射）
+        let result = map_agent_to_mcp_tool("unknown_agent");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_format_mcp_result() {
+        // 标准格式
+        let result = json!({
+            "content": [
+                { "type": "text", "text": "Line 1" },
+                { "type": "text", "text": "Line 2" }
+            ]
+        });
+        let formatted = format_mcp_result(&result);
+        assert!(formatted.contains("Line 1"));
+        assert!(formatted.contains("Line 2"));
+
+        // 空内容
+        let result = json!({});
+        let formatted = format_mcp_result(&result);
+        assert!(formatted.contains("{}"));
     }
 }

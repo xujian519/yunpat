@@ -45,6 +45,7 @@
     "@yunpat/agent-patent-responder": "workspace:*",
     "@yunpat/agent-legal-qa": "workspace:*",
     "@yunpat/unified-knowledge-graph": "workspace:*",
+    "@yunpat/document-tools": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {

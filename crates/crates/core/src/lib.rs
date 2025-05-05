@@ -11,7 +11,7 @@ use yunpat_execpolicy::{
     AskForApproval, ExecApprovalRequirement, ExecPolicyContext, ExecPolicyDecision,
     ExecPolicyEngine,
 };
-use yunpat_hooks::{HookDispatcher, HookEvent};
+use yunpat_hooks::{HookDispatcher, HookEvent, HookPipeline};
 use yunpat_mcp::{
     McpManager, McpStartupCompleteEvent, McpStartupStatus as McpManagerStartupStatus,
 };
@@ -498,6 +498,29 @@ impl ThreadManager {
             .cwd
             .clone()
             .unwrap_or_else(|| fallback_cwd.to_path_buf());
+
+        // Check for pending HITL or patent checkpoints on resume
+        if let Some(patent_ctx) = &params.patent_context
+            && patent_ctx.pending_hitl
+        {
+            tracing::info!(
+                thread_id = %thread.id,
+                intent = %patent_ctx.intent_type,
+                "Resuming thread with pending HITL patent context"
+            );
+        }
+
+        // Check for TS-originated checkpoints with HITL state
+        if let Ok(Some(cp)) = self.store.load_unified_checkpoint(&thread.id, None)
+            && matches!(cp.source, yunpat_state::CheckpointSource::TsOrchestrator)
+        {
+            tracing::info!(
+                thread_id = %thread.id,
+                checkpoint_id = %cp.checkpoint_id,
+                "Found TS orchestrator checkpoint during resume"
+            );
+        }
+
         self.persist_thread(&thread, None)?;
         self.running_threads
             .insert(thread.id.clone(), thread.clone());
@@ -654,6 +677,7 @@ pub struct Runtime {
     pub mcp_manager: Arc<McpManager>,
     pub exec_policy: ExecPolicyEngine,
     pub hooks: HookDispatcher,
+    pub hook_pipeline: HookPipeline,
     pub jobs: JobManager,
 }
 
@@ -677,6 +701,7 @@ impl Runtime {
             mcp_manager,
             exec_policy,
             hooks,
+            hook_pipeline: HookPipeline::new(),
             jobs,
         }
     }

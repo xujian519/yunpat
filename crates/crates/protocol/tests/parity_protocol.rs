@@ -16,6 +16,7 @@ fn thread_resume_params_round_trip() {
         developer_instructions: Some("dev".to_string()),
         personality: Some("default".to_string()),
         persist_extended_history: true,
+        patent_context: None,
     });
 
     let encoded = serde_json::to_string(&request).expect("serialize request");

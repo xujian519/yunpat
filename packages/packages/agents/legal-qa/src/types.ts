@@ -5,10 +5,21 @@
 import type { BaseAgentInput, BaseAgentOutput } from '@yunpat/agent-base'
 
 /** 查询来源 */
-export type LegalSource = 'law_article' | 'invalid_decision' | 'patent_judgment' | 'patent_rule' | 'legal_document'
+export type LegalSource =
+  | 'law_article'
+  | 'invalid_decision'
+  | 'patent_judgment'
+  | 'patent_rule'
+  | 'legal_document'
 
 /** 查询领域 */
-export type LegalDomain = 'patent' | 'trademark' | 'copyright' | 'trade_secret' | 'antitrust' | 'general'
+export type LegalDomain =
+  | 'patent'
+  | 'trademark'
+  | 'copyright'
+  | 'trade_secret'
+  | 'antitrust'
+  | 'general'
 
 /** 法律问答输入 */
 export interface LegalQAInput extends BaseAgentInput {

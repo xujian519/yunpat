@@ -1052,7 +1052,7 @@ impl Engine {
             for (index, tool) in tool_uses.iter_mut().enumerate() {
                 let tool_id = tool.id.clone();
                 let mut tool_name = tool.name.clone();
-                let tool_input = tool.input.clone();
+                let mut tool_input = tool.input.clone();
                 let tool_caller = tool.caller.clone();
                 crate::logging::info(format!(
                     "Planning tool '{}' with input: {:?}",
@@ -1162,6 +1162,66 @@ impl Engine {
                     approval_description = "Search tool catalog".to_string();
                     supports_parallel = false;
                     read_only = true;
+                }
+
+                // Constitutional engine check — patent safety constraints (bypasses YOLO)
+                // Constitutional engine check — patent safety constraints (bypasses YOLO)
+                if blocked_error.is_none() {
+                    use yunpat_execpolicy::constitutional::ConstitutionalVerdict;
+                    let (verdict, audit) = self
+                        .constitutional_engine
+                        .adjudicate(&tool_name, &tool_input);
+                    // 持久化审计记录
+                    if !verdict.is_pass() {
+                        for entry in &audit {
+                            if entry.verdict.severity() > 0 {
+                                crate::logging::info(format!(
+                                    "[ConstitutionalAudit] principle={} verdict={:?} tool={} ts={}",
+                                    entry.principle,
+                                    entry.verdict,
+                                    entry.tool_name,
+                                    entry.timestamp_ms
+                                ));
+                            }
+                        }
+                    }
+                    match verdict {
+                        ConstitutionalVerdict::HardDeny { reason } => {
+                            crate::logging::warn(format!(
+                                "Constitutional HardDeny for '{tool_name}': {reason}"
+                            ));
+                            blocked_error = Some(ToolError::permission_denied(format!(
+                                "🛑 宪法约束阻止: {reason}"
+                            )));
+                        }
+                        ConstitutionalVerdict::RequireHuman { reason } => {
+                            crate::logging::info(format!(
+                                "Constitutional RequireHuman for '{tool_name}': {reason}"
+                            ));
+                            approval_required = true;
+                            approval_description = format!("🏛️ {reason}");
+                        }
+                        ConstitutionalVerdict::RouteToLocal { reason } => {
+                            crate::logging::info(format!(
+                                "Constitutional RouteToLocal for '{tool_name}': {reason}"
+                            ));
+                            let _ = self
+                                .tx_event
+                                .send(Event::status(format!("⚠️ 数据主权保护: {reason}")))
+                                .await;
+                            // 标记输入使用本地模型，确保不外发敏感数据
+                            if let Some(obj) = tool_input.as_object_mut() {
+                                obj.insert(
+                                    "_constitutional_route".to_string(),
+                                    json!({"local_model": true, "reason": reason}),
+                                );
+                            }
+                            // 本地路由不需要审批
+                            read_only = true;
+                            approval_required = false;
+                        }
+                        ConstitutionalVerdict::Pass => {}
+                    }
                 }
 
                 if blocked_error.is_none()

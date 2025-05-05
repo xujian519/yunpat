@@ -54,35 +54,24 @@ export class LegalQAAgent extends ProfessionalAgent<LegalQAInput, LegalQAOutput>
   /**
    * 实现act方法：执行查询并生成回答
    */
-  protected async act(
-    plan: any,
-    context: ExtendedExecutionContext
-  ): Promise<LegalQAOutput> {
+  protected async act(plan: any, context: ExtendedExecutionContext): Promise<LegalQAOutput> {
     const startTime = Date.now()
 
     try {
       // 1. 并行搜索多个数据源
-      const [
-        structuredResults,
-        invalidDecisions,
-        patentRules,
-        entityResults,
-      ] = await Promise.allSettled([
-        this.db.structuredSearch(plan.question, Math.ceil(plan.topK / 4)),
-        this.db.queryInvalidDecisions(plan.question, Math.ceil(plan.topK / 4)),
-        this.searchPatentRules(plan.question, Math.ceil(plan.topK / 4)),
-        this.searchEntityBased(plan.question, plan.domain, Math.ceil(plan.topK / 4)),
-      ])
+      const [structuredResults, invalidDecisions, patentRules, entityResults] =
+        await Promise.allSettled([
+          this.db.structuredSearch(plan.question, Math.ceil(plan.topK / 4)),
+          this.db.queryInvalidDecisions(plan.question, Math.ceil(plan.topK / 4)),
+          this.searchPatentRules(plan.question, Math.ceil(plan.topK / 4)),
+          this.searchEntityBased(plan.question, plan.domain, Math.ceil(plan.topK / 4)),
+        ])
 
       // 2. 提取成功的结果
-      const structuredData =
-        structuredResults.status === 'fulfilled' ? structuredResults.value : []
-      const invalidData =
-        invalidDecisions.status === 'fulfilled' ? invalidDecisions.value : []
-      const rulesData =
-        patentRules.status === 'fulfilled' ? patentRules.value : []
-      const entityData =
-        entityResults.status === 'fulfilled' ? entityResults.value : []
+      const structuredData = structuredResults.status === 'fulfilled' ? structuredResults.value : []
+      const invalidData = invalidDecisions.status === 'fulfilled' ? invalidDecisions.value : []
+      const rulesData = patentRules.status === 'fulfilled' ? patentRules.value : []
+      const entityData = entityResults.status === 'fulfilled' ? entityResults.value : []
 
       // 3. 转换为标准格式
       const lawCitations: LawCitation[] = this.mapToLawCitations(structuredData)
@@ -161,11 +150,7 @@ export class LegalQAAgent extends ProfessionalAgent<LegalQAInput, LegalQAOutput>
   /**
    * 基于实体的搜索
    */
-  private async searchEntityBased(
-    query: string,
-    domain: string,
-    topK: number
-  ): Promise<any[]> {
+  private async searchEntityBased(query: string, domain: string, topK: number): Promise<any[]> {
     try {
       const entityResults = await this.db.entitySearch(query, undefined, topK)
       return entityResults
@@ -303,11 +288,7 @@ ${relevantRules || '暂无'}
   /**
    * 计算置信度
    */
-  private calculateConfidence(
-    lawCount: number,
-    caseCount: number,
-    ruleCount: number
-  ): number {
+  private calculateConfidence(lawCount: number, caseCount: number, ruleCount: number): number {
     const total = lawCount + caseCount + ruleCount
 
     if (total === 0) return 0.2

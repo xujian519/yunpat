@@ -275,6 +275,12 @@ export {
 
 export { ShortTermMemory, MemoryManager } from './memory/MemoryStore.js'
 
+export {
+  RustCheckpointBridge,
+  type UnifiedCheckpoint,
+  type HITLCheckpointData,
+} from './memory/RustCheckpointBridge.js'
+
 // ========== ⑤ 工具层 (Tools) ==========
 export { ToolRegistry, BaseTool, ToolWrapper as LegacyToolWrapper } from './tools/ToolRegistry.js'
 
@@ -455,7 +461,11 @@ export {
   ComplianceChecker,
   AutoCorrector,
   PATENT_PRINCIPLES,
+  detectTechnicalDisclosure,
+  createAuditEntry,
 } from './constitutional/index.js'
+
+export type { SovereigntyCheckResult } from './constitutional/index.js'
 
 export type {
   PrincipleCheckFunction,

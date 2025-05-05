@@ -9,4 +9,7 @@ export {
   LegalKnowledgeSearchTool,
   InvalidDecisionSearchTool,
   PatentRuleSearchTool,
+  ProjectScanTool,
 } from './AllTools.js'
+
+export { PatentDispatchTool } from './PatentDispatchTool.js'

@@ -6,5 +6,5 @@
 //! - 审查答复 (/respond)
 //! - 专利管理 (/manage)
 
-pub mod workflow;
 pub mod commands;
+pub mod workflow;

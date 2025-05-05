@@ -337,7 +337,13 @@ ${ctx.featureResolutionHistory.map((h) => `- 第${h.attempt}次：缺少${h.miss
       throw new Error('LLM 未配置，无法执行权利要求生成')
     }
 
-    const result = await this.callLLMWithFallback(context.llm, systemPrompt, userPrompt, plan.input, startTime)
+    const result = await this.callLLMWithFallback(
+      context.llm,
+      systemPrompt,
+      userPrompt,
+      plan.input,
+      startTime
+    )
 
     console.log(`\n✅ [权利要求生成] 撰写完成 (置信度: ${result.confidence.toFixed(2)})`)
     console.log(`   独立权利要求: ${result.claimsSet.independent_claims.length} 项`)
@@ -723,7 +729,10 @@ ${ctx.featureResolutionHistory.map((h) => `- 第${h.attempt}次：缺少${h.miss
     }
   }
 
-  private createFallbackOutput(input: ClaimGeneratorInput, startTime: number): ClaimGeneratorOutput {
+  private createFallbackOutput(
+    input: ClaimGeneratorInput,
+    startTime: number
+  ): ClaimGeneratorOutput {
     const executionTime = Date.now() - startTime
     const { inventionUnderstanding } = input
 

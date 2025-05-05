@@ -1,0 +1,126 @@
+# 数据主权规则
+# 定义专利数据的分类、路由和传输约束
+# 版本: 1.0.0
+# 这是整个系统最关键的规则文件，保护客户技术秘密
+
+# ── 数据分级 ──
+data_classification:
+  restricted:
+    # 技术交底书、发明构思、未公开的技术方案
+    description: 受限数据 — 禁止外传
+    examples:
+      - 技术交底书原文
+      - 发明构思描述
+      - 未公开的实验数据
+      - 核心算法源码
+    routing: local_only    # 只能路由到本地模型
+    retention: session_only # 仅会话内保留，不持久化
+
+  controlled:
+    # 权利要求书、说明书草稿、审查意见答复
+    description: 受控数据 — 抽象化后可外传
+    examples:
+      - 权利要求书草稿
+      - 说明书草稿
+      - 审查意见答复草稿
+    routing: abstract_first # 抽象化后可发送到外部 API
+    retention: encrypted    # 加密存储
+
+  public:
+    # 公开专利文献、法律法规、审查指南
+    description: 公开数据 — 无限制
+    examples:
+      - 已公开的专利文献
+      - 法律法规文本
+      - 审查指南
+    routing: any
+    retention: standard
+
+# ── 规则集 ──
+rules:
+  technical_disclosure_protection:
+    id: CON-01
+    name: 技术交底书保护
+    description: 技术交底书内容禁止发送到外部 API，必须路由到本地模型
+    severity: critical
+    action: block_and_reroute
+    detection:
+      # 检测条件（满足任一即触发）
+      type: content_analysis
+      conditions:
+        - type: keyword_density
+          keywords:
+            - "技术交底书"
+            - "发明人"
+            - "技术方案如下"
+            - "技术问题"
+            - "技术效果"
+            - "实施例"
+            - "实验数据"
+            - "测试结果"
+          threshold: 3  # 命中3个以上关键词
+        - type: length_and_structure
+          min_length: 500    # 超过500字
+          has_structure: true # 包含结构化描述
+      action_on_match:
+        block_external: true
+        reroute_to: "ollama"
+        notify_user: true
+        message: "检测到技术交底书内容，已自动路由到本地模型处理（CON-01）"
+
+  claim_draft_protection:
+    id: CON-01B
+    name: 权利要求草稿保护
+    description: 权利要求草稿发送到外部 API 前必须抽象化处理
+    severity: major
+    action: abstract_and_route
+    detection:
+      type: keyword_match
+      keywords:
+        - "权利要求"
+        - "独立权利要求"
+        - "从属权利要求"
+        - "前序部分"
+        - "特征部分"
+      threshold: 2
+    action_on_match:
+      abstract_before_send: true
+      log_action: true
+
+  source_traceability:
+    id: CON-03
+    name: 来源可追溯性
+    description: 所有专利检索结果必须包含来源信息，AI 生成的分析必须标注
+    severity: major
+    action: enforce
+    check:
+      type: output_validation
+      requires:
+        - source_url
+        - source_type    # patent | academic | legal
+        - confidence_score
+
+  audit_logging:
+    id: CON-05
+    name: 操作审计日志
+    description: 所有专利工具调用必须记录完整审计日志
+    severity: major
+    action: log
+    log_fields:
+      - timestamp
+      - tool_name
+      - input_hash      # 不记录原文，只记录哈希
+      - output_hash
+      - model_used
+      - routing_decision # local | external
+      - user_action      # approve | reject | modify
+
+# ── 本地路由配置 ──
+local_routing:
+  default_model: "ollama:qwen2.5:14b"
+  fallback_model: "ollama:qwen2.5:7b"
+  timeout_ms: 60000
+  # 如果 Ollama 不可用
+  on_unavailable:
+    action: block_with_message
+    message: "本地模型不可用，技术交底书内容不会发送到外部 API。请安装 Ollama 并下载 qwen2.5 模型。"

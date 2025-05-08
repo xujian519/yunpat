@@ -3,14 +3,6 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Envelope<T> {
-    pub request_id: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub thread_id: Option<String>,
-    pub body: T,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ThreadStatus {

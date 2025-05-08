@@ -14,38 +14,7 @@
 import { IntentRecognizer, LLMClient } from '@yunpat/orchestrator'
 import type { OrchestratorInput } from '@yunpat/orchestrator'
 import { generatePlan } from './plan-injector.js'
-
-/** 向 stderr 写日志 */
-function log(...args: unknown[]): void {
-  process.stderr.write(`[intent-hook] ${args.join(' ')}\n`)
-}
-
-/** 从 stdin 读取全部内容 */
-function readStdin(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = ''
-    process.stdin.setEncoding('utf-8')
-    process.stdin.on('data', (chunk: string) => {
-      data += chunk
-    })
-    process.stdin.on('end', () => resolve(data))
-    process.stdin.on('error', reject)
-  })
-}
-
-/** 向 stdout 写入单行 JSONL */
-function emit(obj: Record<string, unknown>): void {
-  process.stdout.write(JSON.stringify(obj) + '\n')
-}
-
-/** 检查是否有可用的 LLM API Key */
-function hasLLMApiKey(): boolean {
-  return !!(
-    process.env.ANTHROPIC_API_KEY ||
-    process.env.OPENAI_API_KEY ||
-    process.env.DEEPSEEK_API_KEY
-  )
-}
+import { readStdin, emit, log, hasLLMApiKey } from './hook-utils.js'
 
 /** 意图类型到 HookInstruction 的映射 */
 function emitInstructionsForIntent(intentResult: {
@@ -80,7 +49,7 @@ function emitInstructionsForIntent(intentResult: {
     // 触发任务规划（2A.3）
     if (extracted.title) {
       generatePlan(extracted.title).catch((err) => {
-        log(`任务规划失败: ${err instanceof Error ? err.message : String(err)}`)
+      log("intent-hook", `任务规划失败: ${err instanceof Error ? err.message : String(err)}`)
       })
     }
   }
@@ -93,7 +62,7 @@ function emitInstructionsForIntent(intentResult: {
 
     if (extracted.title) {
       generatePlan(extracted.title).catch((err) => {
-        log(`任务规划失败: ${err instanceof Error ? err.message : String(err)}`)
+      log("intent-hook", `任务规划失败: ${err instanceof Error ? err.message : String(err)}`)
       })
     }
   }
@@ -141,7 +110,7 @@ async function main(): Promise<void> {
   try {
     const raw = await readStdin()
     if (!raw.trim()) {
-      log('stdin 为空，跳过')
+      log("intent-hook", 'stdin 为空，跳过')
       return
     }
 
@@ -149,7 +118,7 @@ async function main(): Promise<void> {
     try {
       input = JSON.parse(raw)
     } catch {
-      log('无法解析 stdin JSON，跳过')
+      log("intent-hook", '无法解析 stdin JSON，跳过')
       return
     }
 
@@ -158,17 +127,17 @@ async function main(): Promise<void> {
     const mode = String(input.mode ?? '')
     const sessionId = String(input.session_id ?? 'hook-session')
 
-    log(`event=${event} mode=${mode} message长度=${message.length}`)
+      log("intent-hook", `event=${event} mode=${mode} message长度=${message.length}`)
 
     // 仅处理 message_submit 事件
     if (event !== 'message_submit') {
-      log(`忽略非 message_submit 事件: ${event}`)
+      log("intent-hook", `忽略非 message_submit 事件: ${event}`)
       return
     }
 
     // 有 API Key 时使用 LLM 识别器
     if (hasLLMApiKey()) {
-      log('使用 LLM IntentRecognizer')
+      log("intent-hook", '使用 LLM IntentRecognizer')
 
       try {
         const llmClient = new LLMClient({
@@ -187,21 +156,21 @@ async function main(): Promise<void> {
 
         const intentResult = await recognizer.recognize(orchestratorInput)
 
-        log(
+      log("intent-hook", 
           `识别结果: intent=${intentResult.intent} confidence=${intentResult.confidence.toFixed(2)} complexity=${intentResult.complexity}`
         )
 
         emitInstructionsForIntent(intentResult)
       } catch (err) {
-        log(`LLM 识别失败，降级为关键词检测: ${err instanceof Error ? err.message : String(err)}`)
+      log("intent-hook", `LLM 识别失败，降级为关键词检测: ${err instanceof Error ? err.message : String(err)}`)
         fallbackKeywordDetection(message)
       }
     } else {
-      log('无 LLM API Key，使用关键词检测')
+      log("intent-hook", '无 LLM API Key，使用关键词检测')
       fallbackKeywordDetection(message)
     }
   } catch (err) {
-    log(`异常退出: ${err instanceof Error ? err.message : String(err)}`)
+      log("intent-hook", `异常退出: ${err instanceof Error ? err.message : String(err)}`)
   }
 }
 

@@ -20,11 +20,11 @@ use async_trait::async_trait;
 use futures_core::Stream;
 use std::pin::Pin;
 
+use crate::helpers::{llm_generate, extract_case_id, keyword_confidence, AgentBase};
+
 /// The OA Response Agent handles office action response workflows.
 pub struct OAResponseAgent {
-    id: AgentId,
-    initialized: bool,
-    llm_provider: Option<Box<dyn LlmProvider>>,
+    base: AgentBase,
 }
 
 impl Default for OAResponseAgent {
@@ -35,22 +35,17 @@ impl Default for OAResponseAgent {
 
 impl OAResponseAgent {
     pub fn new() -> Self {
-        Self {
-            id: AgentId("oa-response".to_string()),
-            initialized: false,
-            llm_provider: None,
-        }
+        Self { base: AgentBase::new("oa-response") }
     }
 
     /// Set an LLM provider for content generation (builder pattern).
-    pub fn with_llm(mut self, provider: Box<dyn LlmProvider>) -> Self {
-        self.llm_provider = Some(provider);
-        self
+    pub fn with_llm(self, provider: Box<dyn LlmProvider>) -> Self {
+        Self { base: self.base.with_llm(provider) }
     }
 
     /// Whether an LLM provider is configured.
     pub fn has_llm(&self) -> bool {
-        self.llm_provider.is_some()
+        self.base.has_llm()
     }
 }
 
@@ -70,7 +65,7 @@ const OA_KEYWORDS: &[&str] = &[
 #[async_trait]
 impl PatentAgent for OAResponseAgent {
     fn id(&self) -> &AgentId {
-        &self.id
+        self.base.id()
     }
 
     fn name(&self) -> &str {
@@ -96,21 +91,7 @@ impl PatentAgent for OAResponseAgent {
     }
 
     fn can_handle(&self, intent: &UserIntent) -> Confidence {
-        let input = &intent.raw_input;
-        let lower = input.to_lowercase();
-
-        let matches = OA_KEYWORDS
-            .iter()
-            .filter(|kw| lower.contains(kw.to_lowercase().as_str()))
-            .count();
-
-        if matches == 0 {
-            return 0.0;
-        }
-
-        let base = 0.6;
-        let boost = (matches as f32 * 0.1).min(0.4);
-        (base + boost).min(1.0)
+        keyword_confidence(&intent.raw_input, OA_KEYWORDS, 0.6, 0.1, 0.4)
     }
 
     fn stages(&self) -> Vec<StageDefinition> {
@@ -149,20 +130,16 @@ impl PatentAgent for OAResponseAgent {
     }
 
     async fn initialize(&mut self) -> Result<()> {
-        self.initialized = true;
+        self.base.initialized = true;
         Ok(())
     }
 
     fn execute(&mut self, input: AgentInput) -> Pin<Box<dyn Stream<Item = StageOutput> + Send>> {
         let topic = input.intent.raw_input.clone();
-        let case_id = input
-            .extra
-            .get("case_id")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string());
+        let case_id = extract_case_id(&input.extra);
 
         // Take the LLM provider out (move into the stream).
-        let llm_provider = self.llm_provider.take();
+        let llm_provider = self.base.llm_provider.take();
 
         Box::pin(async_stream::stream! {
             // Step 1: 审查意见解读
@@ -404,7 +381,7 @@ impl PatentAgent for OAResponseAgent {
     }
 
     async fn terminate(&mut self) -> Result<()> {
-        self.initialized = false;
+        self.base.initialized = false;
         Ok(())
     }
 }
@@ -548,29 +525,6 @@ impl crate::agent::OrchestrationAgent for OAResponseAgent {
                 },
             ],
         }
-    }
-}
-
-// --- Content generation helpers ---
-
-/// Generate content via LLM. Falls back to empty string on error.
-async fn llm_generate(provider: &dyn LlmProvider, system_prompt: &str, user_msg: &str) -> String {
-    use futures_util::StreamExt;
-    let mut stream = provider.chat_stream(system_prompt, user_msg);
-    let mut result = String::new();
-    while let Some(chunk) = stream.next().await {
-        match chunk {
-            Ok(text) => result.push_str(&text),
-            Err(e) => {
-                result.push_str(&format!("\n\n[LLM 生成出错: {}]", e));
-                break;
-            }
-        }
-    }
-    if result.is_empty() {
-        "[LLM 未返回内容]".to_string()
-    } else {
-        result
     }
 }
 
@@ -843,13 +797,7 @@ fn generate_quality_report() -> QualityReport {
 }
 
 fn pass_mark(score: f32) -> &'static str {
-    if score >= 8.0 {
-        "✓ 优秀"
-    } else if score >= 7.5 {
-        "✓ 合格"
-    } else {
-        "✗ 不达标"
-    }
+    crate::helpers::pass_mark(score, 7.5)
 }
 
 fn generate_response_package(topic: &str) -> String {

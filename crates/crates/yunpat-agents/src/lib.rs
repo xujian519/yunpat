@@ -15,6 +15,7 @@ pub mod drafting;
 pub mod flow;
 pub mod flow_executor;
 pub mod flow_loader;
+pub mod helpers;
 pub mod invalidation;
 pub mod knowledge;
 pub mod oa_response;

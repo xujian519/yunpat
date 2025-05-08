@@ -12,6 +12,7 @@
 
 import { ExceptionHandler } from '@yunpat/orchestrator'
 import type { ExecutionContext } from '@yunpat/orchestrator'
+import { readStdin, emit, log } from './hook-utils.js'
 
 /** 专利相关工具名称前缀/关键词 */
 const PATENT_TOOL_NAMES = [
@@ -34,37 +35,19 @@ interface HookInstruction {
     | 'require_approval'
     | 'warn'
     | 'allow'
-  role?: string // inject_message 时使用
-  content?: string // inject_message/warn 时使用
-  mode?: string // set_mode 时使用
-  reason?: string // set_mode/suggest_tool 时使用
-  tool?: string // suggest_tool 时使用
-  message?: string // require_approval/warn 时使用
-  options?: string[] // require_approval 时使用
-  skill?: string // load_skill 时使用
+  role?: string
+  content?: string
+  mode?: string
+  reason?: string
+  tool?: string
+  message?: string
+  options?: string[]
+  skill?: string
 }
 
-/** 从 stdin 读取全部内容 */
-function readStdin(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = ''
-    process.stdin.setEncoding('utf8')
-    process.stdin.on('data', (chunk: string) => {
-      data += chunk
-    })
-    process.stdin.on('end', () => resolve(data))
-    process.stdin.on('error', reject)
-  })
-}
-
-/** 向 stdout 写入单行 JSONL */
-function emit(instruction: HookInstruction): void {
-  process.stdout.write(JSON.stringify(instruction) + '\n')
-}
-
-/** 向 stderr 写日志 */
-function log(...args: unknown[]): void {
-  process.stderr.write(`[exception-hook] ${args.join(' ')}\n`)
+/** Write a single HookInstruction JSONL to stdout. */
+function emitInstruction(instruction: HookInstruction): void {
+  emit(instruction as unknown as Record<string, unknown>)
 }
 
 /**
@@ -193,7 +176,7 @@ async function main(): Promise<void> {
   try {
     const raw = await readStdin()
     if (!raw.trim()) {
-      log('stdin 为空，跳过')
+      log("exception-hook", 'stdin 为空，跳过')
       return
     }
 
@@ -201,7 +184,7 @@ async function main(): Promise<void> {
     try {
       input = JSON.parse(raw)
     } catch {
-      log('无法解析 stdin JSON，跳过')
+      log("exception-hook", '无法解析 stdin JSON，跳过')
       return
     }
 
@@ -211,21 +194,21 @@ async function main(): Promise<void> {
     const toolName = input.tool_name ? String(input.tool_name) : undefined
     const sessionId = input.session_id ? String(input.session_id) : undefined
 
-    log(
+      log("exception-hook", 
       `event=${event} error_type=${errorType} tool=${toolName ?? '-'} session=${sessionId ?? '-'}`
     )
 
     // 仅处理 on_error 事件
     if (event !== 'on_error') {
-      log(`忽略非 on_error 事件: ${event}`)
+      log("exception-hook", `忽略非 on_error 事件: ${event}`)
       return
     }
 
     // 快速路径：尝试规则化恢复
     const quickInstruction = quickRecoveryStrategy(errorType, errorMsg, toolName)
     if (quickInstruction) {
-      log('快速路径恢复策略:', quickInstruction.action)
-      emit(quickInstruction)
+      log("exception-hook", '快速路径恢复策略:', quickInstruction.action)
+      emitInstruction(quickInstruction)
       return
     }
 
@@ -238,20 +221,20 @@ async function main(): Promise<void> {
       const recoveryResult = await exceptionHandler.handleException(error, executionContext)
       const instruction = recoveryResultToInstruction(recoveryResult, error)
 
-      log(`ExceptionHandler 恢复策略: action=${instruction.action}`)
-      emit(instruction)
+      log("exception-hook", `ExceptionHandler 恢复策略: action=${instruction.action}`)
+      emitInstruction(instruction)
     } catch (handlerError) {
       // ExceptionHandler 也失败了，输出最简单的兜底指令
-      log(
+      log("exception-hook", 
         `ExceptionHandler 失败: ${handlerError instanceof Error ? handlerError.message : String(handlerError)}`
       )
-      emit({
+      emitInstruction({
         action: 'warn',
         message: '系统出现错误，请稍后重试',
       })
     }
   } catch (err) {
-    log(`异常退出: ${err instanceof Error ? err.message : String(err)}`)
+      log("exception-hook", `异常退出: ${err instanceof Error ? err.message : String(err)}`)
   }
 }
 

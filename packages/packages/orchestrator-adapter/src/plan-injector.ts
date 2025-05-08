@@ -10,20 +10,7 @@ import type { TaskPlan } from '@yunpat/orchestrator'
 import fs from 'fs'
 import path from 'path'
 import { homedir } from 'os'
-
-/** 向 stderr 写日志 */
-function log(...args: unknown[]): void {
-  process.stderr.write(`[plan-injector] ${args.join(' ')}\n`)
-}
-
-/** 检查是否有可用的 LLM API Key */
-function hasLLMApiKey(): boolean {
-  return !!(
-    process.env.ANTHROPIC_API_KEY ||
-    process.env.OPENAI_API_KEY ||
-    process.env.DEEPSEEK_API_KEY
-  )
-}
+import { log, hasLLMApiKey } from './hook-utils.js'
 
 /**
  * 将 TaskPlan 转换为 Markdown 格式
@@ -86,12 +73,12 @@ function taskPlanToMarkdown(plan: TaskPlan): string {
  */
 export async function generatePlan(taskDescription: string, sessionId?: string): Promise<string> {
   if (!hasLLMApiKey()) {
-    log('无 LLM API Key，跳过任务规划生成')
+      log("plan-injector", '无 LLM API Key，跳过任务规划生成')
     return ''
   }
 
   try {
-    log(`开始生成任务规划: ${taskDescription}`)
+      log("plan-injector", `开始生成任务规划: ${taskDescription}`)
 
     // 初始化 LLM Client
     const llmClient = new LLMClient({
@@ -126,7 +113,7 @@ export async function generatePlan(taskDescription: string, sessionId?: string):
     // 生成计划
     const plan = await planner.generatePlan(mockIntentResult, sessionId)
 
-    log(`任务规划生成成功: ${plan.planId}, ${plan.steps.length} 个步骤`)
+      log("plan-injector", `任务规划生成成功: ${plan.planId}, ${plan.steps.length} 个步骤`)
 
     // 确保 .deepseek 目录存在
     const deepseekDir = path.join(homedir(), '.deepseek')
@@ -139,11 +126,11 @@ export async function generatePlan(taskDescription: string, sessionId?: string):
     const markdown = taskPlanToMarkdown(plan)
     fs.writeFileSync(planFilePath, markdown, 'utf-8')
 
-    log(`任务规划已写入: ${planFilePath}`)
+      log("plan-injector", `任务规划已写入: ${planFilePath}`)
 
     return planFilePath
   } catch (err) {
-    log(`任务规划生成失败: ${err instanceof Error ? err.message : String(err)}`)
+      log("plan-injector", `任务规划生成失败: ${err instanceof Error ? err.message : String(err)}`)
     throw err
   }
 }

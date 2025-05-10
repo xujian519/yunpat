@@ -190,6 +190,7 @@ export class PostgreSQLClient {
       password: this.config.password || process.env.PG_PASSWORD || '',
       max: 20,
       idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
     })
   }
 
@@ -203,6 +204,8 @@ export class PostgreSQLClient {
 
     try {
       const client = await this.pool.connect()
+      // 设置查询超时，防止慢查询挂起
+      await client.query('SET statement_timeout = 10000')
       const result = await client.query('SELECT version()')
       console.log('[PostgreSQL] ✅ 连接成功')
       client.release()

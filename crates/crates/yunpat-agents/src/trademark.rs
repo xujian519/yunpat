@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use futures_core::Stream;
 use std::pin::Pin;
 
-use crate::helpers::{llm_generate, extract_case_id, keyword_confidence, AgentBase};
+use crate::helpers::{AgentBase, extract_case_id, keyword_confidence, llm_generate};
 
 pub struct TrademarkAgent {
     base: AgentBase,
@@ -21,11 +21,15 @@ impl Default for TrademarkAgent {
 
 impl TrademarkAgent {
     pub fn new() -> Self {
-        Self { base: AgentBase::new("trademark") }
+        Self {
+            base: AgentBase::new("trademark"),
+        }
     }
 
     pub fn with_llm(self, provider: Box<dyn LlmProvider>) -> Self {
-        Self { base: self.base.with_llm(provider) }
+        Self {
+            base: self.base.with_llm(provider),
+        }
     }
 
     pub fn has_llm(&self) -> bool {

@@ -61,3 +61,43 @@ export class ValidationError extends Error {
     this.name = 'ValidationError'
   }
 }
+
+/**
+ * 工具执行错误
+ *
+ * 包含工具名、输入、错误类型和是否可重试。
+ */
+export class ToolExecutionError extends Error {
+  constructor(
+    message: string,
+    public readonly toolName: string,
+    public readonly input: unknown,
+    public readonly errorType:
+      | 'TIMEOUT'
+      | 'PERMISSION_DENIED'
+      | 'INTERRUPTED'
+      | 'VALIDATION_FAILED'
+      | 'EXECUTION_FAILED',
+    public readonly retryable: boolean = false,
+    public readonly originalError?: Error
+  ) {
+    super(message)
+    this.name = 'ToolExecutionError'
+  }
+}
+
+/**
+ * 权限拒绝错误
+ */
+export class PermissionDeniedError extends ToolExecutionError {
+  constructor(
+    message: string,
+    toolName: string,
+    input: unknown,
+    public readonly requiredPermissions: string[],
+    public readonly reason: string
+  ) {
+    super(message, toolName, input, 'PERMISSION_DENIED', false)
+    this.name = 'PermissionDeniedError'
+  }
+}

@@ -11,11 +11,40 @@ import type {
   FileSignal,
   FileSignalType,
 } from '@yunpat/orchestrator'
+import {
+  PatentCoordinator,
+  createPatentCoordinator,
+  type CoordinatorInput,
+  type AgentConfig,
+  type PatentCoordinatorConfig,
+  type CaseUnderstanding,
+} from '@yunpat/core'
 
 export interface AdapterConfig {
   port: number
   gatewayUrl: string
   orchestrator: OrchestratorAgentConfig
+  /** 专利协调器配置（可选，启用 /internal/coordinate 路由） */
+  patentCoordinator?: {
+    agentConfig: Omit<AgentConfig, 'eventBus' | 'memory' | 'tools' | 'llm'>
+    coordinatorConfig?: PatentCoordinatorConfig
+  }
+}
+
+/**
+ * 专利协调请求
+ */
+export interface CoordinateRequest {
+  session_id: string
+  user_id?: string
+  /** 用户原始输入 */
+  message: string
+  /** 用户意图（可选） */
+  intent?: 'draft_full' | 'draft_claims' | 'draft_spec' | 'respond_oa' | 'search' | 'analyze'
+  /** 已有案件理解（可选） */
+  existing_case_understanding?: Record<string, unknown>
+  /** 额外上下文 */
+  context?: Record<string, unknown>
 }
 
 export interface OrchestrateRequest {
@@ -97,6 +126,10 @@ export class OrchestratorAdapter {
   private agent: OrchestratorAgent
   private gatewayUrl: string
   private port: number
+  private config: AdapterConfig
+
+  // 专利协调器（懒加载）
+  private patentCoordinator?: PatentCoordinator
 
   // sessionId → { sessionId, checkpointIds } 映射，用于 HITL 恢复
   private sessionHitlMap = new Map<string, { sessionId: string; checkpointIds: string[] }>()
@@ -104,12 +137,44 @@ export class OrchestratorAdapter {
   constructor(config: AdapterConfig) {
     this.port = config.port
     this.gatewayUrl = config.gatewayUrl
+    this.config = config
     this.agent = new OrchestratorAgent(config.orchestrator)
 
     this.app = express()
     this.app.use(express.json({ limit: '10mb' }))
 
     this.setupRoutes()
+  }
+
+  /**
+   * 获取或创建专利协调器
+   */
+  private getPatentCoordinator(): PatentCoordinator {
+    if (this.patentCoordinator) {
+      return this.patentCoordinator
+    }
+
+    if (!this.config.patentCoordinator) {
+      throw new Error('PatentCoordinator not configured. Set patentCoordinator in adapter config.')
+    }
+
+    const { agentConfig, coordinatorConfig } = this.config.patentCoordinator
+    const orchestrator = this.config.orchestrator
+
+    const fullAgentConfig: AgentConfig = {
+      ...agentConfig,
+      eventBus: orchestrator.eventBus,
+      memory: orchestrator.memory,
+      tools: orchestrator.tools,
+      llm: orchestrator.llm,
+    }
+
+    this.patentCoordinator = createPatentCoordinator({
+      ...fullAgentConfig,
+      coordinatorConfig,
+    })
+
+    return this.patentCoordinator
   }
 
   private setupRoutes(): void {
@@ -231,6 +296,65 @@ export class OrchestratorAdapter {
         res.json({ checkpoints })
       } catch (error) {
         res.status(500).json({ error: String(error) })
+      }
+    })
+
+    // 专利工作流协调路由
+    this.app.post('/internal/coordinate', async (req, res) => {
+      const { session_id, user_id, message, intent, existing_case_understanding, context } =
+        req.body as CoordinateRequest
+
+      if (!message) {
+        res.status(400).json({ error: 'message is required' })
+        return
+      }
+
+      try {
+        const coordinator = this.getPatentCoordinator()
+
+        // 发送开始事件
+        await this.emitEvent(session_id, 'workflow_start', {
+          type: 'patent_coordinator',
+          intent: intent || 'draft_full',
+          timestamp: Date.now(),
+        })
+
+        const coordinatorInput: CoordinatorInput = {
+          userInput: message,
+          ...(intent ? { intent } : {}),
+          ...(existing_case_understanding
+            ? {
+                existingCaseUnderstanding:
+                  existing_case_understanding as unknown as CaseUnderstanding,
+              }
+            : {}),
+          ...(context ? { context } : {}),
+        }
+
+        const result = await coordinator.execute(coordinatorInput)
+
+        // 发送完成事件
+        await this.emitEvent(session_id, 'workflow_done', {
+          type: 'patent_coordinator',
+          executionSummary: result.executionSummary,
+          timestamp: Date.now(),
+        })
+
+        res.json({
+          success: true,
+          session_id,
+          result: {
+            caseUnderstanding: result.caseUnderstanding,
+            workflowPlan: result.workflowPlan,
+            taskResults: result.taskResults,
+            finalOutput: result.finalOutput,
+            executionSummary: result.executionSummary,
+          },
+        })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        await this.emitEvent(session_id, 'error', { error: errorMessage })
+        res.status(500).json({ error: errorMessage })
       }
     })
   }

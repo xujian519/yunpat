@@ -36,6 +36,10 @@ export interface RelationInference {
   sources: string[]
 }
 
+// 进程级单例：避免多个 Agent 重复创建连接池
+let globalKnowledgeGraph: PostgreSQLFirstKnowledgeGraph | null = null
+let globalInitPromise: Promise<PostgreSQLFirstKnowledgeGraph> | null = null
+
 export class PostgreSQLFirstKnowledgeGraph {
   private postgres: PostgreSQLClient
   private yunpat: YunPatAdapter
@@ -63,6 +67,17 @@ export class PostgreSQLFirstKnowledgeGraph {
 
     this.initialized = true
     console.log('[KnowledgeGraph] ✅ 初始化完成')
+  }
+
+  /**
+   * 关闭所有底层连接
+   */
+  async close(): Promise<void> {
+    await Promise.all([
+      this.postgres.close().catch(() => {}),
+      this.openclaw.close().catch(() => {}),
+    ])
+    this.initialized = false
   }
 
   async query(queryText: string, options: KnowledgeQueryOptions = {}): Promise<KnowledgeResult[]> {
@@ -242,7 +257,27 @@ export class PostgreSQLFirstKnowledgeGraph {
 }
 
 export async function createKnowledgeGraph(): Promise<PostgreSQLFirstKnowledgeGraph> {
-  const kg = new PostgreSQLFirstKnowledgeGraph()
-  await kg.initialize()
-  return kg
+  // 单例模式：进程内只创建一个知识图谱实例
+  if (globalKnowledgeGraph) return globalKnowledgeGraph
+  if (globalInitPromise) return globalInitPromise
+
+  globalInitPromise = (async () => {
+    const kg = new PostgreSQLFirstKnowledgeGraph()
+    await kg.initialize()
+    globalKnowledgeGraph = kg
+    return kg
+  })()
+
+  return globalInitPromise
+}
+
+/**
+ * 关闭全局知识图谱连接（释放数据库连接池）
+ */
+export async function closeKnowledgeGraph(): Promise<void> {
+  if (globalKnowledgeGraph) {
+    await globalKnowledgeGraph.close()
+    globalKnowledgeGraph = null
+    globalInitPromise = null
+  }
 }

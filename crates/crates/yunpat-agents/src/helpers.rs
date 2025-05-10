@@ -11,7 +11,11 @@ use crate::types::{AgentId, Confidence};
 // ---------------------------------------------------------------------------
 
 /// Stream an LLM response into a String. Returns an error marker on failure.
-pub async fn llm_generate(provider: &dyn LlmProvider, system_prompt: &str, user_msg: &str) -> String {
+pub async fn llm_generate(
+    provider: &dyn LlmProvider,
+    system_prompt: &str,
+    user_msg: &str,
+) -> String {
     use futures_util::StreamExt;
     let mut stream = provider.chat_stream(system_prompt, user_msg);
     let mut result = String::new();
@@ -77,7 +81,10 @@ pub fn keyword_confidence(
 
 /// Extract `case_id` from the `extra` field of an `AgentInput`.
 pub fn extract_case_id(extra: &serde_json::Value) -> Option<String> {
-    extra.get("case_id").and_then(|v| v.as_str()).map(|s| s.to_string())
+    extra
+        .get("case_id")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
 }
 
 /// Common struct fields for agent implementations.

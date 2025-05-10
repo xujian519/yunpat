@@ -503,11 +503,153 @@ export class PatentAnalyzerTool extends BaseMcpTool<any, any> {
     version: '1.0.0',
   }
 
-  protected async executeInternal(input: any, _context: McpToolContext) {
+  protected async executeInternal(input: any, context: McpToolContext) {
+    // 如果有 LLM 和完整上下文，使用真实的 ComparisonAnalyzerAgent
+    if (context.llm && context.eventBus && context.memory && context.registry) {
+      try {
+        const { ComparisonAnalyzerAgent } = await import('@yunpat/agent-patent-analyzer')
+
+        const analyzerAgent = new ComparisonAnalyzerAgent({
+          name: 'comparison-analyzer',
+          description: '专利对比分析智能体',
+          llm: context.llm,
+          eventBus: context.eventBus,
+          memory: context.memory,
+          tools: context.registry,
+        })
+
+        // 从 MCP 输入构造 ComparisonAnalyzerInput
+        const independentClaims = input.claims.filter((c: any) => c.type === 'independent')
+
+        const result = await analyzerAgent.execute({
+          inventionUnderstanding: {
+            technicalProblem: input.specification.backgroundArt || '',
+            technicalSolution:
+              input.specification.inventionContent || independentClaims[0]?.content || '',
+            keyFeatures: independentClaims.flatMap((c: any) =>
+              c.content
+                .split(/[，。；、]/)
+                .filter((s: string) => s.length > 3)
+                .slice(0, 5)
+            ),
+            beneficialEffects: input.specification.embodiment || '',
+          },
+          priorArtAnalyses: [
+            {
+              documentInfo: {
+                type: 'patent' as const,
+                title: `对比文件 - ${input.inventionTitle}相关`,
+              },
+              technicalAnalysis: {
+                technicalProblems: {
+                  main: input.specification.backgroundArt || '',
+                  sub: [],
+                },
+                technicalSolution: {
+                  core: independentClaims[0]?.content || '',
+                  keyFeatures: independentClaims.flatMap((c: any) =>
+                    c.content
+                      .split(/[，。；、]/)
+                      .filter((s: string) => s.length > 3)
+                      .slice(0, 5)
+                      .map((f: string) => ({
+                        feature: f,
+                        necessity: 'important' as const,
+                        confidence: 0.5,
+                      }))
+                  ),
+                  implementation: input.specification.embodiment || '',
+                  technicalEffects: [],
+                },
+              },
+              metadata: {
+                depth: 1,
+                timestamp: Date.now(),
+                confidence: 0.5,
+                knowledgeGraphUsed: false,
+              },
+            },
+          ],
+          scenario: 'new_application',
+        })
+
+        // 将 Agent 输出映射为 MCP 工具输出格式
+        const comparisons = result.comparisons || []
+        const closest = result.closestPriorArt
+
+        return {
+          version: '1.0.0',
+          integrationMode: 'real_agent',
+          completenessAnalysis: {
+            score: result.riskAssessment ? (closest && closest.similarity < 0.5 ? 85 : 65) : 75,
+            missingItems: [],
+            recommendations: result.recommendations || [],
+          },
+          claimsStructureAnalysis: {
+            independentCount: input.claims.filter((c: any) => c.type === 'independent').length,
+            dependentCount: input.claims.filter((c: any) => c.type === 'dependent').length,
+            totalLevels: 2,
+            claimsTree: input.claims.map((c: any) => ({
+              number: c.number,
+              type: c.type,
+              dependsOn: c.dependsOn,
+            })),
+            structureAssessment: {
+              score: comparisons.length > 0 ? 75 : 70,
+              comments: result.recommendations?.slice(0, 2) || ['结构合理'],
+            },
+          },
+          protectionScopeAnalysis: {
+            breadthAssessment: {
+              score: result.creativityAssessment?.score || 70,
+              level:
+                (result.creativityAssessment?.score || 70) > 80
+                  ? 'broad'
+                  : (result.creativityAssessment?.score || 70) > 60
+                    ? 'medium'
+                    : 'narrow',
+              description: result.creativityAssessment?.reasoning || '保护范围适中',
+            },
+            coreFeatures: closest?.overlappingFeatures || [],
+            keywordAnalysis: {
+              primaryKeywords: [],
+              secondaryKeywords: [],
+              technicalTerms: [],
+            },
+            protectionRecommendations: result.recommendations || [],
+          },
+          riskAssessment: {
+            overallRisk: result.riskAssessment?.invalidityRisk || 'low',
+            riskItems: result.riskAssessment?.riskFactors || [],
+            stabilityAssessment: {
+              score: result.riskAssessment?.invalidityRisk === 'low' ? 80 : 60,
+              description:
+                result.riskAssessment?.invalidityRisk === 'low' ? '稳定性良好' : '存在改进空间',
+            },
+          },
+          overallAssessment: {
+            score: result.creativityAssessment?.score || 73,
+            level:
+              (result.creativityAssessment?.score || 73) > 80
+                ? 'excellent'
+                : (result.creativityAssessment?.score || 73) > 70
+                  ? 'good'
+                  : 'fair',
+            summary: result.creativityAssessment?.reasoning || '专利申请文件质量良好',
+          },
+        }
+      } catch (error) {
+        console.warn('[PatentAnalyzerTool] 真实智能体调用失败，回退到规则模式:', error)
+      }
+    }
+
+    // 回退模式：基于规则的分析
     const independentCount = input.claims.filter((c: any) => c.type === 'independent').length
     const dependentCount = input.claims.filter((c: any) => c.type === 'dependent').length
 
     return {
+      version: '1.0.0',
+      integrationMode: 'rule_based',
       completenessAnalysis: {
         score: 75,
         missingItems: [],
@@ -574,7 +716,50 @@ export class PatentResponderTool extends BaseMcpTool<any, any> {
     version: '1.0.0',
   }
 
-  protected async executeInternal(input: any, _context: McpToolContext) {
+  protected async executeInternal(input: any, context: McpToolContext) {
+    // 如果有 LLM 和完整上下文，使用真实的 PatentResponderAgentV5
+    if (context.llm && context.eventBus && context.memory && context.registry) {
+      try {
+        const { PatentResponderAgentV5 } = await import('@yunpat/agent-patent-responder')
+
+        const responderAgent = new PatentResponderAgentV5({
+          name: 'patent-responder',
+          description: '审查意见答复智能体',
+          llm: context.llm,
+          eventBus: context.eventBus,
+          memory: context.memory,
+          tools: context.registry,
+        })
+
+        // 从 MCP 输入构造 PatentResponderInputV2
+        const result = await responderAgent.execute({
+          officeAction: {
+            applicationNumber: input.officeAction.applicationNumber,
+            patentTitle: input.officeAction.patentTitle,
+            officeActionContent: input.officeAction.officeActionContent,
+            citedReferences: input.officeAction.citedReferences,
+          },
+          originalApplication: {
+            title: input.officeAction.patentTitle,
+            claims: input.originalClaims,
+            description: input.originalDescription,
+          },
+          strategyPreference: input.strategyPreference,
+          enablePrecedentSearch: true,
+          enableLegalKnowledge: true,
+        })
+
+        return {
+          version: '1.0.0',
+          integrationMode: 'real_agent',
+          ...result,
+        }
+      } catch (error) {
+        console.warn('[PatentResponderTool] 真实智能体调用失败，回退到规则模式:', error)
+      }
+    }
+
+    // 回退模式：基于规则的审查意见分析
     const content = input.officeAction.officeActionContent.toLowerCase()
     const issues: any[] = []
 
@@ -586,6 +771,8 @@ export class PatentResponderTool extends BaseMcpTool<any, any> {
     }
 
     return {
+      version: '1.0.0',
+      integrationMode: 'rule_based',
       analysis: {
         summary: `审查意见指出${issues.length}个主要问题`,
         keyIssues: issues,
@@ -760,14 +947,62 @@ export class InvalidDecisionSearchTool extends BaseMcpTool<any, any> {
     inputSchema: invalidDecisionSearchToolSchema.inputSchema,
   } satisfies import('./BaseMcpTool.js').McpToolMetadata
 
-  protected async executeInternal(input: any, _context: McpToolContext) {
+  protected async executeInternal(input: any, context: McpToolContext) {
+    // 如果有 LLM，使用 LegalQAAgent 进行语义增强检索
+    if (context.llm) {
+      try {
+        const { LegalQAAgent } = await import('@yunpat/agent-legal-qa')
+
+        const legalAgent = new LegalQAAgent({
+          name: 'legal-qa-invalid',
+          description: '无效决定检索智能体',
+          llm: context.llm,
+          eventBus: context.eventBus!,
+          memory: context.memory!,
+          tools: context.registry!,
+        })
+
+        const result = await legalAgent.execute({
+          question: input.query,
+          domain: input.domain || 'patent',
+          sources: ['invalid_decision'],
+        })
+
+        const caseResults = result.caseCitations || []
+        const invalidResults = caseResults.filter(
+          (c: any) => c.source === 'invalid_decision' || !c.source
+        )
+
+        if (invalidResults.length > 0) {
+          return {
+            version: '1.0.0',
+            integrationMode: 'real_agent',
+            query: input.query,
+            domain: input.domain,
+            totalFound: invalidResults.length,
+            results: invalidResults.map((item: any) => ({
+              documentNumber: item.documentNumber,
+              title: item.title,
+              content: item.summary || item.content,
+              domain: item.domain,
+              relevance: item.relevance || 0.9,
+              decisionType: item.source,
+              decisionDate: item.decisionDate,
+            })),
+          }
+        }
+      } catch (error) {
+        console.warn('[InvalidDecisionSearchTool] 真实智能体调用失败，回退到规则模式:', error)
+      }
+    }
+
+    // 回退模式：使用 PostgreSQLClient
     try {
       const { PostgreSQLClient } = await import('@yunpat/unified-knowledge-graph')
 
       const client = new PostgreSQLClient()
       const topK = input.topK || 10
 
-      // 并行查询无效决定和实体搜索
       const [queryResult, entityResult] = await Promise.allSettled([
         client.queryInvalidDecisions(input.query, topK),
         client.searchInvalidEntities({
@@ -778,7 +1013,6 @@ export class InvalidDecisionSearchTool extends BaseMcpTool<any, any> {
 
       const results = []
 
-      // 处理查询结果
       if (queryResult.status === 'fulfilled') {
         results.push(
           ...queryResult.value.map((item) => ({
@@ -793,7 +1027,6 @@ export class InvalidDecisionSearchTool extends BaseMcpTool<any, any> {
         )
       }
 
-      // 处理实体搜索结果
       if (entityResult.status === 'fulfilled') {
         results.push(
           ...entityResult.value.map((item) => ({
@@ -808,7 +1041,6 @@ export class InvalidDecisionSearchTool extends BaseMcpTool<any, any> {
         )
       }
 
-      // 去重并排序
       const uniqueResults = Array.from(
         new Map(results.map((item) => [item.documentNumber, item])).values()
       )
@@ -816,6 +1048,7 @@ export class InvalidDecisionSearchTool extends BaseMcpTool<any, any> {
 
       return {
         version: '1.0.0',
+        integrationMode: 'rule_based',
         query: input.query,
         domain: input.domain,
         totalFound: uniqueResults.length,
@@ -827,6 +1060,342 @@ export class InvalidDecisionSearchTool extends BaseMcpTool<any, any> {
         error: `查询失败: ${error instanceof Error ? error.message : String(error)}`,
         results: [],
       }
+    }
+  }
+}
+
+// ============= PatentWriterTool（集成 SpecificationDrafterAgent）============
+export class PatentWriterTool extends BaseMcpTool<any, any> {
+  readonly metadata = {
+    name: 'patent_writer',
+    description:
+      '专利说明书撰写工具 — 根据技术交底书生成完整的专利说明书（技术领域、背景技术、发明内容、具体实施方式、附图说明）。',
+    version: '1.0.0',
+    inputSchema: z.object({
+      inventionTitle: z.string().min(1).describe('发明名称'),
+      technicalField: z.string().min(1).describe('技术领域'),
+      technicalProblem: z.string().min(1).describe('技术问题'),
+      technicalSolution: z.string().min(1).describe('技术方案'),
+      beneficialEffects: z.string().min(1).describe('有益效果'),
+      keyFeatures: z.array(z.string()).min(1).describe('关键特征列表'),
+      backgroundArt: z.string().optional().describe('背景技术'),
+      embodiments: z
+        .array(
+          z.object({
+            title: z.string(),
+            content: z.string(),
+            relatedDrawings: z.array(z.string()).optional(),
+          })
+        )
+        .optional()
+        .describe('实施例列表'),
+      drawings: z.array(z.string()).optional().describe('附图列表'),
+      patentType: z
+        .enum(['invention', 'utilityModel', 'design'])
+        .default('invention')
+        .describe('专利类型'),
+      draftMode: z
+        .enum(['standard', 'detailed', 'concise'])
+        .default('standard')
+        .describe('撰写模式'),
+    }),
+  } satisfies import('./BaseMcpTool.js').McpToolMetadata
+
+  protected async executeInternal(input: any, context: McpToolContext) {
+    // 如果有 LLM 和完整上下文，使用真实的 SpecificationDrafterAgent
+    if (context.llm && context.eventBus && context.memory && context.registry) {
+      try {
+        const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification-drafter')
+
+        const drafterAgent = new SpecificationDrafterAgent({
+          name: 'specification-drafter',
+          description: '说明书撰写智能体',
+          llm: context.llm,
+          eventBus: context.eventBus,
+          memory: context.memory,
+          tools: context.registry,
+        })
+
+        // 构造 SpecificationDrafterInput
+        const inventionUnderstanding = {
+          inventionConcepts: [
+            {
+              technicalProblem: input.technicalProblem || '',
+              keyFeatures: input.keyFeatures || [],
+              technicalEffects: input.beneficialEffects ? [input.beneficialEffects] : [],
+              confidence: 0.8,
+            },
+          ],
+          technicalField: input.technicalField || '',
+          backgroundArt: input.backgroundArt || '',
+          embodimentSummary: input.technicalSolution || '',
+          drawingDescriptions: (input.drawings || []).map((d: string) => ({
+            figureNumber: d,
+            title: d,
+            description: '',
+            keyElements: [],
+          })),
+          confidence: 0.8,
+          keyFeatures: input.keyFeatures || [],
+          technicalProblem: input.technicalProblem || '',
+          technicalSolution: input.technicalSolution || '',
+          beneficialEffects: input.beneficialEffects || '',
+        }
+
+        const result = await drafterAgent.execute({
+          inventionUnderstanding,
+          drawings: input.drawings,
+          patentType: input.patentType,
+          draftMode: input.draftMode,
+        })
+
+        return {
+          version: '1.0.0',
+          integrationMode: 'real_agent',
+          ...result,
+        }
+      } catch (error) {
+        console.warn('[PatentWriterTool] 真实智能体调用失败，回退到规则模式:', error)
+      }
+    }
+
+    // 回退模式：基于规则和模板生成说明书
+    const sections = []
+
+    sections.push({
+      chapter: '技术领域',
+      title: '技术领域',
+      content: `本发明涉及${input.technicalField}领域，特别涉及一种${input.inventionTitle}。`,
+      wordCount: input.technicalField.length + 20,
+    })
+
+    sections.push({
+      chapter: '背景技术',
+      title: '背景技术',
+      content:
+        input.backgroundArt ||
+        `现有${input.technicalField}技术中，存在${input.technicalProblem}等问题，需要一种改进的技术方案。`,
+      wordCount: input.backgroundArt ? input.backgroundArt.length : 50,
+    })
+
+    const inventionContent = `本发明要解决的技术问题是：${input.technicalProblem}。
+
+为解决上述技术问题，本发明采用的技术方案是：${input.technicalSolution}。
+
+本发明的有益效果是：${input.beneficialEffects}。`
+
+    sections.push({
+      chapter: '发明内容',
+      title: '发明内容',
+      content: inventionContent,
+      wordCount: inventionContent.length,
+    })
+
+    const embodimentContent =
+      input.embodiments && input.embodiments.length > 0
+        ? input.embodiments
+            .map((e: any, i: number) => `实施例${i + 1}：${e.title}\n\n${e.content}`)
+            .join('\n\n')
+        : `下面结合具体实施方式对本发明作进一步详细描述。\n\n实施例1：${input.technicalSolution}。`
+
+    sections.push({
+      chapter: '具体实施方式',
+      title: '具体实施方式',
+      content: embodimentContent,
+      wordCount: embodimentContent.length,
+    })
+
+    if (input.drawings && input.drawings.length > 0) {
+      sections.push({
+        chapter: '附图说明',
+        title: '附图说明',
+        content: input.drawings
+          .map((d: string, i: number) => `图${i + 1}为${d}的示意图。`)
+          .join('\n'),
+        wordCount: input.drawings.length * 20,
+      })
+    }
+
+    const totalWordCount = sections.reduce((sum, s) => sum + s.wordCount, 0)
+
+    return {
+      version: '1.0.0',
+      integrationMode: 'rule_based',
+      inventionTitle: input.inventionTitle,
+      specification: {
+        sections,
+        totalWordCount,
+        chapterCount: sections.length,
+      },
+      qualityScore: {
+        overall: 75,
+        clarity: 80,
+        completeness: 70,
+        consistency: 80,
+      },
+      confidence: 0.75,
+      recommendations: [
+        '建议补充更多具体实施例以提高充分公开程度',
+        '建议在背景技术部分增加对现有技术的具体分析',
+        '建议核对术语使用的一致性',
+      ],
+    }
+  }
+}
+
+// ============= PatentCompareTool（集成 ComparisonReportGeneratorAgent）============
+export class PatentCompareTool extends BaseMcpTool<any, any> {
+  readonly metadata = {
+    name: 'patent_compare',
+    description:
+      '专利对比工具 — 对比专利申请与现有技术的技术方案、权利要求范围，分析差异和相似性，生成对比报告。',
+    version: '1.0.0',
+    inputSchema: z.object({
+      application: z
+        .object({
+          inventionTitle: z.string().min(1).describe('发明名称'),
+          claims: z
+            .array(
+              z.object({
+                type: z.enum(['independent', 'dependent']),
+                number: z.number(),
+                content: z.string(),
+                dependsOn: z.number().optional(),
+              })
+            )
+            .describe('权利要求列表'),
+          specification: z
+            .object({
+              technicalField: z.string().optional(),
+              backgroundArt: z.string().optional(),
+              inventionContent: z.string().optional(),
+              embodiment: z.string().optional(),
+            })
+            .describe('说明书内容'),
+        })
+        .describe('本申请专利信息'),
+      priorArt: z
+        .array(
+          z.object({
+            patentId: z.string().describe('专利ID/公开号'),
+            title: z.string().describe('标题'),
+            abstract: z.string().describe('摘要'),
+            claims: z.array(z.string()).optional().describe('权利要求'),
+            description: z.string().optional().describe('说明书'),
+          })
+        )
+        .min(1)
+        .describe('现有技术专利列表'),
+      options: z
+        .object({
+          format: z.enum(['markdown', 'html']).default('markdown'),
+          includeTables: z.boolean().default(true),
+          language: z.enum(['zh-CN', 'en-US']).default('zh-CN'),
+        })
+        .optional()
+        .describe('报告选项'),
+    }),
+  } satisfies import('./BaseMcpTool.js').McpToolMetadata
+
+  protected async executeInternal(input: any, context: McpToolContext) {
+    // 如果有 LLM 和完整上下文，使用真实的 ComparisonReportGeneratorAgent
+    if (context.llm && context.eventBus && context.memory && context.registry) {
+      try {
+        const { ComparisonReportGeneratorAgent } =
+          await import('@yunpat/comparison-report-generator')
+
+        const compareAgent = new ComparisonReportGeneratorAgent({
+          name: 'comparison-report-generator',
+          description: '对比报告生成智能体',
+          llm: context.llm,
+          eventBus: context.eventBus,
+          memory: context.memory,
+          tools: context.registry,
+        })
+
+        const result = await compareAgent.execute({
+          application: input.application,
+          priorArt: input.priorArt.map((pa: any) => ({
+            patentId: pa.patentId,
+            title: pa.title,
+            abstract: pa.abstract,
+            claims: pa.claims || [],
+            description: pa.description || '',
+          })),
+          options: input.options,
+        })
+
+        return {
+          version: '1.0.0',
+          integrationMode: 'real_agent',
+          ...result,
+        }
+      } catch (error) {
+        console.warn('[PatentCompareTool] 真实智能体调用失败，回退到规则模式:', error)
+      }
+    }
+
+    // 回退模式：基于规则的对比分析
+    const appFeatures = input.application.claims
+      .filter((c: any) => c.type === 'independent')
+      .flatMap((c: any) => c.content.split(/[，。；、]/).filter((s: string) => s.length > 3))
+
+    const priorArtFeatures = input.priorArt.flatMap((pa: any) =>
+      pa.abstract.split(/[，。；、]/).filter((s: string) => s.length > 3)
+    )
+
+    const differences = appFeatures
+      .filter(
+        (f: string) =>
+          !priorArtFeatures.some(
+            (pf: string) => pf.includes(f.substring(0, 4)) || f.includes(pf.substring(0, 4))
+          )
+      )
+      .slice(0, 5)
+
+    const similarities = appFeatures
+      .filter((f: string) =>
+        priorArtFeatures.some(
+          (pf: string) => pf.includes(f.substring(0, 4)) || f.includes(pf.substring(0, 4))
+        )
+      )
+      .slice(0, 5)
+
+    return {
+      version: '1.0.0',
+      integrationMode: 'rule_based',
+      report: {
+        title: `对比分析报告：${input.application.inventionTitle}`,
+        summary: `本报告对比了"${input.application.inventionTitle}"与${input.priorArt.length}篇现有技术。`,
+        sections: [
+          {
+            heading: '技术差异',
+            content:
+              differences.length > 0
+                ? differences.map((d: string) => `- ${d}`).join('\n')
+                : '未发现显著技术差异',
+          },
+          {
+            heading: '技术相似点',
+            content:
+              similarities.length > 0
+                ? similarities.map((s: string) => `- ${s}`).join('\n')
+                : '未发现明显相似点',
+          },
+        ],
+        conclusions: ['本申请与现有技术存在技术方案差异', '建议进一步分析区别技术特征的技术效果'],
+        recommendations: [
+          '建议重点关注区别技术特征带来的有益效果',
+          '建议补充实施例数据以支撑创造性论证',
+        ],
+      },
+      analysis: {
+        technicalDifferences: differences,
+        advantages: differences.slice(0, 3),
+        disadvantages: [],
+        novelty: differences.length > 2 ? '具有新颖性' : '需进一步分析',
+        inventiveStep: differences.length > 3 ? '具有创造性' : '创造性论证需加强',
+      },
     }
   }
 }
@@ -843,7 +1412,52 @@ export class PatentRuleSearchTool extends BaseMcpTool<any, any> {
     inputSchema: patentRuleSearchToolSchema.inputSchema,
   } satisfies import('./BaseMcpTool.js').McpToolMetadata
 
-  protected async executeInternal(input: any, _context: McpToolContext) {
+  protected async executeInternal(input: any, context: McpToolContext) {
+    // 如果有 LLM，使用 LegalQAAgent 进行语义增强检索
+    if (context.llm) {
+      try {
+        const { LegalQAAgent } = await import('@yunpat/agent-legal-qa')
+
+        const legalAgent = new LegalQAAgent({
+          name: 'legal-qa-rules',
+          description: '审查规则检索智能体',
+          llm: context.llm,
+          eventBus: context.eventBus!,
+          memory: context.memory!,
+          tools: context.registry!,
+        })
+
+        const result = await legalAgent.execute({
+          question: input.query,
+          domain: 'patent',
+          sources: ['patent_rule'],
+        })
+
+        const ruleResults = result.ruleCitations || []
+
+        if (ruleResults.length > 0) {
+          return {
+            version: '1.0.0',
+            integrationMode: 'real_agent',
+            query: input.query,
+            articleType: input.articleType,
+            totalFound: ruleResults.length,
+            results: ruleResults.map((item: any) => ({
+              articleId: item.articleId,
+              title: item.title,
+              content: item.content,
+              corePrinciple: item.corePrinciple,
+              relevance: item.relevance || item.similarity || 0.85,
+              articleType: item.articleType,
+            })),
+          }
+        }
+      } catch (error) {
+        console.warn('[PatentRuleSearchTool] 真实智能体调用失败，回退到规则模式:', error)
+      }
+    }
+
+    // 回退模式：使用 PostgreSQLClient
     try {
       const { PostgreSQLClient } = await import('@yunpat/unified-knowledge-graph')
 
@@ -857,6 +1471,7 @@ export class PatentRuleSearchTool extends BaseMcpTool<any, any> {
 
       return {
         version: '1.0.0',
+        integrationMode: 'rule_based',
         query: input.query,
         articleType: input.articleType,
         totalFound: results.length,

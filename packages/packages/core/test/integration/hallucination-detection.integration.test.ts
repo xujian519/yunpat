@@ -11,7 +11,9 @@ import { createDeepSeekModel } from '../../src/llm/NativeLLMAdapter.js'
 import { KnowledgeBase, createKnowledgeBase } from '../../src/knowledge/KnowledgeBase.js'
 import { z } from 'zod'
 
-describe('幻觉检测系统集成测试', () => {
+const isMock = process.env.MOCK_TESTS === 'true'
+
+describe.skipIf(isMock)('幻觉检测系统集成测试', () => {
   let llm: any
   let knowledgeBase: KnowledgeBase
 
@@ -262,7 +264,7 @@ describe('幻觉检测系统集成测试', () => {
   })
 
   describe('端到端场景测试', () => {
-    it('应该完整验证专利申请文件', async () => {
+    it('应该完整验证专利申请文件', 120000, async () => {
       const validator = new ResultValidator({
         llm,
         knowledgeBase,

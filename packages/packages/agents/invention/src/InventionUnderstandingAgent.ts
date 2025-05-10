@@ -1047,6 +1047,17 @@ ${input.inventors ? `发明人：${input.inventors.join(', ')}` : ''}
     prompt += `## 技术交底书\n\n`
     prompt += input.technicalDisclosure
 
+    // 添加混合格式解析指导
+    prompt += `
+
+---
+
+**重要提示**：以上文本可能是混合格式（例如同时包含权利要求书、说明书、对比文件、答题须知等）。
+请专注于提取其中描述的发明创造的**实质技术内容**，忽略答题须知、评分标准、考试说明等非技术部分。
+从说明书和/或权利要求书中提取发明的技术问题、关键技术特征和技术效果。
+如果文本中包含对比文件，请将其视为现有技术参考，帮助理解发明的创新点。
+`
+
     if (input.drawings && input.drawings.length > 0) {
       prompt += `\n\n## 附图说明\n\n`
       prompt += input.drawings.join('\n')
@@ -1342,40 +1353,100 @@ ${input.inventors ? `发明人：${input.inventors.join(', ')}` : ''}
 
   /**
    * 从技术交底书中提取特征（兜底机制）
-   * 当LLM未能提取到特征时，使用简单的规则提取交底书中的技术组件
+   * 当LLM未能提取到特征时，使用多模式规则提取交底书中的技术组件
    */
   private extractFeaturesFromDisclosure(disclosure: string): string[] {
     const features: string[] = []
 
+    // 过滤掉非技术内容（答题须知、评分标准等）
+    const cleanedDisclosure = this.cleanTechnicalContent(disclosure)
+
     // 匹配 "包括..."、"具有..."、"包含..." 后的名词短语
     const includePatterns = [
-      /包括\s*([^，。；]+)/g,
-      /具有\s*([^，。；]+)/g,
-      /包含\s*([^，。；]+)/g,
-      /设有\s*([^，。；]+)/g,
-      /由\s*([^，。；]+)\s*组成/g,
+      /包括\s*([^，。；\n]{2,40})/g,
+      /具有\s*([^，。；\n]{2,40})/g,
+      /包含\s*([^，。；\n]{2,40})/g,
+      /设有\s*([^，。；\n]{2,40})/g,
+      /设置有\s*([^，。；\n]{2,40})/g,
+      /由\s*([^，。；\n]{2,40})\s*组成/g,
+      /配置有\s*([^，。；\n]{2,40})/g,
+      /安装有\s*([^，。；\n]{2,40})/g,
+      /采用\s*([^，。；\n]{2,40})/g,
     ]
 
     for (const pattern of includePatterns) {
       let match
-      while ((match = pattern.exec(disclosure)) !== null) {
+      while ((match = pattern.exec(cleanedDisclosure)) !== null) {
         const feature = match[1].trim()
-        if (feature.length > 2 && !features.includes(feature)) {
+        if (feature.length > 2 && feature.length <= 40 && !features.includes(feature)) {
           features.push(feature)
         }
       }
     }
 
-    // 如果还是没提取到，按标点分割取有意义的片段
-    if (features.length === 0) {
-      const segments = disclosure
-        .split(/[，。；]/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 3 && s.length < 50)
-      features.push(...segments.slice(0, 5))
+    // 提取"其特征在于"后的特征（权利要求书格式）
+    const characteristicPattern = /其特征在于[：:]\s*([^。；\n]{3,80})/g
+    let charMatch
+    while ((charMatch = characteristicPattern.exec(cleanedDisclosure)) !== null) {
+      const feature = charMatch[1].trim()
+      if (feature.length > 3 && !features.includes(feature)) {
+        features.push(feature)
+      }
     }
 
-    return features
+    // 提取权利要求中的组件（如"1. 一种...，其特征在于..."）
+    const claimComponentPattern = /权利要求\s*\d+[^。]*?(?:包括|具有|包含|设有)[^。]*?(?:的)?([^，。；\n]{2,30})/g
+    let compMatch
+    while ((compMatch = claimComponentPattern.exec(cleanedDisclosure)) !== null) {
+      const feature = compMatch[1].trim()
+      if (feature.length > 2 && !features.includes(feature)) {
+        features.push(feature)
+      }
+    }
+
+    // 提取"用于..."、"用来..."后的功能描述
+    const purposePattern = /(?:用于|用来|用以|旨在|以便)\s*([^，。；\n]{3,50})/g
+    let purposeMatch
+    while ((purposeMatch = purposePattern.exec(cleanedDisclosure)) !== null) {
+      const feature = purposeMatch[1].trim()
+      if (feature.length > 3 && !features.includes(feature)) {
+        features.push(feature)
+      }
+    }
+
+    // 如果还是没提取到，按标点分割取有意义的片段
+    if (features.length === 0) {
+      const segments = cleanedDisclosure
+        .split(/[，。；]/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 5 && s.length < 60)
+        .filter((s) => !/^\d+[\.、]/.test(s)) // 过滤纯编号行
+      features.push(...segments.slice(0, 8))
+    }
+
+    return features.slice(0, 15)
+  }
+
+  /**
+   * 清洗技术内容，去除非技术部分
+   */
+  private cleanTechnicalContent(disclosure: string): string {
+    // 移除常见的考试/答题非技术部分
+    const nonTechPatterns = [
+      /答题须知[\s\S]*?(?=\n\n|\Z)/,
+      /评分标准[\s\S]*?(?=\n\n|\Z)/,
+      /考试说明[\s\S]*?(?=\n\n|\Z)/,
+      /注意事项[\s\S]*?(?=\n\n|\Z)/,
+      /^\s*\d+\s*分\s*$/m,
+      /^(?:一|二|三|四|五|六|七|八|九|十)[、．.]\s*$/m,
+    ]
+
+    let cleaned = disclosure
+    for (const pattern of nonTechPatterns) {
+      cleaned = cleaned.replace(pattern, '')
+    }
+
+    return cleaned
   }
 
   /**

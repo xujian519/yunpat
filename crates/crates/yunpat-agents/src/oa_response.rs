@@ -20,7 +20,7 @@ use async_trait::async_trait;
 use futures_core::Stream;
 use std::pin::Pin;
 
-use crate::helpers::{llm_generate, extract_case_id, keyword_confidence, AgentBase};
+use crate::helpers::{AgentBase, extract_case_id, keyword_confidence, llm_generate};
 
 /// The OA Response Agent handles office action response workflows.
 pub struct OAResponseAgent {
@@ -35,12 +35,16 @@ impl Default for OAResponseAgent {
 
 impl OAResponseAgent {
     pub fn new() -> Self {
-        Self { base: AgentBase::new("oa-response") }
+        Self {
+            base: AgentBase::new("oa-response"),
+        }
     }
 
     /// Set an LLM provider for content generation (builder pattern).
     pub fn with_llm(self, provider: Box<dyn LlmProvider>) -> Self {
-        Self { base: self.base.with_llm(provider) }
+        Self {
+            base: self.base.with_llm(provider),
+        }
     }
 
     /// Whether an LLM provider is configured.

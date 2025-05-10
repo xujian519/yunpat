@@ -1,4 +1,5 @@
-import { KnowledgeEnhancedAgent, type ExecutionContext } from '@yunpat/core'
+import { KnowledgeEnhancedAgent, SkillLoader, type ExecutionContext } from '@yunpat/core'
+import { join } from 'path'
 
 /**
  * 对比文件类型
@@ -152,6 +153,16 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
   private static readonly DEFAULT_DEPTH = 2
   private static readonly DEFAULT_TEMPERATURE = 0.3
   private static readonly MAX_RETRIES = 2
+  private skillLoader?: SkillLoader
+
+  constructor(config: any = {}) {
+    super(config)
+    this.skillLoader =
+      config.skillLoader ||
+      new SkillLoader({
+        baseDir: join(process.cwd(), '.yunpat/skills/prior-art-analysis'),
+      })
+  }
 
   protected async plan(
     input: PriorArtAnalyzerInput,
@@ -221,8 +232,8 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
     input: PriorArtAnalyzerInput,
     knowledgeResults?: Array<{ source: string; content: string; score: number }>
   ): Promise<PriorArtAnalysis> {
-    const systemPrompt = this.buildSystemPrompt(input, knowledgeResults)
-    const userPrompt = this.buildUserPrompt(input)
+    const systemPrompt = await this.buildSystemPrompt(input, knowledgeResults)
+    const userPrompt = await this.buildUserPrompt(input)
 
     const parseResult = await this.callLLMWithRetry(llm, systemPrompt, userPrompt)
 
@@ -234,12 +245,36 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
     return this.normalizeAnalysis(parseResult.data!, input)
   }
 
-  private buildSystemPrompt(
+  private async buildSystemPrompt(
     input: PriorArtAnalyzerInput,
     knowledgeResults?: Array<{ source: string; content: string; score: number }>
-  ): string {
+  ): Promise<string> {
     const depth = input.analysisDepth ?? PriorArtAnalyzerAgent.DEFAULT_DEPTH
     const typeLabel = this.getDocumentTypeLabel(input.document.type)
+
+    // 尝试使用 SkillLoader 动态模板
+    if (this.skillLoader) {
+      try {
+        const template = await this.skillLoader.load('system-prompt')
+        const knowledgeContext =
+          knowledgeResults && knowledgeResults.length > 0
+            ? knowledgeResults
+                .map(
+                  (k, i) =>
+                    `[${i + 1}] ${k.source} (相关性: ${(k.score * 100).toFixed(0)}%): ${k.content.substring(0, 150)}...`
+                )
+                .join('\n')
+            : ''
+        return this.skillLoader.render(template, {
+          documentType: typeLabel,
+          analysisDepth: String(depth),
+          hasKnowledge: !!(knowledgeResults && knowledgeResults.length > 0),
+          knowledgeContext,
+        })
+      } catch {
+        /* 模板不存在，使用硬编码降级 */
+      }
+    }
 
     let prompt = `你是一位资深的技术分析专家，擅长从${typeLabel}中提取和深度分析技术信息。
 
@@ -265,9 +300,30 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
     return prompt
   }
 
-  private buildUserPrompt(input: PriorArtAnalyzerInput): string {
+  private async buildUserPrompt(input: PriorArtAnalyzerInput): Promise<string> {
     const depth = input.analysisDepth ?? PriorArtAnalyzerAgent.DEFAULT_DEPTH
     const doc = input.document
+
+    // 尝试使用 SkillLoader 动态模板
+    if (this.skillLoader) {
+      try {
+        const template = await this.skillLoader.load('user-prompt')
+        const typeLabels: Record<string, string> = { patent: '专利文献', paper: '学术论文', report: '调研报告' }
+        return this.skillLoader.render(template, {
+          docType: typeLabels[doc.type] || doc.type,
+          docTitle: doc.title,
+          docContent: doc.content.substring(0, depth === 3 ? 5000 : depth === 2 ? 3000 : 1500),
+          publicationNumber: doc.metadata?.publicationNumber || '',
+          applicant: doc.metadata?.applicant || '',
+          inventors: doc.metadata?.authors?.join(', ') || '',
+          publicationDate: doc.metadata?.publicationDate || '',
+          analysisDepth: String(depth),
+          maxLength: String(depth === 3 ? 5000 : depth === 2 ? 3000 : 1500),
+        })
+      } catch {
+        /* 模板不存在，使用硬编码降级 */
+      }
+    }
 
     let prompt = `## ${this.getDocumentTypeLabel(doc.type)}信息\n`
 

@@ -53,3 +53,18 @@ crates/target/
 # 保留示例配置
 !.env.example
 !config.example.toml
+
+# 本地测试数据（不提交git）
+测试/
+测试
+
+# 核心提示词资产（加密存储，不进开源仓库）
+packages/.yunpat/skills/patent-drafting/claims-core.md
+packages/.yunpat/skills/patent-drafting/claims-essential-features.md
+packages/.yunpat/skills/patent-drafting/claims-judicial.md
+packages/.yunpat/skills/patent-drafting/claims-law-profile.md
+packages/.yunpat/skills/patent-drafting/claims-domain-*.md
+
+# 密钥文件
+.yunpat/.skills-key
+skills-key

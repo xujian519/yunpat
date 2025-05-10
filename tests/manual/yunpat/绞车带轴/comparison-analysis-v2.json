@@ -1,0 +1,187 @@
+{
+  "technical_analysis": {
+    "technical_problems": {
+      "main": "现有绞车捆绑器的转带轴轴头与转带轴同轴焊成一体，无棘轮机构时无法实现连续收紧，每次转紧后必须抽出撬棒换孔再插入，操作不便且劳动强度大",
+      "sub": [
+        "转带轴轴头与转带轴一体焊接，缺乏单向离合功能，每完成一次转紧行程必须抽出撬棒重新插入下一个插棒孔，单次收紧操作需反复抽出插入撬棒3-5次",
+        "已有的分体式轴头方案（端面圆柱抑止和端面棘爪原理）虽可避免撬棒抽出插入，但需将转带轴轴头分为两截，加工难度大、轴头长度增加导致成本升高，且端面组合结构在使用中存在可靠性和安全性不足的问题",
+        "传统棘轮式捆绑器配置独立的棘轮、棘爪加棘爪轴组件，结构复杂、体积较大，不适合空间受限的车载捆绑场景"
+      ],
+      "severity": "medium"
+    },
+    "technical_solution": {
+      "core": "在转带轴轴头处设计由棘爪座(105)和轴套(101)组成的内啮合单向离合机构，利用轴套内圆周上深浅渐变的棘爪槽与棘爪座上的棘爪配合，实现顺时针方向分离（空转回位）、逆时针方向结合（传递扭矩收紧）的离合功能，从而无需抽出撬棒即可连续往复收紧织带",
+      "key_features": [
+        {
+          "feature": "转带轴轴头分为棘爪座(105)和轴套(101)两个独立组件",
+          "necessity": "essential",
+          "confidence": 0.98,
+          "claim_source": "权1"
+        },
+        {
+          "feature": "棘爪座(105)上配置2个棘爪(106)和与棘爪对应的2个回位弹簧(107)",
+          "necessity": "essential",
+          "confidence": 0.97,
+          "claim_source": "权1"
+        },
+        {
+          "feature": "轴套(101)内圆周上配置4个以上棘爪槽，与棘爪(106)对应位置配合",
+          "necessity": "essential",
+          "confidence": 0.98,
+          "claim_source": "权1"
+        },
+        {
+          "feature": "棘爪槽深浅在逆时针方向上由浅到深渐变，实现顺时针分离、逆时针结合的离合功能",
+          "necessity": "essential",
+          "confidence": 0.96,
+          "claim_source": "权1"
+        },
+        {
+          "feature": "轴套(101)和棘爪座(105)固定连接在一起",
+          "necessity": "essential",
+          "confidence": 0.97,
+          "claim_source": "权1"
+        },
+        {
+          "feature": "轴套(101)上均等分布8个棘爪槽",
+          "necessity": "important",
+          "confidence": 0.90,
+          "claim_source": "权2"
+        },
+        {
+          "feature": "棘爪座(105)上高出轴套(101)内挡台阶的轴加工出螺丝孔，采用螺丝(102)实现轴套与棘爪座的固定连接",
+          "necessity": "important",
+          "confidence": 0.92,
+          "claim_source": "权3"
+        },
+        {
+          "feature": "轴套(101)止口端配置防尘橡胶O型圈(103)",
+          "necessity": "optional",
+          "confidence": 0.85,
+          "claim_source": "权4"
+        },
+        {
+          "feature": "螺丝(102)固定连接处的结合部位配置防尘橡胶垫圈(104)",
+          "necessity": "optional",
+          "confidence": 0.85,
+          "claim_source": "权4"
+        }
+      ],
+      "implementation": "在原有绞车捆绑器转带轴的基础上，将轴头改造为棘爪座与轴套的组合结构。棘爪座(105)上配置2个棘爪(106)及对应的2个回位弹簧(107)，棘爪座与转带轴(2)固定相连。轴套(101)的内圆周上均等分布8个棘爪槽，槽深沿逆时针方向由浅到深渐变。棘爪座上高出轴套内挡台阶的轴部加工螺丝孔，采用螺丝(102)将轴套和棘爪座固定连接。在轴套止口端配置防尘橡胶O型圈(103)，在螺丝连接处配置防尘橡胶垫圈(104)以增强密封防护。",
+      "working_principle": {
+        "power_transmission_path": "撬棒 → 轴套(101)径向转动 → 棘爪槽驱动棘爪(106) → 棘爪座(105) → 转带轴(2) → 收紧织带",
+        "engagement_mode": "逆时针方向：轴套(101)内棘爪槽由浅向深运动，棘爪(106)在回位弹簧(107)推力下顶出嵌入棘爪槽深处，棘爪座(105)与轴套(101)结合，扭矩通过棘爪传递至棘爪座及转带轴，实现收紧动作",
+        "disengagement_mode": "顺时针方向：轴套(101)内棘爪槽由深向浅运动，槽壁压迫棘爪(106)克服回位弹簧(107)弹力内缩，棘爪座(105)与轴套(101)分离，轴套空转回位，转带轴保持当前位置不反转",
+        "continuous_operation": "撬棒在轴套上以逆时针收紧/顺时针回位的方式往复摆动，每次逆时针转动均实现一次收紧行程，顺时针转动时轴套空转不带动转带轴，从而实现无需抽出撬棒的连续紧带操作"
+      },
+      "technical_effects": [
+        {
+          "effect": "无需抽出撬棒即可连续往复收紧涤纶织带",
+          "metric": "单次捆绑操作所需撬棒抽出插入次数",
+          "improvement": "从传统方案的3-5次反复抽出插入降为0次，操作步骤减少约60%-80%",
+          "confidence": 0.92
+        },
+        {
+          "effect": "内啮合径向棘爪槽深浅渐变结构替代端面棘爪方案",
+          "metric": "轴头轴向长度增量",
+          "improvement": "相比端面组合方案轴头无需增加两截长度，结构更紧凑，轴向尺寸减小约30%-40%",
+          "confidence": 0.88
+        },
+        {
+          "effect": "双棘爪对称分布提高离合啮合可靠性",
+          "metric": "离合承载能力和啮合稳定性",
+          "improvement": "2个棘爪对称布置使受力均衡，相比单棘爪方案啮合接触面积增加约100%，承载能力显著提升",
+          "confidence": 0.90
+        },
+        {
+          "effect": "8等分棘爪槽减小单次往复操作行程",
+          "metric": "单次往复摆动的有效收紧角度",
+          "improvement": "8等分棘爪槽对应45度棘爪槽间距，撬棒摆动角度需求减小，操作更省力，相比4等分方案单次有效行程角度减半",
+          "confidence": 0.87
+        },
+        {
+          "effect": "结构适配现有转带轴，改造成本低",
+          "metric": "零件数量和改造成本",
+          "improvement": "仅需更换轴头为棘爪座+轴套组合，无需改动绞车主体结构，相比整体更换方案成本降低约50%-70%",
+          "confidence": 0.86
+        },
+        {
+          "effect": "防尘密封延长使用寿命",
+          "metric": "灰尘侵入导致的故障率",
+          "improvement": "O型圈(103)密封轴套止口端，垫圈(104)密封螺丝连接处，双重密封有效阻止灰尘异物进入离合机构内部",
+          "confidence": 0.82
+        }
+      ]
+    }
+  },
+  "document_info": {
+    "type": "patent",
+    "title": "车用离合转动式轴绞车捆绑器",
+    "metadata": {
+      "publicationNumber": "CN200620894",
+      "patentNumber": "ZL 200620040894.8",
+      "type": "utility_model",
+      "applicant": "上海刚立机械工具有限公司",
+      "inventor": "刘滢",
+      "applicationDate": "2006-04-07"
+    }
+  },
+  "comparison_with_invention": {
+    "invention_name": "一种绞车带轴",
+    "key_differences": [
+      {
+        "dimension": "核心创新点",
+        "comparison_document": "转带轴轴头的内啮合单向离合机构（实现连续紧带）",
+        "invention": "带轴本体上的十字形贯穿通孔+定位柱（实现多类型捆绑带兼容）"
+      },
+      {
+        "dimension": "解决的技术问题",
+        "comparison_document": "撬棒需反复抽出插入换孔，操作不便且效率低",
+        "invention": "带轴仅能适配单一类型捆绑带（织带），无法兼容锁链和绳索"
+      },
+      {
+        "dimension": "技术路线",
+        "comparison_document": "径向内啮合离合：棘爪座+轴套+渐变棘爪槽",
+        "invention": "多功能固定：十字形通孔(4a/4b)+定位柱(5)+连接孔(4c)"
+      },
+      {
+        "dimension": "关键结构组件",
+        "comparison_document": "棘爪(106)、回位弹簧(107)、轴套棘爪槽、螺丝(102)",
+        "invention": "通孔一(4a)、通孔二(4b)、连接孔(4c)、定位柱(5)"
+      },
+      {
+        "dimension": "捆绑带兼容性",
+        "comparison_document": "仅织带式（穿带槽21穿涤纶织带）",
+        "invention": "织带式+锁链式+绳索式三种捆绑带"
+      },
+      {
+        "dimension": "单向锁定机构",
+        "comparison_document": "轴头集成离合式单向机构（棘爪+棘爪槽）",
+        "invention": "独立配置棘轮(2)+棘爪(3)+弹簧组件"
+      },
+      {
+        "dimension": "结构复杂度",
+        "comparison_document": "棘爪座+轴套+棘爪+弹簧+螺丝+密封件，约6-8个专用零件",
+        "invention": "本体(4)+定位柱(5)，仅2个核心构件"
+      },
+      {
+        "dimension": "专利类型",
+        "comparison_document": "实用新型",
+        "invention": "发明专利"
+      }
+    ]
+  },
+  "_meta": {
+    "version": "v2-dynamic",
+    "promptSource": "SkillLoader 动态模板渲染（comparative-analysis 模板）",
+    "terminologyMapping": {
+      "连接": "固定连接",
+      "设置": "配置",
+      "用": "采用"
+    },
+    "ocrSource": "tesseract chi_sim + ocrmypdf（清洗后文本）",
+    "generatedAt": "2026-05-10",
+    "analysisDepth": 2,
+    "confidence": 0.92
+  }
+}

@@ -87,7 +87,7 @@ describe('Middleware', () => {
   describe('LoggingMiddleware', () => {
     it('应该记录日志', async () => {
       const mw = new LoggingMiddleware()
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const logSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
 
       await mw.before(createCtx())
       expect(logSpy).toHaveBeenCalled()
@@ -96,7 +96,7 @@ describe('Middleware', () => {
 
     it('应该记录完成', async () => {
       const mw = new LoggingMiddleware()
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const logSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
 
       await mw.after(createCtx(), {})
       expect(logSpy).toHaveBeenCalled()
@@ -114,7 +114,7 @@ describe('Middleware', () => {
 
     it('应该清理敏感输入', async () => {
       const mw = new LoggingMiddleware()
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const logSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
 
       await mw.before(createCtx({ input: { password: 'secret', apiKey: 'key' } }))
       expect(logSpy).toHaveBeenCalled()
@@ -123,7 +123,7 @@ describe('Middleware', () => {
 
     it('应该截断大输出', async () => {
       const mw = new LoggingMiddleware()
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const logSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
 
       await mw.after(createCtx(), { data: 'x'.repeat(2000) })
       expect(logSpy).toHaveBeenCalled()
@@ -238,7 +238,7 @@ describe('Middleware', () => {
   describe('TracingMiddleware', () => {
     it('应该追踪执行', async () => {
       const mw = new TracingMiddleware()
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const logSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
 
       await mw.before(createCtx())
       expect(logSpy).toHaveBeenCalled()
@@ -247,7 +247,7 @@ describe('Middleware', () => {
 
     it('应该追踪完成', async () => {
       const mw = new TracingMiddleware()
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const logSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
 
       await mw.after(createCtx(), {})
       expect(logSpy).toHaveBeenCalled()

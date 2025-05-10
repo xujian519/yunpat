@@ -43,6 +43,8 @@
     "@yunpat/agent-quality": "workspace:*",
     "@yunpat/agent-patent-analyzer": "workspace:*",
     "@yunpat/agent-patent-responder": "workspace:*",
+    "@yunpat/agent-specification-drafter": "workspace:*",
+    "@yunpat/comparison-report-generator": "workspace:*",
     "@yunpat/agent-legal-qa": "workspace:*",
     "@yunpat/unified-knowledge-graph": "workspace:*",
     "@yunpat/document-tools": "workspace:*",

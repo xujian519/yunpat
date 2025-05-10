@@ -197,7 +197,8 @@ impl ToolSpec for PatentAnalyzeSpec {
 
 /// 专利撰写工具 Spec
 ///
-/// 注意: 当前 MCP server 未实现此工具，此 Spec 为未来扩展预留
+/// 对应 MCP 工具: `patent_writer`
+/// 后端 Agent: `SpecificationDrafterAgent`（`@yunpat/agent-specification-drafter`）
 pub struct PatentWriteSpec;
 
 #[async_trait]
@@ -207,8 +208,8 @@ impl ToolSpec for PatentWriteSpec {
     }
 
     fn description(&self) -> &str {
-        "专利撰写工具 — 根据技术交底书生成完整的专利申请文件（权利要求书、说明书等）。\
-         注意: 此工具当前未实现，为未来扩展预留。"
+        "专利撰写工具 — 根据技术交底书生成完整的专利说明书（技术领域、背景技术、\
+          发明内容、具体实施方式、附图说明）。集成 SpecificationDrafterAgent 智能体。"
     }
 
     fn input_schema(&self) -> serde_json::Value {
@@ -244,7 +245,7 @@ impl ToolSpec for PatentWriteSpec {
         _context: &ToolContext,
     ) -> Result<ToolResult, ToolError> {
         Err(ToolError::NotAvailable {
-            message: "Patent writer tool is not yet implemented".to_string(),
+            message: "Patent writer must be executed through MCP adapter".to_string(),
         })
     }
 }
@@ -347,7 +348,8 @@ impl ToolSpec for PatentClaimGenSpec {
 
 /// 专利对比工具 Spec
 ///
-/// 注意: 当前 MCP server 未实现此工具，此 Spec 为未来扩展预留
+/// 对应 MCP 工具: `patent_compare`
+/// 后端 Agent: `ComparisonReportGeneratorAgent`（`@yunpat/agent-comparison-report-generator`）
 pub struct PatentCompareSpec;
 
 #[async_trait]
@@ -357,24 +359,72 @@ impl ToolSpec for PatentCompareSpec {
     }
 
     fn description(&self) -> &str {
-        "专利对比工具 — 对比两个专利的技术方案、权利要求范围，分析差异和相似性。\
-         注意: 此工具当前未实现，为未来扩展预留。"
+        "专利对比工具 — 对比两个专利的技术方案、权利要求范围，分析差异和相似性，\
+          生成对比报告。集成 ComparisonReportGeneratorAgent 智能体。"
     }
 
     fn input_schema(&self) -> serde_json::Value {
         json!({
             "type": "object",
             "properties": {
-                "patent1": {
+                "application": {
                     "type": "object",
-                    "description": "第一个专利的信息"
+                    "description": "本申请专利信息",
+                    "properties": {
+                        "inventionTitle": { "type": "string", "description": "发明名称" },
+                        "claims": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "type": { "type": "string", "enum": ["independent", "dependent"] },
+                                    "number": { "type": "number" },
+                                    "content": { "type": "string" },
+                                    "dependsOn": { "type": "number" }
+                                },
+                                "required": ["type", "number", "content"]
+                            },
+                            "description": "权利要求列表"
+                        },
+                        "specification": {
+                            "type": "object",
+                            "properties": {
+                                "technicalField": { "type": "string" },
+                                "backgroundArt": { "type": "string" },
+                                "inventionContent": { "type": "string" },
+                                "embodiment": { "type": "string" }
+                            },
+                            "description": "说明书内容"
+                        }
+                    },
+                    "required": ["inventionTitle", "claims"]
                 },
-                "patent2": {
+                "priorArt": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "patentId": { "type": "string", "description": "专利ID/公开号" },
+                            "title": { "type": "string", "description": "标题" },
+                            "abstract": { "type": "string", "description": "摘要" },
+                            "claims": { "type": "array", "items": { "type": "string" }, "description": "权利要求" },
+                            "description": { "type": "string", "description": "说明书" }
+                        },
+                        "required": ["patentId", "title", "abstract"]
+                    },
+                    "description": "现有技术专利列表"
+                },
+                "options": {
                     "type": "object",
-                    "description": "第二个专利的信息"
+                    "properties": {
+                        "format": { "type": "string", "enum": ["markdown", "html"] },
+                        "includeTables": { "type": "boolean" },
+                        "language": { "type": "string", "enum": ["zh-CN", "en-US"] }
+                    },
+                    "description": "报告选项"
                 }
             },
-            "required": ["patent1", "patent2"]
+            "required": ["application", "priorArt"]
         })
     }
 
@@ -392,7 +442,7 @@ impl ToolSpec for PatentCompareSpec {
         _context: &ToolContext,
     ) -> Result<ToolResult, ToolError> {
         Err(ToolError::NotAvailable {
-            message: "Patent comparison tool is not yet implemented".to_string(),
+            message: "Patent comparison must be executed through MCP adapter".to_string(),
         })
     }
 }

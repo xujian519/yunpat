@@ -79,3 +79,55 @@ export function isSemanticallySimilar(a: string, b: string): boolean {
   const overlap = termsA.filter((t: string) => termsB.includes(t)).length
   return overlap / Math.min(termsA.length, termsB.length) >= 0.7
 }
+
+/**
+ * 必要技术特征分析结果
+ */
+export interface EssentialFeatureAnalysis {
+  /** 特征描述 */
+  feature: string
+  /** 该特征的技术效果 */
+  technicalEffect: string
+  /** 去除该特征后能否仍解决技术问题 */
+  canSolveWithout: boolean
+  /** 是否为必要技术特征 */
+  isEssential: boolean
+  /** 在权利要求中的归属位置 */
+  location: 'preamble' | 'characteristic' | 'dependent'
+  /** 判断理由 */
+  reason: string
+}
+
+/**
+ * 检出独立权利要求中不应包含的非必要特征
+ *
+ * 基于 EssentialFeatureAnalysis 分析结果，检查独立权利要求文本中
+ * 是否包含了被判定为"非必要"的特征。用于 reflect() 阶段的反向验证。
+ *
+ * @param claimText 独立权利要求的完整文本
+ * @param analysis 必要技术特征分析结果
+ * @returns 被独立权利要求包含的非必要特征列表
+ */
+export function identifyIncludedUnnecessaryFeatures(
+  claimText: string,
+  analysis: EssentialFeatureAnalysis[]
+): Array<{ feature: string; reason: string }> {
+  if (!claimText?.trim() || !analysis?.length) return []
+
+  const result: Array<{ feature: string; reason: string }> = []
+
+  for (const item of analysis) {
+    // 只检查被判定为非必要的特征
+    if (item.isEssential) continue
+
+    // 检查该非必要特征是否出现在独立权利要求中
+    if (isFeatureCoveredInClaim(item.feature, claimText)) {
+      result.push({
+        feature: item.feature,
+        reason: item.reason || `特征"${item.feature}"被判定为非必要（去除后仍能解决技术问题），但出现在独立权利要求中，应移至从属权利要求`,
+      })
+    }
+  }
+
+  return result
+}

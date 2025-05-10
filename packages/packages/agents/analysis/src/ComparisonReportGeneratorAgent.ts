@@ -1,4 +1,5 @@
-import { KnowledgeEnhancedAgent, type ExecutionContext } from '@yunpat/core'
+import { KnowledgeEnhancedAgent, SkillLoader, type ExecutionContext } from '@yunpat/core'
+import { join } from 'path'
 
 export interface ComparisonReportInput {
   inventionUnderstanding: {
@@ -77,6 +78,17 @@ interface ReportPlan {
 }
 
 export class ComparisonReportGeneratorAgent extends KnowledgeEnhancedAgent {
+  private skillLoader?: SkillLoader
+
+  constructor(config: any = {}) {
+    super(config)
+    this.skillLoader =
+      config.skillLoader ||
+      new SkillLoader({
+        baseDir: join(process.cwd(), '.yunpat/skills/comparison-report'),
+      })
+  }
+
   protected async plan(
     input: ComparisonReportInput,
     _context: ExecutionContext
@@ -108,43 +120,9 @@ export class ComparisonReportGeneratorAgent extends KnowledgeEnhancedAgent {
 
     console.log(`   最接近现有技术: ${closestPriorArt.patentInfo.publicationNumber}`)
 
-    const systemPrompt = `你是一位资深的专利对比分析专家，擅长分析发明与现有技术的区别，评估创造性。
+    const systemPrompt = await this.buildSystemPrompt()
 
-你的任务：
-1. 识别发明与最接近现有技术的区别特征
-2. 评估区别特征的新颖性程度（高/中/低）
-3. 分析技术问题的提炼和 refinement
-4. 评估技术方案的创造性
-5. 给出保护范围建议
-
-输出必须是严格的JSON格式。`
-
-    const priorArtSummary = input.priorArtAnalysis
-      .map(
-        (art, index) => `
-## 现有技术 ${index + 1}: ${art.patentInfo.publicationNumber}
-标题: ${art.patentInfo.title}
-技术问题: ${art.technicalAnalysis.technicalProblems.main}
-核心方案: ${art.technicalAnalysis.technicalSolution.core}
-关键特征: ${art.technicalAnalysis.technicalSolution.keyFeatures.map((f) => f.feature).join(', ')}
-相似度: ${(art.comparison.similarity * 100).toFixed(1)}%
-区别特征: ${art.comparison.distinctFeatures.join(', ') || '无'}
-`
-      )
-      .join('\n')
-
-    const userPrompt = `## 发明信息
-
-技术问题: ${input.inventionUnderstanding.technicalProblem}
-技术方案: ${input.inventionUnderstanding.technicalSolution}
-技术效果: ${input.inventionUnderstanding.technicalEffects}
-关键特征: ${input.inventionUnderstanding.keyFeatures.join(', ')}
-
-${priorArtSummary}
-
-请生成对比分析报告，输出以下JSON格式:
-
-{\n  "closest_prior_art": {\n    "publication_number": "公开号",\n    "title": "标题",\n    "similarity": 0.5,\n    "reason": "为什么是最接近的现有技术"\n  },\n  "distinct_features": [\n    {\n      "feature": "区别特征",\n      "novelty": "high | medium | low",\n      "evidence": ["证据1", "证据2"]\n    }\n  ],\n  "technical_problem": {\n    "original": "原始技术问题",\n    "refined": "提炼后的技术问题",\n    "refinement_reason": "提炼理由"\n  },\n  "technical_solution": {\n    "original": "原始技术方案",\n    "refined": {\n      "core": "提炼后的核心",\n      "innovative": ["创新点1"],\n      "obvious": ["显而易见点1"]\n    }\n  },\n  "technical_effects": {\n    "original": ["原始效果1"],\n    "refined": {\n      "unexpected": ["预料不到的效果"],\n      "expected": ["可预期的效果"]\n    }\n  },\n  "inventiveness": {\n    "score": 0.7,\n    "key_factors": ["创造性因素1"]\n  },\n  "protection_scope": {\n    "independent_claims": ["独立权利要求建议1"],\n    "dependent_claims": [["从属权利要求建议1"]],\n    "breadth": "保护范围建议"\n  }\n}`
+    const userPrompt = await this.buildUserPrompt(input)
 
     const response = await context.llm.chat({
       messages: [
@@ -249,5 +227,119 @@ ${priorArtSummary}
         breadth: '',
       },
     }
+  }
+
+  private async buildSystemPrompt(): Promise<string> {
+    if (this.skillLoader) {
+      try {
+        const template = await this.skillLoader.load('system-prompt')
+        return this.skillLoader.render(template, {})
+      } catch {
+        /* 模板不存在，使用硬编码降级 */
+      }
+    }
+
+    return `你是一位资深的专利对比分析专家，擅长分析发明与现有技术的区别，评估创造性。
+
+你的任务：
+1. 识别发明与最接近现有技术的区别特征
+2. 评估区别特征的新颖性程度（高/中/低）
+3. 分析技术问题的提炼和 refinement
+4. 评估技术方案的创造性
+5. 给出保护范围建议
+
+输出必须是严格的JSON格式。`
+  }
+
+  private async buildUserPrompt(input: ComparisonReportInput): Promise<string> {
+    const priorArtSummary = input.priorArtAnalysis
+      .map(
+        (art, index) => `
+## 现有技术 ${index + 1}: ${art.patentInfo.publicationNumber}
+标题: ${art.patentInfo.title}
+技术问题: ${art.technicalAnalysis.technicalProblems.main}
+核心方案: ${art.technicalAnalysis.technicalSolution.core}
+关键特征: ${art.technicalAnalysis.technicalSolution.keyFeatures.map((f) => f.feature).join(', ')}
+相似度: ${(art.comparison.similarity * 100).toFixed(1)}%
+区别特征: ${art.comparison.distinctFeatures.join(', ') || '无'}
+`
+      )
+      .join('\n')
+
+    const inventionProblem = input.inventionUnderstanding.technicalProblem
+    const inventionSolution = input.inventionUnderstanding.technicalSolution
+    const inventionEffects = input.inventionUnderstanding.technicalEffects
+    const inventionFeatures = input.inventionUnderstanding.keyFeatures.join(', ')
+
+    if (this.skillLoader) {
+      try {
+        const template = await this.skillLoader.load('user-prompt')
+        return this.skillLoader.render(template, {
+          inventionProblem,
+          inventionSolution,
+          inventionEffects,
+          inventionFeatures,
+          priorArtSummary,
+        })
+      } catch {
+        /* 模板不存在，使用硬编码降级 */
+      }
+    }
+
+    return `## 发明信息
+
+技术问题: ${inventionProblem}
+技术方案: ${inventionSolution}
+技术效果: ${inventionEffects}
+关键特征: ${inventionFeatures}
+
+${priorArtSummary}
+
+请生成对比分析报告，输出以下JSON格式:
+
+{
+  "closest_prior_art": {
+    "publication_number": "公开号",
+    "title": "标题",
+    "similarity": 0.5,
+    "reason": "为什么是最接近的现有技术"
+  },
+  "distinct_features": [
+    {
+      "feature": "区别特征",
+      "novelty": "high | medium | low",
+      "evidence": ["证据1", "证据2"]
+    }
+  ],
+  "technical_problem": {
+    "original": "原始技术问题",
+    "refined": "提炼后的技术问题",
+    "refinement_reason": "提炼理由"
+  },
+  "technical_solution": {
+    "original": "原始技术方案",
+    "refined": {
+      "core": "提炼后的核心",
+      "innovative": ["创新点1"],
+      "obvious": ["显而易见点1"]
+    }
+  },
+  "technical_effects": {
+    "original": ["原始效果1"],
+    "refined": {
+      "unexpected": ["预料不到的效果"],
+      "expected": ["可预期的效果"]
+    }
+  },
+  "inventiveness": {
+    "score": 0.7,
+    "key_factors": ["创造性因素1"]
+  },
+  "protection_scope": {
+    "independent_claims": ["独立权利要求建议1"],
+    "dependent_claims": [["从属权利要求建议1"]],
+    "breadth": "保护范围建议"
+  }
+}`
   }
 }

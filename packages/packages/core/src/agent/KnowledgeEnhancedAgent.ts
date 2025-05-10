@@ -6,6 +6,7 @@
 
 import { Agent, AgentConfig } from './Agent.js'
 import type { ExecutionContext } from '../lifecycle/Lifecycle.js'
+import type { PromptSection } from '../prompt/index.js'
 
 // 知识来源类型常量
 const SOURCE_POSTGRESQL_VECTOR = 'postgresql_vector'
@@ -106,24 +107,75 @@ export abstract class KnowledgeEnhancedAgent<TInput = any, TOutput = any> extend
   }
 
   /**
-   * 查询知识图谱
+   * 查询知识图谱（支持 Token Budget 感知）
    *
    * @param queryText - 查询文本
    * @param topK - 返回结果数量（默认 5）
-   * @returns 知识结果数组
+   * @param maxTokens - 最大 Token 预算（默认 4000）
+   * @returns 知识结果数组（已按预算截断）
    */
-  protected async queryKnowledge(queryText: string, topK: number = 5): Promise<KnowledgeResult[]> {
+  protected async queryKnowledge(
+    queryText: string,
+    topK: number = 5,
+    maxTokens: number = 4000
+  ): Promise<KnowledgeResult[]> {
     if (!this.knowledgeGraph) {
       console.warn(`[${this.name}] 知识图谱未启用`)
       return []
     }
 
     try {
-      return await this.knowledgeGraph.query(queryText, { topK })
+      const results = await this.knowledgeGraph.query(queryText, { topK })
+      return this.truncateKnowledgeByBudget(results, maxTokens)
     } catch (err) {
       console.error(`[${this.name}] 知识图谱查询失败:`, err)
       return []
     }
+  }
+
+  /**
+   * 按 Token 预算截断知识结果
+   *
+   * 保留高相关性结果，截断低相关性结果的内容。
+   */
+  protected truncateKnowledgeByBudget(
+    results: KnowledgeResult[],
+    maxTokens: number
+  ): KnowledgeResult[] {
+    // 简单估算：中文按 0.6 token/字，英文按 0.3 token/字
+    const estimateTokens = (text: string): number => {
+      const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length
+      const otherChars = text.length - chineseChars
+      return Math.ceil(chineseChars * 0.6 + otherChars * 0.3)
+    }
+
+    let accumulated = 0
+    const truncated: KnowledgeResult[] = []
+
+    for (const result of results) {
+      const tokens = estimateTokens(result.content)
+      if (accumulated + tokens > maxTokens && truncated.length > 0) {
+        // 预算已满，截断当前结果的内容
+        const remaining = maxTokens - accumulated
+        const maxChars = Math.floor(remaining / 0.6) // 保守按中文计算
+        truncated.push({
+          ...result,
+          content:
+            result.content.substring(0, Math.max(maxChars, 50)) + '... [内容因 Token 预算截断]',
+        })
+        break
+      }
+      accumulated += tokens
+      truncated.push(result)
+    }
+
+    if (truncated.length < results.length) {
+      console.log(
+        `[${this.name}] 知识结果从 ${results.length} 条截断至 ${truncated.length} 条（预算 ${maxTokens} tokens）`
+      )
+    }
+
+    return truncated
   }
 
   /**
@@ -158,7 +210,7 @@ export abstract class KnowledgeEnhancedAgent<TInput = any, TOutput = any> extend
   }
 
   /**
-   * 构建知识增强的 Prompt
+   * 构建知识增强的 Prompt（向后兼容）
    */
   protected buildKnowledgeEnhancedPrompt(
     userQuery: string,
@@ -202,6 +254,68 @@ export abstract class KnowledgeEnhancedAgent<TInput = any, TOutput = any> extend
     prompt += `请基于上述法律知识，结合你的专业知识，给出准确、详细的回答。`
 
     return prompt
+  }
+
+  /**
+   * 构建知识上下文 PromptSections（用于 PromptAssemblyPipeline）
+   *
+   * 将知识检索结果转换为可注入 Prompt 管道的 Section。
+   * 这些 Section 标记为 dynamic，因为它们随每次查询变化。
+   */
+  protected buildKnowledgeContextSections(knowledgeResults: KnowledgeResult[]): PromptSection[] {
+    if (knowledgeResults.length === 0) {
+      return []
+    }
+
+    const grouped = groupBySource(knowledgeResults)
+    const sections: PromptSection[] = []
+
+    if (grouped.postgresqlVector.length > 0) {
+      const content = this.formatKnowledgeSection(grouped.postgresqlVector, 300)
+      sections.push({
+        id: 'knowledge_law_vector',
+        priority: 70, // 高于 Agent 默认，低于 Coordinator
+        content: `## 相关法律条文与判例\n\n${content}`,
+        cacheScope: null,
+        isDynamic: true,
+      })
+    }
+
+    if (grouped.postgresqlStructured.length > 0) {
+      const content = this.formatKnowledgeSection(grouped.postgresqlStructured, 300)
+      sections.push({
+        id: 'knowledge_structured',
+        priority: 70,
+        content: `## 结构化知识\n\n${content}`,
+        cacheScope: null,
+        isDynamic: true,
+      })
+    }
+
+    if (grouped.yunpatConcepts.length > 0) {
+      const content = grouped.yunpatConcepts
+        .map((k, i) => {
+          const level = (k.metadata?.level as number) || 0
+          let text = `${i + 1}. ${k.name}（${level}级概念）`
+          if (k.content) text += `\n   ${k.content.substring(0, 200)}...`
+          const pages = k.metadata?.relatedPages
+          if (Array.isArray(pages) && pages.length > 0) {
+            text += `\n   相关页面: ${pages.slice(0, 3).join(', ')}`
+          }
+          return text
+        })
+        .join('\n\n')
+
+      sections.push({
+        id: 'knowledge_concepts',
+        priority: 70,
+        content: `## 核心概念\n\n${content}`,
+        cacheScope: null,
+        isDynamic: true,
+      })
+    }
+
+    return sections
   }
 
   private formatKnowledgeSection(results: KnowledgeResult[], maxContentLength: number): string {

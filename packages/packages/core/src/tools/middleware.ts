@@ -1,5 +1,5 @@
 import { ToolExecutionContext, ToolExecutionStats } from './types.js'
-import { createLogger, type Logger } from '../utils/Logger.js'
+import { createLogger, LogLevel, type Logger } from '../utils/Logger.js'
 
 /**
  * 中间件接口
@@ -129,7 +129,7 @@ export class LoggingMiddleware implements Middleware {
   private logger: Logger
 
   constructor() {
-    this.logger = createLogger('ToolMiddleware')
+    this.logger = createLogger('ToolMiddleware', LogLevel.DEBUG)
   }
 
   async before(ctx: ToolExecutionContext): Promise<void> {
@@ -466,7 +466,7 @@ export class TracingMiddleware implements Middleware {
   private traces = new Map<string, ToolExecutionStats>()
 
   constructor() {
-    this.logger = createLogger('TracingMiddleware')
+    this.logger = createLogger('TracingMiddleware', LogLevel.DEBUG)
   }
 
   async before(ctx: ToolExecutionContext): Promise<void> {

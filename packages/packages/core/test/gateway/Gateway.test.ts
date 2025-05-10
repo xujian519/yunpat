@@ -320,7 +320,7 @@ describe('Gateway - 额外分支覆盖测试', () => {
       })
 
       expect(result.success).toBe(false)
-      expect(result.error).toBe('Basic 认证暂未实现')
+      expect(result.error).toBe('Basic 认证提供者未配置')
     })
   })
 

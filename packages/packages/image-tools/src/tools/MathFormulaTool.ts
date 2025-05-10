@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
+import { EnhancedBaseTool, ToolCategory, ToolContext, ToolResultBlockParam } from '@yunpat/core'
 
 /**
  * 数学公式识别工具
@@ -25,6 +25,13 @@ export class MathFormulaTool extends EnhancedBaseTool<
     this.serviceUrl = serviceUrl
   }
 
+  /**
+   * 标记为只读操作（识别服务，不修改数据）
+   */
+  isReadOnly(): boolean {
+    return true
+  }
+
   readonly metadata = {
     name: 'math_formula_recognition',
     description: '识别图片中的数学公式（LaTeX输出）',
@@ -43,6 +50,38 @@ export class MathFormulaTool extends EnhancedBaseTool<
     permissions: ['network:read'],
     version: '1.0.0',
     author: 'YunPat Team',
+  }
+
+  /**
+   * 渲染数学公式识别结果为 LLM message blocks
+   */
+  async renderToolResultMessage(result: {
+    success: boolean
+    message: string
+    latex?: string
+    confidence?: number
+  }): Promise<ToolResultBlockParam[]> {
+    if (!result.success || !result.latex) {
+      return [{ type: 'text', text: `[数学公式识别] 失败: ${result.message}` }]
+    }
+
+    const lines: string[] = []
+    lines.push(`## 数学公式识别结果`)
+    lines.push('')
+    lines.push(`- 置信度: ${((result.confidence ?? 0) * 100).toFixed(1)}%`)
+    lines.push('')
+    lines.push('```latex')
+    lines.push(result.latex)
+    lines.push('```')
+
+    return [{ type: 'text', text: lines.join('\n') }]
+  }
+
+  /**
+   * 渲染工具调用请求
+   */
+  async renderToolUseMessage(input: { imageData: string; imageFormat?: string }): Promise<string> {
+    return `数学公式识别: ${input.imageFormat ?? 'png'} → LaTeX`
   }
 
   async execute(

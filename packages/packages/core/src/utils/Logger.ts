@@ -177,6 +177,6 @@ export class Logger {
 /**
  * 创建默认Logger
  */
-export function createLogger(context: string): Logger {
-  return new Logger({ context })
+export function createLogger(context: string, minLevel?: LogLevel): Logger {
+  return new Logger({ context, minLevel })
 }

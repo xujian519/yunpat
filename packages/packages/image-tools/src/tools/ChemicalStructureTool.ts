@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
+import { EnhancedBaseTool, ToolCategory, ToolContext, ToolResultBlockParam } from '@yunpat/core'
 
 /**
  * 化学结构识别工具
@@ -27,6 +27,13 @@ export class ChemicalStructureTool extends EnhancedBaseTool<
     this.serviceUrl = serviceUrl
   }
 
+  /**
+   * 标记为只读操作（识别服务，不修改数据）
+   */
+  isReadOnly(): boolean {
+    return true
+  }
+
   readonly metadata = {
     name: 'chemical_structure_recognition',
     description: '识别图片中的化学结构（分子式、反应方程式等）',
@@ -51,6 +58,44 @@ export class ChemicalStructureTool extends EnhancedBaseTool<
     permissions: ['network:read'],
     version: '1.0.0',
     author: 'YunPat Team',
+  }
+
+  /**
+   * 渲染化学结构识别结果为 LLM message blocks
+   */
+  async renderToolResultMessage(result: {
+    success: boolean
+    message: string
+    structure?: string
+    confidence?: number
+    format: string
+  }): Promise<ToolResultBlockParam[]> {
+    if (!result.success || !result.structure) {
+      return [{ type: 'text', text: `[化学结构识别] 失败: ${result.message}` }]
+    }
+
+    const lines: string[] = []
+    lines.push(`## 化学结构识别结果`)
+    lines.push('')
+    lines.push(`- 格式: ${result.format.toUpperCase()}`)
+    lines.push(`- 置信度: ${((result.confidence ?? 0) * 100).toFixed(1)}%`)
+    lines.push('')
+    lines.push('```')
+    lines.push(result.structure)
+    lines.push('```')
+
+    return [{ type: 'text', text: lines.join('\n') }]
+  }
+
+  /**
+   * 渲染工具调用请求
+   */
+  async renderToolUseMessage(input: {
+    imageData: string
+    imageFormat?: string
+    outputFormat?: string
+  }): Promise<string> {
+    return `化学结构识别: ${input.imageFormat ?? 'png'} → ${input.outputFormat ?? 'smiles'}`
   }
 
   async execute(

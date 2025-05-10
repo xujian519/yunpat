@@ -37,6 +37,8 @@ import {
   PatentRuleSearchTool,
   ProjectScanTool,
   PatentDispatchTool,
+  PatentWriterTool,
+  PatentCompareTool,
 } from './tools/index.js'
 
 import type { McpToolContext } from './types.js'
@@ -61,6 +63,8 @@ function createServer() {
   const patentRuleTool = new PatentRuleSearchTool()
   const projectScanTool = new ProjectScanTool()
   const patentDispatchTool = new PatentDispatchTool()
+  const patentWriterTool = new PatentWriterTool()
+  const patentCompareTool = new PatentCompareTool()
 
   // 所有工具列表
   const toolsList = [
@@ -72,6 +76,8 @@ function createServer() {
     patentRuleTool,
     projectScanTool,
     patentDispatchTool,
+    patentWriterTool,
+    patentCompareTool,
   ]
 
   // 创建 MCP 服务器
@@ -175,6 +181,14 @@ function createServer() {
 
         case 'patent_dispatch':
           result = await patentDispatchTool.execute(args, context)
+          break
+
+        case 'patent_writer':
+          result = await patentWriterTool.execute(args, context)
+          break
+
+        case 'patent_compare':
+          result = await patentCompareTool.execute(args, context)
           break
 
         default:

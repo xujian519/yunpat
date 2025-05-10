@@ -11,6 +11,8 @@ import {
   ToolExecutionStats,
   ToolMetadata,
   ToolValidationResult,
+  type PermissionResult,
+  type ToolResultBlockParam,
 } from './types.js'
 import {
   MiddlewarePipeline,
@@ -20,6 +22,7 @@ import {
   RateLimitMiddleware,
   TracingMiddleware,
 } from './middleware.js'
+import { ToolExecutionEngine } from './ToolExecutionEngine.js'
 
 /**
  * 增强的工具注册表
@@ -38,6 +41,9 @@ export class EnhancedToolRegistry {
   /** 中间件管道 */
   private middleware: MiddlewarePipeline
 
+  /** 工具执行引擎（Phase 2.2） */
+  private executionEngine: ToolExecutionEngine
+
   /** 事件总线 */
   private eventBus: EventBus
 
@@ -50,6 +56,7 @@ export class EnhancedToolRegistry {
   constructor(eventBus: EventBus) {
     this.eventBus = eventBus
     this.middleware = new MiddlewarePipeline()
+    this.executionEngine = new ToolExecutionEngine({ middleware: this.middleware })
 
     // 注册默认中间件
     this.registerDefaultMiddleware()
@@ -153,7 +160,9 @@ export class EnhancedToolRegistry {
   }
 
   /**
-   * 调用工具（带中间件）
+   * 调用工具（委托给 ToolExecutionEngine）
+   *
+   * 向后兼容：保留现有签名，内部委托给执行引擎。
    */
   async call<TInput, TOutput>(name: string, input: TInput, context: ToolContext): Promise<TOutput> {
     const tool = this.tools.get(name) as EnhancedTool<TInput, TOutput>
@@ -162,39 +171,19 @@ export class EnhancedToolRegistry {
       throw new Error(`Tool not found: ${name}`)
     }
 
-    // 验证输入参数
-    const validatedInput = await this.validateInput(tool, input)
-
-    // 工具级语义校验（在 Zod schema 验证之后）
-    if (tool.validateInput) {
-      const result = await tool.validateInput(validatedInput)
-      if (!result.result) {
-        throw new Error(
-          `Tool '${name}' input validation failed: ${result.message} (code: ${result.errorCode})`
-        )
-      }
+    // 确保 registry 指向当前实例
+    const enrichedContext = {
+      ...context,
+      registry: this as unknown as ToolContext['registry'],
     }
 
-    // 构建执行上下文
-    const executionContext: ToolExecutionContext = {
-      tool,
-      input: validatedInput,
-      context: {
-        ...context,
-        registry: this as unknown as ToolContext['registry'],
-      },
-      startTime: Date.now(),
-    }
-
-    // 通过中间件管道执行
-    const rawResult = (await this.middleware.execute(executionContext)) as TOutput
-
-    // 输出持久化：超大结果自动存磁盘
-    return this.maybePersistResult(tool, rawResult) as TOutput
+    return this.executionEngine.execute(tool, input, enrichedContext)
   }
 
   /**
-   * 批量调用工具（智能并发）
+   * 批量调用工具（委托给 ToolExecutionEngine）
+   *
+   * 向后兼容：保留现有签名，内部委托给执行引擎的批量执行。
    */
   async callBatch<TInput, TOutput>(
     calls: Array<{ name: string; input: TInput }>,
@@ -204,43 +193,20 @@ export class EnhancedToolRegistry {
       return []
     }
 
-    // 分离只读工具和写工具（使用动态方法判断）
-    const readOnlyCalls: Array<{ name: string; input: TInput; index: number }> = []
-    const writeCalls: Array<{ name: string; input: TInput; index: number }> = []
-
-    for (let i = 0; i < calls.length; i++) {
-      const tool = this.tools.get(calls[i].name) as EnhancedTool
-      const input = calls[i].input
-      const safe = tool?.isConcurrencySafe
-        ? tool.isConcurrencySafe(input)
-        : (tool?.metadata.isConcurrencySafe ?? false)
-      if (safe) {
-        readOnlyCalls.push({ ...calls[i], index: i })
-      } else {
-        writeCalls.push({ ...calls[i], index: i })
-      }
+    const enrichedContext = {
+      ...context,
+      registry: this as unknown as ToolContext['registry'],
     }
 
-    // 并发执行只读工具
-    const readOnlyPromises = readOnlyCalls.map(async (call) => {
-      const result = await this.call(call.name, call.input, context)
-      return { index: call.index, result }
+    const toolCalls = calls.map((call) => {
+      const tool = this.tools.get(call.name) as EnhancedTool<TInput, TOutput>
+      if (!tool) {
+        throw new Error(`Tool not found: ${call.name}`)
+      }
+      return { tool, input: call.input }
     })
 
-    const readOnlyResults = await Promise.all(readOnlyPromises)
-
-    // 串行执行写工具
-    const writeResults: Array<{ index: number; result: unknown }> = []
-    for (const call of writeCalls) {
-      const result = await this.call(call.name, call.input, context)
-      writeResults.push({ index: call.index, result })
-    }
-
-    // 合并结果（保持原始顺序）
-    const allResults = [...readOnlyResults, ...writeResults]
-    allResults.sort((a, b) => a.index - b.index)
-
-    return allResults.map((r) => r.result) as TOutput[]
+    return this.executionEngine.executeBatch(toolCalls, enrichedContext)
   }
 
   /**
@@ -491,6 +457,10 @@ export abstract class BaseTool<TInput = any, TOutput = any> implements EnhancedT
     return { result: true }
   }
 
+  async checkPermissions(_input: TInput, _context: ToolContext): Promise<PermissionResult> {
+    return { allowed: true }
+  }
+
   // 可选钩子（子类可覆盖）
   async before?(input: TInput, context: ToolContext): Promise<void>
 
@@ -511,6 +481,11 @@ export class ToolWrapperClass<TInput = any, TOutput = any> extends BaseTool<TInp
   private isConcurrencySafeFn?: (input: TInput) => boolean
   private isDestructiveFn?: (input: TInput) => boolean
   private validateInputFn?: (input: TInput) => Promise<ToolValidationResult>
+  private checkPermissionsFn?: (input: TInput, context: ToolContext) => Promise<PermissionResult>
+  private renderToolResultMessageFn?: (
+    result: TOutput
+  ) => ToolResultBlockParam[] | Promise<ToolResultBlockParam[]>
+  private renderToolUseMessageFn?: (input: TInput) => string | Promise<string>
 
   constructor(
     metadata: ToolMetadata<TInput, TOutput>,
@@ -520,6 +495,11 @@ export class ToolWrapperClass<TInput = any, TOutput = any> extends BaseTool<TInp
       isConcurrencySafe?: (input: TInput) => boolean
       isDestructive?: (input: TInput) => boolean
       validateInput?: (input: TInput) => Promise<ToolValidationResult>
+      checkPermissions?: (input: TInput, context: ToolContext) => Promise<PermissionResult>
+      renderToolResultMessage?: (
+        result: TOutput
+      ) => ToolResultBlockParam[] | Promise<ToolResultBlockParam[]>
+      renderToolUseMessage?: (input: TInput) => string | Promise<string>
     }
   ) {
     super()
@@ -529,6 +509,9 @@ export class ToolWrapperClass<TInput = any, TOutput = any> extends BaseTool<TInp
     this.isConcurrencySafeFn = options?.isConcurrencySafe
     this.isDestructiveFn = options?.isDestructive
     this.validateInputFn = options?.validateInput
+    this.checkPermissionsFn = options?.checkPermissions
+    this.renderToolResultMessageFn = options?.renderToolResultMessage
+    this.renderToolUseMessageFn = options?.renderToolUseMessage
   }
 
   async execute(input: TInput, context: ToolContext): Promise<TOutput> {
@@ -551,6 +534,12 @@ export class ToolWrapperClass<TInput = any, TOutput = any> extends BaseTool<TInp
 
   override validateInput(input: TInput): Promise<ToolValidationResult> {
     return this.validateInputFn ? this.validateInputFn(input) : super.validateInput(input)
+  }
+
+  override checkPermissions(input: TInput, context: ToolContext): Promise<PermissionResult> {
+    return this.checkPermissionsFn
+      ? this.checkPermissionsFn(input, context)
+      : super.checkPermissions(input, context)
   }
 }
 
@@ -590,9 +579,17 @@ export function buildTool<TInput = any, TOutput = any>(
     validateInput:
       def.validateInput ??
       ((_input: TInput) => Promise.resolve({ result: true } as ToolValidationResult)),
+    checkPermissions:
+      def.checkPermissions ??
+      ((_input: TInput, _context: ToolContext) => Promise.resolve({ allowed: true })),
     metadata: def.metadata,
     execute: def.execute,
     ...(def.before ? { before: def.before } : {}),
     ...(def.after ? { after: def.after } : {}),
+    ...(def.interruptBehavior ? { interruptBehavior: def.interruptBehavior } : {}),
+    ...(def.renderToolResultMessage
+      ? { renderToolResultMessage: def.renderToolResultMessage }
+      : {}),
+    ...(def.renderToolUseMessage ? { renderToolUseMessage: def.renderToolUseMessage } : {}),
   }
 }

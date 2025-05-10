@@ -176,7 +176,7 @@ async function main(): Promise<void> {
   try {
     const raw = await readStdin()
     if (!raw.trim()) {
-      log("exception-hook", 'stdin 为空，跳过')
+      log('exception-hook', 'stdin 为空，跳过')
       return
     }
 
@@ -184,7 +184,7 @@ async function main(): Promise<void> {
     try {
       input = JSON.parse(raw)
     } catch {
-      log("exception-hook", '无法解析 stdin JSON，跳过')
+      log('exception-hook', '无法解析 stdin JSON，跳过')
       return
     }
 
@@ -194,20 +194,21 @@ async function main(): Promise<void> {
     const toolName = input.tool_name ? String(input.tool_name) : undefined
     const sessionId = input.session_id ? String(input.session_id) : undefined
 
-      log("exception-hook", 
+    log(
+      'exception-hook',
       `event=${event} error_type=${errorType} tool=${toolName ?? '-'} session=${sessionId ?? '-'}`
     )
 
     // 仅处理 on_error 事件
     if (event !== 'on_error') {
-      log("exception-hook", `忽略非 on_error 事件: ${event}`)
+      log('exception-hook', `忽略非 on_error 事件: ${event}`)
       return
     }
 
     // 快速路径：尝试规则化恢复
     const quickInstruction = quickRecoveryStrategy(errorType, errorMsg, toolName)
     if (quickInstruction) {
-      log("exception-hook", '快速路径恢复策略:', quickInstruction.action)
+      log('exception-hook', '快速路径恢复策略:', quickInstruction.action)
       emitInstruction(quickInstruction)
       return
     }
@@ -221,11 +222,12 @@ async function main(): Promise<void> {
       const recoveryResult = await exceptionHandler.handleException(error, executionContext)
       const instruction = recoveryResultToInstruction(recoveryResult, error)
 
-      log("exception-hook", `ExceptionHandler 恢复策略: action=${instruction.action}`)
+      log('exception-hook', `ExceptionHandler 恢复策略: action=${instruction.action}`)
       emitInstruction(instruction)
     } catch (handlerError) {
       // ExceptionHandler 也失败了，输出最简单的兜底指令
-      log("exception-hook", 
+      log(
+        'exception-hook',
         `ExceptionHandler 失败: ${handlerError instanceof Error ? handlerError.message : String(handlerError)}`
       )
       emitInstruction({
@@ -234,7 +236,7 @@ async function main(): Promise<void> {
       })
     }
   } catch (err) {
-      log("exception-hook", `异常退出: ${err instanceof Error ? err.message : String(err)}`)
+    log('exception-hook', `异常退出: ${err instanceof Error ? err.message : String(err)}`)
   }
 }
 

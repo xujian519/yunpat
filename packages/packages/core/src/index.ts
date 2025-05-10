@@ -15,6 +15,8 @@ export {
   AgentExecutionError,
   ExternalServiceError,
   ValidationError,
+  ToolExecutionError,
+  PermissionDeniedError,
 } from './errors/AgentErrors.js'
 
 // ========== 工具类 ==========
@@ -27,8 +29,9 @@ export {
   extractRequiredFeatures,
   isFeatureCoveredInClaim,
   isSemanticallySimilar,
+  identifyIncludedUnnecessaryFeatures,
 } from './utils/claimFeatureMatcher.js'
-export type { InventionFeatureData } from './utils/claimFeatureMatcher.js'
+export type { InventionFeatureData, EssentialFeatureAnalysis } from './utils/claimFeatureMatcher.js'
 
 // ========== ① 交互层 (Gateway) ==========
 export {
@@ -302,6 +305,10 @@ export {
   EnhancedTool,
   ToolExecutionStats,
   ToolValidationResult,
+  type InterruptBehavior,
+  type ToolResultBlockParam,
+  type UIRenderSpec,
+  type PermissionResult,
 } from './tools/types.js'
 
 export {
@@ -312,6 +319,20 @@ export {
   RateLimitMiddleware,
   TracingMiddleware,
 } from './tools/middleware.js'
+
+export {
+  ToolExecutionEngine,
+  defaultToolExecutionEngine,
+  type ToolExecutionEngineConfig,
+  type ExecuteOptions,
+  type BatchExecuteOptions,
+} from './tools/ToolExecutionEngine.js'
+
+export {
+  ToolResultRenderer,
+  defaultToolResultRenderer,
+  type RenderTarget,
+} from './tools/ToolResultRenderer.js'
 
 // ========== 核心抽象 ==========
 export { Agent, AgentConfig } from './agent/Agent.js'
@@ -562,9 +583,139 @@ export type {
   ValidationResult as SkillValidationResult,
 } from './skills/SkillLoader.js'
 
+// 安全内容提供者（提示词加密保护）
+export {
+  SecureContentProvider,
+  sealContent,
+} from './skills/SecureContentProvider.js'
+
+export type {
+  SecureContentProviderConfig,
+  KeySource,
+  SealOptions,
+} from './skills/SecureContentProvider.js'
+
+// ========== 协调器 (Coordinator) ==========
+export {
+  PatentCoordinator,
+  createPatentCoordinator,
+  type CoordinatorInput,
+  type CoordinatorOutput,
+} from './coordinator/PatentCoordinator.js'
+
+export {
+  AgentTeam,
+  createAgentTeam,
+  PATENT_DRAFTING_TEAM,
+  PATENT_SEARCH_TEAM,
+  OA_RESPONSE_TEAM,
+  type TeamTask,
+  type TeamTaskResult,
+} from './coordinator/AgentTeam.js'
+
+export {
+  SharedTaskList,
+  createSharedTaskList,
+  type TaskFilter,
+  type TaskUpdateHandler,
+} from './coordinator/SharedTaskList.js'
+
+export {
+  CoordinatorTaskStatus,
+  type CaseUnderstanding,
+  type WorkflowPlan,
+  type WorkflowPlanStep,
+  type AgentTask,
+  type HandoffContext,
+  type HandoffResult,
+  type ReviewResult,
+  type ReviewCriteria,
+  type PatentCoordinatorConfig,
+  type CoordinatorEventType,
+  type AgentRole,
+} from './coordinator/types.js'
+
 // ========== 版本信息 ==========
 export const VERSION = '0.2.0'
 export const ARCHITECTURE = 'five-layer'
 
 // Observability
 export * from './observability/index.js'
+
+// ========== Phase 0: Prompt 工程重构 ==========
+export {
+  type SystemPrompt,
+  asSystemPrompt,
+  SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
+  hasDynamicBoundary,
+  splitByDynamicBoundary,
+  removeBoundary,
+  type Persona,
+  PERSONA_LIBRARY,
+  PERSONA_REF_REGEX,
+  renderPersonaRefs,
+  getPersona,
+  listPersonaIds,
+  type PromptSection,
+  sectionRegistry,
+  registerSection,
+  registerDynamicSection,
+  registerDefaultPromptSections,
+  type PromptConfig,
+  PromptAssemblyPipeline,
+  promptPipeline,
+  type AgentDefinition,
+  parseAgentDefinition,
+  parseAgentDefinitionContent,
+  AgentDefinitionLoader,
+  agentDefinitionLoader,
+} from './prompt/index.js'
+
+// ========== Phase 1: Token 预算与压缩 ==========
+export {
+  type TokenBudgetConfig,
+  type TokenBudget,
+  type PatentTokenBudget,
+  TokenBudgetManager,
+  defaultTokenBudgetManager,
+  type ContentType,
+  type EstimateOptions,
+  type ImageEstimateParams,
+  estimateTextTokens,
+  estimateMessagesTokens,
+  estimateImageTokens,
+  estimateBase64ImageTokens,
+  TokenEstimator,
+  tokenEstimator,
+} from './token/index.js'
+
+export {
+  type CompactType,
+  type CompactBoundary,
+  type CompactResult,
+  type CompactConfig,
+  type ContentSummary,
+  type CompactableContentType,
+  type DocumentSegment,
+  type SegmentLoadStrategy,
+  microCompact,
+  isCompactable,
+  getCompactableTypes,
+  createCompactBoundaryContent,
+  parseCompactBoundary,
+  isCompactBoundary,
+  isMicroCompactBoundary,
+  getMessagesAfterLastBoundary,
+  extractBoundaries,
+  calculateTotalTokensSaved,
+  sessionMemoryCompact,
+  calculateMessagesToKeepIndex,
+  apiSummaryCompact,
+  POST_COMPACT_TOKEN_BUDGET,
+  POST_COMPACT_MAX_FILES_TO_RESTORE,
+  POST_COMPACT_MAX_TOKENS_PER_FILE,
+  DocumentSegmentLoader,
+  PATENT_SECTION_TYPES,
+  parseSpecificationIntoSegments,
+  parseClaimsIntoSegments,
+} from './compact/index.js'

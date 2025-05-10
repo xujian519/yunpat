@@ -7,7 +7,13 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { z } from 'zod'
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
+import {
+  EnhancedBaseTool,
+  ToolCategory,
+  ToolContext,
+  ToolResultBlockParam,
+  InterruptBehavior,
+} from '@yunpat/core'
 
 // 动态导入 docx
 let docx: any
@@ -172,6 +178,56 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
+  }
+
+  /**
+   * 标记为破坏性操作（写文件）
+   */
+  isDestructive(_input: unknown): boolean {
+    return true
+  }
+
+  /**
+   * 中断行为配置
+   */
+  interruptBehavior: InterruptBehavior = {
+    timeout: 60000,
+    retryable: false,
+    cleanup: async () => {
+      // 清理临时文件
+      console.log('[PatentApplicationGeneratorTool] 中断清理')
+    },
+  }
+
+  /**
+   * 渲染工具结果为 LLM message blocks
+   */
+  async renderToolResultMessage(result: {
+    success: boolean
+    outputPath: string
+    pages: number
+  }): Promise<ToolResultBlockParam[]> {
+    if (!result.success) {
+      return [{ type: 'text', text: `[专利申请文件生成] 失败` }]
+    }
+
+    return [
+      {
+        type: 'text',
+        text: `[专利申请文件生成] 成功\n- 输出路径: ${result.outputPath}\n- 页数: ${result.pages}`,
+      },
+    ]
+  }
+
+  /**
+   * 渲染工具调用请求
+   */
+  async renderToolUseMessage(input: {
+    data: PatentApplicationData
+    outputPath: string
+    template?: 'standard' | 'pct' | 'utility'
+  }): Promise<string> {
+    return `生成专利申请文件: "${input.data.inventionTitle}" → ${input.outputPath} (模板: ${input.template ?? 'standard'})`
   }
 
   async execute(
@@ -418,6 +474,58 @@ export class PatentClaimsGeneratorTool extends EnhancedBaseTool<
     author: 'YunPat Team',
   }
 
+  /**
+   * 标记为破坏性操作（写文件）
+   */
+  isDestructive(_input: unknown): boolean {
+    return true
+  }
+
+  /**
+   * 中断行为配置
+   */
+  interruptBehavior: InterruptBehavior = {
+    timeout: 30000,
+    retryable: false,
+    cleanup: async () => {
+      console.log('[PatentClaimsGeneratorTool] 中断清理')
+    },
+  }
+
+  /**
+   * 渲染工具结果为 LLM message blocks
+   */
+  async renderToolResultMessage(result: {
+    success: boolean
+    outputPath: string
+    claimsCount: number
+  }): Promise<ToolResultBlockParam[]> {
+    if (!result.success) {
+      return [{ type: 'text', text: `[权利要求书生成] 失败` }]
+    }
+    return [
+      {
+        type: 'text',
+        text: `[权利要求书生成] 成功\n- 输出路径: ${result.outputPath}\n- 权利要求数: ${result.claimsCount}`,
+      },
+    ]
+  }
+
+  /**
+   * 渲染工具调用请求
+   */
+  async renderToolUseMessage(input: {
+    claims: Array<{
+      type: 'independent' | 'dependent'
+      number: number
+      content: string
+      dependsOn?: number
+    }>
+    outputPath: string
+  }): Promise<string> {
+    return `生成权利要求书: ${input.claims.length} 条 → ${input.outputPath}`
+  }
+
   async execute(
     input: {
       claims: Array<{
@@ -549,6 +657,53 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
+  }
+
+  /**
+   * 标记为破坏性操作（写文件）
+   */
+  isDestructive(_input: unknown): boolean {
+    return true
+  }
+
+  /**
+   * 中断行为配置
+   */
+  interruptBehavior: InterruptBehavior = {
+    timeout: 30000,
+    retryable: false,
+    cleanup: async () => {
+      console.log('[ResponseStatementGeneratorTool] 中断清理')
+    },
+  }
+
+  /**
+   * 渲染工具结果为 LLM message blocks
+   */
+  async renderToolResultMessage(result: {
+    success: boolean
+    outputPath: string
+    pages: number
+  }): Promise<ToolResultBlockParam[]> {
+    if (!result.success) {
+      return [{ type: 'text', text: `[审查意见陈述书生成] 失败` }]
+    }
+    return [
+      {
+        type: 'text',
+        text: `[审查意见陈述书生成] 成功\n- 输出路径: ${result.outputPath}\n- 页数: ${result.pages}`,
+      },
+    ]
+  }
+
+  /**
+   * 渲染工具调用请求
+   */
+  async renderToolUseMessage(input: {
+    data: ResponseStatementData
+    outputPath: string
+  }): Promise<string> {
+    return `生成审查意见陈述书: ${input.data.inventionTitle} → ${input.outputPath}`
   }
 
   async execute(

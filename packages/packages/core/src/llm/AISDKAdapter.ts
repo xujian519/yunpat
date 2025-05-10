@@ -228,4 +228,4 @@ function getDefaultModel(provider: AIProvider): string {
   return defaults[provider]
 }
 
-export * as AISDKAdapter_ from './AISDKAdapter'
+export * as AISDKAdapter_ from './AISDKAdapter.js'

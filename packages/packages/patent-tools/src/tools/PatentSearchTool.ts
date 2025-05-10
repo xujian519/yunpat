@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
+import { EnhancedBaseTool, ToolCategory, ToolContext, ToolResultBlockParam } from '@yunpat/core'
 import { GooglePatentsFetchTool, GooglePatentResult } from './GooglePatentsTool.js'
 
 /**
@@ -72,6 +72,13 @@ export class PatentSearchTool extends EnhancedBaseTool<
   },
   PatentSearchResult
 > {
+  /**
+   * 标记为只读操作（网络检索，不修改数据）
+   */
+  isReadOnly(): boolean {
+    return true
+  }
+
   readonly metadata = {
     name: 'patent_search',
     description: '综合专利检索工具，支持关键词、申请人、IPC分类、申请号等多种检索方式',
@@ -117,6 +124,43 @@ export class PatentSearchTool extends EnhancedBaseTool<
   /**
    * 执行专利检索
    */
+  /**
+   * 渲染工具结果为 LLM message blocks
+   */
+  async renderToolResultMessage(result: PatentSearchResult): Promise<ToolResultBlockParam[]> {
+    const patents = result.patents
+    if (patents.length === 0) {
+      return [{ type: 'text', text: `[专利检索] 未找到匹配结果` }]
+    }
+
+    const lines: string[] = []
+    lines.push(`## 专利检索结果（共 ${result.total} 条，耗时 ${result.elapsedMs}ms）`)
+    lines.push('')
+
+    patents.forEach((p, i) => {
+      lines.push(`${i + 1}. **${p.patentName}**`)
+      lines.push(`   - 公开号: ${p.publicationNumber}`)
+      lines.push(`   - 申请人: ${p.applicant}`)
+      if (p.ipcCode) lines.push(`   - IPC: ${p.ipcCode}`)
+      if (p.abstract) lines.push(`   - 摘要: ${p.abstract.substring(0, 200)}...`)
+      lines.push('')
+    })
+
+    return [{ type: 'text', text: lines.join('\n') }]
+  }
+
+  /**
+   * 渲染工具调用请求
+   */
+  async renderToolUseMessage(input: {
+    query: string
+    mode?: PatentSearchMode
+    page?: number
+    limit?: number
+  }): Promise<string> {
+    return `专利检索: "${input.query}" (模式: ${input.mode ?? 'keyword'},  limit: ${input.limit ?? 10})`
+  }
+
   async execute(
     input: {
       query: string
@@ -314,6 +358,13 @@ export class SimilarPatentSearchTool extends EnhancedBaseTool<
     similarityScores: number[]
   }
 > {
+  /**
+   * 标记为只读操作
+   */
+  isReadOnly(): boolean {
+    return true
+  }
+
   readonly metadata = {
     name: 'similar_patent_search',
     description: '基于技术描述检索相似专利',

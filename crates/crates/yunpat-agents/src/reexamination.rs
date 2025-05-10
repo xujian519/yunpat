@@ -20,7 +20,7 @@ use async_trait::async_trait;
 use futures_core::Stream;
 use std::pin::Pin;
 
-use crate::helpers::{llm_generate, extract_case_id, keyword_confidence, AgentBase};
+use crate::helpers::{AgentBase, extract_case_id, keyword_confidence, llm_generate};
 
 /// The Reexamination Agent handles patent reexamination request workflows.
 pub struct ReexaminationAgent {

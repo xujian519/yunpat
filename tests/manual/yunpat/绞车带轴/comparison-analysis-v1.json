@@ -1,0 +1,57 @@
+{
+  "documentInfo": {
+    "type": "patent",
+    "title": "车用离合转动式轴绞车捆绑器",
+    "metadata": {
+      "publicationNumber": "CN200620040894",
+      "patentNumber": "ZL 200620040894.8",
+      "type": "utility_model",
+      "applicant": "上海刚立机械工具有限公司",
+      "inventor": "刘滢",
+      "applicationDate": "2006-04-07"
+    }
+  },
+  "technicalAnalysis": {
+    "technicalProblems": {
+      "main": "现有绞车捆绑器的转带轴轴头与转带轴同轴焊成一体，无棘轮机构时无法实现连续收紧，每次转紧后必须抽出撬棒换孔再插入，操作不便且效率低",
+      "sub": [
+        "转带轴轴头与转带轴一体焊接，无单向离合功能，必须反复抽出换孔",
+        "已有的分体式轴头方案加工难度大、制造成本高、可靠性差",
+        "传统棘轮式捆绑器结构复杂、体积较大，不适合空间受限的车载场景"
+      ],
+      "severity": "medium"
+    },
+    "technicalSolution": {
+      "core": "在转带轴轴头处设计由棘爪座和轴套组成的内啮合单向离合机构，利用轴套内圆周上深浅渐变的棘爪槽与棘爪座的棘爪配合，实现顺时针分离、逆时针结合的离合功能",
+      "keyFeatures": [
+        { "feature": "转带轴轴头分为棘爪座(105)和轴套(101)两个独立组件", "necessity": "essential", "confidence": 0.98 },
+        { "feature": "棘爪座上设置2个棘爪(106)和2个回位弹簧(107)", "necessity": "essential", "confidence": 0.97 },
+        { "feature": "轴套内圆周上设有4个以上棘爪槽，槽深逆时针方向由浅到深渐变", "necessity": "essential", "confidence": 0.98 },
+        { "feature": "棘爪槽深浅渐变实现顺时针分离、逆时针结合的离合", "necessity": "essential", "confidence": 0.96 },
+        { "feature": "轴套上均等分布8个棘爪槽", "necessity": "important", "confidence": 0.9 },
+        { "feature": "轴套和棘爪座通过螺丝(102)连接", "necessity": "important", "confidence": 0.92 },
+        { "feature": "轴套止口端设置防尘橡胶O型圈(103)", "necessity": "optional", "confidence": 0.85 },
+        { "feature": "连接处设置防尘橡胶垫圈(104)", "necessity": "optional", "confidence": 0.85 }
+      ],
+      "implementation": "在原有转带轴基础上将轴头改造为棘爪座与轴套组合结构。棘爪座设2个棘爪和回位弹簧嵌入轴套内。轴套内圆周均布8个棘爪槽逆时针由浅到深渐变。工作时撬棒插入轴套顺时针转使棘爪内缩分离，逆时针转使棘爪顶出结合，往复摆动实现连续收紧。",
+      "technicalEffects": [
+        { "effect": "无需抽出撬棒即可连续收紧织带", "metric": "操作效率", "improvement": "操作步骤减少约50%以上", "confidence": 0.92 },
+        { "effect": "内啮合棘爪槽深浅渐变替代端面棘爪，降低加工难度", "metric": "加工复杂度", "improvement": "加工工序显著简化", "confidence": 0.88 },
+        { "effect": "双棘爪对称分布提高离合可靠性", "metric": "可靠性", "improvement": "啮合稳定性和承载能力显著提升", "confidence": 0.9 },
+        { "effect": "结构紧凑适配现有转带轴改造成本低", "metric": "改造成本", "improvement": "相比端面棘爪方案显著降低", "confidence": 0.87 }
+      ]
+    }
+  },
+  "metadata": {
+    "depth": 2,
+    "timestamp": 1746825600000,
+    "confidence": 0.91,
+    "knowledgeGraphUsed": false
+  },
+  "_meta": {
+    "version": "v1-degraded",
+    "promptSource": "PriorArtAnalyzerAgent 硬编码提示词（降级模式）",
+    "ocrSource": "tesseract chi_sim + ocrmypdf",
+    "generatedAt": "2026-05-10"
+  }
+}

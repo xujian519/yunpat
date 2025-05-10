@@ -49,7 +49,7 @@ function emitInstructionsForIntent(intentResult: {
     // 触发任务规划（2A.3）
     if (extracted.title) {
       generatePlan(extracted.title).catch((err) => {
-      log("intent-hook", `任务规划失败: ${err instanceof Error ? err.message : String(err)}`)
+        log('intent-hook', `任务规划失败: ${err instanceof Error ? err.message : String(err)}`)
       })
     }
   }
@@ -62,7 +62,7 @@ function emitInstructionsForIntent(intentResult: {
 
     if (extracted.title) {
       generatePlan(extracted.title).catch((err) => {
-      log("intent-hook", `任务规划失败: ${err instanceof Error ? err.message : String(err)}`)
+        log('intent-hook', `任务规划失败: ${err instanceof Error ? err.message : String(err)}`)
       })
     }
   }
@@ -110,7 +110,7 @@ async function main(): Promise<void> {
   try {
     const raw = await readStdin()
     if (!raw.trim()) {
-      log("intent-hook", 'stdin 为空，跳过')
+      log('intent-hook', 'stdin 为空，跳过')
       return
     }
 
@@ -118,7 +118,7 @@ async function main(): Promise<void> {
     try {
       input = JSON.parse(raw)
     } catch {
-      log("intent-hook", '无法解析 stdin JSON，跳过')
+      log('intent-hook', '无法解析 stdin JSON，跳过')
       return
     }
 
@@ -127,17 +127,17 @@ async function main(): Promise<void> {
     const mode = String(input.mode ?? '')
     const sessionId = String(input.session_id ?? 'hook-session')
 
-      log("intent-hook", `event=${event} mode=${mode} message长度=${message.length}`)
+    log('intent-hook', `event=${event} mode=${mode} message长度=${message.length}`)
 
     // 仅处理 message_submit 事件
     if (event !== 'message_submit') {
-      log("intent-hook", `忽略非 message_submit 事件: ${event}`)
+      log('intent-hook', `忽略非 message_submit 事件: ${event}`)
       return
     }
 
     // 有 API Key 时使用 LLM 识别器
     if (hasLLMApiKey()) {
-      log("intent-hook", '使用 LLM IntentRecognizer')
+      log('intent-hook', '使用 LLM IntentRecognizer')
 
       try {
         const llmClient = new LLMClient({
@@ -156,21 +156,25 @@ async function main(): Promise<void> {
 
         const intentResult = await recognizer.recognize(orchestratorInput)
 
-      log("intent-hook", 
+        log(
+          'intent-hook',
           `识别结果: intent=${intentResult.intent} confidence=${intentResult.confidence.toFixed(2)} complexity=${intentResult.complexity}`
         )
 
         emitInstructionsForIntent(intentResult)
       } catch (err) {
-      log("intent-hook", `LLM 识别失败，降级为关键词检测: ${err instanceof Error ? err.message : String(err)}`)
+        log(
+          'intent-hook',
+          `LLM 识别失败，降级为关键词检测: ${err instanceof Error ? err.message : String(err)}`
+        )
         fallbackKeywordDetection(message)
       }
     } else {
-      log("intent-hook", '无 LLM API Key，使用关键词检测')
+      log('intent-hook', '无 LLM API Key，使用关键词检测')
       fallbackKeywordDetection(message)
     }
   } catch (err) {
-      log("intent-hook", `异常退出: ${err instanceof Error ? err.message : String(err)}`)
+    log('intent-hook', `异常退出: ${err instanceof Error ? err.message : String(err)}`)
   }
 }
 

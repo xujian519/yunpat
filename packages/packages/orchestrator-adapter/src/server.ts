@@ -316,6 +316,19 @@ const adapter = createAdapter({
   port,
   gatewayUrl,
   orchestrator: orchestratorConfig,
+  patentCoordinator: {
+    agentConfig: {
+      name: 'patent_coordinator',
+      description: 'YunPat 专利工作流协调器 - 理解案件、规划工作流、委派 Agent',
+    },
+    coordinatorConfig: {
+      maxUnderstandingRounds: 3,
+      reviewThreshold: 70,
+      maxRetries: 2,
+      enableParallelExecution: true,
+      enableApprovalFlow: false,
+    },
+  },
 })
 
 adapter.start().then(() => {

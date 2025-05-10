@@ -50,7 +50,9 @@
     "db:migrate": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "tui": "pnpm --filter @yunpat/tui start",
-    "tui:build": "pnpm --filter @yunpat/tui --filter @yunpat/orchestrator-adapter build"
+    "tui:build": "pnpm --filter @yunpat/tui --filter @yunpat/orchestrator-adapter build",
+    "skills:keygen": "npx tsx scripts/seal-skills.ts --keygen",
+    "skills:seal": "npx tsx scripts/seal-skills.ts"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
@@ -91,6 +93,7 @@
   "dependencies": {
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
+    "pdf-parse": "^1.1.4",
     "postgres": "^3.4.9",
     "prom-client": "^15.1.3"
   }

@@ -10,6 +10,8 @@ export {
   InvalidDecisionSearchTool,
   PatentRuleSearchTool,
   ProjectScanTool,
+  PatentWriterTool,
+  PatentCompareTool,
 } from './AllTools.js'
 
 export { PatentDispatchTool } from './PatentDispatchTool.js'

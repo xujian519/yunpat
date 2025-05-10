@@ -249,4 +249,4 @@ function sanitizeJsonSchema(schema: JsonSchema): Record<string, unknown> {
   return result
 }
 
-export * as SchemaToLLM from './SchemaToLLM'
+export * as SchemaToLLM from './SchemaToLLM.js'

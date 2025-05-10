@@ -97,6 +97,107 @@ export type ToolValidationResult =
   | { result: false; message: string; errorCode: number }
 
 /**
+ * 中断行为配置
+ *
+ * 定义工具如何响应中断信号（AbortSignal）和超时。
+ * 借鉴 Claude Code 的 interruptBehavior 设计。
+ */
+export interface InterruptBehavior {
+  /** 超时时间（毫秒），0 表示无超时 */
+  timeout: number
+
+  /** 中断信号（AbortController.signal） */
+  signal?: AbortSignal
+
+  /** 超时后的回调（用于清理资源） */
+  onTimeout?: () => void | Promise<void>
+
+  /** 中断时的清理回调 */
+  cleanup?: () => void | Promise<void>
+
+  /** 是否可重试（超时后是否允许重试） */
+  retryable: boolean
+}
+
+/**
+ * 工具结果 Block 参数
+ *
+ * 将工具结果映射为 LLM 可用的 message block 格式。
+ * 支持文本、图片、JSON 等多种类型。
+ */
+export interface ToolResultBlockParam {
+  /** Block 类型 */
+  type: 'text' | 'image' | 'json' | 'error'
+
+  /** 文本内容（type='text' 时使用） */
+  text?: string
+
+  /** JSON 内容（type='json' 时使用） */
+  json?: unknown
+
+  /** 图片数据（type='image' 时使用） */
+  image?: {
+    /** Base64 编码的图片数据 */
+    data: string
+    /** MIME 类型 */
+    mimeType: string
+  }
+
+  /** 错误信息（type='error' 时使用） */
+  error?: {
+    message: string
+    code?: string
+  }
+
+  /** 是否已压缩 */
+  isCompacted?: boolean
+
+  /** 原始 Token 数（压缩前） */
+  originalTokens?: number
+}
+
+/**
+ * UI 渲染规范
+ *
+ * 供前端渲染工具结果的结构化描述。
+ */
+export interface UIRenderSpec {
+  /** 渲染组件类型 */
+  component: 'text' | 'code' | 'table' | 'image' | 'json' | 'diff' | 'chart'
+
+  /** 标题 */
+  title?: string
+
+  /** 内容 */
+  content: unknown
+
+  /** 元数据 */
+  meta?: {
+    language?: string
+    lineCount?: number
+    truncated?: boolean
+    [key: string]: unknown
+  }
+}
+
+/**
+ * 权限检查结果
+ */
+export interface PermissionResult {
+  /** 是否允许执行 */
+  allowed: boolean
+
+  /** 拒绝原因（allowed=false 时） */
+  reason?: string
+
+  /** 所需权限列表 */
+  requiredPermissions?: string[]
+
+  /** 建议的操作（如 "请求权限"、"使用替代工具"） */
+  suggestion?: string
+}
+
+/**
  * 增强的工具接口（扩展自 Lifecycle.Tool）
  *
  * 借鉴 Claude Code 工具系统设计：
@@ -135,6 +236,32 @@ export interface EnhancedTool<TInput = any, TOutput = any> {
    * 返回 false 时阻止工具执行。
    */
   validateInput?(input: TInput): Promise<ToolValidationResult>
+
+  /**
+   * 动态权限检查（执行前调用）。
+   * 基于 input 和 context 判断当前用户是否有权限执行。
+   */
+  checkPermissions?(input: TInput, context: ToolContext): Promise<PermissionResult>
+
+  /**
+   * 中断行为配置。
+   * 定义工具如何响应超时和中断信号。
+   */
+  interruptBehavior?: InterruptBehavior
+
+  /**
+   * 渲染工具结果为 LLM 可用的 message block。
+   * 未实现时由 ToolResultRenderer 使用默认渲染。
+   */
+  renderToolResultMessage?(
+    result: TOutput
+  ): ToolResultBlockParam[] | Promise<ToolResultBlockParam[]>
+
+  /**
+   * 渲染工具调用请求为可读的描述文本。
+   * 用于日志、审计、UI 展示。
+   */
+  renderToolUseMessage?(input: TInput): string | Promise<string>
 
   /** 可选：前置钩子 */
   before?(input: TInput, context: ToolContext): Promise<void>

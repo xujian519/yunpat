@@ -134,6 +134,9 @@ export interface WorkflowStep {
 
   /** 步骤描述 */
   description?: string
+
+  /** 所属并行组（同组步骤并行执行） */
+  parallelGroup?: string
 }
 
 /**
@@ -253,6 +256,9 @@ export interface WorkflowEngineConfig {
 
   /** 检查点管理器（可选） */
   checkpointManager?: CheckpointManager
+
+  /** 是否启用并行执行（默认 true） */
+  enableParallelExecution?: boolean
 }
 
 /**
@@ -327,37 +333,133 @@ export class WorkflowEngine {
   private async runExecution(execution: WorkflowExecution): Promise<WorkflowResult> {
     const workflow = execution.workflow
     const startTime = execution.startTime
+    const enableParallel = this.config.enableParallelExecution ?? true
 
     try {
-      for (let i = execution.currentStepIndex; i < workflow.steps.length; i++) {
-        const step = workflow.steps[i]
-        execution.currentStepIndex = i
+      // 依赖驱动的执行：每轮找出所有依赖已满足的步骤
+      const executedSteps = new Set<string>()
+      const remainingSteps = new Set(workflow.steps.map((s) => s.id))
 
+      // 从检查点恢复时，已有结果的步骤不应重复执行
+      for (const result of execution.stepResults) {
+        executedSteps.add(result.stepId)
+        remainingSteps.delete(result.stepId)
+      }
+
+      while (remainingSteps.size > 0) {
+        // 检查暂停
         if (execution.paused) {
           await this.saveCheckpoint(execution)
           throw new Error(`WORKFLOW_PAUSED:${execution.executionId}`)
         }
 
-        if (workflow.dependencies) {
-          const dependencies = workflow.dependencies.filter((d) => d.to === step.id)
-          for (const dep of dependencies) {
-            const depResult = execution.stepResults.find((r) => r.stepId === dep.from)
-            if (!depResult || !depResult.success) {
-              throw new Error(`步骤 ${step.id} 的依赖 ${dep.from} 执行失败或未完成`)
+        // 找出当前可执行的步骤（所有依赖已完成）
+        const readySteps = workflow.steps.filter((step) => {
+          if (!remainingSteps.has(step.id)) return false
+
+          // 检查显式依赖
+          if (workflow.dependencies) {
+            const deps = workflow.dependencies.filter((d) => d.to === step.id)
+            for (const dep of deps) {
+              const depResult = execution.stepResults.find((r) => r.stepId === dep.from)
+              if (!depResult || !depResult.success) {
+                return false
+              }
             }
           }
+
+          // 检查隐式依赖（步骤顺序）
+          const stepIndex = workflow.steps.findIndex((s) => s.id === step.id)
+          for (let i = 0; i < stepIndex; i++) {
+            const prevStep = workflow.steps[i]
+            // 如果前序步骤在 remainingSteps 中且不在同一并行组，则不能执行
+            if (remainingSteps.has(prevStep.id) && prevStep.parallelGroup !== step.parallelGroup) {
+              return false
+            }
+          }
+
+          return true
+        })
+
+        if (readySteps.length === 0 && remainingSteps.size > 0) {
+          throw new Error('工作流执行死锁：存在循环依赖或无法满足的依赖')
         }
 
-        const stepResult = await this.executeStep(step, execution, execution.initialInput)
-        execution.stepResults.push(stepResult)
-        execution.stepOutputs.set(step.id, stepResult.output)
+        // 分离并行组和串行步骤
+        if (enableParallel && readySteps.some((s) => s.parallelGroup)) {
+          // 按并行组分组
+          const parallelGroups = new Map<string, WorkflowStep[]>()
+          const serialSteps: WorkflowStep[] = []
 
-        if (workflow.enableCheckpoints) {
-          await this.saveCheckpoint(execution)
-        }
+          for (const step of readySteps) {
+            if (step.parallelGroup) {
+              const group = parallelGroups.get(step.parallelGroup) ?? []
+              group.push(step)
+              parallelGroups.set(step.parallelGroup, group)
+            } else {
+              serialSteps.push(step)
+            }
+          }
 
-        if (!stepResult.success) {
-          throw new Error(`步骤 ${step.id} 执行失败: ${stepResult.error}`)
+          // 执行并行组
+          for (const [groupName, steps] of parallelGroups) {
+            console.log(`[WorkflowEngine] 执行并行组 "${groupName}": ${steps.length} 个步骤`)
+
+            const promises = steps.map(async (step) => {
+              const stepResult = await this.executeStep(step, execution, execution.initialInput)
+              return { step, stepResult }
+            })
+
+            const results = await Promise.all(promises)
+
+            for (const { step, stepResult } of results) {
+              execution.stepResults.push(stepResult)
+              execution.stepOutputs.set(step.id, stepResult.output)
+              executedSteps.add(step.id)
+              remainingSteps.delete(step.id)
+
+              if (workflow.enableCheckpoints) {
+                await this.saveCheckpoint(execution)
+              }
+
+              if (!stepResult.success) {
+                throw new Error(`步骤 ${step.id} 执行失败: ${stepResult.error}`)
+              }
+            }
+          }
+
+          // 执行串行步骤（如果有的话）
+          for (const step of serialSteps) {
+            const stepResult = await this.executeStep(step, execution, execution.initialInput)
+            execution.stepResults.push(stepResult)
+            execution.stepOutputs.set(step.id, stepResult.output)
+            executedSteps.add(step.id)
+            remainingSteps.delete(step.id)
+
+            if (workflow.enableCheckpoints) {
+              await this.saveCheckpoint(execution)
+            }
+
+            if (!stepResult.success) {
+              throw new Error(`步骤 ${step.id} 执行失败: ${stepResult.error}`)
+            }
+          }
+        } else {
+          // 串行执行（向后兼容：每次只执行一个步骤）
+          const step = readySteps[0]
+          const stepResult = await this.executeStep(step, execution, execution.initialInput)
+          execution.stepResults.push(stepResult)
+          execution.stepOutputs.set(step.id, stepResult.output)
+          executedSteps.add(step.id)
+          remainingSteps.delete(step.id)
+
+          if (workflow.enableCheckpoints) {
+            await this.saveCheckpoint(execution)
+          }
+
+          if (!stepResult.success) {
+            throw new Error(`步骤 ${step.id} 执行失败: ${stepResult.error}`)
+          }
         }
       }
 

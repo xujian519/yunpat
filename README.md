@@ -41,51 +41,45 @@
 ```
 yunpat/
 │
-├── apps/                    # 应用层
-│   ├── patent-writer/       # 专利撰写应用
-│   ├── office-action/       # 审查答复应用
-│   ├── patent-analyzer/     # 专利分析应用
-│   ├── patent-manager/      # 专利管理应用
-│   └── client-portal/       # 客户门户
+├── packages/                # 可复用代码包
+│   ├── core/                # 核心框架（TypeScript）
+│   ├── agents/              # 通用智能体
+│   ├── rust-tools/          # Rust 工具（性能关键）
+│   ├── python-tools/        # Python 工具（科学计算）
+│   └── cli/                 # 命令行工具
 │
-├── services/                # 业务逻辑层
-│   ├── patent-lifecycle/    # 专利全生命周期
-│   ├── workflow-engine/     # 工作流引擎
-│   ├── knowledge-base/      # 专利知识库
-│   ├── document-service/    # 文档管理
-│   └── user-service/        # 用户权限
+├── patents/                 # 专利专用业务逻辑
+│   ├── agents/              # 四大专利智能体
+│   │   ├── writer/          # 专利撰写智能体
+│   │   ├── responder/       # 审查答复智能体
+│   │   ├── analyzer/        # 专利分析智能体
+│   │   └── manager/         # 专利管理智能体
+│   ├── prompts/             # Prompt 模板
+│   ├── generation/          # 文档生成器
+│   ├── retrieval/           # 检索系统
+│   ├── knowledge/           # 知识库集成
+│   └── mcp/                 # MCP 工具服务器
 │
-├── ai/                      # AI 能力层
-│   ├── agents/              # 智能体
-│   │   ├── writer/           # 撰写智能体（通用）
-│   │   ├── responder/        # 答复智能体（新建）
-│   │   ├── analyzer/         # 分析智能体（新建）
-│   │   └── manager/          # 管理智能体（新建）
-│   ├── retrieval/           # 检索引擎
-│   ├── generation/          # 生成引擎
-│   ├── knowledge/           # 知识系统
-│   └── core/                # 核心框架
+├── knowledge-base/          # 专利知识库
+│   ├── cards/               # Wiki 卡片
+│   ├── 法律法规/            # 法律文档
+│   ├── 复审无效/            # 复审无效案例
+│   ├── 审查指南/            # 专利审查指南
+│   ├── 专利判决/            # 专利判决书
+│   ├── 专利侵权/            # 侵权案例
+│   └── 专利实务/            # 专利实务
 │
-├── infrastructure/          # 基础设施层
-│   ├── api/                 # API 网关
-│   ├── database/            # 数据库
-│   ├── queue/               # 消息队列
-│   ├── cache/               # 缓存
-│   └── monitoring/          # 监控
-│
-├── docs/                    # 文档
+├── docs/                    # 项目文档
+│   ├── reports/             # 工作报告
+│   ├── plans/               # 计划文档
+│   ├── guides/              # 开发指南
 │   ├── architecture/        # 架构文档
-│   ├── api/                # API 文档
-│   ├── user-guides/        # 用户指南
-│   └── business/           # 业务文档
-│       ├── patent-writers/  # 专利代理人指南
-│       ├── patent-engineers/# 专利工程师指南
-│       ├── ip-managers/      # IP 管理指南
-│       └── law-firms/        # 律所指南
+│   └── business/            # 业务文档
 │
-├── tests/                   # 测试
-├── docker/                 # Docker
-└── scripts/                # 脚本
+├── examples/                # 使用示例
+├── scripts/                 # 维护脚本
+├── test/                    # 测试文件
+└── docker/                  # Docker 配置
 ```
 
 ---

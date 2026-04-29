@@ -122,10 +122,17 @@ await this.send('target-agent', { data: 'message' });
 
 ### 新增智能体步骤
 
+**通用智能体（可复用）：**
 1. 在 `packages/agents/` 创建新目录
 2. 继承 `Agent` 类
 3. 实现 `plan` 和 `act` 方法
 4. **不需要修改 `packages/core` 任何代码**
+
+**专利专用智能体：**
+1. 在 `patents/agents/` 创建新目录
+2. 继承 `Agent` 类
+3. 实现 `plan` 和 `act` 方法
+4. 可以使用 `patents/prompts/` 中的模板
 
 ## LLM 模型选择
 
@@ -148,26 +155,56 @@ export DASHSCOPE_API_KEY=sk-...       # 通义千问
 # Ollama 无需 API Key
 ```
 
-## 包结构
+## 项目结构
 
 ```
-packages/
-├── core/              # 核心框架（不包含业务逻辑）
-│   └── src/
-│       ├── agent/     # Agent 抽象基类
-│       ├── gateway/   # 交互层
-│       ├── reasoning/ # 推理层
-│       ├── llm/       # LLM 适配器
-│       ├── memory/    # 记忆层
-│       ├── tools/     # 工具层
-│       ├── eventbus/  # 事件总线
-│       └── lifecycle/ # 生命周期类型定义
+yunpat/
+├── packages/              # 所有可复用的代码包
+│   ├── core/              # 核心框架（不包含业务逻辑）
+│   │   └── src/
+│   │       ├── agent/     # Agent 抽象基类
+│   │       ├── gateway/   # 交互层
+│   │       ├── reasoning/ # 推理层
+│   │       ├── llm/       # LLM 适配器
+│   │       ├── memory/    # 记忆层
+│   │       ├── tools/     # 工具层
+│   │       ├── eventbus/  # 事件总线
+│   │       └── lifecycle/ # 生命周期类型定义
+│   │
+│   ├── agents/            # 通用智能体（可复用）
+│   │   ├── writer/        # 技术写作助手
+│   │   └── researcher/    # 研究分析师
+│   │
+│   ├── rust-tools/        # Rust 工具（性能关键型）
+│   │   ├── patent-tools/  # 专利工具集
+│   │   ├── patent-cli/    # Rust CLI
+│   │   └── patent-agent/  # Rust 智能体
+│   │
+│   ├── python-tools/      # Python 工具（科学计算）
+│   │
+│   └── cli/               # 命令行工具
 │
-├── agents/            # 示例智能体（业务逻辑）
-│   ├── writer/        # 技术写作助手
-│   └── researcher/    # 研究分析师
+├── patents/               # 专利专用业务逻辑
+│   ├── agents/            # 四大专利智能体
+│   │   ├── writer/        # 专利撰写智能体
+│   │   ├── responder/     # 审查答复智能体
+│   │   ├── analyzer/      # 专利分析智能体
+│   │   └── manager/       # 专利管理智能体
+│   │
+│   ├── prompts/           # Prompt 模板和管理器
+│   │   ├── templates/     # Markdown 模板
+│   │   └── PromptTemplateManager.ts
+│   │
+│   ├── generation/        # 文档生成器
+│   ├── retrieval/         # 检索系统
+│   ├── knowledge/         # 知识库集成
+│   └── mcp/               # MCP 工具服务器
 │
-└── cli/               # 命令行工具
+├── knowledge-base/        # 专利知识库（法律文档）
+├── docs/                  # 项目文档
+├── examples/              # 使用示例
+├── scripts/               # 维护脚本
+└── test/                  # 测试文件
 ```
 
 ## 关键设计决策
@@ -245,8 +282,13 @@ await timeMachine.travelBack(checkpointId);
 
 ### 修改智能体行为
 
+**通用智能体：**
 1. 直接修改 `packages/agents/` 下的智能体文件
 2. **不要**修改 `packages/core` 除非要改变框架能力
+
+**专利智能体：**
+1. 直接修改 `patents/agents/` 下的智能体文件
+2. 可以使用 `patents/prompts/templates/` 中的模板
 
 ## 重要约束
 

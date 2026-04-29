@@ -1,0 +1,22 @@
+{
+  "name": "@yunpat/patent-cli",
+  "version": "1.0.0",
+  "description": "专利工具 CLI",
+  "main": "index.js",
+  "bin": {
+    "patent-cli": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["patent", "cli"],
+  "author": "YunPat",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1"
+  }
+}

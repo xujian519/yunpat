@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package yunpat.vector;
+
+import "common.proto";
+
+// 向量检索服务
+service VectorService {
+  // 添加向量
+  rpc AddVector(AddVectorRequest) returns (AddVectorResponse);
+
+  // 批量添加向量
+  rpc AddVectors(AddVectorsRequest) returns (AddVectorsResponse);
+
+  // 搜索向量
+  rpc Search(SearchRequest) returns (SearchResponse);
+
+  // 删除向量
+  rpc DeleteVector(DeleteVectorRequest) returns (DeleteVectorResponse);
+
+  // 获取向量
+  rpc GetVector(GetVectorRequest) returns (GetVectorResponse);
+
+  // 获取索引统计
+  rpc GetIndexStats(GetIndexStatsRequest) returns (GetIndexStatsResponse);
+}
+
+// 添加向量请求
+message AddVectorRequest {
+  string id = 1;
+  repeated float vector = 2;
+  map<string, string> metadata = 3;
+}
+
+// 添加向量响应
+message AddVectorResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 批量添加向量请求
+message AddVectorsRequest {
+  repeated VectorData vectors = 1;
+}
+
+message VectorData {
+  string id = 1;
+  repeated float vector = 2;
+  map<string, string> metadata = 3;
+}
+
+// 批量添加向量响应
+message AddVectorsResponse {
+  int32 added_count = 1;
+  repeated string failed_ids = 2;
+}
+
+// 搜索请求
+message SearchRequest {
+  repeated float query_vector = 1;
+  int32 top_k = 2;               // 返回 top-k 结果
+  float threshold = 3;           // 相似度阈值
+  optional string filter = 4;     // 元数据过滤条件
+  bool include_vector = 5;        // 是否包含向量数据
+}
+
+// 搜索响应
+message SearchResponse {
+  repeated SearchResult results = 1;
+  int32 total_count = 2;
+  int64 search_time_ms = 3;
+}
+
+// 搜索结果
+message SearchResult {
+  string id = 1;
+  float score = 2;               // 相似度分数
+  repeated float vector = 3;     // 向量数据（可选）
+  map<string, string> metadata = 4;
+}
+
+// 删除向量请求
+message DeleteVectorRequest {
+  string id = 1;
+}
+
+// 删除向量响应
+message DeleteVectorResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 获取向量请求
+message GetVectorRequest {
+  string id = 1;
+}
+
+// 获取向量响应
+message GetVectorResponse {
+  string id = 1;
+  repeated float vector = 2;
+  map<string, string> metadata = 3;
+}
+
+// 获取索引统计请求
+message GetIndexStatsRequest {
+  // 空请求
+}
+
+// 获取索引统计响应
+message GetIndexStatsResponse {
+  int32 total_vectors = 1;
+  int32 dimension = 2;
+  int64 index_size_bytes = 3;
+  float memory_usage_mb = 4;
+  map<string, string> metrics = 5;
+}

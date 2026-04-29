@@ -1,0 +1,60 @@
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 敏感配置
+config/secrets.yml
+config/production.yml
+
+# 日志文件
+*.log
+logs/
+
+# 缓存
+.cache/
+*.cache
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 构建产物
+dist/
+build/
+*.tsbuildinfo
+
+# 依赖
+node_modules/
+
+# 数据文件
+data/
+*.db
+*.sqlite
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+
+# 知识库本地路径（不要提交个人路径）
+*.local.json
+
+# OMC 工作目录
+.omc/
+
+# macOS
+.DS_Store
+
+# 知识卡片向量数据（二进制大文件）
+knowledge-base/cards/data.json
+
+# Rust 编译产物
+rust/target/

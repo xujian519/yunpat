@@ -1,0 +1,15 @@
+[package]
+name = "patent-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+patent-tools = { path = "../patent-tools" }
+
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true

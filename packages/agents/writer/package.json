@@ -1,0 +1,40 @@
+{
+  "name": "@yunpat/agent-writer",
+  "version": "0.1.0",
+  "description": "技术写作助手智能体 - 文档生成、格式转换、内容优化",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "echo \"Test not implemented yet\""
+  },
+  "dependencies": {
+    "@langchain/core": "^0.2.26",
+    "@yunpat/core": "workspace:*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "agent",
+    "writer",
+    "documentation",
+    "yunpat"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT"
+}

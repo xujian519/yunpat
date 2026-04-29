@@ -1,0 +1,49 @@
+{
+  "name": "@yunpat/core",
+  "version": "0.1.0",
+  "description": "YunPat 核心框架 - 智能体抽象、事件总线、生命周期管理",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.2.26",
+    "@langchain/openai": "^0.2.5",
+    "eventemitter3": "^5.0.1",
+    "uuid": "^9.0.1",
+    "yaml": "^2.8.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/uuid": "^9.0.7",
+    "@vitest/ui": "^4.1.5",
+    "typescript": "^5.3.3",
+    "vitest": "^4.1.5"
+  },
+  "keywords": [
+    "agent",
+    "framework",
+    "langchain",
+    "event-bus",
+    "lifecycle"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT"
+}

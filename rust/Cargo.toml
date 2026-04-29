@@ -1,0 +1,37 @@
+[workspace]
+members = [
+    "crates/patent-tools",
+    "crates/patent-agent",
+    "crates/patent-cli",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "1"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_panics_doc = "allow"
+missing_errors_doc = "allow"
+
+# Memory-conscious build profiles
+[profile.release]
+lto = "thin"
+
+[profile.dev]
+split-debuginfo = "unpacked"

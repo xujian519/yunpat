@@ -1,0 +1,24 @@
+[package]
+name = "patent-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "patent-cli"
+path = "src/main.rs"
+
+[dependencies]
+patent-tools = { path = "../patent-tools" }
+patent-agent = { path = "../patent-agent" }
+
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+
+clap = { version = "4.5", features = ["derive"] }
+colored = "2.1"
+shellexpand = "3.1"

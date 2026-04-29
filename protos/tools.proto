@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package yunpat.tools;
+
+import "common.proto";
+
+// 工具调用服务（Python 工具容器）
+service PythonToolsService {
+  // 执行工具
+  rpc ExecuteTool(ExecuteToolRequest) returns (ExecuteToolResponse);
+
+  // 批量执行工具
+  rpc ExecuteTools(ExecuteToolsRequest) returns (ExecuteToolsResponse);
+
+  // 列出可用工具
+  rpc ListTools(ListToolsRequest) returns (ListToolsResponse);
+
+  // 获取工具信息
+  rpc GetToolInfo(GetToolInfoRequest) returns (GetToolInfoResponse);
+
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// 执行工具请求
+message ExecuteToolRequest {
+  string tool_name = 1;          // 工具名称
+  map<string, string> args = 2;  // 工具参数
+  int32 timeout_ms = 3;          // 超时时间
+  map<string, string> options = 4; // 可选项
+}
+
+// 执行工具响应
+message ExecuteToolResponse {
+  bool success = 1;
+  map<string, string> result = 2;
+  string error_message = 3;
+  ToolMetrics metrics = 4;
+}
+
+// 工具指标
+message ToolMetrics {
+  int64 execution_time_ms = 1;
+  int32 memory_usage_mb = 2;
+  int32 cpu_usage_percent = 3;
+  map<string, string> details = 4;
+}
+
+// 批量执行工具请求
+message ExecuteToolsRequest {
+  repeated ExecuteToolRequest requests = 1;
+  bool parallel = 2;             // 是否并行执行
+}
+
+// 批量执行工具响应
+message ExecuteToolsResponse {
+  repeated ExecuteToolResponse responses = 1;
+  int32 total_time_ms = 2;
+}
+
+// 列出工具请求
+message ListToolsRequest {
+  string category = 1;           // 按类别过滤
+}
+
+// 列出工具响应
+message ListToolsResponse {
+  repeated ToolInfo tools = 1;
+}
+
+// 工具信息
+message ToolInfo {
+  string name = 1;
+  string category = 2;
+  string description = 3;
+  map<string, string> parameters = 4; // 参数定义
+  string version = 5;
+  bool available = 6;
+}
+
+// 获取工具信息请求
+message GetToolInfoRequest {
+  string tool_name = 1;
+}
+
+// 获取工具信息响应
+message GetToolInfoResponse {
+  ToolInfo tool_info = 1;
+}
+
+// 健康检查请求
+message HealthCheckRequest {
+  // 空请求
+}
+
+// 健康检查响应
+message HealthCheckResponse {
+  bool healthy = 1;
+  string version = 2;
+  map<string, string> details = 3;
+}

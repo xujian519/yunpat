@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # TypeScript Agent Service
+  agent-service:
+    build:
+      context: ../../
+      dockerfile: docker/agent-service/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      - VECTOR_SERVICE_URL=vector-service:50051
+      - SCHEDULER_SERVICE_URL=scheduler-service:50051
+      - PYTHON_TOOLS_URL=python-tools:50052
+    depends_on:
+      - vector-service
+      - scheduler-service
+      - python-tools
+
+  # Rust Vector Service
+  vector-service:
+    build:
+      context: ../../rust/vector-service
+      dockerfile: Dockerfile
+    ports:
+      - "50052:50051"  # 内部端口映射到不同端口
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  # Rust Scheduler Service
+  scheduler-service:
+    build:
+      context: ../../rust/scheduler-service
+      dockerfile: Dockerfile
+    ports:
+      - "50053:50051"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+
+  # Python Tools Service（隔离）
+  python-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "50054:50052"
+    environment:
+      - ROLE=tool_provider_only
+      - MAX_CONCURRENT_REQUESTS=10
+      - MEMORY_LIMIT=4G
+      - CPU_LIMIT=2
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '500m'
+          memory: 1G

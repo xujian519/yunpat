@@ -1,0 +1,44 @@
+{
+  "name": "yunpat-agent-framework",
+  "version": "0.1.0",
+  "description": "通用智能体框架 - 框架笨，智能体专",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter ./packages/* dev",
+    "build": "node esbuild.config.mjs build",
+    "build:tsc": "pnpm -r --filter './packages/*' build",
+    "build:watch": "node esbuild.config.mjs watch",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "esbuild": "^0.28.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.3",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "keywords": [
+    "agent",
+    "ai",
+    "llm",
+    "langchain",
+    "framework",
+    "typescript"
+  ],
+  "author": "Xu Jian <xujian519@gmail.com>",
+  "license": "MIT"
+}

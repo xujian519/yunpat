@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package yunpat.agent;
+
+import "common.proto";
+
+// Agent 服务定义
+service AgentService {
+  // 执行 Agent 任务
+  rpc ExecuteAgent(ExecuteAgentRequest) returns (ExecuteAgentResponse);
+
+  // 流式执行（支持实时反馈）
+  rpc StreamExecuteAgent(ExecuteAgentRequest) returns (stream AgentProgress);
+
+  // 获取 Agent 状态
+  rpc GetAgentStatus(GetAgentStatusRequest) returns (GetAgentStatusResponse);
+
+  // 取消执行
+  rpc CancelAgent(CancelAgentRequest) returns (CancelAgentResponse);
+
+  // 列出所有 Agent
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+}
+
+// 执行请求
+message ExecuteAgentRequest {
+  string agent_name = 1;        // Agent 名称
+  string agent_id = 2;          // Agent 实例 ID
+  map<string, string> input = 3; // 输入参数
+  ExecutionConfig config = 4;    // 执行配置
+}
+
+// 执行配置
+message ExecutionConfig {
+  int32 timeout_ms = 1;           // 超时时间（毫秒）
+  int32 max_iterations = 2;       // 最大迭代次数
+  bool enable_tracing = 3;        // 启用追踪
+  bool enable_caching = 4;        // 启用缓存
+  map<string, string> metadata = 5; // 元数据
+}
+
+// 执行响应
+message ExecuteAgentResponse {
+  yunpat.common.StatusCode status = 1;
+  map<string, string> output = 2;
+  ExecutionMetrics metrics = 3;
+  string error_message = 4;
+}
+
+// 执行指标
+message ExecutionMetrics {
+  int64 duration_ms = 1;       // 总耗时（毫秒）
+  int32 total_tokens = 2;      // 总 Token 数
+  int32 llm_calls = 3;         // LLM 调用次数
+  int32 tool_calls = 4;        // 工具调用次数
+  int32 cache_hits = 5;        // 缓存命中次数
+  int32 cache_misses = 6;      // 缓存未命中次数
+}
+
+// Agent 进度（流式）
+message AgentProgress {
+  string stage = 1;             // 当前阶段
+  int32 progress = 2;           // 进度 0-100
+  string message = 3;           // 进度消息
+  map<string, string> data = 4; // 附加数据
+  int64 timestamp = 5;          // 时间戳
+}
+
+// 获取状态请求
+message GetAgentStatusRequest {
+  string agent_id = 1;
+}
+
+// 获取状态响应
+message GetAgentStatusResponse {
+  string agent_id = 1;
+  string status = 2;            // running, completed, failed
+  int64 uptime_ms = 3;
+  ExecutionMetrics metrics = 4;
+}
+
+// 取消请求
+message CancelAgentRequest {
+  string agent_id = 1;
+  string reason = 2;
+}
+
+// 取消响应
+message CancelAgentResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 列出 Agent 请求
+message ListAgentsRequest {
+  yunpat.common.PageRequest page = 1;
+  string filter = 2;            // 过滤条件
+}
+
+// 列出 Agent 响应
+message ListAgentsResponse {
+  repeated AgentInfo agents = 1;
+  yunpat.common.PageResponse page = 2;
+}
+
+// Agent 信息
+message AgentInfo {
+  string name = 1;
+  string id = 2;
+  string description = 3;
+  string status = 4;
+  yunpat.common.Metadata metadata = 5;
+}

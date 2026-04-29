@@ -234,46 +234,60 @@ ${input.description.substring(0, 1000)}...
    * 制定答复策略
    */
   private async formulateStrategy(plan: any, context: any): Promise<any> {
-    const strategy = await context.llm.chat({
+    const strategyResponse = await context.llm.chat({
       messages: [
         {
           role: 'system',
-          content: `请根据审查意见制定答复策略：
+          content: `你是一位资深的专利代理人。请根据审查意见分析制定答复策略。
 
-策略类型：
-1. amendment - 通过修改权利要求来克服驳回
-2. argument - 通过争辩来反驳审查员观点
-3. combination - 修改 + 争辩结合
+策略类型必须是以下之一：
+- amendment - 通过修改权利要求来克服驳回
+- argument - 通过争辩来反驳审查员观点
+- combination - 修改 + 争辩结合
 
-请给出：
-1. 策略类型
-2. 核心论点列表
-3. 建议的权利要求修改`
+你必须以 JSON 格式返回，不要包含任何其他内容：
+{
+  "type": "amendment | argument | combination",
+  "arguments": ["核心论点1", "核心论点2", ...],
+  "suggestedAmendments": ["建议修改1", "建议修改2", ...]
+}`
         },
         {
           role: 'user',
           content: `审查意见分析：
 ${plan.analysis}
 
-请制定最佳答复策略。`
+请制定最佳答复策略，并以 JSON 格式返回。`
         }
       ],
       temperature: 0.4,
     });
 
-    // 解析策略
-    return {
-      type: 'combination', // 默认策略
-      arguments: [
-        '区别技术特征分析',
-        '创造性论述',
-        '不支持驳回理由的论点',
-      ],
-      suggestedAmendments: [
-        '权利要求1增加区别技术特征',
-        '从属权利要求合并到独立权利要求',
-      ],
-    };
+    // 解析 LLM 返回的 JSON
+    const content = strategyResponse.message.content;
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonStr = jsonMatch ? jsonMatch[0] : content;
+      const parsed = JSON.parse(jsonStr);
+
+      const validTypes: Array<'amendment' | 'argument' | 'combination'> = ['amendment', 'argument', 'combination'];
+      const type = validTypes.includes(parsed.type) ? parsed.type : 'combination';
+
+      return {
+        type,
+        arguments: Array.isArray(parsed.arguments) ? parsed.arguments : ['区别技术特征分析', '创造性论述'],
+        suggestedAmendments: Array.isArray(parsed.suggestedAmendments)
+          ? parsed.suggestedAmendments
+          : ['权利要求1增加区别技术特征', '从属权利要求合并到独立权利要求'],
+      };
+    } catch {
+      // 解析失败则回退到硬编码默认值
+      return {
+        type: 'combination',
+        arguments: ['区别技术特征分析', '创造性论述', '不支持驳回理由的论点'],
+        suggestedAmendments: ['权利要求1增加区别技术特征', '从属权利要求合并到独立权利要求'],
+      };
+    }
   }
 
   /**
@@ -337,7 +351,10 @@ ${plan.analysis.substring(0, 1000)}...
 
     // 解析修改后的权利要求
     const content = amended.message.content;
-    return content.split(/\n/).filter(line => line.trim().length > 0);
+    return content
+      .split(/\n/)
+      .filter(line => line.trim().length > 0)
+      .filter(line => /^\s*\d+[\.、]/.test(line) || line.includes('权利要求'));
   }
 
   /**

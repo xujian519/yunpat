@@ -73,11 +73,7 @@ export const STAGE2_PLAN = {
     'Python ML tools integration (2 weeks)',
     'Integration & Testing (2 weeks)',
   ],
-  milestones: [
-    'Week 6: HNSW PoC',
-    'Week 8: Scheduler complete',
-    'Week 10: ML tools ready',
-  ],
+  milestones: ['Week 6: HNSW PoC', 'Week 8: Scheduler complete', 'Week 10: ML tools ready'],
 };
 
 console.log('✅ 阶段 1 完成，阶段 2 启动！');

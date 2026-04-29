@@ -1,6 +1,6 @@
 //! 智能体协调器
 
-use crate::agent::{PatentAgent, PatentAgentConfig, Task, TaskResult};
+use crate::agent::{PatentAgent, Task, TaskResult};
 use std::collections::HashMap;
 
 /// 智能体协调器
@@ -65,6 +65,7 @@ impl Default for AgentCoordinator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::PatentAgentConfig;
 
     #[tokio::test]
     async fn test_coordinator() {

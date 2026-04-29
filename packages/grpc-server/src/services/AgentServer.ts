@@ -8,7 +8,7 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { v4 as uuidv4 } from 'uuid';
-import type { ServerCredentials, ServerUnaryCall, requestCallback } from '@grpc/grpc-js';
+import type { ServerUnaryCall, requestCallback } from '@grpc/grpc-js';
 
 interface AgentServerConfig {
   vectorServiceUrl: string;
@@ -33,7 +33,7 @@ export class AgentServer {
   start(port: number): void {
     // 加载 Protobuf 定义
     const protoDefinition = this.loadProtoDefinition();
-    const agentProto = grpc.loadPackageDefinition(protoDefinition).yunpat.agent;
+    const agentProto = (grpc.loadPackageDefinition(protoDefinition) as any).yunpat.agent;
 
     // 添加 AgentService
     this.server.addService(agentProto.AgentService.service, {
@@ -84,19 +84,22 @@ export class AgentServer {
     } catch (error: any) {
       console.error(`❌ [${agentId}] Execution failed:`, error.message);
 
-      callback({
+      const serviceError: grpc.ServiceError = {
         code: grpc.status.INTERNAL,
         details: error.message,
-      });
+        metadata: new grpc.Metadata(),
+        name: 'InternalError',
+        message: error.message,
+      };
+
+      callback(serviceError);
     }
   }
 
   /**
    * 流式执行 Agent（实时反馈）
    */
-  private async streamExecuteAgent(
-    call: any
-  ): Promise<void> {
+  private async streamExecuteAgent(call: any): Promise<void> {
     const request = call.request;
     const agentId = request.agent_id || uuidv4();
 

@@ -204,10 +204,10 @@ fn create_llm_client(config: &Config) -> anyhow::Result<LlmClient> {
 
 /// 执行搜索命令
 async fn execute_search(
-    llm_client: LlmClient,
+    _llm_client: LlmClient,
     keywords: Vec<String>,
-    applicant: Option<String>,
-    limit: usize,
+    _applicant: Option<String>,
+    _limit: usize,
 ) -> anyhow::Result<()> {
     println!("{}\n", "专利搜索".bright_cyan().bold());
     println!("关键词: {}\n", keywords.join(", ").bright_yellow());
@@ -220,10 +220,10 @@ async fn execute_search(
 
 /// 执行生成命令
 async fn execute_generate(
-    llm_client: LlmClient,
+    _llm_client: LlmClient,
     input: PathBuf,
-    invention_type: String,
-    output: Option<PathBuf>,
+    _invention_type: String,
+    _output: Option<PathBuf>,
 ) -> anyhow::Result<()> {
     println!("{}\n", "权利要求生成".bright_cyan().bold());
     println!("输入文件: {}\n", input.display().to_string().bright_yellow());
@@ -236,7 +236,7 @@ async fn execute_generate(
 
 /// 执行评估命令
 async fn execute_assess(
-    llm_client: LlmClient,
+    _llm_client: LlmClient,
     input: PathBuf,
 ) -> anyhow::Result<()> {
     println!("{}\n", "质量评估".bright_cyan().bold());
@@ -250,9 +250,9 @@ async fn execute_assess(
 
 /// 执行解析命令
 async fn execute_parse(
-    llm_client: LlmClient,
+    _llm_client: LlmClient,
     input: PathBuf,
-    output: Option<PathBuf>,
+    _output: Option<PathBuf>,
 ) -> anyhow::Result<()> {
     println!("{}\n", "审查意见解析".bright_cyan().bold());
     println!("输入文件: {}\n", input.display().to_string().bright_yellow());
@@ -265,7 +265,7 @@ async fn execute_parse(
 
 /// 执行分析命令
 async fn execute_analyze(
-    llm_client: LlmClient,
+    _llm_client: LlmClient,
     patent_number: String,
     analysis_type: String,
 ) -> anyhow::Result<()> {

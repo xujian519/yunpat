@@ -13,7 +13,7 @@ import { z, ZodSchema } from 'zod';
 /**
  * 验证结果
  */
-export interface ValidationResult<T = any> {
+export interface ValidationResult<T = unknown> {
   /** 是否通过验证 */
   valid: boolean;
 
@@ -564,21 +564,33 @@ export class ResultValidator {
   /**
    * 提取内容（从对象或字符串）
    */
-  private extractContent(result: any): string | null {
+  private extractContent(result: unknown): string | null {
     if (typeof result === 'string') {
       return result;
     }
 
     if (typeof result === 'object' && result !== null) {
+      const obj = result as Record<string, unknown>;
       // 尝试提取常见的 content/message/text 字段
-      if (typeof result.content === 'string') return result.content;
-      if (typeof result.message === 'string') return result.message;
-      if (typeof result.text === 'string') return result.text;
-      if (typeof result.output === 'string') return result.output;
+      if (typeof obj.content === 'string') return obj.content;
+      if (typeof obj.message === 'string') return obj.message;
+      if (typeof obj.text === 'string') return obj.text;
+      if (typeof obj.output === 'string') return obj.output;
 
       // 尝试提取 LLM 响应格式
-      if (result.choices && result.choices[0]?.message?.content) {
-        return result.choices[0].message.content;
+      if (
+        Array.isArray(obj.choices) &&
+        obj.choices.length > 0 &&
+        typeof obj.choices[0] === 'object' &&
+        obj.choices[0] !== null
+      ) {
+        const choice = obj.choices[0] as Record<string, unknown>;
+        if (typeof choice.message === 'object' && choice.message !== null) {
+          const message = choice.message as Record<string, unknown>;
+          if (typeof message.content === 'string') {
+            return message.content;
+          }
+        }
       }
     }
 

@@ -29,7 +29,7 @@ export class EventBus implements IEventBus {
   private pendingRequests = new Map<
     string,
     {
-      resolve: (value: any) => void;
+      resolve: (value: unknown) => void;
       reject: (error: Error) => void;
       timeout: ReturnType<typeof setTimeout>;
     }
@@ -136,7 +136,7 @@ export class EventBus implements IEventBus {
    * @param timeout 超时时间（毫秒）
    * @returns 响应
    */
-  async request(target: string, message: any, timeout = 30000): Promise<any> {
+  async request(target: string, message: unknown, timeout = 30000): Promise<unknown> {
     const requestId = uuidv4();
 
     return new Promise((resolve, reject) => {
@@ -173,7 +173,7 @@ export class EventBus implements IEventBus {
    * @param requestId 请求 ID
    * @param response 响应数据
    */
-  respond(requestId: string, response: any): void {
+  respond(requestId: string, response: unknown): void {
     const pending = this.pendingRequests.get(requestId);
 
     if (pending) {

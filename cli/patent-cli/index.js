@@ -85,7 +85,8 @@ const patentTools = {
     return {
       applicationNumber: '',
       actionType: '',
-      rejections: []
+      rejections: [
+        {
           claimNumbers: [1, 2],
           reasons: '权利要求1相对于对比文件1不具备创造性',
           citedReferences: ['CN110123456A']

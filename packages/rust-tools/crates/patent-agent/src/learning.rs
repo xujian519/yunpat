@@ -1,7 +1,6 @@
 //! 学习引擎
 
 use crate::agent::TaskResult;
-use patent_tools::QualityAssessment;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;

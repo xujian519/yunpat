@@ -193,18 +193,22 @@ export class NativeLLMAdapter implements ILLMAdapter {
         throw new Error(`API 请求失败: ${response.status} ${response.statusText}`);
       }
 
-      const data: any = await response.json();
+      const data = (await response.json()) as Record<string, unknown>;
+
+      const choices = data.choices as Array<Record<string, unknown>>;
+      const message = choices[0].message as Record<string, unknown>;
+      const usage = data.usage as Record<string, number> | undefined;
 
       return {
         message: {
           role: 'assistant',
-          content: data.choices[0].message.content,
+          content: message.content as string,
         },
-        usage: data.usage
+        usage: usage
           ? {
-              promptTokens: data.usage.prompt_tokens || 0,
-              completionTokens: data.usage.completion_tokens || 0,
-              totalTokens: data.usage.total_tokens || 0,
+              promptTokens: usage.prompt_tokens || 0,
+              completionTokens: usage.completion_tokens || 0,
+              totalTokens: usage.total_tokens || 0,
             }
           : undefined,
       };

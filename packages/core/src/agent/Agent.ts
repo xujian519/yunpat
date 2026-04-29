@@ -118,7 +118,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
    * @param context 执行上下文
    * @returns 执行计划
    */
-  protected abstract plan(input: TInput, context: ExecutionContext): Promise<any>;
+  protected abstract plan(input: TInput, context: ExecutionContext): Promise<unknown>;
 
   /**
    * 执行钩子（必需）
@@ -130,7 +130,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
    * @param context 执行上下文
    * @returns 执行结果
    */
-  protected abstract act(plan: any, context: ExecutionContext): Promise<any>;
+  protected abstract act(plan: any, context: ExecutionContext): Promise<unknown>;
 
   /**
    * 反思钩子（可选）
@@ -145,7 +145,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
    * @param context 执行上下文
    * @returns 反思结果，包含 shouldContinue 标志
    */
-  protected reflect?(result: any, context: ExecutionContext): Promise<any>;
+  protected reflect?(result: unknown, context: ExecutionContext): Promise<unknown>;
 
   /**
    * 后置钩子（可选）
@@ -230,7 +230,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
 
       // 5. act 阶段（循环执行）
       context.currentStage = LifecycleStage.ACT;
-      let result: any;
+      let result: unknown;
       let iterations = 0;
       let shouldContinue = true;
 
@@ -245,7 +245,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
 
           // 如果反思返回了 shouldContinue 标志，使用它
           if (reflection && typeof reflection === 'object') {
-            shouldContinue = (reflection as any).shouldContinue ?? false;
+            shouldContinue = ((reflection as Record<string, unknown>).shouldContinue as boolean) ?? false;
           } else {
             shouldContinue = false;
           }
@@ -311,7 +311,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
    * @param message 消息内容
    * @returns 响应
    */
-  protected async send(target: string, message: any): Promise<any> {
+  protected async send(target: string, message: unknown): Promise<unknown> {
     return this.eventBus.request(target, message);
   }
 
@@ -321,7 +321,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
    * @param type 事件类型
    * @param data 事件数据
    */
-  private publishEvent(type: string, data: any) {
+  private publishEvent(type: string, data: unknown) {
     const event: AgentEvent = {
       type,
       source: this.name,

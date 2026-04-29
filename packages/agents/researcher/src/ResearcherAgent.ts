@@ -130,13 +130,7 @@ export interface ResearchResult {
  *
  * 专门用于信息搜集、数据整理和分析
  */
-export class ResearcherAgent extends Agent<
-  ResearchQuery,
-  ResearchResult,
-  ResearchPlan,
-  ResearchResult,
-  { shouldContinue: boolean; feedback?: string }
-> {
+export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
   constructor(config: Omit<AgentConfig, 'name' | 'description'>) {
     super({
       ...config,

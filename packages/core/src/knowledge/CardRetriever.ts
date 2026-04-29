@@ -63,7 +63,9 @@ export class CardRetriever {
       try {
         const [emb] = await this.embedder.embed([query]);
         queryEmbedding = emb;
-      } catch {}
+      } catch {
+        // 忽略错误，使用默认值
+      }
     }
 
     // 计算分数
@@ -122,7 +124,10 @@ export class CardRetriever {
     return result;
   }
 
-  async injectContext(prompt: string, maxCards: number = 5): Promise<{
+  async injectContext(
+    prompt: string,
+    maxCards: number = 5
+  ): Promise<{
     enhancedPrompt: string;
     injectedCards: KnowledgeCard[];
   }> {
@@ -184,7 +189,7 @@ ${prompt}`;
     card: KnowledgeCard,
     query: string,
     mode: 'keyword' | 'semantic' | 'hybrid',
-    queryEmbedding: number[] | null,
+    queryEmbedding: number[] | null
   ): Promise<CardSearchResult> {
     let keywordScore = 0;
     let semanticScore = 0;
@@ -239,11 +244,7 @@ ${prompt}`;
     };
   }
 
-  private getCandidates(
-    domain?: string,
-    concept?: string,
-    tags?: string[],
-  ): KnowledgeCard[] {
+  private getCandidates(domain?: string, concept?: string, tags?: string[]): KnowledgeCard[] {
     let candidateIds: Set<string> | undefined;
 
     if (domain) {
@@ -326,7 +327,9 @@ ${prompt}`;
 
   private cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length) return 0;
-    let dot = 0, normA = 0, normB = 0;
+    let dot = 0,
+      normA = 0,
+      normB = 0;
     for (let i = 0; i < a.length; i++) {
       dot += a[i] * b[i];
       normA += a[i] * a[i];

@@ -2,8 +2,7 @@
 
 use patent_tools::{
     ClaimGenerator, OfficeActionParser, PriorArtAnalyzer, SpecificationWriter,
-    LlmClient, LlmConfig, LlmProvider,
-    Claim, OfficeAction,
+    LlmClient, LlmConfig, LlmProvider, OfficeAction,
 };
 use serde::{Deserialize, Serialize};
 

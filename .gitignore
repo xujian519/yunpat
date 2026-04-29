@@ -58,3 +58,8 @@ knowledge-base/cards/data.json
 
 # Rust 编译产物
 rust/target/
+
+# Rust 编译产物
+packages/rust-tools/target/
+packages/rust-tools/crates/*/target/
+

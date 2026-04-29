@@ -27,7 +27,7 @@ export enum LifecycleStage {
 /**
  * 生命周期钩函数类型
  */
-export type LifecycleHook<TInput = any> = (
+export type LifecycleHook<TInput = unknown> = (
   input: TInput,
   context: ExecutionContext
 ) => Promise<void>;
@@ -35,7 +35,7 @@ export type LifecycleHook<TInput = any> = (
 /**
  * 规划函数类型
  */
-export type PlanFunction<TInput = any, TPlan = any> = (
+export type PlanFunction<TInput = unknown, TPlan = unknown> = (
   input: TInput,
   context: ExecutionContext
 ) => Promise<TPlan>;
@@ -43,7 +43,7 @@ export type PlanFunction<TInput = any, TPlan = any> = (
 /**
  * 执行函数类型
  */
-export type ActFunction<TPlan = any, TResult = any> = (
+export type ActFunction<TPlan = unknown, TResult = unknown> = (
   plan: TPlan,
   context: ExecutionContext
 ) => Promise<TResult>;
@@ -51,7 +51,7 @@ export type ActFunction<TPlan = any, TResult = any> = (
 /**
  * 反思函数类型
  */
-export type ReflectFunction<TResult = any, TReflection = any> = (
+export type ReflectFunction<TResult = unknown, TReflection = unknown> = (
   result: TResult,
   context: ExecutionContext
 ) => Promise<TReflection>;
@@ -92,10 +92,10 @@ export interface ExecutionContext {
   llm: LLMAdapter;
 
   /** 执行元数据 */
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 
   /** 共享状态 - 用于在生命周期钩子间传递数据 */
-  sharedState: Map<string, any>;
+  sharedState: Map<string, unknown>;
 }
 
 /**
@@ -105,10 +105,10 @@ export interface ExecutionContext {
  */
 export interface MemoryStore {
   /** 读取短期记忆 */
-  get(key: string): Promise<any>;
+  get(key: string): Promise<unknown>;
 
   /** 写入短期记忆 */
-  set(key: string, value: any): Promise<void>;
+  set(key: string, value: unknown): Promise<void>;
 
   /** 删除记忆 */
   delete(key: string): Promise<void>;
@@ -117,7 +117,7 @@ export interface MemoryStore {
   has(key: string): Promise<boolean>;
 
   /** 获取所有短期记忆 */
-  getAll(): Promise<Record<string, any>>;
+  getAll(): Promise<Record<string, unknown>>;
 
   /** 清空短期记忆 */
   clear(): Promise<void>;
@@ -131,7 +131,7 @@ export interface MemoryStore {
  */
 export interface MemoryEntry {
   key: string;
-  value: any;
+  value: unknown;
   similarity?: number;
   timestamp: Date;
 }
@@ -152,7 +152,7 @@ export interface EventBus {
   unsubscribe(subscription: Subscription): void;
 
   /** 请求响应模式 */
-  request(target: string, message: any, timeout?: number): Promise<any>;
+  request(target: string, message: unknown, timeout?: number): Promise<unknown>;
 }
 
 /**
@@ -169,7 +169,7 @@ export interface AgentEvent {
   target?: string;
 
   /** 事件数据 */
-  data: any;
+  data: unknown;
 
   /** 事件时间戳 */
   timestamp: Date;
@@ -213,7 +213,7 @@ export interface ToolRegistry {
   get(name: string): Tool | undefined;
 
   /** 调用工具 */
-  call(name: string, input: any): Promise<any>;
+  call(name: string, input: unknown): Promise<unknown>;
 
   /** 列出所有工具 */
   list(): Tool[];
@@ -230,10 +230,10 @@ export interface Tool {
   description: string;
 
   /** 输入模式（用于验证） */
-  inputSchema?: any;
+  inputSchema?: unknown;
 
   /** 执行工具 */
-  execute(input: any): Promise<any>;
+  execute(input: unknown): Promise<unknown>;
 }
 
 /**
@@ -269,7 +269,7 @@ export interface ChatParams {
   stopSequences?: string[];
 
   /** 工具定义 - 用于函数调用 */
-  tools?: any[];
+  tools?: unknown[];
 }
 
 /**
@@ -283,7 +283,7 @@ export interface ChatMessage {
   content: string;
 
   /** 工具调用（仅 assistant） */
-  toolCalls?: any[];
+  toolCalls?: unknown[];
 
   /** 工具响应 ID（仅 tool） */
   toolCallId?: string;

@@ -8,17 +8,15 @@ Python 工具容器，提供 ML 模型推理和数据分析能力
 import grpc
 from concurrent import futures
 import os
-from typing import Dict, Any
+import time
+from typing import Dict, Any, Tuple
 
-# 导入生成的 Protobuf 代码
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../protos'))
+# 导入生成的 Protobuf 代码（与 tools_server.py 同目录）
+import tools_pb2
+import tools_pb2_grpc
 
-# 这些文件将在构建时生成
-# import tools_pb2
-# import tools_pb2_grpc
 
-class PythonToolsService:
+class PythonToolsServicer(tools_pb2_grpc.PythonToolsServiceServicer):
     """Python 工具服务"""
 
     def __init__(self):
@@ -28,6 +26,20 @@ class PythonToolsService:
             'analyze_data': self.analyze_data,
         }
 
+    def _execute_tool_impl(self, tool_name: str, args: Dict[str, str]) -> Tuple[bool, Dict[str, Any], str, int]:
+        """核心工具执行逻辑，返回 (success, result_dict, error_message, elapsed_ms)"""
+        if tool_name not in self.tools:
+            return False, {}, f'Tool {tool_name} not found', 0
+
+        start_time = time.time()
+        try:
+            result = self.tools[tool_name](args)
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            return True, result, '', elapsed_ms
+        except Exception as e:
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            return False, {}, str(e), elapsed_ms
+
     def ExecuteTool(self, request, context):
         """执行工具"""
         tool_name = request.tool_name
@@ -36,29 +48,106 @@ class PythonToolsService:
         print(f"📝 Executing tool: {tool_name}")
         print(f"   Args: {args}")
 
-        if tool_name not in self.tools:
+        success, result, error_message, elapsed_ms = self._execute_tool_impl(tool_name, args)
+
+        if not success:
+            if 'not found' in error_message:
+                context.set_code(grpc.StatusCode.NOT_FOUND)
+            else:
+                context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(error_message)
+            print(f"❌ Tool execution failed: {error_message}")
+            return tools_pb2.ExecuteToolResponse(
+                success=False,
+                result={},
+                error_message=error_message,
+            )
+
+        # result 在 protobuf 中为 map<string, string>，需将所有值转为字符串
+        result_str = {k: str(v) for k, v in result.items()}
+
+        return tools_pb2.ExecuteToolResponse(
+            success=True,
+            result=result_str,
+            error_message='',
+            metrics=tools_pb2.ToolMetrics(
+                execution_time_ms=elapsed_ms,
+                memory_usage_mb=512,
+                cpu_usage_percent=20,
+            ),
+        )
+
+    def ExecuteTools(self, request, context):
+        """批量执行工具"""
+        responses = []
+        start_time = time.time()
+        for req in request.requests:
+            success, result, error_message, elapsed_ms = self._execute_tool_impl(
+                req.tool_name, dict(req.args)
+            )
+            if success:
+                result_str = {k: str(v) for k, v in result.items()}
+                responses.append(tools_pb2.ExecuteToolResponse(
+                    success=True,
+                    result=result_str,
+                    error_message='',
+                    metrics=tools_pb2.ToolMetrics(
+                        execution_time_ms=elapsed_ms,
+                        memory_usage_mb=512,
+                        cpu_usage_percent=20,
+                    ),
+                ))
+            else:
+                responses.append(tools_pb2.ExecuteToolResponse(
+                    success=False,
+                    result={},
+                    error_message=error_message,
+                ))
+        total_time_ms = int((time.time() - start_time) * 1000)
+        return tools_pb2.ExecuteToolsResponse(
+            responses=responses,
+            total_time_ms=total_time_ms,
+        )
+
+    def ListTools(self, request, context):
+        """列出可用工具"""
+        tools = []
+        for name in ['embed_text', 'classify_text', 'analyze_data']:
+            tools.append(tools_pb2.ToolInfo(
+                name=name,
+                category='ml',
+                description=f'{name} tool',
+                parameters={},
+                version='1.0.0',
+                available=True,
+            ))
+        return tools_pb2.ListToolsResponse(tools=tools)
+
+    def GetToolInfo(self, request, context):
+        """获取工具信息"""
+        tool_name = request.tool_name
+        if tool_name in self.tools:
+            info = tools_pb2.ToolInfo(
+                name=tool_name,
+                category='ml',
+                description=f'{tool_name} tool',
+                parameters={},
+                version='1.0.0',
+                available=True,
+            )
+            return tools_pb2.GetToolInfoResponse(tool_info=info)
+        else:
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details(f'Tool {tool_name} not found')
-            # return tools_pb2.ToolResponse()
+            return tools_pb2.GetToolInfoResponse()
 
-        try:
-            result = self.tools[tool_name](args)
-
-            # return tools_pb2.ToolResponse(
-            #     success=True,
-            #     result=result,
-            #     error_message='',
-            #     metrics=tools_pb2.ToolMetrics(
-            #         execution_time_ms=100,
-            #         memory_usage_mb=512,
-            #         cpu_usage_percent=20,
-            #     ),
-            # )
-        except Exception as e:
-            print(f"❌ Tool execution failed: {e}")
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
-            # return tools_pb2.ToolResponse()
+    def HealthCheck(self, request, context):
+        """健康检查"""
+        return tools_pb2.HealthCheckResponse(
+            healthy=True,
+            version='1.0.0',
+            details={'status': 'ready'},
+        )
 
     def embed_text(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """文本嵌入（模拟）"""
@@ -94,14 +183,15 @@ class PythonToolsService:
             'count': len(data) if isinstance(data, list) else 0,
         }
 
+
 def serve():
     """启动 gRPC 服务"""
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
     # 添加服务
-    # tools_pb2_grpc.add_PythonToolsServicer_to_server(
-    #     PythonToolsService(), server
-    # )
+    tools_pb2_grpc.add_PythonToolsServiceServicer_to_server(
+        PythonToolsServicer(), server
+    )
 
     port = os.getenv('PORT', '50052')
     server.add_insecure_port(f'[::]:{port}')
@@ -117,6 +207,7 @@ def serve():
 
     server.start()
     server.wait_for_termination()
+
 
 if __name__ == '__main__':
     serve()

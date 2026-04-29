@@ -131,11 +131,13 @@ export function markdownToCard(content: string, id: string): KnowledgeCard {
 
   for (const line of lines) {
     if (line.startsWith('- 来源问题:')) question = line.replace(/^- 来源问题:\s*/, '');
-    else if (line.startsWith('- 质量分:')) quality = parseFloat(line.replace(/^- 质量分:\s*/, '')) || 0.5;
+    else if (line.startsWith('- 质量分:'))
+      quality = parseFloat(line.replace(/^- 质量分:\s*/, '')) || 0.5;
     else if (line.startsWith('- 生成时间:')) timestamp = line.replace(/^- 生成时间:\s*/, '');
     else if (line.startsWith('- 概念:')) concept = line.replace(/^- 概念:\s*/, '');
     else if (line.startsWith('- 领域:')) domain = line.replace(/^- 领域:\s*/, '');
-    else if (line.startsWith('- 版本:')) version = parseInt(line.replace(/^- 版本:\s*/, ''), 10) || 1;
+    else if (line.startsWith('- 版本:'))
+      version = parseInt(line.replace(/^- 版本:\s*/, ''), 10) || 1;
   }
 
   const cardContentStart = lines.findIndex((l) => l === '## 卡片内容');
@@ -143,7 +145,10 @@ export function markdownToCard(content: string, id: string): KnowledgeCard {
   const relatedCardsStart = lines.findIndex((l) => l === '## 关联卡片');
 
   const contentEnd = relatedPagesStart > 0 ? relatedPagesStart : lines.length;
-  const cardContent = lines.slice(cardContentStart + 2, contentEnd).join('\n').trim();
+  const cardContent = lines
+    .slice(cardContentStart + 2, contentEnd)
+    .join('\n')
+    .trim();
 
   const sourcePages: string[] = [];
   const relatedCards: string[] = [];

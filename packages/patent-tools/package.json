@@ -1,0 +1,44 @@
+{
+  "name": "@yunpat/patent-tools",
+  "version": "0.1.0",
+  "description": "YunPat 专利工具集 - 权利要求生成、质量评估、审查答复等",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest --run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "yunpat",
+    "patent",
+    "tools",
+    "claims",
+    "quality-assessment",
+    "office-action"
+  ],
+  "author": "YunPat Team",
+  "license": "MIT",
+  "dependencies": {
+    "@yunpat/core": "workspace:*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "typescript": "^5.x",
+    "vitest": "^4.1.5"
+  }
+}

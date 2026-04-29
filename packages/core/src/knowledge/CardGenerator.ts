@@ -87,18 +87,20 @@ export class CardGenerator {
     pageContent: string,
     pageTitle: string,
     concept: string,
-    domain: string,
+    domain: string
   ): Promise<KnowledgeCard[]> {
     const MAX_CONTENT_LEN = 6000;
-    const prompt = GENERATION_PROMPT
-      .replace(/\{title\}/g, pageTitle)
+    const prompt = GENERATION_PROMPT.replace(/\{title\}/g, pageTitle)
       .replace(/\{concept\}/g, concept)
       .replace(/\{domain\}/g, domain)
       .replace(/\{content\}/g, pageContent.slice(0, MAX_CONTENT_LEN));
 
     const response = await this.llm.chat({
       messages: [
-        { role: 'system', content: '你是一个专利法知识管理专家，擅长提炼结构化知识卡片。只输出 JSON。' },
+        {
+          role: 'system',
+          content: '你是一个专利法知识管理专家，擅长提炼结构化知识卡片。只输出 JSON。',
+        },
         { role: 'user', content: prompt },
       ],
       temperature: 0.3,
@@ -112,7 +114,7 @@ export class CardGenerator {
   async generateFromConcept(
     concept: string,
     domain: string,
-    pages: Array<{ path: string; content: string; title: string }>,
+    pages: Array<{ path: string; content: string; title: string }>
   ): Promise<KnowledgeCard[]> {
     const allCards: KnowledgeCard[] = [];
 
@@ -123,7 +125,7 @@ export class CardGenerator {
           page.content,
           page.title,
           concept,
-          domain,
+          domain
         );
         allCards.push(...cards);
       } catch (error) {
@@ -137,9 +139,10 @@ export class CardGenerator {
   }
 
   async assessQuality(card: KnowledgeCard): Promise<{ quality: number; issues: string[] }> {
-    const prompt = QUALITY_ASSESS_PROMPT
-      .replace('{question}', card.question)
-      .replace('{content}', card.content);
+    const prompt = QUALITY_ASSESS_PROMPT.replace('{question}', card.question).replace(
+      '{content}',
+      card.content
+    );
 
     try {
       const response = await this.llm.chat({
@@ -165,7 +168,7 @@ export class CardGenerator {
     content: string,
     sourcePage: string,
     concept: string,
-    domain: string,
+    domain: string
   ): KnowledgeCard[] {
     const parsed = this.extractJSON(content);
     const items = Array.isArray(parsed) ? parsed : [parsed];
@@ -211,7 +214,9 @@ export class CardGenerator {
     // 尝试直接解析
     try {
       return JSON.parse(text.trim());
-    } catch {}
+    } catch {
+      // 直接解析失败，尝试提取 JSON 子串
+    }
 
     // 尝试找到第一个 { 和最后一个 }
     const start = text.indexOf('{');
@@ -219,7 +224,9 @@ export class CardGenerator {
     if (start >= 0 && end > start) {
       try {
         return JSON.parse(text.slice(start, end + 1));
-      } catch {}
+      } catch {
+        // 提取子串后解析仍失败
+      }
     }
 
     throw new Error(`无法从 LLM 响应中提取 JSON: ${text.slice(0, 200)}`);

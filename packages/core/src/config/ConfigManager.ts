@@ -102,7 +102,7 @@ export class ConfigManager {
     const finalConfig = this.enableEnvVar ? this.replaceEnvVars(mergedConfig) : mergedConfig;
 
     // 6. 应用默认值
-    this.resolvedConfig = this.applyDefaults(finalConfig);
+    this.resolvedConfig = this.applyDefaults(finalConfig as YunPatConfig);
 
     console.log(`✓ 配置已加载 [环境: ${this.environment}]`);
     return this.resolvedConfig;
@@ -143,14 +143,14 @@ export class ConfigManager {
   /**
    * 获取特定配置值
    */
-  get<T = any>(key: string): T | undefined {
+  get<T = unknown>(key: string): T | undefined {
     const config = this.load();
     const keys = key.split('.');
-    let value: any = config;
+    let value: unknown = config;
 
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+        value = (value as Record<string, unknown>)[k];
       } else {
         return undefined;
       }
@@ -162,20 +162,20 @@ export class ConfigManager {
   /**
    * 设置配置值（仅内存）
    */
-  set(key: string, value: any): void {
+  set(key: string, value: unknown): void {
     if (!this.resolvedConfig) {
       this.load();
     }
 
     const keys = key.split('.');
-    let target: any = this.resolvedConfig;
+    let target: Record<string, unknown> = this.resolvedConfig as Record<string, unknown>;
 
     for (let i = 0; i < keys.length - 1; i++) {
       const k = keys[i];
       if (!(k in target) || typeof target[k] !== 'object') {
         target[k] = {};
       }
-      target = target[k];
+      target = target[k] as Record<string, unknown>;
     }
 
     target[keys[keys.length - 1]] = value;
@@ -206,27 +206,35 @@ export class ConfigManager {
     const envConfig = configFile[this.environment] || {};
 
     // 深度合并
-    return this.deepMerge(baseConfig, envConfig);
+    return this.deepMerge(baseConfig, envConfig) as YunPatConfig;
   }
 
   /**
    * 深度合并对象
    */
-  private deepMerge(target: any, source: any): any {
+  private deepMerge(
+    target: Record<string, unknown>,
+    source: Record<string, unknown>
+  ): Record<string, unknown> {
     const result = { ...target };
 
     for (const key of Object.keys(source)) {
+      const sourceValue = source[key];
+      const targetValue = result[key];
       if (
-        source[key] &&
-        typeof source[key] === 'object' &&
-        !Array.isArray(source[key]) &&
-        target[key] &&
-        typeof target[key] === 'object' &&
-        !Array.isArray(target[key])
+        sourceValue &&
+        typeof sourceValue === 'object' &&
+        !Array.isArray(sourceValue) &&
+        targetValue &&
+        typeof targetValue === 'object' &&
+        !Array.isArray(targetValue)
       ) {
-        result[key] = this.deepMerge(target[key], source[key]);
+        result[key] = this.deepMerge(
+          targetValue as Record<string, unknown>,
+          sourceValue as Record<string, unknown>
+        );
       } else {
-        result[key] = source[key];
+        result[key] = sourceValue;
       }
     }
 
@@ -240,7 +248,7 @@ export class ConfigManager {
    * - ${VAR_NAME}
    * - ${VAR_NAME:default_value}
    */
-  private replaceEnvVars(config: any): any {
+  private replaceEnvVars(config: unknown): unknown {
     if (typeof config === 'string') {
       return config.replace(/\$\{([^}:]+)(?::([^}]*))?\}/g, (_, name, defaultValue) => {
         return process.env[name] ?? defaultValue ?? '';
@@ -252,7 +260,7 @@ export class ConfigManager {
     }
 
     if (config && typeof config === 'object') {
-      const result: any = {};
+      const result: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(config)) {
         result[key] = this.replaceEnvVars(value);
       }

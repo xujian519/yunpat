@@ -10,11 +10,7 @@ import * as path from 'path';
 
 import type { LLMAdapter } from '../lifecycle/Lifecycle.js';
 import type { EmbeddingAdapter } from '../llm/EmbeddingAdapter.js';
-import type {
-  KnowledgeCard,
-  PipelineConfig,
-  PipelineResult,
-} from './KnowledgeCard.js';
+import type { KnowledgeCard, PipelineConfig, PipelineResult } from './KnowledgeCard.js';
 import { cardToMarkdown } from './KnowledgeCard.js';
 import { CardGenerator } from './CardGenerator.js';
 import { CardRetriever } from './CardRetriever.js';
@@ -31,11 +27,7 @@ export class CardPipeline {
   private embedder?: EmbeddingAdapter;
   private knowledgeBasePath: string;
 
-  constructor(config: {
-    llm: LLMAdapter;
-    knowledgeBasePath: string;
-    embedder?: EmbeddingAdapter;
-  }) {
+  constructor(config: { llm: LLMAdapter; knowledgeBasePath: string; embedder?: EmbeddingAdapter }) {
     this.generator = new CardGenerator({ llm: config.llm });
     this.retriever = new CardRetriever(config.embedder);
     this.embedder = config.embedder;
@@ -83,17 +75,15 @@ export class CardPipeline {
 
         if (pages.length === 0) continue;
 
-        const cards = await this.generator.generateFromConcept(
-          concept.name,
-          concept.domain,
-          pages,
-        );
+        const cards = await this.generator.generateFromConcept(concept.name, concept.domain, pages);
 
         // 限制每个概念的卡片数
         const limitedCards = cards.slice(0, config.maxCardsPerConcept);
         allCards.push(...limitedCards);
       } catch (error) {
-        result.errors.push(`${concept.name}: ${error instanceof Error ? error.message : String(error)}`);
+        result.errors.push(
+          `${concept.name}: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
 
       // 并发控制
@@ -126,7 +116,9 @@ export class CardPipeline {
             }
           }
         } catch (error) {
-          result.errors.push(`向量化批次 ${i}: ${error instanceof Error ? error.message : String(error)}`);
+          result.errors.push(
+            `向量化批次 ${i}: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
       }
     }
@@ -157,9 +149,7 @@ export class CardPipeline {
 
     // 统计
     result.avgQuality =
-      allCards.length > 0
-        ? allCards.reduce((sum, c) => sum + c.quality, 0) / allCards.length
-        : 0;
+      allCards.length > 0 ? allCards.reduce((sum, c) => sum + c.quality, 0) / allCards.length : 0;
     result.duration = Date.now() - startTime;
 
     return result;
@@ -184,7 +174,9 @@ export class CardPipeline {
     try {
       const hierarchyContent = await fs.readFile(hierarchyPath, 'utf-8');
       conceptDomains = this.parseConceptHierarchy(hierarchyContent);
-    } catch {}
+    } catch {
+      // 忽略错误，使用默认值
+    }
 
     // 构建概念列表
     const concepts: ConceptInfo[] = [];
@@ -193,9 +185,8 @@ export class CardPipeline {
     for (const [name, pages] of Object.entries(conceptPages)) {
       if (targetSet && !targetSet.has(name)) {
         // 模糊匹配：如果目标概念是索引概念的子串
-        const matched = targetSet.has(name) || [...targetSet].some(
-          (t) => name.includes(t) || t.includes(name)
-        );
+        const matched =
+          targetSet.has(name) || [...targetSet].some((t) => name.includes(t) || t.includes(name));
         if (!matched) continue;
       }
       concepts.push({
@@ -250,7 +241,10 @@ export class CardPipeline {
       }
       // #### 新颖性 -> 二级概念（映射到所属一级领域）
       else if (line.startsWith('#### ')) {
-        currentConcept = line.slice(5).replace(/\s*\(.*\)\s*$/, '').trim();
+        currentConcept = line
+          .slice(5)
+          .replace(/\s*\(.*\)\s*$/, '')
+          .trim();
         if (currentDomain && currentConcept) {
           result[currentConcept] = currentDomain;
         }
@@ -266,34 +260,34 @@ export class CardPipeline {
 
     // 补充未在层级文件中显式出现的概念映射
     const supplement: Record<string, string> = {
-      '按许销售': '专利侵权',
-      '安全例外': '强制许可',
-      '保密义务': '程序问题',
-      '不可专利': '专利授权',
-      '冲突': '权属问题',
-      '二级概念': '专利授权',
-      '法律法规': '程序问题',
-      '防止权滥用': '专利权效力',
-      '非显而易见': '专利授权',
-      '公知常识': '现有技术',
-      '化学领域': '专利审查',
-      '合法来源': '侵权抗辩',
-      '既有技术': '现有技术',
-      '宽限期': '专利授权',
-      '领域技术人员': '专利授权',
-      '逻辑推理': '专利审查',
-      '偶然因素': '专利授权',
-      '专利权效力': '专利权效力',
-      '专利无效': '专利无效',
-      '普通技术人员': '专利授权',
-      '权利要求解释': '权利要求解释',
-      '三步法': '专利授权',
-      '授权条件': '专利授权',
-      '外观设计': '外观设计',
-      '信息化': '现有技术',
-      '专门用于': '专利侵权',
-      '诉讼程序': '程序问题',
-      '主题名称': '权利要求与说明书',
+      按许销售: '专利侵权',
+      安全例外: '强制许可',
+      保密义务: '程序问题',
+      不可专利: '专利授权',
+      冲突: '权属问题',
+      二级概念: '专利授权',
+      法律法规: '程序问题',
+      防止权滥用: '专利权效力',
+      非显而易见: '专利授权',
+      公知常识: '现有技术',
+      化学领域: '专利审查',
+      合法来源: '侵权抗辩',
+      既有技术: '现有技术',
+      宽限期: '专利授权',
+      领域技术人员: '专利授权',
+      逻辑推理: '专利审查',
+      偶然因素: '专利授权',
+      专利权效力: '专利权效力',
+      专利无效: '专利无效',
+      普通技术人员: '专利授权',
+      权利要求解释: '权利要求解释',
+      三步法: '专利授权',
+      授权条件: '专利授权',
+      外观设计: '外观设计',
+      信息化: '现有技术',
+      专门用于: '专利侵权',
+      诉讼程序: '程序问题',
+      主题名称: '权利要求与说明书',
     };
     for (const [concept, domain] of Object.entries(supplement)) {
       if (!result[concept]) {
@@ -309,7 +303,7 @@ export class CardPipeline {
    */
   private async scanRelatedFiles(
     concept: string,
-    maxFiles: number,
+    maxFiles: number
   ): Promise<Array<{ path: string; content: string; title: string }>> {
     const pages: Array<{ path: string; content: string; title: string }> = [];
 
@@ -346,7 +340,9 @@ export class CardPipeline {
             content,
             title: titleMatch ? titleMatch[1] : relPath,
           });
-        } catch {}
+        } catch {
+          // 忽略错误，使用默认值
+        }
       }
     }
 
@@ -376,7 +372,7 @@ export class CardPipeline {
   }
 
   private async loadPages(
-    pagePaths: string[],
+    pagePaths: string[]
   ): Promise<Array<{ path: string; content: string; title: string }>> {
     const pages: Array<{ path: string; content: string; title: string }> = [];
 
@@ -399,7 +395,9 @@ export class CardPipeline {
           content,
           title: titleMatch ? titleMatch[1] : pagePath,
         });
-      } catch {}
+      } catch {
+        // 忽略错误，使用默认值
+      }
     }
 
     return pages;
@@ -410,7 +408,9 @@ export class CardPipeline {
 
     try {
       await fs.mkdir(cardsDir, { recursive: true });
-    } catch {}
+    } catch {
+      // 忽略错误，使用默认值
+    }
 
     // 持久化为 JSON 索引
     const indexPath = path.join(cardsDir, 'index.json');

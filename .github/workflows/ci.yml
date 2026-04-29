@@ -2,12 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   test:
+    name: 测试
     runs-on: ubuntu-latest
 
     strategy:
@@ -15,57 +16,118 @@ jobs:
         node-version: [18.x, 20.x]
 
     steps:
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: 安装 pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: 设置 Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
-      - name: Build all packages
+      - name: 构建
         run: pnpm build
 
-      - name: Run tests
-        run: pnpm test
+      - name: 运行测试
+        run: pnpm test -- --run
 
-      - name: TypeScript type check
-        run: pnpm -r exec tsc --noEmit
+      - name: 生成覆盖率报告
+        run: pnpm test -- --coverage
+
+      - name: 上传覆盖率到 Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./packages/core/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
 
   lint:
+    name: 代码检查
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: 安装 pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
 
-      - name: Setup Node.js
+      - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
-      # 注意：当前项目还没有配置ESLint，这个步骤会失败
-      # 我们会在后续任务中配置ESLint
-      - name: Run lint
-        run: |
-          echo "⚠️ ESLint还未配置，跳过此步骤"
-          # pnpm lint
-        continue-on-error: true
+      - name: 运行 ESLint
+        run: pnpm lint
+
+  type-check:
+    name: 类型检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript 类型检查
+        run: pnpm build:tsc
+
+  build:
+    name: 构建
+    runs-on: ubuntu-latest
+    needs: [test, lint, type-check]
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建所有包
+        run: pnpm build
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: packages/*/dist
+          retention-days: 7

@@ -205,7 +205,31 @@ export {
 export { ShortTermMemory, MemoryManager } from './memory/MemoryStore.js';
 
 // ========== ⑤ 工具层 (Tools) ==========
-export { ToolRegistry, BaseTool, ToolWrapper } from './tools/ToolRegistry.js';
+export { ToolRegistry, BaseTool, ToolWrapper as LegacyToolWrapper } from './tools/ToolRegistry.js';
+
+// 增强的工具系统
+export {
+  EnhancedToolRegistry,
+  BaseTool as EnhancedBaseTool,
+  ToolWrapperClass,
+} from './tools/EnhancedToolRegistry.js';
+
+export {
+  ToolCategory,
+  ToolMetadata,
+  ToolContext,
+  EnhancedTool,
+  ToolExecutionStats,
+} from './tools/types.js';
+
+export {
+  MiddlewarePipeline,
+  LoggingMiddleware,
+  PermissionMiddleware,
+  CacheMiddleware,
+  RateLimitMiddleware,
+  TracingMiddleware,
+} from './tools/middleware.js';
 
 // ========== 核心抽象 ==========
 export { Agent, AgentConfig } from './agent/Agent.js';
@@ -300,6 +324,31 @@ export type {
   ABTestResult,
   LearningRound,
 } from './learning/ActiveLearningSystem.js';
+
+// ========== 工具选择优化 (Tool Selection Optimization) ==========
+export {
+  ToolDescriptionEnhancer,
+  type EnhancedToolMetadata,
+  type ToolExample,
+} from './tools/ToolDescriptionEnhancer.js';
+
+export {
+  FewShotPromptManager,
+  fewShotManager,
+  type FewShotExample,
+} from './reasoning/FewShotPromptManager.js';
+
+export { ToolUsageTracker, toolUsageTracker } from './tools/ToolUsageTracker.js';
+
+export { ToolSelectionOptimizer, toolSelectionOptimizer } from './tools/ToolSelectionOptimizer.js';
+
+export { SimilarityCalculator, similarityCalculator } from './tools/SimilarityCalculator.js';
+
+export type {
+  ToolUsageRecord,
+  ToolPerformanceStats,
+  ToolRecommendation,
+} from './tools/ToolUsageTracker.js';
 
 // ========== 版本信息 ==========
 export const VERSION = '0.2.0';

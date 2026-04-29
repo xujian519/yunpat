@@ -9,6 +9,8 @@
  */
 
 import { Agent } from '@yunpat/core';
+import * as PatentCore from '../../core/PatentCoreBridge.js';
+import { renderAnalysisPrompt } from '../../prompts/capability/analysis.js';
 
 /**
  * 专利分析输入
@@ -164,6 +166,22 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
     console.log(`   分析类型: ${input.analysisType}`);
     console.log(`   技术领域: ${input.technicalField || '未指定'}`);
 
+    // patent-core IPC 分类
+    let ipcClassification: any = null;
+    try {
+      const classifyText = [input.technicalField, input.parameters?.keywords].filter(Boolean).join(' ');
+      if (classifyText) {
+        ipcClassification = await PatentCore.classifyIpc(classifyText);
+        console.log(`[PatentAnalyzerAgent] IPC 分类: ${ipcClassification.classifications.map((c: any) => `${c.section}(${c.description})`).join(', ')}`);
+      }
+    } catch (e) {
+      console.warn('[PatentAnalyzerAgent] patent-core IPC 分类失败:', (e as Error).message);
+    }
+
+    const ipcContext = ipcClassification
+      ? `\n\n## patent-core IPC 分类\n${ipcClassification.classifications.map((c: any) => `- ${c.section}部: ${c.description}`).join('\n')}`
+      : '';
+
     // 使用 LLM 制定分析策略
     const strategy = await context.llm.chat({
       messages: [
@@ -184,7 +202,7 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
 目标专利数量：${input.targetPatents?.length || 0}
 竞争对手：${input.competitors?.join('、') || '未指定'}
 时间范围：${input.timeRange?.start || '未指定'} - ${input.timeRange?.end || '未指定'}
-`
+${ipcContext}`
         }
       ],
       temperature: 0.3,
@@ -194,6 +212,7 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
       strategy: strategy.message.content,
       dataSources: this.identifyDataSources(input),
       analysisMethods: this.selectAnalysisMethods(input),
+      ipcClassification,
     };
   }
 
@@ -250,6 +269,21 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
   ): Promise<any> {
     console.log(`\n🤔 [专利分析] 质量评估`);
 
+    // patent-core IPC 验证
+    let ipcVerification: any = null;
+    try {
+      const keywords = context.input?.parameters?.keywords || context.input?.technicalField;
+      if (keywords) {
+        ipcVerification = await PatentCore.classifyIpc(keywords);
+      }
+    } catch {
+      // IPC 验证失败不影响主流程
+    }
+
+    const ipcInfo = ipcVerification
+      ? `\n\n## IPC 分类验证\n${ipcVerification.classifications.map((c: any) => `- ${c.section}: ${c.description}`).join('\n')}`
+      : '';
+
     const assessment = await context.llm.chat({
       messages: [
         {
@@ -268,8 +302,7 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
           content: `分析类型：${output.analysisType}
 专利总数：${output.metrics.totalPatents}
 可信度：${output.metrics.confidence}
-建议数量：${output.recommendations.length}
-`
+建议数量：${output.recommendations.length}${ipcInfo}`
         }
       ],
       temperature: 0.3,
@@ -277,6 +310,7 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
 
     return {
       qualityAssessment: assessment.message.content,
+      ipcVerification,
     };
   }
 

@@ -9,6 +9,8 @@
  */
 
 import { Agent } from '@yunpat/core';
+import * as PatentCore from '../../core/PatentCoreBridge.js';
+import { renderOaAnalysisPrompt } from '../../prompts/business/oa-response.js';
 
 /**
  * 审查意见答复输入
@@ -98,7 +100,28 @@ export class PatentResponderAgent extends Agent<OfficeActionInput, OfficeActionO
     console.log(`   专利名称: ${input.patentTitle}`);
     console.log(`   对比文件数量: ${input.priorArt.length}`);
 
-    // 使用 LLM 分析审查意见
+    // patent-core 预处理：解析 OA + 推荐策略
+    let parsedOa: any = null;
+    let recommendedStrategies: any = null;
+    try {
+      parsedOa = await PatentCore.parseOa(input.officeAction);
+      console.log(`[PatentResponderAgent] OA 类型: ${parsedOa.oa_type}, 受影响权利要求: ${parsedOa.affected_claims.join(',')}`);
+      recommendedStrategies = await PatentCore.recommendStrategy(JSON.stringify(parsedOa));
+      console.log(`[PatentResponderAgent] 推荐策略: ${recommendedStrategies.strategies.map((s: any) => `${s.strategy_type}(${s.confidence})`).join(', ')}`);
+    } catch (e) {
+      console.warn('[PatentResponderAgent] patent-core OA 解析失败，回退到纯 LLM 模式:', (e as Error).message);
+    }
+
+    // 构建增强的提示词
+    const oaContext = parsedOa
+      ? `\n\n## patent-core OA 分析\n类型: ${parsedOa.oa_type}\n受影响权利要求: ${parsedOa.affected_claims.join(', ')}\n引用文献: ${parsedOa.citations.map((c: any) => c.document_number).join(', ')}\n审查员论点: ${parsedOa.examiner_arguments.substring(0, 500)}`
+      : '';
+
+    const strategyContext = recommendedStrategies
+      ? `\n\n## 推荐答复策略（patent-core）\n${recommendedStrategies.strategies.map((s: any) => `- ${s.strategy_type} (置信度: ${s.confidence}): ${s.reasoning}`).join('\n')}`
+      : '';
+
+    // 使用 LLM 分析审查意见（结合 patent-core 预处理结果）
     const analysis = await context.llm.chat({
       messages: [
         {
@@ -130,7 +153,7 @@ ${input.claims.join('\n')}
 
 说明书：
 ${input.description.substring(0, 1000)}...
-`
+${oaContext}${strategyContext}`
         }
       ],
       temperature: 0.3,
@@ -140,6 +163,8 @@ ${input.description.substring(0, 1000)}...
       analysis: analysis.message.content,
       keyIssues: [],
       strategy: '待制定',
+      parsedOa,
+      recommendedStrategies,
     };
   }
 
@@ -196,6 +221,27 @@ ${input.description.substring(0, 1000)}...
   ): Promise<any> {
     console.log(`\n🤔 [审查答复] 质量检查`);
 
+    // patent-core 质量评估
+    let coreAssessment: any = null;
+    try {
+      const claimDrafts = output.response.amendedClaims.map((c, i) => ({
+        id: String(i + 1),
+        claim_type: (i === 0 ? 'Independent' : 'Dependent') as 'Independent' | 'Dependent',
+        preamble: c.substring(0, 50),
+        transitional_phrase: '',
+        elements: [c],
+        dependent_on: i > 0 ? String(i) : null,
+      }));
+      coreAssessment = await PatentCore.assessQuality(claimDrafts);
+      console.log(`[PatentResponderAgent] 修改后权利要求质量: ${coreAssessment.overall_score.toFixed(2)}`);
+    } catch (e) {
+      console.warn('[PatentResponderAgent] patent-core 质量评估失败:', (e as Error).message);
+    }
+
+    const coreInfo = coreAssessment
+      ? `\n\n## patent-core 规则化评估\n综合: ${coreAssessment.overall_score}\n${coreAssessment.issues?.map((i: any) => `- [${i.severity}] ${i.suggestion}`).join('\n') || ''}`
+      : '';
+
     const qualityCheck = await context.llm.chat({
       messages: [
         {
@@ -217,8 +263,7 @@ ${input.description.substring(0, 1000)}...
 核心论点数量：${output.responseStrategy.arguments.length}
 修改权利要求数量：${output.response.amendedClaims.length}
 意见陈述书长度：${output.response.writtenArgument.split(/\s+/).length} 字
-授权成功率预测：${output.metrics.allowanceProbability}%
-`
+授权成功率预测：${output.metrics.allowanceProbability}%${coreInfo}`
         }
       ],
       temperature: 0.3,
@@ -226,7 +271,8 @@ ${input.description.substring(0, 1000)}...
 
     return {
       qualityCheck: qualityCheck.message.content,
-      improvementSuggestions: [],
+      coreAssessment,
+      improvementSuggestions: coreAssessment?.issues?.map((i: any) => i.suggestion) || [],
     };
   }
 

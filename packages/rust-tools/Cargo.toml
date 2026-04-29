@@ -3,6 +3,7 @@ members = [
     "crates/patent-tools",
     "crates/patent-agent",
     "crates/patent-cli",
+    "crates/patent-core",
 ]
 resolver = "2"
 

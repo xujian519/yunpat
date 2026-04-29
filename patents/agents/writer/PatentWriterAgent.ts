@@ -20,6 +20,8 @@ import { CardRetriever } from '@yunpat/core/src/knowledge/CardRetriever.js';
 import { CardPipeline } from '@yunpat/core/src/knowledge/CardPipeline.js';
 import type { EmbeddingAdapter } from '@yunpat/core/src/llm/EmbeddingAdapter.js';
 import { PromptTemplateManager } from '../../prompts/PromptTemplateManager.js';
+import * as PatentCore from '../../core/PatentCoreBridge.js';
+import { renderDraftingClaimsPrompt, renderDraftingSpecificationPrompt } from '../../prompts/business/drafting.js';
 
 /**
  * 专利撰写输入
@@ -183,11 +185,25 @@ export class PatentWriterAgent extends Agent<PatentWritingInput, PatentWritingOu
 
     this.currentStage = 'planning';
 
+    // patent-core 预处理：解析交底书 + 提取特征
+    let parsedDisclosure: any = null;
+    let extractedFeatures: any = null;
+    try {
+      parsedDisclosure = await PatentCore.parseDisclosure(input.technicalDisclosure);
+      extractedFeatures = await PatentCore.extractFeatures(input.technicalDisclosure);
+      console.log(`[PatentWriterAgent] 交底书解析置信度: ${parsedDisclosure.confidence.toFixed(2)}, 特征数: ${extractedFeatures.features.length}`);
+    } catch (e) {
+      console.warn('[PatentWriterAgent] patent-core 预处理失败，回退到纯 LLM 模式:', (e as Error).message);
+    }
+
     // 预加载创造性分析模板（发明理解阶段需要）
     if (this.promptManager) {
       await this.promptManager.preload('invention-understanding');
       console.log('[PatentWriterAgent] 已预加载创造性分析模板');
     }
+
+    // 构建增强的提示词，包含 patent-core 提取的结构化信息
+    const preprocessedInfo = this.buildPreprocessedContext(parsedDisclosure, extractedFeatures);
 
     // 使用 LLM 分析技术交底书
     const analysis = await context.llm.chat({
@@ -218,10 +234,12 @@ export class PatentWriterAgent extends Agent<PatentWritingInput, PatentWritingOu
 ${input.technicalDisclosure}
 
 附图：
-${input.drawings.join('\n')}`,
+${input.drawings.join('\n')}
+
+${preprocessedInfo}`,
         },
       ],
-      temperature: 0.3, // 低温度确保稳定性
+      temperature: 0.3,
     });
 
     // 知识库增强（如果启用）
@@ -234,7 +252,30 @@ ${input.drawings.join('\n')}`,
       plan: enhancedAnalysis,
       coreInnovation: '待识别',
       protectionScope: '待设计',
+      parsedDisclosure,
+      extractedFeatures,
     };
+  }
+
+  /** 构建 patent-core 预处理上下文 */
+  private buildPreprocessedContext(disclosure: any, features: any): string {
+    if (!disclosure && !features) return '';
+    const parts: string[] = ['\n## 算法预处理结果（patent-core）'];
+    if (disclosure) {
+      parts.push(`\n### 交底书结构解析（置信度: ${disclosure.confidence.toFixed(2)}）`);
+      for (const [section, content] of Object.entries(disclosure.sections || {})) {
+        if (content && (content as string).trim()) {
+          parts.push(`- ${section}: ${(content as string).substring(0, 200)}`);
+        }
+      }
+    }
+    if (features && features.features?.length > 0) {
+      parts.push(`\n### 提取的技术特征（${features.features.length}个）`);
+      for (const f of features.features.slice(0, 10)) {
+        parts.push(`- [${f.category}/${f.feature_type}] ${f.description}`);
+      }
+    }
+    return parts.join('\n');
   }
 
   /**
@@ -303,6 +344,26 @@ ${input.drawings.join('\n')}`,
 
     this.currentStage = 'quality-assessment';
 
+    // patent-core 质量评估（规则化评分，不依赖 LLM）
+    let coreAssessment: any = null;
+    try {
+      const claimDrafts = output.patentApplication.claims.map((c, i) => ({
+        id: String(i + 1),
+        claim_type: (c.type === 'independent' ? 'Independent' : 'Dependent') as 'Independent' | 'Dependent',
+        preamble: c.content.substring(0, 50),
+        transitional_phrase: '',
+        elements: [c.content],
+        dependent_on: c.type === 'dependent' ? String(Math.max(1, i)) : null,
+      }));
+      coreAssessment = await PatentCore.assessQuality(claimDrafts);
+      console.log(`[PatentWriterAgent] patent-core 质量评分: ${coreAssessment.overall_score.toFixed(2)}`);
+      if (coreAssessment.issues?.length > 0) {
+        console.log(`[PatentWriterAgent] 发现 ${coreAssessment.issues.length} 个质量问题`);
+      }
+    } catch (e) {
+      console.warn('[PatentWriterAgent] patent-core 质量评估失败:', (e as Error).message);
+    }
+
     // 懒加载所有模板（质量评估需要）
     if (this.promptManager) {
       console.log('[PatentWriterAgent] 加载所有模板用于质量评估...');
@@ -312,6 +373,10 @@ ${input.drawings.join('\n')}`,
         '03-creativity-analysis',
       ]);
     }
+
+    const coreInfo = coreAssessment
+      ? `\n\n## patent-core 规则化评估\n清晰性: ${coreAssessment.clarity_score}\n支持性: ${coreAssessment.support_score}\n保护范围: ${coreAssessment.scope_score}\n综合: ${coreAssessment.overall_score}\n${coreAssessment.issues?.map((i: any) => `- [${i.severity}] ${i.dimension}: ${i.suggestion}`).join('\n') || ''}`
+      : '';
 
     const qualityCheck = await context.llm.chat({
       messages: [
@@ -332,7 +397,7 @@ ${input.drawings.join('\n')}`,
           role: 'user',
           content: `权利要求数量：${output.metrics.claimsCount}
 摘要：${output.patentApplication.abstract}
-说明书长度：${output.metrics.descriptionWordCount} 字`,
+说明书长度：${output.metrics.descriptionWordCount} 字${coreInfo}`,
         },
       ],
       temperature: 0.3,
@@ -340,7 +405,8 @@ ${input.drawings.join('\n')}`,
 
     return {
       qualityCheck: qualityCheck.message.content,
-      improvementSuggestions: '待生成',
+      coreAssessment,
+      improvementSuggestions: coreAssessment?.issues?.map((i: any) => i.suggestion) || [],
     };
   }
 

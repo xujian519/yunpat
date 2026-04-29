@@ -1,280 +1,208 @@
 //! 专利工具 CLI
 
 use clap::{Parser, Subcommand};
-use colored::Colorize;
-use patent_tools::{LlmClient, LlmProvider};
+use patent_core::{
+    classification::IpcClassifier,
+    drafting::{ClaimGenerator, ClaimOptions, DisclosureParser, FeatureExtractor, InventionUnderstanding},
+    drafting::claims::InventionType as InvType,
+    oa::{ClaimReviser, OaParser, OaResponder},
+    quality::QualityAssessor,
+};
 use std::path::PathBuf;
 
-/// 专利工具 CLI - 专业级专利分析和生成工具
+/// 专利工具 CLI
 #[derive(Parser, Debug)]
 #[command(name = "patent-cli")]
-#[command(about = "专利工具 CLI - 专业级专利分析和生成工具", long_about = None)]
+#[command(about = "专利工具 CLI", long_about = None)]
 #[command(version)]
 struct Cli {
-    /// 子命令
     #[command(subcommand)]
     command: Commands,
-
-    /// 配置文件路径
-    #[arg(short, long, default_value = "~/.patent-cli/config.json")]
-    config: String,
-
-    /// 详细输出
-    #[arg(short, long)]
-    verbose: bool,
 }
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// 搜索专利
-    Search {
-        /// 关键词
+    /// 提取技术特征
+    ExtractFeatures {
         #[arg(short, long)]
-        keywords: Vec<String>,
-
-        /// 申请人
+        text: Option<String>,
         #[arg(short, long)]
-        applicant: Option<String>,
+        file: Option<PathBuf>,
+    },
 
-        /// 限制数量
-        #[arg(short, long, default_value = "10")]
-        limit: usize,
+    /// 解析交底书
+    ParseDisclosure {
+        #[arg(short, long)]
+        text: Option<String>,
+        #[arg(short, long)]
+        file: Option<PathBuf>,
     },
 
     /// 生成权利要求
-    Generate {
-        /// 输入文件（JSON 格式）
+    GenerateClaims {
         #[arg(short, long)]
-        input: PathBuf,
-
-        /// 发明类型
+        title: String,
         #[arg(short, long)]
+        solution: String,
+        #[arg(short = 't', long, default_value = "product")]
         invention_type: String,
-
-        /// 输出文件
-        #[arg(short, long)]
-        output: Option<PathBuf>,
-    },
-
-    /// 评估质量
-    Assess {
-        /// 输入文件（JSON 格式）
-        #[arg(short, long)]
-        input: PathBuf,
     },
 
     /// 解析审查意见
-    Parse {
-        /// 输入文件（文本或 JSON）
+    ParseOa {
         #[arg(short, long)]
-        input: PathBuf,
-
-        /// 输出文件（JSON 格式）
+        text: Option<String>,
         #[arg(short, long)]
-        output: Option<PathBuf>,
+        file: Option<PathBuf>,
     },
 
-    /// 分析专利
-    Analyze {
-        /// 专利号
+    /// 推荐答复策略
+    RecommendStrategy {
         #[arg(short, long)]
-        patent_number: String,
+        oa_json: String,
+    },
 
-        /// 分析类型
+    /// 修改权利要求
+    ReviseClaims {
         #[arg(short, long)]
-        analysis_type: String,
+        claims_file: PathBuf,
+        #[arg(short = 't', long, default_value = "Hybrid")]
+        strategy: String,
+    },
+
+    /// 评估权利要求质量
+    AssessQuality {
+        #[arg(short, long)]
+        claims_file: PathBuf,
+    },
+
+    /// IPC 分类
+    ClassifyIpc {
+        #[arg(short, long)]
+        text: String,
     },
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    // 加载配置
-    let config = load_config(&cli.config)?;
-
-    // 创建 LLM 客户端
-    let llm_client = create_llm_client(&config)?;
-
-    // 执行命令
     match cli.command {
-        Commands::Search {
-            keywords,
-            applicant,
-            limit,
-        } => {
-            execute_search(llm_client, keywords, applicant, limit).await?;
+        Commands::ExtractFeatures { text, file } => {
+            let input = read_input(text, file)?;
+            let features = FeatureExtractor::extract_features(&input, None);
+            let pfe = FeatureExtractor::extract_problem_feature_effects(&input, None, None);
+            print_json(&serde_json::json!({
+                "features": features,
+                "problem_feature_effects": pfe,
+            }));
         }
 
-        Commands::Generate {
-            input,
-            invention_type,
-            output,
-        } => {
-            execute_generate(llm_client, input, invention_type, output).await?;
+        Commands::ParseDisclosure { text, file } => {
+            let input = read_input(text, file)?;
+            let doc = DisclosureParser::parse(&input);
+            let title = doc.sections.get("发明名称").cloned().unwrap_or_default();
+            print_json(&serde_json::json!({
+                "title": title,
+                "sections": doc.sections,
+                "confidence": doc.confidence,
+            }));
         }
 
-        Commands::Assess { input } => {
-            execute_assess(llm_client, input).await?;
+        Commands::GenerateClaims { title, solution, invention_type } => {
+            let inv_type = match invention_type.as_str() {
+                "method" => InvType::Method,
+                "use" => InvType::Use,
+                _ => InvType::Product,
+            };
+            let features = FeatureExtractor::extract_features(&solution, None);
+            let essential: Vec<_> = features.iter().filter(|f| f.feature_type == patent_core::FeatureType::Essential).cloned().collect();
+            let optional: Vec<_> = features.iter().filter(|f| f.feature_type == patent_core::FeatureType::Optional).cloned().collect();
+            let understanding = InventionUnderstanding {
+                title,
+                invention_type: inv_type,
+                essential_features: essential,
+                optional_features: optional,
+            };
+            let claims = ClaimGenerator::generate_all_claims(&understanding, &ClaimOptions::default());
+            let rendered: Vec<String> = claims.iter().map(ClaimGenerator::render_claim).collect();
+            print_json(&serde_json::json!({
+                "claims": claims,
+                "rendered": rendered,
+            }));
         }
 
-        Commands::Parse { input, output } => {
-            execute_parse(llm_client, input, output).await?;
+        Commands::ParseOa { text, file } => {
+            let input = read_input(text, file)?;
+            let oa = OaParser::parse(&input)?;
+            print_json(&serde_json::json!({
+                "oa_type": format!("{:?}", oa.oa_type),
+                "citations": oa.citations,
+                "affected_claims": oa.affected_claims,
+                "examiner_arguments": oa.examiner_arguments,
+            }));
         }
 
-        Commands::Analyze {
-            patent_number,
-            analysis_type,
-        } => {
-            execute_analyze(llm_client, patent_number, analysis_type).await?;
+        Commands::RecommendStrategy { oa_json } => {
+            let oa: patent_core::OfficeAction = serde_json::from_str(&oa_json)?;
+            let strategies = OaResponder::analyze_and_recommend(&oa);
+            print_json(&serde_json::json!({
+                "strategies": strategies,
+            }));
+        }
+
+        Commands::ReviseClaims { claims_file, strategy } => {
+            let content = std::fs::read_to_string(&claims_file)?;
+            let claims: Vec<patent_core::ClaimDraft> = serde_json::from_str(&content)?;
+            let strat = patent_core::ResponseStrategy {
+                strategy_type: match strategy.as_str() {
+                    "AmendClaims" => patent_core::ResponseStrategyType::AmendClaims,
+                    "Argue" => patent_core::ResponseStrategyType::Argue,
+                    _ => patent_core::ResponseStrategyType::Hybrid,
+                },
+                reasoning: "CLI 指定策略".into(),
+                confidence: 0.7,
+            };
+            let revised = ClaimReviser::revise(&claims, &strat);
+            let quality = ClaimReviser::assess_revision(&claims, &revised);
+            print_json(&serde_json::json!({
+                "revised_claims": revised,
+                "revision_quality": quality,
+            }));
+        }
+
+        Commands::AssessQuality { claims_file } => {
+            let content = std::fs::read_to_string(&claims_file)?;
+            let claims: Vec<patent_core::ClaimDraft> = serde_json::from_str(&content)?;
+            let assessment = QualityAssessor::assess_claims(&claims);
+            print_json(&serde_json::json!({
+                "clarity_score": assessment.clarity_score,
+                "support_score": assessment.support_score,
+                "scope_score": assessment.scope_score,
+                "overall_score": assessment.overall_score,
+                "issues": assessment.issues,
+            }));
+        }
+
+        Commands::ClassifyIpc { text } => {
+            let classifier = IpcClassifier::new();
+            let results = classifier.classify(&text);
+            print_json(&serde_json::json!({
+                "classifications": results,
+            }));
         }
     }
 
     Ok(())
 }
 
-/// 配置文件
-#[derive(Debug, serde::Deserialize)]
-struct Config {
-    /// LLM 提供商
-    llm_provider: String,
-
-    /// API Key
-    api_key: String,
-
-    /// API 端点
-    api_endpoint: Option<String>,
-
-    /// 模型名称
-    model: Option<String>,
-}
-
-/// 加载配置文件
-fn load_config(path: &str) -> anyhow::Result<Config> {
-    let path = shellex_expand(path)?;
-
-    if !PathBuf::from(&path).exists() {
-        // 使用默认配置
-        return Ok(Config {
-            llm_provider: "deepseek".to_string(),
-            api_key: std::env::var("DEEPSEEK_API_KEY").unwrap_or_else(|_| "".to_string()),
-            api_endpoint: None,
-            model: None,
-        });
+fn read_input(text: Option<String>, file: Option<PathBuf>) -> anyhow::Result<String> {
+    match (text, file) {
+        (Some(t), _) => Ok(t),
+        (_, Some(path)) => Ok(std::fs::read_to_string(path)?),
+        _ => anyhow::bail!("请提供 --text 或 --file 参数"),
     }
-
-    let content = std::fs::read_to_string(&path)?;
-    let config: Config = serde_json::from_str(&content)?;
-
-    Ok(config)
 }
 
-/// 展开波浪号
-fn shellex_expand(path: &str) -> anyhow::Result<String> {
-    Ok(shellexpand::full(path)?.to_string())
-}
-
-/// 创建 LLM 客户端
-fn create_llm_client(config: &Config) -> anyhow::Result<LlmClient> {
-    let provider = match config.llm_provider.as_str() {
-        "deepseek" => LlmProvider::DeepSeek,
-        "qwen" => LlmProvider::Qwen,
-        "openai" => LlmProvider::OpenAI,
-        _ => anyhow::bail!("不支持的 LLM 提供商: {}", config.llm_provider),
-    };
-
-    let client = match provider {
-        LlmProvider::DeepSeek => LlmClient::deepseek(config.api_key.clone()),
-        LlmProvider::Qwen => LlmClient::qwen(config.api_key.clone()),
-        LlmProvider::OpenAI => {
-            LlmClient::new(patent_tools::LlmConfig {
-                provider,
-                api_endpoint: config.api_endpoint.clone().unwrap_or_else(|| {
-                    "https://api.openai.com".to_string()
-                }),
-                api_key: config.api_key.clone(),
-                model: config.model.clone().unwrap_or_else(|| "gpt-4".to_string()),
-                ..Default::default()
-            })
-        }
-    };
-
-    Ok(client)
-}
-
-/// 执行搜索命令
-async fn execute_search(
-    _llm_client: LlmClient,
-    keywords: Vec<String>,
-    _applicant: Option<String>,
-    _limit: usize,
-) -> anyhow::Result<()> {
-    println!("{}\n", "专利搜索".bright_cyan().bold());
-    println!("关键词: {}\n", keywords.join(", ").bright_yellow());
-
-    // TODO: 实现实际的搜索逻辑
-    println!("{} 搜索功能待实现\n", "注意:".bright_yellow());
-
-    Ok(())
-}
-
-/// 执行生成命令
-async fn execute_generate(
-    _llm_client: LlmClient,
-    input: PathBuf,
-    _invention_type: String,
-    _output: Option<PathBuf>,
-) -> anyhow::Result<()> {
-    println!("{}\n", "权利要求生成".bright_cyan().bold());
-    println!("输入文件: {}\n", input.display().to_string().bright_yellow());
-
-    // TODO: 实现实际的生成逻辑
-    println!("{} 生成功能待实现\n", "注意:".bright_yellow());
-
-    Ok(())
-}
-
-/// 执行评估命令
-async fn execute_assess(
-    _llm_client: LlmClient,
-    input: PathBuf,
-) -> anyhow::Result<()> {
-    println!("{}\n", "质量评估".bright_cyan().bold());
-    println!("输入文件: {}\n", input.display().to_string().bright_yellow());
-
-    // TODO: 实现实际的评估逻辑
-    println!("{} 评估功能待实现\n", "注意:".bright_yellow());
-
-    Ok(())
-}
-
-/// 执行解析命令
-async fn execute_parse(
-    _llm_client: LlmClient,
-    input: PathBuf,
-    _output: Option<PathBuf>,
-) -> anyhow::Result<()> {
-    println!("{}\n", "审查意见解析".bright_cyan().bold());
-    println!("输入文件: {}\n", input.display().to_string().bright_yellow());
-
-    // TODO: 实现实际的解析逻辑
-    println!("{} 解析功能待实现\n", "注意:".bright_yellow());
-
-    Ok(())
-}
-
-/// 执行分析命令
-async fn execute_analyze(
-    _llm_client: LlmClient,
-    patent_number: String,
-    analysis_type: String,
-) -> anyhow::Result<()> {
-    println!("{}\n", "专利分析".bright_cyan().bold());
-    println!("专利号: {}\n", patent_number.bright_yellow());
-    println!("分析类型: {}\n", analysis_type.bright_yellow());
-
-    // TODO: 实现实际的分析逻辑
-    println!("{} 分析功能待实现\n", "注意:".bright_yellow());
-
-    Ok(())
+fn print_json(data: &serde_json::Value) {
+    println!("{}", serde_json::to_string_pretty(data).unwrap_or_default());
 }

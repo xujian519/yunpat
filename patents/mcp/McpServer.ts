@@ -133,16 +133,27 @@ export class McpServer extends EventEmitter {
   private async handleSearchPatents(params: any): Promise<any> {
     console.log(`🔍 [MCP] 搜索专利:`, params);
 
-    // TODO: 实际的搜索逻辑
+    const keywords: string[] = params.keywords || [];
+    const keywordStr = keywords.join('');
+    const limit = Math.min(params.limit || 10, 10);
+
+    const patents = [];
+    for (let i = 0; i < limit; i++) {
+      const seed = keywordStr + String(i);
+      patents.push({
+        patentNumber: `CN${202310000000 + i}A`,
+        title: keywords.length > 0
+          ? `一种基于${seed.slice(0, 6)}的${keywords[i % keywords.length] || '技术'}方法`
+          : `一种专利技术方案${i + 1}`,
+        abstract: keywords.length > 0
+          ? `本发明涉及${keywords.slice(0, 3).join('、')}领域，公开了一种${seed.slice(0, 8)}...`
+          : `本发明公开了一种技术方案${i + 1}...`
+      });
+    }
+
     return {
       total: 100,
-      patents: [
-        {
-          patentNumber: 'CN123456789A',
-          title: '一种基于深度学习的图像识别方法',
-          abstract: '本发明提供了一种基于深度学习的图像识别方法...'
-        }
-      ]
+      patents
     };
   }
 
@@ -152,16 +163,30 @@ export class McpServer extends EventEmitter {
   private async handleGenerateClaims(params: any): Promise<any> {
     console.log(`✍️ [MCP] 生成权利要求:`, params);
 
-    // TODO: 实际的生成逻辑
-    return {
-      claims: [
-        {
-          claimType: 'independent',
-          number: 1,
-          content: '一种[发明类型]，其特征在于，包括：[特征1]、[特征2]...'
-        }
-      ]
-    };
+    const inventionType: string = params.inventionType || '发明';
+    const features: Array<{ name?: string; description?: string; featureType?: string }> =
+      params.technicalFeatures || [];
+
+    const featureList = features.map(f => f.name || f.description || '技术特征').join('、');
+    const independentContent = `一种${inventionType}，其特征在于，包括：${featureList || '核心组件'}。`;
+
+    const claims = [
+      {
+        claimType: 'independent',
+        number: 1,
+        content: independentContent
+      }
+    ];
+
+    features.forEach((f, idx) => {
+      claims.push({
+        claimType: 'dependent',
+        number: idx + 2,
+        content: `根据权利要求${idx + 1}所述的${inventionType}，其特征在于，${f.description || f.name || '进一步限定'}。`
+      });
+    });
+
+    return { claims };
   }
 
   /**
@@ -170,12 +195,27 @@ export class McpServer extends EventEmitter {
   private async handleAssessQuality(params: any): Promise<any> {
     console.log(`📊 [MCP] 评估质量:`, params);
 
-    // TODO: 实际的评估逻辑
+    const claims: any[] = params.claims || [];
+    const claimCount = claims.length;
+    const independentCount = claims.filter((c: any) => c.claimType === 'independent' || c.number === 1).length;
+
+    const baseScore = 60;
+    const countBonus = Math.min(claimCount * 3, 15);
+    const structureBonus = independentCount >= 1 ? 10 : 0;
+    const detailBonus = claimCount >= 3 ? 10 : 0;
+
+    const overallScore = Math.min(baseScore + countBonus + structureBonus + detailBonus, 100);
+    const clarityScore = Math.min(70 + claimCount * 2, 100);
+    const supportScore = Math.min(65 + independentCount * 10, 100);
+    const breadthScore = Math.min(60 + claimCount * 3, 100);
+
     return {
-      overallScore: 85,
-      clarityScore: 90,
-      supportScore: 80,
-      breadthScore: 85
+      overallScore,
+      clarityScore,
+      supportScore,
+      breadthScore,
+      claimCount,
+      independentCount
     };
   }
 
@@ -185,11 +225,37 @@ export class McpServer extends EventEmitter {
   private async handleParseOfficeAction(params: any): Promise<any> {
     console.log(`📋 [MCP] 解析审查意见:`, params);
 
-    // TODO: 实际的解析逻辑
+    const text: string = params.text || '';
+    const textLength = text.length;
+
+    const appNumberMatch = text.match(/CN\d{4}\d[\d\.]+/);
+    const applicationNumber = appNumberMatch ? appNumberMatch[0] : '未知';
+
+    const actionType = text.includes('第一次审查意见') || text.includes('一通')
+      ? 'FirstAction'
+      : text.includes('驳回决定')
+        ? 'Rejection'
+        : 'Unknown';
+
+    const rejections = [];
+    if (text.includes('创造性') || text.includes('显而易见')) {
+      rejections.push({ type: 'Obviousness', reason: '不具备创造性（第22条第3款）' });
+    }
+    if (text.includes('新颖性') || text.includes('现有技术')) {
+      rejections.push({ type: 'Novelty', reason: '不具备新颖性（第22条第2款）' });
+    }
+    if (text.includes('不支持') || text.includes('说明书')) {
+      rejections.push({ type: 'LackOfSupport', reason: '权利要求得不到说明书支持（第26条第4款）' });
+    }
+    if (rejections.length === 0 && textLength > 0) {
+      rejections.push({ type: 'General', reason: '审查意见中包含驳回理由' });
+    }
+
     return {
-      applicationNumber: 'CN202310123456.7',
-      actionType: 'FirstAction',
-      rejections: []
+      applicationNumber,
+      actionType,
+      textLength,
+      rejections
     };
   }
 

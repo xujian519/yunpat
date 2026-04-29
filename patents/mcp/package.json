@@ -1,0 +1,33 @@
+{
+  "name": "@yunpat/patent-mcp-server",
+  "version": "1.0.0",
+  "description": "YunPat Patent Tools MCP Server - 提供 YunPat 专利工具的 MCP 协议接口",
+  "type": "module",
+  "main": "patent-tools-server.ts",
+  "bin": {
+    "yunpat-patent-mcp": "patent-tools-server.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node patent-tools-server.ts"
+  },
+  "keywords": [
+    "yunpat",
+    "patent",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "author": "YunPat Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@yunpat/builtin-tools": "workspace:*",
+    "@yunpat/document-tools": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -17,7 +17,7 @@ permissions:
 
 env:
   NODE_VERSION: '20.x'
-  PNPM_VERSION: 8
+  PNPM_VERSION: 9
 
 jobs:
   # 创建 GitHub Release

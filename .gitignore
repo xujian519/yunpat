@@ -53,16 +53,11 @@ temp/
 # macOS
 .DS_Store
 
-# 知识卡片向量数据（二进制大文件）
-knowledge-base/cards/*.json
-knowledge-base/legal-system/
+# 知识库（个人学习资料，不提交）
+knowledge-base/
 
 # 工具使用数据
 data/tool-usage.json
-
-# 文档数据（排除知识库中的数据文件）
-knowledge-base/**/*.json
-!knowledge-base/**/.keep
 
 # 资产引入报告文档
 docs/资产引入/

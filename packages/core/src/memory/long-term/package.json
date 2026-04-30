@@ -1,0 +1,16 @@
+{
+  "name": "@yunpat/memory-poc",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx example.ts",
+    "verify": "tsx verify.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:up": "docker-compose up -d",
+    "db:down": "docker-compose down",
+    "db:logs": "docker-compose logs -f postgres",
+    "db:shell": "docker exec -it yunpat-postgres psql -U yunpat -d yunpat",
+    "db:init": "psql -U yunpat -h localhost -d yunpat -f init.sql"
+  }
+}

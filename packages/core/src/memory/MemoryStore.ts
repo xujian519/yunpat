@@ -120,15 +120,31 @@ export class MemoryManager {
   }
 
   /**
-   * 压缩记忆
+   * 压缩记忆（LRU 算法）
    *
-   * 当记忆过多时，压缩为摘要
+   * 当记忆过多时，删除最旧的记忆
+   *
+   * @param maxMemories 最大记忆数（默认 100）
+   * @returns 删除的记忆数量
    */
-  async compress(): Promise<void> {
-    // TODO: 实现记忆压缩逻辑
-    // 1. 识别重要记忆
-    // 2. 生成摘要
-    // 3. 清理旧记忆
+  async compress(maxMemories: number = 100): Promise<number> {
+    const currentSize = this.history.length;
+    if (currentSize <= maxMemories) {
+      return 0; // 无需压缩
+    }
+
+    // 删除最旧的记忆
+    const toDelete = currentSize - maxMemories;
+    const deleted = this.history.splice(0, toDelete);
+
+    // 从短期记忆中删除
+    for (const entry of deleted) {
+      this.shortTerm.delete(entry.key);
+    }
+
+    console.log(`[MemoryManager] 压缩记忆：删除 ${toDelete} 条，保留 ${maxMemories} 条`);
+
+    return toDelete;
   }
 
   /**

@@ -1,0 +1,46 @@
+# PostgreSQL + pgvector 开发环境
+#
+# 启动命令：
+#   docker-compose up -d
+#
+# 停止命令：
+#   docker-compose down
+#
+# 查看日志：
+#   docker-compose logs -f postgres
+
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: yunpat-postgres
+    environment:
+      POSTGRES_DB: yunpat
+      POSTGRES_USER: yunpat
+      POSTGRES_PASSWORD: yunpat123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yunpat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 可选：pgAdmin（数据库管理界面）
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: yunpat-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@yunpat.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+    driver: local

@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "@types/pg": "^8.20.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
     "esbuild": "^0.28.0",
@@ -27,6 +28,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "glob": "^13.0.6",
     "prettier": "^3.8.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.3"
   },
   "engines": {
@@ -42,5 +44,9 @@
     "typescript"
   ],
   "author": "Xu Jian <xujian519@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9"
+  }
 }

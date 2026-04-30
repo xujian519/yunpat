@@ -31,6 +31,17 @@ dist/
 build/
 *.tsbuildinfo
 
+# config 目录中的编译产物（保留源代码 .ts）
+config/*.js
+config/*.d.ts
+config/*.map
+
+# examples 目录中的编译产物（保留源代码 .ts）
+examples/dist/
+examples/*.js
+examples/*.d.ts
+examples/*.map
+
 # 依赖
 node_modules/
 

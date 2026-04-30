@@ -328,23 +328,25 @@ export class ReasoningCache<T = any> {
   ): CacheQueryResult<T> {
     let bestMatch: CacheEntry<T> | undefined;
     let bestSimilarity = 0;
+    let bestKey: string | undefined;
 
-    for (const entry of this.cache.values()) {
+    for (const [key, entry] of this.cache.entries()) {
       const similarity = this.calculateSimilarity(problem, entry.problem);
 
       if (similarity > bestSimilarity) {
         bestSimilarity = similarity;
         bestMatch = entry;
+        bestKey = key;
       }
     }
 
     // 检查是否达到阈值
-    if (bestMatch && bestSimilarity >= threshold) {
+    if (bestMatch && bestKey && bestSimilarity >= threshold) {
       this.stats.hits++;
       this.stats.tokensSaved += bestMatch.tokensUsed;
       this.stats.similarities.push(bestSimilarity);
 
-      // 更新访问信息
+      // 更新访问信息（直接修改缓存中的条目）
       bestMatch.lastAccessedAt = new Date();
       bestMatch.accessCount++;
 
@@ -500,11 +502,18 @@ export class ReasoningCache<T = any> {
    */
   private evictLRU(): void {
     let oldestKey: string | undefined;
-    let oldestTime = Date.now();
+    let oldestTime = Infinity;
+    let oldestAccessCount = Infinity;
 
     for (const [key, entry] of this.cache.entries()) {
-      if (entry.lastAccessedAt.getTime() < oldestTime) {
-        oldestTime = entry.lastAccessedAt.getTime();
+      const entryTime = entry.lastAccessedAt.getTime();
+      // 优先选择访问时间最旧的，如果时间相同则选择访问次数最少的
+      if (
+        entryTime < oldestTime ||
+        (entryTime === oldestTime && entry.accessCount < oldestAccessCount)
+      ) {
+        oldestTime = entryTime;
+        oldestAccessCount = entry.accessCount;
         oldestKey = key;
       }
     }

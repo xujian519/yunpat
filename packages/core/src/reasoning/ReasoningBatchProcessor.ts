@@ -178,14 +178,24 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
 
       // 控制并发数
       if (executing.length >= this.config.concurrency) {
+        // 等待最快的任务完成
         await Promise.race(executing);
-        // 移除已完成的
+        // 移除已完成的任务
         const settled = await Promise.allSettled(executing);
-        executing.length = 0;
+        for (let i = executing.length - 1; i >= 0; i--) {
+          const s = settled[i];
+          if (s.status === 'fulfilled' || s.status === 'rejected') {
+            // 这个任务已完成，从 executing 中移除并添加到 results
+            executing.splice(i, 1);
+            if (s.status === 'fulfilled') {
+              results.push(s.value);
+            }
+          }
+        }
       }
     }
 
-    // 等待所有任务完成
+    // 等待所有剩余任务完成
     const settled = await Promise.allSettled(executing);
 
     for (const s of settled) {

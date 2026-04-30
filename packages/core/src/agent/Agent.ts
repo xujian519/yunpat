@@ -8,6 +8,15 @@ import {
   LLMAdapter,
   AgentEvent,
 } from '../lifecycle/Lifecycle.js';
+import {
+  ReasoningCache,
+  createReasoningCache,
+  type ReasoningCacheStats,
+} from '../reasoning/ReasoningCache.js';
+import {
+  ReasoningMonitor,
+  reasoningMonitor as globalMonitor,
+} from '../reasoning/ReasoningMonitor.js';
 
 /**
  * 智能体配置
@@ -36,6 +45,24 @@ export interface AgentConfig {
 
   /** 执行超时时间（毫秒） */
   timeout?: number;
+
+  /** ========== 性能优化配置 ========== */
+
+  /** 是否启用推理缓存 */
+  enableReasoningCache?: boolean;
+
+  /** 缓存配置 */
+  cacheConfig?: {
+    maxEntries?: number;
+    similarityThreshold?: number;
+    ttl?: number;
+  };
+
+  /** 是否启用性能监控 */
+  enablePerformanceMonitoring?: boolean;
+
+  /** 推理策略选择 */
+  reasoningStrategy?: 'auto' | 'always-cache' | 'never-cache';
 }
 
 /**
@@ -77,6 +104,12 @@ export abstract class Agent<TInput = any, TOutput = any> {
   /** 是否已初始化 */
   private initialized = false;
 
+  /** 推理缓存（可选） */
+  protected reasoningCache?: ReasoningCache<any>;
+
+  /** 性能监控（可选） */
+  protected performanceMonitor?: ReasoningMonitor;
+
   constructor(config: AgentConfig) {
     this.name = config.name;
     this.description = config.description;
@@ -86,6 +119,24 @@ export abstract class Agent<TInput = any, TOutput = any> {
     this.llm = config.llm;
     this.maxIterations = config.maxIterations ?? 10;
     this.timeout = config.timeout ?? 300000; // 默认 5 分钟
+
+    // 初始化性能优化功能
+    this.initializePerformanceFeatures(config);
+  }
+
+  /**
+   * 初始化性能优化功能
+   */
+  private initializePerformanceFeatures(config: AgentConfig): void {
+    // 初始化推理缓存
+    if (config.enableReasoningCache) {
+      this.reasoningCache = createReasoningCache(config.cacheConfig);
+    }
+
+    // 初始化性能监控
+    if (config.enablePerformanceMonitoring) {
+      this.performanceMonitor = new ReasoningMonitor();
+    }
   }
 
   /**
@@ -338,5 +389,113 @@ export abstract class Agent<TInput = any, TOutput = any> {
    */
   reset(): void {
     this.initialized = false;
+  }
+
+  // ========== 性能优化辅助方法 ==========
+
+  /**
+   * 查询推理缓存
+   *
+   * @param cacheKey 缓存键（问题或任务描述）
+   * @param threshold 相似度阈值（可选）
+   * @returns 缓存查询结果
+   */
+  protected async queryCache<T = any>(
+    cacheKey: string,
+    threshold?: number
+  ): Promise<{ found: boolean; result?: T; similarity?: number }> {
+    if (!this.reasoningCache) {
+      return { found: false };
+    }
+
+    const result = await this.reasoningCache.query(cacheKey, threshold);
+    return {
+      found: result.found,
+      result: result.result,
+      similarity: result.similarity,
+    };
+  }
+
+  /**
+   * 存储到推理缓存
+   *
+   * @param cacheKey 缓存键
+   * @param result 结果
+   * @param tokensUsed Token 消耗
+   */
+  protected async storeToCache<T = any>(
+    cacheKey: string,
+    result: T,
+    tokensUsed: number
+  ): Promise<void> {
+    if (this.reasoningCache) {
+      await this.reasoningCache.store(cacheKey, result, tokensUsed);
+    }
+  }
+
+  /**
+   * 获取性能统计
+   *
+   * @returns 性能统计信息
+   */
+  getPerformanceStats(): {
+    cache?: ReasoningCacheStats;
+    monitor?: ReturnType<ReasoningMonitor['getMetrics']>;
+  } {
+    const stats: any = {};
+
+    if (this.reasoningCache) {
+      stats.cache = this.reasoningCache.getStats();
+    }
+
+    if (this.performanceMonitor) {
+      stats.monitor = this.performanceMonitor.getMetrics();
+    }
+
+    return stats;
+  }
+
+  /**
+   * 清空缓存
+   */
+  clearCache(): void {
+    if (this.reasoningCache) {
+      this.reasoningCache.clear();
+    }
+  }
+
+  /**
+   * 导出性能报告
+   *
+   * @returns 性能报告文本
+   */
+  exportPerformanceReport(): string {
+    let report = `=== ${this.name} 性能报告 ===\n\n`;
+
+    const stats = this.getPerformanceStats();
+
+    if (stats.cache) {
+      report += `## 缓存统计\n`;
+      report += `总条目数: ${stats.cache.totalEntries}\n`;
+      report += `命中次数: ${stats.cache.hits}\n`;
+      report += `未命中次数: ${stats.cache.misses}\n`;
+      report += `命中率: ${(stats.cache.hitRate * 100).toFixed(1)}%\n`;
+      report += `节省Token: ${stats.cache.tokensSaved}\n`;
+      report += `总Token: ${stats.cache.totalTokens}\n`;
+      report += `平均相似度: ${(stats.cache.avgSimilarity * 100).toFixed(1)}%\n\n`;
+    }
+
+    if (stats.monitor) {
+      report += `## 推理统计\n`;
+      report += `总推理次数: ${stats.monitor.totalInferences}\n`;
+      report += `总耗时: ${(stats.monitor.totalDuration / 1000).toFixed(2)}s\n`;
+      report += `平均耗时: ${stats.monitor.avgDuration.toFixed(2)}ms\n`;
+      report += `最小耗时: ${stats.monitor.minDuration}ms\n`;
+      report += `最大耗时: ${stats.monitor.maxDuration}ms\n`;
+      report += `P50/P95/P99: ${stats.monitor.p50Duration}ms / ${stats.monitor.p95Duration}ms / ${stats.monitor.p99Duration}ms\n`;
+      report += `Token消耗: ${stats.monitor.totalTokens}\n`;
+    }
+
+    return report;
   }
 }

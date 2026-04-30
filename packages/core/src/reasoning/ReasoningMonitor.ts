@@ -89,7 +89,7 @@ export class ReasoningMonitor {
       id,
       type,
       startTime: new Date(),
-      endTime: new Date(), // 临时值，将在完成时更新
+      endTime: undefined as any, // 临时值，将在完成时更新
       duration: 0,
       tokensUsed: 0,
       success: false,

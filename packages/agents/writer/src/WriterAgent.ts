@@ -2,11 +2,10 @@ import {
   Agent,
   AgentConfig,
   ExecutionContext,
-  PromptOptimizer,
   IncrementalGenerator,
   SemanticCache,
   createSimpleSignatureGenerator,
-  type TaskSignature,
+  type EnhancedTool,
   type CachedResponse,
 } from '@yunpat/core';
 import { z } from 'zod';
@@ -14,8 +13,24 @@ import { z } from 'zod';
 // Zod schema for outline validation
 const OutlineSchema = z.array(z.string());
 
-// 创建提示词优化器实例
-const promptOptimizer = new PromptOptimizer();
+/**
+ * 语义缓存配置常量
+ */
+const CACHE_CONFIG = {
+  SIMILARITY_THRESHOLD: 0.85,
+  MAX_CACHE_SIZE: 1000,
+  CACHE_EXPIRATION_MS: 7 * 24 * 60 * 60 * 1000, // 7 天
+} as const;
+
+/**
+ * 生成配置常量
+ */
+const GENERATION_CONFIG = {
+  DEFAULT_TEMPERATURE: 0.7,
+  MAX_OUTLINE_RETRIES: 2,
+  DEFAULT_DOCUMENT_LENGTH: 1000,
+  OPTIMIZE_DOCUMENT_LENGTH: 500,
+} as const;
 
 /**
  * 创建写作任务的签名生成器
@@ -78,6 +93,9 @@ export interface WritingPlan {
 
   /** 历史版本内容（增量模式） */
   previousContent?: string;
+
+  /** 选定的工具（增强功能） */
+  selectedTool?: string;
 }
 
 /**
@@ -104,373 +122,253 @@ export interface WritingResult {
     tone: string;
     revision: number;
   };
+
+  /** 工具使用统计（增强功能） */
+  toolUsageStats?: {
+    totalSelections: number;
+    successfulExecutions: number;
+    failedExecutions: number;
+  };
 }
 
 /**
- * 技术写作助手智能体
+ * WriterAgent 配置
+ */
+export interface WriterAgentConfig {
+  /** 基础配置 */
+  eventBus: AgentConfig['eventBus'];
+  memory: AgentConfig['memory'];
+  tools: AgentConfig['tools'];
+  llm: AgentConfig['llm'];
+  maxIterations?: number;
+  timeout?: number;
+
+  /** 是否启用工具能力（默认 false） */
+  enableTools?: boolean;
+
+  /** 可选的增强工具列表 */
+  enhancedTools?: EnhancedTool[];
+}
+
+/**
+ * 技术写作助手智能体（统一版）
  *
- * 专门用于技术文档的生成和优化
+ * 基础功能：
+ * - 文档生成、格式转换、内容优化
+ * - 语义缓存（复用相似任务结果）
+ * - 增量生成（基于历史版本只修改变更部分）
+ *
+ * 增强功能（可选）：
+ * - 智能工具选择
+ * - 工具使用统计
  */
 export class WriterAgent extends Agent<WritingTask, WritingResult> {
   /** 语义缓存实例 */
   private semanticCache: SemanticCache<WritingTask, WritingResult>;
+
   /** 缓存的响应（用于在 act 阶段返回） */
   private cachedResult: WritingResult | null = null;
+
+
   /** 当前任务（用于缓存存储） */
   private currentTask: WritingTask | null = null;
 
-  constructor(config: Omit<AgentConfig, 'name' | 'description'>) {
+  /** 是否启用工具能力 */
+  private enableTools: boolean;
+
+  /** 可用工具列表 */
+  private availableTools: EnhancedTool[] = [];
+
+  /** 工具使用统计 */
+  private toolUsageStats = {
+    totalSelections: 0,
+    successfulExecutions: 0,
+    failedExecutions: 0,
+  };
+
+  constructor(config: WriterAgentConfig) {
     super({
-      ...config,
       name: 'writer',
-      description: '技术写作助手 - 文档生成、格式转换、内容优化',
+      description: config.enableTools
+        ? '技术写作助手（增强版）- 文档生成、格式转换、内容优化、智能工具调用'
+        : '技术写作助手 - 文档生成、格式转换、内容优化',
+      eventBus: config.eventBus,
+      memory: config.memory,
+      tools: config.tools,
+      llm: config.llm,
+      maxIterations: config.maxIterations,
+      timeout: config.timeout,
     });
 
-    // 初始化语义缓存
+    this.enableTools = config.enableTools ?? false;
+    if (config.enhancedTools) {
+      this.availableTools = config.enhancedTools;
+    }
+
+    if (this.enableTools) {
+      console.log('🚀 写作助手已启用工具增强功能');
+    }
+
     this.semanticCache = new SemanticCache({
-      similarityThreshold: 0.85,
-      maxCacheSize: 1000,
-      cacheExpiration: 7 * 24 * 60 * 60 * 1000, // 7 天
+      similarityThreshold: CACHE_CONFIG.SIMILARITY_THRESHOLD,
+      maxCacheSize: CACHE_CONFIG.MAX_CACHE_SIZE,
+      cacheExpiration: CACHE_CONFIG.CACHE_EXPIRATION_MS,
       generateSignature: createWritingTaskSignature,
     });
+  }
+
+  /**
+   * 清理资源
+   */
+  private cleanup() {
+    this.cachedResult = null;
+    this.currentTask = null;
+  }
+
+  /**
+   * 注册可用工具（增强功能）
+   */
+  registerTools(tools: EnhancedTool[]) {
+    this.availableTools = tools;
+    this.enableTools = true;
+    console.log(`🔧 已注册 ${tools.length} 个工具`);
+    tools.forEach(tool => {
+      console.log(`   - ${tool.metadata.name}: ${tool.metadata.description}`);
+    });
+  }
+
+  /**
+   * 获取工具使用统计（增强功能）
+   */
+  getToolUsageStats() {
+    return {
+      ...this.toolUsageStats,
+      successRate:
+        this.toolUsageStats.totalSelections > 0
+          ? this.toolUsageStats.successfulExecutions / this.toolUsageStats.totalSelections
+          : 0,
+    };
+  }
+
+  /**
+   * 重置工具使用统计（增强功能）
+   */
+  resetToolUsageStats() {
+    this.toolUsageStats = {
+      totalSelections: 0,
+      successfulExecutions: 0,
+      failedExecutions: 0,
+    };
   }
 
   /**
    * 规划阶段 - 生成写作大纲和结构
    */
   protected async plan(task: WritingTask, context: ExecutionContext): Promise<WritingPlan> {
-    // 保存当前任务（用于后续缓存存储）
     this.currentTask = task;
 
-    // ========== 语义缓存检查 ==========
-    console.log('[语义缓存] 查找相似任务...');
-    const cachedResponse = await this.semanticCache.findSimilar(task);
+    try {
+      // 语义缓存检查
+      console.log('[语义缓存] 查找相似任务...');
+      const cachedData = await this.semanticCache.findSimilar(task);
 
-    if (cachedResponse) {
-      console.log(`[语义缓存] ✅ 命中！相似度 ${(cachedResponse.signature.embedding[0] * 100).toFixed(1)}%`);
-      console.log(`[语义缓存] 跳过生成，直接返回缓存结果`);
+      if (cachedData) {
+        // 修复：正确获取相似度（假设 findSimilar 返回相似度）
+        const similarity = this.extractSimilarity(cachedData);
+        console.log(`[语义缓存] ✅ 命中！相似度 ${(similarity * 100).toFixed(1)}%`);
+        console.log(`[语义缓存] 跳过生成，直接返回缓存结果`);
 
-      // 保存缓存结果
-      this.cachedResult = cachedResponse.response;
+        this.cachedResult = cachedData.response;
 
-      // 从缓存的响应中提取计划
-      const cachedPlan: WritingPlan = {
-        outline: [], // 将从缓存内容中提取
+        const cachedPlan: WritingPlan = {
+          outline: this.extractOutlineFromContent(cachedData.response.document.content),
+          structure: {
+            title: cachedData.response.document.title,
+            sections: this.extractSectionsFromContent(cachedData.response.document.content),
+          },
+          tone: this.validateAndCastTone(cachedData.response.metadata.tone),
+          targetLength: cachedData.response.stats.wordCount,
+          incremental: false,
+        };
+
+        return cachedPlan;
+      }
+
+      console.log('[语义缓存] ❌ 未命中，继续生成...');
+
+      // 增强功能：工具选择
+      let selectedTool: string | undefined;
+
+      if (this.enableTools && this.availableTools.length > 0) {
+        console.log('\n🧠 [增强模式] 选择合适的工具...');
+        selectedTool = await this.selectToolForTask(task, context);
+        if (selectedTool) {
+          console.log(`✅ 选择的工具: ${selectedTool}`);
+          this.toolUsageStats.totalSelections++;
+        }
+      }
+
+      // 增量生成检查
+      const incrementalPlan = await this.tryIncrementalGeneration(task, context);
+      if (incrementalPlan) {
+        return { ...incrementalPlan, selectedTool };
+      }
+
+      // 完整生成模式
+      const outline = await this.generateOutline(task, context);
+      const tone = this.determineTone(task);
+      const targetLength = this.estimateLength(task);
+
+      return {
+        outline,
         structure: {
-          title: cachedResponse.response.document.title,
-          sections: [], // 将从缓存内容中提取
+          title: task.topic,
+          sections: outline.map((heading, index) => ({
+            heading,
+            content: '',
+            order: index,
+          })),
         },
-        tone: cachedResponse.response.metadata.tone as WritingPlan['tone'],
-        targetLength: cachedResponse.response.stats.wordCount,
+        tone,
+        targetLength,
         incremental: false,
+        selectedTool,
       };
-
-      // 提取大纲
-      cachedPlan.outline = this.extractOutlineFromContent(cachedResponse.response.document.content);
-
-      // 构建结构
-      cachedPlan.structure.sections = cachedPlan.outline.map((heading, index) => ({
-        heading,
-        content: '', // 内容将在 act 阶段从缓存获取
-        order: index,
-      }));
-
-      return cachedPlan;
+    } catch (error) {
+      // 清理资源
+      this.cleanup();
+      throw error;
     }
-
-    console.log('[语义缓存] ❌ 未命中，继续生成...');
-
-    // 检查是否有历史版本（增量生成优化）
-    const taskKey = `writer:${task.type}:${task.topic}`;
-    const previousContent = await context.memory.get(taskKey);
-    const incrementalGenerator = new IncrementalGenerator(context.llm);
-
-    let outline: string[] | null = null;
-    let lastError: Error | null = null;
-    const maxRetries = 2; // 最多重试 2 次
-
-    // 如果有历史版本，尝试增量生成
-    if (previousContent && task.type !== 'generate') {
-      console.log('[增量生成] 检测到历史版本，分析差异...');
-
-      try {
-        // 分析差异
-        const diff = await incrementalGenerator.diff(
-          previousContent,
-          `任务类型: ${task.type}\n主题: ${task.topic}\n要求: ${task.requirements?.join(', ') || '无'}`
-        );
-
-        console.log(`[增量生成] 差异分析完成: ${diff.summary}`);
-        console.log(`[增量生成] 预估节省: ${Math.round(diff.estimatedSavings * 100)}%`);
-
-        // 如果有实质性差异，使用增量模式
-        if (diff.changes.length > 0 && diff.estimatedSavings > 0.2) {
-          // 确定语气
-          const tone = this.determineTone(task);
-
-          // 估算长度
-          const targetLength = this.estimateLength(task);
-
-          // 从历史内容中提取大纲（简化版）
-          const outline = this.extractOutlineFromContent(previousContent);
-
-          return {
-            outline,
-            structure: {
-              title: task.topic,
-              sections: outline.map((heading, index) => ({
-                heading,
-                content: '',
-                order: index,
-              })),
-            },
-            tone,
-            targetLength,
-            incremental: true,
-            previousContent,
-          };
-        }
-      } catch (error) {
-        console.warn('[增量生成] 差异分析失败，回退到完整生成:', error);
-        // 继续使用完整生成
-      }
-    }
-
-    // 完整生成模式
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const outlinePrompt = this.buildOutlinePrompt(task);
-
-        // 如果是重试，添加更严格的格式提示
-        const finalPrompt =
-          attempt > 0
-            ? outlinePrompt +
-              `\n\n**重要：这是第 ${attempt + 1} 次尝试，请确保严格遵循 JSON 格式！**`
-            : outlinePrompt;
-
-        const outlineResponse = await context.llm.chat({
-          messages: [
-            {
-              role: 'system',
-              content: '你是一个技术写作专家，擅长创建清晰、结构化的文档大纲。',
-            },
-            {
-              role: 'user',
-              content: finalPrompt,
-            },
-          ],
-          temperature: 0.7,
-        });
-
-        // 尝试解析大纲
-        outline = this.parseOutline(outlineResponse.message.content);
-
-        // 如果成功，跳出循环
-        break;
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-
-        if (attempt < maxRetries) {
-          // 继续重试
-          console.warn(`大纲解析失败，正在重试 (${attempt + 1}/${maxRetries})...`, lastError.message);
-        } else {
-          // 最后一次尝试也失败了
-          console.error('大纲解析失败，已达到最大重试次数', lastError);
-          throw lastError;
-        }
-      }
-    }
-
-    // 如果所有重试都失败，抛出异常
-    if (!outline) {
-      throw new Error(
-        `无法生成大纲: ${lastError?.message || '未知错误'}`
-      );
-    }
-
-    // 确定语气
-    const tone = this.determineTone(task);
-
-    // 估算长度
-    const targetLength = this.estimateLength(task);
-
-    return {
-      outline,
-      structure: {
-        title: task.topic,
-        sections: outline.map((heading, index) => ({
-          heading,
-          content: '',
-          order: index,
-        })),
-      },
-      tone,
-      targetLength,
-      incremental: false,
-    };
   }
 
   /**
-   * 执行阶段 - 根据计划生成文档（支持增量生成）
+   * 执行阶段 - 根据计划生成文档
    */
   protected async act(plan: WritingPlan, context: ExecutionContext): Promise<WritingResult> {
-    // ========== 语义缓存检查 ==========
-    // 如果 plan 阶段命中了缓存，直接返回缓存结果
-    if (this.cachedResult) {
-      console.log('[语义缓存] 返回缓存结果，跳过生成');
-      const result = this.cachedResult;
-      this.cachedResult = null; // 清空缓存引用
-      return result;
-    }
-
-    // 增量模式：基于历史内容更新
-    if (plan.incremental && plan.previousContent) {
-      console.log('[增量生成] 使用增量模式生成内容（并行）...');
-
-      // 根据任务类型应用不同的增量策略（并行执行）
-      const sectionUpdatePromises = plan.structure.sections.map(async (section) => {
-        if (!section.content) {
-          // 生成新章节或更新现有章节
-          const sectionPrompt = this.buildSectionPrompt(section.heading, plan, context);
-
-          const response = await context.llm.chat({
-            messages: [
-              {
-                role: 'system',
-                content: `你是一个技术写作专家。语气：${plan.tone}。`,
-              },
-              {
-                role: 'user',
-                content: sectionPrompt,
-              },
-            ],
-            temperature: 0.7,
-          });
-
-          return {
-            section,
-            content: response.message.content,
-          };
-        }
-        return { section, content: section.content };
-      });
-
-      // 等待所有章节更新完成（并行执行）
-      const sectionUpdates = await Promise.all(sectionUpdatePromises);
-
-      // 更新章节内容
-      sectionUpdates.forEach(({ section, content }) => {
-        if (content) {
-          section.content = content;
-        }
-      });
-
-      // 组装内容
-      let fullContent = '';
-      let totalWords = 0;
-
-      for (const section of plan.structure.sections) {
-        fullContent += `## ${section.heading}\n\n${section.content}\n\n`;
-        totalWords += section.content.split(/\s+/).length;
+    try {
+      // 语义缓存检查
+      if (this.cachedResult) {
+        console.log('[语义缓存] 返回缓存结果，跳过生成');
+        const result = this.cachedResult;
+        this.cleanup();
+        return result;
       }
 
-      // 格式化输出
-      const formattedContent = this.formatContent(fullContent, plan);
-
-      const result = {
-        document: {
-          title: plan.structure.title,
-          content: formattedContent,
-          format: 'markdown',
-        },
-        stats: {
-          wordCount: totalWords,
-          paragraphCount: plan.structure.sections.length,
-          sectionCount: plan.structure.sections.length,
-        },
-        metadata: {
-          generatedAt: new Date(),
-          tone: plan.tone,
-          revision: 2, // 增量生成的版本号
-        },
-      };
-
-      // 存储到语义缓存
-      if (this.currentTask) {
-        await this.semanticCache.store(this.currentTask, result);
-        console.log('[语义缓存] ✅ 已存储增量生成结果');
+      // 增强功能：使用选定工具
+      if (plan.selectedTool && this.enableTools) {
+        const result = await this.generateWithTool(plan, context);
+        if (result) {
+          return result;
+        }
       }
 
-      return result;
+      // 基础功能：内容生成
+      console.log('📝 使用标准写作流程...');
+      return await this.generateContent(plan, context);
+    } finally {
+      // 确保清理资源
+      this.cleanup();
     }
-
-    // 完整生成模式（原始逻辑）
-    // 并发生成所有章节内容
-    const sectionPromises = plan.structure.sections.map(async (section) => {
-      const sectionPrompt = this.buildSectionPrompt(section.heading, plan, context);
-
-      const response = await context.llm.chat({
-        messages: [
-          {
-            role: 'system',
-            content: `你是一个技术写作专家。语气：${plan.tone}。`,
-          },
-          {
-            role: 'user',
-            content: sectionPrompt,
-          },
-        ],
-        temperature: 0.7,
-      });
-
-      return {
-        section,
-        content: response.message.content,
-        wordCount: response.message.content.split(/\s+/).length,
-      };
-    });
-
-    // 等待所有章节完成（并行执行）
-    const results = await Promise.all(sectionPromises);
-
-    // 按原始顺序组装内容
-    let fullContent = '';
-    let totalWords = 0;
-
-    results.forEach(({ section, content, wordCount }) => {
-      section.content = content;
-      fullContent += `## ${section.heading}\n\n${content}\n\n`;
-      totalWords += wordCount;
-    });
-
-    // 格式化输出
-    const formattedContent = this.formatContent(fullContent, plan);
-
-    const result = {
-      document: {
-        title: plan.structure.title,
-        content: formattedContent,
-        format: 'markdown',
-      },
-      stats: {
-        wordCount: totalWords,
-        paragraphCount: plan.structure.sections.length,
-        sectionCount: plan.structure.sections.length,
-      },
-      metadata: {
-        generatedAt: new Date(),
-        tone: plan.tone,
-        revision: 1,
-      },
-    };
-
-    // 存储到语义缓存
-    if (this.currentTask) {
-      await this.semanticCache.store(this.currentTask, result);
-      console.log('[语义缓存] ✅ 已存储完整生成结果');
-    }
-
-    return result;
   }
 
   /**
@@ -478,23 +376,31 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
    */
   protected async reflect(
     result: WritingResult,
-    _context: ExecutionContext
+    context: ExecutionContext
   ): Promise<{ shouldContinue: boolean; feedback?: string }> {
-    // 输出缓存统计
+    // 增强功能：工具使用统计
+    if (this.enableTools) {
+      console.log('\n🔍 [增强模式] 工具使用统计:');
+      console.log(`  总选择次数: ${this.toolUsageStats.totalSelections}`);
+      console.log(`  成功执行次数: ${this.toolUsageStats.successfulExecutions}`);
+      console.log(`  失败执行次数: ${this.toolUsageStats.failedExecutions}`);
+
+      if (result.toolUsageStats) {
+        result.toolUsageStats = { ...this.toolUsageStats };
+      }
+    }
+
+    // 基础功能：质量检查
     const cacheStats = this.semanticCache.getStats();
     console.log('[语义缓存] 统计信息:');
     console.log(`  - 命中率: ${cacheStats.hitRate}%`);
     console.log(`  - 总请求数: ${cacheStats.totalRequests}`);
-    console.log(`  - 缓存命中: ${cacheStats.cacheHits}`);
-    console.log(`  - 缓存未命中: ${cacheStats.cacheMisses}`);
-    console.log(`  - 当前缓存大小: ${cacheStats.size}`);
-    console.log(`  - 平均相似度: ${cacheStats.averageSimilarity}`);
+    console.log(`  - 缓存大小: ${cacheStats.size}`);
 
-    // 检查是否满足要求
     const qualityChecks = [
-      result.stats.wordCount > 100, // 至少 100 词
-      result.stats.sectionCount > 1, // 至少 2 个章节
-      result.document.content.includes('#'), // 包含标题
+      result.stats.wordCount > 100,
+      result.stats.sectionCount > 1,
+      result.document.content.includes('#'),
     ];
 
     const passed = qualityChecks.every((check) => check);
@@ -513,76 +419,326 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
   }
 
   /**
-   * 构建大纲生成提示（使用 PromptOptimizer 优化）
+   * 选择合适的工具
    */
-  private buildOutlinePrompt(task: WritingTask): string {
-    // 使用 PromptOptimizer 优化提示词
-    const optimized = promptOptimizer.optimize(
-      {
-        task: '创建技术文档大纲',
-        topic: task.topic,
-        format: 'JSON 数组',
-        requirements: task.requirements || [],
-        constraints: [
-          '必须是有效的 JSON 数组格式',
-          '每个元素都是字符串类型的章节标题',
-          '可以使用 markdown 代码块包裹（可选）',
-          '也可以直接返回 JSON 数组（不使用代码块）',
-          '只返回 JSON 数组，不要包含其他说明文字',
-        ],
-      },
-      // 添加少样本示例
-      [
-        {
-          input: 'AI 智能体框架',
-          output: '["引言", "架构设计", "核心组件", "应用场景", "总结"]',
-        },
-      ]
-    );
+  private async selectToolForTask(
+    task: WritingTask,
+    _context: ExecutionContext
+  ): Promise<string | undefined> {
+    // 简单的工具选择逻辑：根据任务类型选择
+    for (const tool of this.availableTools) {
+      const category = tool.metadata.category || '';
 
-    // 添加参考资料（如果有）
-    let finalPrompt = optimized;
-    if (task.references && task.references.length > 0) {
-      finalPrompt += `\n\n参考资料:\n${task.references.map((r) => `- ${r}`).join('\n')}`;
+      // 任务类型与工具类别匹配
+      if (
+        (task.type === 'convert' && category.includes('convert')) ||
+        (task.type === 'format' && category.includes('format')) ||
+        (task.type === 'optimize' && category.includes('optimize'))
+      ) {
+        return tool.metadata.name;
+      }
     }
 
-    return finalPrompt;
+    // 如果没有匹配的工具，返回 undefined
+    return undefined;
   }
 
   /**
-   * 解析大纲 - 使用 zod 验证，支持多种 JSON 格式
-   * @throws {Error} 当无法提取或验证 JSON 时抛出异常
+   * 使用工具生成内容
+   */
+  private async generateWithTool(
+    plan: WritingPlan,
+    _context: ExecutionContext
+  ): Promise<WritingResult | undefined> {
+    if (!plan.selectedTool) {
+      return undefined;
+    }
+
+    const tool = this.availableTools.find((t) => t.metadata.name === plan.selectedTool);
+    if (!tool) {
+      console.warn(`工具 ${plan.selectedTool} 未找到`);
+      return undefined;
+    }
+
+    console.log(`🔧 执行工具: ${plan.selectedTool}`);
+
+    try {
+      const startTime = Date.now();
+      // EnhancedTool.execute 需要两个参数：input 和 context
+      const toolResult = await tool.execute(
+        {
+          action: 'generate',
+          plan: plan,
+          timestamp: Date.now()
+        } as any,
+        {} as any // ToolContext - 使用空对象作为上下文
+      );
+
+      this.toolUsageStats.successfulExecutions++;
+      console.log(`✅ 工具执行成功，耗时: ${Date.now() - startTime}ms`);
+
+      // 如果工具返回了内容，使用它；否则继续标准流程
+      if (toolResult && typeof toolResult === 'object' && 'content' in toolResult) {
+        return {
+          document: {
+            title: plan.structure.title,
+            content: toolResult.content as string,
+            format: 'markdown',
+          },
+          stats: {
+            wordCount: (toolResult.content as string).split(/\s+/).length,
+            paragraphCount: plan.structure.sections.length,
+            sectionCount: plan.structure.sections.length,
+          },
+          metadata: {
+            generatedAt: new Date(),
+            tone: plan.tone,
+            revision: 1,
+          },
+          toolUsageStats: { ...this.toolUsageStats },
+        };
+      }
+
+      return undefined;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.toolUsageStats.failedExecutions++;
+      console.error(`❌ 工具执行失败: ${errorMsg}`);
+      return undefined;
+    }
+  }
+
+  /**
+   * 尝试增量生成
+   */
+  private async tryIncrementalGeneration(
+    task: WritingTask,
+    _context: ExecutionContext
+  ): Promise<WritingPlan | null> {
+    if (task.type === 'generate') {
+      return null;
+    }
+
+    const taskKey = `writer:${task.type}:${task.topic}`;
+    const previousContent = await _context.memory.get(taskKey);
+
+    if (!previousContent) {
+      return null;
+    }
+
+    console.log('[增量生成] 检测到历史版本，分析差异...');
+
+    try {
+      const incrementalGenerator = new IncrementalGenerator(_context.llm);
+      const diff = await incrementalGenerator.diff(
+        previousContent as string,
+        `任务类型: ${task.type}\n主题: ${task.topic}`
+      );
+
+      console.log(`[增量生成] 差异分析完成`);
+
+      if (diff.changes && diff.changes.length > 0) {
+        const outline = this.extractOutlineFromContent(previousContent as string);
+        const tone = this.determineTone(task);
+        const targetLength = this.estimateLength(task);
+
+        return {
+          outline,
+          structure: {
+            title: task.topic,
+            sections: outline.map((heading, index) => ({
+              heading,
+              content: '',
+              order: index,
+            })),
+          },
+          tone,
+          targetLength,
+          incremental: true,
+          previousContent: previousContent as string,
+        };
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`[增量生成] 差异分析失败: ${errorMsg}，回退到完整生成`);
+    }
+
+    return null;
+  }
+
+  /**
+   * 生成内容
+   */
+  private async generateContent(plan: WritingPlan, context: ExecutionContext): Promise<WritingResult> {
+    const sectionPromises = plan.structure.sections.map(async (section) => {
+      const sectionPrompt = this.buildSectionPrompt(section.heading, plan);
+
+      const response = await context.llm.chat({
+        messages: [
+          {
+            role: 'system',
+            content: `你是一个技术写作专家。语气：${plan.tone}。`,
+          },
+          {
+            role: 'user',
+            content: sectionPrompt,
+          },
+        ],
+        temperature: GENERATION_CONFIG.DEFAULT_TEMPERATURE,
+      });
+
+      return {
+        section,
+        content: response.message.content,
+        wordCount: response.message.content.split(/\s+/).length,
+      };
+    });
+
+    const results = await Promise.all(sectionPromises);
+
+    let fullContent = '';
+    let totalWords = 0;
+
+    results.forEach(({ section, content, wordCount }) => {
+      section.content = content;
+      fullContent += `## ${section.heading}\n\n${content}\n\n`;
+      totalWords += wordCount;
+    });
+
+    const formattedContent = this.formatContent(fullContent, plan);
+
+    const result: WritingResult = {
+      document: {
+        title: plan.structure.title,
+        content: formattedContent,
+        format: 'markdown',
+      },
+      stats: {
+        wordCount: totalWords,
+        paragraphCount: plan.structure.sections.length,
+        sectionCount: plan.structure.sections.length,
+      },
+      metadata: {
+        generatedAt: new Date(),
+        tone: plan.tone,
+        revision: plan.incremental ? 2 : 1,
+      },
+    };
+
+    if (this.enableTools) {
+      result.toolUsageStats = { ...this.toolUsageStats };
+    }
+
+    // 存储到语义缓存
+    if (this.currentTask) {
+      await this.semanticCache.store(this.currentTask, result);
+      console.log('[语义缓存] ✅ 已存储生成结果');
+    }
+
+    return result;
+  }
+
+  /**
+   * 生成大纲
+   */
+  private async generateOutline(task: WritingTask, context: ExecutionContext): Promise<string[]> {
+    for (let attempt = 0; attempt <= GENERATION_CONFIG.MAX_OUTLINE_RETRIES; attempt++) {
+      try {
+        const outlinePrompt = this.buildOutlinePrompt(task);
+
+        const finalPrompt =
+          attempt > 0
+            ? outlinePrompt +
+              `\n\n**重要：这是第 ${attempt + 1} 次尝试，请确保严格遵循 JSON 格式！**`
+            : outlinePrompt;
+
+        const outlineResponse = await context.llm.chat({
+          messages: [
+            {
+              role: 'system',
+              content: '你是一个技术写作专家，擅长创建清晰、结构化的文档大纲。',
+            },
+            {
+              role: 'user',
+              content: finalPrompt,
+            },
+          ],
+          temperature: GENERATION_CONFIG.DEFAULT_TEMPERATURE,
+        });
+
+        return this.parseOutline(outlineResponse.message.content);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+
+        if (attempt < GENERATION_CONFIG.MAX_OUTLINE_RETRIES) {
+          console.warn(`大纲解析失败，正在重试 (${attempt + 1}/${GENERATION_CONFIG.MAX_OUTLINE_RETRIES}): ${errorMsg}`);
+          continue;
+        }
+
+        throw new Error(`无法生成大纲: ${errorMsg}`);
+      }
+    }
+
+    throw new Error('无法生成大纲');
+  }
+
+  /**
+   * 构建大纲生成提示
+   */
+  private buildOutlinePrompt(task: WritingTask): string {
+    let prompt = `请为以下主题创建一个结构化的技术文档大纲：
+
+主题：${task.topic}
+任务类型：${task.type}
+
+要求：
+- 返回 JSON 数组格式
+- 每个元素都是字符串类型的章节标题
+- 包含 5-8 个主要章节
+- 章节按逻辑顺序排列
+
+示例格式：
+["引言", "架构设计", "核心组件", "应用场景", "总结"]
+
+请直接返回 JSON 数组，不要包含其他说明文字。`;
+
+    if (task.requirements && task.requirements.length > 0) {
+      prompt += `\n\n特殊要求：\n${task.requirements.map((r) => `- ${r}`).join('\n')}`;
+    }
+
+    if (task.references && task.references.length > 0) {
+      prompt += `\n\n参考资料：\n${task.references.map((r) => `- ${r}`).join('\n')}`;
+    }
+
+    return prompt;
+  }
+
+  /**
+   * 解析大纲
    */
   private parseOutline(content: string): string[] {
-    // 尝试多种方式提取 JSON
     let jsonMatch: RegExpMatchArray | null = null;
 
-    // 方式1: 尝试提取 markdown 代码块中的 JSON (```json ... ``` 或 ``` ... ```)
+    // 尝试提取 markdown 代码块中的 JSON
     jsonMatch = content.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
 
-    // 方式2: 如果没找到代码块，尝试直接提取 JSON 数组
+    // 如果没找到代码块，尝试直接提取 JSON 数组
     if (!jsonMatch) {
       jsonMatch = content.match(/\[[\s\S]*\]/);
     }
 
-    // 如果都没找到，抛出异常
     if (!jsonMatch) {
       throw new Error('无法从 LLM 响应中提取大纲 JSON');
     }
 
     try {
-      // 解析 JSON
       const parsed = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-
-      // 使用 zod schema 验证
-      const validatedOutline = OutlineSchema.parse(parsed);
-
-      return validatedOutline;
+      return OutlineSchema.parse(parsed);
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`大纲解析失败: ${error.message}`);
       }
-      throw new Error(`大纲解析失败: 未知错误`);
+      throw new Error('大纲解析失败: 未知错误');
     }
   }
 
@@ -590,7 +746,6 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
    * 确定语气
    */
   private determineTone(task: WritingTask): WritingPlan['tone'] {
-    // 根据主题和要求确定语气
     if (task.requirements?.includes('学术')) {
       return 'academic';
     }
@@ -600,65 +755,57 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
     if (task.requirements?.includes('轻松')) {
       return 'casual';
     }
-    return 'technical'; // 默认技术语气
+    return 'technical';
   }
 
   /**
    * 估算长度
    */
   private estimateLength(task: WritingTask): number {
-    // 根据类型估算
     switch (task.type) {
       case 'generate':
-        return 1000;
+        return GENERATION_CONFIG.DEFAULT_DOCUMENT_LENGTH;
       case 'optimize':
-        return 500;
+        return GENERATION_CONFIG.OPTIMIZE_DOCUMENT_LENGTH;
       case 'convert':
-        return 0; // 转换不改变长度
       case 'format':
-        return 0; // 格式化不改变长度
+        return 0;
       default:
-        return 500;
+        return GENERATION_CONFIG.OPTIMIZE_DOCUMENT_LENGTH;
     }
   }
 
   /**
-   * 构建章节生成提示（使用 PromptOptimizer 优化）
+   * 构建章节生成提示
    */
-  private buildSectionPrompt(
-    heading: string,
-    plan: WritingPlan,
-    _context: ExecutionContext
-  ): string {
-    // 使用 PromptOptimizer 优化提示词
-    const optimized = promptOptimizer.optimize({
-      task: `撰写文档章节内容`,
-      topic: `文档"${plan.structure.title}"的章节"${heading}"`,
-      format: 'Markdown',
-      requirements: [
-        `语气：${plan.tone}`,
-        `目标长度：约${Math.round(plan.targetLength / plan.structure.sections.length)}词`,
-        '内容详细、准确',
-      ],
-    });
+  private buildSectionPrompt(heading: string, plan: WritingPlan): string {
+    const targetLength = Math.round(plan.targetLength / plan.structure.sections.length);
 
-    return optimized;
+    return `请为文档"${plan.structure.title}"撰写以下章节：
+
+章节标题：${heading}
+语气：${plan.tone}
+目标长度：约${targetLength}词
+
+要求：
+- 内容详细、准确
+- 符合技术文档规范
+- 使用 Markdown 格式
+
+请直接输出章节内容，不要包含章节标题。`;
   }
 
   /**
    * 格式化内容
    */
   private formatContent(content: string, plan: WritingPlan): string {
-    let formatted = `# ${plan.structure.title}\n\n`;
-    formatted += content;
-    return formatted;
+    return `# ${plan.structure.title}\n\n${content}`;
   }
 
   /**
-   * 从内容中提取大纲（用于增量生成）
+   * 从内容中提取大纲
    */
   private extractOutlineFromContent(content: string): string[] {
-    // 使用正则表达式提取所有二级标题
     const headingRegex = /^##\s+(.+)$/gm;
     const matches = content.match(headingRegex);
 
@@ -666,7 +813,83 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
       return matches.map((match) => match.replace(/^##\s+/, ''));
     }
 
-    // 如果没有找到标题，返回默认大纲
     return ['引言', '主要内容', '总结'];
   }
+
+  /**
+   * 从内容中提取章节结构
+   */
+  private extractSectionsFromContent(content: string): Array<{
+    heading: string;
+    content: string;
+    order: number;
+  }> {
+    const headingRegex = /^##\s+(.+)$/gm;
+    const matches = content.match(headingRegex);
+
+    if (matches) {
+      return matches.map((match, index) => ({
+        heading: match.replace(/^##\s+/, ''),
+        content: '',
+        order: index,
+      }));
+    }
+
+    return [
+      { heading: '引言', content: '', order: 0 },
+      { heading: '主要内容', content: '', order: 1 },
+      { heading: '总结', content: '', order: 2 },
+    ];
+  }
+
+  /**
+   * 提取相似度分数
+   */
+  private extractSimilarity(cachedData: CachedResponse<WritingTask, WritingResult>): number {
+    // 尝试从签名中获取相似度
+    if (cachedData.signature && 'similarity' in cachedData.signature) {
+      return (cachedData.signature as any).similarity as number;
+    }
+
+    // 如果没有存储相似度，使用第一个嵌入值（这不太准确，但作为后备方案）
+    if (cachedData.signature.embedding && cachedData.signature.embedding[0]) {
+      const value = cachedData.signature.embedding[0];
+      // 确保值在 0-1 范围内
+      return Math.max(0, Math.min(1, Math.abs(value)));
+    }
+
+    // 默认返回高相似度
+    return CACHE_CONFIG.SIMILARITY_THRESHOLD;
+  }
+
+  /**
+   * 验证并转换语气类型
+   */
+  private validateAndCastTone(tone: string): WritingPlan['tone'] {
+    const validTones: WritingPlan['tone'][] = ['formal', 'casual', 'technical', 'academic'];
+
+    if (validTones.includes(tone as WritingPlan['tone'])) {
+      return tone as WritingPlan['tone'];
+    }
+
+    console.warn(`Invalid tone in cache: ${tone}, using default 'technical'`);
+    return 'technical';
+  }
+}
+
+/**
+ * 创建写作助手（向后兼容的工厂函数）
+ */
+export function createWriterAgent(config: WriterAgentConfig) {
+  return new WriterAgent(config);
+}
+
+/**
+ * 创建增强版写作助手（向后兼容的工厂函数）
+ */
+export function createEnhancedWriterAgent(config: WriterAgentConfig) {
+  return new WriterAgent({
+    ...config,
+    enableTools: true,
+  });
 }

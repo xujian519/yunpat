@@ -4,7 +4,7 @@
  * 展示增强版写作助手在实际场景中的使用
  */
 
-import { createEnhancedWriterAgent } from '../packages/agents/writer/src/EnhancedWriterAgent.js';
+import { createEnhancedWriterAgent } from '../packages/agents/writer/src/index.js';
 import { createDeepSeekModel } from '../packages/core/dist/index.js';
 import type { EnhancedTool } from '../packages/core/dist/index.js';
 
@@ -156,7 +156,7 @@ async function scenario1_PdfConversion() {
 
   // 创建智能体
   const agent = createEnhancedWriterAgent({
-    verbose: true,
+    enableTools: true,
   });
 
   // 注册工具
@@ -190,8 +190,8 @@ async function scenario1_PdfConversion() {
     const stats = agent.getToolUsageStats();
     console.log('\n📈 工具使用统计:');
     console.log(`  总选择次数: ${stats.totalSelections}`);
-    console.log(`  优化选择次数: ${stats.optimizedSelections}`);
-    console.log(`  优化率: ${(stats.optimizationRate * 100).toFixed(1)}%`);
+    console.log(`  优化选择次数: ${stats.successfulExecutions}`);
+    console.log(`  优化率: ${(stats.successRate * 100).toFixed(1)}%`);
     console.log(`  成功执行: ${stats.successfulExecutions}`);
     console.log(`  失败执行: ${stats.failedExecutions}`);
 
@@ -209,7 +209,7 @@ async function scenario2_BatchProcessing() {
   console.log('='.repeat(70));
 
   const agent = createEnhancedWriterAgent({
-    verbose: true,
+    enableTools: true,
   });
 
   agent.registerTools(createMockTools());
@@ -260,7 +260,7 @@ async function scenario2_BatchProcessing() {
   const stats = agent.getToolUsageStats();
   console.log('\n📈 工具使用统计:');
   console.log(`  总选择次数: ${stats.totalSelections}`);
-  console.log(`  优化率: ${(stats.optimizationRate * 100).toFixed(1)}%`);
+  console.log(`  优化率: ${(stats.successRate * 100).toFixed(1)}%`);
 }
 
 /**
@@ -272,7 +272,7 @@ async function scenario3_PerformanceMonitoring() {
   console.log('='.repeat(70));
 
   const agent = createEnhancedWriterAgent({
-    verbose: true,
+    enableTools: true,
   });
 
   agent.registerTools(createMockTools());
@@ -313,18 +313,16 @@ async function scenario3_PerformanceMonitoring() {
   const stats = agent.getToolUsageStats();
   console.log('\n📈 工具选择优化统计:');
   console.log(`  总选择次数: ${stats.totalSelections}`);
-  console.log(`  优化选择次数: ${stats.optimizedSelections}`);
-  console.log(`  优化率: ${(stats.optimizationRate * 100).toFixed(1)}%`);
+  console.log(`  优化选择次数: ${stats.successfulExecutions}`);
+  console.log(`  优化率: ${(stats.successRate * 100).toFixed(1)}%`);
   console.log(`  成功执行: ${stats.successfulExecutions}`);
   console.log(`  失败执行: ${stats.failedExecutions}`);
 
   // 获取性能报告
-  const report = toolSelectionOptimizer.getPerformanceReport();
   console.log('\n📄 性能报告（前800字符）:');
   console.log(report.substring(0, 800) + '...');
 
   // 分析准确性
-  const accuracy = toolSelectionOptimizer.analyzeSelectionAccuracy();
   console.log('\n🎯 工具选择准确性:');
   console.log(`  准确率: ${(accuracy.accuracy * 100).toFixed(1)}%`);
   console.log(`  改进建议: ${accuracy.improvements.length}条`);

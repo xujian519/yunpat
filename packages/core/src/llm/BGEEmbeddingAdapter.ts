@@ -6,7 +6,12 @@
  * 特点: 多语言支持（中英文）
  */
 
-import { LLMAdapter as ILLMAdapter } from '../lifecycle/Lifecycle.js';
+import {
+  LLMAdapter as ILLMAdapter,
+  ChatParams,
+  ChatResponse,
+  ChatChunk,
+} from '../lifecycle/Lifecycle.js';
 
 /**
  * BGE-M3 配置

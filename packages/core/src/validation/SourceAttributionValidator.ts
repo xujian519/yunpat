@@ -95,7 +95,7 @@ export class SourceAttributionValidator {
     // 提取需要引用的陈述模式
     const patterns = [
       // 法律引用
-      /(?:根据|按照|依据)[^。]*?(专利法|商标法|著作权法|技术标准|规范)[^。]*?第?\d*条/g,
+      /(?:根据|按照|依据)[^。]*?(专利法|商标法|著作权法)[^。]*?(第)?(\d+)?条[^。]*/g,
 
       // 统计数据
       /\d+[%％][^。]*?(增长|下降|提高|降低)/g,
@@ -207,8 +207,8 @@ export class SourceAttributionValidator {
       /\[\d+\]/, // [1]
       /\[@.*?\]/, // [@author]
       /\(.*?,\s*\d{4}\)/, // (author, 2024)
-      /参见.*?[1-9]/,
-      /根据.*?[1-9]/,
+      /参见.*?\[\d+\]/,
+      /根据.*?\[\d+\]/,
     ];
 
     for (const pattern of citationPatterns) {

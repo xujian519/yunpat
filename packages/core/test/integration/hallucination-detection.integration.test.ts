@@ -313,8 +313,8 @@ describe('幻觉检测系统集成测试', () => {
       console.log(`  结构验证: ${result.valid ? '✅ 通过' : '❌ 失败'}`);
       console.log(`  幻觉分数: ${(result.hallucinationReport!.overallScore * 100).toFixed(1)}%`);
       console.log(`  事实验证: ${result.hallucinationReport!.factCheckResults?.length || 0} 个声明`);
-      console.log(`  逻辑问题: ${result.halluchinationReport!.logicalInconsistencies.length} 个`);
-      console.log(`  源归属问题: ${result.halluchinationReport!.sourceAttributionIssues.length} 个`);
+      console.log(`  逻辑问题: ${result.hallucinationReport!.logicalInconsistencies.length} 个`);
+      console.log(`  源归属问题: ${result.hallucinationReport!.sourceAttributionIssues.length} 个`);
     });
 
     it('应该检测低质量内容并拒绝', async () => {

@@ -345,12 +345,18 @@ export class HallucinationDetector {
     output += '幻觉检测报告\n';
     output += '='.repeat(70) + '\n\n';
 
-    // 总体评分
+    // 总体评分和通过标记
     const scorePercent = report.overallScore * 100;
     const scoreLevel = report.overallScore < 0.3 ? '优秀' :
                       report.overallScore < 0.5 ? '良好' :
                       report.overallScore < 0.7 ? '一般' : '较差';
 
+    // 添加通过/失败标记
+    const statusIcon = report.overallScore < 0.3 ? '✅' :
+                      report.overallScore < 0.5 ? '✅' :
+                      report.overallScore < 0.7 ? '⚠️' : '❌';
+
+    output += `状态: ${statusIcon}\n`;
     output += `📊 总体评分: ${scorePercent.toFixed(1)}% (${scoreLevel})\n`;
     output += `⏱️  检测耗时: ${report.duration}ms\n`;
     output += `🕐 检测时间: ${report.timestamp.toLocaleString('zh-CN')}\n\n`;

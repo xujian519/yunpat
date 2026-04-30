@@ -602,8 +602,9 @@ export class KnowledgeBase {
    * 更新索引
    */
   private updateIndexes(id: string, entry: KnowledgeEntry): void {
-    // 标签索引
-    for (const tag of entry.tags) {
+    // 标签索引（确保tags存在且可迭代）
+    const tags = entry.tags || [];
+    for (const tag of tags) {
       if (!this.tagIndex.has(tag)) {
         this.tagIndex.set(tag, new Set());
       }

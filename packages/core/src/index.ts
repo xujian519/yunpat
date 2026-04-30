@@ -53,6 +53,7 @@ export {
   type Thought,
   type Action as ReasoningAction,
   type ActionResult,
+  type ThoughtNode,
 } from './reasoning/ReActLoop.js';
 
 export { ReasoningStrategy } from './reasoning/ReActLoop.js';

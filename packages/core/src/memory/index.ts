@@ -20,3 +20,10 @@ export * from './long-term/schema.js';
 // 检查点与状态管理
 export * from './CheckpointManager.js';
 export * from './MemoryStore.js';
+
+// 集成模块
+export * from './integration/BGEIntegration.js';
+export * from './integration/RAGEngine.js';
+
+// 配置管理
+export * from './config.js';

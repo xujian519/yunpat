@@ -1,3 +1,10 @@
+/**
+ * 记忆存储模块
+ *
+ * 提供基础的记忆存储功能
+ * 为了向后兼容，保留原有接口
+ */
+
 import { MemoryStore as IMemoryStore, MemoryEntry } from '../lifecycle/Lifecycle.js';
 
 /**
@@ -10,7 +17,7 @@ import { MemoryStore as IMemoryStore, MemoryEntry } from '../lifecycle/Lifecycle
  */
 export class ShortTermMemory implements IMemoryStore {
   /** 存储后端 */
-  private storage = new Map<string, any>();
+  protected storage = new Map<string, unknown>();
 
   /**
    * 读取记忆
@@ -55,9 +62,7 @@ export class ShortTermMemory implements IMemoryStore {
   }
 
   /**
-   * 搜索长期记忆
-   *
-   * 短期记忆不支持向量搜索，返回空数组
+   * 搜索长期记忆（占位符）
    */
   async search(_query: string, _topK = 10): Promise<MemoryEntry[]> {
     // TODO: 集成长期记忆（向量数据库）
@@ -139,7 +144,7 @@ export class MemoryManager {
 
     // 从短期记忆中删除
     for (const entry of deleted) {
-      this.shortTerm.delete(entry.key);
+      await this.shortTerm.delete(entry.key);
     }
 
     console.log(`[MemoryManager] 压缩记忆：删除 ${toDelete} 条，保留 ${maxMemories} 条`);

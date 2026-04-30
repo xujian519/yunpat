@@ -52,9 +52,9 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18.x, 20.x]
-        fail-fast: false
 
     steps:
       - name: 检出代码

@@ -1,0 +1,77 @@
+name: CI (Simplified)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+  PNPM_VERSION: 8
+
+jobs:
+  # 简化的TypeScript测试
+  test:
+    name: TypeScript 测试
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript 类型检查
+        run: pnpm build:tsc
+
+      - name: 运行测试
+        run: pnpm test -- --run
+
+      - name: 构建项目
+        run: pnpm build
+
+  # 代码质量检查（可选，失败不阻塞）
+  quality:
+    name: 代码质量检查
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 运行 ESLint
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: 检查代码格式
+        run: pnpm exec prettier --check "**/*.{ts,js,json,md}"
+        continue-on-error: true

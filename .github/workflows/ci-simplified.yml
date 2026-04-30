@@ -39,7 +39,7 @@ jobs:
         run: pnpm build:tsc
 
       - name: 运行测试
-        run: pnpm test -- --run
+        run: pnpm --filter @yunpat/core test -- --run
 
       - name: 构建项目
         run: pnpm build

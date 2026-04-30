@@ -197,9 +197,28 @@ describe('MemoryManager', () => {
   });
 
   describe('compress', () => {
-    it('应不抛异常（TODO 实现）', async () => {
+    it('应返回删除的记忆数量', async () => {
       await manager.add('a', 1);
-      await expect(manager.compress()).resolves.toBeUndefined();
+      const deleted = await manager.compress();
+      expect(typeof deleted).toBe('number');
+      expect(deleted).toBeGreaterThanOrEqual(0);
+    });
+
+    it('应在记忆过多时删除最旧的', async () => {
+      // 添加少量记忆，不应删除
+      for (let i = 0; i < 5; i++) {
+        await manager.add(`key${i}`, i);
+      }
+      let deleted = await manager.compress(10);
+      expect(deleted).toBe(0); // 无需压缩
+
+      // 添加更多记忆，应删除
+      for (let i = 5; i < 15; i++) {
+        await manager.add(`key${i}`, i);
+      }
+      deleted = await manager.compress(10);
+      expect(deleted).toBe(5); // 删除 5 条
+      expect(manager.getHistory().length).toBe(10);
     });
   });
 });

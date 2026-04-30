@@ -5,12 +5,13 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/agents/*"
   ],
   "scripts": {
     "dev": "pnpm --filter ./packages/* dev",
     "build": "node esbuild.config.mjs build",
-    "build:tsc": "pnpm -r --filter './packages/*' build",
+    "build:tsc": "pnpm -r --filter './packages/*' --filter './packages/agents/*' build",
     "build:watch": "node esbuild.config.mjs watch",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",

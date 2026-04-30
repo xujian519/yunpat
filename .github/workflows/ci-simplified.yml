@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '20.x'
-  PNPM_VERSION: 8
+  NODE_VERSION: '22.x'
+  PNPM_VERSION: 9
 
 jobs:
   # 简化的TypeScript测试

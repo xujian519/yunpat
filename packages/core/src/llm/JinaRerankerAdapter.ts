@@ -65,11 +65,7 @@ export class JinaRerankerAdapter {
    * @param topK 返回前 K 个结果（可选，覆盖配置）
    * @returns 重排序后的文档列表
    */
-  async rerank(
-    query: string,
-    documents: string[],
-    topK?: number
-  ): Promise<RerankResult[]> {
+  async rerank(query: string, documents: string[], topK?: number): Promise<RerankResult[]> {
     const url = `${this.config.baseURL}/rerank`;
     const k = topK ?? this.config.topK;
 
@@ -125,11 +121,7 @@ export class JinaRerankerAdapter {
    * @param topK 返回前 K 个结果
    * @returns 重排序后的文档内容列表
    */
-  async rerankAndExtract(
-    query: string,
-    documents: string[],
-    topK?: number
-  ): Promise<string[]> {
+  async rerankAndExtract(query: string, documents: string[], topK?: number): Promise<string[]> {
     const results = await this.rerank(query, documents, topK);
     return results.map((r) => r.document);
   }
@@ -156,7 +148,9 @@ export class JinaRerankerAdapter {
 
     console.log(`✅ 重排序完成:`);
     results.forEach((r) => {
-      console.log(`   ${r.rank}. [分数: ${r.relevanceScore.toFixed(4)}] ${r.document.substring(0, 50)}...`);
+      console.log(
+        `   ${r.rank}. [分数: ${r.relevanceScore.toFixed(4)}] ${r.document.substring(0, 50)}...`
+      );
     });
 
     return results.map((r) => ({

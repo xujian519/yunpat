@@ -85,15 +85,11 @@ export class BGEEmbeddingAdapter {
       };
 
       // 提取向量（按索引排序）
-      const embeddings = data.data
-        .sort((a, b) => a.index - b.index)
-        .map((item) => item.embedding);
+      const embeddings = data.data.sort((a, b) => a.index - b.index).map((item) => item.embedding);
 
       return embeddings;
     } catch (error) {
-      throw new Error(
-        `BGE-M3 嵌入失败: ${error instanceof Error ? error.message : String(error)}`
-      );
+      throw new Error(`BGE-M3 嵌入失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -219,8 +215,10 @@ export class BGEEmbeddingLLMWrapper implements ILLMAdapter {
     throw new Error('BGE-M3 不支持聊天功能');
   }
 
-  async *chatStream(): AsyncIterable<never> {
-    throw new Error('BGE-M3 不支持流式聊天');
+  async *chatStream(): AsyncIterable<ChatChunk> {
+    // BGE-M3 不支持流式聊天，返回空结果
+    return;
+    yield { delta: '', done: true };
   }
 
   async embed(texts: string[]): Promise<number[][]> {

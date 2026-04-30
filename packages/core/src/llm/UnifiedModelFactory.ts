@@ -9,7 +9,13 @@
  * - Ollama 本地模型
  */
 
-import { createDeepSeekModel, createZhipuModel, NativeModel, ThinkingConfig, ReasoningEffort } from './NativeLLMAdapter.js';
+import {
+  createDeepSeekModel,
+  createZhipuModel,
+  NativeModel,
+  ThinkingConfig,
+  ReasoningEffort,
+} from './NativeLLMAdapter.js';
 import { KimiCodeAdapter } from './KimiCodeAdapter.js';
 import { OMXLModelFactory } from './OMXLModelFactory.js';
 import type { LLMAdapter } from '../lifecycle/Lifecycle.js';
@@ -261,10 +267,7 @@ export class UnifiedModelFactory {
   /**
    * 创建 DeepSeek V4 模型
    */
-  static createDeepSeekV4(
-    model: 'pro' | 'flash' = 'pro',
-    options?: DeepSeekV4Options
-  ): LLMAdapter {
+  static createDeepSeekV4(model: 'pro' | 'flash' = 'pro', options?: DeepSeekV4Options): LLMAdapter {
     const modelName = model === 'pro' ? NativeModel.DEEPSEEK_V4_PRO : NativeModel.DEEPSEEK_V4_FLASH;
     return createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '', modelName, options);
   }
@@ -295,8 +298,8 @@ export class UnifiedModelFactory {
   static createZhipuModel(model: '4.7' | 'flash' | 'plus' = '4.7'): LLMAdapter {
     const modelMap = {
       '4.7': NativeModel.GLM_4_7,
-      'flash': NativeModel.GLM_4_FLASH,
-      'plus': NativeModel.GLM_4_PLUS,
+      flash: NativeModel.GLM_4_FLASH,
+      plus: NativeModel.GLM_4_PLUS,
     };
 
     return createZhipuModel(process.env.ZHIPU_API_KEY || '', modelMap[model]);

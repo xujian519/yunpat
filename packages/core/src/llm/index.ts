@@ -5,15 +5,34 @@
  */
 
 // ========== 核心适配器 ==========
-export { NativeLLMAdapter, MultiModelManager, createDeepSeekModel, createQwenModel, createZhipuModel, createOllamaModel } from './NativeLLMAdapter.js';
-export type { NativeModel, ModelConfig, ThinkingConfig, ReasoningEffort } from './NativeLLMAdapter.js';
+export {
+  NativeLLMAdapter,
+  MultiModelManager,
+  createDeepSeekModel,
+  createQwenModel,
+  createZhipuModel,
+  createOllamaModel,
+} from './NativeLLMAdapter.js';
+export type {
+  NativeModel,
+  ModelConfig,
+  ThinkingConfig,
+  ReasoningEffort,
+} from './NativeLLMAdapter.js';
 
 // ========== Kimi Code ==========
 export { KimiCodeAdapter, createKimiCodeAdapter } from './KimiCodeAdapter.js';
 export type { KimiCodeConfig } from './KimiCodeAdapter.js';
 
 // ========== OMXL 本地模型 ==========
-export { OMXLModelFactory, createChatModel, createReasoningModel, createPatentWritingModel, createCodeGenerationModel, createModelForTask } from './OMXLModelFactory.js';
+export {
+  OMXLModelFactory,
+  createChatModel,
+  createReasoningModel,
+  createPatentWritingModel,
+  createCodeGenerationModel,
+  createModelForTask,
+} from './OMXLModelFactory.js';
 export type { TaskType, ModelRecommendation } from './OMXLModelFactory.js';
 
 // ========== 统一模型工厂 ==========
@@ -25,7 +44,12 @@ export {
   createZhipu,
   createLocalModel as createOMXL,
 } from './UnifiedModelFactory.js';
-export type { ModelSource, ModelCategory, ModelInfo, DeepSeekV4Options } from './UnifiedModelFactory.js';
+export type {
+  ModelSource,
+  ModelCategory,
+  ModelInfo,
+  DeepSeekV4Options,
+} from './UnifiedModelFactory.js';
 
 // ========== 嵌入模型 ==========
 export { BGEEmbeddingAdapter } from './BGEEmbeddingAdapter.js';

@@ -4,7 +4,7 @@
  * 测试知识库增强和提示词模板懒加载功能
  */
 
-import { PatentWriterAgent, type PatentWritingInput } from '../ai/agents/writer/PatentWriterAgent';
+import { PatentWriterAgent, type PatentWritingInput } from '../patents/agents/writer/PatentWriterAgent';
 import { createDeepSeekModel } from '../packages/core/src/llm/NativeLLMAdapter';
 
 /**
@@ -174,7 +174,9 @@ async function testLazyLoadingStrategy() {
   stats = agent.getCacheStats();
   console.log('最终状态:');
   console.log(`   已加载模板: ${stats.promptManager?.templates || 0}个`);
-  console.log(`   加载时间: ${stats.promptManager?.loadedAt?.map((t: any) => `${t.name}: ${t.loadedAt}`).join('\n                ') || 'N/A'}`);
+  console.log(
+    `   加载时间: ${stats.promptManager?.loadedAt?.map((t: any) => `${t.name}: ${t.loadedAt}`).join('\n                ') || 'N/A'}`
+  );
   console.log('');
 
   console.log('✅ 懒加载测试完成！');

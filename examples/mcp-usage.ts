@@ -4,7 +4,7 @@
  * 展示如何使用 MCP 服务器
  */
 
-import { createPatentMcpServer, McpServer } from '../ai/mcp/McpServer';
+import { createPatentMcpServer, McpServer } from '../patents/mcp/McpServer';
 
 /**
  * 示例 1: 基本使用
@@ -21,14 +21,14 @@ async function example1_BasicUsage() {
   // 列出工具
   const tools = server.listTools();
   console.log('可用工具:');
-  tools.forEach(tool => {
+  tools.forEach((tool) => {
     console.log(`  - ${tool.name}: ${tool.description}`);
   });
 
   // 调用工具
   const searchResult = await server.callTool('search_patents', {
     keywords: ['深度学习', '图像识别'],
-    limit: 5
+    limit: 5,
   });
 
   console.log('\n搜索结果:', searchResult.content);
@@ -55,22 +55,22 @@ async function example2_CustomTool() {
         properties: {
           features: {
             type: 'array',
-            items: { type: 'string' }
+            items: { type: 'string' },
           },
           priorArt: {
             type: 'array',
-            items: { type: 'string' }
-          }
+            items: { type: 'string' },
+          },
         },
-        required: ['features', 'priorArt']
-      }
+        required: ['features', 'priorArt'],
+      },
     },
     async (params) => {
       console.log('🔍 [自定义工具] 分析发明创造性');
       return {
         hasNovelty: true,
         hasInventiveStep: true,
-        confidence: 0.85
+        confidence: 0.85,
       };
     }
   );
@@ -80,7 +80,7 @@ async function example2_CustomTool() {
   // 调用自定义工具
   const result = await server.callTool('analyze_invention', {
     features: ['卷积神经网络', '图像识别'],
-    priorArt: ['CN110123456A']
+    priorArt: ['CN110123456A'],
   });
 
   console.log('分析结果:', result.content);
@@ -114,7 +114,7 @@ async function example3_EventListening() {
 
   // 模拟工具调用
   await server.callTool('search_patents', {
-    keywords: ['测试']
+    keywords: ['测试'],
   });
 
   await server.stop();
@@ -138,7 +138,7 @@ async function example4_AgentIntegration() {
 
   // 模拟智能体调用
   const patentSearch = await server.callTool('search_patents', {
-    keywords: ['深度学习', '图像识别']
+    keywords: ['深度学习', '图像识别'],
   });
 
   console.log('\n智能体获得专利数据:', patentSearch.content);

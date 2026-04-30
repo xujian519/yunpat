@@ -8,10 +8,10 @@
  * 4. PatentManagerAgent - 专利管理
  */
 
-import { PatentWriterAgent } from '../../ai/agents/writer/PatentWriterAgent';
-import { PatentResponderAgent } from '../../ai/agents/responder/PatentResponderAgent';
-import { PatentAnalyzerAgent } from '../../ai/agents/analyzer/PatentAnalyzerAgent';
-import { PatentManagerAgent } from '../../ai/agents/manager/PatentManagerAgent';
+import { PatentWriterAgent } from '../patents/agents/writer/PatentWriterAgent';
+import { PatentResponderAgent } from '../patents/agents/responder/PatentResponderAgent';
+import { PatentAnalyzerAgent } from '../patents/agents/analyzer/PatentAnalyzerAgent';
+import { PatentManagerAgent } from '../patents/agents/manager/PatentManagerAgent';
 import { createDeepSeekModel } from '@yunpat/core';
 
 /**
@@ -126,11 +126,7 @@ async function examplePatentAnalysis() {
   // 准备输入
   const input = {
     analysisType: 'value' as const,
-    targetPatents: [
-      'CN123456789A',
-      'US9876543B2',
-      'EP3456789A1',
-    ],
+    targetPatents: ['CN123456789A', 'US9876543B2', 'EP3456789A1'],
     technicalField: '人工智能',
     parameters: {
       regions: ['CN', 'US', 'EP'],
@@ -151,9 +147,9 @@ async function examplePatentAnalysis() {
 
   if (output.results.valueAssessment) {
     console.log('高价值专利:');
-    output.results.valueAssessment.highValuePatents.forEach(patent => {
+    output.results.valueAssessment.highValuePatents.forEach((patent) => {
       console.log(`  - ${patent.patentNumber}: ${patent.score}分`);
-      patent.reasons.forEach(reason => console.log(`    * ${reason}`));
+      patent.reasons.forEach((reason) => console.log(`    * ${reason}`));
     });
     console.log();
   }

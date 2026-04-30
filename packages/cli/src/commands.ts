@@ -1,11 +1,6 @@
 import chalk from 'chalk';
 import ora, { Ora } from 'ora';
-import {
-  EventBus,
-  ShortTermMemory,
-  ToolRegistry,
-  createDeepSeekModel,
-} from '@yunpat/core';
+import { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } from '@yunpat/core';
 import { WriterAgent, WritingTask } from '@yunpat/agent-writer';
 import { ResearcherAgent, ResearchQuery } from '@yunpat/agent-researcher';
 
@@ -125,8 +120,10 @@ export async function runAgent(
 
     // 保存到文件
     if (options.output) {
-      // TODO: 实现文件保存
-      console.log(chalk.gray(`\n结果已保存到: ${options.output}`));
+      throw new Error(
+        '文件保存功能尚未实现。请移除 --output 参数，或等待此功能实现。\n' +
+        '临时方案：使用命令行重定向保存结果，例如：yunpat chat > output.json'
+      );
     }
   } catch (error) {
     spinner.fail(chalk.red('执行失败'));

@@ -68,6 +68,32 @@ export {
   StepFormat,
 } from './reasoning/ChainOfThoughtStrategy.js';
 
+// 推理缓存系统
+export {
+  ReasoningCache,
+  createReasoningCache,
+  type CacheEntry,
+  type ReasoningCacheStats,
+  type CacheConfig,
+  type CacheQueryResult,
+} from './reasoning/ReasoningCache.js';
+
+// 推理性能监控
+export {
+  ReasoningMonitor,
+  reasoningMonitor,
+  type PerformanceMetrics,
+  type InferenceRecord,
+} from './reasoning/ReasoningMonitor.js';
+
+// 批量推理处理器
+export {
+  ReasoningBatchProcessor,
+  createBatchProcessor,
+  type BatchProcessConfig,
+  type BatchResult,
+} from './reasoning/ReasoningBatchProcessor.js';
+
 // 增强自我反思机制（P1 准确率优化方案 #4）
 export {
   EnhancedReflection,

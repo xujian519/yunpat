@@ -57,6 +57,16 @@ export {
 
 export { ReasoningStrategy } from './reasoning/ReActLoop.js';
 
+// Chain-of-Thought 基础推理策略
+export {
+  ChainOfThoughtStrategy,
+  createChainOfThought,
+  type CoTConfig,
+  type CoTResult,
+  type ReasoningStep,
+  StepFormat,
+} from './reasoning/ChainOfThoughtStrategy.js';
+
 // 增强自我反思机制（P1 准确率优化方案 #4）
 export {
   EnhancedReflection,

@@ -130,7 +130,7 @@ export class TextRenderer {
     depth: number,
     maxDepth: number
   ): string {
-    const node = plan.subGoals.find(g => g.id === nodeId);
+    const node = plan.subGoals.find((g: any) => g.id === nodeId);
     if (!node) {
       return '';
     }
@@ -167,16 +167,16 @@ export class TextRenderer {
 
     for (let i = 0; i < order.length; i++) {
       const nodeId = order[i];
-      const node = plan.subGoals.find(g => g.id === nodeId);
+      const node = plan.subGoals.find((g: any) => g.id === nodeId);
       if (!node) continue;
 
       const icon = this.getStatusIcon(node.status);
-      const line = `${icon} [${nodeId}] ${node.title}`;
+      let line = `${icon} [${nodeId}] ${node.title}`;
 
       // 显示依赖关系
       if (node.dependencies.length > 0) {
         const deps = node.dependencies.map(d => {
-          const depNode = plan.subGoals.find(g => g.id === d);
+          const depNode = plan.subGoals.find((g: any) => g.id === d);
           return depNode ? depNode.title : d;
         }).join(', ');
         line += ` ← 依赖: ${deps}`;
@@ -208,8 +208,8 @@ export class TextRenderer {
     }
 
     for (const edge of plan.dependencies.edges) {
-      const fromNode = plan.subGoals.find(g => g.id === edge.from);
-      const toNode = plan.subGoals.find(g => g => g.id === edge.to);
+      const fromNode = plan.subGoals.find((g: any) => g.id === edge.from);
+      const toNode = plan.subGoals.find((g: any) => (g: any) => g.id === edge.to);
 
       if (fromNode && toNode) {
         const strengthIcon = this.getStrengthIcon(edge.strength);
@@ -238,7 +238,7 @@ export class TextRenderer {
     const order = plan.dependencies.topologicalOrder || plan.subGoals.map(g => g.id);
 
     for (const nodeId of order) {
-      const node = plan.subGoals.find(g => g.id === nodeId);
+      const node = plan.subGoals.find((g: any) => g.id === nodeId);
       if (!node) continue;
 
       const icon = this.getStatusIcon(node.status);
@@ -356,7 +356,7 @@ export class TextRenderer {
       visited.add(nodeId);
       let maxChildDepth = currentDepth;
 
-      const node = plan.subGoals.find(g => g.id === nodeId);
+      const node = plan.subGoals.find((g: any) => g.id === nodeId);
       if (node) {
         for (const depId of node.dependencies) {
           const childDepth = calculateDepth(depId, currentDepth + 1);
@@ -435,7 +435,7 @@ export class TextRenderer {
    * 获取优先级图标
    */
   private getPriorityIcon(priority: any): string {
-    const icons = {
+    const icons: { [key: string]: string } = {
       critical: '🔴',
       high: '🟠',
       medium: '🟡',
@@ -540,9 +540,9 @@ export class TextRenderer {
 
       lines.push(
         `  "${node.id}" [label="${label}", ` +
-        `fillcolor="${style.fillColor}", ` +
-        `color="${style.fontColor}", ` +
-        `penwidth=${style.borderWidth}];`
+        `fillcolor="${style?.fillColor || '#f5f5f5'}", ` +
+        `color="${style?.fontColor || '#333333'}", ` +
+        `penwidth=${style?.borderWidth || 1}];`
       );
     }
 
@@ -551,13 +551,13 @@ export class TextRenderer {
     // 添加边
     for (const edge of plan.dependencies.edges) {
       const style = this.edgeStyles.get(edge.type) || this.edgeStyles.get('ordering');
-      const styleAttr = style.style === 'solid' ? 'solid' : style.style;
+      const styleAttr = style?.style === 'solid' ? 'solid' : style?.style || 'dotted';
 
       lines.push(
         `  "${edge.from}" -> "${edge.to}" ` +
         `[style=${styleAttr}, ` +
-        `color="${style.color}", ` +
-        `penwidth=${style.thickness}];`
+        `color="${style?.color || '#999999'}", ` +
+        `penwidth=${style?.thickness || 1}];`
       );
     }
 
@@ -584,7 +584,7 @@ export class TextRenderer {
 
       // 设置节点样式
       const style = this.nodeStyles.get(node.status) || this.nodeStyles.get('pending');
-      lines.push(`    ${node.id}["fillcolor:${style.fillColor}"]`);
+      lines.push(`    ${node.id}["fillcolor:${style?.fillColor || '#f5f5f5'}"]`);
     }
 
     lines.push('');

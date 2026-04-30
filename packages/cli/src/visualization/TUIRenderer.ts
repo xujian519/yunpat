@@ -35,7 +35,7 @@ export class TUIRenderer {
    */
   render(
     plan: HierarchicalPlan,
-    options: TUIRenderOptions = {}
+    options: any = {}
   ): RenderResult {
     const startTime = Date.now();
 
@@ -59,7 +59,7 @@ export class TUIRenderer {
    */
   private renderInteractiveView(
     plan: HierarchicalPlan,
-    options: TUIRenderOptions
+    options: any
   ): string {
     const lines: string[] = [];
 

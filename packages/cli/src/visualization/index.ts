@@ -22,7 +22,6 @@ export type {
   TextRenderOptions,
   TUIRenderOptions,
   ExportOptions,
-  ExportFormat,
 
   // 渲染相关
   RenderResult,

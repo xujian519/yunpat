@@ -8,12 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { z } from 'zod';
 import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
-import {
-  DocumentParseResult,
-  DocumentType,
-  ElementType,
-  OutputFormat,
-} from '../types/document.js';
+import { DocumentParseResult, DocumentType, ElementType, OutputFormat } from '../types/document.js';
 import TurndownService from 'turndown';
 
 // 动态导入
@@ -101,10 +96,7 @@ export class DocxToHtmlTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       filePath: z.string().describe('DOCX文件路径'),
-      styleMap: z
-        .string()
-        .optional()
-        .describe('样式映射配置'),
+      styleMap: z.string().optional().describe('样式映射配置'),
     }),
     outputSchema: z.object({
       html: z.string().describe('HTML内容'),
@@ -161,11 +153,7 @@ export class DocxToMarkdownTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       filePath: z.string().describe('DOCX文件路径'),
-      headingStyle: z
-        .enum(['atx', 'setext'])
-        .optional()
-        .default('atx')
-        .describe('标题样式'),
+      headingStyle: z.enum(['atx', 'setext']).optional().default('atx').describe('标题样式'),
       codeBlockStyle: z
         .enum(['fenced', 'indented'])
         .optional()

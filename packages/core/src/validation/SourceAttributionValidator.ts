@@ -55,10 +55,7 @@ export class SourceAttributionValidator {
    * @param claims 内容中的声明列表（可选）
    * @returns 源归属问题列表
    */
-  async validateAttribution(
-    content: string,
-    claims?: Claim[]
-  ): Promise<SourceAttributionIssue[]> {
+  async validateAttribution(content: string, claims?: Claim[]): Promise<SourceAttributionIssue[]> {
     const issues: SourceAttributionIssue[] = [];
 
     // 如果没有提供声明，先提取声明
@@ -164,7 +161,8 @@ export class SourceAttributionValidator {
           // 尝试在知识库中查找相关来源
           const suggestedSources = await this.suggestSources(claim);
 
-          const severityVal = claim.category === ClaimCategory.LEGAL_PRECEDENT ? 'critical' : 'major';
+          const severityVal =
+            claim.category === ClaimCategory.LEGAL_PRECEDENT ? 'critical' : 'major';
 
           issues.push({
             id: `missing-citation-${issueId++}`,
@@ -234,7 +232,7 @@ export class SourceAttributionValidator {
         minSimilarity: 0.7,
       });
 
-      return searchResults.map(result => ({
+      return searchResults.map((result) => ({
         id: result.entry.id,
         type: SourceType.KNOWLEDGE_ENTRY,
         title: result.entry.title || result.entry.content.substring(0, 50),
@@ -313,7 +311,7 @@ export class SourceAttributionValidator {
     }
 
     // 检查引用格式的一致性
-    const citationTypes = new Set(citations.map(c => c.type));
+    const citationTypes = new Set(citations.map((c) => c.type));
     if (citationTypes.size > 1) {
       issues.push({
         id: `citation-format-${issueId++}`,
@@ -544,13 +542,16 @@ export class SourceAttributionValidator {
     let report = `⚠️  发现 ${issues.length} 个源归属问题\n\n`;
 
     // 按严重程度分组
-    const bySeverity = issues.reduce((acc, issue) => {
-      if (!acc[issue.severity]) {
-        acc[issue.severity] = [];
-      }
-      acc[issue.severity].push(issue);
-      return acc;
-    }, {} as Record<string, SourceAttributionIssue[]>);
+    const bySeverity = issues.reduce(
+      (acc, issue) => {
+        if (!acc[issue.severity]) {
+          acc[issue.severity] = [];
+        }
+        acc[issue.severity].push(issue);
+        return acc;
+      },
+      {} as Record<string, SourceAttributionIssue[]>
+    );
 
     // 输出严重问题
     if (bySeverity.critical) {
@@ -558,7 +559,7 @@ export class SourceAttributionValidator {
       for (const issue of bySeverity.critical) {
         report += `  - ${issue.description}\n`;
         if (issue.suggestedSources && issue.suggestedSources.length > 0) {
-          report += `    建议来源: ${issue.suggestedSources.map(s => s.title).join(', ')}\n`;
+          report += `    建议来源: ${issue.suggestedSources.map((s) => s.title).join(', ')}\n`;
         }
       }
       report += '\n';

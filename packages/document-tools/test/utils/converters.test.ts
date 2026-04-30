@@ -42,7 +42,11 @@ describe('converters', () => {
 
     it('ignores images when imageHandling is ignore', () => {
       const elements: DocumentElement[] = [
-        { type: ElementType.IMAGE, content: 'image.png', metadata: { alt: 'Test', url: 'http://example.com/image.png' } },
+        {
+          type: ElementType.IMAGE,
+          content: 'image.png',
+          metadata: { alt: 'Test', url: 'http://example.com/image.png' },
+        },
       ];
       const md = elementsToMarkdown(elements, { imageHandling: 'ignore' });
       expect(md).not.toContain('image.png');
@@ -50,7 +54,11 @@ describe('converters', () => {
 
     it('embeds images when imageHandling is embed', () => {
       const elements: DocumentElement[] = [
-        { type: ElementType.IMAGE, content: 'image.png', metadata: { alt: 'Test', url: 'http://example.com/image.png' } },
+        {
+          type: ElementType.IMAGE,
+          content: 'image.png',
+          metadata: { alt: 'Test', url: 'http://example.com/image.png' },
+        },
       ];
       const md = elementsToMarkdown(elements, { imageHandling: 'embed' });
       expect(md).toContain('![Test](http://example.com/image.png)');
@@ -60,7 +68,11 @@ describe('converters', () => {
   describe('elementsToJson', () => {
     it('converts elements to JSON string', () => {
       const elements: DocumentElement[] = [
-        { type: ElementType.TITLE, content: 'Title', metadata: { level: 1, bbox: [0, 0, 100, 50] } },
+        {
+          type: ElementType.TITLE,
+          content: 'Title',
+          metadata: { level: 1, bbox: [0, 0, 100, 50] },
+        },
       ];
       const json = elementsToJson(elements);
       const parsed = JSON.parse(json);
@@ -72,9 +84,7 @@ describe('converters', () => {
     });
 
     it('respects compress option', () => {
-      const elements: DocumentElement[] = [
-        { type: ElementType.PARAGRAPH, content: 'Hi' },
-      ];
+      const elements: DocumentElement[] = [{ type: ElementType.PARAGRAPH, content: 'Hi' }];
       const json = elementsToJson(elements, { compress: true });
       expect(json).not.toContain('\n');
     });
@@ -102,8 +112,12 @@ describe('converters', () => {
   describe('detectFileType', () => {
     it('detects common file types', () => {
       expect(detectFileType('doc.pdf')).toBe('application/pdf');
-      expect(detectFileType('doc.docx')).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-      expect(detectFileType('sheet.xlsx')).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      expect(detectFileType('doc.docx')).toBe(
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      );
+      expect(detectFileType('sheet.xlsx')).toBe(
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
       expect(detectFileType('image.png')).toBe('image/png');
       expect(detectFileType('image.jpg')).toBe('image/jpeg');
       expect(detectFileType('audio.mp3')).toBe('audio/mpeg');

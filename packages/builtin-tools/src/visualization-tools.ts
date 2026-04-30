@@ -11,10 +11,7 @@ import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
 /**
  * Mermaid 图表生成工具
  */
-export class MermaidChartTool extends EnhancedBaseTool<
-  any,
-  any
-> {
+export class MermaidChartTool extends EnhancedBaseTool<any, any> {
   readonly metadata = {
     name: 'mermaid_chart',
     description: '生成 Mermaid 图表（流程图、时序图、类图等）',
@@ -22,26 +19,12 @@ export class MermaidChartTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       chartType: z
-        .enum([
-          'flowchart',
-          'sequence',
-          'class',
-          'state',
-          'gantt',
-          'pie',
-          'mindmap',
-        ])
+        .enum(['flowchart', 'sequence', 'class', 'state', 'gantt', 'pie', 'mindmap'])
         .describe('图表类型'),
       data: z.any().describe('图表数据'),
       title: z.string().optional().describe('图表标题'),
-      orientation: z
-        .enum(['TD', 'BT', 'LR', 'RL'])
-        .optional()
-        .describe('方向'),
-      outputFormat: z
-        .enum(['svg', 'png', 'markdown'])
-        .optional()
-        .describe('输出格式'),
+      orientation: z.enum(['TD', 'BT', 'LR', 'RL']).optional().describe('方向'),
+      outputFormat: z.enum(['svg', 'png', 'markdown']).optional().describe('输出格式'),
     }),
     outputSchema: z.object({
       success: z.boolean(),
@@ -366,9 +349,7 @@ export class PatentClaimsStructureTool extends EnhancedBaseTool<
       dependsOn?: number;
     }>
   ): string[] {
-    const directChildren = allClaims.filter(
-      (c) => c.dependsOn === parentNumber
-    );
+    const directChildren = allClaims.filter((c) => c.dependsOn === parentNumber);
 
     const result: string[] = [];
 

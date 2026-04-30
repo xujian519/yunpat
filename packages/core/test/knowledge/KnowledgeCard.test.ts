@@ -24,7 +24,8 @@ function createTestCard(overrides?: Partial<KnowledgeCard>): KnowledgeCard {
   return {
     id: generateCardId('什么是创造性', '创造性'),
     question: '什么是创造性',
-    content: '创造性是指与现有技术相比，该发明具有突出的实质性特点和显著的进步。根据专利法第22条第3款的规定...',
+    content:
+      '创造性是指与现有技术相比，该发明具有突出的实质性特点和显著的进步。根据专利法第22条第3款的规定...',
     sourcePages: ['专利实务/创造性/创造性判断概述'],
     relatedCards: [],
     concept: '创造性',
@@ -103,7 +104,9 @@ describe('KnowledgeCard 序列化', () => {
     const parsed = markdownToCard(md, card.id);
 
     expect(parsed.question).toBe(card.question);
-    expect(parsed.content.replace(/\n+/g, ' ').trim()).toBe(card.content.replace(/\n+/g, ' ').trim());
+    expect(parsed.content.replace(/\n+/g, ' ').trim()).toBe(
+      card.content.replace(/\n+/g, ' ').trim()
+    );
     expect(parsed.concept).toBe(card.concept);
     expect(parsed.domain).toBe(card.domain);
   });

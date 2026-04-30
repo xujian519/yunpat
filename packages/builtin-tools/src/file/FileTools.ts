@@ -80,10 +80,7 @@ export class FileWriteTool extends EnhancedBaseTool<
     author: 'YunPat Team',
   };
 
-  async before(
-    input: { filePath: string; content: string },
-    _context: ToolContext
-  ): Promise<void> {
+  async before(input: { filePath: string; content: string }, _context: ToolContext): Promise<void> {
     // 确保目录存在
     const dir = path.dirname(input.filePath);
     try {
@@ -93,8 +90,7 @@ export class FileWriteTool extends EnhancedBaseTool<
       if (
         !(
           error instanceof Error &&
-          (error.message.includes('EEXIST') ||
-            error.message.includes('already exists'))
+          (error.message.includes('EEXIST') || error.message.includes('already exists'))
         )
       ) {
         throw error;
@@ -175,10 +171,7 @@ export class FileAppendTool extends EnhancedBaseTool<
 /**
  * 文件删除工具
  */
-export class FileDeleteTool extends EnhancedBaseTool<
-  { filePath: string },
-  { success: boolean }
-> {
+export class FileDeleteTool extends EnhancedBaseTool<{ filePath: string }, { success: boolean }> {
   readonly metadata = {
     name: 'file_delete',
     description: '删除文件',
@@ -195,10 +188,7 @@ export class FileDeleteTool extends EnhancedBaseTool<
     author: 'YunPat Team',
   };
 
-  async execute(
-    input: { filePath: string },
-    _context: ToolContext
-  ): Promise<{ success: boolean }> {
+  async execute(input: { filePath: string }, _context: ToolContext): Promise<{ success: boolean }> {
     const { filePath } = input;
 
     try {
@@ -232,16 +222,8 @@ export class DirectoryListTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       dirPath: z.string().describe('要列出的目录路径'),
-      recursive: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否递归列出子目录'),
-      includeHidden: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否包含隐藏文件（以.开头）'),
+      recursive: z.boolean().optional().default(false).describe('是否递归列出子目录'),
+      includeHidden: z.boolean().optional().default(false).describe('是否包含隐藏文件（以.开头）'),
     }),
     outputSchema: z.object({
       entries: z.array(

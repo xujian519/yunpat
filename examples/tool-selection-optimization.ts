@@ -39,13 +39,9 @@ async function example1_BasicUsage() {
   const userInput = '帮我把这个PDF文件转换成Markdown格式';
 
   // 生成优化提示
-  const optimizedPrompt = optimizer.optimizeToolSelectionPrompt(
-    userInput,
-    availableTools,
-    {
-      currentTask: '文档格式转换',
-    }
-  );
+  const optimizedPrompt = optimizer.optimizeToolSelectionPrompt(userInput, availableTools, {
+    currentTask: '文档格式转换',
+  });
 
   console.log('优化后的提示：');
   console.log(optimizedPrompt);
@@ -73,9 +69,7 @@ async function example2_RecordUsage() {
     {
       sessionId: 'session-123',
       userId: 'user-456',
-      conversationHistory: [
-        { role: 'user', content: '帮我把这个PDF文件转换成Markdown格式' },
-      ],
+      conversationHistory: [{ role: 'user', content: '帮我把这个PDF文件转换成Markdown格式' }],
     }
   );
 
@@ -97,18 +91,10 @@ async function example3_GetRecommendations() {
   console.log('=== 示例3：获取工具推荐 ===\n');
 
   const userInput = '分析这个Excel表格中的销售数据';
-  const availableTools = [
-    'ExcelReadTool',
-    'ExcelToJsonTool',
-    'PdfParseTool',
-    'DataAnalysisTool',
-  ];
+  const availableTools = ['ExcelReadTool', 'ExcelToJsonTool', 'PdfParseTool', 'DataAnalysisTool'];
 
   // 获取推荐
-  const recommendations = toolUsageTracker.getRecommendations(
-    userInput,
-    availableTools
-  );
+  const recommendations = toolUsageTracker.getRecommendations(userInput, availableTools);
 
   console.log('工具推荐：');
   for (const rec of recommendations) {
@@ -169,13 +155,9 @@ class EnhancedAgent {
    */
   async selectTool(userInput: string, availableTools: any[]) {
     // 1. 生成优化提示
-    const prompt = this.optimizer.optimizeToolSelectionPrompt(
-      userInput,
-      availableTools,
-      {
-        currentTask: userInput,
-      }
-    );
+    const prompt = this.optimizer.optimizeToolSelectionPrompt(userInput, availableTools, {
+      currentTask: userInput,
+    });
 
     // 2. 调用LLM获取决策
     // const decision = await this.llm.generate(prompt);

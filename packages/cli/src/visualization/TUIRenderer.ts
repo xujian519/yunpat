@@ -4,11 +4,7 @@
  * 在终端中提供交互式的任务依赖图浏览界面
  */
 
-import type {
-  HierarchicalPlan,
-  TUIRenderOptions,
-  RenderResult,
-} from './types.js';
+import type { HierarchicalPlan, TUIRenderOptions, RenderResult } from './types.js';
 import { TaskStatus } from '@yunpat/core';
 
 /**
@@ -33,10 +29,7 @@ export class TUIRenderer {
   /**
    * 渲染TUI界面
    */
-  render(
-    plan: HierarchicalPlan,
-    options: any = {}
-  ): RenderResult {
+  render(plan: HierarchicalPlan, options: any = {}): RenderResult {
     const startTime = Date.now();
 
     const content = this.renderInteractiveView(plan, options);
@@ -57,10 +50,7 @@ export class TUIRenderer {
   /**
    * 渲染交互式视图
    */
-  private renderInteractiveView(
-    plan: HierarchicalPlan,
-    options: any
-  ): string {
+  private renderInteractiveView(plan: HierarchicalPlan, options: any): string {
     const lines: string[] = [];
 
     // 标题栏
@@ -98,13 +88,7 @@ export class TUIRenderer {
    * 渲染菜单栏
    */
   private renderMenuBar(options: TUIRenderOptions): string {
-    const items = [
-      '[F1] 帮助',
-      '[F2] 过滤',
-      '[F3] 排序',
-      '[F4] 导出',
-      '[Q] 退出',
-    ];
+    const items = ['[F1] 帮助', '[F2] 过滤', '[F3] 排序', '[F4] 导出', '[Q] 退出'];
 
     return `│ ${items.join('  ')} │`;
   }
@@ -112,20 +96,17 @@ export class TUIRenderer {
   /**
    * 渲染主内容区
    */
-  private renderMainContent(
-    plan: HierarchicalPlan,
-    options: TUIRenderOptions
-  ): string {
+  private renderMainContent(plan: HierarchicalPlan, options: TUIRenderOptions): string {
     const lines: string[] = [];
 
     lines.push('│');
     lines.push('│ ┌─ 任务列表 ─────────────────────────────────┐');
 
     // 显示任务列表
-    const order = plan.dependencies.topologicalOrder || plan.subGoals.map(g => g.id);
+    const order = plan.dependencies.topologicalOrder || plan.subGoals.map((g) => g.id);
 
     for (const nodeId of order) {
-      const node = plan.subGoals.find(g => g.id === nodeId);
+      const node = plan.subGoals.find((g) => g.id === nodeId);
       if (!node) continue;
 
       // 应用状态过滤
@@ -142,7 +123,7 @@ export class TUIRenderer {
 
     // 如果有选中的任务，显示详细信息
     if (this.currentNode) {
-      const node = plan.subGoals.find(g => g.id === this.currentNode);
+      const node = plan.subGoals.find((g) => g.id === this.currentNode);
       if (node) {
         lines.push('│ ┌─ 任务详情 ─────────────────────────────────┐');
         lines.push(this.renderTaskDetail(node, plan));
@@ -156,11 +137,7 @@ export class TUIRenderer {
   /**
    * 渲染任务行
    */
-  private renderTaskLine(
-    node: any,
-    isSelected: boolean,
-    isCurrent: boolean
-  ): string {
+  private renderTaskLine(node: any, isSelected: boolean, isCurrent: boolean): string {
     const icon = this.getStatusIcon(node.status);
     const priorityIcon = this.getPriorityIcon(node.priority);
     const marker = isCurrent ? '►' : ' ';
@@ -195,9 +172,7 @@ export class TUIRenderer {
     }
 
     // 被依赖关系
-    const dependents = plan.subGoals.filter((g: any) =>
-      g.dependencies.includes(node.id)
-    );
+    const dependents = plan.subGoals.filter((g: any) => g.dependencies.includes(node.id));
     if (dependents.length > 0) {
       const depNames = dependents.map((g: any) => g.title).join(', ');
       lines.push(`│ │ 被依赖: ${depNames}`);
@@ -211,7 +186,8 @@ export class TUIRenderer {
    */
   private renderStatusBar(plan: HierarchicalPlan): string {
     const stats = this.calculateStats(plan);
-    const statusText = `任务: ${stats.totalNodes} | ` +
+    const statusText =
+      `任务: ${stats.totalNodes} | ` +
       `完成: ${stats.completedNodes} | ` +
       `失败: ${stats.failedNodes} | ` +
       `进行中: ${stats.inProgressNodes}`;
@@ -261,9 +237,7 @@ export class TUIRenderer {
     percentage: number;
   } {
     const total = plan.subGoals.length;
-    const completed = plan.subGoals.filter(
-      g => g.status === TaskStatus.COMPLETED
-    ).length;
+    const completed = plan.subGoals.filter((g) => g.status === TaskStatus.COMPLETED).length;
     const percentage = total > 0 ? (completed / total) * 100 : 0;
 
     return { total, completed, percentage };
@@ -280,15 +254,9 @@ export class TUIRenderer {
   } {
     return {
       totalNodes: plan.subGoals.length,
-      completedNodes: plan.subGoals.filter(
-        (g: any) => g.status === TaskStatus.COMPLETED
-      ).length,
-      failedNodes: plan.subGoals.filter(
-        (g: any) => g.status === TaskStatus.FAILED
-      ).length,
-      inProgressNodes: plan.subGoals.filter(
-        (g: any) => g.status === TaskStatus.IN_PROGRESS
-      ).length,
+      completedNodes: plan.subGoals.filter((g: any) => g.status === TaskStatus.COMPLETED).length,
+      failedNodes: plan.subGoals.filter((g: any) => g.status === TaskStatus.FAILED).length,
+      inProgressNodes: plan.subGoals.filter((g: any) => g.status === TaskStatus.IN_PROGRESS).length,
     };
   }
 

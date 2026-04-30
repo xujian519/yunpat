@@ -60,16 +60,8 @@ export class PatentDetailTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       patentNumber: z.string().describe('专利号（如 CN123456789A）'),
-      includeClaims: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('是否包含权利要求'),
-      includeAnalysis: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('是否包含技术分析'),
+      includeClaims: z.boolean().optional().default(true).describe('是否包含权利要求'),
+      includeAnalysis: z.boolean().optional().default(true).describe('是否包含技术分析'),
     }),
     outputSchema: z.object({
       basicInfo: z.object({
@@ -159,9 +151,7 @@ export class PatentDetailTool extends EnhancedBaseTool<
       };
     } catch (error) {
       throw new Error(
-        `Patent detail analysis failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Patent detail analysis failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -184,8 +174,7 @@ export class PatentDetailTool extends EnhancedBaseTool<
     const keywords = this.extractKeywords(detail.title + ' ' + detail.abstract);
 
     // 确定技术领域（基于 IPC）
-    const technologyField =
-      ipcCodes.length > 0 ? this.getTechnologyField(ipcCodes[0]) : 'Unknown';
+    const technologyField = ipcCodes.length > 0 ? this.getTechnologyField(ipcCodes[0]) : 'Unknown';
 
     return {
       ipcCodes,
@@ -316,11 +305,7 @@ export class HighCitationPatentsTool extends EnhancedBaseTool<
     inputSchema: z.object({
       technology: z.string().optional().describe('技术领域关键词'),
       ipcCode: z.string().optional().describe('IPC分类号'),
-      minCitations: z
-        .number()
-        .optional()
-        .default(10)
-        .describe('最小被引次数'),
+      minCitations: z.number().optional().default(10).describe('最小被引次数'),
       limit: z.number().optional().default(10).describe('返回结果数量'),
     }),
     outputSchema: z.object({
@@ -403,8 +388,7 @@ export class HighCitationPatentsTool extends EnhancedBaseTool<
       const citationCounts = patentsWithCitations.map((p: any) => p.citations);
       const citationStats = {
         avgCitations:
-          citationCounts.reduce((sum: number, c: number) => sum + c, 0) /
-          citationCounts.length,
+          citationCounts.reduce((sum: number, c: number) => sum + c, 0) / citationCounts.length,
         maxCitations: Math.max(...citationCounts),
         minCitations: Math.min(...citationCounts),
       };

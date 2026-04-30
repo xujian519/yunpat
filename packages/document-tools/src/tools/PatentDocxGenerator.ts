@@ -192,7 +192,14 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
       sections: [
         {
           properties: {},
-          children: this.generateDocumentChildren(data, Document, Paragraph, TextRun, HeadingLevel, AlignmentType),
+          children: this.generateDocumentChildren(
+            data,
+            Document,
+            Paragraph,
+            TextRun,
+            HeadingLevel,
+            AlignmentType
+          ),
         },
       ],
     });

@@ -27,7 +27,8 @@ if (existsSync(envPath)) {
 
 // 2. 测试知识库
 console.log('\n2️⃣ 测试知识库...');
-const knowledgePath = process.env.KNOWLEDGE_BASE_PATH || '/Users/xujian/projects/YunPat/knowledge-base';
+const knowledgePath =
+  process.env.KNOWLEDGE_BASE_PATH || '/Users/xujian/projects/YunPat/knowledge-base';
 if (existsSync(knowledgePath)) {
   console.log('   ✅ 知识库目录存在');
   const { statSync } = await import('fs');
@@ -44,7 +45,7 @@ const { readdirSync } = await import('fs');
 const wikiPath = join(knowledgePath, '专利实务');
 if (existsSync(wikiPath)) {
   const files = readdirSync(wikiPath, { recursive: true });
-  const mdFiles = files.filter(f => f.endsWith('.md'));
+  const mdFiles = files.filter((f) => f.endsWith('.md'));
   console.log(`   ✅ 找到 ${mdFiles.length} 个 markdown 文件`);
 } else {
   console.log('   ❌ 专利实务目录不存在');
@@ -56,7 +57,7 @@ const templateDir = './prompts/patent-drafting';
 const templates = [
   '01-claims-generation.md',
   '02-specification-drafting.md',
-  '03-creativity-analysis.md'
+  '03-creativity-analysis.md',
 ];
 
 let templateCount = 0;

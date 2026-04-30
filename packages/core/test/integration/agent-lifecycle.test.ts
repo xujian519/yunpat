@@ -24,7 +24,7 @@ class FullAgent extends Agent<string, string> {
     name: string,
     eventBus: EventBus,
     memoryStore: EnhancedMemoryStore,
-    toolRegistry: ToolRegistry,
+    toolRegistry: ToolRegistry
   ) {
     super({
       name,
@@ -201,7 +201,9 @@ describe('Agent 端到端集成', () => {
             llm: createMockLLM(),
           });
         }
-        protected async plan() { return 'plan'; }
+        protected async plan() {
+          return 'plan';
+        }
         protected async act() {
           this.response = await this.send('responder', { target: 'responder' });
           return 'done';

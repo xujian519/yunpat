@@ -4,12 +4,7 @@
  * 分析任务和子目标之间的依赖关系，构建依赖图，检测循环依赖
  */
 
-import type {
-  Dependency,
-  DependencyGraph,
-  SubGoal,
-  DependencyAnalyzerConfig,
-} from './types.js';
+import type { Dependency, DependencyGraph, SubGoal, DependencyAnalyzerConfig } from './types.js';
 import { DependencyType, TaskType } from './types.js';
 
 /**
@@ -30,10 +25,7 @@ export class DependencyAnalyzer {
   /**
    * 分析子目标之间的依赖关系
    */
-  analyzeDependencies(
-    subGoals: SubGoal[],
-    existingDependencies?: Dependency[]
-  ): DependencyGraph {
+  analyzeDependencies(subGoals: SubGoal[], existingDependencies?: Dependency[]): DependencyGraph {
     const nodes = new Map<string, SubGoal>();
     const edges: Dependency[] = [...(existingDependencies || [])];
 
@@ -99,18 +91,13 @@ export class DependencyAnalyzer {
     }
 
     // 过滤掉低强度的依赖
-    return dependencies.filter(
-      (dep) => dep.strength >= this.config.minDependencyStrength
-    );
+    return dependencies.filter((dep) => dep.strength >= this.config.minDependencyStrength);
   }
 
   /**
    * 检查两个子目标之间是否存在依赖关系
    */
-  private checkDependency(
-    fromGoal: SubGoal,
-    toGoal: SubGoal
-  ): Dependency | null {
+  private checkDependency(fromGoal: SubGoal, toGoal: SubGoal): Dependency | null {
     let strength = 0;
     const reasons: string[] = [];
 
@@ -169,7 +156,7 @@ export class DependencyAnalyzer {
 
       // 匹配英文单词（2个字母或以上）
       const englishMatches = text.toLowerCase().match(/[a-z]{2,}/g) || [];
-      englishMatches.forEach(word => keywords.add(word));
+      englishMatches.forEach((word) => keywords.add(word));
 
       // 对于中文，提取2个字的词
       // 例如："深度学习训练" -> ["深度", "学习", "训练"]
@@ -193,7 +180,7 @@ export class DependencyAnalyzer {
     extractFromText(goal.description);
 
     // 从任务标题提取
-    goal.tasks.forEach(task => {
+    goal.tasks.forEach((task) => {
       extractFromText(task.title);
       extractFromText(task.description);
     });
@@ -210,7 +197,7 @@ export class DependencyAnalyzer {
     }
 
     const intersection = new Set<string>();
-    keywordsA.forEach(word => {
+    keywordsA.forEach((word) => {
       if (keywordsB.has(word)) {
         intersection.add(word);
       }
@@ -224,8 +211,8 @@ export class DependencyAnalyzer {
    * 检查任务类型依赖
    */
   private checkTaskTypeDependency(fromGoal: SubGoal, toGoal: SubGoal): number {
-    const fromTypes = new Set(fromGoal.tasks.map(t => t.type));
-    const toTypes = new Set(toGoal.tasks.map(t => t.type));
+    const fromTypes = new Set(fromGoal.tasks.map((t) => t.type));
+    const toTypes = new Set(toGoal.tasks.map((t) => t.type));
 
     // 研究任务应该在分析任务之前
     if (fromTypes.has(TaskType.RESEARCH) && toTypes.has(TaskType.ANALYSIS)) {
@@ -266,10 +253,7 @@ export class DependencyAnalyzer {
   /**
    * 检测循环依赖（使用DFS）
    */
-  private detectCycles(
-    nodes: Map<string, SubGoal>,
-    edges: Dependency[]
-  ): boolean {
+  private detectCycles(nodes: Map<string, SubGoal>, edges: Dependency[]): boolean {
     const visited = new Set<string>();
     const recursionStack = new Set<string>();
 
@@ -285,7 +269,7 @@ export class DependencyAnalyzer {
       recursionStack.add(nodeId);
 
       // 获取所有出边
-      const outgoingEdges = edges.filter(e => e.from === nodeId);
+      const outgoingEdges = edges.filter((e) => e.from === nodeId);
       for (const edge of outgoingEdges) {
         if (dfs(edge.to)) {
           return true;
@@ -308,10 +292,7 @@ export class DependencyAnalyzer {
   /**
    * 修复循环依赖（移除强度最低的边）
    */
-  private fixCycles(
-    nodes: Map<string, SubGoal>,
-    edges: Dependency[]
-  ): Dependency[] {
+  private fixCycles(nodes: Map<string, SubGoal>, edges: Dependency[]): Dependency[] {
     const fixedEdges = [...edges];
     let hasCycles = true;
 
@@ -330,7 +311,7 @@ export class DependencyAnalyzer {
       for (let i = 0; i < cycle.length; i++) {
         const from = cycle[i];
         const to = cycle[(i + 1) % cycle.length];
-        const edge = fixedEdges.find(e => e.from === from && e.to === to);
+        const edge = fixedEdges.find((e) => e.from === from && e.to === to);
         if (edge && edge.strength < minStrength) {
           minStrength = edge.strength;
           edgeToRemove = edge;
@@ -355,11 +336,8 @@ export class DependencyAnalyzer {
   /**
    * 查找循环路径
    */
-  private findCycle(
-    nodes: Map<string, SubGoal>,
-    edges: Dependency[]
-  ): string[] | null {
-    const parent = new Map<string, string | null>();
+  private findCycle(nodes: Map<string, SubGoal>, edges: Dependency[]): string[] | null {
+    const _parent = new Map<string, string | null>(); // 保留用于未来实现路径追踪
     const visited = new Set<string>();
     const recursionStack = new Set<string>();
 
@@ -378,7 +356,7 @@ export class DependencyAnalyzer {
       path.push(nodeId);
 
       // 获取所有出边
-      const outgoingEdges = edges.filter(e => e.from === nodeId);
+      const outgoingEdges = edges.filter((e) => e.from === nodeId);
       for (const edge of outgoingEdges) {
         const result = dfs(edge.to, [...path]);
         if (result) {
@@ -403,10 +381,7 @@ export class DependencyAnalyzer {
   /**
    * 拓扑排序（Kahn算法）
    */
-  private topologicalSort(
-    nodes: Map<string, SubGoal>,
-    edges: Dependency[]
-  ): string[] {
+  private topologicalSort(nodes: Map<string, SubGoal>, edges: Dependency[]): string[] {
     const inDegree = new Map<string, number>();
     const adjList = new Map<string, string[]>();
 
@@ -417,7 +392,7 @@ export class DependencyAnalyzer {
     });
 
     // 构建邻接表和入度
-    edges.forEach(edge => {
+    edges.forEach((edge) => {
       adjList.get(edge.from)?.push(edge.to);
       inDegree.set(edge.to, (inDegree.get(edge.to) || 0) + 1);
     });
@@ -469,7 +444,7 @@ export class DependencyAnalyzer {
     // 计算最早开始时间
     const order = graph.topologicalOrder;
     for (const nodeId of order) {
-      const incomingEdges = graph.edges.filter(e => e.to === nodeId);
+      const incomingEdges = graph.edges.filter((e) => e.to === nodeId);
       for (const edge of incomingEdges) {
         const fromDuration = graph.nodes.get(edge.from)?.estimatedDuration || 0;
         const newStart = (earliestStart.get(edge.from) || 0) + fromDuration;
@@ -480,7 +455,7 @@ export class DependencyAnalyzer {
     // 计算最晚开始时间（从后往前）
     for (let i = order.length - 1; i >= 0; i--) {
       const nodeId = order[i];
-      const outgoingEdges = graph.edges.filter(e => e.from === nodeId);
+      const outgoingEdges = graph.edges.filter((e) => e.from === nodeId);
       const currentNode = graph.nodes.get(nodeId);
 
       if (outgoingEdges.length === 0) {
@@ -523,15 +498,16 @@ export class DependencyAnalyzer {
   } {
     const degrees = new Map<string, number>();
 
-    graph.edges.forEach(edge => {
+    graph.edges.forEach((edge) => {
       degrees.set(edge.from, (degrees.get(edge.from) || 0) + 1);
       degrees.set(edge.to, (degrees.get(edge.to) || 0) + 1);
     });
 
     const degreeValues = Array.from(degrees.values());
-    const avgDegree = degreeValues.length > 0
-      ? degreeValues.reduce((sum, d) => sum + d, 0) / degreeValues.length
-      : 0;
+    const avgDegree =
+      degreeValues.length > 0
+        ? degreeValues.reduce((sum, d) => sum + d, 0) / degreeValues.length
+        : 0;
     const maxDegree = degreeValues.length > 0 ? Math.max(...degreeValues) : 0;
 
     return {

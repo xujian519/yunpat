@@ -13,7 +13,7 @@ import { createMockLLM, createMockMemory } from '../helpers/mocks.js';
 function createTestTool(
   name: string,
   category?: ToolCategory,
-  overrides?: Partial<EnhancedTool['metadata']>,
+  overrides?: Partial<EnhancedTool['metadata']>
 ): EnhancedTool {
   const schema = z.object({ input: z.string() });
   return new ToolWrapperClass(
@@ -25,7 +25,7 @@ function createTestTool(
       isConcurrencySafe: true,
       ...overrides,
     },
-    async (input) => `processed: ${input.input}`,
+    async (input) => `processed: ${input.input}`
   );
 }
 
@@ -62,7 +62,7 @@ describe('EnhancedToolRegistry', () => {
       const schema = z.object({ input: z.string() });
       const emptyTool = new ToolWrapperClass(
         { name: '', description: '', inputSchema: schema },
-        async (input) => input,
+        async (input) => input
       );
       expect(() => registry.register(emptyTool)).toThrow('Tool name is required');
     });
@@ -110,15 +110,15 @@ describe('EnhancedToolRegistry', () => {
     });
 
     it('调用不存在的工具应抛出错误', async () => {
-      await expect(
-        registry.call('missing', { input: 'x' }, createToolContext()),
-      ).rejects.toThrow('Tool not found');
+      await expect(registry.call('missing', { input: 'x' }, createToolContext())).rejects.toThrow(
+        'Tool not found'
+      );
     });
 
     it('无效输入应抛出验证错误', async () => {
       registry.register(createTestTool('strict'));
       await expect(
-        registry.call('strict', { wrong: 'field' }, createToolContext()),
+        registry.call('strict', { wrong: 'field' }, createToolContext())
       ).rejects.toThrow();
     });
   });
@@ -133,7 +133,7 @@ describe('EnhancedToolRegistry', () => {
           { name: 'b1', input: { input: 'a' } },
           { name: 'b2', input: { input: 'b' } },
         ],
-        createToolContext(),
+        createToolContext()
       );
 
       expect(results).toEqual(['processed: a', 'processed: b']);
@@ -162,10 +162,12 @@ describe('EnhancedToolRegistry', () => {
 
   describe('getByMcpServer', () => {
     it('应按 MCP 服务器过滤工具', () => {
-      registry.register(createTestTool('mcp-1', undefined, {
-        isMcp: true,
-        mcpServer: 'server-a',
-      }));
+      registry.register(
+        createTestTool('mcp-1', undefined, {
+          isMcp: true,
+          mcpServer: 'server-a',
+        })
+      );
       registry.register(createTestTool('local-1'));
 
       const mcpTools = registry.getByMcpServer('server-a');

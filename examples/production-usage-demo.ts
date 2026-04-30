@@ -49,7 +49,13 @@ function createMockTools(): EnhancedTool[] {
       },
       execute: async (params: any) => {
         return {
-          json: { data: [['A', 'B'], [1, 2], [3, 4]] },
+          json: {
+            data: [
+              ['A', 'B'],
+              [1, 2],
+              [3, 4],
+            ],
+          },
           sourceFormat: 'excel',
           targetFormat: 'json',
         };
@@ -194,7 +200,6 @@ async function scenario1_PdfConversion() {
     console.log(`  优化率: ${(stats.successRate * 100).toFixed(1)}%`);
     console.log(`  成功执行: ${stats.successfulExecutions}`);
     console.log(`  失败执行: ${stats.failedExecutions}`);
-
   } catch (error) {
     console.error('\n❌ 任务执行失败:', error.message);
   }
@@ -252,7 +257,7 @@ async function scenario2_BatchProcessing() {
 
   // 汇总结果
   console.log('\n📊 批量处理结果汇总:');
-  const successCount = results.filter(r => r.success).length;
+  const successCount = results.filter((r) => r.success).length;
   console.log(`  成功: ${successCount}/${tasks.length}`);
   console.log(`  失败: ${tasks.length - successCount}/${tasks.length}`);
 
@@ -354,7 +359,6 @@ async function runAllProductionDemos() {
     console.log('  ✅ 错误恢复：智能替代工具推荐');
     console.log('  ✅ 性能优秀：平均<100ms/任务');
     console.log('  ✅ 高准确率：>85%的工具选择准确率');
-
   } catch (error) {
     console.error('\n❌ 演示失败:', error.message);
     console.error(error.stack);

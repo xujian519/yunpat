@@ -59,20 +59,20 @@ export class LangChainAdapter implements ILLMAdapter {
     }));
 
     // 调用 LangChain
-    const response: any = await this.llm.call(messages as any);
+    const response: unknown = await this.llm.call(messages as any);
 
     return {
       message: {
         role: 'assistant',
-        content: response.content as string,
+        content: (response as any).content as string,
       },
-      usage: response.usage_metadata
+      usage: (response as any).usage_metadata
         ? {
-            promptTokens: response.usage_metadata.input_tokens || 0,
-            completionTokens: response.usage_metadata.output_tokens || 0,
+            promptTokens: (response as any).usage_metadata.input_tokens || 0,
+            completionTokens: (response as any).usage_metadata.output_tokens || 0,
             totalTokens:
-              (response.usage_metadata.input_tokens || 0) +
-              (response.usage_metadata.output_tokens || 0),
+              ((response as any).usage_metadata.input_tokens || 0) +
+              ((response as any).usage_metadata.output_tokens || 0),
           }
         : undefined,
     };

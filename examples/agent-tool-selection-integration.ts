@@ -275,11 +275,7 @@ ${recommendations}
   /**
    * 尝试替代工具
    */
-  private async tryAlternativeTool(
-    failedPlan: any,
-    context: any,
-    error: Error
-  ): Promise<any> {
+  private async tryAlternativeTool(failedPlan: any, context: any, error: Error): Promise<any> {
     // 获取推荐
     const recommendations = this.toolOptimizer.optimizeToolSelectionPrompt(
       context.userInput,
@@ -402,16 +398,12 @@ export async function completeToolSelectionWorkflow() {
 
   // 4. 生成优化提示
   console.log('1️⃣ 生成优化的工具选择提示');
-  const optimizedPrompt = optimizer.optimizeToolSelectionPrompt(
-    userInput,
-    availableTools,
-    {
-      conversationHistory: [
-        { role: 'user', content: '我需要处理一些文档' },
-        { role: 'assistant', content: '我可以帮您处理文档' },
-      ],
-    }
-  );
+  const optimizedPrompt = optimizer.optimizeToolSelectionPrompt(userInput, availableTools, {
+    conversationHistory: [
+      { role: 'user', content: '我需要处理一些文档' },
+      { role: 'assistant', content: '我可以帮您处理文档' },
+    ],
+  });
 
   console.log(optimizedPrompt);
   console.log('\n' + '='.repeat(60) + '\n');

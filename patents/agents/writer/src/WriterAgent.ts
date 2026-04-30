@@ -147,7 +147,9 @@ export class WriterAgent extends Agent<WritingTask, WritingResult, WritingPlan, 
     const cachedResponse = await this.semanticCache.findSimilar(task);
 
     if (cachedResponse) {
-      console.log(`[语义缓存] ✅ 命中！相似度 ${(cachedResponse.signature.embedding[0] * 100).toFixed(1)}%`);
+      console.log(
+        `[语义缓存] ✅ 命中！相似度 ${(cachedResponse.signature.embedding[0] * 100).toFixed(1)}%`
+      );
       console.log(`[语义缓存] 跳过生成，直接返回缓存结果`);
 
       // 保存缓存结果
@@ -272,7 +274,10 @@ export class WriterAgent extends Agent<WritingTask, WritingResult, WritingPlan, 
 
         if (attempt < maxRetries) {
           // 继续重试
-          console.warn(`大纲解析失败，正在重试 (${attempt + 1}/${maxRetries})...`, lastError.message);
+          console.warn(
+            `大纲解析失败，正在重试 (${attempt + 1}/${maxRetries})...`,
+            lastError.message
+          );
         } else {
           // 最后一次尝试也失败了
           console.error('大纲解析失败，已达到最大重试次数', lastError);
@@ -283,9 +288,7 @@ export class WriterAgent extends Agent<WritingTask, WritingResult, WritingPlan, 
 
     // 如果所有重试都失败，抛出异常
     if (!outline) {
-      throw new Error(
-        `无法生成大纲: ${lastError?.message || '未知错误'}`
-      );
+      throw new Error(`无法生成大纲: ${lastError?.message || '未知错误'}`);
     }
 
     // 确定语气

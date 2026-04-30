@@ -109,9 +109,7 @@ describe('GooglePatentsFetchTool', () => {
     vi.stubGlobal('fetch', mockFetch);
 
     const context = {} as any;
-    await expect(tool.execute({ query: 'test' }, context)).rejects.toThrow(
-      'HTTP 403: Forbidden'
-    );
+    await expect(tool.execute({ query: 'test' }, context)).rejects.toThrow('HTTP 403: Forbidden');
   });
 
   it('uses default page and language', async () => {
@@ -239,8 +237,8 @@ describe('GooglePatentDetailTool', () => {
     vi.stubGlobal('fetch', mockFetch);
 
     const context = {} as any;
-    await expect(
-      tool.execute({ patentNumber: 'INVALID' }, context)
-    ).rejects.toThrow('HTTP 404: Not Found');
+    await expect(tool.execute({ patentNumber: 'INVALID' }, context)).rejects.toThrow(
+      'HTTP 404: Not Found'
+    );
   });
 });

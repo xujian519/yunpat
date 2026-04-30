@@ -265,17 +265,15 @@ describe('ToolSelectionOptimizer - 性能测试', () => {
       const start = performance.now();
 
       // 模拟并发请求
-      const promises = requests.map(req =>
-        Promise.resolve(
-          optimizer.optimizeToolSelectionPrompt(req.userInput, req.tools)
-        )
+      const promises = requests.map((req) =>
+        Promise.resolve(optimizer.optimizeToolSelectionPrompt(req.userInput, req.tools))
       );
 
       const results = await Promise.all(promises);
       const duration = performance.now() - start;
 
       expect(results.length).toBe(20);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeDefined();
       });
       expect(duration).toBeLessThan(1000); // 应该在1秒内完成

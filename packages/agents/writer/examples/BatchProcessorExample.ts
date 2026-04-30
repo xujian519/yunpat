@@ -177,7 +177,18 @@ export async function runBatchProcessorExample() {
   console.log(JSON.stringify(batchProcessor.getConfig(), null, 2));
 
   console.log('\n3. 智能分批示例:');
-  const sections = ['第一章', '第二章', '第三章', '第四章', '第五章', '第六章', '第七章', '第八章', '第九章', '第十章'];
+  const sections = [
+    '第一章',
+    '第二章',
+    '第三章',
+    '第四章',
+    '第五章',
+    '第六章',
+    '第七章',
+    '第八章',
+    '第九章',
+    '第十章',
+  ];
   console.log(`   总章节数: ${sections.length}`);
   console.log(`   单批最大: 8个章节`);
   console.log(`   分批数量: ${Math.ceil(sections.length / 8)}批`);

@@ -18,7 +18,8 @@ export class PatentToolsRust {
 
   constructor(rustBinaryPath?: string) {
     // 更新路径：rust/ 已移动到 packages/rust-tools/
-    this.rustBinaryPath = rustBinaryPath || join(process.cwd(), 'packages/rust-tools/target/debug/patent-tools');
+    this.rustBinaryPath =
+      rustBinaryPath || join(process.cwd(), 'packages/rust-tools/target/debug/patent-tools');
   }
 
   /**
@@ -44,10 +45,7 @@ export class PatentToolsRust {
   /**
    * 生成权利要求
    */
-  async generateClaims(params: {
-    technicalFeatures: any[];
-    inventionType: string;
-  }): Promise<any> {
+  async generateClaims(params: { technicalFeatures: any[]; inventionType: string }): Promise<any> {
     const inputPath = join(tmpdir(), `claim-gen-${Date.now()}.json`);
     await writeFile(inputPath, JSON.stringify(params));
 

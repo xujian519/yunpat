@@ -66,10 +66,7 @@ export class DeviationDetector {
     deviations.push(...resourceDeviations);
 
     // 4. 检测依赖偏离
-    const dependencyDeviation = this.detectDependencyDeviation(
-      plannedState,
-      actualState
-    );
+    const dependencyDeviation = this.detectDependencyDeviation(plannedState, actualState);
     if (dependencyDeviation) {
       deviations.push(dependencyDeviation);
     }
@@ -120,16 +117,8 @@ export class DeviationDetector {
       deviationDegree,
       affectedGoals: this.getAffectedGoals(plannedState, actualState),
       suggestions: isBehind
-        ? [
-            '增加资源投入',
-            '调整任务优先级',
-            '并行化执行',
-            '分解剩余任务',
-          ]
-        : [
-            '提高质量标准',
-            '增加验证步骤',
-          ],
+        ? ['增加资源投入', '调整任务优先级', '并行化执行', '分解剩余任务']
+        : ['提高质量标准', '增加验证步骤'],
     };
   }
 
@@ -148,7 +137,8 @@ export class DeviationDetector {
     if (qualityDeviation >= threshold) {
       deviations.push({
         type: 'quality_deviation' as DeviationType,
-        severity: qualityDeviation > 0.4 ? 'severe' : qualityDeviation > 0.25 ? 'moderate' : 'minor',
+        severity:
+          qualityDeviation > 0.4 ? 'severe' : qualityDeviation > 0.25 ? 'moderate' : 'minor',
         description: `总体质量偏离: 预期 ${(plannedQuality.overallQuality * 100).toFixed(1)}%, 实际 ${(actualQuality.overallQuality * 100).toFixed(1)}%`,
         plannedValue: plannedQuality.overallQuality,
         actualValue: actualQuality.overallQuality,
@@ -159,7 +149,9 @@ export class DeviationDetector {
     }
 
     // 检测成功率偏离
-    const successRateDeviation = Math.abs(plannedQuality.taskSuccessRate - actualQuality.taskSuccessRate);
+    const successRateDeviation = Math.abs(
+      plannedQuality.taskSuccessRate - actualQuality.taskSuccessRate
+    );
     if (successRateDeviation >= threshold) {
       deviations.push({
         type: 'quality_deviation' as DeviationType,
@@ -169,12 +161,7 @@ export class DeviationDetector {
         actualValue: actualQuality.taskSuccessRate,
         deviationDegree: successRateDeviation,
         affectedGoals: [],
-        suggestions: [
-          '分析失败原因',
-          '调整任务难度',
-          '增加资源支持',
-          '改进任务描述',
-        ],
+        suggestions: ['分析失败原因', '调整任务难度', '增加资源支持', '改进任务描述'],
       });
     }
 
@@ -188,11 +175,7 @@ export class DeviationDetector {
         actualValue: actualQuality.overallQuality,
         deviationDegree: 0.3,
         affectedGoals: [],
-        suggestions: [
-          '暂停执行，分析原因',
-          '调整执行策略',
-          '增加质量控制',
-        ],
+        suggestions: ['暂停执行，分析原因', '调整执行策略', '增加质量控制'],
       });
     }
 
@@ -228,15 +211,8 @@ export class DeviationDetector {
         deviationDegree: Math.abs(tokenDeviation),
         affectedGoals: [],
         suggestions: isOverBudget
-          ? [
-              '优化提示词',
-              '减少冗余步骤',
-              '使用语义缓存',
-            ]
-          : [
-              '增加任务深度',
-              '提高输出质量',
-            ],
+          ? ['优化提示词', '减少冗余步骤', '使用语义缓存']
+          : ['增加任务深度', '提高输出质量'],
       });
     }
 
@@ -259,15 +235,8 @@ export class DeviationDetector {
         deviationDegree: Math.abs(timeDeviation),
         affectedGoals: [],
         suggestions: isOverTime
-          ? [
-              '跳过非关键任务',
-              '降低输出质量',
-              '并行化执行',
-            ]
-          : [
-              '增加验证步骤',
-              '提高输出质量',
-            ],
+          ? ['跳过非关键任务', '降低输出质量', '并行化执行']
+          : ['增加验证步骤', '提高输出质量'],
       });
     }
 
@@ -311,11 +280,7 @@ export class DeviationDetector {
       actualValue: violatedDeps,
       deviationDegree: Math.min(violatedDeps * 0.2, 1.0),
       affectedGoals,
-      suggestions: [
-        '重新排序任务',
-        '调整依赖关系',
-        '增加中间检查点',
-      ],
+      suggestions: ['重新排序任务', '调整依赖关系', '增加中间检查点'],
     };
   }
 
@@ -334,10 +299,7 @@ export class DeviationDetector {
       severe: 1.0,
     };
 
-    const totalWeight = deviations.reduce(
-      (sum, d) => sum + weights[d.severity],
-      0
-    );
+    const totalWeight = deviations.reduce((sum, d) => sum + weights[d.severity], 0);
 
     const weightedSum = deviations.reduce(
       (sum, d) => sum + d.deviationDegree * weights[d.severity],
@@ -377,10 +339,7 @@ export class DeviationDetector {
   /**
    * 获取受影响的子目标
    */
-  private getAffectedGoals(
-    plannedState: ExecutionState,
-    actualState: ExecutionState
-  ): string[] {
+  private getAffectedGoals(plannedState: ExecutionState, actualState: ExecutionState): string[] {
     const behindGoals: string[] = [];
 
     for (const goal of plannedState.plan.subGoals) {

@@ -8,7 +8,7 @@
  * - 安全对齐：Constitutional AI、Guardrails
  */
 
-import { LLMAdapter, ChatParams } from '../lifecycle/Lifecycle.js';
+import { LLMAdapter } from '../lifecycle/Lifecycle.js';
 
 /**
  * 推理策略类型
@@ -35,7 +35,7 @@ export interface Observation {
   content: string;
 
   /** 相关数据 */
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 
   /** 时间戳 */
   timestamp: Date;
@@ -69,7 +69,7 @@ export interface Action {
   type: string;
 
   /** 行动参数 */
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
 
   /** 目标 */
   target?: string;
@@ -86,7 +86,7 @@ export interface ActionResult {
   success: boolean;
 
   /** 结果数据 */
-  data?: any;
+  data?: unknown;
 
   /** 错误信息 */
   error?: string;
@@ -164,7 +164,7 @@ export class ReActLoop {
    * @param context 上下文信息
    * @returns 迭代结果生成器
    */
-  async *execute(goal: string, context?: Record<string, any>): AsyncIterable<ReActIteration> {
+  async *execute(goal: string, context?: Record<string, unknown>): AsyncIterable<ReActIteration> {
     let iteration = 0;
     let done = false;
     let observation: Observation = {
@@ -482,10 +482,7 @@ export class PlanAndSolveStrategy {
   /**
    * 生成计划
    */
-  async makePlan(
-    goal: string,
-    context?: Record<string, any>
-  ): Promise<string[]> {
+  async makePlan(goal: string, context?: Record<string, unknown>): Promise<string[]> {
     let prompt = `请为以下目标制定详细的执行计划。
 
 **要求**：
@@ -529,10 +526,7 @@ export class PlanAndSolveStrategy {
   /**
    * 执行计划（增强版）
    */
-  async *executePlan(
-    plan: string[],
-    context?: Record<string, any>
-  ): AsyncIterable<StepResult> {
+  async *executePlan(plan: string[], context?: Record<string, unknown>): AsyncIterable<StepResult> {
     let executionContext = context || {};
 
     for (let i = 0; i < plan.length; i++) {
@@ -559,7 +553,6 @@ export class PlanAndSolveStrategy {
           done: i === plan.length - 1,
           tokensUsed: result.tokensUsed,
         };
-
       } catch (error) {
         // 步骤执行失败
         yield {
@@ -583,7 +576,7 @@ export class PlanAndSolveStrategy {
     step: string,
     stepNumber: number,
     totalSteps: number,
-    context: Record<string, any>
+    context: Record<string, unknown>
   ): Promise<{ result: string; tokensUsed: number }> {
     let prompt = `请执行以下步骤：
 
@@ -618,12 +611,15 @@ export class PlanAndSolveStrategy {
   /**
    * 验证计划质量
    */
-  async validatePlan(goal: string, plan: string[]): Promise<{
+  async validatePlan(
+    goal: string,
+    plan: string[]
+  ): Promise<{
     isValid: boolean;
     score: number;
     feedback: string;
   }> {
-    let prompt = `请验证以下执行计划的质量：
+    const prompt = `请验证以下执行计划的质量：
 
 **目标**：${goal}
 
@@ -668,8 +664,8 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
    */
   async *planAndSolve(
     goal: string,
-    context?: Record<string, any>
-  ): AsyncIterable<StepResult & { plan?: string[]; validation?: any }> {
+    context?: Record<string, unknown>
+  ): AsyncIterable<StepResult & { plan?: string[]; validation?: unknown }> {
     // 步骤1：生成计划
     const plan = await this.makePlan(goal, context);
 
@@ -711,8 +707,8 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 
     // 尝试多种格式
     const patterns = [
-      /^\d+[\.\)]\s*(.+)$/gm,  // "1. 步骤" 或 "1) 步骤"
-      /^[-•]\s*(.+)$/gm,       // "- 步骤" 或 "• 步骤"
+      /^\d+[\.\)]\s*(.+)$/gm, // "1. 步骤" 或 "1) 步骤"
+      /^[-•]\s*(.+)$/gm, // "- 步骤" 或 "• 步骤"
     ];
 
     for (const pattern of patterns) {
@@ -730,7 +726,7 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 
     // 如果没有匹配到，按段落分割
     if (steps.length === 0) {
-      const paragraphs = content.split(/\n\n+/).filter(p => p.trim());
+      const paragraphs = content.split(/\n\n+/).filter((p) => p.trim());
       for (const para of paragraphs) {
         const step = para.trim();
         if (step && !steps.includes(step)) {
@@ -764,10 +760,10 @@ export interface ThoughtNode {
 
   /** 评估详情 */
   evaluation?: {
-    feasibility: number;  // 可行性
-    innovation: number;   // 创新性
+    feasibility: number; // 可行性
+    innovation: number; // 创新性
     completeness: number; // 完整性
-    clarity: number;      // 清晰度
+    clarity: number; // 清晰度
   };
 }
 
@@ -827,8 +823,8 @@ export class TreeOfThoughtsStrategy {
   async evaluateThoughts(
     problem: string,
     thoughts: Array<{ thought: string; score: number }>
-  ): Promise<Array<{ thought: string; score: number; evaluation?: any }>> {
-    let prompt = `请对以下解决思路进行多维度评估（每个维度 1-10 分）：
+  ): Promise<Array<{ thought: string; score: number; evaluation?: unknown }>> {
+    const prompt = `请对以下解决思路进行多维度评估（每个维度 1-10 分）：
 
 **评估维度**：
 - 可行性：是否容易实施
@@ -902,7 +898,9 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
           score: t.score,
           depth: current.depth + 1,
           parent: current,
-          evaluation: t.evaluation,
+          evaluation: t.evaluation as
+            | { feasibility: number; innovation: number; completeness: number; clarity: number }
+            | undefined,
         };
         children.push(node);
 
@@ -945,8 +943,8 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
 
     // 尝试多种格式
     const patterns = [
-      /^\d+[\.\)]\s*(.+)$/gm,  // "1. 思路" 或 "1) 思路"
-      /^[-•]\s*(.+)$/gm,       // "- 思路" 或 "• 思路"
+      /^\d+[\.\)]\s*(.+)$/gm, // "1. 思路" 或 "1) 思路"
+      /^[-•]\s*(.+)$/gm, // "- 思路" 或 "• 思路"
     ];
 
     for (const pattern of patterns) {
@@ -954,7 +952,7 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
       if (matches && matches.length > 0) {
         for (const match of matches) {
           const cleaned = match[1]?.trim();
-          if (cleaned && !thoughts.find(t => t.thought === cleaned)) {
+          if (cleaned && !thoughts.find((t) => t.thought === cleaned)) {
             thoughts.push({ thought: cleaned, score: 5.0 }); // 默认中等分数
           }
         }
@@ -964,10 +962,10 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
 
     // 如果没有匹配到，按段落分割
     if (thoughts.length === 0) {
-      const paragraphs = content.split(/\n\n+/).filter(p => p.trim());
+      const paragraphs = content.split(/\n\n+/).filter((p) => p.trim());
       for (const para of paragraphs) {
         const cleaned = para.trim();
-        if (cleaned && !thoughts.find(t => t.thought === cleaned)) {
+        if (cleaned && !thoughts.find((t) => t.thought === cleaned)) {
           thoughts.push({ thought: cleaned, score: 5.0 });
         }
       }
@@ -982,11 +980,11 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
   private parseEvaluations(
     content: string,
     originalThoughts: Array<{ thought: string; score: number }>
-  ): Array<{ thought: string; score: number; evaluation?: any }> {
-    const results: Array<{ thought: string; score: number; evaluation?: any }> = [];
+  ): Array<{ thought: string; score: number; evaluation?: unknown }> {
+    const results: Array<{ thought: string; score: number; evaluation?: unknown }> = [];
 
     // 按行解析
-    const lines = content.split('\n').filter(line => line.trim());
+    const lines = content.split('\n').filter((line) => line.trim());
 
     for (let i = 0; i < Math.min(lines.length, originalThoughts.length); i++) {
       const line = lines[i];
@@ -1052,7 +1050,8 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
       // 计算总分（如果没有明确给出）
       if (scores.total === 5.0) {
         const sum = scores.feasibility + scores.innovation + scores.completeness + scores.clarity;
-        if (sum > 20) { // 如果不是默认值
+        if (sum > 20) {
+          // 如果不是默认值
           scores.total = sum / 4;
         }
       }
@@ -1062,7 +1061,7 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
       const numbers = line.match(numberPattern);
 
       if (numbers && numbers.length >= 4) {
-        const nums = numbers.map(n => parseFloat(n));
+        const nums = numbers.map((n) => parseFloat(n));
         scores.feasibility = nums[0];
         scores.innovation = nums[1];
         scores.completeness = nums[2];

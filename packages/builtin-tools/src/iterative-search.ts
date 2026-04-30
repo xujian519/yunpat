@@ -73,42 +73,21 @@ export class IterativeSearchTool extends EnhancedBaseTool<
 > {
   readonly metadata = {
     name: 'iterative_search',
-    description:
-      '执行迭代式深度搜索，通过多轮搜索和LLM分析不断优化结果，深度挖掘主题信息',
+    description: '执行迭代式深度搜索，通过多轮搜索和LLM分析不断优化结果，深度挖掘主题信息',
     category: ToolCategory.SEARCH,
     isConcurrencySafe: true,
     inputSchema: z.object({
       query: z.string().describe('搜索主题或问题'),
-      iterations: z
-        .number()
-        .optional()
-        .default(3)
-        .describe('迭代次数（默认3次）'),
-      width: z
-        .number()
-        .optional()
-        .default(4)
-        .describe('每轮执行的查询数量（默认4个）'),
+      iterations: z.number().optional().default(3).describe('迭代次数（默认3次）'),
+      width: z.number().optional().default(4).describe('每轮执行的查询数量（默认4个）'),
       temperature: z
         .number()
         .optional()
         .default(0.7)
         .describe('LLM温度，控制查询多样性（0.3-1.0）'),
-      dedupThreshold: z
-        .number()
-        .optional()
-        .default(0.85)
-        .describe('相似度去重阈值'),
-      deepRead: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否深度阅读原文'),
-      searchType: z
-        .enum(['auto', 'web', 'patent'])
-        .optional()
-        .default('auto')
-        .describe('搜索类型'),
+      dedupThreshold: z.number().optional().default(0.85).describe('相似度去重阈值'),
+      deepRead: z.boolean().optional().default(false).describe('是否深度阅读原文'),
+      searchType: z.enum(['auto', 'web', 'patent']).optional().default('auto').describe('搜索类型'),
     }),
     outputSchema: z.object({
       query: z.string(),
@@ -194,11 +173,7 @@ export class IterativeSearchTool extends EnhancedBaseTool<
       }
 
       // 3. 去重和排序
-      const uniqueResults = this.deduplicateResults(
-        roundResults,
-        allResults,
-        dedupThreshold
-      );
+      const uniqueResults = this.deduplicateResults(roundResults, allResults, dedupThreshold);
 
       // 4. 分析结果并更新查询
       const analysis = await this.analyzeResults(uniqueResults, context);
@@ -295,13 +270,13 @@ export class IterativeSearchTool extends EnhancedBaseTool<
 
     for (const result of newResults) {
       // 检查是否与现有结果重复
-      const isDuplicate = existingResults.some(existing =>
-        this.calculateSimilarity(result, existing) >= threshold
+      const isDuplicate = existingResults.some(
+        (existing) => this.calculateSimilarity(result, existing) >= threshold
       );
 
       // 检查是否与新结果中已添加的重复
-      const isDuplicateInNew = unique.some(existing =>
-        this.calculateSimilarity(result, existing) >= threshold
+      const isDuplicateInNew = unique.some(
+        (existing) => this.calculateSimilarity(result, existing) >= threshold
       );
 
       if (!isDuplicate && !isDuplicateInNew) {
@@ -315,19 +290,14 @@ export class IterativeSearchTool extends EnhancedBaseTool<
   /**
    * 计算相似度（简化版）
    */
-  private calculateSimilarity(
-    result1: SearchResultItem,
-    result2: SearchResultItem
-  ): number {
+  private calculateSimilarity(result1: SearchResultItem, result2: SearchResultItem): number {
     // 简化的相似度计算
     // 实际应该使用更复杂的算法（如编辑距离、余弦相似度等）
     if (result1.url === result2.url) return 1.0;
 
-    const titleSimilarity =
-      result1.title === result2.title ? 0.8 : 0.2;
+    const titleSimilarity = result1.title === result2.title ? 0.8 : 0.2;
 
-    const snippetSimilarity =
-      result1.snippet === result2.snippet ? 0.5 : 0.1;
+    const snippetSimilarity = result1.snippet === result2.snippet ? 0.5 : 0.1;
 
     return titleSimilarity * 0.7 + snippetSimilarity * 0.3;
   }
@@ -344,8 +314,8 @@ export class IterativeSearchTool extends EnhancedBaseTool<
     suggestedQueries: string[];
   }> {
     // 简化实现：基于搜索结果生成基础分析
-    const keyFindings = results.slice(0, 3).map(r => r.title);
-    const suggestedQueries = results.slice(0, 3).map(r => r.title);
+    const keyFindings = results.slice(0, 3).map((r) => r.title);
+    const suggestedQueries = results.slice(0, 3).map((r) => r.title);
 
     return {
       keyFindings,
@@ -390,10 +360,7 @@ export class PatentSearchTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       query: z.string().describe('检索关键词'),
-      searchFields: z
-        .array(z.string())
-        .optional()
-        .describe('检索字段（标题、摘要、权利要求等）'),
+      searchFields: z.array(z.string()).optional().describe('检索字段（标题、摘要、权利要求等）'),
       dateRange: z
         .object({
           start: z.string(),

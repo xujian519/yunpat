@@ -93,9 +93,11 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
     }));
 
     // 处理每个任务
-    const processTask = async (
-      task: { input: TInput; index: number; key?: string }
-    ): Promise<BatchResult<TInput, TResult>> => {
+    const processTask = async (task: {
+      input: TInput;
+      index: number;
+      key?: string;
+    }): Promise<BatchResult<TInput, TResult>> => {
       const startTime = Date.now();
       const monitorId = reasoningMonitor.startInference('batch-process', {
         index: task.index,
@@ -119,12 +121,12 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
         // 如果缓存未命中，执行处理
         if (!fromCache) {
           // 添加超时
-          const processedResult = await Promise.race([
+          const processedResult = (await Promise.race([
             processFn(task.input),
             new Promise<TResult>((_, reject) =>
               setTimeout(() => reject(new Error('Timeout')), this.config.timeout)
             ),
-          ]) as TResult;
+          ])) as TResult;
 
           result = processedResult;
           tokensUsed = this.estimateTokens(task.input);
@@ -146,7 +148,6 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
           tokensUsed,
           fromCache,
         };
-
       } catch (error) {
         const duration = Date.now() - startTime;
         reasoningMonitor.endInference(monitorId, 0, false, (error as Error).message);
@@ -272,7 +273,6 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
           });
 
           break; // 成功，跳出重试循环
-
         } catch (error) {
           lastError = error as Error;
           if (attempt === this.config.maxRetries) {
@@ -327,8 +327,8 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
     totalTokens: number;
     tokensSaved: number;
   } {
-    const successful = results.filter(r => !r.error);
-    const fromCache = results.filter(r => r.fromCache);
+    const successful = results.filter((r) => !r.error);
+    const fromCache = results.filter((r) => r.fromCache);
 
     return {
       totalDuration: results.reduce((sum, r) => sum + r.duration, 0),

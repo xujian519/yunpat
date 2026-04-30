@@ -44,11 +44,7 @@ export class AudioTranscriptionTool extends EnhancedBaseTool<
     inputSchema: z.object({
       audioPath: z.string().describe('音频文件路径（MP3、WAV、M4A等）'),
       language: z.string().optional().describe('语言代码（如zh、en等），默认自动检测'),
-      translateToEnglish: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否翻译成英文'),
+      translateToEnglish: z.boolean().optional().default(false).describe('是否翻译成英文'),
       outputFormat: z
         .enum(['text', 'srt', 'vtt', 'json'])
         .optional()
@@ -109,9 +105,7 @@ export class AudioTranscriptionTool extends EnhancedBaseTool<
         processingTime,
       };
     } catch (error) {
-      throw new Error(
-        `音频转写失败: ${error instanceof Error ? error.message : String(error)}`
-      );
+      throw new Error(`音频转写失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -205,7 +199,9 @@ export class AudioToSrtTool extends EnhancedBaseTool<
   /**
    * 生成SRT格式
    */
-  private generateSrt(segments: Array<{ id: number; start: number; end: number; text: string }>): string {
+  private generateSrt(
+    segments: Array<{ id: number; start: number; end: number; text: string }>
+  ): string {
     return segments
       .map((seg) => {
         return `${seg.id}\n${this.formatTime(seg.start)} --> ${this.formatTime(seg.end)}\n${seg.text}\n`;
@@ -317,11 +313,7 @@ export class AudioToMarkdownTool extends EnhancedBaseTool<
     inputSchema: z.object({
       audioPath: z.string().describe('音频文件路径'),
       language: z.string().optional().describe('语言代码'),
-      includeTimestamps: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否包含时间戳'),
+      includeTimestamps: z.boolean().optional().default(false).describe('是否包含时间戳'),
     }),
     outputSchema: z.object({
       markdown: z.string().describe('Markdown内容'),

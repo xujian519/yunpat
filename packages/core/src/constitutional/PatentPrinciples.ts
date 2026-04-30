@@ -9,7 +9,6 @@ import {
   PrincipleCategory,
   ViolationSeverity,
   ComplianceResult,
-  PrincipleCheckFunction,
 } from './types.js';
 
 /**
@@ -25,12 +24,8 @@ export const PATENT_PRINCIPLES: ConstitutionalPrinciple[] = [
     legalBasis: '《专利法》第二十六条第四款',
     checkFunction: checkClarity,
     examples: {
-      compliant: [
-        '一种数据处理装置，包括：处理器，用于执行指令；存储器，耦合到所述处理器。',
-      ],
-      nonCompliant: [
-        '一种数据处理装置，包括：一些处理部件，用于做一些相关操作。',
-      ],
+      compliant: ['一种数据处理装置，包括：处理器，用于执行指令；存储器，耦合到所述处理器。'],
+      nonCompliant: ['一种数据处理装置，包括：一些处理部件，用于做一些相关操作。'],
     },
   },
 
@@ -43,9 +38,7 @@ export const PATENT_PRINCIPLES: ConstitutionalPrinciple[] = [
     legalBasis: '《专利法》第二十六条第四款',
     checkFunction: checkBrevity,
     examples: {
-      compliant: [
-        '所述处理器耦合到所述存储器。',
-      ],
+      compliant: ['所述处理器耦合到所述存储器。'],
       nonCompliant: [
         '所述处理器通过连接线耦合到所述存储器，所述存储器又连接到所述处理器，这种耦合关系使得处理器能够访问存储器。',
       ],
@@ -61,9 +54,7 @@ export const PATENT_PRINCIPLES: ConstitutionalPrinciple[] = [
     legalBasis: '《专利法》第二十六条第四款',
     checkFunction: checkSupport,
     examples: {
-      compliant: [
-        '根据权利要求1所述的装置，其中所述处理器为ARM架构处理器。',
-      ],
+      compliant: ['根据权利要求1所述的装置，其中所述处理器为ARM架构处理器。'],
       nonCompliant: [
         '根据权利要求1所述的装置，其中所述处理器为任意类型的处理器。', // 过于宽泛
       ],
@@ -97,9 +88,7 @@ export const PATENT_PRINCIPLES: ConstitutionalPrinciple[] = [
     legalBasis: '《专利法》第二十六条第三款',
     checkFunction: checkEnablement,
     examples: {
-      compliant: [
-        '所述滤波器采用3x3卷积核，卷积核参数为[1,2,1;2,4,2;1,2,1]，步长为1像素。',
-      ],
+      compliant: ['所述滤波器采用3x3卷积核，卷积核参数为[1,2,1;2,4,2;1,2,1]，步长为1像素。'],
       nonCompliant: [
         '所述滤波器采用适当的参数进行配置。', // 参数不明确
       ],
@@ -115,12 +104,8 @@ export const PATENT_PRINCIPLES: ConstitutionalPrinciple[] = [
     legalBasis: '《专利法》第二十六条第四款',
     checkFunction: checkDefiniteness,
     examples: {
-      compliant: [
-        '所述处理器的时钟频率为1.5GHz。',
-      ],
-      nonCompliant: [
-        '所述处理器的时钟频率大约为1.5GHz左右。',
-      ],
+      compliant: ['所述处理器的时钟频率为1.5GHz。'],
+      nonCompliant: ['所述处理器的时钟频率大约为1.5GHz左右。'],
     },
   },
 
@@ -133,9 +118,7 @@ export const PATENT_PRINCIPLES: ConstitutionalPrinciple[] = [
     legalBasis: '《专利法》第二十二条第三款',
     checkFunction: checkNovelty,
     examples: {
-      compliant: [
-        '所述滤波器采用自适应卷积核，根据图像内容动态调整卷积核参数。',
-      ],
+      compliant: ['所述滤波器采用自适应卷积核，根据图像内容动态调整卷积核参数。'],
       nonCompliant: [
         '所述滤波器采用3x3卷积核。', // 常规技术，缺乏创造性
       ],
@@ -175,8 +158,8 @@ function createViolation(
   suggestedCorrection: string,
   confidence: number,
   content?: string
-): any {
-  const violation: any = {
+): unknown {
+  const violation: unknown = {
     principleId,
     principleName,
     severity,
@@ -192,7 +175,7 @@ function createViolation(
 
   // 如果提供了内容，添加上下文
   if (content) {
-    violation.location.context = content.substring(
+    (violation as any).location.context = content.substring(
       Math.max(0, start - 20),
       Math.min(content.length, end + 20)
     );
@@ -210,8 +193,16 @@ async function checkClarity(content: string): Promise<ComplianceResult> {
 
   // 模糊词汇列表
   const vagueTerms = [
-    '一些', '某些', '相关', '适当', '相应的',
-    '一些相关', '多个', '若干', '等', '等等',
+    '一些',
+    '某些',
+    '相关',
+    '适当',
+    '相应的',
+    '一些相关',
+    '多个',
+    '若干',
+    '等',
+    '等等',
   ];
 
   // 检查模糊词汇
@@ -219,18 +210,20 @@ async function checkClarity(content: string): Promise<ComplianceResult> {
     const regex = new RegExp(term, 'g');
     let match;
     while ((match = regex.exec(content)) !== null) {
-      violations.push(createViolation(
-        'clarity',
-        '清楚性原则',
-        ViolationSeverity.MAJOR,
-        match.index,
-        match.index + term.length,
-        term,
-        `使用了模糊词汇"${term}"，导致保护范围不明确`,
-        '使用具体的技术特征描述替代模糊词汇',
-        0.8,
-        content
-      ));
+      violations.push(
+        createViolation(
+          'clarity',
+          '清楚性原则',
+          ViolationSeverity.MAJOR,
+          match.index,
+          match.index + term.length,
+          term,
+          `使用了模糊词汇"${term}"，导致保护范围不明确`,
+          '使用具体的技术特征描述替代模糊词汇',
+          0.8,
+          content
+        )
+      );
     }
   }
 
@@ -339,18 +332,20 @@ async function checkSupport(content: string): Promise<ComplianceResult> {
   for (const { pattern, severity } of overlyBroadPatterns) {
     let match;
     while ((match = pattern.exec(content)) !== null) {
-      violations.push(createViolation(
-        'support',
-        '支持性原则',
-        severity,
-        match.index,
-        match.index + match[0].length,
-        match[0],
-        '表述过于宽泛，可能得不到说明书支持',
-        '使用具体、明确的技术特征描述',
-        0.75,
-        content
-      ));
+      violations.push(
+        createViolation(
+          'support',
+          '支持性原则',
+          severity,
+          match.index,
+          match.index + match[0].length,
+          match[0],
+          '表述过于宽泛，可能得不到说明书支持',
+          '使用具体、明确的技术特征描述',
+          0.75,
+          content
+        )
+      );
     }
   }
 
@@ -394,18 +389,20 @@ async function checkCompleteness(content: string): Promise<ComplianceResult> {
   if (hasMethodClaim) {
     const hasIncluding = /包括|包含/i.test(content);
     if (!hasIncluding) {
-      violations.push(createViolation(
-        'completeness',
-        '完整性原则',
-        ViolationSeverity.CRITICAL,
-        0,
-        Math.min(50, content.length),
-        content.substring(0, Math.min(50, content.length)),
-        '方法权利要求缺少步骤描述词"包括"或"包含"',
-        '在技术方案描述中添加"包括："或"包含："',
-        0.9,
-        content
-      ));
+      violations.push(
+        createViolation(
+          'completeness',
+          '完整性原则',
+          ViolationSeverity.CRITICAL,
+          0,
+          Math.min(50, content.length),
+          content.substring(0, Math.min(50, content.length)),
+          '方法权利要求缺少步骤描述词"包括"或"包含"',
+          '在技术方案描述中添加"包括："或"包含："',
+          0.9,
+          content
+        )
+      );
     }
   }
 
@@ -414,18 +411,20 @@ async function checkCompleteness(content: string): Promise<ComplianceResult> {
   if (hasDeviceClaim) {
     const hasIncluding = /包括|包含|由.*组成/i.test(content);
     if (!hasIncluding) {
-      violations.push(createViolation(
-        'completeness',
-        '完整性原则',
-        ViolationSeverity.CRITICAL,
-        0,
-        Math.min(50, content.length),
-        content.substring(0, Math.min(50, content.length)),
-        '装置权利要求缺少组件描述词"包括"或"包含"',
-        '在技术方案描述中添加"包括："或"包含："',
-        0.9,
-        content
-      ));
+      violations.push(
+        createViolation(
+          'completeness',
+          '完整性原则',
+          ViolationSeverity.CRITICAL,
+          0,
+          Math.min(50, content.length),
+          content.substring(0, Math.min(50, content.length)),
+          '装置权利要求缺少组件描述词"包括"或"包含"',
+          '在技术方案描述中添加"包括："或"包含："',
+          0.9,
+          content
+        )
+      );
     }
   }
 
@@ -458,37 +457,30 @@ async function checkEnablement(content: string): Promise<ComplianceResult> {
   const warnings: any[] = [];
 
   // 检查是否有未公开的参数（如"适当参数"、"合适参数"等）
-  const undisclosedParams = [
-    /适当参数/g,
-    /合适参数/g,
-    /预定参数/g,
-    /相应的参数/g,
-  ];
+  const undisclosedParams = [/适当参数/g, /合适参数/g, /预定参数/g, /相应的参数/g];
 
   for (const pattern of undisclosedParams) {
     let match;
     while ((match = pattern.exec(content)) !== null) {
-      violations.push(createViolation(
-        'enablement',
-        '充分公开原则',
-        ViolationSeverity.MAJOR,
-        match.index,
-        match.index + match[0].length,
-        match[0],
-        '技术参数未充分公开',
-        '提供具体的参数值或参数范围',
-        0.85,
-        content
-      ));
+      violations.push(
+        createViolation(
+          'enablement',
+          '充分公开原则',
+          ViolationSeverity.MAJOR,
+          match.index,
+          match.index + match[0].length,
+          match[0],
+          '技术参数未充分公开',
+          '提供具体的参数值或参数范围',
+          0.85,
+          content
+        )
+      );
     }
   }
 
   // 检查功能性描述（可能缺乏具体实现）
-  const functionalDescriptions = [
-    /能够实现.*功能/g,
-    /用于实现/g,
-    /配置为.*$/g,
-  ];
+  const functionalDescriptions = [/能够实现.*功能/g, /用于实现/g, /配置为.*$/g];
 
   for (const pattern of functionalDescriptions) {
     let match;
@@ -541,22 +533,25 @@ async function checkDefiniteness(content: string): Promise<ComplianceResult> {
     let match;
     while ((match = regex.exec(content)) !== null) {
       // 检查这个范围是否已被覆盖
-      const isCovered = coveredRanges.slice(match.index, match.index + term.length)
-        .some(covered => covered);
+      const isCovered = coveredRanges
+        .slice(match.index, match.index + term.length)
+        .some((covered) => covered);
 
       if (!isCovered) {
-        violations.push(createViolation(
-          'definiteness',
-          '确定性原则',
-          severity,
-          match.index,
-          match.index + term.length,
-          term,
-          `使用了不确定词汇"${term}"`,
-          '使用确定的数值或范围',
-          0.8,
-          content
-        ));
+        violations.push(
+          createViolation(
+            'definiteness',
+            '确定性原则',
+            severity,
+            match.index,
+            match.index + term.length,
+            term,
+            `使用了不确定词汇"${term}"`,
+            '使用确定的数值或范围',
+            0.8,
+            content
+          )
+        );
 
         // 标记这个范围已覆盖
         for (let i = match.index; i < match.index + term.length; i++) {
@@ -604,12 +599,7 @@ async function checkNovelty(content: string): Promise<ComplianceResult> {
   const warnings: any[] = [];
 
   // 检查常规技术描述（如"常规的"、"标准的"等）
-  const conventionalTech = [
-    /常规的/g,
-    /标准的/g,
-    /已知的/g,
-    /现有的/g,
-  ];
+  const conventionalTech = [/常规的/g, /标准的/g, /已知的/g, /现有的/g];
 
   for (const pattern of conventionalTech) {
     let match;
@@ -639,7 +629,7 @@ async function checkNovelty(content: string): Promise<ComplianceResult> {
     });
   }
 
-  const score = 1 - (warnings.length * 0.1);
+  const score = 1 - warnings.length * 0.1;
 
   return {
     compliant: violations.length === 0,
@@ -678,7 +668,7 @@ async function checkBestMode(content: string): Promise<ComplianceResult> {
     });
   }
 
-  const score = 1 - (warnings.length * 0.1);
+  const score = 1 - warnings.length * 0.1;
 
   return {
     compliant: violations.length === 0,

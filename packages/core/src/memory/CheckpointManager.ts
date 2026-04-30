@@ -29,13 +29,13 @@ export interface Checkpoint {
   iteration: number;
 
   /** 记忆快照 */
-  memorySnapshot: Record<string, any>;
+  memorySnapshot: Record<string, unknown>;
 
   /** 上下文快照 */
-  contextSnapshot: Record<string, any>;
+  contextSnapshot: Record<string, unknown>;
 
   /** 状态快照 */
-  stateSnapshot: Record<string, any>;
+  stateSnapshot: Record<string, unknown>;
 
   /** 标签 */
   tags?: string[];
@@ -88,9 +88,9 @@ export class CheckpointManager {
     agentName: string,
     executionId: string,
     iteration: number,
-    memory: Record<string, any>,
-    context: Record<string, any>,
-    state: Record<string, any>,
+    memory: Record<string, unknown>,
+    context: Record<string, unknown>,
+    state: Record<string, unknown>,
     tags?: string[],
     notes?: string
   ): Promise<Checkpoint> {
@@ -290,14 +290,14 @@ export class EnhancedMemoryStore implements IMemoryStore {
   /**
    * 读取记忆
    */
-  async get(key: string): Promise<any> {
+  async get(key: string): Promise<unknown> {
     return this.shortTerm.get(key);
   }
 
   /**
    * 写入记忆
    */
-  async set(key: string, value: any): Promise<void> {
+  async set(key: string, value: unknown): Promise<void> {
     this.shortTerm.set(key, value);
 
     // 记录历史
@@ -325,7 +325,7 @@ export class EnhancedMemoryStore implements IMemoryStore {
   /**
    * 获取所有记忆
    */
-  async getAll(): Promise<Record<string, any>> {
+  async getAll(): Promise<Record<string, unknown>> {
     return Object.fromEntries(this.shortTerm.entries());
   }
 
@@ -458,7 +458,7 @@ export class ResumeManager {
     agentName: string,
     executionId: string,
     iteration: number,
-    context: Record<string, any>
+    context: Record<string, unknown>
   ): Promise<Checkpoint> {
     return this.checkpointManager.saveCheckpoint(
       agentName,

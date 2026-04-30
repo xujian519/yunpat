@@ -20,8 +20,12 @@ describe('CheckpointManager', () => {
   describe('saveCheckpoint', () => {
     it('应创建检查点并返回', async () => {
       const cp = await manager.saveCheckpoint(
-        'test-agent', 'exec-1', 1,
-        { key: 'value' }, { ctx: true }, { state: 1 },
+        'test-agent',
+        'exec-1',
+        1,
+        { key: 'value' },
+        { ctx: true },
+        { state: 1 }
       );
 
       expect(cp.id).toBeDefined();
@@ -42,8 +46,14 @@ describe('CheckpointManager', () => {
 
     it('应支持 tags 和 notes', async () => {
       const cp = await manager.saveCheckpoint(
-        'a', 'e', 1, {}, {}, {},
-        ['important', 'milestone'], 'First checkpoint',
+        'a',
+        'e',
+        1,
+        {},
+        {},
+        {},
+        ['important', 'milestone'],
+        'First checkpoint'
       );
 
       expect(cp.tags).toEqual(['important', 'milestone']);

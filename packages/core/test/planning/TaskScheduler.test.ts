@@ -95,7 +95,7 @@ describe('TaskScheduler', () => {
     ];
 
     const dependencies: DependencyGraph = {
-      nodes: new Map(subGoals.map(g => [g.id, g])),
+      nodes: new Map(subGoals.map((g) => [g.id, g])),
       edges: [
         { from: 'goal1', to: 'goal2', type: 'strong', strength: 1.0 },
         { from: 'goal2', to: 'goal3', type: 'strong', strength: 1.0 },
@@ -194,17 +194,19 @@ describe('TaskScheduler', () => {
           id: 'goal1',
           title: '低优先级任务',
           description: '测试',
-          tasks: [{
-            id: 'task1',
-            title: '任务1',
-            description: '测试',
-            type: TaskType.WRITING,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 1000,
-            estimatedDuration: 100,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task1',
+              title: '任务1',
+              description: '测试',
+              type: TaskType.WRITING,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 1000,
+              estimatedDuration: 100,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.LOW,
           status: TaskStatus.PENDING,
@@ -215,17 +217,19 @@ describe('TaskScheduler', () => {
           id: 'goal2',
           title: '中优先级任务',
           description: '测试',
-          tasks: [{
-            id: 'task2',
-            title: '任务2',
-            description: '测试',
-            type: TaskType.WRITING,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 1000,
-            estimatedDuration: 100,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task2',
+              title: '任务2',
+              description: '测试',
+              type: TaskType.WRITING,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 1000,
+              estimatedDuration: 100,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.MEDIUM,
           status: TaskStatus.PENDING,
@@ -236,17 +240,19 @@ describe('TaskScheduler', () => {
           id: 'goal3',
           title: '关键任务',
           description: '测试',
-          tasks: [{
-            id: 'task3',
-            title: '任务3',
-            description: '测试',
-            type: TaskType.WRITING,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 1000,
-            estimatedDuration: 100,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task3',
+              title: '任务3',
+              description: '测试',
+              type: TaskType.WRITING,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 1000,
+              estimatedDuration: 100,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.CRITICAL,
           status: TaskStatus.PENDING,
@@ -256,7 +262,7 @@ describe('TaskScheduler', () => {
       ];
 
       const dependencies: DependencyGraph = {
-        nodes: new Map(subGoals.map(g => [g.id, g])),
+        nodes: new Map(subGoals.map((g) => [g.id, g])),
         edges: [],
         hasCycles: false,
         topologicalOrder: ['goal3', 'goal2', 'goal1'], // 按优先级排序的拓扑顺序
@@ -363,8 +369,8 @@ describe('TaskScheduler', () => {
       const plan = createTestPlan();
 
       // 标记所有任务为完成
-      plan.subGoals.forEach(goal => {
-        goal.tasks.forEach(task => {
+      plan.subGoals.forEach((goal) => {
+        goal.tasks.forEach((task) => {
           task.status = TaskStatus.COMPLETED;
         });
       });
@@ -384,7 +390,7 @@ describe('TaskScheduler', () => {
 
       expect(progress.totalTasks).toBe(3);
       expect(progress.completedTasks).toBe(1);
-      expect(progress.progress).toBeCloseTo(1/3, 2);
+      expect(progress.progress).toBeCloseTo(1 / 3, 2);
     });
 
     it('应该计算每个子目标的进度', () => {
@@ -398,7 +404,7 @@ describe('TaskScheduler', () => {
       expect(progress.byGoal).toBeDefined();
       expect(progress.byGoal.length).toBe(3);
 
-      const goal1Progress = progress.byGoal.find(g => g.goalId === 'goal1');
+      const goal1Progress = progress.byGoal.find((g) => g.goalId === 'goal1');
       expect(goal1Progress?.progress).toBe(1);
     });
 
@@ -453,8 +459,8 @@ describe('TaskScheduler', () => {
 
       // 创建多个需要 writing 的任务
       const plan = createTestPlan();
-      plan.subGoals.forEach(goal => {
-        goal.tasks.forEach(task => {
+      plan.subGoals.forEach((goal) => {
+        goal.tasks.forEach((task) => {
           task.requiredCapabilities = ['writing'];
         });
       });
@@ -462,7 +468,7 @@ describe('TaskScheduler', () => {
       const result = resourceAwareScheduler.schedule(plan);
 
       // 不应该所有任务都并行
-      result.parallelGroups.forEach(group => {
+      result.parallelGroups.forEach((group) => {
         expect(group.length).toBeLessThanOrEqual(1); // 每次只能执行一个
       });
     });

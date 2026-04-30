@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  OfficialDocParserToolV2,
-  OfficialDocType,
-} from '../../src/tools/OfficialDocParserV2.js';
+import { OfficialDocParserToolV2, OfficialDocType } from '../../src/tools/OfficialDocParserV2.js';
 import { ToolCategory } from '@yunpat/core';
 
 vi.mock('../../src/tools/PdfTools.js', () => ({
@@ -63,7 +60,9 @@ describe('OfficialDocParserV2', () => {
       const { existsSync } = await import('fs');
       vi.mocked(existsSync).mockReturnValueOnce(false);
       const tool = new OfficialDocParserToolV2();
-      await expect(tool.execute({ filePath: '/nonexistent.pdf' }, mockContext)).rejects.toThrow('文件不存在');
+      await expect(tool.execute({ filePath: '/nonexistent.pdf' }, mockContext)).rejects.toThrow(
+        '文件不存在'
+      );
     });
 
     it('parses PDF official document', async () => {
@@ -127,9 +126,9 @@ describe('OfficialDocParserV2', () => {
 
     it('throws error for unsupported file formats', async () => {
       const tool = new OfficialDocParserToolV2();
-      await expect(
-        tool.execute({ filePath: '/mock/doc.zip' }, mockContext)
-      ).rejects.toThrow('不支持的文件格式');
+      await expect(tool.execute({ filePath: '/mock/doc.zip' }, mockContext)).rejects.toThrow(
+        '不支持的文件格式'
+      );
     });
   });
 });

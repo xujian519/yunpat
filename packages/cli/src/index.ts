@@ -7,10 +7,7 @@ import { createAgentFramework, runAgent, listAgents } from './commands.js';
 const program = new Command();
 
 // CLI 信息
-program
-  .name('yunpat')
-  .description('YunPat 智能体框架 CLI')
-  .version('0.1.0');
+program.name('yunpat').description('YunPat 智能体框架 CLI').version('0.1.0');
 
 // 初始化框架
 program
@@ -31,10 +28,7 @@ program
   .action(runAgent);
 
 // 列出智能体
-program
-  .command('list')
-  .description('列出所有可用智能体')
-  .action(listAgents);
+program.command('list').description('列出所有可用智能体').action(listAgents);
 
 // 交互式对话
 program

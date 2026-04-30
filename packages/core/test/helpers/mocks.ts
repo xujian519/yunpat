@@ -43,7 +43,11 @@ export function createMockLLM(responses?: Partial<ChatResponse>): LLMAdapter {
       yield { delta: '', done: true };
     },
     embed: async (texts: string[]) =>
-      texts.map((_, i) => Array(128).fill(0).map((_, j) => (i * 128 + j) % 7 === 0 ? 1 : 0)),
+      texts.map((_, i) =>
+        Array(128)
+          .fill(0)
+          .map((_, j) => ((i * 128 + j) % 7 === 0 ? 1 : 0))
+      ),
   };
 }
 
@@ -54,11 +58,17 @@ export function createMockMemory(): MemoryStore {
   const store = new Map<string, unknown>();
   return {
     get: async (key: string) => store.get(key),
-    set: async (key: string, value: unknown) => { store.set(key, value); },
-    delete: async (key: string) => { store.delete(key); },
+    set: async (key: string, value: unknown) => {
+      store.set(key, value);
+    },
+    delete: async (key: string) => {
+      store.delete(key);
+    },
     has: async (key: string) => store.has(key),
     getAll: async () => Object.fromEntries(store.entries()),
-    clear: async () => { store.clear(); },
+    clear: async () => {
+      store.clear();
+    },
     search: async () => [],
   };
 }
@@ -67,11 +77,7 @@ export function createMockMemory(): MemoryStore {
  * 创建 mock 工具
  */
 export function createMockTool(name: string, result: unknown = 'mock-tool-result'): Tool {
-  return new ToolWrapper(
-    name,
-    `Mock tool: ${name}`,
-    async () => result,
-  );
+  return new ToolWrapper(name, `Mock tool: ${name}`, async () => result);
 }
 
 /**
@@ -114,7 +120,7 @@ export class TestAgent extends Agent<string, string> {
       tools?: ToolRegistry;
       llm?: LLMAdapter;
       maxIterations?: number;
-    },
+    }
   ) {
     super({
       name: 'test-agent',
@@ -153,7 +159,11 @@ export class TestAgent extends Agent<string, string> {
     return { shouldContinue: false, quality: 'good', result };
   }
 
-  protected async after(_input: string, _output: string, _context: ExecutionContext): Promise<void> {
+  protected async after(
+    _input: string,
+    _output: string,
+    _context: ExecutionContext
+  ): Promise<void> {
     this.callLog.push('after');
   }
 }
@@ -179,17 +189,13 @@ export function createTestAgent(overrides?: {
   const toolRegistry = createMockToolRegistry();
   const llm = createMockLLM();
 
-  const agent = new TestAgent(
-    overrides?.planFn,
-    overrides?.actFn,
-    {
-      eventBus,
-      memory,
-      tools: toolRegistry,
-      llm,
-      maxIterations: overrides?.maxIterations,
-    },
-  );
+  const agent = new TestAgent(overrides?.planFn, overrides?.actFn, {
+    eventBus,
+    memory,
+    tools: toolRegistry,
+    llm,
+    maxIterations: overrides?.maxIterations,
+  });
 
   return { agent, eventBus, memory, toolRegistry };
 }

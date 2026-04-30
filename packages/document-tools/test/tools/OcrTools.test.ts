@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  ImageOcrTool,
-  BatchImageOcrTool,
-  ImageToMarkdownTool,
-} from '../../src/tools/OcrTools.js';
+import { ImageOcrTool, BatchImageOcrTool, ImageToMarkdownTool } from '../../src/tools/OcrTools.js';
 import { ToolCategory } from '@yunpat/core';
 
 vi.mock('tesseract.js', () => ({
@@ -68,12 +64,17 @@ describe('OcrTools', () => {
       const { existsSync } = await import('fs');
       vi.mocked(existsSync).mockReturnValueOnce(false);
       const tool = new ImageOcrTool();
-      await expect(tool.execute({ imagePath: '/nonexistent.png' }, mockContext)).rejects.toThrow('图片文件不存在');
+      await expect(tool.execute({ imagePath: '/nonexistent.png' }, mockContext)).rejects.toThrow(
+        '图片文件不存在'
+      );
     });
 
     it('returns word details in json mode', async () => {
       const tool = new ImageOcrTool();
-      const result = await tool.execute({ imagePath: '/mock/test.png', outputFormat: 'json' }, mockContext);
+      const result = await tool.execute(
+        { imagePath: '/mock/test.png', outputFormat: 'json' },
+        mockContext
+      );
       expect(result.words).toBeDefined();
       expect(result.words).toHaveLength(2);
     });
@@ -120,7 +121,10 @@ describe('OcrTools', () => {
 
     it('converts image OCR to markdown with alt text', async () => {
       const tool = new ImageToMarkdownTool();
-      const result = await tool.execute({ imagePath: '/mock/test.png', includeAlt: true }, mockContext);
+      const result = await tool.execute(
+        { imagePath: '/mock/test.png', includeAlt: true },
+        mockContext
+      );
       expect(result.markdown).toContain('![test.png](/mock/test.png)');
       expect(result.markdown).toContain('OCR result text');
       expect(result.metadata.confidence).toBe(95);
@@ -128,7 +132,10 @@ describe('OcrTools', () => {
 
     it('excludes alt text when includeAlt is false', async () => {
       const tool = new ImageToMarkdownTool();
-      const result = await tool.execute({ imagePath: '/mock/test.png', includeAlt: false }, mockContext);
+      const result = await tool.execute(
+        { imagePath: '/mock/test.png', includeAlt: false },
+        mockContext
+      );
       expect(result.markdown).not.toContain('![');
       expect(result.markdown).toBe('OCR result text');
     });

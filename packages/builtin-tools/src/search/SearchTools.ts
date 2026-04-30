@@ -38,21 +38,9 @@ export class GrepTool extends EnhancedBaseTool<
       filePath: z.string().optional().describe('要搜索的文件路径'),
       directory: z.string().optional().describe('要搜索的目录路径'),
       filePattern: z.string().optional().describe('文件匹配模式（如 *.ts）'),
-      caseInsensitive: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('是否忽略大小写'),
-      regex: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否使用正则表达式'),
-      maxResults: z
-        .number()
-        .optional()
-        .default(100)
-        .describe('最大结果数'),
+      caseInsensitive: z.boolean().optional().default(true).describe('是否忽略大小写'),
+      regex: z.boolean().optional().default(false).describe('是否使用正则表达式'),
+      maxResults: z.number().optional().default(100).describe('最大结果数'),
     }),
     outputSchema: z.object({
       matches: z.array(
@@ -110,9 +98,7 @@ export class GrepTool extends EnhancedBaseTool<
           );
     } catch (error) {
       throw new Error(
-        `Invalid search pattern: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Invalid search pattern: ${error instanceof Error ? error.message : String(error)}`
       );
     }
 
@@ -200,11 +186,7 @@ export class GlobTool extends EnhancedBaseTool<
     inputSchema: z.object({
       pattern: z.string().describe('glob 模式（如 **/*.ts）'),
       cwd: z.string().optional().describe('当前工作目录'),
-      includeHidden: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否包含隐藏文件'),
+      includeHidden: z.boolean().optional().default(false).describe('是否包含隐藏文件'),
     }),
     outputSchema: z.object({
       files: z.array(z.string()).describe('匹配的文件路径列表'),
@@ -231,9 +213,7 @@ export class GlobTool extends EnhancedBaseTool<
       return { files };
     } catch (error) {
       throw new Error(
-        `Glob search failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Glob search failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

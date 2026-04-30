@@ -110,9 +110,7 @@ export class GooglePatentsFetchTool extends EnhancedBaseTool<
       };
     } catch (error) {
       throw new Error(
-        `Google Patents fetch failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Google Patents fetch failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -143,23 +141,15 @@ export class GooglePatentsFetchTool extends EnhancedBaseTool<
 
         // 提取摘要
         const snippet =
-          patent.summary ||
-          patent.abstract ||
-          patent.description ||
-          patent.snippet ||
-          '';
+          patent.summary || patent.abstract || patent.description || patent.snippet || '';
 
         // 构建 URL
-        const patentNumber = patent.publication_number
-          ? patent.publication_number[0]
-          : patentId;
+        const patentNumber = patent.publication_number ? patent.publication_number[0] : patentId;
         const url = `https://patents.google.com/patent/${patentNumber}/`;
 
         // 提取申请人
         const assignee =
-          patent.assignee_harmonized ||
-          (patent.assignee && patent.assignee[0]) ||
-          '';
+          patent.assignee_harmonized || (patent.assignee && patent.assignee[0]) || '';
 
         // 提取公开日期
         const publicationDate =
@@ -171,8 +161,7 @@ export class GooglePatentsFetchTool extends EnhancedBaseTool<
         // 提取 IPC 分类号
         const ipcCodes =
           patent.ipc_codes ||
-          (patent.classifications &&
-            patent.classifications.map((c: any) => c.code)) ||
+          (patent.classifications && patent.classifications.map((c: any) => c.code)) ||
           [];
 
         results.push({
@@ -270,8 +259,7 @@ export class GooglePatentDetailTool extends EnhancedBaseTool<
         method: 'GET',
         headers: {
           'Accept-Language': language,
-          'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
         },
       });
 
@@ -295,7 +283,10 @@ export class GooglePatentDetailTool extends EnhancedBaseTool<
   /**
    * 解析专利详情页 HTML
    */
-  private parsePatentDetail(html: string, patentNumber: string): {
+  private parsePatentDetail(
+    html: string,
+    patentNumber: string
+  ): {
     patentNumber: string;
     title: string;
     abstract: string;

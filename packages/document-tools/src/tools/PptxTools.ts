@@ -64,16 +64,8 @@ export class PptxExtractTextTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       filePath: z.string().describe('PowerPoint 文件路径'),
-      includeNotes: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否包含演讲者备注'),
-      includeLayout: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否包含布局信息'),
+      includeNotes: z.boolean().optional().default(false).describe('是否包含演讲者备注'),
+      includeLayout: z.boolean().optional().default(false).describe('是否包含布局信息'),
     }),
     outputSchema: z.object({
       text: z.string().describe('提取的文本内容'),
@@ -146,10 +138,7 @@ export class PatentPresentationTool extends EnhancedBaseTool<
               title: z.string().describe('幻灯片标题'),
               content: z.array(z.string()).describe('幻灯片内容'),
               notes: z.string().optional().describe('备注'),
-              layout: z
-                .enum(['title', 'content', 'blank'])
-                .optional()
-                .describe('布局类型'),
+              layout: z.enum(['title', 'content', 'blank']).optional().describe('布局类型'),
             })
           )
           .describe('幻灯片数组'),

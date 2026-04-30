@@ -138,7 +138,7 @@ describe('SimilarityCalculator - 性能测试', () => {
 
       // 单个计算
       const start2 = performance.now();
-      const singleResults = candidates.map(text => ({
+      const singleResults = candidates.map((text) => ({
         text,
         similarity: calculator.calculateSimilarity(targetText, text),
       }));
@@ -220,11 +220,7 @@ describe('SimilarityCalculator - 性能测试', () => {
 
     it('findMostSimilar应该支持阈值过滤', () => {
       const targetText = '完全不相关的文本';
-      const candidates = [
-        '候选文本1',
-        '候选文本2',
-        '候选文本3',
-      ];
+      const candidates = ['候选文本1', '候选文本2', '候选文本3'];
 
       const result = calculator.findMostSimilar(targetText, candidates, 'jaccard', 0.5);
 

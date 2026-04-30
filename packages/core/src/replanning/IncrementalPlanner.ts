@@ -6,12 +6,12 @@
 
 import type {
   HierarchicalPlan,
-  SubGoal,
   PlanAdjustment,
   ReplanningContext,
   IncrementalPlannerConfig,
   TaskModification,
 } from './types.js';
+import { Priority, TaskStatus } from '../planning/types.js';
 import type { TaskDecomposer } from '../planning/TaskDecomposer.js';
 
 /**
@@ -21,10 +21,7 @@ export class IncrementalPlanner {
   private config: IncrementalPlannerConfig;
   private taskDecomposer?: TaskDecomposer;
 
-  constructor(
-    config: Partial<IncrementalPlannerConfig> = {},
-    taskDecomposer?: TaskDecomposer
-  ) {
+  constructor(config: Partial<IncrementalPlannerConfig> = {}, taskDecomposer?: TaskDecomposer) {
     this.config = {
       maxModifications: config.maxModifications ?? 5,
       preserveCriticalPath: config.preserveCriticalPath ?? true,
@@ -92,10 +89,7 @@ export class IncrementalPlanner {
     }
 
     // 限制修改数量
-    const limitedModifications = modifications.slice(
-      0,
-      this.config.maxModifications
-    );
+    const limitedModifications = modifications.slice(0, this.config.maxModifications);
 
     return {
       type: strategy.type,
@@ -108,13 +102,11 @@ export class IncrementalPlanner {
   /**
    * 生成重试修改
    */
-  private generateRetryModifications(
-    context: ReplanningContext
-  ): TaskModification[] {
+  private generateRetryModifications(context: ReplanningContext): TaskModification[] {
     const modifications: TaskModification[] = [];
 
     for (const failedGoal of context.currentState.failedGoals) {
-      const goal = context.originalPlan.subGoals.find(g => g.id === failedGoal);
+      const goal = context.originalPlan.subGoals.find((g) => g.id === failedGoal);
       if (goal) {
         modifications.push({
           type: 'modify',
@@ -136,9 +128,7 @@ export class IncrementalPlanner {
   /**
    * 生成跳过修改
    */
-  private generateSkipModifications(
-    context: ReplanningContext
-  ): TaskModification[] {
+  private generateSkipModifications(context: ReplanningContext): TaskModification[] {
     const modifications: TaskModification[] = [];
 
     // 找出被阻塞的任务
@@ -160,14 +150,12 @@ export class IncrementalPlanner {
   /**
    * 生成重排序修改
    */
-  private generateReorderModifications(
-    context: ReplanningContext
-  ): TaskModification[] {
+  private generateReorderModifications(context: ReplanningContext): TaskModification[] {
     const modifications: TaskModification[] = [];
 
     // 找出未完成的任务
     const pendingGoals = context.originalPlan.subGoals
-      .filter(g => !context.currentState.completedGoals.has(g.id))
+      .filter((g) => !context.currentState.completedGoals.has(g.id))
       .sort((a, b) => {
         // 优先级高的排前面
         const priorityDiff = this.getPriorityValue(b.priority) - this.getPriorityValue(a.priority);
@@ -195,26 +183,23 @@ export class IncrementalPlanner {
   /**
    * 生成分解修改
    */
-  private generateDecomposeModifications(
-    context: ReplanningContext
-  ): TaskModification[] {
+  private generateDecomposeModifications(context: ReplanningContext): TaskModification[] {
     const modifications: TaskModification[] = [];
 
     // 找出复杂的任务（时间或token超过阈值）
-    const complexGoals = context.originalPlan.subGoals.filter(g => {
-      const avgDuration = context.originalPlan.subGoals.reduce(
-        (sum, g) => sum + g.estimatedDuration,
-        0
-      ) / context.originalPlan.subGoals.length;
+    const complexGoals = context.originalPlan.subGoals.filter((g) => {
+      const avgDuration =
+        context.originalPlan.subGoals.reduce((sum, g) => sum + g.estimatedDuration, 0) /
+        context.originalPlan.subGoals.length;
 
-      const avgTokens = context.originalPlan.subGoals.reduce(
-        (sum, g) => sum + g.estimatedTokens,
-        0
-      ) / context.originalPlan.subGoals.length;
+      const avgTokens =
+        context.originalPlan.subGoals.reduce((sum, g) => sum + g.estimatedTokens, 0) /
+        context.originalPlan.subGoals.length;
 
-      return !context.currentState.completedGoals.has(g.id) &&
-             (g.estimatedDuration > avgDuration * 1.5 ||
-              g.estimatedTokens > avgTokens * 1.5);
+      return (
+        !context.currentState.completedGoals.has(g.id) &&
+        (g.estimatedDuration > avgDuration * 1.5 || g.estimatedTokens > avgTokens * 1.5)
+      );
     });
 
     for (const goal of complexGoals) {
@@ -236,9 +221,7 @@ export class IncrementalPlanner {
   /**
    * 生成适应修改
    */
-  private generateAdaptModifications(
-    context: ReplanningContext
-  ): TaskModification[] {
+  private generateAdaptModifications(context: ReplanningContext): TaskModification[] {
     const modifications: TaskModification[] = [];
 
     // 根据资源使用情况调整估算
@@ -272,7 +255,7 @@ export class IncrementalPlanner {
     plan: HierarchicalPlan,
     modification: TaskModification
   ): Promise<void> {
-    const goal = plan.subGoals.find(g => g.id === modification.goalId);
+    const goal = plan.subGoals.find((g) => g.id === modification.goalId);
     if (!goal) {
       console.warn(`[IncrementalPlanner] 找不到子目标: ${modification.goalId}`);
       return;
@@ -307,11 +290,11 @@ export class IncrementalPlanner {
           }
 
           if (modification.changes.newPriority !== undefined) {
-            goal.priority = modification.changes.newPriority as any;
+            goal.priority = modification.changes.newPriority as unknown as Priority;
           }
 
           if (modification.changes.newStatus !== undefined) {
-            goal.status = modification.changes.newStatus as any;
+            goal.status = modification.changes.newStatus as TaskStatus;
           }
 
           if (modification.changes.newEstimate !== undefined) {
@@ -334,7 +317,7 @@ export class IncrementalPlanner {
   /**
    * 重新计算依赖关系
    */
-  private recalculateDependencies(plan: HierarchicalPlan): void {
+  private recalculateDependencies(_plan: HierarchicalPlan): void {
     // TODO: 实现依赖关系重新计算
     // 这里应该调用DependencyAnalyzer来重新分析依赖关系
   }
@@ -345,7 +328,7 @@ export class IncrementalPlanner {
   private clonePlan(plan: HierarchicalPlan): HierarchicalPlan {
     return {
       ...plan,
-      subGoals: plan.subGoals.map(goal => ({ ...goal })),
+      subGoals: plan.subGoals.map((goal) => ({ ...goal })),
       dependencies: {
         ...plan.dependencies,
         nodes: new Map(plan.dependencies.nodes),
@@ -369,8 +352,8 @@ export class IncrementalPlanner {
       if (toCompleted && !fromCompleted) {
         // 检查是否有其他任务依赖这个目标
         const dependents = context.originalPlan.dependencies.edges
-          .filter(e => e.from === edge.to)
-          .map(e => e.to);
+          .filter((e) => e.from === edge.to)
+          .map((e) => e.to);
 
         if (dependents.length > 0) {
           blockedGoals.push(...dependents);
@@ -384,23 +367,20 @@ export class IncrementalPlanner {
   /**
    * 获取优先级数值
    */
-  private getPriorityValue(priority: any): number {
+  private getPriorityValue(priority: unknown): number {
     const values: Record<string, number> = {
-      'critical': 4,
-      'high': 3,
-      'medium': 2,
-      'low': 1,
+      critical: 4,
+      high: 3,
+      medium: 2,
+      low: 1,
     };
-    return values[priority] || 0;
+    return values[priority as keyof typeof values] || 0;
   }
 
   /**
    * 验证调整
    */
-  async validateAdjustment(
-    plan: HierarchicalPlan,
-    adjustment: PlanAdjustment
-  ): Promise<boolean> {
+  async validateAdjustment(plan: HierarchicalPlan, adjustment: PlanAdjustment): Promise<boolean> {
     // 检查修改数量
     if (adjustment.modifications.length > this.config.maxModifications) {
       console.warn(

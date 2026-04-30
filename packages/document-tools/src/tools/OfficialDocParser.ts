@@ -98,15 +98,8 @@ export class OfficialDocParserTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       filePath: z.string().describe('官文文件路径（PDF/图片）'),
-      docType: z
-        .nativeEnum(OfficialDocType)
-        .optional()
-        .describe('官文类型（自动检测）'),
-      useOcr: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('是否使用OCR提取字段'),
+      docType: z.nativeEnum(OfficialDocType).optional().describe('官文类型（自动检测）'),
+      useOcr: z.boolean().optional().default(true).describe('是否使用OCR提取字段'),
       ocrEndpoint: z
         .string()
         .optional()
@@ -197,10 +190,7 @@ export class OfficialDocParserTool extends EnhancedBaseTool<
     version?: string;
   }> {
     return new Promise((resolve, reject) => {
-      const pythonScript = path.join(
-        __dirname,
-        '../../../python-tools/official_doc_parser.py'
-      );
+      const pythonScript = path.join(__dirname, '../../../python-tools/official_doc_parser.py');
 
       const process = spawn('python3', [pythonScript, 'parse', filePath]);
 
@@ -244,10 +234,7 @@ export class OfficialDocParserTool extends EnhancedBaseTool<
     ocrEndpoint: string
   ): Promise<OfficialDocFields> {
     return new Promise((resolve, reject) => {
-      const pythonScript = path.join(
-        __dirname,
-        '../../../python-tools/official_doc_parser.py'
-      );
+      const pythonScript = path.join(__dirname, '../../../python-tools/official_doc_parser.py');
 
       const process = spawn('python3', [
         pythonScript,

@@ -88,18 +88,18 @@ export class OMLXAdapter implements ILLMAdapter {
         throw new Error(`OMXL API 请求失败: ${response.status} ${response.statusText}`);
       }
 
-      const data: any = await response.json();
+      const data: unknown = await response.json();
 
       return {
         message: {
           role: 'assistant',
-          content: data.choices[0].message.content,
+          content: (data as any).choices[0].message.content,
         },
-        usage: data.usage
+        usage: (data as any).usage
           ? {
-              promptTokens: data.usage.prompt_tokens || 0,
-              completionTokens: data.usage.completion_tokens || 0,
-              totalTokens: data.usage.total_tokens || 0,
+              promptTokens: (data as any).usage.prompt_tokens || 0,
+              completionTokens: (data as any).usage.completion_tokens || 0,
+              totalTokens: (data as any).usage.total_tokens || 0,
             }
           : undefined,
       };

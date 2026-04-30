@@ -108,15 +108,18 @@ async function main() {
   // 执行批量生成
   const startTime = Date.now();
   const result = await pipeline.run({
-    concepts: targetConcepts ?? [],  // 空数组 = 所有概念
+    concepts: targetConcepts ?? [], // 空数组 = 所有概念
     maxCardsPerConcept,
     qualityThreshold: 0.6,
-    concurrency: 1,  // 本地模型串行调用
+    concurrency: 1, // 本地模型串行调用
     batchSize,
     onProgress: (progress) => {
-      const phase = progress.phase === 'generating' ? '生成'
-        : progress.phase === 'embedding' ? '向量化'
-        : '存储';
+      const phase =
+        progress.phase === 'generating'
+          ? '生成'
+          : progress.phase === 'embedding'
+            ? '向量化'
+            : '存储';
       const concept = progress.concept ? ` [${progress.concept}]` : '';
       const pct = ((progress.current / progress.total) * 100).toFixed(0);
       process.stdout.write(`\r${phase}${concept}: ${progress.current}/${progress.total} (${pct}%)`);
@@ -148,7 +151,9 @@ async function main() {
   for (const q of testQueries) {
     const results = await retriever.search(q, { limit: 2 });
     if (results.length > 0) {
-      console.log(`"${q}" → ${results.map((r) => `${r.card.question}(score=${r.score.toFixed(2)})`).join(', ')}`);
+      console.log(
+        `"${q}" → ${results.map((r) => `${r.card.question}(score=${r.score.toFixed(2)})`).join(', ')}`
+      );
     } else {
       console.log(`"${q}" → 无结果`);
     }

@@ -89,7 +89,9 @@ class PatentWriterAgentOptimized extends Agent<string, string> {
         const cached = await this.queryCache(sectionCacheKey);
 
         if (cached.found) {
-          console.log(`✅ [缓存命中] ${section} (相似度: ${(cached.similarity * 100).toFixed(1)}%)`);
+          console.log(
+            `✅ [缓存命中] ${section} (相似度: ${(cached.similarity * 100).toFixed(1)}%)`
+          );
           content += `\n## ${section}\n${cached.result}\n`;
         } else {
           console.log(`⚡ [执行] 生成 ${section}...`);
@@ -107,7 +109,6 @@ class PatentWriterAgentOptimized extends Agent<string, string> {
       }
 
       return content;
-
     } catch (error) {
       if (monitorId && this.performanceMonitor) {
         this.performanceMonitor.endInference(monitorId, 0, false, (error as Error).message);
@@ -248,7 +249,6 @@ async function main() {
     console.log('  3. 使用 storeToCache() 存储结果');
     console.log('  4. 使用 getPerformanceStats() 获取统计');
     console.log('  5. 使用 exportPerformanceReport() 导出报告');
-
   } catch (error) {
     console.error('\n❌ 演示失败:', (error as Error).message);
   }

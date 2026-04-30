@@ -4,7 +4,7 @@
  * 用于验证LLM生成内容中的事实声明，确保技术事实、法律判例、统计数据的准确性
  */
 
-import { LLMAdapter, ChatParams } from '../lifecycle/Lifecycle.js';
+import { LLMAdapter } from '../lifecycle/Lifecycle.js';
 import { KnowledgeBase } from '../knowledge/KnowledgeBase.js';
 import {
   Claim,
@@ -13,7 +13,6 @@ import {
   SourceReference,
   SourceType,
   FactCheckerConfig,
-  TextLocation,
 } from './hallucination-types.js';
 
 /**
@@ -24,11 +23,7 @@ export class FactChecker {
   private knowledgeBase: KnowledgeBase;
   private config: FactCheckerConfig;
 
-  constructor(
-    llm: LLMAdapter,
-    knowledgeBase: KnowledgeBase,
-    config?: Partial<FactCheckerConfig>
-  ) {
+  constructor(llm: LLMAdapter, knowledgeBase: KnowledgeBase, config?: Partial<FactCheckerConfig>) {
     this.llm = llm;
     this.knowledgeBase = knowledgeBase;
     this.config = {
@@ -69,8 +64,8 @@ export class FactChecker {
    * @returns 提取的声明列表
    */
   private async extractClaims(content: string): Promise<Claim[]> {
-    const claims: Claim[] = [];
-    let claimId = 0;
+    // const claims: Claim[] = []; // 未使用，已移除
+    // const claimId = 0; // 未使用，已移除
 
     // 根据配置选择提取方法
     if (this.config.extractionMethod === 'regex') {
@@ -86,7 +81,7 @@ export class FactChecker {
       const combined = [...regexClaims];
       for (const llmClaim of llmClaims) {
         const isDuplicate = regexClaims.some(
-          rc => rc.content.toLowerCase() === llmClaim.content.toLowerCase()
+          (rc) => rc.content.toLowerCase() === llmClaim.content.toLowerCase()
         );
         if (!isDuplicate) {
           combined.push(llmClaim);
@@ -200,11 +195,11 @@ ${content}
 
       const parsed = JSON.parse(response.message.content);
 
-      return parsed.map((item: any, index: number) => ({
+      return parsed.map((item: unknown, index: number) => ({
         id: `claim-llm-${index}`,
-        content: item.content,
-        category: this.parseClaimCategory(item.category),
-        confidence: item.confidence || 0.8,
+        content: (item as any).content,
+        category: this.parseClaimCategory((item as any).category),
+        confidence: (item as any).confidence || 0.8,
       }));
     } catch (error) {
       console.error('LLM声明提取失败:', error);
@@ -246,13 +241,10 @@ ${content}
   private async verifyWithKnowledgeBase(claim: Claim): Promise<FactCheckResult> {
     try {
       // 在知识库中搜索相关内容
-      const searchResults = await this.knowledgeBase.search(
-        claim.content,
-        {
-          limit: this.config.knowledgeBaseOptions?.maxResults || 5,
-          minSimilarity: this.config.knowledgeBaseOptions?.similarityThreshold || 0.85,
-        }
-      );
+      const searchResults = await this.knowledgeBase.search(claim.content, {
+        limit: this.config.knowledgeBaseOptions?.maxResults || 5,
+        minSimilarity: this.config.knowledgeBaseOptions?.similarityThreshold || 0.85,
+      });
 
       if (searchResults.length === 0) {
         // 未找到匹配结果
@@ -268,7 +260,7 @@ ${content}
       }
 
       // 找到了相关结果
-      const sources: SourceReference[] = searchResults.map(result => ({
+      const sources: SourceReference[] = searchResults.map((result) => ({
         id: result.entry.id,
         type: SourceType.KNOWLEDGE_ENTRY,
         title: result.entry.title || result.entry.content.substring(0, 50),
@@ -277,7 +269,7 @@ ${content}
       }));
 
       // 计算验证置信度
-      const maxSimilarity = Math.max(...searchResults.map(r => r.score || 0));
+      const maxSimilarity = Math.max(...searchResults.map((r) => r.score || 0));
       const confidence = maxSimilarity;
 
       return {
@@ -310,10 +302,7 @@ ${content}
    * @param results 多个验证方法的结果
    * @returns 合并后的验证结果
    */
-  private mergeVerificationResults(
-    claim: Claim,
-    results: FactCheckResult[]
-  ): FactCheckResult {
+  private mergeVerificationResults(claim: Claim, results: FactCheckResult[]): FactCheckResult {
     if (results.length === 0) {
       return {
         claim,
@@ -361,7 +350,7 @@ ${content}
       lowerContent.includes('专利法') ||
       lowerContent.includes('商标法') ||
       lowerContent.includes('著作权法') ||
-      lowerContent.includes('第') && lowerContent.includes('条')
+      (lowerContent.includes('第') && lowerContent.includes('条'))
     ) {
       return ClaimCategory.LEGAL_PRECEDENT;
     }
@@ -410,11 +399,11 @@ ${content}
    */
   private parseClaimCategory(category: string): ClaimCategory {
     const categoryMap: Record<string, ClaimCategory> = {
-      'legal_precedent': ClaimCategory.LEGAL_PRECEDENT,
-      'technical_fact': ClaimCategory.TECHNICAL_FACT,
-      'statistical_data': ClaimCategory.STATISTICAL_DATA,
-      'domain_knowledge': ClaimCategory.DOMAIN_KNOWLEDGE,
-      'general_statement': ClaimCategory.GENERAL_STATEMENT,
+      legal_precedent: ClaimCategory.LEGAL_PRECEDENT,
+      technical_fact: ClaimCategory.TECHNICAL_FACT,
+      statistical_data: ClaimCategory.STATISTICAL_DATA,
+      domain_knowledge: ClaimCategory.DOMAIN_KNOWLEDGE,
+      general_statement: ClaimCategory.GENERAL_STATEMENT,
     };
 
     return categoryMap[category] || ClaimCategory.GENERAL_STATEMENT;
@@ -433,9 +422,7 @@ ${content}
     const concurrency = 5;
     for (let i = 0; i < claims.length; i += concurrency) {
       const batch = claims.slice(i, i + concurrency);
-      const batchResults = await Promise.all(
-        batch.map(claim => this.verifyClaim(claim))
-      );
+      const batchResults = await Promise.all(batch.map((claim) => this.verifyClaim(claim)));
       results.push(...batchResults);
     }
 
@@ -456,9 +443,9 @@ ${content}
     verificationRate: number;
     avgConfidence: number;
   } {
-    const verifiable = results.filter(r => r.isVerifiable);
-    const verified = results.filter(r => r.isVerified);
-    const unverified = results.filter(r => r.isVerifiable && !r.isVerified);
+    const verifiable = results.filter((r) => r.isVerifiable);
+    const verified = results.filter((r) => r.isVerified);
+    const unverified = results.filter((r) => r.isVerifiable && !r.isVerified);
 
     const totalConfidence = results.reduce((sum, r) => sum + r.confidence, 0);
 

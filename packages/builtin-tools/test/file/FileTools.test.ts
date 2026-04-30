@@ -71,10 +71,7 @@ describe('FileTools', () => {
       const tool = new FileWriteTool();
 
       await tool.before({ filePath: testFile, content: 'nested' }, mockContext);
-      const result = await tool.execute(
-        { filePath: testFile, content: 'nested' },
-        mockContext
-      );
+      const result = await tool.execute({ filePath: testFile, content: 'nested' }, mockContext);
 
       expect(result.success).toBe(true);
       const readContent = await fs.readFile(testFile, 'utf-8');
@@ -88,10 +85,7 @@ describe('FileTools', () => {
       await fs.writeFile(testFile, 'first', 'utf-8');
 
       const tool = new FileAppendTool();
-      const result = await tool.execute(
-        { filePath: testFile, content: '-second' },
-        mockContext
-      );
+      const result = await tool.execute({ filePath: testFile, content: '-second' }, mockContext);
 
       expect(result.success).toBe(true);
 
@@ -150,10 +144,7 @@ describe('FileTools', () => {
       await fs.writeFile(path.join(tmpDir, 'visible.txt'), 'b', 'utf-8');
 
       const tool = new DirectoryListTool();
-      const result = await tool.execute(
-        { dirPath: tmpDir, includeHidden: true },
-        mockContext
-      );
+      const result = await tool.execute({ dirPath: tmpDir, includeHidden: true }, mockContext);
 
       const names = result.entries.map((e) => e.name);
       expect(names).toContain('visible.txt');
@@ -165,10 +156,7 @@ describe('FileTools', () => {
       await fs.writeFile(path.join(tmpDir, 'nested', 'deep.txt'), 'a', 'utf-8');
 
       const tool = new DirectoryListTool();
-      const result = await tool.execute(
-        { dirPath: tmpDir, recursive: true },
-        mockContext
-      );
+      const result = await tool.execute({ dirPath: tmpDir, recursive: true }, mockContext);
 
       const names = result.entries.map((e) => e.name);
       expect(names).toContain('deep.txt');

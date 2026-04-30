@@ -111,11 +111,7 @@ async function testFewShotPromptManager() {
     },
   ];
 
-  const relevantExamples = fewShotManager.getRelevantExamples(
-    userInput,
-    availableTools,
-    3
-  );
+  const relevantExamples = fewShotManager.getRelevantExamples(userInput, availableTools, 3);
 
   console.log('\n✅ 找到相关示例:');
   relevantExamples.forEach((example, index) => {
@@ -126,16 +122,12 @@ async function testFewShotPromptManager() {
   });
 
   // 生成Few-shot提示
-  const fewShotPrompt = fewShotManager.generateFewShotPrompt(
-    userInput,
-    availableTools,
-    {
-      conversationHistory: [
-        { role: 'user', content: '我需要处理文档' },
-        { role: 'assistant', content: '我可以帮您处理' },
-      ],
-    }
-  );
+  const fewShotPrompt = fewShotManager.generateFewShotPrompt(userInput, availableTools, {
+    conversationHistory: [
+      { role: 'user', content: '我需要处理文档' },
+      { role: 'assistant', content: '我可以帮您处理' },
+    ],
+  });
 
   console.log('\n✅ 生成的Few-shot提示（前500字符）:');
   console.log(fewShotPrompt.substring(0, 500) + '...');
@@ -217,10 +209,11 @@ async function testToolUsageTracker() {
 
   // 获取推荐
   console.log('\n⭐ 工具推荐:');
-  const recommendations = toolUsageTracker.getRecommendations(
-    '转换PDF到Markdown',
-    ['PdfToMarkdownTool', 'PdfParseTool', 'ImageOcrTool']
-  );
+  const recommendations = toolUsageTracker.getRecommendations('转换PDF到Markdown', [
+    'PdfToMarkdownTool',
+    'PdfParseTool',
+    'ImageOcrTool',
+  ]);
 
   recommendations.forEach((rec) => {
     console.log(`\n- ${rec.toolName}:`);
@@ -382,10 +375,7 @@ async function testCompleteWorkflow() {
     console.log(`\n🔹 请求: ${request}`);
 
     // 1. 生成优化提示
-    const prompt = toolSelectionOptimizer.optimizeToolSelectionPrompt(
-      request,
-      availableTools
-    );
+    const prompt = toolSelectionOptimizer.optimizeToolSelectionPrompt(request, availableTools);
 
     // 2. 模拟工具选择（简化版）
     let selectedTool = '';

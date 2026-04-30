@@ -18,10 +18,7 @@ export const HITL_PROTOCOL_PROMPT = `
 - 修改方案验证
 `;
 
-export function renderHitlPrompt(params: {
-  taskType: string;
-  decisionPoints?: string[];
-}): string {
+export function renderHitlPrompt(params: { taskType: string; decisionPoints?: string[] }): string {
   return `${HITL_PROTOCOL_PROMPT}
 
 ## 当前任务类型

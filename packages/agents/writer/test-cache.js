@@ -8,7 +8,10 @@
  * 4. 缓存统计
  */
 
-import { SemanticCache, createSimpleSignatureGenerator } from '../../core/dist/cache/SemanticCache.js';
+import {
+  SemanticCache,
+  createSimpleSignatureGenerator,
+} from '../../core/dist/cache/SemanticCache.js';
 
 // 定义测试用的任务类型
 const testTask1 = {
@@ -53,12 +56,7 @@ const testResult1 = {
 
 // 创建签名生成器
 const createSignature = createSimpleSignatureGenerator((task) => {
-  return [
-    task.type,
-    task.topic,
-    task.format || 'markdown',
-    ...(task.requirements || []),
-  ];
+  return [task.type, task.topic, task.format || 'markdown', ...(task.requirements || [])];
 });
 
 // 创建语义缓存实例

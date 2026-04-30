@@ -179,7 +179,7 @@ export interface ReflectionRecord {
   iterationCount: number;
 
   /** 最终结果 */
-  finalResult?: any;
+  finalResult?: unknown;
 }
 
 /**
@@ -193,7 +193,7 @@ export interface IterationResult {
   success: boolean;
 
   /** 最终结果 */
-  result: any;
+  result: unknown;
 
   /** 所有反思报告 */
   reports: ReflectionReport[];
@@ -282,7 +282,11 @@ export class EnhancedReflection {
    * @param goal 原始目标（可选）
    * @returns 反思报告
    */
-  async reflect(result: any, context: ExecutionContext, goal?: string): Promise<ReflectionReport> {
+  async reflect(
+    result: unknown,
+    context: ExecutionContext,
+    goal?: string
+  ): Promise<ReflectionReport> {
     const startTime = Date.now();
 
     // 记录反思开始
@@ -411,10 +415,10 @@ export class EnhancedReflection {
    * @returns 迭代结果
    */
   async iterate(
-    result: any,
+    result: unknown,
     improvements: Improvement[],
     context: ExecutionContext,
-    reActFunction: (improvements: Improvement[]) => Promise<any>
+    reActFunction: (improvements: Improvement[]) => Promise<unknown>
   ): Promise<IterationResult> {
     const startTime = Date.now();
     const reports: ReflectionReport[] = [];
@@ -548,7 +552,7 @@ export class EnhancedReflection {
    * 执行多维度评估
    */
   private async performDimensionalAssessments(
-    result: any,
+    result: unknown,
     context: ExecutionContext,
     goal?: string
   ): Promise<DimensionAssessment[]> {
@@ -576,7 +580,7 @@ export class EnhancedReflection {
    */
   private async performLLMAssessment(
     dimension: ReflectionDimension,
-    result: any,
+    result: unknown,
     context: ExecutionContext,
     goal?: string
   ): Promise<DimensionAssessment> {
@@ -605,8 +609,8 @@ export class EnhancedReflection {
    */
   private performRuleBasedAssessment(
     dimension: ReflectionDimension,
-    result: any,
-    context: ExecutionContext
+    result: unknown,
+    _context: ExecutionContext
   ): DimensionAssessment {
     const issues: string[] = [];
     let score = 1.0;
@@ -688,7 +692,7 @@ export class EnhancedReflection {
    */
   private buildAssessmentPrompt(
     dimension: ReflectionDimension,
-    result: any,
+    result: unknown,
     context: ExecutionContext,
     goal?: string
   ): string {
@@ -830,7 +834,7 @@ export class EnhancedReflection {
   private determineIterationNeed(
     overallScore: number,
     improvements: Improvement[],
-    context: ExecutionContext
+    _context: ExecutionContext
   ): { needsIteration: boolean; iterationReason?: string } {
     // 检查评分阈值
     if (overallScore < this.config.iterationThreshold) {
@@ -898,7 +902,7 @@ export class EnhancedReflection {
   /**
    * 生成行动步骤
    */
-  private generateActionSteps(dimension: ReflectionDimension, issue: string): string[] {
+  private generateActionSteps(dimension: ReflectionDimension, _issue: string): string[] {
     const stepsMap: Record<ReflectionDimension, string[]> = {
       [ReflectionDimension.QUALITY]: ['重新验证结果准确性', '检查与目标的相关性', '补充缺失的信息'],
       [ReflectionDimension.COMPLETENESS]: ['检查遗漏的方面', '补充必要的细节', '确保覆盖所有要求'],
@@ -974,7 +978,7 @@ export class EnhancedReflection {
   /**
    * 记录遥测事件
    */
-  private recordTelemetryEvent(type: TelemetryEventType, data: Record<string, any>): void {
+  private recordTelemetryEvent(type: TelemetryEventType, data: Record<string, unknown>): void {
     if (this.config.enableTelemetry && this.telemetryCollector) {
       this.telemetryCollector.record({
         id: '',

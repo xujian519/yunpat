@@ -61,11 +61,7 @@ async function example1_FileTools() {
   );
 
   // 读取文件
-  const result = await registry.call(
-    'file_read',
-    { filePath: '/tmp/test.txt' },
-    context
-  );
+  const result = await registry.call('file_read', { filePath: '/tmp/test.txt' }, context);
 
   console.log('文件内容:', result.content);
 }
@@ -86,11 +82,7 @@ async function example2_SearchTools() {
   const context = createToolContext(null, null);
 
   // 查找所有 TypeScript 文件
-  const globResult = await registry.call(
-    'glob',
-    { pattern: 'packages/core/src/**/*.ts' },
-    context
-  );
+  const globResult = await registry.call('glob', { pattern: 'packages/core/src/**/*.ts' }, context);
 
   console.log(`找到 ${globResult.files.length} 个 TypeScript 文件`);
 
@@ -108,9 +100,7 @@ async function example2_SearchTools() {
 
   console.log(`搜索到 ${grepResult.matches.length} 个匹配:`);
   grepResult.matches.forEach((match) => {
-    console.log(
-      `  ${match.file}:${match.lineNumber} - ${match.line.substring(0, 60)}`
-    );
+    console.log(`  ${match.file}:${match.lineNumber} - ${match.line.substring(0, 60)}`);
   });
 }
 
@@ -158,9 +148,7 @@ async function example3_PatentTools() {
 
   console.log('提取到的技术特征:');
   features.features.forEach((f) => {
-    console.log(
-      `  [${f.isEssential ? '必要' : '附加'}] ${f.text} (${f.category || '未分类'})`
-    );
+    console.log(`  [${f.isEssential ? '必要' : '附加'}] ${f.text} (${f.category || '未分类'})`);
   });
 
   // 生成权利要求

@@ -72,11 +72,7 @@ async function test2() {
     },
   ];
 
-  const relevantExamples = fewShotManager.getRelevantExamples(
-    userInput,
-    availableTools,
-    3
-  );
+  const relevantExamples = fewShotManager.getRelevantExamples(userInput, availableTools, 3);
 
   console.log('\n✅ 找到相关示例:');
   relevantExamples.forEach((example, index) => {

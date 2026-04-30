@@ -112,9 +112,11 @@ describe('ToolRegistry', () => {
       const events: string[] = [];
       eventBus.subscribe('tool:error', async () => events.push('error'));
 
-      registry.register(new ToolWrapper('failing', 'fails', async () => {
-        throw new Error('exec failed');
-      }));
+      registry.register(
+        new ToolWrapper('failing', 'fails', async () => {
+          throw new Error('exec failed');
+        })
+      );
 
       await expect(registry.call('failing', {})).rejects.toThrow('exec failed');
       expect(events).toEqual(['error']);

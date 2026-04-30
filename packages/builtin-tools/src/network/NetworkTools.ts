@@ -33,16 +33,9 @@ export class WebFetchTool extends EnhancedBaseTool<
         .optional()
         .default('GET')
         .describe('HTTP 方法'),
-      headers: z
-        .record(z.string())
-        .optional()
-        .describe('请求头'),
+      headers: z.record(z.string()).optional().describe('请求头'),
       body: z.string().optional().describe('请求体（POST/PUT）'),
-      timeout: z
-        .number()
-        .optional()
-        .default(30000)
-        .describe('超时时间（毫秒）'),
+      timeout: z.number().optional().default(30000).describe('超时时间（毫秒）'),
     }),
     outputSchema: z.object({
       status: z.number().describe('HTTP 状态码'),
@@ -70,13 +63,7 @@ export class WebFetchTool extends EnhancedBaseTool<
     headers: Record<string, string>;
     body: string;
   }> {
-    const {
-      url,
-      method = 'GET',
-      headers = {},
-      body,
-      timeout = 30000,
-    } = input;
+    const { url, method = 'GET', headers = {}, body, timeout = 30000 } = input;
 
     try {
       const controller = new AbortController();
@@ -85,8 +72,7 @@ export class WebFetchTool extends EnhancedBaseTool<
       const response = await fetch(url, {
         method,
         headers: {
-          'User-Agent':
-            'Mozilla/5.0 (compatible; YunPat/1.0; +https://yunpat.dev)',
+          'User-Agent': 'Mozilla/5.0 (compatible; YunPat/1.0; +https://yunpat.dev)',
           ...headers,
         },
         body,
@@ -114,9 +100,7 @@ export class WebFetchTool extends EnhancedBaseTool<
       }
 
       throw new Error(
-        `HTTP request failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `HTTP request failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -148,11 +132,7 @@ export class WebSearchTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       query: z.string().describe('搜索查询'),
-      numResults: z
-        .number()
-        .optional()
-        .default(10)
-        .describe('返回结果数量'),
+      numResults: z.number().optional().default(10).describe('返回结果数量'),
       lang: z.string().optional().default('zh-CN').describe('语言代码'),
     }),
     outputSchema: z.object({
@@ -226,9 +206,7 @@ export class WebSearchTool extends EnhancedBaseTool<
       return { results };
     } catch (error) {
       throw new Error(
-        `Web search failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Web search failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

@@ -89,24 +89,10 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       query: z.string().describe('检索查询（关键词或问题）'),
-      concepts: z
-        .array(z.string())
-        .optional()
-        .describe('限定概念范围'),
-      domains: z
-        .array(z.string())
-        .optional()
-        .describe('限定领域范围'),
-      limit: z
-        .number()
-        .optional()
-        .default(10)
-        .describe('返回结果数量限制'),
-      includeContent: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('是否包含卡片内容'),
+      concepts: z.array(z.string()).optional().describe('限定概念范围'),
+      domains: z.array(z.string()).optional().describe('限定领域范围'),
+      limit: z.number().optional().default(10).describe('返回结果数量限制'),
+      includeContent: z.boolean().optional().default(true).describe('是否包含卡片内容'),
     }),
     outputSchema: z.object({
       cards: z.array(
@@ -176,9 +162,7 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
     const results = await Promise.all(
       matchedCards.map(async (cardMeta) => {
         const content =
-          input.includeContent !== false
-            ? await this.loadCardContent(cardMeta.filePath)
-            : '';
+          input.includeContent !== false ? await this.loadCardContent(cardMeta.filePath) : '';
 
         return {
           metadata: cardMeta,
@@ -266,9 +250,7 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
   /**
    * 解析卡片元数据
    */
-  private async parseCardMetadata(
-    filePath: string
-  ): Promise<CardMetadata | null> {
+  private async parseCardMetadata(filePath: string): Promise<CardMetadata | null> {
     try {
       const content = fs.readFileSync(filePath, 'utf-8');
       const lines = content.split('\n');
@@ -326,9 +308,7 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
 
     // 按概念过滤
     if (concepts && concepts.length > 0) {
-      candidates = candidates.filter((card) =>
-        concepts.includes(card.concept)
-      );
+      candidates = candidates.filter((card) => concepts.includes(card.concept));
     }
 
     // 按领域过滤
@@ -434,11 +414,7 @@ export class KnowledgeIndexBuilderTool extends EnhancedBaseTool<
     category: 'knowledge' as any,
     isConcurrencySafe: false,
     inputSchema: z.object({
-      forceRebuild: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否强制重建索引'),
+      forceRebuild: z.boolean().optional().default(false).describe('是否强制重建索引'),
     }),
     outputSchema: z.object({
       success: z.boolean(),
@@ -465,10 +441,7 @@ export class KnowledgeIndexBuilderTool extends EnhancedBaseTool<
   ): Promise<{ success: boolean; totalCards: number; buildTime: number }> {
     const startTime = Date.now();
 
-    const searchTool = new KnowledgeSearchTool(
-      this.knowledgeBasePath,
-      this.indexPath
-    );
+    const searchTool = new KnowledgeSearchTool(this.knowledgeBasePath, this.indexPath);
 
     if (input.forceRebuild || !fs.existsSync(this.indexPath)) {
       // 直接构建索引

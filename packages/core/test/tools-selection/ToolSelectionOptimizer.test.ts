@@ -384,16 +384,11 @@ describe('ToolSelectionOptimizer - 集成测试', () => {
       const executionTime = Date.now() - startTime;
 
       // 4. 记录使用
-      const recordId = optimizer.recordToolUsage(
-        selectedTool,
-        userInput,
-        parameters,
-        {
-          success: true,
-          executionTime,
-          output: result,
-        }
-      );
+      const recordId = optimizer.recordToolUsage(selectedTool, userInput, parameters, {
+        success: true,
+        executionTime,
+        output: result,
+      });
 
       expect(recordId).toBeDefined();
 
@@ -424,7 +419,7 @@ describe('ToolSelectionOptimizer - 集成测试', () => {
             category: 'test',
           },
           execute: async () => ({ result: 'success' }),
-          },
+        },
       ];
 
       // 1. 第一次尝试失败
@@ -479,11 +474,7 @@ describe('ToolSelectionOptimizer - 集成测试', () => {
         ],
       };
 
-      const prompt = optimizer.optimizeToolSelectionPrompt(
-        '请执行转换',
-        mockTools,
-        context
-      );
+      const prompt = optimizer.optimizeToolSelectionPrompt('请执行转换', mockTools, context);
 
       expect(prompt).toContain('对话历史');
       expect(prompt).toContain('我需要处理PDF');
@@ -554,10 +545,7 @@ describe('ToolSelectionOptimizer - 集成测试', () => {
         );
       }
 
-      const prompt = optimizer.optimizeToolSelectionPrompt(
-        '测试任务',
-        mockTools
-      );
+      const prompt = optimizer.optimizeToolSelectionPrompt('测试任务', mockTools);
 
       // 提示应该包含推荐信息
       expect(prompt).toBeDefined();

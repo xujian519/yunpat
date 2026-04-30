@@ -33,7 +33,8 @@ export class PromptTemplateManager {
   private loadStrategy: Map<string, TemplateLoadStrategy>;
 
   constructor(templateDir?: string) {
-    this.templateDir = templateDir || process.env.PROMPT_TEMPLATES_DIR || './prompts/patent-drafting';
+    this.templateDir =
+      templateDir || process.env.PROMPT_TEMPLATES_DIR || './prompts/patent-drafting';
     this.loadStrategy = new Map();
     this.initializeLoadStrategy();
   }
@@ -44,24 +45,24 @@ export class PromptTemplateManager {
   private initializeLoadStrategy() {
     // 定义每个阶段的加载策略
     this.loadStrategy.set('invention-understanding', {
-      preload: ['03-creativity-analysis'],  // 发明理解需要创造性分析模板
+      preload: ['03-creativity-analysis'], // 发明理解需要创造性分析模板
     });
 
     this.loadStrategy.set('claims-generation', {
-      onDemand: ['01-claims-generation'],  // 权利要求生成时加载
+      onDemand: ['01-claims-generation'], // 权利要求生成时加载
     });
 
     this.loadStrategy.set('specification-drafting', {
-      onDemand: ['02-specification-drafting'],  // 说明书撰写时加载
+      onDemand: ['02-specification-drafting'], // 说明书撰写时加载
     });
 
     this.loadStrategy.set('quality-assessment', {
-      lazy: ['01-claims-generation', '02-specification-drafting', '03-creativity-analysis'],  // 质量评估时才需要全部模板
+      lazy: ['01-claims-generation', '02-specification-drafting', '03-creativity-analysis'], // 质量评估时才需要全部模板
     });
 
     this.loadStrategy.set('full-drafting', {
-      preload: ['01-claims-generation'],  // 预加载权利要求模板
-      onDemand: ['02-specification-drafting', '03-creativity-analysis'],  // 按需加载其他模板
+      preload: ['01-claims-generation'], // 预加载权利要求模板
+      onDemand: ['02-specification-drafting', '03-creativity-analysis'], // 按需加载其他模板
     });
   }
 
@@ -121,9 +122,7 @@ export class PromptTemplateManager {
    * @param templateNames 模板名称数组
    */
   async loadTemplates(templateNames: string[]): Promise<void> {
-    await Promise.all(
-      templateNames.map((name) => this.loadTemplate(name))
-    );
+    await Promise.all(templateNames.map((name) => this.loadTemplate(name)));
   }
 
   /**
@@ -187,7 +186,7 @@ export class PromptTemplateManager {
   getCacheStats() {
     return {
       templates: this.templates.size,
-      loadedAt: Array.from(this.templates.values()).map(t => ({
+      loadedAt: Array.from(this.templates.values()).map((t) => ({
         name: t.name,
         loadedAt: t.loadedAt,
       })),
@@ -207,10 +206,7 @@ export class PromptTemplateManager {
    * @param knowledgeBridge 知识库桥接
    * @param concept 概念名称
    */
-  async extractFromKnowledge(
-    knowledgeBridge: any,
-    concept: string
-  ): Promise<string> {
+  async extractFromKnowledge(knowledgeBridge: any, concept: string): Promise<string> {
     console.log(`[PromptTemplateManager] 从知识库提炼: ${concept}`);
 
     // 1. 查询概念相关页面

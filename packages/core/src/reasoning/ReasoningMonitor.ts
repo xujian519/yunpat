@@ -64,7 +64,7 @@ export interface InferenceRecord {
   error?: string;
 
   /** 元数据 */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -82,7 +82,7 @@ export class ReasoningMonitor {
   /**
    * 开始记录推理
    */
-  startInference(type: string, metadata?: Record<string, any>): string {
+  startInference(type: string, metadata?: Record<string, unknown>): string {
     const id = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const record: InferenceRecord = {
@@ -103,12 +103,7 @@ export class ReasoningMonitor {
   /**
    * 完成推理记录
    */
-  endInference(
-    id: string,
-    tokensUsed: number,
-    success: boolean,
-    error?: string
-  ): void {
+  endInference(id: string, tokensUsed: number, success: boolean, error?: string): void {
     const record = this.records.get(id);
     if (!record) {
       return;
@@ -130,7 +125,7 @@ export class ReasoningMonitor {
    */
   getMetrics(type?: string): PerformanceMetrics {
     const records = type
-      ? Array.from(this.records.values()).filter(r => r.type === type)
+      ? Array.from(this.records.values()).filter((r) => r.type === type)
       : Array.from(this.records.values());
 
     if (records.length === 0) {
@@ -148,8 +143,8 @@ export class ReasoningMonitor {
       };
     }
 
-    const durations = records.map(r => r.duration).sort((a, b) => a - b);
-    const tokens = records.map(r => r.tokensUsed);
+    const durations = records.map((r) => r.duration).sort((a, b) => a - b);
+    const tokens = records.map((r) => r.tokensUsed);
 
     return {
       totalInferences: records.length,

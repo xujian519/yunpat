@@ -9,8 +9,6 @@ import type {
   RecoveryStrategyType,
   DeviationReport,
   ReplanningContext,
-  ExecutionState,
-  PlanAdjustment,
 } from './types.js';
 import { RecoveryStrategyType as Strategy } from './types.js';
 
@@ -100,8 +98,8 @@ export class RecoveryStrategySelector {
         // 找出可以提前执行的任务
         const modifications = [];
         const pendingGoals = context.originalPlan.subGoals
-          .filter(g => !context.currentState.completedGoals.has(g.id))
-          .sort((a, b) => (b.priority as any) - (a.priority as any)); // 按优先级降序
+          .filter((g) => !context.currentState.completedGoals.has(g.id))
+          .sort((a, b) => (b.priority as unknown as number) - (a.priority as unknown as number)); // 按优先级降序
 
         for (let i = 0; i < pendingGoals.length; i++) {
           modifications.push({
@@ -144,8 +142,12 @@ export class RecoveryStrategySelector {
               goalId: currentGoal,
               changes: {
                 newEstimate: {
-                  duration: context.originalPlan.subGoals.find(g => g.id === currentGoal)?.estimatedDuration! * 0.6,
-                  tokens: context.originalPlan.subGoals.find(g => g.id === currentGoal)?.estimatedTokens! * 0.6,
+                  duration:
+                    (context.originalPlan.subGoals.find((g) => g.id === currentGoal)
+                      ?.estimatedDuration ?? 0) * 0.6,
+                  tokens:
+                    (context.originalPlan.subGoals.find((g) => g.id === currentGoal)
+                      ?.estimatedTokens ?? 0) * 0.6,
                 },
               },
             },
@@ -200,7 +202,7 @@ export class RecoveryStrategySelector {
       applicableScenarios: ['critical_failure', 'unrecoverable_error', 'severe_deviation'],
       estimatedCost: 1.0,
       estimatedSuccess: 0.5, // 依赖人工干预
-      action: async (context) => {
+      action: async (_context) => {
         return {
           type: Strategy.ABORT,
           modifications: [],
@@ -248,9 +250,7 @@ export class RecoveryStrategySelector {
   /**
    * 获取候选策略
    */
-  private getCandidateStrategies(
-    deviationReport: DeviationReport
-  ): RecoveryStrategy[] {
+  private getCandidateStrategies(deviationReport: DeviationReport): RecoveryStrategy[] {
     const candidates: RecoveryStrategy[] = [];
 
     for (const strategy of this.strategies.values()) {
@@ -290,21 +290,23 @@ export class RecoveryStrategySelector {
   /**
    * 场景匹配
    */
-  private scenarioMatches(deviation: any, scenario: string): boolean {
-    const deviationType = deviation.type;
+  private scenarioMatches(deviation: unknown, scenario: string): boolean {
+    const deviationType = (deviation as any).type;
 
     // 映射偏离类型到场景
     const scenarioMap: Record<string, string[]> = {
-      'schedule_deviation': ['schedule_deviation', 'delay', 'behind_schedule'],
-      'quality_deviation': ['quality_issue', 'quality_drop', 'low_quality'],
-      'resource_deviation': ['resource_shortage', 'over_budget'],
-      'dependency_deviation': ['dependency_bottleneck', 'blocked_task'],
+      schedule_deviation: ['schedule_deviation', 'delay', 'behind_schedule'],
+      quality_deviation: ['quality_issue', 'quality_drop', 'low_quality'],
+      resource_deviation: ['resource_shortage', 'over_budget'],
+      dependency_deviation: ['dependency_bottleneck', 'blocked_task'],
     };
 
     const applicableScenarios = scenarioMap[deviationType] || [];
 
-    return applicableScenarios.includes(scenario) ||
-           deviation.description.toLowerCase().includes(scenario.replace('_', ' '));
+    return (
+      applicableScenarios.includes(scenario) ||
+      (deviation as any).description.toLowerCase().includes(scenario.replace('_', ' '))
+    );
   }
 
   /**
@@ -318,11 +320,7 @@ export class RecoveryStrategySelector {
     const scored = [];
 
     for (const strategy of strategies) {
-      const score = await this.calculateStrategyScore(
-        strategy,
-        deviationReport,
-        context
-      );
+      const score = await this.calculateStrategyScore(strategy, deviationReport, context);
       scored.push({ strategy, score });
     }
 
@@ -365,7 +363,7 @@ export class RecoveryStrategySelector {
       return 'minor';
     }
 
-    const severityOrder = { 'minor': 1, 'moderate': 2, 'severe': 3 };
+    const severityOrder = { minor: 1, moderate: 2, severe: 3 };
     const maxDeviation = deviationReport.deviations.reduce((max, d) =>
       severityOrder[d.severity] > severityOrder[max.severity] ? d : max
     );
@@ -376,35 +374,32 @@ export class RecoveryStrategySelector {
   /**
    * 计算严重程度匹配度
    */
-  private calculateSeverityMatch(
-    strategy: RecoveryStrategy,
-    maxSeverity: string
-  ): number {
+  private calculateSeverityMatch(strategy: RecoveryStrategy, maxSeverity: string): number {
     // 不同策略对不同严重程度的适用性
     const matchMatrix: Record<string, Record<string, number>> = {
-      'minor': {
-        'retry': 0.9,
-        'skip': 0.7,
-        'reorder': 0.8,
-        'decompose': 0.5,
-        'adapt': 0.6,
-        'abort': 0.1,
+      minor: {
+        retry: 0.9,
+        skip: 0.7,
+        reorder: 0.8,
+        decompose: 0.5,
+        adapt: 0.6,
+        abort: 0.1,
       },
-      'moderate': {
-        'retry': 0.7,
-        'skip': 0.8,
-        'reorder': 0.9,
-        'decompose': 0.8,
-        'adapt': 0.7,
-        'abort': 0.3,
+      moderate: {
+        retry: 0.7,
+        skip: 0.8,
+        reorder: 0.9,
+        decompose: 0.8,
+        adapt: 0.7,
+        abort: 0.3,
       },
-      'severe': {
-        'retry': 0.3,
-        'skip': 0.5,
-        'reorder': 0.6,
-        'decompose': 0.7,
-        'adapt': 0.8,
-        'abort': 0.9,
+      severe: {
+        retry: 0.3,
+        skip: 0.5,
+        reorder: 0.6,
+        decompose: 0.7,
+        adapt: 0.8,
+        abort: 0.9,
       },
     };
 
@@ -414,21 +409,18 @@ export class RecoveryStrategySelector {
   /**
    * 获取历史成功率
    */
-  private getHistoricalSuccess(
-    strategyName: RecoveryStrategyType,
-    history: any[]
-  ): number {
+  private getHistoricalSuccess(strategyName: RecoveryStrategyType, history: any[]): number {
     if (history.length === 0) {
       return 0.5; // 无历史数据时返回中性分数
     }
 
-    const strategyHistory = history.filter(h => h.adjustment.type === strategyName);
+    const strategyHistory = history.filter((h) => h.adjustment.type === strategyName);
 
     if (strategyHistory.length === 0) {
       return 0.5;
     }
 
-    const successCount = strategyHistory.filter(h => h.result === 'success').length;
+    const successCount = strategyHistory.filter((h) => h.result === 'success').length;
     return successCount / strategyHistory.length;
   }
 

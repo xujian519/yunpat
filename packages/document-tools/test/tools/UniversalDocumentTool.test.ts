@@ -104,7 +104,9 @@ describe('UniversalDocumentTool', () => {
       const { existsSync } = await import('fs');
       vi.mocked(existsSync).mockReturnValueOnce(false);
       const tool = new UniversalDocumentParserTool();
-      await expect(tool.execute({ filePath: '/nonexistent.pdf' }, mockContext)).rejects.toThrow('文件不存在');
+      await expect(tool.execute({ filePath: '/nonexistent.pdf' }, mockContext)).rejects.toThrow(
+        '文件不存在'
+      );
     });
 
     it('parses PDF files', async () => {
@@ -198,7 +200,11 @@ describe('UniversalDocumentTool', () => {
     it('converts document to JSON', async () => {
       const tool = new DocumentConverterTool();
       const result = await tool.execute(
-        { inputPath: '/mock/test.pdf', outputPath: '/mock/out.json', outputFormat: OutputFormat.JSON },
+        {
+          inputPath: '/mock/test.pdf',
+          outputPath: '/mock/out.json',
+          outputFormat: OutputFormat.JSON,
+        },
         mockContext
       );
       expect(result.success).toBe(true);
@@ -208,7 +214,11 @@ describe('UniversalDocumentTool', () => {
     it('converts document to Markdown', async () => {
       const tool = new DocumentConverterTool();
       const result = await tool.execute(
-        { inputPath: '/mock/test.pdf', outputPath: '/mock/out.md', outputFormat: OutputFormat.MARKDOWN },
+        {
+          inputPath: '/mock/test.pdf',
+          outputPath: '/mock/out.md',
+          outputFormat: OutputFormat.MARKDOWN,
+        },
         mockContext
       );
       expect(result.success).toBe(true);
@@ -218,7 +228,11 @@ describe('UniversalDocumentTool', () => {
     it('converts document to Text', async () => {
       const tool = new DocumentConverterTool();
       const result = await tool.execute(
-        { inputPath: '/mock/test.pdf', outputPath: '/mock/out.txt', outputFormat: OutputFormat.TEXT },
+        {
+          inputPath: '/mock/test.pdf',
+          outputPath: '/mock/out.txt',
+          outputFormat: OutputFormat.TEXT,
+        },
         mockContext
       );
       expect(result.success).toBe(true);

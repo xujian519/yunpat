@@ -20,11 +20,7 @@ export type {
 } from './types.js';
 
 // 枚举（既是类型又是值）
-export {
-  PrincipleCategory,
-  ViolationSeverity,
-  CorrectionStrategy,
-} from './types.js';
+export { PrincipleCategory, ViolationSeverity, CorrectionStrategy } from './types.js';
 
 // 原则集
 export { PATENT_PRINCIPLES } from './PatentPrinciples.js';

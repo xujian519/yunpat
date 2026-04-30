@@ -120,31 +120,21 @@ class BasicIntegratedAgent extends Agent {
       const result = await context.tools.get(plan.toolName).execute(plan.parameters);
 
       // 记录成功
-      toolSelectionOptimizer.recordToolUsage(
-        plan.toolName,
-        context.userInput,
-        plan.parameters,
-        {
-          success: true,
-          executionTime: Date.now() - startTime,
-          output: result,
-        }
-      );
+      toolSelectionOptimizer.recordToolUsage(plan.toolName, context.userInput, plan.parameters, {
+        success: true,
+        executionTime: Date.now() - startTime,
+        output: result,
+      });
 
       console.log(`✅ [基础] 执行成功，耗时: ${Date.now() - startTime}ms`);
       return { success: true, result, tool: plan.toolName };
     } catch (error) {
       // 记录失败
-      toolSelectionOptimizer.recordToolUsage(
-        plan.toolName,
-        context.userInput,
-        plan.parameters,
-        {
-          success: false,
-          executionTime: Date.now() - startTime,
-          error: error.message,
-        }
-      );
+      toolSelectionOptimizer.recordToolUsage(plan.toolName, context.userInput, plan.parameters, {
+        success: false,
+        executionTime: Date.now() - startTime,
+        error: error.message,
+      });
 
       console.error(`❌ [基础] 执行失败: ${error.message}`);
       throw error;
@@ -223,16 +213,11 @@ ${prompt}
       const result = await context.tools.get(plan.toolName).execute(plan.parameters);
 
       // 记录成功
-      toolSelectionOptimizer.recordToolUsage(
-        plan.toolName,
-        context.userInput,
-        plan.parameters,
-        {
-          success: true,
-          executionTime: Date.now() - startTime,
-          output: result,
-        }
-      );
+      toolSelectionOptimizer.recordToolUsage(plan.toolName, context.userInput, plan.parameters, {
+        success: true,
+        executionTime: Date.now() - startTime,
+        output: result,
+      });
 
       console.log(`✅ [高级] 执行成功，耗时: ${Date.now() - startTime}ms`);
       return { success: true, result, tool: plan.toolName };

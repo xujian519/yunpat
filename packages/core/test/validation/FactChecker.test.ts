@@ -136,7 +136,7 @@ describe('FactChecker', () => {
       const results = await factChecker.verifyContent(content);
 
       expect(results.length).toBeGreaterThan(0);
-      expect(results.every(r => typeof r.claim === 'object')).toBe(true);
+      expect(results.every((r) => typeof r.claim === 'object')).toBe(true);
     });
   });
 
@@ -160,7 +160,7 @@ describe('FactChecker', () => {
       const results = await factChecker.verifyClaims(claims);
 
       expect(results).toHaveLength(2);
-      expect(results.every(r => r.claim.id === claims[0].id || r.claim.id === claims[1].id));
+      expect(results.every((r) => r.claim.id === claims[0].id || r.claim.id === claims[1].id));
     });
   });
 

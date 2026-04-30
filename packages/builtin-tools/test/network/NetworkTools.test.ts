@@ -103,9 +103,7 @@ describe('NetworkTools', () => {
 
       expect(result.results).toHaveLength(2);
       expect(result.results[0].url).toBe('https://example.com/1');
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('duckduckgo.com')
-      );
+      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('duckduckgo.com'));
     });
 
     it('should return fallback result when API returns empty', async () => {

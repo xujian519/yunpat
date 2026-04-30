@@ -244,7 +244,6 @@ async function main() {
     console.log('  2. 调用 detect() 方法进行完整检测');
     console.log('  3. 调用 quickCheck() 进行快速检测');
     console.log('  4. 使用 generateReport() 生成可读报告');
-
   } catch (error) {
     console.error('\n❌ 演示失败:', (error as Error).message);
     console.error('请确保：');

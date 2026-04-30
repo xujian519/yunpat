@@ -45,10 +45,7 @@ describe('WebTools', () => {
       mockFetchSuccess({ success: true, tabId: 'tab-1' });
 
       const tool = new WebNavigateTool();
-      const result = await tool.execute(
-        { url: 'https://example.com' },
-        mockContext
-      );
+      const result = await tool.execute({ url: 'https://example.com' }, mockContext);
 
       expect(result.success).toBe(true);
       expect(result.url).toBe('https://example.com');
@@ -59,9 +56,9 @@ describe('WebTools', () => {
       mockFetchError(500, 'Internal Server Error');
 
       const tool = new WebNavigateTool();
-      await expect(
-        tool.execute({ url: 'https://example.com' }, mockContext)
-      ).rejects.toThrow('Navigation failed');
+      await expect(tool.execute({ url: 'https://example.com' }, mockContext)).rejects.toThrow(
+        'Navigation failed'
+      );
     });
   });
 
@@ -100,10 +97,7 @@ describe('WebTools', () => {
       mockFetchSuccess({ success: true, tag: 'button', text: 'Click me' });
 
       const tool = new WebClickTool();
-      const result = await tool.execute(
-        { selector: '@e1' },
-        mockContext
-      );
+      const result = await tool.execute({ selector: '@e1' }, mockContext);
 
       expect(result.success).toBe(true);
       expect(result.tag).toBe('button');
@@ -115,10 +109,7 @@ describe('WebTools', () => {
       mockFetchSuccess({ success: true, tag: 'input' });
 
       const tool = new WebFillTool();
-      const result = await tool.execute(
-        { selector: '@e2', value: 'test value' },
-        mockContext
-      );
+      const result = await tool.execute({ selector: '@e2', value: 'test value' }, mockContext);
 
       expect(result.success).toBe(true);
     });
@@ -129,10 +120,7 @@ describe('WebTools', () => {
       mockFetchSuccess({ type: 'number', value: 42 });
 
       const tool = new WebEvaluateTool();
-      const result = await tool.execute(
-        { code: '1 + 41' },
-        mockContext
-      );
+      const result = await tool.execute({ code: '1 + 41' }, mockContext);
 
       expect(result.type).toBe('number');
       expect(result.value).toBe(42);

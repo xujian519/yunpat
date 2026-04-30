@@ -57,7 +57,7 @@ async function example2_PatentWriting() {
   plan.subGoals.forEach((goal, i) => {
     console.log(`   ${i + 1}. ${goal.title}`);
     console.log(`      描述: ${goal.description}`);
-    console.log(`      任务: ${goal.tasks.map(t => t.title).join(', ')}`);
+    console.log(`      任务: ${goal.tasks.map((t) => t.title).join(', ')}`);
   });
 }
 
@@ -135,7 +135,9 @@ async function example4_SchedulingStrategies() {
 
     const result = scheduler.schedule(plan);
 
-    console.log(`   执行顺序: ${result.executionOrder.slice(0, 3).join(' → ')}${result.executionOrder.length > 3 ? '...' : ''}`);
+    console.log(
+      `   执行顺序: ${result.executionOrder.slice(0, 3).join(' → ')}${result.executionOrder.length > 3 ? '...' : ''}`
+    );
     console.log(`   并行组数: ${result.parallelGroups.length}`);
     console.log(`   关键路径长度: ${result.criticalPath.length}`);
     console.log(`   资源利用率: ${(result.resourceUtilization * 100).toFixed(1)}%`);
@@ -183,7 +185,7 @@ async function example5_IntelligentDecomposition() {
  */
 async function main() {
   console.log('🎯 YunPat 目标分解系统演示\n');
-  console.log('=' .repeat(70));
+  console.log('='.repeat(70));
 
   try {
     await example1_BasicDecomposition();
@@ -208,7 +210,6 @@ async function main() {
     console.log('  3. 使用 DependencyAnalyzer 分析依赖关系');
     console.log('  4. 使用 TaskScheduler 生成执行计划');
     console.log('  5. 跟踪进度并执行任务');
-
   } catch (error) {
     console.error('\n❌ 演示失败:', (error as Error).message);
   }

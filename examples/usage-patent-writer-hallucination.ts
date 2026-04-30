@@ -49,10 +49,7 @@ async function example1_BasicWritingWithHallucinationCheck() {
 【有益效果】
 本发明提高了图像识别的准确性和鲁棒性。
     `,
-    drawings: [
-      '图1是本发明实施例的方法流程图',
-      '图2是卷积神经网络结构示意图',
-    ],
+    drawings: ['图1是本发明实施例的方法流程图', '图2是卷积神经网络结构示意图'],
   };
 
   // 3. 执行撰写
@@ -76,7 +73,9 @@ async function example1_BasicWritingWithHallucinationCheck() {
 
     console.log(`\n📋 权利要求（前3项）:`);
     output.patentApplication.claims.slice(0, 3).forEach((claim, i) => {
-      console.log(`  ${i + 1}. ${claim.type === 'independent' ? '【独立】' : '【从属】'} ${claim.content.substring(0, 80)}...`);
+      console.log(
+        `  ${i + 1}. ${claim.type === 'independent' ? '【独立】' : '【从属】'} ${claim.content.substring(0, 80)}...`
+      );
     });
 
     // 4. 从 reflect 结果中获取幻觉检测报告
@@ -211,7 +210,6 @@ async function main() {
     console.log('  - enableFactCheck: 是否启用事实验证（默认: true）');
     console.log('  - enableLogicalConsistencyCheck: 是否启用逻辑检查（默认: true）');
     console.log('  - enableSourceAttribution: 是否启用源归属验证（默认: true）');
-
   } catch (error) {
     console.error('\n❌ 演示失败:', (error as Error).message);
     console.error('\n请确保：');

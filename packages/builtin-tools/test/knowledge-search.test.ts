@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  KnowledgeSearchTool,
-  KnowledgeIndexBuilderTool,
-} from '../src/knowledge-search.js';
+import { KnowledgeSearchTool, KnowledgeIndexBuilderTool } from '../src/knowledge-search.js';
 
 const mockContext = {
   registry: {} as any,
@@ -54,9 +51,7 @@ describe('KnowledgeSearchTool', () => {
     await (tool as any).buildIndex();
 
     expect(fs.writeFileSync).toHaveBeenCalled();
-    const writtenData = JSON.parse(
-      (fs.writeFileSync as any).mock.calls[0][1] as string
-    );
+    const writtenData = JSON.parse((fs.writeFileSync as any).mock.calls[0][1] as string);
     expect(writtenData.totalCards).toBe(2);
     expect(writtenData.cards[0].title).toBe('测试标题1');
     // Note: front-matter parser uses \w+ which does not match Chinese keys,

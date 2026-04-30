@@ -155,13 +155,15 @@ async function fiveLayerExample() {
   // ============================================================
   console.log('⑤ 初始化工具层...');
 
-  const toolRegistry = new ToolRegistry(new (class EventBus {
-    // 简化的 EventBus
-    publish() {}
-    subscribe() {}
-    unsubscribe() {}
-    request() {}
-  })());
+  const toolRegistry = new ToolRegistry(
+    new (class EventBus {
+      // 简化的 EventBus
+      publish() {}
+      subscribe() {}
+      unsubscribe() {}
+      request() {}
+    })()
+  );
 
   // 注册示例工具
   class WebSearchTool extends BaseTool {
@@ -180,7 +182,12 @@ async function fiveLayerExample() {
 
   toolRegistry.register(new WebSearchTool());
 
-  console.log(`已注册工具: ${toolRegistry.list().map((t) => t.name).join(', ')}\n`);
+  console.log(
+    `已注册工具: ${toolRegistry
+      .list()
+      .map((t) => t.name)
+      .join(', ')}\n`
+  );
 
   // ============================================================
   // 完整执行流程

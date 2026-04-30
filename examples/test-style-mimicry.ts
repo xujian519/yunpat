@@ -5,7 +5,11 @@
  */
 
 import { WriterAgent } from '../packages/agents/writer/dist/index.js';
-import { xuJianWritingStyle, generateXuJianStylePrompt, createStyledWritingTask } from '../config/writing-style-xujian.js';
+import {
+  xuJianWritingStyle,
+  generateXuJianStylePrompt,
+  createStyledWritingTask,
+} from '../config/writing-style-xujian.js';
 
 /**
  * 创建模拟的执行上下文
@@ -38,18 +42,18 @@ function createMockContext() {
 
 ## 📊 总结
 
-总的来说，Docker 容器化技术通过环境一致性、资源隔离和快速部署三大优势，彻底改变了软件交付的方式。`
+总的来说，Docker 容器化技术通过环境一致性、资源隔离和快速部署三大优势，彻底改变了软件交付的方式。`,
         };
-      }
+      },
     },
     tools: new Map(),
     memory: {
       get: async () => null,
-      set: async () => {}
+      set: async () => {},
     },
     conversationHistory: [],
     sessionId: 'test-session',
-    userId: 'test-user'
+    userId: 'test-user',
   };
 }
 
@@ -102,7 +106,7 @@ async function testWriterAgentIntegration() {
     eventBus: null as any,
     memory: null as any,
     tools: null as any,
-    llm: null as any
+    llm: null as any,
   });
 
   const task = createStyledWritingTask('Docker 容器化技术');
@@ -193,7 +197,6 @@ async function runAllTests() {
     console.log('  1. 使用真实的 LLM 测试写作效果');
     console.log('  2. 收集更多写作样本优化风格配置');
     console.log('  3. 实现自动风格学习功能');
-
   } catch (error) {
     console.error('\n❌ 测试失败:', (error as Error).message);
     console.error((error as Error).stack);

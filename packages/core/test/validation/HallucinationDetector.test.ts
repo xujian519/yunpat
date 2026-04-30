@@ -123,7 +123,7 @@ describe('HallucinationDetector', () => {
       const report = await detector.detect(content);
 
       const contradictions = report.logicalInconsistencies.filter(
-        i => i.type === 'contradiction'
+        (i) => i.type === 'contradiction'
       );
       // 可能检测到矛盾，也可能没有（取决于检测算法）
       expect(report.logicalInconsistencies.length).toBeGreaterThanOrEqual(0);
@@ -135,7 +135,7 @@ describe('HallucinationDetector', () => {
       const report = await detector.detect(content);
 
       const missingCitations = report.sourceAttributionIssues.filter(
-        i => i.type === 'missing_citation'
+        (i) => i.type === 'missing_citation'
       );
       // 应该检测到缺少引用
       expect(missingCitations.length).toBeGreaterThan(0);
@@ -203,9 +203,7 @@ describe('HallucinationDetector', () => {
 
       const report = await detector.detect(content);
 
-      const fixSuggestions = report.suggestions.filter(
-        s => s.action === 'fix'
-      );
+      const fixSuggestions = report.suggestions.filter((s) => s.action === 'fix');
       // 如果检测到矛盾，应该有修正建议
       if (report.logicalInconsistencies.length > 0) {
         expect(fixSuggestions.length).toBeGreaterThan(0);
@@ -217,11 +215,9 @@ describe('HallucinationDetector', () => {
 
       const report = await detector.detect(content);
 
-      const addSuggestions = report.suggestions.filter(
-        s => s.action === 'add_citation'
-      );
+      const addSuggestions = report.suggestions.filter((s) => s.action === 'add_citation');
       // 如果检测到缺少引用，应该有添加建议
-      if (report.sourceAttributionIssues.some(i => i.type === 'missing_citation')) {
+      if (report.sourceAttributionIssues.some((i) => i.type === 'missing_citation')) {
         expect(addSuggestions.length).toBeGreaterThan(0);
       }
     });
@@ -244,11 +240,7 @@ describe('HallucinationDetector', () => {
     });
 
     it('应该支持批量进度回调', async () => {
-      const documents = [
-        '内容1',
-        '内容2',
-        '内容3',
-      ];
+      const documents = ['内容1', '内容2', '内容3'];
 
       const progressCallback = vi.fn();
       const reports = await detector.detectBatch(documents, progressCallback);
@@ -330,11 +322,7 @@ describe('HallucinationDetector', () => {
 
   describe('统计功能', () => {
     it('应该计算检测器统计', async () => {
-      const documents = [
-        '内容1',
-        '内容2',
-        '内容3',
-      ];
+      const documents = ['内容1', '内容2', '内容3'];
 
       const reports = await detector.detectBatch(documents);
       const stats = detector.getDetectorStats(reports);
@@ -549,10 +537,7 @@ describe('HallucinationDetector', () => {
         persistent: false,
         storagePath: '/tmp/yunpat-test-knowledge-empty',
       });
-      const detectorWithEmptyKB = new HallucinationDetector(
-        mockLLM,
-        emptyKB
-      );
+      const detectorWithEmptyKB = new HallucinationDetector(mockLLM, emptyKB);
 
       const content = '根据专利法第25条规定。';
       const report = await detectorWithEmptyKB.detect(content);

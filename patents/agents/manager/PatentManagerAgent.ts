@@ -224,10 +224,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
   /**
    * 规划阶段：制定管理策略
    */
-  protected async plan(
-    input: PatentManagementInput,
-    context: any
-  ): Promise<any> {
+  protected async plan(input: PatentManagementInput, context: any): Promise<any> {
     console.log(`\n📋 [专利管理] 开始制定管理策略`);
     console.log(`   管理类型: ${input.managementType}`);
 
@@ -242,7 +239,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
 1. 数据收集策略
 2. 分析方法选择
 3. 预警机制设计
-4. 行动建议生成`
+4. 行动建议生成`,
         },
         {
           role: 'user',
@@ -250,8 +247,8 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
 目标专利数量：${input.targetPatents?.length || 0}
 操作类型：${input.operation ? Object.keys(input.operation).join('、') : '无'}
 筛选条件：${input.filters ? JSON.stringify(input.filters) : '无'}
-`
-        }
+`,
+        },
       ],
       temperature: 0.3,
     });
@@ -266,10 +263,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
   /**
    * 执行阶段：执行管理操作
    */
-  protected async act(
-    plan: any,
-    context: any
-  ): Promise<PatentManagementOutput> {
+  protected async act(plan: any, context: any): Promise<PatentManagementOutput> {
     console.log(`\n⚙️ [专利管理] 开始执行管理操作`);
 
     const startTime = Date.now();
@@ -310,10 +304,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
   /**
    * 反思阶段：效果评估
    */
-  protected async reflect(
-    output: PatentManagementOutput,
-    context: any
-  ): Promise<any> {
+  protected async reflect(output: PatentManagementOutput, context: any): Promise<any> {
     console.log(`\n🤔 [专利管理] 效果评估`);
 
     const assessment = await context.llm.chat({
@@ -327,7 +318,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
 3. 预警是否及时
 4. 操作是否高效
 
-给出评分（0-100）和改进建议。`
+给出评分（0-100）和改进建议。`,
         },
         {
           role: 'user',
@@ -336,8 +327,8 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
 识别问题数：${output.metrics.issuesIdentified}
 生成提醒数：${output.metrics.remindersGenerated}
 建议操作数：${output.recommendedActions.length}
-`
-        }
+`,
+        },
       ],
       temperature: 0.3,
     });
@@ -477,7 +468,12 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
         workflowManagement: {
           pendingTasks: data.pendingTasks || [],
           workflowProgress: data.workflowProgress || [],
-          statistics: data.statistics || { totalTasks: 0, completedTasks: 0, overdueTasks: 0, completionRate: 0 },
+          statistics: data.statistics || {
+            totalTasks: 0,
+            completedTasks: 0,
+            overdueTasks: 0,
+            completionRate: 0,
+          },
         },
       };
     } catch (error) {
@@ -555,7 +551,12 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
       return {
         costManagement: {
           costDetails: data.costDetails || [],
-          statistics: data.statistics || { totalCost: 0, paidCost: 0, pendingCost: 0, overdueCost: 0 },
+          statistics: data.statistics || {
+            totalCost: 0,
+            paidCost: 0,
+            pendingCost: 0,
+            overdueCost: 0,
+          },
           forecast: data.forecast || { nextMonth: 0, nextQuarter: 0, nextYear: 0 },
         },
       };
@@ -603,14 +604,14 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
 2. 价值分布分析
 3. 地域分布统计
 4. 技术领域分布
-5. 风险识别和预警`
+5. 风险识别和预警`,
         },
         {
           role: 'user',
           content: `请分析专利组合的整体情况。
 筛选条件：${context.input.filters ? JSON.stringify(context.input.filters) : '无'}
-`
-        }
+`,
+        },
       ],
       temperature: 0.4,
     });
@@ -677,14 +678,14 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
 3. 责任人分配
 4. 时间要求
 
-每条建议应当具体、可执行、有优先级。`
+每条建议应当具体、可执行、有优先级。`,
         },
         {
           role: 'user',
           content: `管理结果：
 ${JSON.stringify(results, null, 2).substring(0, 1000)}...
-`
-        }
+`,
+        },
       ],
       temperature: 0.5,
     });
@@ -768,9 +769,7 @@ ${JSON.stringify(results, null, 2).substring(0, 1000)}...
     }
 
     if (results.costManagement?.costDetails) {
-      count += results.costManagement.costDetails.filter(
-        (c: any) => c.status === 'pending'
-      ).length;
+      count += results.costManagement.costDetails.filter((c: any) => c.status === 'pending').length;
     }
 
     return count;

@@ -13,10 +13,7 @@ import type {
   ConstitutionalAIConfig,
   ConflictResolution,
 } from './types.js';
-import {
-  CorrectionStrategy,
-  ViolationSeverity,
-} from './types.js';
+import { CorrectionStrategy, ViolationSeverity } from './types.js';
 import { ComplianceChecker } from './ComplianceChecker.js';
 import { AutoCorrector } from './AutoCorrector.js';
 
@@ -65,10 +62,7 @@ export class ConstitutionalAI {
   /**
    * 纠正违规内容
    */
-  async correct(
-    content: string,
-    violations?: Violation[]
-  ): Promise<CorrectionResult> {
+  async correct(content: string, violations?: Violation[]): Promise<CorrectionResult> {
     let violationsToCorrect = violations;
 
     // 如果没有提供违规列表，先进行检查
@@ -113,9 +107,7 @@ export class ConstitutionalAI {
   /**
    * 检查并纠正（一步完成）
    */
-  async checkAndCorrect(
-    content: string
-  ): Promise<{
+  async checkAndCorrect(content: string): Promise<{
     report: ComplianceReport;
     correction: CorrectionResult;
   }> {
@@ -170,7 +162,9 @@ export class ConstitutionalAI {
     }
 
     // 添加无冲突的违规
-    const conflictIds = new Set(conflicts.flat().map(v => `${v.principleId}-${v.location.start}`));
+    const conflictIds = new Set(
+      conflicts.flat().map((v) => `${v.principleId}-${v.location.start}`)
+    );
     for (const violation of violations) {
       const key = `${violation.principleId}-${violation.location.start}`;
       if (!conflictIds.has(key)) {
@@ -202,7 +196,7 @@ export class ConstitutionalAI {
     }
 
     // 找出有多个违规的位置
-    for (const [location, violationsAtLocation] of violationsByLocation) {
+    for (const [_location, violationsAtLocation] of violationsByLocation) {
       if (violationsAtLocation.length > 1) {
         conflicts.push(violationsAtLocation);
       }
@@ -215,16 +209,14 @@ export class ConstitutionalAI {
    * 获取原则优先级
    */
   private getPrinciplePriority(principleId: string): number {
-    const principle = this.principles.find(p => p.id === principleId);
+    const principle = this.principles.find((p) => p.id === principleId);
     return principle ? principle.priority : 0;
   }
 
   /**
    * 批量检查多个内容
    */
-  async batchCheck(
-    contents: string[]
-  ): Promise<ComplianceReport[]> {
+  async batchCheck(contents: string[]): Promise<ComplianceReport[]> {
     const reports: ComplianceReport[] = [];
 
     for (const content of contents) {
@@ -248,11 +240,7 @@ export class ConstitutionalAI {
 
     // 总体结果
     lines.push(`📊 总体合规分数: ${(report.score * 100).toFixed(1)}%`);
-    lines.push(
-      `📋 合规状态: ${
-        report.overallCompliant ? '✅ 合规' : '❌ 不合规'
-      }`
-    );
+    lines.push(`📋 合规状态: ${report.overallCompliant ? '✅ 合规' : '❌ 不合规'}`);
     lines.push(`⏱️  检查耗时: ${report.duration}ms`);
     lines.push(`🕐 检查时间: ${report.checkedAt.toLocaleString('zh-CN')}`);
     lines.push('');
@@ -343,7 +331,7 @@ export class ConstitutionalAI {
    * 移除原则
    */
   removePrinciple(principleId: string): void {
-    this.principles = this.principles.filter(p => p.id !== principleId);
+    this.principles = this.principles.filter((p) => p.id !== principleId);
     this.checker = new ComplianceChecker(this.principles, this.config);
   }
 
@@ -351,7 +339,7 @@ export class ConstitutionalAI {
    * 获取原则详情
    */
   getPrinciple(principleId: string): ConstitutionalPrinciple | undefined {
-    return this.principles.find(p => p.id === principleId);
+    return this.principles.find((p) => p.id === principleId);
   }
 
   /**

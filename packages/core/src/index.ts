@@ -344,11 +344,7 @@ export type {
 } from './validation/ResultValidator.js';
 
 // ========== 规划系统 (Planning) ==========
-export {
-  TaskDecomposer,
-  DependencyAnalyzer,
-  TaskScheduler,
-} from './planning/index.js';
+export { TaskDecomposer, DependencyAnalyzer, TaskScheduler } from './planning/index.js';
 
 export type {
   // 配置和选项
@@ -407,7 +403,11 @@ export type {
   ConflictResolution,
 } from './constitutional/types.js';
 
-export { PrincipleCategory, ViolationSeverity, CorrectionStrategy } from './constitutional/types.js';
+export {
+  PrincipleCategory,
+  ViolationSeverity,
+  CorrectionStrategy,
+} from './constitutional/types.js';
 
 // ========== 动态重规划 (Dynamic Replanning) ==========
 export {

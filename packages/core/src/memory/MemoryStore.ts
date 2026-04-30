@@ -15,14 +15,14 @@ export class ShortTermMemory implements IMemoryStore {
   /**
    * 读取记忆
    */
-  async get(key: string): Promise<any> {
+  async get(key: string): Promise<unknown> {
     return this.storage.get(key);
   }
 
   /**
    * 写入记忆
    */
-  async set(key: string, value: any): Promise<void> {
+  async set(key: string, value: unknown): Promise<void> {
     this.storage.set(key, value);
   }
 
@@ -43,7 +43,7 @@ export class ShortTermMemory implements IMemoryStore {
   /**
    * 获取所有记忆
    */
-  async getAll(): Promise<Record<string, any>> {
+  async getAll(): Promise<Record<string, unknown>> {
     return Object.fromEntries(this.storage.entries());
   }
 
@@ -101,7 +101,7 @@ export class MemoryManager {
   /**
    * 添加记忆
    */
-  async add(key: string, value: any): Promise<void> {
+  async add(key: string, value: unknown): Promise<void> {
     await this.shortTerm.set(key, value);
 
     // 记录历史
@@ -115,7 +115,7 @@ export class MemoryManager {
   /**
    * 获取记忆
    */
-  async get(key: string): Promise<any> {
+  async get(key: string): Promise<unknown> {
     return this.shortTerm.get(key);
   }
 

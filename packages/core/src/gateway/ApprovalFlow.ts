@@ -41,10 +41,10 @@ export interface UserFeedback {
   content: string;
 
   /** 修正数据（当type=correct时） */
-  corrections?: Record<string, any>;
+  corrections?: Record<string, unknown>;
 
   /** 补充信息（当type=supplement时） */
-  supplements?: Record<string, any>;
+  supplements?: Record<string, unknown>;
 
   /** 拒绝原因（当type=reject时） */
   rejectionReason?: string;
@@ -157,7 +157,7 @@ export class ApprovalFlow {
    * @returns 审批响应
    */
   async requestApproval(
-    result: any,
+    result: unknown,
     context: ExecutionContext,
     timeout?: number
   ): Promise<ApprovalResponse> {
@@ -226,7 +226,7 @@ export class ApprovalFlow {
    * @param result 结果数据
    * @param options 展示选项
    */
-  async presentForApproval(result: any, options: PresentationOptions): Promise<void> {
+  async presentForApproval(result: unknown, options: PresentationOptions): Promise<void> {
     const { format, highlightConcerns, concerns, message } = options;
 
     // 打印自定义消息
@@ -323,7 +323,7 @@ export class ApprovalFlow {
    */
   private async cliApproval(
     approvalId: string,
-    result: any,
+    result: unknown,
     context: ExecutionContext,
     timeout: number
   ): Promise<ApprovalResponse> {
@@ -408,7 +408,7 @@ export class ApprovalFlow {
    */
   private async httpApproval(
     _approvalId: string,
-    _result: any,
+    _result: unknown,
     _context: ExecutionContext,
     _timeout: number
   ): Promise<ApprovalResponse> {
@@ -426,7 +426,7 @@ export class ApprovalFlow {
    */
   private async websocketApproval(
     _approvalId: string,
-    _result: any,
+    _result: unknown,
     _context: ExecutionContext,
     _timeout: number
   ): Promise<ApprovalResponse> {
@@ -442,7 +442,7 @@ export class ApprovalFlow {
   /**
    * 收集CLI反馈
    */
-  private async collectCliFeedback(approvalId: string): Promise<UserFeedback> {
+  private async collectCliFeedback(_approvalId: string): Promise<UserFeedback> {
     return new Promise((resolve) => {
       const rl = readline.createInterface({
         input: process.stdin,
@@ -488,7 +488,7 @@ export class ApprovalFlow {
   /**
    * 以表格形式展示结果
    */
-  private presentAsTable(result: any): void {
+  private presentAsTable(result: unknown): void {
     if (typeof result === 'object' && result !== null) {
       console.log('\n┌─────────────────────────────────────────────────────────┐');
       console.log('│ 结果摘要                                                │');
@@ -508,7 +508,7 @@ export class ApprovalFlow {
   /**
    * 以摘要形式展示结果
    */
-  private presentAsSummary(result: any): void {
+  private presentAsSummary(result: unknown): void {
     console.log('\n📊 结果摘要:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
@@ -531,7 +531,7 @@ export class ApprovalFlow {
   /**
    * 分析疑点
    */
-  private analyzeConcerns(result: any): string[] {
+  private analyzeConcerns(result: unknown): string[] {
     const concerns: string[] = [];
 
     if (typeof result === 'object' && result !== null) {

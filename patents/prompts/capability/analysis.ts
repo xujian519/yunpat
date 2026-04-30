@@ -16,10 +16,7 @@ export const CAP_ANALYSIS_PROMPT = `
 - 层次性：区分核心特征和可选特征
 `;
 
-export function renderAnalysisPrompt(params: {
-  text: string;
-  analysisType: string;
-}): string {
+export function renderAnalysisPrompt(params: { text: string; analysisType: string }): string {
   return `${CAP_ANALYSIS_PROMPT}
 
 ## 待分析文本

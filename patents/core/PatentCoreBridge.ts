@@ -13,7 +13,16 @@ import { tmpdir } from 'os';
 
 const execFileAsync = promisify(execFile);
 
-let CLI_PATH = join(__dirname, '..', '..', 'packages', 'rust-tools', 'target', 'release', 'patent-cli');
+let CLI_PATH = join(
+  __dirname,
+  '..',
+  '..',
+  'packages',
+  'rust-tools',
+  'target',
+  'release',
+  'patent-cli'
+);
 
 export function setCliPath(path: string): void {
   CLI_PATH = path;
@@ -25,7 +34,11 @@ async function runCli(args: string[]): Promise<any> {
 }
 
 /** 通过临时文件传递 JSON 数据给 CLI（避免命令行参数长度限制和跨平台 /dev/stdin 问题） */
-async function runCliWithStdin(subcommand: string, extraArgs: string[], data: string): Promise<any> {
+async function runCliWithStdin(
+  subcommand: string,
+  extraArgs: string[],
+  data: string
+): Promise<any> {
   const tmpDir = mkdtempSync(join(tmpdir(), 'patent-cli-'));
   const tmpFile = join(tmpDir, 'input.json');
   try {
@@ -34,8 +47,16 @@ async function runCliWithStdin(subcommand: string, extraArgs: string[], data: st
     const { stdout } = await execFileAsync(CLI_PATH, args, { timeout: 30000 });
     return JSON.parse(stdout);
   } finally {
-    try { unlinkSync(tmpFile); } catch { /* ignore */ }
-    try { unlinkSync(join(tmpDir)); } catch { /* ignore */ }
+    try {
+      unlinkSync(tmpFile);
+    } catch {
+      /* ignore */
+    }
+    try {
+      unlinkSync(join(tmpDir));
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -133,7 +154,7 @@ export async function parseDisclosure(text: string): Promise<DisclosureDoc> {
 export async function generateClaims(
   title: string,
   solution: string,
-  inventionType: 'product' | 'method' | 'use' = 'product',
+  inventionType: 'product' | 'method' | 'use' = 'product'
 ): Promise<{
   claims: ClaimDraft[];
   rendered: string[];
@@ -156,7 +177,7 @@ export async function recommendStrategy(oaJson: string): Promise<{
 /** 修改权利要求 */
 export async function reviseClaims(
   claims: ClaimDraft[],
-  strategy: 'AmendClaims' | 'Hybrid' | 'Argue' = 'Hybrid',
+  strategy: 'AmendClaims' | 'Hybrid' | 'Argue' = 'Hybrid'
 ): Promise<{
   revised_claims: ClaimDraft[];
   revision_quality: number;

@@ -57,7 +57,7 @@ export interface OfficeActionOutput {
     writtenArgument: string;
 
     /** 修改后的权利要求 */
-  amendedClaims: string[];
+    amendedClaims: string[];
 
     /** 修改对照页 */
     amendmentComparison: string;
@@ -91,10 +91,7 @@ export class PatentResponderAgent extends Agent<OfficeActionInput, OfficeActionO
   /**
    * 规划阶段：分析审查意见并制定答复策略
    */
-  protected async plan(
-    input: OfficeActionInput,
-    context: any
-  ): Promise<any> {
+  protected async plan(input: OfficeActionInput, context: any): Promise<any> {
     console.log(`\n📋 [审查答复] 开始分析审查意见`);
     console.log(`   申请号: ${input.applicationNumber}`);
     console.log(`   专利名称: ${input.patentTitle}`);
@@ -105,11 +102,18 @@ export class PatentResponderAgent extends Agent<OfficeActionInput, OfficeActionO
     let recommendedStrategies: any = null;
     try {
       parsedOa = await PatentCore.parseOa(input.officeAction);
-      console.log(`[PatentResponderAgent] OA 类型: ${parsedOa.oa_type}, 受影响权利要求: ${parsedOa.affected_claims.join(',')}`);
+      console.log(
+        `[PatentResponderAgent] OA 类型: ${parsedOa.oa_type}, 受影响权利要求: ${parsedOa.affected_claims.join(',')}`
+      );
       recommendedStrategies = await PatentCore.recommendStrategy(JSON.stringify(parsedOa));
-      console.log(`[PatentResponderAgent] 推荐策略: ${recommendedStrategies.strategies.map((s: any) => `${s.strategy_type}(${s.confidence})`).join(', ')}`);
+      console.log(
+        `[PatentResponderAgent] 推荐策略: ${recommendedStrategies.strategies.map((s: any) => `${s.strategy_type}(${s.confidence})`).join(', ')}`
+      );
     } catch (e) {
-      console.warn('[PatentResponderAgent] patent-core OA 解析失败，回退到纯 LLM 模式:', (e as Error).message);
+      console.warn(
+        '[PatentResponderAgent] patent-core OA 解析失败，回退到纯 LLM 模式:',
+        (e as Error).message
+      );
     }
 
     // 构建增强的提示词
@@ -134,7 +138,7 @@ export class PatentResponderAgent extends Agent<OfficeActionInput, OfficeActionO
 3. 制定有效的答复策略
 4. 设计权利要求修改方案
 
-请分析以下审查意见，并给出答复策略。`
+请分析以下审查意见，并给出答复策略。`,
         },
         {
           role: 'user',
@@ -153,8 +157,8 @@ ${input.claims.join('\n')}
 
 说明书：
 ${input.description.substring(0, 1000)}...
-${oaContext}${strategyContext}`
-        }
+${oaContext}${strategyContext}`,
+        },
       ],
       temperature: 0.3,
     });
@@ -171,10 +175,7 @@ ${oaContext}${strategyContext}`
   /**
    * 执行阶段：生成答复书
    */
-  protected async act(
-    plan: any,
-    context: any
-  ): Promise<OfficeActionOutput> {
+  protected async act(plan: any, context: any): Promise<OfficeActionOutput> {
     console.log(`\n✍️ [审查答复] 开始生成答复书`);
 
     // 1. 制定答复策略
@@ -215,10 +216,7 @@ ${oaContext}${strategyContext}`
   /**
    * 反思阶段：答复质量检查
    */
-  protected async reflect(
-    output: OfficeActionOutput,
-    context: any
-  ): Promise<any> {
+  protected async reflect(output: OfficeActionOutput, context: any): Promise<any> {
     console.log(`\n🤔 [审查答复] 质量检查`);
 
     // patent-core 质量评估
@@ -233,7 +231,9 @@ ${oaContext}${strategyContext}`
         dependent_on: i > 0 ? String(i) : null,
       }));
       coreAssessment = await PatentCore.assessQuality(claimDrafts);
-      console.log(`[PatentResponderAgent] 修改后权利要求质量: ${coreAssessment.overall_score.toFixed(2)}`);
+      console.log(
+        `[PatentResponderAgent] 修改后权利要求质量: ${coreAssessment.overall_score.toFixed(2)}`
+      );
     } catch (e) {
       console.warn('[PatentResponderAgent] patent-core 质量评估失败:', (e as Error).message);
     }
@@ -255,7 +255,7 @@ ${oaContext}${strategyContext}`
 3. 是否充分回应了审查意见
 4. 是否存在明显的法律风险
 
-给出评分（0-100）和改进建议。`
+给出评分（0-100）和改进建议。`,
         },
         {
           role: 'user',
@@ -263,8 +263,8 @@ ${oaContext}${strategyContext}`
 核心论点数量：${output.responseStrategy.arguments.length}
 修改权利要求数量：${output.response.amendedClaims.length}
 意见陈述书长度：${output.response.writtenArgument.split(/\s+/).length} 字
-授权成功率预测：${output.metrics.allowanceProbability}%${coreInfo}`
-        }
+授权成功率预测：${output.metrics.allowanceProbability}%${coreInfo}`,
+        },
       ],
       temperature: 0.3,
     });
@@ -296,15 +296,15 @@ ${oaContext}${strategyContext}`
   "type": "amendment | argument | combination",
   "arguments": ["核心论点1", "核心论点2", ...],
   "suggestedAmendments": ["建议修改1", "建议修改2", ...]
-}`
+}`,
         },
         {
           role: 'user',
           content: `审查意见分析：
 ${plan.analysis}
 
-请制定最佳答复策略，并以 JSON 格式返回。`
-        }
+请制定最佳答复策略，并以 JSON 格式返回。`,
+        },
       ],
       temperature: 0.4,
     });
@@ -316,12 +316,18 @@ ${plan.analysis}
       const jsonStr = jsonMatch ? jsonMatch[0] : content;
       const parsed = JSON.parse(jsonStr);
 
-      const validTypes: Array<'amendment' | 'argument' | 'combination'> = ['amendment', 'argument', 'combination'];
+      const validTypes: Array<'amendment' | 'argument' | 'combination'> = [
+        'amendment',
+        'argument',
+        'combination',
+      ];
       const type = validTypes.includes(parsed.type) ? parsed.type : 'combination';
 
       return {
         type,
-        arguments: Array.isArray(parsed.arguments) ? parsed.arguments : ['区别技术特征分析', '创造性论述'],
+        arguments: Array.isArray(parsed.arguments)
+          ? parsed.arguments
+          : ['区别技术特征分析', '创造性论述'],
         suggestedAmendments: Array.isArray(parsed.suggestedAmendments)
           ? parsed.suggestedAmendments
           : ['权利要求1增加区别技术特征', '从属权利要求合并到独立权利要求'],
@@ -352,14 +358,14 @@ ${plan.analysis}
 4. 引用相关法律条款和审查指南
 5. 语言专业、逻辑清晰、有说服力
 
-字数：1500-3000 字`
+字数：1500-3000 字`,
         },
         {
           role: 'user',
           content: `请根据以下审查意见撰写陈述书：
 ${plan.analysis.substring(0, 2000)}...
-`
-        }
+`,
+        },
       ],
       temperature: 0.5,
     });
@@ -383,14 +389,14 @@ ${plan.analysis.substring(0, 2000)}...
 3. 合理合并从属权利要求
 4. 确保修改得到说明书支持
 
-输出格式：每项权利要求单独一行`
+输出格式：每项权利要求单独一行`,
         },
         {
           role: 'user',
           content: `请修改权利要求以克服审查意见的驳回理由。
 ${plan.analysis.substring(0, 1000)}...
-`
-        }
+`,
+        },
       ],
       temperature: 0.4,
     });
@@ -399,8 +405,8 @@ ${plan.analysis.substring(0, 1000)}...
     const content = amended.message.content;
     return content
       .split(/\n/)
-      .filter(line => line.trim().length > 0)
-      .filter(line => /^\s*\d+[\.、]/.test(line) || line.includes('权利要求'));
+      .filter((line) => line.trim().length > 0)
+      .filter((line) => /^\s*\d+[\.、]/.test(line) || line.includes('权利要求'));
   }
 
   /**
@@ -420,12 +426,12 @@ ${plan.analysis.substring(0, 1000)}...
 
 权利要求2：
 ...
-`
+`,
         },
         {
           role: 'user',
-          content: `请生成修改对照页。`
-        }
+          content: `请生成修改对照页。`,
+        },
       ],
       temperature: 0.3,
     });

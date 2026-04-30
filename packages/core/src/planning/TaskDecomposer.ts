@@ -11,14 +11,11 @@ import type {
   DecompositionOptions,
   TaskDecomposerConfig,
   DecompositionRule,
-  SubGoalTemplate,
-  TaskTemplate,
   PlanningExecutionContext,
   DecompositionStats,
   Dependency,
-  LLMAdapter,
 } from './types.js';
-import { Priority, TaskStatus, TaskType, PlanStatus, DependencyType } from './types.js';
+import { Priority, TaskStatus, TaskType, PlanStatus } from './types.js';
 import { DependencyAnalyzer } from './DependencyAnalyzer.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -87,13 +84,7 @@ export class TaskDecomposer {
     const planId = uuidv4();
 
     // 递归分解
-    const subGoals = await this.decomposeRecursive(
-      goal,
-      0,
-      opts.maxDepth,
-      context,
-      opts
-    );
+    const subGoals = await this.decomposeRecursive(goal, 0, opts.maxDepth, context, opts);
 
     console.log(`   分解完成: ${subGoals.length} 个子目标`);
 
@@ -122,7 +113,9 @@ export class TaskDecomposer {
       },
     };
 
-    console.log(`   总任务数: ${stats.totalTasks}, 预估时长: ${(stats.totalEstimatedDuration / 60).toFixed(1)} 分钟`);
+    console.log(
+      `   总任务数: ${stats.totalTasks}, 预估时长: ${(stats.totalEstimatedDuration / 60).toFixed(1)} 分钟`
+    );
 
     return plan;
   }
@@ -161,15 +154,9 @@ export class TaskDecomposer {
   /**
    * 查找匹配的分解规则
    */
-  private findMatchingRule(
-    goal: string,
-    options?: DecompositionOptions
-  ): DecompositionRule | null {
+  private findMatchingRule(goal: string, options?: DecompositionOptions): DecompositionRule | null {
     const domain = options?.domain || this.config.domain || 'general';
-    const allRules = [
-      ...(this.domainRules.get(domain) || []),
-      ...(this.config.customRules || []),
-    ];
+    const allRules = [...(this.domainRules.get(domain) || []), ...(this.config.customRules || [])];
 
     for (const rule of allRules) {
       if (this.matchesRule(goal, rule)) {
@@ -189,7 +176,7 @@ export class TaskDecomposer {
     if (rule.matchPattern instanceof RegExp) {
       return rule.matchPattern.test(lowerGoal);
     } else if (Array.isArray(rule.matchPattern)) {
-      return rule.matchPattern.some(pattern => lowerGoal.includes(pattern.toLowerCase()));
+      return rule.matchPattern.some((pattern) => lowerGoal.includes(pattern.toLowerCase()));
     }
 
     return false;
@@ -201,14 +188,14 @@ export class TaskDecomposer {
   private async applyRule(
     goal: string,
     rule: DecompositionRule,
-    currentDepth: number,
-    context?: Partial<PlanningExecutionContext>,
-    options?: DecompositionOptions
+    _currentDepth: number,
+    _context?: Partial<PlanningExecutionContext>,
+    _options?: DecompositionOptions
   ): Promise<SubGoal[]> {
     const subGoals: SubGoal[] = [];
 
     for (const template of rule.subGoalTemplates) {
-      const tasks: PlanningTask[] = template.taskTemplates.map(taskTemplate => ({
+      const tasks: PlanningTask[] = template.taskTemplates.map((taskTemplate) => ({
         id: uuidv4(),
         title: taskTemplate.title,
         description: taskTemplate.description,
@@ -241,8 +228,8 @@ export class TaskDecomposer {
    */
   private ruleBasedDecompose(
     goal: string,
-    currentDepth: number,
-    options?: DecompositionOptions
+    _currentDepth: number,
+    _options?: DecompositionOptions
   ): SubGoal[] {
     // 通用分解策略
     const subGoals: SubGoal[] = [];
@@ -469,26 +456,32 @@ export class TaskDecomposer {
         throw new Error('无效的子目标格式');
       }
 
-      return result.subGoals.map((sg: any) => ({
+      return result.subGoals.map((sg: unknown) => ({
         id: uuidv4(),
-        title: sg.title || '未命名子目标',
-        description: sg.description || '',
-        tasks: (sg.tasks || []).map((t: any) => ({
+        title: (sg as any).title || '未命名子目标',
+        description: (sg as any).description || '',
+        tasks: ((sg as any).tasks || []).map((t: unknown) => ({
           id: uuidv4(),
-          title: t.title || '未命名任务',
-          description: t.description || '',
-          type: this.parseTaskType(t.type),
+          title: (t as any).title || '未命名任务',
+          description: (t as any).description || '',
+          type: this.parseTaskType((t as any).type),
           status: TaskStatus.PENDING,
-          requiredCapabilities: this.inferCapabilities(t.type),
-          estimatedTokens: t.estimatedTokens || 2000,
-          estimatedDuration: t.estimatedDuration || 300,
+          requiredCapabilities: this.inferCapabilities((t as any).type),
+          estimatedTokens: (t as any).estimatedTokens || 2000,
+          estimatedDuration: (t as any).estimatedDuration || 300,
           createdAt: new Date(),
         })),
-        dependencies: sg.dependencies || [],
-        priority: this.parsePriority(sg.priority),
+        dependencies: (sg as any).dependencies || [],
+        priority: this.parsePriority((sg as any).priority),
         status: TaskStatus.PENDING,
-        estimatedDuration: (sg.tasks || []).reduce((sum: number, t: any) => sum + (t.estimatedDuration || 300), 0),
-        estimatedTokens: (sg.tasks || []).reduce((sum: number, t: any) => sum + (t.estimatedTokens || 2000), 0),
+        estimatedDuration: ((sg as any).tasks || []).reduce(
+          (sum: number, t: unknown) => sum + ((t as any).estimatedDuration || 300),
+          0
+        ),
+        estimatedTokens: ((sg as any).tasks || []).reduce(
+          (sum: number, t: unknown) => sum + ((t as any).estimatedTokens || 2000),
+          0
+        ),
       }));
     } catch (error) {
       console.error('解析分解结果失败:', error);
@@ -534,7 +527,7 @@ export class TaskDecomposer {
   /**
    * 创建叶子子目标（达到最大深度时）
    */
-  private createLeafSubGoal(goal: string, depth: number): SubGoal {
+  private createLeafSubGoal(goal: string, _depth: number): SubGoal {
     const taskId = uuidv4();
     return {
       id: uuidv4(),
@@ -579,7 +572,7 @@ export class TaskDecomposer {
     const maxDepth = Math.ceil(Math.log2(totalGoals + 1));
 
     // 计算关键路径长度（粗略估计）
-    const criticalPathLength = Math.max(...subGoals.map(g => g.tasks.length));
+    const criticalPathLength = Math.max(...subGoals.map((g) => g.tasks.length));
 
     return {
       totalGoals,
@@ -600,7 +593,10 @@ export class TaskDecomposer {
     return {
       maxDepth: options?.maxDepth ?? this.config.maxDepth ?? 3,
       maxTasksPerGoal: options?.maxTasksPerGoal ?? this.config.maxTasksPerGoal ?? 10,
-      enableIntelligentDecomposition: options?.enableIntelligentDecomposition ?? this.config.enableIntelligentDecomposition ?? false,
+      enableIntelligentDecomposition:
+        options?.enableIntelligentDecomposition ??
+        this.config.enableIntelligentDecomposition ??
+        false,
       domain: options?.domain ?? this.config.domain ?? 'general',
       customRules: options?.customRules ?? this.config.customRules ?? [],
     };
@@ -769,7 +765,7 @@ export class TaskDecomposer {
     customRulesCount: number;
   } {
     let domainRulesCount = 0;
-    this.domainRules.forEach(rules => {
+    this.domainRules.forEach((rules) => {
       domainRulesCount += rules.length;
     });
 

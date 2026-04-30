@@ -4,12 +4,7 @@
  * 演示多个智能体如何通过事件总线协作完成任务
  */
 
-import {
-  EventBus,
-  ShortTermMemory,
-  ToolRegistry,
-  LangChainAdapter,
-} from '@yunpat/core';
+import { EventBus, ShortTermMemory, ToolRegistry, LangChainAdapter } from '@yunpat/core';
 import { WriterAgent } from '@yunpat/agent-writer';
 import { ResearcherAgent } from '@yunpat/agent-researcher';
 

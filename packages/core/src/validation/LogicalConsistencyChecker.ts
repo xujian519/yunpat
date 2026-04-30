@@ -90,15 +90,15 @@ export class LogicalConsistencyChecker {
     const contradictions: LogicalInconsistency[] = [];
     let contradictionId = 0;
 
-    // 规则1: 检测相互否定的陈述
-    const negationPatterns = [
+    // 规则1: 检测相互否定的陈述（保留用于未来实现）
+    const _negationPatterns = [
       {
         pattern: /(.{1,50}?)(?:不|非|无|没)(?:是|为|存在|有)(.{1,50}?)/g,
         oppositePattern: /(.{1,50}?)(?:是|为|存在|有)(.{1,50}?)/g,
       },
     ];
 
-    const sentences = content.split(/[。！？.!?]/).filter(s => s.trim().length > 0);
+    const sentences = content.split(/[。！？.!?]/).filter((s) => s.trim().length > 0);
 
     // 检查相互矛盾的句子
     for (let i = 0; i < sentences.length; i++) {
@@ -112,7 +112,7 @@ export class LogicalConsistencyChecker {
             locations: [
               this.findLocationInText(content, sentences[i]),
               this.findLocationInText(content, sentences[j]),
-            ].filter(loc => loc !== undefined) as TextLocation[],
+            ].filter((loc) => loc !== undefined) as TextLocation[],
             conflictingStatements: [sentences[i], sentences[j]],
           });
         }
@@ -137,18 +137,18 @@ export class LogicalConsistencyChecker {
     const negations1 = ['不', '非', '无', '没', '不是', '不存在'];
     const affirmations1 = ['是', '为', '存在', '有'];
 
-    const hasNegation1 = negations1.some(neg => s1.includes(neg));
-    const hasAffirmation1 = affirmations1.some(aff => s1.includes(aff));
+    const hasNegation1 = negations1.some((neg) => s1.includes(neg));
+    const hasAffirmation1 = affirmations1.some((aff) => s1.includes(aff));
 
-    const hasNegation2 = negations1.some(neg => s2.includes(neg));
-    const hasAffirmation2 = affirmations1.some(aff => s2.includes(aff));
+    const hasNegation2 = negations1.some((neg) => s2.includes(neg));
+    const hasAffirmation2 = affirmations1.some((aff) => s2.includes(aff));
 
     // 如果一个句子包含否定，另一个包含肯定，且关键词相似
     if (hasNegation1 && hasAffirmation2) {
       const keyTerms1 = this.extractKeyTerms(s1);
       const keyTerms2 = this.extractKeyTerms(s2);
 
-      const commonTerms = keyTerms1.filter(term => keyTerms2.includes(term));
+      const commonTerms = keyTerms1.filter((term) => keyTerms2.includes(term));
       if (commonTerms.length >= 2) {
         return true;
       }
@@ -158,7 +158,7 @@ export class LogicalConsistencyChecker {
       const keyTerms1 = this.extractKeyTerms(s1);
       const keyTerms2 = this.extractKeyTerms(s2);
 
-      const commonTerms = keyTerms1.filter(term => keyTerms2.includes(term));
+      const commonTerms = keyTerms1.filter((term) => keyTerms2.includes(term));
       if (commonTerms.length >= 2) {
         return true;
       }
@@ -179,7 +179,7 @@ export class LogicalConsistencyChecker {
     const words = sentence
       .replace(/[，。！？、,.!?]/g, ' ')
       .split(/\s+/)
-      .filter(w => w.length > 1 && !stopWords.includes(w));
+      .filter((w) => w.length > 1 && !stopWords.includes(w));
 
     return words;
   }
@@ -224,15 +224,15 @@ ${content}
 
       const parsed = JSON.parse(response.message.content);
 
-      return parsed.map((item: any, index: number) => ({
+      return parsed.map((item: unknown, index: number) => ({
         id: `contradiction-llm-${index}`,
         type: LogicalInconsistencyType.CONTRADICTION,
-        severity: item.severity || 'major',
-        description: item.description,
-        locations: item.statements.map((stmt: string) =>
-          this.findLocationInText(content, stmt)
-        ).filter((loc: TextLocation | undefined) => loc !== undefined) as TextLocation[],
-        conflictingStatements: item.statements,
+        severity: (item as any).severity || 'major',
+        description: (item as any).description,
+        locations: (item as any).statements
+          .map((stmt: string) => this.findLocationInText(content, stmt))
+          .filter((loc: TextLocation | undefined) => loc !== undefined) as TextLocation[],
+        conflictingStatements: (item as any).statements,
       }));
     } catch (error) {
       console.error('LLM矛盾检测失败:', error);
@@ -251,7 +251,7 @@ ${content}
     let duplicationId = 0;
 
     // 按段落分割
-    const paragraphs = content.split(/\n\n+/).filter(p => p.trim().length > 0);
+    const paragraphs = content.split(/\n\n+/).filter((p) => p.trim().length > 0);
 
     // 比较每两个段落
     for (let i = 0; i < paragraphs.length; i++) {
@@ -267,7 +267,7 @@ ${content}
             locations: [
               this.findLocationInText(content, paragraphs[i]),
               this.findLocationInText(content, paragraphs[j]),
-            ].filter(loc => loc !== undefined) as TextLocation[],
+            ].filter((loc) => loc !== undefined) as TextLocation[],
             conflictingStatements: [paragraphs[i], paragraphs[j]],
             suggestedFix: '建议删除重复内容或合并为一个段落',
           });
@@ -290,7 +290,7 @@ ${content}
     const words1 = new Set(this.extractKeyTerms(text1.toLowerCase()));
     const words2 = new Set(this.extractKeyTerms(text2.toLowerCase()));
 
-    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    const intersection = new Set([...words1].filter((x) => words2.has(x)));
     const union = new Set([...words1, ...words2]);
 
     return union.size > 0 ? intersection.size / union.size : 0;
@@ -303,7 +303,7 @@ ${content}
    * @returns 逻辑断层列表
    */
   private async detectLogicalGaps(content: string): Promise<LogicalInconsistency[]> {
-    const gaps: LogicalInconsistency[] = [];
+    // const gaps: LogicalInconsistency[] = []; // 未使用，已移除
 
     // 使用LLM检测逻辑断层
     const prompt = `请分析以下文本的逻辑流畅性，识别是否存在逻辑断层或推理不连贯的地方。
@@ -339,16 +339,16 @@ ${content}
 
       const parsed = JSON.parse(response.message.content);
 
-      return parsed.map((item: any, index: number) => ({
+      return parsed.map((item: unknown, index: number) => ({
         id: `logical-gap-${index}`,
         type: LogicalInconsistencyType.LOGICAL_GAP,
         severity: 'minor',
-        description: item.description,
-        locations: [
-          this.findLocationInText(content, item.location || ''),
-        ].filter(loc => loc !== undefined) as TextLocation[],
+        description: (item as any).description,
+        locations: [this.findLocationInText(content, (item as any).location || '')].filter(
+          (loc) => loc !== undefined
+        ) as TextLocation[],
         conflictingStatements: [],
-        suggestedFix: item.suggestedFix,
+        suggestedFix: (item as any).suggestedFix,
       }));
     } catch (error) {
       console.error('LLM逻辑断层检测失败:', error);
@@ -397,13 +397,16 @@ ${content}
     let report = `⚠️  发现 ${inconsistencies.length} 个逻辑一致性问题\n\n`;
 
     // 按严重程度分组
-    const bySeverity = inconsistencies.reduce((acc, inc) => {
-      if (!acc[inc.severity]) {
-        acc[inc.severity] = [];
-      }
-      acc[inc.severity].push(inc);
-      return acc;
-    }, {} as Record<string, LogicalInconsistency[]>);
+    const bySeverity = inconsistencies.reduce(
+      (acc, inc) => {
+        if (!acc[inc.severity]) {
+          acc[inc.severity] = [];
+        }
+        acc[inc.severity].push(inc);
+        return acc;
+      },
+      {} as Record<string, LogicalInconsistency[]>
+    );
 
     // 输出严重问题
     if (bySeverity.critical) {

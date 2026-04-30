@@ -75,7 +75,10 @@ describe('ExcelTools', () => {
 
     it('reads specific sheet by name', async () => {
       const tool = new ExcelReadTool();
-      const result = await tool.execute({ filePath: '/mock/test.xlsx', sheetName: 'Sheet1' }, mockContext);
+      const result = await tool.execute(
+        { filePath: '/mock/test.xlsx', sheetName: 'Sheet1' },
+        mockContext
+      );
       expect(result.sheets).toHaveLength(1);
       expect(result.sheets[0].name).toBe('Sheet1');
       expect(result.sheets[0].rowCount).toBe(3);
@@ -125,7 +128,10 @@ describe('ExcelTools', () => {
 
     it('parses excel to DocumentParseResult', async () => {
       const tool = new ExcelParseTool();
-      const result = await tool.execute({ filePath: '/mock/test.xlsx', outputFormat: OutputFormat.JSON }, mockContext);
+      const result = await tool.execute(
+        { filePath: '/mock/test.xlsx', outputFormat: OutputFormat.JSON },
+        mockContext
+      );
       expect(result.documentType).toBe('xlsx');
       expect(result.filename).toBe('test.xlsx');
       expect(result.elements.length).toBeGreaterThan(0);

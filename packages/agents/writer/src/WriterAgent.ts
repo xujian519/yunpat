@@ -169,7 +169,6 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
   /** 缓存的响应（用于在 act 阶段返回） */
   private cachedResult: WritingResult | null = null;
 
-
   /** 当前任务（用于缓存存储） */
   private currentTask: WritingTask | null = null;
 
@@ -232,7 +231,7 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
     this.availableTools = tools;
     this.enableTools = true;
     console.log(`🔧 已注册 ${tools.length} 个工具`);
-    tools.forEach(tool => {
+    tools.forEach((tool) => {
       console.log(`   - ${tool.metadata.name}: ${tool.metadata.description}`);
     });
   }
@@ -469,7 +468,7 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
         {
           action: 'generate',
           plan: plan,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         } as any,
         {} as any // ToolContext - 使用空对象作为上下文
       );
@@ -569,7 +568,10 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
   /**
    * 生成内容
    */
-  private async generateContent(plan: WritingPlan, context: ExecutionContext): Promise<WritingResult> {
+  private async generateContent(
+    plan: WritingPlan,
+    context: ExecutionContext
+  ): Promise<WritingResult> {
     const sectionPromises = plan.structure.sections.map(async (section) => {
       const sectionPrompt = this.buildSectionPrompt(section.heading, plan);
 
@@ -671,7 +673,9 @@ export class WriterAgent extends Agent<WritingTask, WritingResult> {
         const errorMsg = error instanceof Error ? error.message : String(error);
 
         if (attempt < GENERATION_CONFIG.MAX_OUTLINE_RETRIES) {
-          console.warn(`大纲解析失败，正在重试 (${attempt + 1}/${GENERATION_CONFIG.MAX_OUTLINE_RETRIES}): ${errorMsg}`);
+          console.warn(
+            `大纲解析失败，正在重试 (${attempt + 1}/${GENERATION_CONFIG.MAX_OUTLINE_RETRIES}): ${errorMsg}`
+          );
           continue;
         }
 

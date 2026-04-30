@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  ClaimsGeneratorTool,
-  FeatureExtractorTool,
-} from '../../src/tools/ClaimsGeneratorTool.js';
+import { ClaimsGeneratorTool, FeatureExtractorTool } from '../../src/tools/ClaimsGeneratorTool.js';
 import { InventionType, ClaimType } from '../../src/types/patent.js';
 
 describe('ClaimsGeneratorTool', () => {
@@ -28,9 +25,7 @@ describe('ClaimsGeneratorTool', () => {
     const context = {} as any;
     const input = {
       inventionType: InventionType.DEVICE,
-      coreFeatures: [
-        { text: '可选特征1', isEssential: false },
-      ],
+      coreFeatures: [{ text: '可选特征1', isEssential: false }],
     };
 
     await expect(tool.execute(input as any, context)).rejects.toThrow(
@@ -146,10 +141,7 @@ describe('FeatureExtractorTool', () => {
     };
 
     const context = { llm: mockLLM } as any;
-    const result = await tool.execute(
-      { description: '本发明涉及一种图像识别装置...' },
-      context
-    );
+    const result = await tool.execute({ description: '本发明涉及一种图像识别装置...' }, context);
 
     expect(result.features).toHaveLength(2);
     expect(result.features[0].text).toBe('图像采集模块');

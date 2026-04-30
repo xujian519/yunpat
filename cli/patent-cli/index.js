@@ -22,13 +22,13 @@ const patentTools = {
     // - 实现智能搜索和过滤
     // - 支持多语言搜索
     console.warn('⚠️ 专利搜索功能尚未实现');
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     spinner.succeed('搜索完成');
 
     return {
       total: 0,
-      patents: []
+      patents: [],
     };
   },
 
@@ -40,12 +40,12 @@ const patentTools = {
     // - 实现权利要求生成算法
     // - 支持独立和从属权利要求生成
     console.warn('⚠️ 权利要求生成功能尚未实现');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     spinner.succeed('权利要求生成完成');
 
     return {
-      claims: []
+      claims: [],
     };
   },
 
@@ -57,7 +57,7 @@ const patentTools = {
     // - 检查权利要求的清晰度、支持度、保护范围
     // - 提供改进建议
     console.warn('⚠️ 质量评估功能尚未实现');
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     spinner.succeed('质量评估完成');
 
@@ -66,7 +66,7 @@ const patentTools = {
       clarityScore: 0,
       supportScore: 0,
       breadthScore: 0,
-      issues: []
+      issues: [],
     };
   },
 
@@ -78,7 +78,7 @@ const patentTools = {
     // - 识别审查意见类型和驳回理由
     // - 提取关键信息
     console.warn('⚠️ 审查意见解析功能尚未实现');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     spinner.succeed('审查意见解析完成');
 
@@ -89,26 +89,23 @@ const patentTools = {
         {
           claimNumbers: [1, 2],
           reasons: '权利要求1相对于对比文件1不具备创造性',
-          citedReferences: ['CN110123456A']
-        }
+          citedReferences: ['CN110123456A'],
+        },
       ],
       citedReferences: [
         {
           publicationNumber: 'CN110123456A',
           documentType: '发明专利申请',
           relevance: '公开了类似的图像识别方法',
-          publicationDate: '2022-01-01'
-        }
-      ]
+          publicationDate: '2022-01-01',
+        },
+      ],
     };
-  }
+  },
 };
 
 // CLI 程序
-program
-  .name('patent-cli')
-  .description('专利工具 CLI - 专业级专利分析和生成工具')
-  .version('1.0.0');
+program.name('patent-cli').description('专利工具 CLI - 专业级专利分析和生成工具').version('1.0.0');
 
 // 搜索命令
 program
@@ -129,7 +126,7 @@ program
 
     const result = await patentTools.searchPatents(options.keywords, {
       applicant: options.applicant,
-      limit: parseInt(options.limit)
+      limit: parseInt(options.limit),
     });
 
     console.log(chalk.green.bold(`\n找到 ${result.total} 件专利\n`));
@@ -160,8 +157,8 @@ program
       technicalFeatures: options.features.map((f, i) => ({
         name: `特征${i + 1}`,
         description: f,
-        featureType: 'Structural'
-      }))
+        featureType: 'Structural',
+      })),
     });
 
     console.log(chalk.green.bold(`\n生成 ${result.claims.length} 项权利要求\n`));
@@ -198,7 +195,8 @@ program
     if (result.issues.length > 0) {
       console.log(chalk.red.bold('质量问题:\n'));
       result.issues.forEach((issue) => {
-        const severity = issue.severity === 'high' ? '🔴' : issue.severity === 'medium' ? '🟡' : '🟢';
+        const severity =
+          issue.severity === 'high' ? '🔴' : issue.severity === 'medium' ? '🟡' : '🟢';
         console.log(`${severity} ${issue.description}`);
         console.log(chalk.gray(`   建议: ${issue.suggestion}`));
         console.log();
@@ -260,14 +258,8 @@ program
         type: 'list',
         name: 'action',
         message: '请选择操作:',
-        choices: [
-          '搜索专利',
-          '生成权利要求',
-          '评估质量',
-          '解析审查意见',
-          '退出'
-        ]
-      }
+        choices: ['搜索专利', '生成权利要求', '评估质量', '解析审查意见', '退出'],
+      },
     ]);
 
     switch (answers.action) {

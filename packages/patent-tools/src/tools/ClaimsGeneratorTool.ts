@@ -22,10 +22,7 @@ import {
  *
  * 根据技术交底书自动生成专利权利要求书
  */
-export class ClaimsGeneratorTool extends EnhancedBaseTool<
-  IndependentClaimParams,
-  ClaimDraft[]
-> {
+export class ClaimsGeneratorTool extends EnhancedBaseTool<IndependentClaimParams, ClaimDraft[]> {
   readonly metadata = {
     name: 'generate_claims',
     description: '根据技术交底书自动生成专利权利要求书，包括独立权利要求和从属权利要求',
@@ -41,10 +38,7 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<
   /**
    * 执行权利要求生成
    */
-  async execute(
-    input: IndependentClaimParams,
-    context: ToolContext
-  ): Promise<ClaimDraft[]> {
+  async execute(input: IndependentClaimParams, context: ToolContext): Promise<ClaimDraft[]> {
     const { inventionType, coreFeatures, preamble, transitionWord } = input;
 
     // 1. 提取必要特征和附加特征
@@ -91,9 +85,7 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<
     const { inventionType, coreFeatures, preamble, transitionWord } = params;
 
     // 构建特征列表字符串
-    const featuresStr = coreFeatures
-      .map((f, index) => `${index + 1}. ${f.text}`)
-      .join('\n');
+    const featuresStr = coreFeatures.map((f, index) => `${index + 1}. ${f.text}`).join('\n');
 
     // 确保有默认值
     const finalPreamble = preamble || DEFAULT_PREAMBLES[inventionType];
@@ -208,9 +200,11 @@ export class FeatureExtractorTool extends EnhancedBaseTool<
     description: '从技术描述中自动提取技术特征，区分必要特征和附加特征',
     category: ToolCategory.PATENT,
     isConcurrencySafe: true,
-    inputSchema: z.object({
-      description: z.string().describe('技术描述'),
-    }).strict(),
+    inputSchema: z
+      .object({
+        description: z.string().describe('技术描述'),
+      })
+      .strict(),
     outputSchema: z.object({
       features: z.array(
         z.object({
@@ -264,8 +258,7 @@ ${input.description}
       messages: [
         {
           role: 'system',
-          content:
-            '你是一个专业的专利代理人，擅长分析技术方案并提取技术特征。',
+          content: '你是一个专业的专利代理人，擅长分析技术方案并提取技术特征。',
         },
         {
           role: 'user',
@@ -282,9 +275,7 @@ ${input.description}
       const parsed = JSON.parse(content);
       return parsed;
     } catch (error) {
-      throw new Error(
-        `Failed to parse extracted features: ${error}. Raw content: ${content}`
-      );
+      throw new Error(`Failed to parse extracted features: ${error}. Raw content: ${content}`);
     }
   }
 

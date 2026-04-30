@@ -9,10 +9,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 // 导入 YunPat 工具
 import {
@@ -52,8 +49,7 @@ function createServer() {
         // 知识库检索工具
         {
           name: 'knowledge_search',
-          description:
-            '从专利知识库中检索相关卡片和文档。支持关键词、概念、领域多维度检索。',
+          description: '从专利知识库中检索相关卡片和文档。支持关键词、概念、领域多维度检索。',
           inputSchema: {
             type: 'object',
             properties: {
@@ -130,8 +126,7 @@ function createServer() {
         // 官文解析工具
         {
           name: 'official_doc_parse',
-          description:
-            '解析专利官文（审查意见通知书、驳回决定、缴费通知书等），提取结构化字段',
+          description: '解析专利官文（审查意见通知书、驳回决定、缴费通知书等），提取结构化字段',
           inputSchema: {
             type: 'object',
             properties: {

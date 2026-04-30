@@ -32,10 +32,7 @@ export class TextRenderer {
   /**
    * 渲染为文本格式
    */
-  render(
-    plan: HierarchicalPlan,
-    options: TextRenderOptions = { format: 'text' }
-  ): RenderResult {
+  render(plan: HierarchicalPlan, options: TextRenderOptions = { format: 'text' }): RenderResult {
     const startTime = Date.now();
 
     let content = '';
@@ -111,7 +108,7 @@ export class TextRenderer {
     lines.push('');
 
     // 使用拓扑排序作为树的根节点顺序
-    const order = plan.dependencies.topologicalOrder || plan.subGoals.map(g => g.id);
+    const order = plan.dependencies.topologicalOrder || plan.subGoals.map((g) => g.id);
 
     for (const rootId of order) {
       const subtree = this.renderSubtree(rootId, plan, 0, options.maxDepth || 3);
@@ -163,7 +160,7 @@ export class TextRenderer {
     lines.push('');
 
     // 简单的ASCII图表示
-    const order = plan.dependencies.topologicalOrder || plan.subGoals.map(g => g.id);
+    const order = plan.dependencies.topologicalOrder || plan.subGoals.map((g) => g.id);
 
     for (let i = 0; i < order.length; i++) {
       const nodeId = order[i];
@@ -175,10 +172,12 @@ export class TextRenderer {
 
       // 显示依赖关系
       if (node.dependencies.length > 0) {
-        const deps = node.dependencies.map(d => {
-          const depNode = plan.subGoals.find((g: any) => g.id === d);
-          return depNode ? depNode.title : d;
-        }).join(', ');
+        const deps = node.dependencies
+          .map((d) => {
+            const depNode = plan.subGoals.find((g: any) => g.id === d);
+            return depNode ? depNode.title : d;
+          })
+          .join(', ');
         line += ` ← 依赖: ${deps}`;
       }
 
@@ -235,7 +234,7 @@ export class TextRenderer {
     lines.push('📝 任务列表:');
     lines.push('');
 
-    const order = plan.dependencies.topologicalOrder || plan.subGoals.map(g => g.id);
+    const order = plan.dependencies.topologicalOrder || plan.subGoals.map((g) => g.id);
 
     for (const nodeId of order) {
       const node = plan.subGoals.find((g: any) => g.id === nodeId);
@@ -244,9 +243,7 @@ export class TextRenderer {
       const icon = this.getStatusIcon(node.status);
       const priorityIcon = this.getPriorityIcon(node.priority);
 
-      lines.push(
-        `  ${icon} [${node.id}] ${node.title} ${priorityIcon}`
-      );
+      lines.push(`  ${icon} [${node.id}] ${node.title} ${priorityIcon}`);
 
       if (options.includeDetails) {
         lines.push(`      描述: ${node.description}`);
@@ -328,10 +325,7 @@ export class TextRenderer {
     const maxDepth = this.calculateMaxDepth(plan);
 
     // 计算预计总时间
-    const estimatedTime = plan.subGoals.reduce(
-      (sum, goal) => sum + goal.estimatedDuration,
-      0
-    );
+    const estimatedTime = plan.subGoals.reduce((sum, goal) => sum + goal.estimatedDuration, 0);
 
     return {
       totalNodes,
@@ -368,7 +362,7 @@ export class TextRenderer {
     };
 
     let maxDepth = 0;
-    for (const nodeId of plan.subGoals.map(g => g.id)) {
+    for (const nodeId of plan.subGoals.map((g) => g.id)) {
       const depth = calculateDepth(nodeId, 0);
       maxDepth = Math.max(maxDepth, depth);
     }
@@ -540,9 +534,9 @@ export class TextRenderer {
 
       lines.push(
         `  "${node.id}" [label="${label}", ` +
-        `fillcolor="${style?.fillColor || '#f5f5f5'}", ` +
-        `color="${style?.fontColor || '#333333'}", ` +
-        `penwidth=${style?.borderWidth || 1}];`
+          `fillcolor="${style?.fillColor || '#f5f5f5'}", ` +
+          `color="${style?.fontColor || '#333333'}", ` +
+          `penwidth=${style?.borderWidth || 1}];`
       );
     }
 
@@ -555,9 +549,9 @@ export class TextRenderer {
 
       lines.push(
         `  "${edge.from}" -> "${edge.to}" ` +
-        `[style=${styleAttr}, ` +
-        `color="${style?.color || '#999999'}", ` +
-        `penwidth=${style?.thickness || 1}];`
+          `[style=${styleAttr}, ` +
+          `color="${style?.color || '#999999'}", ` +
+          `penwidth=${style?.thickness || 1}];`
       );
     }
 

@@ -134,7 +134,7 @@ export class ChainOfThoughtStrategy {
    */
   async reason(
     problem: string,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     format?: StepFormat
   ): Promise<CoTResult> {
     const startTime = Date.now();
@@ -166,9 +166,7 @@ export class ChainOfThoughtStrategy {
         if (this.config.verbose) {
           console.log(`\n✅ [CoT] 解析出 ${steps.length} 个推理步骤`);
           steps.forEach((step) => {
-            console.log(
-              `  步骤 ${step.step}: ${step.description.substring(0, 50)}...`
-            );
+            console.log(`  步骤 ${step.step}: ${step.description.substring(0, 50)}...`);
           });
         }
 
@@ -199,7 +197,6 @@ export class ChainOfThoughtStrategy {
           tokensUsed: totalTokens,
           duration,
         };
-
       } catch (error) {
         lastError = error as Error;
         if (this.config.verbose) {
@@ -213,9 +210,7 @@ export class ChainOfThoughtStrategy {
       }
     }
 
-    throw new Error(
-      `Chain-of-Thought 推理失败: ${lastError?.message || '未知错误'}`
-    );
+    throw new Error(`Chain-of-Thought 推理失败: ${lastError?.message || '未知错误'}`);
   }
 
   /**
@@ -223,10 +218,10 @@ export class ChainOfThoughtStrategy {
    */
   private async generateCoT(
     problem: string,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     format?: StepFormat
   ): Promise<{ content: string; tokensUsed: number }> {
-    let prompt = this.buildCoTPrompt(problem, context, format);
+    const prompt = this.buildCoTPrompt(problem, context, format);
 
     const response = await this.llm.chat({
       messages: [
@@ -253,7 +248,7 @@ export class ChainOfThoughtStrategy {
    */
   private buildCoTPrompt(
     problem: string,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     format?: StepFormat
   ): string {
     let prompt = `请通过逐步推理的方式解决以下问题，展示你的完整思考过程。\n\n`;
@@ -366,22 +361,19 @@ export class ChainOfThoughtStrategy {
   /**
    * 解析推理步骤
    */
-  private parseReasoningSteps(
-    content: string,
-    _format?: StepFormat
-  ): ReasoningStep[] {
+  private parseReasoningSteps(content: string, _format?: StepFormat): ReasoningStep[] {
     const steps: ReasoningStep[] = [];
 
     // 定义多种步骤匹配模式
     const patterns = [
       // "步骤1"、"步骤2"格式
-      /(?:步骤|Step)[\s　]*([0-9]+)[\s　]*[:：\n]/gi,
+      /(?:步骤|Step)[\s ]*([0-9]+)[\s ]*[:：\n]/gi,
       // "1."、"2."编号格式
       /^\s*(\d+)[\.\)]\s+/gm,
       // "(1)"、"(2)"格式
       /^\s*\((\d+)\)\s+/gm,
       // "一、"、"二、"中文数字格式
-      /^\s*([一二三四五六七八九十]+)[　、]/gm,
+      /^\s*([一二三四五六七八九十]+)[ 、]/gm,
       // 项目符号（作为单个步骤）
       /^\s*[-•*]\s+/gm,
     ];
@@ -405,13 +397,12 @@ export class ChainOfThoughtStrategy {
 
           // 提取描述（第一行或前50个字符）
           const lines = stepContent.split('\n').filter((line) => line.trim());
-          const description = lines[0]?.replace(/^[步骤\d\s\.\):：　\-•*]+/, '').trim() ||
-                            stepContent.substring(0, 50);
+          const description =
+            lines[0]?.replace(/^[步骤\d\s\.\):： \-•*]+/, '').trim() ||
+            stepContent.substring(0, 50);
 
           // 提取推理内容（去除标记后的内容）
-          const reasoning = stepContent
-            .replace(/^[步骤\d\s\.\):：　\-•*]+/, '')
-            .trim();
+          const reasoning = stepContent.replace(/^[步骤\d\s\.\):： \-•*]+/, '').trim();
 
           if (reasoning) {
             steps.push({
@@ -432,14 +423,14 @@ export class ChainOfThoughtStrategy {
 
     // 如果没有匹配到任何模式，尝试按段落分割
     if (steps.length === 0) {
-      const paragraphs = content
-        .split(/\n\n+/)
-        .filter((p) => p.trim() && p.length > 20); // 忽略太短的段落
+      const paragraphs = content.split(/\n\n+/).filter((p) => p.trim() && p.length > 20); // 忽略太短的段落
 
       for (let i = 0; i < paragraphs.length; i++) {
         const paragraph = paragraphs[i].trim();
-        if (!paragraph.toLowerCase().includes('结论') &&
-            !paragraph.toLowerCase().includes('答案')) {
+        if (
+          !paragraph.toLowerCase().includes('结论') &&
+          !paragraph.toLowerCase().includes('答案')
+        ) {
           steps.push({
             step: i + 1,
             description: paragraph.substring(0, 50),
@@ -460,8 +451,8 @@ export class ChainOfThoughtStrategy {
   private extractConclusion(content: string): string {
     // 定义结论标记模式
     const conclusionPatterns = [
-      /(?:结论|答案|最终|综上所述|总而言之|因此|所以)[\s　]*[:：]\s*([^\n]+)/i,
-      /(?:结论|答案|最终)[\s　]*[:：]\s*([^]+?)(?=\n\n|$)/i,
+      /(?:结论|答案|最终|综上所述|总而言之|因此|所以)[\s ]*[:：]\s*([^\n]+)/i,
+      /(?:结论|答案|最终)[\s ]*[:：]\s*([^]+?)(?=\n\n|$)/i,
     ];
 
     // 尝试匹配结论
@@ -511,8 +502,7 @@ export class ChainOfThoughtStrategy {
     }
 
     // 因素2：步骤平均置信度
-    const avgStepConfidence =
-      steps.reduce((sum, step) => sum + step.confidence, 0) / stepCount;
+    const avgStepConfidence = steps.reduce((sum, step) => sum + step.confidence, 0) / stepCount;
     confidence += avgStepConfidence * 0.4;
 
     // 因素3：结论质量（长度适中）
@@ -556,7 +546,7 @@ export class ChainOfThoughtStrategy {
    */
   async *reasonStream(
     problem: string,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): AsyncIterable<ReasoningStep | { conclusion: string; confidence: number }> {
     const result = await this.reason(problem, context);
 
@@ -579,10 +569,7 @@ export class ChainOfThoughtStrategy {
    * @param context 共享上下文（可选）
    * @returns 推理结果数组
    */
-  async reasonBatch(
-    problems: string[],
-    context?: Record<string, any>
-  ): Promise<CoTResult[]> {
+  async reasonBatch(problems: string[], context?: Record<string, unknown>): Promise<CoTResult[]> {
     const results: CoTResult[] = [];
 
     for (let i = 0; i < problems.length; i++) {

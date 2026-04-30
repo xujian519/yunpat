@@ -52,16 +52,8 @@ export class ImageOcrTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       imagePath: z.string().describe('图片文件路径'),
-      languages: z
-        .array(z.string())
-        .optional()
-        .default(['eng', 'chi_sim'])
-        .describe('OCR语言列表'),
-      outputFormat: z
-        .enum(['text', 'json'])
-        .optional()
-        .default('text')
-        .describe('输出格式'),
+      languages: z.array(z.string()).optional().default(['eng', 'chi_sim']).describe('OCR语言列表'),
+      outputFormat: z.enum(['text', 'json']).optional().default('text').describe('输出格式'),
     }),
     outputSchema: z.object({
       text: z.string().describe('识别的文本'),
@@ -199,16 +191,8 @@ export class BatchImageOcrTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       imagePaths: z.array(z.string()).describe('图片文件路径列表'),
-      languages: z
-        .array(z.string())
-        .optional()
-        .default(['eng', 'chi_sim'])
-        .describe('OCR语言列表'),
-      outputFormat: z
-        .enum(['text', 'json'])
-        .optional()
-        .default('text')
-        .describe('输出格式'),
+      languages: z.array(z.string()).optional().default(['eng', 'chi_sim']).describe('OCR语言列表'),
+      outputFormat: z.enum(['text', 'json']).optional().default('text').describe('输出格式'),
     }),
     outputSchema: z.object({
       results: z.array(
@@ -311,16 +295,8 @@ export class ImageToMarkdownTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       imagePath: z.string().describe('图片文件路径'),
-      languages: z
-        .array(z.string())
-        .optional()
-        .default(['eng', 'chi_sim'])
-        .describe('OCR语言列表'),
-      includeAlt: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('是否包含图片alt描述'),
+      languages: z.array(z.string()).optional().default(['eng', 'chi_sim']).describe('OCR语言列表'),
+      includeAlt: z.boolean().optional().default(true).describe('是否包含图片alt描述'),
     }),
     outputSchema: z.object({
       markdown: z.string().describe('Markdown内容'),

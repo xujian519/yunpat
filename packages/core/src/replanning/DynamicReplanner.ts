@@ -50,10 +50,7 @@ export class DynamicReplanner {
   private replanningHistory: ReplanningHistory[];
   private llm: LLMAdapter | null;
 
-  constructor(
-    llm: LLMAdapter | null = null,
-    config: Partial<DynamicReplannerConfig> = {}
-  ) {
+  constructor(llm: LLMAdapter | null = null, config: Partial<DynamicReplannerConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.llm = llm;
     this.deviationDetector = new DeviationDetector();
@@ -86,8 +83,7 @@ export class DynamicReplanner {
     // 2. 检测质量下降（高优先级）
     if (this.config.enableQualityDropDetection) {
       const qualityDrop =
-        plannedState.qualityMetrics.overallQuality -
-        actualState.qualityMetrics.overallQuality;
+        plannedState.qualityMetrics.overallQuality - actualState.qualityMetrics.overallQuality;
 
       if (qualityDrop > this.config.qualityDropThreshold) {
         return {
@@ -97,8 +93,7 @@ export class DynamicReplanner {
             threshold: this.config.qualityDropThreshold,
             description: '检测到质量下降',
             condition: (state) =>
-              plannedState.qualityMetrics.overallQuality -
-                state.qualityMetrics.overallQuality >
+              plannedState.qualityMetrics.overallQuality - state.qualityMetrics.overallQuality >
               this.config.qualityDropThreshold,
           },
           reason: `质量下降: ${(qualityDrop * 100).toFixed(1)}%`,
@@ -144,7 +139,8 @@ export class DynamicReplanner {
             type: ReplanningTriggerType.DEVIATION,
             threshold: this.config.deviationThreshold,
             description: '检测到偏离',
-            condition: (state) => deviationReport.overallDeviationScore > this.config.deviationThreshold,
+            condition: (_state) =>
+              deviationReport.overallDeviationScore > this.config.deviationThreshold,
           },
           reason: `偏离分数: ${deviationReport.overallDeviationScore.toFixed(2)}`,
         };
@@ -189,27 +185,18 @@ export class DynamicReplanner {
     console.log(`[DynamicReplanner] 选择策略: ${strategy.name}`);
 
     // 4. 生成增量调整
-    const adjustment = await this.incrementalPlanner.generateIncrementalAdjustment(
-      context,
-      {
-        type: strategy.name,
-        modifications: [],
-        estimatedImprovement: strategy.estimatedSuccess,
-        reasoning: strategy.description,
-      }
-    );
+    const adjustment = await this.incrementalPlanner.generateIncrementalAdjustment(context, {
+      type: strategy.name,
+      modifications: [],
+      estimatedImprovement: strategy.estimatedSuccess,
+      reasoning: strategy.description,
+    });
 
     // 5. 应用调整
-    const adjustedPlan = await this.incrementalPlanner.applyAdjustment(
-      currentPlan,
-      adjustment
-    );
+    const adjustedPlan = await this.incrementalPlanner.applyAdjustment(currentPlan, adjustment);
 
     // 6. 验证调整
-    const isValid = await this.incrementalPlanner.validateAdjustment(
-      adjustedPlan,
-      adjustment
-    );
+    const isValid = await this.incrementalPlanner.validateAdjustment(adjustedPlan, adjustment);
 
     if (!isValid) {
       console.warn('[DynamicReplanner] 调整验证失败，返回原始计划');
@@ -289,13 +276,14 @@ export class DynamicReplanner {
 
     // 根据偏离严重程度调整
     if (deviationReport.hasDeviation) {
-      const maxSeverity = deviationReport.deviations.reduce((max, d) =>
-        d.severity === 'severe' ? d : max, {} as any
+      const maxSeverity = deviationReport.deviations.reduce(
+        (max, d) => (d.severity === 'severe' ? d : max),
+        {} as unknown
       );
 
-      if (maxSeverity.severity === 'severe') {
+      if ((maxSeverity as any).severity === 'severe') {
         confidence -= 0.2;
-      } else if (maxSeverity.severity === 'moderate') {
+      } else if ((maxSeverity as any).severity === 'moderate') {
         confidence -= 0.1;
       }
     }
@@ -319,7 +307,7 @@ export class DynamicReplanner {
    */
   private generateReasoning(
     deviationReport: DeviationReport,
-    strategy: any,
+    strategy: unknown,
     adjustment: PlanAdjustment
   ): string {
     const parts: string[] = [];
@@ -331,7 +319,7 @@ export class DynamicReplanner {
     }
 
     // 策略描述
-    parts.push(`选择策略: ${strategy.description}`);
+    parts.push(`选择策略: ${(strategy as any).description}`);
 
     // 调整描述
     parts.push(`应用${adjustment.modifications.length}个修改`);

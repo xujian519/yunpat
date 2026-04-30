@@ -70,7 +70,7 @@ export interface KnowledgeEntry {
   version: number;
 
   /** 元数据 */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   /** 嵌入向量（用于语义搜索） */
   embedding?: number[];
@@ -1024,7 +1024,7 @@ class Factory {
 
 \`\`\`typescript
 interface Observer {
-  update(data: any): void;
+  update(data: unknown): void;
 }
 
 class Subject {
@@ -1034,7 +1034,7 @@ class Subject {
     this.observers.push(observer);
   }
 
-  notify(data: any): void {
+  notify(data: unknown): void {
     this.observers.forEach(obs => obs.update(data));
   }
 }

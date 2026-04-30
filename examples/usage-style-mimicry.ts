@@ -5,10 +5,7 @@
  */
 
 import { WriterAgent, WriterAgentConfig } from '@yunpat/agent-writer';
-import {
-  xuJianWritingStyle,
-  createStyledWritingTask
-} from '../config/writing-style-xujian.js';
+import { xuJianWritingStyle, createStyledWritingTask } from '../config/writing-style-xujian.js';
 
 /**
  * 创建徐健风格的写作智能体
@@ -17,7 +14,7 @@ export function createXuJianStyleWriter(config: WriterAgentConfig) {
   return new WriterAgent({
     ...config,
     name: 'xujian-writer',
-    description: '徐健风格技术写作助手 - 专业、结构化、案例丰富'
+    description: '徐健风格技术写作助手 - 专业、结构化、案例丰富',
   });
 }
 
@@ -36,10 +33,7 @@ export function createXuJianStyleWriter(config: WriterAgentConfig) {
  * );
  * ```
  */
-export async function writeInXuJianStyle(
-  topic: string,
-  config: WriterAgentConfig
-) {
+export async function writeInXuJianStyle(topic: string, config: WriterAgentConfig) {
   // 创建徐健风格智能体
   const writer = createXuJianStyleWriter(config);
 
@@ -58,10 +52,7 @@ export async function writeInXuJianStyle(
  * @param topics 主题数组
  * @param config WriterAgent 基础配置
  */
-export async function batchWriteInXuJianStyle(
-  topics: string[],
-  config: WriterAgentConfig
-) {
+export async function batchWriteInXuJianStyle(topics: string[], config: WriterAgentConfig) {
   const writer = createXuJianStyleWriter(config);
   const results = [];
 
@@ -104,15 +95,12 @@ export async function learnWritingStyleFromDocuments(
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function example1_TechDoc() {
-  const result = await writeInXuJianStyle(
-    '微服务架构的设计原则',
-    {
-      eventBus: null as any,
-      memory: null as any,
-      tools: null as any,
-      llm: null as any
-    }
-  );
+  const result = await writeInXuJianStyle('微服务架构的设计原则', {
+    eventBus: null as any,
+    memory: null as any,
+    tools: null as any,
+    llm: null as any,
+  });
 
   console.log(result.document.content);
 }
@@ -122,15 +110,12 @@ async function example1_TechDoc() {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function example2_SystemDesign() {
-  const result = await writeInXuJianStyle(
-    'WebChat 协作系统架构设计',
-    {
-      eventBus: null as any,
-      memory: null as any,
-      tools: null as any,
-      llm: null as any
-    }
-  );
+  const result = await writeInXuJianStyle('WebChat 协作系统架构设计', {
+    eventBus: null as any,
+    memory: null as any,
+    tools: null as any,
+    llm: null as any,
+  });
 
   console.log(result.document.content);
 }
@@ -140,21 +125,14 @@ async function example2_SystemDesign() {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function example3_Batch() {
-  const topics = [
-    'Docker 容器化技术',
-    'AI 模型部署最佳实践',
-    '专利审查指南'
-  ];
+  const topics = ['Docker 容器化技术', 'AI 模型部署最佳实践', '专利审查指南'];
 
-  const results = await batchWriteInXuJianStyle(
-    topics,
-    {
-      eventBus: null as any,
-      memory: null as any,
-      tools: null as any,
-      llm: null as any
-    }
-  );
+  const results = await batchWriteInXuJianStyle(topics, {
+    eventBus: null as any,
+    memory: null as any,
+    tools: null as any,
+    llm: null as any,
+  });
 
   results.forEach((result, i) => {
     console.log(`\n${i + 1}. ${result.document.title}`);
@@ -171,7 +149,7 @@ async function example4_RefineStyle() {
     eventBus: null as any,
     memory: null as any,
     tools: null as any,
-    llm: null as any
+    llm: null as any,
   };
 
   // 第一次生成

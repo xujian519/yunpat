@@ -57,7 +57,7 @@ class TestAgentOptimized extends Agent<string, string> {
 
   protected async act(plan: any, context: ExecutionContext): Promise<string> {
     // 模拟执行
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     return `Result for: ${plan.input}`;
   }

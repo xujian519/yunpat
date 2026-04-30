@@ -15,9 +15,9 @@ export type { HierarchicalPlan, SubGoal, DependencyGraph };
  * 重规划触发类型
  */
 export enum ReplanningTriggerType {
-  DEVIATION = 'deviation',       // 偏离检测
-  FAILURE = 'failure',           // 任务失败
-  TIMEOUT = 'timeout',           // 超时
+  DEVIATION = 'deviation', // 偏离检测
+  FAILURE = 'failure', // 任务失败
+  TIMEOUT = 'timeout', // 超时
   QUALITY_DROP = 'quality_drop', // 质量下降
   USER_REQUEST = 'user_request', // 用户请求
 }
@@ -26,9 +26,9 @@ export enum ReplanningTriggerType {
  * 偏离类型
  */
 export enum DeviationType {
-  SCHEDULE_DEVIATION = 'schedule_deviation',   // 进度偏离
-  QUALITY_DEVIATION = 'quality_deviation',     // 质量偏离
-  RESOURCE_DEVIATION = 'resource_deviation',   // 资源偏离
+  SCHEDULE_DEVIATION = 'schedule_deviation', // 进度偏离
+  QUALITY_DEVIATION = 'quality_deviation', // 质量偏离
+  RESOURCE_DEVIATION = 'resource_deviation', // 资源偏离
   DEPENDENCY_DEVIATION = 'dependency_deviation', // 依赖偏离
 }
 
@@ -36,12 +36,12 @@ export enum DeviationType {
  * 恢复策略类型
  */
 export enum RecoveryStrategyType {
-  RETRY = 'retry',               // 重试
-  SKIP = 'skip',                 // 跳过
-  REORDER = 'reorder',           // 重排序
-  DECOMPOSE = 'decompose',       // 分解
-  ADAPT = 'adapt',               // 适应
-  ABORT = 'abort',               // 中止
+  RETRY = 'retry', // 重试
+  SKIP = 'skip', // 跳过
+  REORDER = 'reorder', // 重排序
+  DECOMPOSE = 'decompose', // 分解
+  ADAPT = 'adapt', // 适应
+  ABORT = 'abort', // 中止
 }
 
 /**
@@ -72,9 +72,9 @@ export interface ExecutionState {
  * 质量指标
  */
 export interface QualityMetrics {
-  overallQuality: number;        // 总体质量 (0-1)
-  taskSuccessRate: number;       // 任务成功率 (0-1)
-  averageQuality: number;        // 平均质量 (0-1)
+  overallQuality: number; // 总体质量 (0-1)
+  taskSuccessRate: number; // 任务成功率 (0-1)
+  averageQuality: number; // 平均质量 (0-1)
   qualityTrend: 'improving' | 'stable' | 'declining';
 }
 

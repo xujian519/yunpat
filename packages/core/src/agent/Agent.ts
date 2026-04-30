@@ -13,10 +13,7 @@ import {
   createReasoningCache,
   type ReasoningCacheStats,
 } from '../reasoning/ReasoningCache.js';
-import {
-  ReasoningMonitor,
-  reasoningMonitor as globalMonitor,
-} from '../reasoning/ReasoningMonitor.js';
+import { ReasoningMonitor } from '../reasoning/ReasoningMonitor.js';
 
 /**
  * 智能体配置
@@ -105,7 +102,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
   private initialized = false;
 
   /** 推理缓存（可选） */
-  protected reasoningCache?: ReasoningCache<any>;
+  protected reasoningCache?: ReasoningCache<unknown>;
 
   /** 性能监控（可选） */
   protected performanceMonitor?: ReasoningMonitor;
@@ -181,7 +178,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
    * @param context 执行上下文
    * @returns 执行结果
    */
-  protected abstract act(plan: any, context: ExecutionContext): Promise<unknown>;
+  protected abstract act(plan: unknown, context: ExecutionContext): Promise<unknown>;
 
   /**
    * 反思钩子（可选）
@@ -411,7 +408,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
     const result = await this.reasoningCache.query(cacheKey, threshold);
     return {
       found: result.found,
-      result: result.result,
+      result: result.result as T | undefined,
       similarity: result.similarity,
     };
   }
@@ -442,14 +439,17 @@ export abstract class Agent<TInput = any, TOutput = any> {
     cache?: ReasoningCacheStats;
     monitor?: ReturnType<ReasoningMonitor['getMetrics']>;
   } {
-    const stats: any = {};
+    const stats: {
+      cache?: ReasoningCacheStats;
+      monitor?: ReturnType<ReasoningMonitor['getMetrics']>;
+    } = {};
 
     if (this.reasoningCache) {
-      stats.cache = this.reasoningCache.getStats();
+      (stats as any).cache = this.reasoningCache.getStats();
     }
 
     if (this.performanceMonitor) {
-      stats.monitor = this.performanceMonitor.getMetrics();
+      (stats as any).monitor = this.performanceMonitor.getMetrics();
     }
 
     return stats;

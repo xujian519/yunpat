@@ -25,17 +25,19 @@ describe('TUIRenderer', () => {
           id: 'goal1',
           title: '技术方案理解',
           description: '理解技术方案',
-          tasks: [{
-            id: 'task1',
-            title: '分析技术要点',
-            description: '分析技术要点',
-            type: 'research' as any,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['analysis'],
-            estimatedTokens: 2000,
-            estimatedDuration: 300,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task1',
+              title: '分析技术要点',
+              description: '分析技术要点',
+              type: 'research' as any,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['analysis'],
+              estimatedTokens: 2000,
+              estimatedDuration: 300,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.HIGH,
           status: TaskStatus.COMPLETED,
@@ -46,17 +48,19 @@ describe('TUIRenderer', () => {
           id: 'goal2',
           title: '权利要求生成',
           description: '生成权利要求',
-          tasks: [{
-            id: 'task2',
-            title: '撰写独立权利要求',
-            description: '撰写独立权利要求',
-            type: 'writing' as any,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 3000,
-            estimatedDuration: 600,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task2',
+              title: '撰写独立权利要求',
+              description: '撰写独立权利要求',
+              type: 'writing' as any,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 3000,
+              estimatedDuration: 600,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: ['goal1'],
           priority: Priority.CRITICAL,
           status: TaskStatus.IN_PROGRESS,
@@ -286,7 +290,7 @@ describe('TUIRenderer', () => {
 
     it('应该处理所有任务完成的计划', () => {
       const plan = createTestPlan();
-      plan.subGoals.forEach(goal => {
+      plan.subGoals.forEach((goal) => {
         goal.status = TaskStatus.COMPLETED;
       });
 

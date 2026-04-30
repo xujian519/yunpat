@@ -4,7 +4,10 @@
  * 展示语义缓存如何在实际使用中节省成本
  */
 
-import { SemanticCache, createSimpleSignatureGenerator } from '../../core/dist/cache/SemanticCache.js';
+import {
+  SemanticCache,
+  createSimpleSignatureGenerator,
+} from '../../core/dist/cache/SemanticCache.js';
 
 // 模拟写作任务
 const writingTasks = [
@@ -61,12 +64,7 @@ const createMockResult = (topic) => ({
 
 // 创建签名生成器
 const createSignature = createSimpleSignatureGenerator((task) => {
-  return [
-    task.type,
-    task.topic,
-    task.format || 'markdown',
-    ...(task.requirements || []),
-  ];
+  return [task.type, task.topic, task.format || 'markdown', ...(task.requirements || [])];
 });
 
 // 创建语义缓存
@@ -122,7 +120,9 @@ async function simulateWriting() {
   console.log(`实际成本: ¥${totalCost.toFixed(2)}`);
   console.log(`节省成本: ¥${savedCost.toFixed(2)}`);
   console.log(`无缓存成本: ¥${(writingTasks.length * LLM_COST_PER_CALL).toFixed(2)}`);
-  console.log(`节省比例: ${((savedCost / (writingTasks.length * LLM_COST_PER_CALL)) * 100).toFixed(1)}%`);
+  console.log(
+    `节省比例: ${((savedCost / (writingTasks.length * LLM_COST_PER_CALL)) * 100).toFixed(1)}%`
+  );
 
   // 输出缓存统计
   console.log('\n========== 缓存统计 ==========');

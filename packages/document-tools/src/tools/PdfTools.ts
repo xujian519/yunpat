@@ -56,11 +56,7 @@ export class PdfExtractTextTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       filePath: z.string().describe('PDF文件路径'),
-      includeMetadata: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否包含元数据'),
+      includeMetadata: z.boolean().optional().default(false).describe('是否包含元数据'),
     }),
     outputSchema: z.object({
       text: z.string().describe('提取的文本内容'),
@@ -125,11 +121,7 @@ export class PdfParseTool extends EnhancedBaseTool<
         .optional()
         .default(OutputFormat.TEXT)
         .describe('输出格式'),
-      extractImages: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否提取图片'),
+      extractImages: z.boolean().optional().default(false).describe('是否提取图片'),
     }),
     outputSchema: z.object({
       documentType: z.nativeEnum(DocumentType),
@@ -173,9 +165,7 @@ export class PdfParseTool extends EnhancedBaseTool<
       metadata: {
         totalPages: data.numpages,
         author: data.info?.Author,
-        creationDate: data.info?.CreationDate
-          ? new Date(data.info.CreationDate)
-          : undefined,
+        creationDate: data.info?.CreationDate ? new Date(data.info.CreationDate) : undefined,
         title: data.info?.Title,
       },
       parseTime: Date.now() - startTime,
@@ -241,11 +231,7 @@ export class PdfToMarkdownTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       filePath: z.string().describe('PDF文件路径'),
-      includeHeaderFooter: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否包含页眉页脚'),
+      includeHeaderFooter: z.boolean().optional().default(false).describe('是否包含页眉页脚'),
     }),
     outputSchema: z.object({
       markdown: z.string().describe('Markdown内容'),
@@ -314,11 +300,7 @@ export class PdfOcrTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       filePath: z.string().describe('PDF文件路径'),
-      languages: z
-        .array(z.string())
-        .optional()
-        .default(['eng', 'chi_sim'])
-        .describe('OCR语言列表'),
+      languages: z.array(z.string()).optional().default(['eng', 'chi_sim']).describe('OCR语言列表'),
       outputFormat: z
         .enum([OutputFormat.TEXT, OutputFormat.MARKDOWN, OutputFormat.JSON])
         .optional()
@@ -345,9 +327,7 @@ export class PdfOcrTool extends EnhancedBaseTool<
       // 检查Marker是否安装
       execSync('which marker', { stdio: 'ignore' });
     } catch (error) {
-      throw new Error(
-        'Marker未安装。请先安装: pip install marker-pdf'
-      );
+      throw new Error('Marker未安装。请先安装: pip install marker-pdf');
     }
 
     const startTime = Date.now();

@@ -121,8 +121,8 @@ describe('FewShotPromptManager', () => {
       const ocrExamples = manager.getRelevantExamples(ocrInput, [], 3);
 
       // PDF相关的示例应该更靠前
-      const pdfExampleIds = pdfExamples.map(e => e.id);
-      const ocrExampleIds = ocrExamples.map(e => e.id);
+      const pdfExampleIds = pdfExamples.map((e) => e.id);
+      const ocrExampleIds = ocrExamples.map((e) => e.id);
 
       expect(pdfExampleIds).toContain('pdf-001');
       expect(ocrExampleIds).toContain('ocr-001');
@@ -154,7 +154,7 @@ describe('FewShotPromptManager', () => {
 
       expect(examples.length).toBeGreaterThan(0);
       // 应该包含PDF相关的示例
-      const hasPdfExample = examples.some(e => e.id === 'pdf-001');
+      const hasPdfExample = examples.some((e) => e.id === 'pdf-001');
       expect(hasPdfExample).toBe(true);
     });
   });
@@ -277,7 +277,7 @@ describe('FewShotPromptManager', () => {
       const allExamples = newManager.getRelevantExamples('', [], 100);
 
       // 检查是否包含预置的示例
-      const scenarios = allExamples.map(e => e.scenario);
+      const scenarios = allExamples.map((e) => e.scenario);
       expect(scenarios).toContain('PDF转Markdown');
       expect(scenarios).toContain('网页数据抓取');
       expect(scenarios).toContain('Excel数据分析');
@@ -299,7 +299,7 @@ describe('FewShotPromptManager', () => {
       });
 
       const examples = manager.getRelevantExamples('处理DOCX文件', [], 10);
-      const hasDocExample = examples.some(e => e.id === 'doc-001');
+      const hasDocExample = examples.some((e) => e.id === 'doc-001');
       expect(hasDocExample).toBe(true);
     });
 
@@ -315,7 +315,7 @@ describe('FewShotPromptManager', () => {
       });
 
       const examples = manager.getRelevantExamples('处理PNG图片', [], 10);
-      const hasImgExample = examples.some(e => e.id === 'img-001');
+      const hasImgExample = examples.some((e) => e.id === 'img-001');
       expect(hasImgExample).toBe(true);
     });
 
@@ -331,7 +331,7 @@ describe('FewShotPromptManager', () => {
       });
 
       const examples = manager.getRelevantExamples('访问网站', [], 10);
-      const hasWebExample = examples.some(e => e.id === 'web-001');
+      const hasWebExample = examples.some((e) => e.id === 'web-001');
       expect(hasWebExample).toBe(true);
     });
   });
@@ -374,7 +374,7 @@ describe('FewShotPromptManager', () => {
       manager.importExamples(jsonData);
 
       const examples = manager.getRelevantExamples('导入', [], 10);
-      const hasImportedExample = examples.some(e => e.id === 'import-001');
+      const hasImportedExample = examples.some((e) => e.id === 'import-001');
       expect(hasImportedExample).toBe(true);
     });
   });

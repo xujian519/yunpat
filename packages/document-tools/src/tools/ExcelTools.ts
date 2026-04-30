@@ -9,12 +9,7 @@ import * as path from 'path';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
-import {
-  DocumentParseResult,
-  DocumentType,
-  ElementType,
-  OutputFormat,
-} from '../types/document.js';
+import { DocumentParseResult, DocumentType, ElementType, OutputFormat } from '../types/document.js';
 
 /**
  * Excel工作表数据
@@ -178,9 +173,7 @@ export class ExcelToJsonTool extends EnhancedBaseTool<
     const sheets: Record<string, any[]> = {};
 
     // 确定要读取哪些工作表
-    const sheetNamesToRead = input.sheetName
-      ? [input.sheetName]
-      : workbook.SheetNames;
+    const sheetNamesToRead = input.sheetName ? [input.sheetName] : workbook.SheetNames;
 
     // 读取每个工作表
     for (const sheetName of sheetNamesToRead) {
@@ -228,11 +221,7 @@ export class ExcelToMarkdownTool extends EnhancedBaseTool<
     inputSchema: z.object({
       filePath: z.string().describe('Excel文件路径'),
       sheetName: z.string().optional().describe('指定工作表名称'),
-      tableFormat: z
-        .enum(['github', 'pipe'])
-        .optional()
-        .default('github')
-        .describe('表格格式'),
+      tableFormat: z.enum(['github', 'pipe']).optional().default('github').describe('表格格式'),
     }),
     outputSchema: z.object({
       markdown: z.string().describe('Markdown内容'),
@@ -387,9 +376,10 @@ export class ExcelParseTool extends EnhancedBaseTool<
     const stats = fs.statSync(input.filePath);
 
     return {
-      documentType: path.extname(input.filePath).toLowerCase() === '.xlsx'
-        ? DocumentType.XLSX
-        : DocumentType.XLS,
+      documentType:
+        path.extname(input.filePath).toLowerCase() === '.xlsx'
+          ? DocumentType.XLSX
+          : DocumentType.XLS,
       filename: path.basename(input.filePath),
       text: textParts.join('\n'),
       elements,

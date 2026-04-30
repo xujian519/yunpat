@@ -9,7 +9,10 @@
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": ["patent", "cli"],
+  "keywords": [
+    "patent",
+    "cli"
+  ],
   "author": "YunPat",
   "license": "MIT",
   "type": "commonjs",

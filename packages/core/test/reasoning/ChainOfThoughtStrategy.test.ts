@@ -29,7 +29,8 @@ describe('ChainOfThoughtStrategy', () => {
       const mockResponse = {
         message: {
           role: 'assistant' as const,
-          content: '步骤1：理解问题\n这是第一步推理。\n\n步骤2：分析问题\n这是第二步推理。\n\n结论：最终答案',
+          content:
+            '步骤1：理解问题\n这是第一步推理。\n\n步骤2：分析问题\n这是第二步推理。\n\n结论：最终答案',
         },
         usage: { totalTokens: 100 },
       };
@@ -111,7 +112,8 @@ describe('ChainOfThoughtStrategy', () => {
       const mockResponse = {
         message: {
           role: 'assistant' as const,
-          content: '1. 第一步推理\n这是第一步内容。\n\n2. 第二步推理\n这是第二步内容。\n\n结论：最终答案',
+          content:
+            '1. 第一步推理\n这是第一步内容。\n\n2. 第二步推理\n这是第二步内容。\n\n结论：最终答案',
         },
         usage: { totalTokens: 100 },
       };
@@ -236,9 +238,7 @@ describe('ChainOfThoughtStrategy', () => {
         usage: { totalTokens: 50 },
       };
 
-      mockLLM.chat
-        .mockRejectedValueOnce(new Error('网络错误'))
-        .mockResolvedValueOnce(mockResponse);
+      mockLLM.chat.mockRejectedValueOnce(new Error('网络错误')).mockResolvedValueOnce(mockResponse);
 
       const result = await cot.reason('测试问题');
 

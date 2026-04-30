@@ -4,8 +4,6 @@
  * 为现有工具添加详细的增强描述，提升工具选择准确性
  */
 
-import { ToolDescriptionEnhancer } from '@yunpat/core';
-
 /**
  * 增强工具描述库
  */
@@ -261,7 +259,7 @@ export function addEnhancedDescriptions() {
 /**
  * 获取工具的增强描述
  */
-export function getEnhancedDescription(toolName: string): any {
+export function getEnhancedDescription(toolName: string): unknown {
   const descriptions = EnhancedToolDescriptions;
   return descriptions[toolName] || null;
 }

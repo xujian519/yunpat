@@ -46,7 +46,12 @@ function createMockTools(): EnhancedTool[] {
       },
       execute: async (params: any) => {
         return {
-          json: { data: [['A', 'B'], [1, 2]] },
+          json: {
+            data: [
+              ['A', 'B'],
+              [1, 2],
+            ],
+          },
           success: true,
         };
       },
@@ -194,7 +199,7 @@ async function scenario1_SingleDocument() {
 
   // 4. 模拟工具执行
   if (selectedTool) {
-    const tool = availableTools.find(t => t.metadata.name === selectedTool);
+    const tool = availableTools.find((t) => t.metadata.name === selectedTool);
     if (tool) {
       console.log('\n⚙️ 执行工具:', selectedTool);
       const startTime = Date.now();
@@ -228,7 +233,6 @@ async function scenario1_SingleDocument() {
         console.log('✅ 工具执行成功');
         console.log('  执行时间:', executionTime, 'ms');
         console.log('  输出:', JSON.stringify(result).substring(0, 100) + '...');
-
       } catch (error) {
         console.error('❌ 工具执行失败:', error.message);
 
@@ -292,7 +296,7 @@ async function scenario2_BatchProcessing() {
 
     // 模拟选择
     const startTime = Date.now();
-    const tool = availableTools.find(t => t.metadata.name === task.tool);
+    const tool = availableTools.find((t) => t.metadata.name === task.tool);
 
     if (tool) {
       try {
@@ -312,7 +316,6 @@ async function scenario2_BatchProcessing() {
 
         console.log(`  ✅ 成功 (${Date.now() - startTime}ms)`);
         successCount++;
-
       } catch (error) {
         console.log(`  ❌ 失败: ${error.message}`);
         failCount++;
@@ -380,10 +383,7 @@ async function scenario3_PerformanceComparison() {
   // 执行多次并记录
   console.log('\n🔄 执行10次工具选择以收集数据...');
   for (let i = 0; i < 10; i++) {
-    const prompt = toolSelectionOptimizer.optimizeToolSelectionPrompt(
-      userInput,
-      availableTools
-    );
+    const prompt = toolSelectionOptimizer.optimizeToolSelectionPrompt(userInput, availableTools);
 
     // 模拟执行
     toolSelectionOptimizer.recordToolUsage(
@@ -433,7 +433,6 @@ async function runProductionDemo() {
     console.log('  - 集成指南: docs/AGENT_INTEGRATION_GUIDE.md');
     console.log('  - TDD报告: docs/TDD_COMPLETE_REPORT.md');
     console.log('  - 使用示例: examples/production-usage-demo.ts');
-
   } catch (error) {
     console.error('\n❌ 演示失败:', error.message);
     console.error(error.stack);

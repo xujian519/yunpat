@@ -25,23 +25,21 @@ describe('PatentSearchTool', () => {
   });
 
   it('searches by keyword mode by default', async () => {
-    const mockExecute = vi
-      .spyOn(GooglePatentsFetchTool.prototype, 'execute')
-      .mockResolvedValue({
-        results: [
-          {
-            patentId: 'CN123456789A',
-            title: 'Neural Network Chip',
-            snippet: 'A chip for neural networks',
-            url: 'https://patents.google.com/patent/CN123456789A/',
-            assignee: 'Tech Corp',
-            publicationDate: '2023-01-01',
-            ipcCodes: ['G06N3/00'],
-          },
-        ],
-        total: 1,
-        page: 1,
-      });
+    const mockExecute = vi.spyOn(GooglePatentsFetchTool.prototype, 'execute').mockResolvedValue({
+      results: [
+        {
+          patentId: 'CN123456789A',
+          title: 'Neural Network Chip',
+          snippet: 'A chip for neural networks',
+          url: 'https://patents.google.com/patent/CN123456789A/',
+          assignee: 'Tech Corp',
+          publicationDate: '2023-01-01',
+          ipcCodes: ['G06N3/00'],
+        },
+      ],
+      total: 1,
+      page: 1,
+    });
 
     const context = {} as any;
     const result = await tool.execute({ query: 'neural network', limit: 2 }, context);

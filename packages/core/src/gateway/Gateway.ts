@@ -121,7 +121,7 @@ export interface MultimodalOutput {
   attachments?: Array<{
     type: 'image' | 'file' | 'audio';
     data: ArrayBuffer;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
   }>;
 
   /** 元数据 */
@@ -166,7 +166,7 @@ export interface ApprovalRequest {
   /** 需要审批的内容 */
   content: {
     type: 'action' | 'output' | 'plan';
-    data: any;
+    data: unknown;
   };
 
   /** 上下文信息 */
@@ -250,7 +250,7 @@ export interface Action {
   resource?: string;
 
   /** 参数 */
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
 }
 
 /**
@@ -319,7 +319,7 @@ export interface AuditLog {
   result: 'success' | 'failure' | 'blocked';
 
   /** 详情 */
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 
   /** IP 地址 */
   ipAddress?: string;

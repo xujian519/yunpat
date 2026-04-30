@@ -13,7 +13,13 @@ import { Agent } from '../../src/agent/Agent.js';
 import { EventBus } from '../../src/eventbus/EventBus.js';
 import { ShortTermMemory } from '../../src/memory/MemoryStore.js';
 import { ToolRegistry } from '../../src/tools/ToolRegistry.js';
-import type { LLMAdapter, ExecutionContext, AgentEvent, Tool, MemoryStore } from '../../src/lifecycle/Lifecycle.js';
+import type {
+  LLMAdapter,
+  ExecutionContext,
+  AgentEvent,
+  Tool,
+  MemoryStore,
+} from '../../src/lifecycle/Lifecycle.js';
 
 /**
  * 创建 Mock LLM
@@ -22,7 +28,7 @@ function createMockLLM(responseDelay: number = 0): LLMAdapter {
   return {
     chat: async () => {
       if (responseDelay > 0) {
-        await new Promise(resolve => setTimeout(resolve, responseDelay));
+        await new Promise((resolve) => setTimeout(resolve, responseDelay));
       }
       return {
         message: {
@@ -72,7 +78,7 @@ class TestAgent extends Agent<string, string> {
 
   protected async act(plan: any, context: ExecutionContext): Promise<any> {
     // 模拟一些工作
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     return {
       success: true,
@@ -155,12 +161,10 @@ describe('并发 Agent 测试', () => {
       ];
 
       // 并发执行
-      const results = await Promise.all(
-        agents.map(agent => agent.execute('test task'))
-      );
+      const results = await Promise.all(agents.map((agent) => agent.execute('test task')));
 
       expect(results).toHaveLength(3);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.success).toBe(true);
       });
     });
@@ -190,13 +194,13 @@ describe('并发 Agent 测试', () => {
       ];
 
       // 所有 Agent 同时读取
-      const readPromises = agents.map(async agent => {
+      const readPromises = agents.map(async (agent) => {
         return await memory.get('shared-key');
       });
 
       const results = await Promise.all(readPromises);
 
-      results.forEach(value => {
+      results.forEach((value) => {
         expect(value).toBe('shared-value');
       });
     });
@@ -238,7 +242,7 @@ describe('并发 Agent 测试', () => {
       expect(finalCounter).toBeLessThanOrEqual(3);
 
       // 验证所有 Agent 都成功完成
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.counter).toBeGreaterThan(0);
       });
     });
@@ -292,7 +296,7 @@ describe('并发 Agent 测试', () => {
       });
 
       // 等待事件传播
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // 验证所有订阅者都收到事件
       expect(receivedEvents).toHaveLength(3);
@@ -318,7 +322,7 @@ describe('并发 Agent 测试', () => {
 
       // 并发发布多个事件
       await Promise.all([
-        new Promise(resolve => {
+        new Promise((resolve) => {
           eventBus.publish({
             type: 'event1',
             source: 'test',
@@ -327,7 +331,7 @@ describe('并发 Agent 测试', () => {
           });
           resolve(undefined);
         }),
-        new Promise(resolve => {
+        new Promise((resolve) => {
           eventBus.publish({
             type: 'event2',
             source: 'test',
@@ -336,7 +340,7 @@ describe('并发 Agent 测试', () => {
           });
           resolve(undefined);
         }),
-        new Promise(resolve => {
+        new Promise((resolve) => {
           eventBus.publish({
             type: 'event3',
             source: 'test',
@@ -347,7 +351,7 @@ describe('并发 Agent 测试', () => {
         }),
       ]);
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(receivedEvents.event1).toBe(1);
       expect(receivedEvents.event2).toBe(1);
@@ -372,7 +376,7 @@ describe('并发 Agent 测试', () => {
       }
 
       // 等待事件处理
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(eventCount).toBe(100);
     });
@@ -390,7 +394,7 @@ describe('并发 Agent 测试', () => {
         description: 'Test tool',
         execute: async () => {
           callCount++;
-          await new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise((resolve) => setTimeout(resolve, 10));
           return { called: true };
         },
       };
@@ -423,7 +427,7 @@ describe('并发 Agent 测试', () => {
         description: 'Tool that tracks execution order',
         execute: async (params: any) => {
           executionOrder.push(params.id);
-          await new Promise(resolve => setTimeout(resolve, Math.random() * 10));
+          await new Promise((resolve) => setTimeout(resolve, Math.random() * 10));
           return { id: params.id };
         },
       };
@@ -484,22 +488,18 @@ describe('并发 Agent 测试', () => {
       const agents: TestAgent[] = [];
 
       for (let i = 0; i < agentCount; i++) {
-        agents.push(
-          new TestAgent(`agent-${i}`, eventBus, memory, tools, llm)
-        );
+        agents.push(new TestAgent(`agent-${i}`, eventBus, memory, tools, llm));
       }
 
       const startTime = Date.now();
 
       // 并发执行所有 Agent
-      const results = await Promise.all(
-        agents.map(agent => agent.execute('test task'))
-      );
+      const results = await Promise.all(agents.map((agent) => agent.execute('test task')));
 
       const duration = Date.now() - startTime;
 
       expect(results).toHaveLength(agentCount);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.success).toBe(true);
       });
 
@@ -532,10 +532,7 @@ describe('并发 Agent 测试', () => {
       ];
 
       // 并发写入 Memory
-      await Promise.all([
-        memory.set('agent1-data', 'value1'),
-        memory.set('agent2-data', 'value2'),
-      ]);
+      await Promise.all([memory.set('agent1-data', 'value1'), memory.set('agent2-data', 'value2')]);
 
       // 验证数据写入成功
       expect(await memory.get('agent1-data')).toBe('value1');

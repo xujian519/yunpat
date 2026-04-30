@@ -2,12 +2,7 @@
  * 文档格式转换工具
  */
 
-import {
-  DocumentElement,
-  ElementType,
-  MarkdownOptions,
-  JsonOptions,
-} from '../types/document.js';
+import { DocumentElement, ElementType, MarkdownOptions, JsonOptions } from '../types/document.js';
 
 /**
  * 将文档元素转换为Markdown
@@ -95,10 +90,7 @@ export function elementsToMarkdown(
 /**
  * 将文档元素转换为JSON
  */
-export function elementsToJson(
-  elements: DocumentElement[],
-  options: JsonOptions = {}
-): string {
+export function elementsToJson(elements: DocumentElement[], options: JsonOptions = {}): string {
   const { includeCoordinates = true, includeStyles = false, compress = false } = options;
 
   const data = elements.map((element) => {

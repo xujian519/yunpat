@@ -156,8 +156,8 @@ export class CardGenerator {
 
       const parsed = this.extractJSON(response.message.content);
       return {
-        quality: parsed.quality ?? 0.5,
-        issues: parsed.issues ?? [],
+        quality: (parsed as any).quality ?? 0.5,
+        issues: (parsed as any).issues ?? [],
       };
     } catch {
       return { quality: card.quality, issues: [] };
@@ -174,25 +174,25 @@ export class CardGenerator {
     const items = Array.isArray(parsed) ? parsed : [parsed];
     const now = new Date().toISOString();
 
-    return items.map((item: any) => {
-      const question = item.question ?? '';
+    return items.map((item: unknown) => {
+      const question = (item as any).question ?? '';
       const card: KnowledgeCard = {
         id: generateCardId(question, concept),
         question,
-        content: item.content ?? '',
+        content: (item as any).content ?? '',
         sourcePages: [sourcePage],
         relatedCards: [],
         concept,
         domain,
-        quality: typeof item.quality === 'number' ? item.quality : 0.5,
-        tags: item.tags ?? [],
+        quality: typeof (item as any).quality === 'number' ? (item as any).quality : 0.5,
+        tags: (item as any).tags ?? [],
         version: 1,
         createdAt: now,
         updatedAt: now,
         metadata: {
           generator: 'CardGenerator',
           llmModel: 'unknown',
-          tokenCount: (item.content ?? '').length,
+          tokenCount: ((item as any).content ?? '').length,
           referenceCount: 0,
         },
       };
@@ -200,7 +200,7 @@ export class CardGenerator {
     });
   }
 
-  private extractJSON(text: string): any {
+  private extractJSON(text: string): unknown {
     // 尝试提取 JSON 代码块
     const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (codeBlockMatch) {

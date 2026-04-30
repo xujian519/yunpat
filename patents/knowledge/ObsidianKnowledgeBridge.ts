@@ -169,7 +169,10 @@ export class ObsidianKnowledgeBridge {
 
     // 提取卡片内容（从"## 卡片内容"到文件末尾）
     const cardContentStart = lines.findIndex((l) => l === '## 卡片内容');
-    const cardContent = lines.slice(cardContentStart + 1).join('\n').trim();
+    const cardContent = lines
+      .slice(cardContentStart + 1)
+      .join('\n')
+      .trim();
 
     // 提取相关页面（[[wikilink]]）
     const relatedPages = (content.match(/\[\[([^\]]+)\]\]/g) || []).map((link) =>

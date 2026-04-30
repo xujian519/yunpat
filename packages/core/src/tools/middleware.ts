@@ -10,7 +10,7 @@ export interface Middleware {
   before?(ctx: ToolExecutionContext): Promise<void>;
 
   /** 后置处理 */
-  after?(ctx: ToolExecutionContext, result: any): Promise<void>;
+  after?(ctx: ToolExecutionContext, result: unknown): Promise<void>;
 
   /** 错误处理 */
   onError?(ctx: ToolExecutionContext, error: Error): Promise<void>;
@@ -26,7 +26,7 @@ export interface Middleware {
   before?(ctx: ToolExecutionContext): Promise<void>;
 
   /** 后置处理 */
-  after?(ctx: ToolExecutionContext, result: any): Promise<void>;
+  after?(ctx: ToolExecutionContext, result: unknown): Promise<void>;
 
   /** 错误处理 */
   onError?(ctx: ToolExecutionContext, error: Error): Promise<void>;
@@ -42,8 +42,8 @@ export class MiddlewarePipeline {
     this.middlewares.push(middleware);
   }
 
-  async execute(ctx: ToolExecutionContext): Promise<any> {
-    let result: any;
+  async execute(ctx: ToolExecutionContext): Promise<unknown> {
+    let result: unknown;
     let error: Error | undefined;
 
     try {
@@ -135,7 +135,7 @@ export class LoggingMiddleware implements Middleware {
     });
   }
 
-  async after(ctx: ToolExecutionContext, result: any): Promise<void> {
+  async after(ctx: ToolExecutionContext, result: unknown): Promise<void> {
     const duration = Date.now() - ctx.startTime;
     const output = this.sanitizeOutput(result);
     console.log(`[Tool] ${ctx.tool.metadata.name} completed in ${duration}ms`, {
@@ -156,12 +156,12 @@ export class LoggingMiddleware implements Middleware {
   /**
    * 清理敏感输入信息
    */
-  private sanitizeInput(input: any): any {
+  private sanitizeInput(input: unknown): unknown {
     if (!input || typeof input !== 'object') {
       return input;
     }
 
-    const sanitized = { ...input };
+    const sanitized = { ...(input as Record<string, any>) };
     const sensitiveKeys = ['password', 'token', 'apiKey', 'secret', 'key'];
 
     for (const key of sensitiveKeys) {
@@ -176,7 +176,7 @@ export class LoggingMiddleware implements Middleware {
   /**
    * 清理敏感输出信息
    */
-  private sanitizeOutput(output: any): any {
+  private sanitizeOutput(output: unknown): unknown {
     // 如果输出太大，只显示摘要
     const str = JSON.stringify(output);
     if (str.length > 1000) {
@@ -253,7 +253,7 @@ export class PermissionMiddleware implements Middleware {
 export class CacheMiddleware implements Middleware {
   name = 'cache';
 
-  private cache = new Map<string, { value: any; expiry: number }>();
+  private cache = new Map<string, { value: unknown; expiry: number }>();
   private stats = {
     hits: 0,
     misses: 0,
@@ -280,7 +280,7 @@ export class CacheMiddleware implements Middleware {
     }
   }
 
-  async after(ctx: ToolExecutionContext, result: any): Promise<void> {
+  async after(ctx: ToolExecutionContext, result: unknown): Promise<void> {
     // 只缓存只读工具且未被拦截的结果
     if (!ctx.tool.metadata.isConcurrencySafe || ctx.cached) {
       return;
@@ -451,7 +451,7 @@ export class TracingMiddleware implements Middleware {
     ctx.context.metadata.traceId = traceId;
   }
 
-  async after(ctx: ToolExecutionContext, result: any): Promise<void> {
+  async after(ctx: ToolExecutionContext, _result: unknown): Promise<void> {
     const duration = Date.now() - ctx.startTime;
     const traceId = ctx.context.metadata?.traceId;
 

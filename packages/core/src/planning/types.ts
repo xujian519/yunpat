@@ -13,34 +13,34 @@ export type { LLMAdapter };
  * 优先级枚举
  */
 export enum Priority {
-  CRITICAL = 'critical',  // 关键任务，阻塞其他任务
-  HIGH = 'high',          // 高优先级
-  MEDIUM = 'medium',      // 中等优先级
-  LOW = 'low',            // 低优先级
+  CRITICAL = 'critical', // 关键任务，阻塞其他任务
+  HIGH = 'high', // 高优先级
+  MEDIUM = 'medium', // 中等优先级
+  LOW = 'low', // 低优先级
 }
 
 /**
  * 任务状态枚举
  */
 export enum TaskStatus {
-  PENDING = 'pending',        // 等待执行
+  PENDING = 'pending', // 等待执行
   IN_PROGRESS = 'in_progress', // 执行中
-  COMPLETED = 'completed',    // 已完成
-  FAILED = 'failed',          // 执行失败
-  SKIPPED = 'skipped',        // 已跳过
-  BLOCKED = 'blocked',        // 被阻塞
+  COMPLETED = 'completed', // 已完成
+  FAILED = 'failed', // 执行失败
+  SKIPPED = 'skipped', // 已跳过
+  BLOCKED = 'blocked', // 被阻塞
 }
 
 /**
  * 任务类型
  */
 export enum TaskType {
-  RESEARCH = 'research',           // 研究任务
-  ANALYSIS = 'analysis',           // 分析任务
-  WRITING = 'writing',             // 撰写任务
-  VALIDATION = 'validation',       // 验证任务
-  GENERATION = 'generation',       // 生成任务
-  REVIEW = 'review',               // 审查任务
+  RESEARCH = 'research', // 研究任务
+  ANALYSIS = 'analysis', // 分析任务
+  WRITING = 'writing', // 撰写任务
+  VALIDATION = 'validation', // 验证任务
+  GENERATION = 'generation', // 生成任务
+  REVIEW = 'review', // 审查任务
 }
 
 /**
@@ -125,9 +125,9 @@ export interface Dependency {
  * 依赖类型
  */
 export enum DependencyType {
-  STRONG = 'strong',      // 强依赖：必须完成后才能开始
-  WEAK = 'weak',          // 弱依赖：建议完成后开始，但可以并行
-  ORDERING = 'ordering',  // 顺序依赖：为了优化效果建议按顺序
+  STRONG = 'strong', // 强依赖：必须完成后才能开始
+  WEAK = 'weak', // 弱依赖：建议完成后开始，但可以并行
+  ORDERING = 'ordering', // 顺序依赖：为了优化效果建议按顺序
 }
 
 /**
@@ -180,12 +180,12 @@ export interface HierarchicalPlan {
  * 计划状态
  */
 export enum PlanStatus {
-  DRAFT = 'draft',           // 草稿
-  READY = 'ready',           // 就绪
+  DRAFT = 'draft', // 草稿
+  READY = 'ready', // 就绪
   IN_PROGRESS = 'in_progress', // 执行中
-  COMPLETED = 'completed',   // 已完成
-  FAILED = 'failed',         // 失败
-  CANCELLED = 'cancelled',   // 已取消
+  COMPLETED = 'completed', // 已完成
+  FAILED = 'failed', // 失败
+  CANCELLED = 'cancelled', // 已取消
 }
 
 /**

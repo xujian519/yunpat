@@ -34,9 +34,7 @@ describe('ConstitutionalAI', () => {
       expect(report.overallCompliant).toBe(false);
       expect(report.violations.length).toBeGreaterThan(0);
 
-      const clarityViolations = report.violations.filter(
-        v => v.principleId === 'clarity'
-      );
+      const clarityViolations = report.violations.filter((v) => v.principleId === 'clarity');
       expect(clarityViolations.length).toBeGreaterThan(0);
     });
 
@@ -48,7 +46,7 @@ describe('ConstitutionalAI', () => {
       expect(report.overallCompliant).toBe(false);
 
       const definitenessViolations = report.violations.filter(
-        v => v.principleId === 'definiteness'
+        (v) => v.principleId === 'definiteness'
       );
       expect(definitenessViolations.length).toBeGreaterThan(0);
     });
@@ -60,9 +58,7 @@ describe('ConstitutionalAI', () => {
 
       expect(report.warnings.length).toBeGreaterThan(0);
 
-      const brevityWarnings = report.warnings.filter(
-        w => w.principleId === 'brevity'
-      );
+      const brevityWarnings = report.warnings.filter((w) => w.principleId === 'brevity');
       expect(brevityWarnings.length).toBeGreaterThan(0);
     });
 
@@ -73,9 +69,7 @@ describe('ConstitutionalAI', () => {
 
       expect(report.overallCompliant).toBe(false);
 
-      const supportViolations = report.violations.filter(
-        v => v.principleId === 'support'
-      );
+      const supportViolations = report.violations.filter((v) => v.principleId === 'support');
       expect(supportViolations.length).toBeGreaterThan(0);
     });
 
@@ -87,7 +81,7 @@ describe('ConstitutionalAI', () => {
       expect(report.overallCompliant).toBe(false);
 
       const completenessViolations = report.violations.filter(
-        v => v.principleId === 'completeness'
+        (v) => v.principleId === 'completeness'
       );
       expect(completenessViolations.length).toBeGreaterThan(0);
     });
@@ -99,9 +93,7 @@ describe('ConstitutionalAI', () => {
 
       expect(report.overallCompliant).toBe(false);
 
-      const enablementViolations = report.violations.filter(
-        v => v.principleId === 'enablement'
-      );
+      const enablementViolations = report.violations.filter((v) => v.principleId === 'enablement');
       expect(enablementViolations.length).toBeGreaterThan(0);
     });
 

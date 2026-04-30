@@ -385,7 +385,7 @@ export class ToolUsageTracker extends EventEmitter {
     accuracy: number;
     improvements: string[];
   } {
-    const correctSelections = 0;
+    const _correctSelections = 0; // 保留用于未来实现准确选择统计
     const totalSelections = this.records.length;
     const improvements: string[] = [];
 

@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  OutputFormat,
-  DocumentType,
-  ElementType,
-} from '../../src/types/document.js';
+import { OutputFormat, DocumentType, ElementType } from '../../src/types/document.js';
 
 describe('document types', () => {
   describe('OutputFormat enum', () => {

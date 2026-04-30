@@ -61,7 +61,10 @@ describe('PdfTools', () => {
 
     it('includes metadata when requested', async () => {
       const tool = new PdfExtractTextTool();
-      const result = await tool.execute({ filePath: '/mock/test.pdf', includeMetadata: true }, mockContext);
+      const result = await tool.execute(
+        { filePath: '/mock/test.pdf', includeMetadata: true },
+        mockContext
+      );
       expect(result.metadata).toBeDefined();
       expect(result.metadata?.pages).toBe(3);
     });

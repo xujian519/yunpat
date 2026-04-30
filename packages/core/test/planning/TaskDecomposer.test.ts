@@ -147,9 +147,9 @@ describe('TaskDecomposer', () => {
       expect(plan.subGoals.length).toBeGreaterThan(0);
 
       // 应该包含专利相关的子目标
-      const titles = plan.subGoals.map(g => g.title);
-      const hasPatentSpecific = titles.some(t =>
-        t.includes('技术方案') || t.includes('权利要求') || t.includes('说明书')
+      const titles = plan.subGoals.map((g) => g.title);
+      const hasPatentSpecific = titles.some(
+        (t) => t.includes('技术方案') || t.includes('权利要求') || t.includes('说明书')
       );
       expect(hasPatentSpecific).toBe(true);
     });
@@ -164,9 +164,9 @@ describe('TaskDecomposer', () => {
       expect(plan.subGoals.length).toBeGreaterThan(0);
 
       // 应该包含研究相关的子目标
-      const titles = plan.subGoals.map(g => g.title);
-      const hasResearchSpecific = titles.some(t =>
-        t.includes('文献') || t.includes('数据') || t.includes('分析')
+      const titles = plan.subGoals.map((g) => g.title);
+      const hasResearchSpecific = titles.some(
+        (t) => t.includes('文献') || t.includes('数据') || t.includes('分析')
       );
       expect(hasResearchSpecific).toBe(true);
     });
@@ -268,8 +268,8 @@ describe('TaskDecomposer', () => {
     it('应该正确推断任务能力', async () => {
       const plan = await decomposer.decompose('测试目标');
 
-      plan.subGoals.forEach(goal => {
-        goal.tasks.forEach(task => {
+      plan.subGoals.forEach((goal) => {
+        goal.tasks.forEach((task) => {
           expect(task.requiredCapabilities).toBeDefined();
           expect(task.requiredCapabilities.length).toBeGreaterThan(0);
         });
@@ -280,10 +280,10 @@ describe('TaskDecomposer', () => {
       const plan = await decomposer.decompose('测试目标');
 
       const researchTasks = plan.subGoals
-        .flatMap(g => g.tasks)
-        .filter(t => t.type === TaskType.RESEARCH);
+        .flatMap((g) => g.tasks)
+        .filter((t) => t.type === TaskType.RESEARCH);
 
-      researchTasks.forEach(task => {
+      researchTasks.forEach((task) => {
         expect(task.requiredCapabilities).toContain('search');
       });
     });
@@ -293,9 +293,10 @@ describe('TaskDecomposer', () => {
     it('应该为子目标设置合理的优先级', async () => {
       const plan = await decomposer.decompose('测试目标');
 
-      plan.subGoals.forEach(goal => {
-        expect([Priority.CRITICAL, Priority.HIGH, Priority.MEDIUM, Priority.LOW])
-          .toContain(goal.priority);
+      plan.subGoals.forEach((goal) => {
+        expect([Priority.CRITICAL, Priority.HIGH, Priority.MEDIUM, Priority.LOW]).toContain(
+          goal.priority
+        );
       });
     });
 
@@ -313,7 +314,7 @@ describe('TaskDecomposer', () => {
       const plan = await decomposer.decompose('测试目标');
 
       let totalTasks = 0;
-      plan.subGoals.forEach(goal => {
+      plan.subGoals.forEach((goal) => {
         totalTasks += goal.tasks.length;
       });
 
@@ -324,7 +325,7 @@ describe('TaskDecomposer', () => {
       const plan = await decomposer.decompose('测试目标');
 
       let totalDuration = 0;
-      plan.subGoals.forEach(goal => {
+      plan.subGoals.forEach((goal) => {
         totalDuration += goal.estimatedDuration;
       });
 
@@ -335,7 +336,7 @@ describe('TaskDecomposer', () => {
       const plan = await decomposer.decompose('测试目标');
 
       let totalTokens = 0;
-      plan.subGoals.forEach(goal => {
+      plan.subGoals.forEach((goal) => {
         totalTokens += goal.estimatedTokens;
       });
 

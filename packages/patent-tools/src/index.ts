@@ -5,25 +5,13 @@
  */
 
 // 工具导出
-export {
-  ClaimsGeneratorTool,
-  FeatureExtractorTool,
-} from './tools/ClaimsGeneratorTool.js';
+export { ClaimsGeneratorTool, FeatureExtractorTool } from './tools/ClaimsGeneratorTool.js';
 
-export {
-  GooglePatentsFetchTool,
-  GooglePatentDetailTool,
-} from './tools/GooglePatentsTool.js';
+export { GooglePatentsFetchTool, GooglePatentDetailTool } from './tools/GooglePatentsTool.js';
 
-export {
-  PatentSearchTool,
-  SimilarPatentSearchTool,
-} from './tools/PatentSearchTool.js';
+export { PatentSearchTool, SimilarPatentSearchTool } from './tools/PatentSearchTool.js';
 
-export {
-  PatentDetailTool,
-  HighCitationPatentsTool,
-} from './tools/PatentDetailTool.js';
+export { PatentDetailTool, HighCitationPatentsTool } from './tools/PatentDetailTool.js';
 
 // 类型导出
 export {

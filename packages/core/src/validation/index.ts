@@ -35,18 +35,10 @@ export {
 } from './hallucination-types.js';
 
 // 幻觉检测系统 - 检测器类
-export {
-  FactChecker,
-} from './FactChecker.js';
+export { FactChecker } from './FactChecker.js';
 
-export {
-  LogicalConsistencyChecker,
-} from './LogicalConsistencyChecker.js';
+export { LogicalConsistencyChecker } from './LogicalConsistencyChecker.js';
 
-export {
-  SourceAttributionValidator,
-} from './SourceAttributionValidator.js';
+export { SourceAttributionValidator } from './SourceAttributionValidator.js';
 
-export {
-  HallucinationDetector,
-} from './HallucinationDetector.js';
+export { HallucinationDetector } from './HallucinationDetector.js';

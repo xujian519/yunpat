@@ -43,11 +43,11 @@ export interface TUIRenderOptions extends VisualizationOptions {
  * 导出格式
  */
 export enum ExportFormat {
-  DOT = 'dot',           // Graphviz DOT格式
-  PNG = 'png',           // PNG图片
-  SVG = 'svg',           // SVG矢量图
-  JSON = 'json',         // JSON格式
-  MERMAID = 'mermaid',   // Mermaid图表
+  DOT = 'dot', // Graphviz DOT格式
+  PNG = 'png', // PNG图片
+  SVG = 'svg', // SVG矢量图
+  JSON = 'json', // JSON格式
+  MERMAID = 'mermaid', // Mermaid图表
 }
 
 /**

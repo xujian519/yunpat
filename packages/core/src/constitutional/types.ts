@@ -13,13 +13,13 @@ export type { LLMAdapter };
  * 原则类别
  */
 export enum PrincipleCategory {
-  CLARITY = 'clarity',         // 清楚性
-  BREVITY = 'brevity',         // 简要性
-  SUPPORT = 'support',         // 支持性
+  CLARITY = 'clarity', // 清楚性
+  BREVITY = 'brevity', // 简要性
+  SUPPORT = 'support', // 支持性
   COMPLETENESS = 'completeness', // 完整性
-  NOVELTY = 'novelty',         // 创造性
-  ENABLEMENT = 'enablement',   // 充分公开
-  BEST_MODE = 'best_mode',     // 最佳实施例
+  NOVELTY = 'novelty', // 创造性
+  ENABLEMENT = 'enablement', // 充分公开
+  BEST_MODE = 'best_mode', // 最佳实施例
   DEFINITENESS = 'definiteness', // 确定性
 }
 
@@ -27,9 +27,9 @@ export enum PrincipleCategory {
  * 违规严重程度
  */
 export enum ViolationSeverity {
-  CRITICAL = 'critical',  // 严重违规，必须修正
-  MAJOR = 'major',        // 重要违规，建议修正
-  MINOR = 'minor',        // 轻微违规，可选修正
+  CRITICAL = 'critical', // 严重违规，必须修正
+  MAJOR = 'major', // 重要违规，建议修正
+  MINOR = 'minor', // 轻微违规，可选修正
 }
 
 /**
@@ -152,9 +152,9 @@ export interface ComplianceReport {
  * 纠正策略
  */
 export enum CorrectionStrategy {
-  RULE_BASED = 'rule_based',     // 基于规则的纠正
-  LLM_BASED = 'llm_based',       // 基于LLM的纠正
-  HYBRID = 'hybrid',             // 混合策略
+  RULE_BASED = 'rule_based', // 基于规则的纠正
+  LLM_BASED = 'llm_based', // 基于LLM的纠正
+  HYBRID = 'hybrid', // 混合策略
 }
 
 /**

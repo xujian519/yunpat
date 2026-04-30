@@ -58,7 +58,9 @@ describe('AudioTools', () => {
       const { existsSync } = await import('fs');
       vi.mocked(existsSync).mockReturnValueOnce(false);
       const tool = new AudioTranscriptionTool();
-      await expect(tool.execute({ audioPath: '/nonexistent.mp3' }, mockContext)).rejects.toThrow('音频文件不存在');
+      await expect(tool.execute({ audioPath: '/nonexistent.mp3' }, mockContext)).rejects.toThrow(
+        '音频文件不存在'
+      );
     });
   });
 

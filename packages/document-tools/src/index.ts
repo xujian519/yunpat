@@ -32,11 +32,7 @@ export {
 } from './tools/ExcelTools.js';
 
 // OCR工具
-export {
-  ImageOcrTool,
-  BatchImageOcrTool,
-  ImageToMarkdownTool,
-} from './tools/OcrTools.js';
+export { ImageOcrTool, BatchImageOcrTool, ImageToMarkdownTool } from './tools/OcrTools.js';
 
 // 音频工具
 export {

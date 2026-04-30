@@ -104,10 +104,10 @@ describe('目标分解系统集成测试', () => {
       expect(plan.subGoals.length).toBeGreaterThan(0);
 
       // 验证专利特定的子目标
-      const titles = plan.subGoals.map(g => g.title);
-      expect(titles.some(t => t.includes('技术方案'))).toBe(true);
-      expect(titles.some(t => t.includes('权利要求'))).toBe(true);
-      expect(titles.some(t => t.includes('说明书'))).toBe(true);
+      const titles = plan.subGoals.map((g) => g.title);
+      expect(titles.some((t) => t.includes('技术方案'))).toBe(true);
+      expect(titles.some((t) => t.includes('权利要求'))).toBe(true);
+      expect(titles.some((t) => t.includes('说明书'))).toBe(true);
 
       console.log(`\n📝 专利撰写子目标:`);
       plan.subGoals.forEach((goal, i) => {
@@ -123,13 +123,11 @@ describe('目标分解系统集成测试', () => {
       const plan = await patentDecomposer.decompose('撰写专利');
 
       // 权利要求通常依赖于技术方案理解
-      const hasTechToClaimsDep = plan.dependencies.edges.some(
-        e => {
-          const fromGoal = plan.subGoals.find(g => g.id === e.from);
-          const toGoal = plan.subGoals.find(g => g.id === e.to);
-          return fromGoal?.title.includes('技术方案') && toGoal?.title.includes('权利要求');
-        }
-      );
+      const hasTechToClaimsDep = plan.dependencies.edges.some((e) => {
+        const fromGoal = plan.subGoals.find((g) => g.id === e.from);
+        const toGoal = plan.subGoals.find((g) => g.id === e.to);
+        return fromGoal?.title.includes('技术方案') && toGoal?.title.includes('权利要求');
+      });
 
       expect(hasTechToClaimsDep || plan.dependencies.edges.length > 0).toBe(true);
     });
@@ -146,9 +144,9 @@ describe('目标分解系统集成测试', () => {
       expect(plan.subGoals.length).toBeGreaterThan(0);
 
       // 验证研究特定的子目标
-      const titles = plan.subGoals.map(g => g.title);
-      expect(titles.some(t => t.includes('文献') || t.includes('资料'))).toBe(true);
-      expect(titles.some(t => t.includes('数据') || t.includes('分析'))).toBe(true);
+      const titles = plan.subGoals.map((g) => g.title);
+      expect(titles.some((t) => t.includes('文献') || t.includes('资料'))).toBe(true);
+      expect(titles.some((t) => t.includes('数据') || t.includes('分析'))).toBe(true);
 
       console.log(`\n🔬 研究任务子目标:`);
       plan.subGoals.forEach((goal, i) => {
@@ -243,7 +241,7 @@ describe('目标分解系统集成测试', () => {
       const plan = await decomposer.decompose('测试任务');
 
       // 完成第一个子目标
-      plan.subGoals[0].tasks.forEach(task => {
+      plan.subGoals[0].tasks.forEach((task) => {
         task.status = TaskStatus.COMPLETED;
       });
 
@@ -265,8 +263,8 @@ describe('目标分解系统集成测试', () => {
       expect(scheduler.isPlanComplete(plan)).toBe(false);
 
       // 标记所有任务为完成
-      plan.subGoals.forEach(goal => {
-        goal.tasks.forEach(task => {
+      plan.subGoals.forEach((goal) => {
+        goal.tasks.forEach((task) => {
           task.status = TaskStatus.COMPLETED;
         });
       });
@@ -283,12 +281,12 @@ describe('目标分解系统集成测试', () => {
       expect(nextTasks.length).toBeGreaterThan(0);
 
       console.log(`\n✅ 初始可执行任务:`);
-      nextTasks.forEach(task => {
+      nextTasks.forEach((task) => {
         console.log(`   - ${task.title}`);
       });
 
       // 完成第一个子目标
-      plan.subGoals[0].tasks.forEach(task => {
+      plan.subGoals[0].tasks.forEach((task) => {
         task.status = TaskStatus.COMPLETED;
       });
       completedTasks.add(plan.subGoals[0].id);
@@ -299,7 +297,7 @@ describe('目标分解系统集成测试', () => {
 
       console.log(`\n✅ 完成第一个子目标后的可执行任务:`);
       if (nextTasks.length > 0) {
-        nextTasks.forEach(task => {
+        nextTasks.forEach((task) => {
           console.log(`   - ${task.title}`);
         });
       } else {

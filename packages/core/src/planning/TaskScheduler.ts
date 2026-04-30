@@ -8,7 +8,6 @@ import type {
   DependencyGraph,
   HierarchicalPlan,
   ScheduleResult,
-  SubGoal,
   PlanningTask,
   TaskSchedulerConfig,
 } from './types.js';
@@ -55,7 +54,7 @@ export class TaskScheduler {
 
     if (!dependencies.topologicalOrder) {
       // 有循环依赖，使用简单的顺序调度
-      const executionOrder = plan.subGoals.map(g => g.id);
+      const executionOrder = plan.subGoals.map((g) => g.id);
       return {
         executionOrder,
         parallelGroups: [executionOrder],
@@ -83,12 +82,13 @@ export class TaskScheduler {
    */
   private scheduleByPriority(plan: HierarchicalPlan): ScheduleResult {
     // 按优先级排序
-    const priorityOrder = plan.subGoals.map(g => g.id);
+    const priorityOrder = plan.subGoals.map((g) => g.id);
     priorityOrder.sort((a, b) => {
-      const goalA = plan.subGoals.find(g => g.id === a)!;
-      const goalB = plan.subGoals.find(g => g.id === b)!;
+      const goalA = plan.subGoals.find((g) => g.id === a)!;
+      const goalB = plan.subGoals.find((g) => g.id === b)!;
       // 优先级值大的排在前面（critical=4 > high=3 > medium=2 > low=1）
-      const priorityDiff = this.getPriorityValue(goalB.priority) - this.getPriorityValue(goalA.priority);
+      const priorityDiff =
+        this.getPriorityValue(goalB.priority) - this.getPriorityValue(goalA.priority);
       if (priorityDiff !== 0) {
         return priorityDiff;
       }
@@ -116,8 +116,8 @@ export class TaskScheduler {
   private scheduleByCriticalPath(plan: HierarchicalPlan): ScheduleResult {
     const criticalPath = this.findCriticalPath(plan);
     const nonCriticalGoals = plan.subGoals
-      .map(g => g.id)
-      .filter(id => !criticalPath.includes(id));
+      .map((g) => g.id)
+      .filter((id) => !criticalPath.includes(id));
 
     // 关键路径优先，然后是其他任务
     const executionOrder = [...criticalPath, ...nonCriticalGoals];
@@ -162,10 +162,7 @@ export class TaskScheduler {
   /**
    * 将任务分组为可并行的组
    */
-  private groupParallelTasks(
-    executionOrder: string[],
-    dependencies: DependencyGraph
-  ): string[][] {
+  private groupParallelTasks(executionOrder: string[], dependencies: DependencyGraph): string[][] {
     const groups: string[][] = [];
     const processed = new Set<string>();
 
@@ -206,10 +203,7 @@ export class TaskScheduler {
   /**
    * 最大并行分组（考虑资源约束）
    */
-  private maxParallelGrouping(
-    executionOrder: string[],
-    dependencies: DependencyGraph
-  ): string[][] {
+  private maxParallelGrouping(executionOrder: string[], dependencies: DependencyGraph): string[][] {
     const groups: string[][] = [];
     const processed = new Set<string>();
     const usedResources = new Set<string>();
@@ -229,7 +223,7 @@ export class TaskScheduler {
         }
 
         // 检查依赖关系
-        const hasDependency = group.some(id =>
+        const hasDependency = group.some((id) =>
           this.checkDependency(id, candidateId, dependencies)
         );
         if (hasDependency) {
@@ -238,14 +232,11 @@ export class TaskScheduler {
 
         // 检查资源约束
         const candidateResources = this.getRequiredResources(candidateId, dependencies);
-        const hasResourceConflict = this.checkResourceConflict(
-          groupResources,
-          candidateResources
-        );
+        const hasResourceConflict = this.checkResourceConflict(groupResources, candidateResources);
 
         if (!hasResourceConflict) {
           group.push(candidateId);
-          candidateResources.forEach(r => groupResources.add(r));
+          candidateResources.forEach((r) => groupResources.add(r));
           processed.add(candidateId);
 
           // 限制并行数
@@ -257,7 +248,7 @@ export class TaskScheduler {
 
       if (group.length > 0) {
         groups.push(group);
-        groupResources.forEach(r => usedResources.add(r));
+        groupResources.forEach((r) => usedResources.add(r));
       }
     }
 
@@ -273,13 +264,9 @@ export class TaskScheduler {
     dependencies: DependencyGraph
   ): boolean {
     // 检查 A -> B
-    const aToB = dependencies.edges.some(
-      e => e.from === taskIdA && e.to === taskIdB
-    );
+    const aToB = dependencies.edges.some((e) => e.from === taskIdA && e.to === taskIdB);
     // 检查 B -> A
-    const bToA = dependencies.edges.some(
-      e => e.from === taskIdB && e.to === taskIdA
-    );
+    const bToA = dependencies.edges.some((e) => e.from === taskIdB && e.to === taskIdA);
 
     return aToB || bToA;
   }
@@ -294,8 +281,8 @@ export class TaskScheduler {
     }
 
     const resources = new Set<string>();
-    node.tasks.forEach(task => {
-      task.requiredCapabilities.forEach(cap => resources.add(cap));
+    node.tasks.forEach((task) => {
+      task.requiredCapabilities.forEach((cap) => resources.add(cap));
     });
 
     return Array.from(resources);
@@ -304,10 +291,7 @@ export class TaskScheduler {
   /**
    * 检查资源冲突
    */
-  private checkResourceConflict(
-    usedResources: Set<string>,
-    requiredResources: string[]
-  ): boolean {
+  private checkResourceConflict(usedResources: Set<string>, requiredResources: string[]): boolean {
     if (!this.config.considerResourceConstraints) {
       return false;
     }
@@ -330,10 +314,7 @@ export class TaskScheduler {
   /**
    * 调整顺序以尊重依赖关系
    */
-  private respectDependencies(
-    order: string[],
-    dependencies: DependencyGraph
-  ): string[] {
+  private respectDependencies(order: string[], dependencies: DependencyGraph): string[] {
     const adjusted: string[] = [];
     const remaining = new Set(order);
 
@@ -341,10 +322,8 @@ export class TaskScheduler {
       // 找到所有依赖已满足的任务
       let added = false;
       for (const taskId of remaining) {
-        const incomingEdges = dependencies.edges.filter(e => e.to === taskId);
-        const dependenciesSatisfied = incomingEdges.every(e =>
-          adjusted.includes(e.from)
-        );
+        const incomingEdges = dependencies.edges.filter((e) => e.to === taskId);
+        const dependenciesSatisfied = incomingEdges.every((e) => adjusted.includes(e.from));
 
         if (dependenciesSatisfied) {
           adjusted.push(taskId);
@@ -374,7 +353,7 @@ export class TaskScheduler {
     const { dependencies } = plan;
 
     if (dependencies.hasCycles || !dependencies.topologicalOrder) {
-      return plan.subGoals.map(g => g.id);
+      return plan.subGoals.map((g) => g.id);
     }
 
     const earliestStart = new Map<string, number>();
@@ -389,7 +368,7 @@ export class TaskScheduler {
     // 计算最早开始时间
     const order = dependencies.topologicalOrder;
     for (const nodeId of order) {
-      const incomingEdges = dependencies.edges.filter(e => e.to === nodeId);
+      const incomingEdges = dependencies.edges.filter((e) => e.to === nodeId);
       for (const edge of incomingEdges) {
         const fromDuration = dependencies.nodes.get(edge.from)?.estimatedDuration || 0;
         const newStart = (earliestStart.get(edge.from) || 0) + fromDuration;
@@ -400,7 +379,7 @@ export class TaskScheduler {
     // 计算最晚开始时间（从后往前）
     for (let i = order.length - 1; i >= 0; i--) {
       const nodeId = order[i];
-      const outgoingEdges = dependencies.edges.filter(e => e.from === nodeId);
+      const outgoingEdges = dependencies.edges.filter((e) => e.from === nodeId);
       const currentNode = dependencies.nodes.get(nodeId);
 
       if (outgoingEdges.length === 0) {
@@ -442,8 +421,8 @@ export class TaskScheduler {
     for (const group of parallelGroups) {
       // 每组的时间 = 组中最长的任务时间
       const maxGroupTime = Math.max(
-        ...group.map(id => {
-          const goal = plan.subGoals.find(g => g.id === id);
+        ...group.map((id) => {
+          const goal = plan.subGoals.find((g) => g.id === id);
           return goal?.estimatedDuration || 0;
         })
       );
@@ -461,10 +440,8 @@ export class TaskScheduler {
       return 0;
     }
 
-    const avgTasksPerGroup = parallelGroups.reduce(
-      (sum, group) => sum + group.length,
-      0
-    ) / parallelGroups.length;
+    const avgTasksPerGroup =
+      parallelGroups.reduce((sum, group) => sum + group.length, 0) / parallelGroups.length;
 
     const utilization = avgTasksPerGroup / this.config.maxParallelTasks;
     return Math.min(1.0, Math.max(0.0, utilization));
@@ -486,10 +463,7 @@ export class TaskScheduler {
   /**
    * 获取下一个可执行的任务
    */
-  getNextExecutableTasks(
-    plan: HierarchicalPlan,
-    completedTasks: Set<string>
-  ): PlanningTask[] {
+  getNextExecutableTasks(plan: HierarchicalPlan, completedTasks: Set<string>): PlanningTask[] {
     const nextTasks: PlanningTask[] = [];
 
     for (const subGoal of plan.subGoals) {
@@ -499,14 +473,12 @@ export class TaskScheduler {
       }
 
       // 检查依赖是否满足
-      const dependencies = plan.dependencies.edges.filter(e => e.to === subGoal.id);
-      const dependenciesSatisfied = dependencies.every(e =>
-        completedTasks.has(e.from)
-      );
+      const dependencies = plan.dependencies.edges.filter((e) => e.to === subGoal.id);
+      const dependenciesSatisfied = dependencies.every((e) => completedTasks.has(e.from));
 
       if (dependenciesSatisfied) {
         // 找到该子目标中待执行的任务
-        const pendingTasks = subGoal.tasks.filter(t => t.status === TaskStatus.PENDING);
+        const pendingTasks = subGoal.tasks.filter((t) => t.status === TaskStatus.PENDING);
         nextTasks.push(...pendingTasks);
       }
     }
@@ -518,8 +490,8 @@ export class TaskScheduler {
    * 检查是否所有任务都已完成
    */
   isPlanComplete(plan: HierarchicalPlan): boolean {
-    return plan.subGoals.every(goal =>
-      goal.tasks.every(task => task.status === TaskStatus.COMPLETED)
+    return plan.subGoals.every((goal) =>
+      goal.tasks.every((task) => task.status === TaskStatus.COMPLETED)
     );
   }
 
@@ -538,7 +510,7 @@ export class TaskScheduler {
 
     for (const goal of plan.subGoals) {
       const goalTotal = goal.tasks.length;
-      const goalCompleted = goal.tasks.filter(t => t.status === TaskStatus.COMPLETED).length;
+      const goalCompleted = goal.tasks.filter((t) => t.status === TaskStatus.COMPLETED).length;
       const goalProgress = goalTotal > 0 ? goalCompleted / goalTotal : 1;
 
       totalTasks += goalTotal;

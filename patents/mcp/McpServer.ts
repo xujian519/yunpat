@@ -45,7 +45,7 @@ export class McpServer extends EventEmitter {
     this.tools = new Map();
 
     // 注册工具
-    config.tools.forEach(tool => {
+    config.tools.forEach((tool) => {
       this.tools.set(tool.name, this.createToolHandler(tool));
     });
   }
@@ -83,7 +83,7 @@ export class McpServer extends EventEmitter {
     if (!handler) {
       return {
         content: null,
-        isError: true
+        isError: true,
       };
     }
 
@@ -92,16 +92,16 @@ export class McpServer extends EventEmitter {
       this.emit('toolCalled', { name, params, result });
 
       return {
-        content: result
+        content: result,
       };
     } catch (error) {
       this.emit('toolError', { name, params, error });
 
       return {
         content: {
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         },
-        isError: true
+        isError: true,
       };
     }
   }
@@ -142,18 +142,20 @@ export class McpServer extends EventEmitter {
       const seed = keywordStr + String(i);
       patents.push({
         patentNumber: `CN${202310000000 + i}A`,
-        title: keywords.length > 0
-          ? `一种基于${seed.slice(0, 6)}的${keywords[i % keywords.length] || '技术'}方法`
-          : `一种专利技术方案${i + 1}`,
-        abstract: keywords.length > 0
-          ? `本发明涉及${keywords.slice(0, 3).join('、')}领域，公开了一种${seed.slice(0, 8)}...`
-          : `本发明公开了一种技术方案${i + 1}...`
+        title:
+          keywords.length > 0
+            ? `一种基于${seed.slice(0, 6)}的${keywords[i % keywords.length] || '技术'}方法`
+            : `一种专利技术方案${i + 1}`,
+        abstract:
+          keywords.length > 0
+            ? `本发明涉及${keywords.slice(0, 3).join('、')}领域，公开了一种${seed.slice(0, 8)}...`
+            : `本发明公开了一种技术方案${i + 1}...`,
       });
     }
 
     return {
       total: 100,
-      patents
+      patents,
     };
   }
 
@@ -167,22 +169,22 @@ export class McpServer extends EventEmitter {
     const features: Array<{ name?: string; description?: string; featureType?: string }> =
       params.technicalFeatures || [];
 
-    const featureList = features.map(f => f.name || f.description || '技术特征').join('、');
+    const featureList = features.map((f) => f.name || f.description || '技术特征').join('、');
     const independentContent = `一种${inventionType}，其特征在于，包括：${featureList || '核心组件'}。`;
 
     const claims = [
       {
         claimType: 'independent',
         number: 1,
-        content: independentContent
-      }
+        content: independentContent,
+      },
     ];
 
     features.forEach((f, idx) => {
       claims.push({
         claimType: 'dependent',
         number: idx + 2,
-        content: `根据权利要求${idx + 1}所述的${inventionType}，其特征在于，${f.description || f.name || '进一步限定'}。`
+        content: `根据权利要求${idx + 1}所述的${inventionType}，其特征在于，${f.description || f.name || '进一步限定'}。`,
       });
     });
 
@@ -197,7 +199,9 @@ export class McpServer extends EventEmitter {
 
     const claims: any[] = params.claims || [];
     const claimCount = claims.length;
-    const independentCount = claims.filter((c: any) => c.claimType === 'independent' || c.number === 1).length;
+    const independentCount = claims.filter(
+      (c: any) => c.claimType === 'independent' || c.number === 1
+    ).length;
 
     const baseScore = 60;
     const countBonus = Math.min(claimCount * 3, 15);
@@ -215,7 +219,7 @@ export class McpServer extends EventEmitter {
       supportScore,
       breadthScore,
       claimCount,
-      independentCount
+      independentCount,
     };
   }
 
@@ -231,11 +235,12 @@ export class McpServer extends EventEmitter {
     const appNumberMatch = text.match(/CN\d{4}\d[\d\.]+/);
     const applicationNumber = appNumberMatch ? appNumberMatch[0] : '未知';
 
-    const actionType = text.includes('第一次审查意见') || text.includes('一通')
-      ? 'FirstAction'
-      : text.includes('驳回决定')
-        ? 'Rejection'
-        : 'Unknown';
+    const actionType =
+      text.includes('第一次审查意见') || text.includes('一通')
+        ? 'FirstAction'
+        : text.includes('驳回决定')
+          ? 'Rejection'
+          : 'Unknown';
 
     const rejections = [];
     if (text.includes('创造性') || text.includes('显而易见')) {
@@ -255,7 +260,7 @@ export class McpServer extends EventEmitter {
       applicationNumber,
       actionType,
       textLength,
-      rejections
+      rejections,
     };
   }
 
@@ -285,18 +290,18 @@ export function createPatentMcpServer(): McpServer {
           properties: {
             keywords: {
               type: 'array',
-              items: { type: 'string' }
+              items: { type: 'string' },
             },
             applicant: {
-              type: 'string'
+              type: 'string',
             },
             limit: {
               type: 'number',
-              default: 10
-            }
+              default: 10,
+            },
           },
-          required: ['keywords']
-        }
+          required: ['keywords'],
+        },
       },
       {
         name: 'generate_claims',
@@ -311,16 +316,16 @@ export function createPatentMcpServer(): McpServer {
                 properties: {
                   name: { type: 'string' },
                   description: { type: 'string' },
-                  featureType: { type: 'string' }
-                }
-              }
+                  featureType: { type: 'string' },
+                },
+              },
             },
             inventionType: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
-          required: ['technicalFeatures', 'inventionType']
-        }
+          required: ['technicalFeatures', 'inventionType'],
+        },
       },
       {
         name: 'assess_quality',
@@ -330,11 +335,11 @@ export function createPatentMcpServer(): McpServer {
           properties: {
             claims: {
               type: 'array',
-              items: { type: 'object' }
-            }
+              items: { type: 'object' },
+            },
           },
-          required: ['claims']
-        }
+          required: ['claims'],
+        },
       },
       {
         name: 'parse_office_action',
@@ -343,13 +348,13 @@ export function createPatentMcpServer(): McpServer {
           type: 'object',
           properties: {
             text: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
-          required: ['text']
-        }
-      }
-    ]
+          required: ['text'],
+        },
+      },
+    ],
   };
 
   const server = new McpServer(config);
@@ -388,7 +393,7 @@ export async function exampleMcpUsage() {
   // 调用工具
   const searchResult = await server.callTool('search_patents', {
     keywords: ['深度学习', '图像识别'],
-    limit: 5
+    limit: 5,
   });
 
   console.log('搜索结果:', searchResult);

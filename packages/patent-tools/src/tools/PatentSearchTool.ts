@@ -79,7 +79,11 @@ export class PatentSearchTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       query: z.string().describe('检索查询内容（关键词/申请人/IPC/专利号）'),
-      mode: z.nativeEnum(PatentSearchMode).optional().default(PatentSearchMode.KEYWORD).describe('检索模式'),
+      mode: z
+        .nativeEnum(PatentSearchMode)
+        .optional()
+        .default(PatentSearchMode.KEYWORD)
+        .describe('检索模式'),
       page: z.number().optional().default(1).describe('页码'),
       limit: z.number().optional().default(10).describe('每页结果数量'),
     }),
@@ -164,9 +168,7 @@ export class PatentSearchTool extends EnhancedBaseTool<
       };
     } catch (error) {
       throw new Error(
-        `Patent search failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Patent search failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -216,9 +218,7 @@ export class PatentSearchTool extends EnhancedBaseTool<
     );
 
     // 过滤结果，确保申请人匹配
-    const filtered = result.results.filter(
-      (r) => r.assignee && r.assignee.includes(applicant)
-    );
+    const filtered = result.results.filter((r) => r.assignee && r.assignee.includes(applicant));
 
     return filtered.slice(0, limit);
   }
@@ -321,9 +321,7 @@ export class SimilarPatentSearchTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       technology: z.string().describe('技术领域或技术方案描述'),
-      features: z
-        .array(z.string())
-        .describe('技术特征列表，用于提高检索精度'),
+      features: z.array(z.string()).describe('技术特征列表，用于提高检索精度'),
       limit: z.number().optional().default(10).describe('返回结果数量'),
     }),
     outputSchema: z.object({

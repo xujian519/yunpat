@@ -15,7 +15,6 @@ import {
   SourceAttributionIssue,
   ImprovementSuggestion,
   SuggestionAction,
-  Claim,
   LogicalInconsistencyType,
   SourceAttributionIssueType,
 } from './hallucination-types.js';
@@ -66,10 +65,7 @@ export class HallucinationDetector {
    * @param context 执行上下文（可选）
    * @returns 幻觉检测报告
    */
-  async detect(
-    content: string,
-    context?: ExecutionContext
-  ): Promise<HallucinationReport> {
+  async detect(content: string, _context?: ExecutionContext): Promise<HallucinationReport> {
     const startTime = Date.now();
 
     // 1. 事实验证
@@ -264,9 +260,10 @@ export class HallucinationDetector {
           priority: 'high',
           category: 'factual',
           description: `声明 "${result.claim.content}" 未通过事实验证`,
-          action: result.sources.length > 0
-            ? SuggestionAction.ADD_CITATION
-            : SuggestionAction.CORRECT_CONTENT,
+          action:
+            result.sources.length > 0
+              ? SuggestionAction.ADD_CITATION
+              : SuggestionAction.CORRECT_CONTENT,
           expectedImpact: `提升内容准确性，增加可信度`,
         });
       }
@@ -347,14 +344,24 @@ export class HallucinationDetector {
 
     // 总体评分和通过标记
     const scorePercent = report.overallScore * 100;
-    const scoreLevel = report.overallScore < 0.3 ? '优秀' :
-                      report.overallScore < 0.5 ? '良好' :
-                      report.overallScore < 0.7 ? '一般' : '较差';
+    const scoreLevel =
+      report.overallScore < 0.3
+        ? '优秀'
+        : report.overallScore < 0.5
+          ? '良好'
+          : report.overallScore < 0.7
+            ? '一般'
+            : '较差';
 
     // 添加通过/失败标记
-    const statusIcon = report.overallScore < 0.3 ? '✅' :
-                      report.overallScore < 0.5 ? '✅' :
-                      report.overallScore < 0.7 ? '⚠️' : '❌';
+    const statusIcon =
+      report.overallScore < 0.3
+        ? '✅'
+        : report.overallScore < 0.5
+          ? '✅'
+          : report.overallScore < 0.7
+            ? '⚠️'
+            : '❌';
 
     output += `状态: ${statusIcon}\n`;
     output += `📊 总体评分: ${scorePercent.toFixed(1)}% (${scoreLevel})\n`;
@@ -377,10 +384,12 @@ export class HallucinationDetector {
       // 显示未验证的声明
       if (factStats.unverified > 0) {
         output += '❌ 未验证的声明:\n';
-        for (const result of report.factCheckResults.filter(r => r.isVerifiable && !r.isVerified)) {
+        for (const result of report.factCheckResults.filter(
+          (r) => r.isVerifiable && !r.isVerified
+        )) {
           output += `  - ${result.claim.content}\n`;
           if (result.sources.length > 0) {
-            output += `    建议来源: ${result.sources.map(s => s.title).join(', ')}\n`;
+            output += `    建议来源: ${result.sources.map((s) => s.title).join(', ')}\n`;
           }
         }
         output += '\n';
@@ -391,18 +400,18 @@ export class HallucinationDetector {
     if (report.logicalInconsistencies.length > 0) {
       output += '🔄 逻辑一致性检查\n';
       output += '-'.repeat(70) + '\n';
-      output += this.logicalConsistencyChecker.generateConsistencyReport(
-        report.logicalInconsistencies
-      ) + '\n';
+      output +=
+        this.logicalConsistencyChecker.generateConsistencyReport(report.logicalInconsistencies) +
+        '\n';
     }
 
     // 源归属结果
     if (report.sourceAttributionIssues.length > 0) {
       output += '📚 源归属验证\n';
       output += '-'.repeat(70) + '\n';
-      output += this.sourceAttributionValidator.generateAttributionReport(
-        report.sourceAttributionIssues
-      ) + '\n';
+      output +=
+        this.sourceAttributionValidator.generateAttributionReport(report.sourceAttributionIssues) +
+        '\n';
     }
 
     // 改进建议
@@ -410,13 +419,16 @@ export class HallucinationDetector {
       output += '💡 改进建议\n';
       output += '-'.repeat(70) + '\n';
 
-      const byPriority = report.suggestions.reduce((acc, sugg) => {
-        if (!acc[sugg.priority]) {
-          acc[sugg.priority] = [];
-        }
-        acc[sugg.priority].push(sugg);
-        return acc;
-      }, {} as Record<string, ImprovementSuggestion[]>);
+      const byPriority = report.suggestions.reduce(
+        (acc, sugg) => {
+          if (!acc[sugg.priority]) {
+            acc[sugg.priority] = [];
+          }
+          acc[sugg.priority].push(sugg);
+          return acc;
+        },
+        {} as Record<string, ImprovementSuggestion[]>
+      );
 
       if (byPriority.high) {
         output += '🔴 高优先级:\n';
@@ -533,9 +545,11 @@ export class HallucinationDetector {
     const totalScore = reports.reduce((sum, r) => sum + r.overallScore, 0);
     const avgScore = totalScore / reports.length;
 
-    const highRiskCount = reports.filter(r => r.overallScore >= 0.7).length;
-    const mediumRiskCount = reports.filter(r => r.overallScore >= 0.5 && r.overallScore < 0.7).length;
-    const lowRiskCount = reports.filter(r => r.overallScore < 0.5).length;
+    const highRiskCount = reports.filter((r) => r.overallScore >= 0.7).length;
+    const mediumRiskCount = reports.filter(
+      (r) => r.overallScore >= 0.5 && r.overallScore < 0.7
+    ).length;
+    const lowRiskCount = reports.filter((r) => r.overallScore < 0.5).length;
 
     const totalDuration = reports.reduce((sum, r) => sum + r.duration, 0);
     const avgDuration = totalDuration / reports.length;

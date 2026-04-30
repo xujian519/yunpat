@@ -29,7 +29,7 @@ function createSimpleTool(name: string, result: string = 'ok'): EnhancedTool {
       inputSchema: z.object({ value: z.string() }),
       isConcurrencySafe: true,
     },
-    async (input) => `${result}:${input.value}`,
+    async (input) => `${result}:${input.value}`
   );
 }
 
@@ -56,14 +56,22 @@ describe('中间件管道集成', () => {
 
       registry.addMiddleware({
         name: 'mw-1',
-        before: async () => { order.push('mw1-before'); },
-        after: async () => { order.push('mw1-after'); },
+        before: async () => {
+          order.push('mw1-before');
+        },
+        after: async () => {
+          order.push('mw1-after');
+        },
       });
 
       registry.addMiddleware({
         name: 'mw-2',
-        before: async () => { order.push('mw2-before'); },
-        after: async () => { order.push('mw2-after'); },
+        before: async () => {
+          order.push('mw2-before');
+        },
+        after: async () => {
+          order.push('mw2-after');
+        },
       });
 
       registry.register(createSimpleTool('ordered'));
@@ -88,14 +96,16 @@ describe('中间件管道集成', () => {
 
       const failingTool = new ToolWrapperClass(
         { name: 'fail', description: 'Fails', inputSchema: z.object({ v: z.string() }) },
-        async () => { throw new Error('intentional error'); },
+        async () => {
+          throw new Error('intentional error');
+        }
       );
 
       registry.register(failingTool);
 
-      await expect(
-        registry.call('fail', { v: 'x' }, createToolContext()),
-      ).rejects.toThrow('intentional error');
+      await expect(registry.call('fail', { v: 'x' }, createToolContext())).rejects.toThrow(
+        'intentional error'
+      );
 
       expect(errorCaught).toBe(true);
     });
@@ -147,12 +157,16 @@ describe('中间件管道集成', () => {
           description: 'Tool with hooks',
           inputSchema: z.object({ value: z.string() }),
         },
-        before: async () => { hookLog.push('tool-before'); },
+        before: async () => {
+          hookLog.push('tool-before');
+        },
         execute: async (input) => {
           hookLog.push('tool-execute');
           return `result: ${input.value}`;
         },
-        after: async () => { hookLog.push('tool-after'); },
+        after: async () => {
+          hookLog.push('tool-after');
+        },
       };
 
       registry.register(toolWithHooks);
@@ -167,13 +181,29 @@ describe('中间件管道集成', () => {
       const executionOrder: string[] = [];
 
       const tool1 = new ToolWrapperClass(
-        { name: 'concurrent-1', description: 'Concurrent tool 1', inputSchema: z.object({ v: z.string() }), isConcurrencySafe: true },
-        async (input) => { executionOrder.push('t1'); return `r1:${input.v}`; },
+        {
+          name: 'concurrent-1',
+          description: 'Concurrent tool 1',
+          inputSchema: z.object({ v: z.string() }),
+          isConcurrencySafe: true,
+        },
+        async (input) => {
+          executionOrder.push('t1');
+          return `r1:${input.v}`;
+        }
       );
 
       const tool2 = new ToolWrapperClass(
-        { name: 'concurrent-2', description: 'Concurrent tool 2', inputSchema: z.object({ v: z.string() }), isConcurrencySafe: true },
-        async (input) => { executionOrder.push('t2'); return `r2:${input.v}`; },
+        {
+          name: 'concurrent-2',
+          description: 'Concurrent tool 2',
+          inputSchema: z.object({ v: z.string() }),
+          isConcurrencySafe: true,
+        },
+        async (input) => {
+          executionOrder.push('t2');
+          return `r2:${input.v}`;
+        }
       );
 
       registry.register(tool1);
@@ -184,7 +214,7 @@ describe('中间件管道集成', () => {
           { name: 'concurrent-1', input: { v: 'a' } },
           { name: 'concurrent-2', input: { v: 'b' } },
         ],
-        createToolContext(),
+        createToolContext()
       );
 
       expect(results).toHaveLength(2);

@@ -45,7 +45,7 @@ export interface TelemetryEvent {
   stage?: string;
   duration?: number;
   status: EventStatus;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   error?: Error;
 }
 

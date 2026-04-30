@@ -76,7 +76,9 @@ function verifyTool(ToolClass: any, name: string, category: string): ToolVerific
       verification.errors.push('Missing isConcurrencySafe field');
     }
   } catch (error) {
-    verification.errors.push(`Instantiation error: ${error instanceof Error ? error.message : String(error)}`);
+    verification.errors.push(
+      `Instantiation error: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 
   return verification;
@@ -238,7 +240,8 @@ async function verifyDocumentTools() {
     }
 
     // 通用工具
-    const universalTools = await import('../packages/document-tools/src/tools/UniversalDocumentTool.js');
+    const universalTools =
+      await import('../packages/document-tools/src/tools/UniversalDocumentTool.js');
     const universalToolList = [
       { Class: universalTools.UniversalDocumentParserTool, name: 'UniversalDocumentParserTool' },
       { Class: universalTools.BatchDocumentParserTool, name: 'BatchDocumentParserTool' },

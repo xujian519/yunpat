@@ -4,10 +4,6 @@
  * 用于检测和评估LLM生成内容中的幻觉、事实错误和逻辑不一致
  */
 
-import { LLMAdapter } from '../lifecycle/Lifecycle.js';
-import { KnowledgeBase } from '../knowledge/KnowledgeBase.js';
-import { ExecutionContext } from '../lifecycle/Lifecycle.js';
-
 /**
  * 幻觉检测配置
  */
@@ -292,7 +288,7 @@ export interface FactCheckerConfig {
   };
 
   /** 外部API配置 */
-  externalAPIConfig?: Record<string, any>;
+  externalAPIConfig?: Record<string, unknown>;
 }
 
 /**

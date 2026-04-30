@@ -77,7 +77,7 @@ export interface ToolConfig {
   name: string;
 
   /** 工具配置 */
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 /**
@@ -134,7 +134,7 @@ export interface YunPatConfig {
   logLevel?: 'debug' | 'info' | 'warn' | 'error';
 
   /** 自定义配置 */
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

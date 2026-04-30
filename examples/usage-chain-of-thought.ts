@@ -99,7 +99,7 @@ C(6,3) = 6! / (3! × 3!) = (6×5×4) / (3×2×1) = 20
 基于已知条件进行逻辑推理...
 
 结论：基于以上分析，得出答案。`,
-          },
+        },
         usage: {
           totalTokens: 200,
         },
@@ -221,11 +221,7 @@ async function example4_BatchCoT() {
     temperature: 0.3,
   });
 
-  const problems = [
-    '什么是专利的新颖性？',
-    '什么是专利的创造性？',
-    '什么是专利的实用性？',
-  ];
+  const problems = ['什么是专利的新颖性？', '什么是专利的创造性？', '什么是专利的实用性？'];
 
   console.log(`\n🔄 批量处理 ${problems.length} 个问题...\n`);
 
@@ -240,8 +236,7 @@ async function example4_BatchCoT() {
     console.log(`  结论: ${result.conclusion.substring(0, 60)}...`);
   });
 
-  const avgConfidence =
-    results.reduce((sum, r) => sum + r.confidence, 0) / results.length;
+  const avgConfidence = results.reduce((sum, r) => sum + r.confidence, 0) / results.length;
   const totalTokens = results.reduce((sum, r) => sum + r.tokensUsed, 0);
 
   console.log(`\n📊 批量处理汇总:`);
@@ -357,7 +352,6 @@ async function runAllExamples() {
     console.log('  1. 集成到 PatentWriterAgent');
     console.log('  2. 结合 Reflection 进行自我检查');
     console.log('  3. 与 ReAct 循环结合使用');
-
   } catch (error) {
     console.error('\n❌ 示例运行失败:', (error as Error).message);
     console.error((error as Error).stack);

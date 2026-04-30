@@ -41,7 +41,7 @@ export interface FewShotExample {
 /**
  * 模板变量
  */
-export type TemplateVariables = Record<string, any>;
+export type TemplateVariables = Record<string, unknown>;
 
 /**
  * 模板元数据
@@ -174,7 +174,7 @@ export class PromptTemplate {
 
     try {
       const lines = frontmatter.split('\n');
-      const metadata: any = {};
+      const metadata: Record<string, any> = {};
 
       for (const line of lines) {
         const colonIndex = line.indexOf(':');
@@ -184,12 +184,12 @@ export class PromptTemplate {
 
           // 处理数组类型
           if (key.startsWith('required') || key.startsWith('optional') || key === 'tags') {
-            metadata[key] = value
+            (metadata as any)[key] = value
               .slice(1, -1)
               .split(',')
               .map((v: string) => v.trim());
           } else {
-            metadata[key] = value;
+            (metadata as any)[key] = value;
           }
         }
       }
@@ -225,7 +225,7 @@ export class PromptTemplate {
     // 3. 添加 Few-shot 示例（如果提供）
     if (options.fewShots && options.fewShots.length > 0) {
       const selectedExamples = this.selectFewShots(
-        variables.task || '',
+        (variables.task as string) || '',
         options.fewShots,
         options.fewShotCount || 3
       );

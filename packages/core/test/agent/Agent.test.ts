@@ -9,11 +9,7 @@ import { Agent } from '../../src/agent/Agent.js';
 import { EventBus } from '../../src/eventbus/EventBus.js';
 import { ShortTermMemory } from '../../src/memory/MemoryStore.js';
 import { ToolRegistry, ToolWrapper } from '../../src/tools/ToolRegistry.js';
-import {
-  createMockLLM,
-  createMockToolRegistry,
-  createTestAgent,
-} from '../helpers/mocks.js';
+import { createMockLLM, createMockToolRegistry, createTestAgent } from '../helpers/mocks.js';
 import type { ExecutionContext, AgentEvent } from '../../src/lifecycle/Lifecycle.js';
 
 /**
@@ -24,10 +20,7 @@ class FlexibleTestAgent extends Agent<string, string> {
   private shouldContinueReflect = false;
   private reflectCount = 0;
 
-  constructor(
-    eventBus: EventBus,
-    options?: { shouldContinueReflect?: boolean },
-  ) {
+  constructor(eventBus: EventBus, options?: { shouldContinueReflect?: boolean }) {
     super({
       name: 'flexible-agent',
       description: 'Flexible test agent',
@@ -98,8 +91,12 @@ describe('Agent', () => {
 
     it('无 before/init/reflect/after 时应正常执行', async () => {
       class MinimalAgent extends Agent<string, string> {
-        protected async plan(input: string) { return input; }
-        protected async act(plan: unknown) { return `done: ${String(plan)}`; }
+        protected async plan(input: string) {
+          return input;
+        }
+        protected async act(plan: unknown) {
+          return `done: ${String(plan)}`;
+        }
         constructor() {
           super({
             name: 'minimal',
@@ -156,8 +153,13 @@ describe('Agent', () => {
             maxIterations: 3,
           });
         }
-        protected async plan() { return 'plan'; }
-        protected async act() { this.iterations++; return 'result'; }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          this.iterations++;
+          return 'result';
+        }
         protected async reflect(result: unknown) {
           return { shouldContinue: true, result };
         }
@@ -182,8 +184,13 @@ describe('Agent', () => {
             llm: createMockLLM(),
           });
         }
-        protected async plan() { return 'plan'; }
-        protected async act() { this.iterations++; return 'result'; }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          this.iterations++;
+          return 'result';
+        }
         protected async reflect(result: unknown) {
           return { shouldContinue: true, result };
         }
@@ -242,8 +249,12 @@ describe('Agent', () => {
             llm: createMockLLM(),
           });
         }
-        protected async plan() { throw new Error('plan failed'); }
-        protected async act() { return 'never'; }
+        protected async plan() {
+          throw new Error('plan failed');
+        }
+        protected async act() {
+          return 'never';
+        }
       }
 
       const agent = new ErrorAgent();
@@ -286,8 +297,12 @@ describe('Agent', () => {
           });
           this.on('test:event', async (e) => received.push(e));
         }
-        protected async plan() { return 'plan'; }
-        protected async act() { return 'done'; }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
       }
 
       const agent = new ListenerAgent();
@@ -324,7 +339,9 @@ describe('Agent', () => {
             llm: createMockLLM(),
           });
         }
-        protected async plan() { return 'plan'; }
+        protected async plan() {
+          return 'plan';
+        }
         protected async act() {
           this.sendResult = await this.send('target-agent', { type: 'request' });
           return 'done';
@@ -355,8 +372,12 @@ describe('Agent', () => {
             llm: createMockLLM(),
           });
         }
-        protected async plan() { throw new Error('plan error'); }
-        protected async act() { return 'never'; }
+        protected async plan() {
+          throw new Error('plan error');
+        }
+        protected async act() {
+          return 'never';
+        }
       }
 
       const agent = new PlanFailAgent();
@@ -380,8 +401,12 @@ describe('Agent', () => {
             llm: createMockLLM(),
           });
         }
-        protected async plan() { return 'plan'; }
-        protected async act() { throw new Error('act error'); }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          throw new Error('act error');
+        }
       }
 
       const agent = new ActFailAgent();
@@ -404,8 +429,12 @@ describe('Agent', () => {
             maxIterations: 0,
           });
         }
-        protected async plan() { return 'plan'; }
-        protected async act() { return 'result'; }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'result';
+        }
       }
 
       const agent = new NoResultAgent();
@@ -428,8 +457,12 @@ describe('Agent', () => {
             llm: createMockLLM(),
           });
         }
-        protected async plan() { throw 'string error'; }
-        protected async act() { return 'never'; }
+        protected async plan() {
+          throw 'string error';
+        }
+        protected async act() {
+          return 'never';
+        }
       }
 
       const agent = new StringErrorAgent();
@@ -458,7 +491,9 @@ describe('Agent', () => {
           capturedContext = context;
           return 'plan';
         }
-        protected async act() { return 'done'; }
+        protected async act() {
+          return 'done';
+        }
       }
 
       const agent = new ContextAgent();

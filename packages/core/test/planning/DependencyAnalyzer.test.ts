@@ -21,11 +21,7 @@ describe('DependencyAnalyzer', () => {
   /**
    * 辅助函数：创建测试用的子目标
    */
-  function createTestSubGoal(
-    id: string,
-    title: string,
-    dependencies: string[] = []
-  ): SubGoal {
+  function createTestSubGoal(id: string, title: string, dependencies: string[] = []): SubGoal {
     // 为每个子目标生成完全不同的描述，避免关键词重叠
     const descriptions = {
       goal1: '第一步工作内容',
@@ -83,7 +79,7 @@ describe('DependencyAnalyzer', () => {
       // 临时调试输出
       if (graph.edges.length > 0) {
         console.log('Debug - Unexpected edges:');
-        graph.edges.forEach(e => {
+        graph.edges.forEach((e) => {
           console.log(`  ${e.from} -> ${e.to}: ${e.description} (strength: ${e.strength})`);
         });
       }
@@ -108,12 +104,8 @@ describe('DependencyAnalyzer', () => {
       expect(graph.edges.length).toBeGreaterThanOrEqual(2); // 至少包含显式依赖
 
       // 检查显式依赖
-      const goal2DependsOnGoal1 = graph.edges.some(
-        e => e.from === 'goal1' && e.to === 'goal2'
-      );
-      const goal3DependsOnGoal2 = graph.edges.some(
-        e => e.from === 'goal2' && e.to === 'goal3'
-      );
+      const goal2DependsOnGoal1 = graph.edges.some((e) => e.from === 'goal1' && e.to === 'goal2');
+      const goal3DependsOnGoal2 = graph.edges.some((e) => e.from === 'goal2' && e.to === 'goal3');
 
       expect(goal2DependsOnGoal1).toBe(true);
       expect(goal3DependsOnGoal2).toBe(true);
@@ -149,9 +141,7 @@ describe('DependencyAnalyzer', () => {
       const graph = analyzer.analyzeDependencies(subGoals);
 
       // 应该检测到关键词重叠（"深度学习"、"神经网络"、"模型"等）
-      const hasImplicitDependency = graph.edges.some(
-        e => e.strength > 0 && e.strength < 1.0
-      );
+      const hasImplicitDependency = graph.edges.some((e) => e.strength > 0 && e.strength < 1.0);
 
       expect(hasImplicitDependency).toBe(true);
     });
@@ -169,9 +159,7 @@ describe('DependencyAnalyzer', () => {
       const graph = analyzer.analyzeDependencies(subGoals);
 
       // 应该检测到研究 -> 分析的依赖
-      const hasTypeDependency = graph.edges.some(
-        e => e.description?.includes('任务类型依赖')
-      );
+      const hasTypeDependency = graph.edges.some((e) => e.description?.includes('任务类型依赖'));
 
       expect(hasTypeDependency).toBe(true);
     });
@@ -313,17 +301,19 @@ describe('DependencyAnalyzer', () => {
           id: 'goal1',
           title: '深度学习模型训练',
           description: '神经网络深度学习相关工作',
-          tasks: [{
-            id: 'goal1-task1',
-            title: '神经网络任务',
-            description: '深度网络相关工作',
-            type: TaskType.WRITING,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 1000,
-            estimatedDuration: 300,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'goal1-task1',
+              title: '神经网络任务',
+              description: '深度网络相关工作',
+              type: TaskType.WRITING,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 1000,
+              estimatedDuration: 300,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.MEDIUM,
           status: TaskStatus.PENDING,
@@ -334,17 +324,19 @@ describe('DependencyAnalyzer', () => {
           id: 'goal2',
           title: '深度学习算法优化',
           description: '神经网络深度学习优化工作',
-          tasks: [{
-            id: 'goal2-task1',
-            title: '神经网络调优',
-            description: '深度网络优化工作',
-            type: TaskType.WRITING,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 1000,
-            estimatedDuration: 300,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'goal2-task1',
+              title: '神经网络调优',
+              description: '深度网络优化工作',
+              type: TaskType.WRITING,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 1000,
+              estimatedDuration: 300,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.MEDIUM,
           status: TaskStatus.PENDING,
@@ -362,15 +354,15 @@ describe('DependencyAnalyzer', () => {
         console.log('Goal 2:', subGoals[1].title, subGoals[1].description);
       } else {
         console.log('Debug - Found edges:', graph.edges.length);
-        graph.edges.forEach(e => {
-          console.log(`  ${e.from} -> ${e.to}: ${e.description} (strength: ${e.strength.toFixed(2)})`);
+        graph.edges.forEach((e) => {
+          console.log(
+            `  ${e.from} -> ${e.to}: ${e.description} (strength: ${e.strength.toFixed(2)})`
+          );
         });
       }
 
       // 应该有基于关键词的隐式依赖（strength在0到1之间，不是显式的1.0）
-      const implicitDeps = graph.edges.filter(
-        e => e.strength > 0 && e.strength < 1.0
-      );
+      const implicitDeps = graph.edges.filter((e) => e.strength > 0 && e.strength < 1.0);
 
       expect(implicitDeps.length).toBeGreaterThan(0);
     });
@@ -382,17 +374,19 @@ describe('DependencyAnalyzer', () => {
           id: 'goal1',
           title: '深度学习训练',
           description: 'AI模型训练',
-          tasks: [{
-            id: 'goal1-task1',
-            title: '神经网络训练',
-            description: '深度网络相关工作',
-            type: TaskType.WRITING,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 1000,
-            estimatedDuration: 300,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'goal1-task1',
+              title: '神经网络训练',
+              description: '深度网络相关工作',
+              type: TaskType.WRITING,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 1000,
+              estimatedDuration: 300,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.MEDIUM,
           status: TaskStatus.PENDING,
@@ -403,17 +397,19 @@ describe('DependencyAnalyzer', () => {
           id: 'goal2',
           title: '深度学习评估',
           description: 'AI模型评估',
-          tasks: [{
-            id: 'goal2-task1',
-            title: '神经网络验证',
-            description: '深度网络验证工作',
-            type: TaskType.WRITING,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 1000,
-            estimatedDuration: 300,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'goal2-task1',
+              title: '神经网络验证',
+              description: '深度网络验证工作',
+              type: TaskType.WRITING,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 1000,
+              estimatedDuration: 300,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.MEDIUM,
           status: TaskStatus.PENDING,
@@ -440,7 +436,7 @@ describe('DependencyAnalyzer', () => {
       ];
 
       const graph = analyzer.analyzeDependencies(subGoals);
-      const strongDeps = graph.edges.filter(e => e.type === 'strong');
+      const strongDeps = graph.edges.filter((e) => e.type === 'strong');
 
       expect(strongDeps.length).toBeGreaterThan(0);
     });

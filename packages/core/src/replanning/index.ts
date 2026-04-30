@@ -27,11 +27,7 @@ export type {
 } from './types.js';
 
 // 枚举
-export {
-  ReplanningTriggerType,
-  DeviationType,
-  RecoveryStrategyType,
-} from './types.js';
+export { ReplanningTriggerType, DeviationType, RecoveryStrategyType } from './types.js';
 
 // 主类
 export { DynamicReplanner } from './DynamicReplanner.js';

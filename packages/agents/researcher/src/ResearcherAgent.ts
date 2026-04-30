@@ -168,10 +168,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
   /**
    * 执行阶段 - 搜索和分析信息
    */
-  protected async act(
-    plan: ResearchPlan,
-    context: ExecutionContext
-  ): Promise<ResearchResult> {
+  protected async act(plan: ResearchPlan, context: ExecutionContext): Promise<ResearchResult> {
     const startTime = Date.now();
 
     // 1. 执行搜索（模拟）

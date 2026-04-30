@@ -153,10 +153,7 @@ export class ReasoningCache<T = any> {
    * @param threshold 相似度阈值（可选，覆盖配置）
    * @returns 缓存查询结果
    */
-  async query(
-    problem: string,
-    threshold?: number
-  ): Promise<CacheQueryResult<T>> {
+  async query(problem: string, threshold?: number): Promise<CacheQueryResult<T>> {
     const similarityThreshold = threshold ?? this.config.similarityThreshold;
 
     // 清理过期条目
@@ -268,10 +265,7 @@ export class ReasoningCache<T = any> {
   /**
    * 基于嵌入向量查询
    */
-  private async queryByEmbedding(
-    problem: string,
-    threshold: number
-  ): Promise<CacheQueryResult<T>> {
+  private async queryByEmbedding(problem: string, threshold: number): Promise<CacheQueryResult<T>> {
     try {
       // 生成查询的嵌入向量
       const embedResult = await this.embeddingAdapter!.embed([problem]);
@@ -311,7 +305,6 @@ export class ReasoningCache<T = any> {
 
       this.stats.misses++;
       return { found: false };
-
     } catch (error) {
       console.error('Embedding query failed:', error);
       this.stats.misses++;
@@ -322,10 +315,7 @@ export class ReasoningCache<T = any> {
   /**
    * 基于相似度查询（不使用嵌入）
    */
-  private queryBySimilarity(
-    problem: string,
-    threshold: number
-  ): CacheQueryResult<T> {
+  private queryBySimilarity(problem: string, threshold: number): CacheQueryResult<T> {
     let bestMatch: CacheEntry<T> | undefined;
     let bestSimilarity = 0;
     let bestKey: string | undefined;
@@ -385,7 +375,7 @@ export class ReasoningCache<T = any> {
     const words1 = new Set(str1.toLowerCase().split(/\s+/));
     const words2 = new Set(str2.toLowerCase().split(/\s+/));
 
-    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    const intersection = new Set([...words1].filter((x) => words2.has(x)));
     const union = new Set([...words1, ...words2]);
 
     return union.size > 0 ? intersection.size / union.size : 0;
@@ -420,7 +410,7 @@ export class ReasoningCache<T = any> {
     const set1 = new Set(str1.toLowerCase().split(/\s+/));
     const set2 = new Set(str2.toLowerCase().split(/\s+/));
 
-    const intersection = new Set([...set1].filter(x => set2.has(x)));
+    const intersection = new Set([...set1].filter((x) => set2.has(x)));
     const union = new Set([...set1, ...set2]);
 
     return union.size > 0 ? intersection.size / union.size : 0;
@@ -458,8 +448,7 @@ export class ReasoningCache<T = any> {
         if (str1[i - 1] === str2[j - 1]) {
           dp[i][j] = dp[i - 1][j - 1];
         } else {
-          dp[i][j] =
-            Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1;
+          dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1;
         }
       }
     }
@@ -494,7 +483,7 @@ export class ReasoningCache<T = any> {
       }
     }
 
-    keysToDelete.forEach(key => this.cache.delete(key));
+    keysToDelete.forEach((key) => this.cache.delete(key));
   }
 
   /**

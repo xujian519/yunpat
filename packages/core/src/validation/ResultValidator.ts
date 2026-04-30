@@ -367,9 +367,7 @@ export class ResultValidator {
 
       // 添加逻辑不一致问题到警告
       if (hallucinationReport.logicalInconsistencies.length > 0) {
-        warnings.push(
-          `发现 ${hallucinationReport.logicalInconsistencies.length} 个逻辑不一致问题`
-        );
+        warnings.push(`发现 ${hallucinationReport.logicalInconsistencies.length} 个逻辑不一致问题`);
       }
 
       // 添加源归属问题到警告
@@ -741,7 +739,7 @@ export class ResultValidator {
       // 如果没有单个content字段，尝试合并所有字符串字段
       const stringFields = Object.entries(obj)
         .filter(([key, value]) => typeof value === 'string' && !key.startsWith('_'))
-        .map(([key, value]) => value as string);
+        .map(([_key, value]) => value as string);
 
       if (stringFields.length > 0) {
         // 返回合并的内容，用换行符分隔

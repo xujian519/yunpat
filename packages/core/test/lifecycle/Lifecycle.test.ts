@@ -67,7 +67,12 @@ describe('Lifecycle', () => {
 
       const mockEventBus: EventBus = {
         publish: () => {},
-        subscribe: () => ({ id: '1', pattern: '*', handler: async () => {}, unsubscribe: () => {} }),
+        subscribe: () => ({
+          id: '1',
+          pattern: '*',
+          handler: async () => {},
+          unsubscribe: () => {},
+        }),
         unsubscribe: () => {},
         request: async () => undefined,
       };

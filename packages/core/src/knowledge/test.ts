@@ -8,7 +8,7 @@
  * 4. 内置知识库
  */
 
-import { KnowledgeBase, KnowledgeEntryType, createKnowledgeBase } from './KnowledgeBase.js';
+import { KnowledgeEntryType, createKnowledgeBase } from './KnowledgeBase.js';
 
 async function testKnowledgeBase() {
   console.log('=== 知识库系统测试 ===\n');

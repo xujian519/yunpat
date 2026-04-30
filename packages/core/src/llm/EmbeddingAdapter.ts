@@ -92,16 +92,18 @@ export class EmbeddingAdapter {
       throw new Error(`Embedding API 请求失败: ${response.status} ${text}`);
     }
 
-    const data: any = await response.json();
+    const data: unknown = await response.json();
 
     // OpenAI 兼容格式: data.data[].embedding
-    if (!data.data || !Array.isArray(data.data)) {
+    if (!(data as any).data || !Array.isArray((data as any).data)) {
       throw new Error('Embedding API 返回格式异常');
     }
 
     // 按 index 排序确保顺序正确
-    const sorted = data.data.sort((a: any, b: any) => a.index - b.index);
-    return sorted.map((item: any) => item.embedding);
+    const sorted = (data as any).data.sort(
+      (a: unknown, b: unknown) => (a as any).index - (b as any).index
+    );
+    return sorted.map((item: unknown) => (item as any).embedding);
   }
 }
 

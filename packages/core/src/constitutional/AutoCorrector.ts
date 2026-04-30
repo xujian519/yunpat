@@ -9,7 +9,6 @@ import type {
   Violation,
   CorrectionResult,
   AppliedCorrection,
-  CorrectionStrategy,
   ConstitutionalAIConfig,
 } from './types.js';
 import { CorrectionStrategy as Strategy } from './types.js';
@@ -29,10 +28,7 @@ export class AutoCorrector {
   /**
    * 执行自动纠正
    */
-  async correct(
-    content: string,
-    violations: Violation[]
-  ): Promise<CorrectionResult> {
+  async correct(content: string, violations: Violation[]): Promise<CorrectionResult> {
     const startTime = Date.now();
 
     // 过滤出需要纠正的违规（根据严重程度阈值）
@@ -89,7 +85,7 @@ export class AutoCorrector {
       minor: 1,
     };
 
-    return violations.filter(v => {
+    return violations.filter((v) => {
       const violationLevel = severityOrder[v.severity];
       const thresholdLevel = severityOrder[threshold];
 
@@ -108,7 +104,7 @@ export class AutoCorrector {
     let correctedContent = content;
 
     // 过滤掉没有location或location不完整的违规
-    const validViolations = violations.filter(v => {
+    const validViolations = violations.filter((v) => {
       if (!v.location) {
         console.warn('[AutoCorrector] 跳过没有location的违规:', v.principleId);
         return false;
@@ -122,15 +118,10 @@ export class AutoCorrector {
     });
 
     // 按位置倒序排序（从后往前纠正，避免位置偏移）
-    const sortedViolations = validViolations.sort(
-      (a, b) => b.location.start - a.location.start
-    );
+    const sortedViolations = validViolations.sort((a, b) => b.location.start - a.location.start);
 
     for (const violation of sortedViolations) {
-      const correction = await this.applyRuleCorrection(
-        correctedContent,
-        violation
-      );
+      const correction = await this.applyRuleCorrection(correctedContent, violation);
 
       console.log('[AutoCorrector correctWithRules] correction结果:', {
         hasCorrection: !!correction,
@@ -159,7 +150,7 @@ export class AutoCorrector {
   private async applyRuleCorrection(
     content: string,
     violation: Violation
-  ): Promise<AppliedCorrection & { correctedContent: string } | null> {
+  ): Promise<(AppliedCorrection & { correctedContent: string }) | null> {
     // 调试日志
     if (!violation.location) {
       console.error('[AutoCorrector] 违规对象缺少location字段:', violation);
@@ -182,9 +173,7 @@ export class AutoCorrector {
       const correctedText = suggestedCorrection;
 
       const correctedContent =
-        content.substring(0, location.start) +
-        correctedText +
-        content.substring(location.end);
+        content.substring(0, location.start) + correctedText + content.substring(location.end);
 
       console.log('[AutoCorrector] 应用建议纠正:', {
         originalText,
@@ -204,11 +193,10 @@ export class AutoCorrector {
 
     // 否则根据违规类型应用通用规则
     const correction = this.applyGenericCorrection(violation, originalText);
-    if (correction !== null) { // 使用 !== null 而不是 if (correction)，因为空字符串是有效纠正
+    if (correction !== null) {
+      // 使用 !== null 而不是 if (correction)，因为空字符串是有效纠正
       const correctedContent =
-        content.substring(0, location.start) +
-        correction +
-        content.substring(location.end);
+        content.substring(0, location.start) + correction + content.substring(location.end);
 
       console.log('[AutoCorrector] 应用通用纠正:', {
         originalText,
@@ -237,11 +225,11 @@ export class AutoCorrector {
     // 清楚性原则：替换模糊词汇
     if (violation.principleId === 'clarity') {
       const vagueToSpecific: Record<string, string> = {
-        '一些': '多个',
-        '某些': '多个',
-        '相关': '特定的',
-        '适当': '预定的',
-        '相应的': '对应的',
+        一些: '多个',
+        某些: '多个',
+        相关: '特定的',
+        适当: '预定的',
+        相应的: '对应的',
       };
 
       for (const [vague, specific] of Object.entries(vagueToSpecific)) {
@@ -254,10 +242,10 @@ export class AutoCorrector {
     // 确定性原则：移除不确定词汇
     if (violation.principleId === 'definiteness') {
       const indefiniteRemoval: Record<string, string> = {
-        '大约': '',
-        '左右': '',
-        '大概': '',
-        '约': '',
+        大约: '',
+        左右: '',
+        大概: '',
+        约: '',
       };
 
       console.log('[AutoCorrector applyGenericCorrection] 检查确定性原则:', {
@@ -278,9 +266,9 @@ export class AutoCorrector {
     // 简要性原则：移除冗余表述
     if (violation.principleId === 'brevity') {
       const redundantRemovals: Record<string, string> = {
-        '通过连接线连接': '连接',
-        '进行配置': '配置',
-        '执行操作': '执行',
+        通过连接线连接: '连接',
+        进行配置: '配置',
+        执行操作: '执行',
       };
 
       for (const [redundant, concise] of Object.entries(redundantRemovals)) {
@@ -309,15 +297,10 @@ export class AutoCorrector {
     let correctedContent = content;
 
     // 按位置倒序排序
-    const sortedViolations = [...violations].sort(
-      (a, b) => b.location.start - a.location.start
-    );
+    const sortedViolations = [...violations].sort((a, b) => b.location.start - a.location.start);
 
     for (const violation of sortedViolations) {
-      const correction = await this.applyLLMCorrection(
-        correctedContent,
-        violation
-      );
+      const correction = await this.applyLLMCorrection(correctedContent, violation);
 
       if (correction) {
         // 重新计算完整的correctedContent
@@ -351,9 +334,7 @@ export class AutoCorrector {
       const prompt = this.buildCorrectionPrompt(content, violation);
 
       const response = await this.llm!.chat({
-        messages: [
-          { role: 'user', content: prompt }
-        ],
+        messages: [{ role: 'user', content: prompt }],
         temperature: 0.3, // 低温度，确保纠正的一致性
         maxTokens: 500,
       });
@@ -362,7 +343,8 @@ export class AutoCorrector {
 
       // 验证纠正结果
       if (correctedText && correctedText !== violation.location.text) {
-        const correctedContent =
+        // 计算完整的纠正后内容（当前未使用，保留用于未来扩展）
+        const _correctedContent =
           content.substring(0, violation.location.start) +
           correctedText +
           content.substring(violation.location.end);
@@ -429,18 +411,12 @@ export class AutoCorrector {
     }
 
     // 先应用规则纠正（快速）
-    const ruleResult = await this.correctWithRules(
-      correctedContent,
-      ruleBasedViolations
-    );
+    const ruleResult = await this.correctWithRules(correctedContent, ruleBasedViolations);
     correctedContent = ruleResult.correctedContent;
     appliedCorrections.push(...ruleResult.appliedCorrections);
 
     // 再应用LLM纠正（智能）
-    const llmResult = await this.correctWithLLM(
-      correctedContent,
-      llmBasedViolations
-    );
+    const llmResult = await this.correctWithLLM(correctedContent, llmBasedViolations);
     correctedContent = llmResult.correctedContent;
     appliedCorrections.push(...llmResult.appliedCorrections);
 

@@ -171,7 +171,7 @@ describe('EventBus', () => {
       eventBus.subscribe('test:event', handler2);
 
       const subscriptions = eventBus.getSubscriptions();
-      const testEventSub = subscriptions.find(sub => sub.pattern === 'test:event');
+      const testEventSub = subscriptions.find((sub) => sub.pattern === 'test:event');
 
       expect(testEventSub).toBeDefined();
       expect(testEventSub?.handlers).toBe(2);

@@ -63,9 +63,9 @@ describe('SearchTools', () => {
 
     it('should throw error when neither filePath nor directory is specified', async () => {
       const tool = new GrepTool();
-      await expect(
-        tool.execute({ pattern: 'test' }, mockContext)
-      ).rejects.toThrow('Either filePath or directory must be specified');
+      await expect(tool.execute({ pattern: 'test' }, mockContext)).rejects.toThrow(
+        'Either filePath or directory must be specified'
+      );
     });
 
     it('should search in directory with glob', async () => {
@@ -85,10 +85,7 @@ describe('SearchTools', () => {
       );
 
       expect(result.matches).toHaveLength(2);
-      expect(mockedGlob).toHaveBeenCalledWith(
-        expect.stringContaining('*.ts'),
-        expect.any(Object)
-      );
+      expect(mockedGlob).toHaveBeenCalledWith(expect.stringContaining('*.ts'), expect.any(Object));
     });
   });
 
@@ -98,10 +95,7 @@ describe('SearchTools', () => {
       mockedGlob.mockResolvedValue(['/test/a.ts', '/test/b.ts']);
 
       const tool = new GlobTool();
-      const result = await tool.execute(
-        { pattern: '**/*.ts', cwd: '/test' },
-        mockContext
-      );
+      const result = await tool.execute({ pattern: '**/*.ts', cwd: '/test' }, mockContext);
 
       expect(result.files).toEqual(['/test/a.ts', '/test/b.ts']);
       expect(mockedGlob).toHaveBeenCalledWith('**/*.ts', {
@@ -117,10 +111,7 @@ describe('SearchTools', () => {
       mockedGlob.mockResolvedValue(['/test/.hidden']);
 
       const tool = new GlobTool();
-      await tool.execute(
-        { pattern: '.*', cwd: '/test', includeHidden: true },
-        mockContext
-      );
+      await tool.execute({ pattern: '.*', cwd: '/test', includeHidden: true }, mockContext);
 
       expect(mockedGlob).toHaveBeenCalledWith(
         expect.any(String),

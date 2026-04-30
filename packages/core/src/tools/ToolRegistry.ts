@@ -79,7 +79,7 @@ export class ToolRegistry implements IToolRegistry {
    * @param input 输入参数
    * @returns 输出结果
    */
-  async call(name: string, input: any): Promise<any> {
+  async call(name: string, input: unknown): Promise<unknown> {
     const tool = this.tools.get(name);
 
     if (!tool) {
@@ -173,9 +173,9 @@ export class ToolRegistry implements IToolRegistry {
 export abstract class BaseTool implements Tool {
   abstract readonly name: string;
   abstract readonly description: string;
-  readonly inputSchema?: any;
+  readonly inputSchema?: unknown;
 
-  abstract execute(input: any): Promise<any>;
+  abstract execute(input: unknown): Promise<unknown>;
 }
 
 /**
@@ -186,15 +186,15 @@ export abstract class BaseTool implements Tool {
 export class ToolWrapper extends BaseTool {
   readonly name: string;
   readonly description: string;
-  readonly inputSchema?: any;
+  readonly inputSchema?: unknown;
 
-  private executor: (input: any) => Promise<any>;
+  private executor: (input: unknown) => Promise<unknown>;
 
   constructor(
     name: string,
     description: string,
-    executor: (input: any) => Promise<any>,
-    inputSchema?: any
+    executor: (input: unknown) => Promise<unknown>,
+    inputSchema?: unknown
   ) {
     super();
     this.name = name;
@@ -203,7 +203,7 @@ export class ToolWrapper extends BaseTool {
     this.inputSchema = inputSchema;
   }
 
-  async execute(input: any): Promise<any> {
+  async execute(input: unknown): Promise<unknown> {
     return this.executor(input);
   }
 }

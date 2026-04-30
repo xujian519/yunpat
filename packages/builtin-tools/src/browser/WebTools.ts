@@ -54,7 +54,7 @@ async function sendWebBridgeCommand(
     throw new Error(`WebBridge HTTP ${response.status}: ${response.statusText}`);
   }
 
-  return await response.json() as WebBridgeResponse;
+  return (await response.json()) as WebBridgeResponse;
 }
 
 /**
@@ -81,11 +81,7 @@ export class WebNavigateTool extends EnhancedBaseTool<
     isConcurrencySafe: false,
     inputSchema: z.object({
       url: z.string().url().describe('要访问的URL'),
-      newTab: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('是否在新标签页中打开'),
+      newTab: z.boolean().optional().default(true).describe('是否在新标签页中打开'),
       session: z.string().optional().describe('会话名称（用于隔离不同站点）'),
     }),
     outputSchema: z.object({
@@ -107,10 +103,14 @@ export class WebNavigateTool extends EnhancedBaseTool<
     tabId?: string;
   }> {
     try {
-      const result = await sendWebBridgeCommand('navigate', {
-        url: input.url,
-        newTab: input.newTab ?? true,
-      }, input.session);
+      const result = await sendWebBridgeCommand(
+        'navigate',
+        {
+          url: input.url,
+          newTab: input.newTab ?? true,
+        },
+        input.session
+      );
 
       return {
         success: result.success,
@@ -119,9 +119,7 @@ export class WebNavigateTool extends EnhancedBaseTool<
       };
     } catch (error) {
       throw new Error(
-        `Navigation failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Navigation failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -151,11 +149,7 @@ export class WebFindTabTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       url: z.string().describe('要查找的URL或域名'),
-      active: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('是否选择当前活动的标签页'),
+      active: z.boolean().optional().default(false).describe('是否选择当前活动的标签页'),
       session: z.string().optional().describe('会话名称'),
     }),
     outputSchema: z.object({
@@ -192,11 +186,7 @@ export class WebFindTabTool extends EnhancedBaseTool<
         tabId: result.tabId,
       };
     } catch (error) {
-      throw new Error(
-        `Find tab failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      throw new Error(`Find tab failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -268,11 +258,7 @@ export class WebSnapshotTool extends EnhancedBaseTool<
         tree: result.tree || [],
       };
     } catch (error) {
-      throw new Error(
-        `Snapshot failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      throw new Error(`Snapshot failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -335,11 +321,7 @@ export class WebClickTool extends EnhancedBaseTool<
         text: result.text,
       };
     } catch (error) {
-      throw new Error(
-        `Click failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      throw new Error(`Click failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -401,11 +383,7 @@ export class WebFillTool extends EnhancedBaseTool<
         tag: result.tag,
       };
     } catch (error) {
-      throw new Error(
-        `Fill failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      throw new Error(`Fill failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -461,11 +439,7 @@ export class WebEvaluateTool extends EnhancedBaseTool<
         value: result.value,
       };
     } catch (error) {
-      throw new Error(
-        `Evaluate failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      throw new Error(`Evaluate failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -491,11 +465,7 @@ export class WebScreenshotTool extends EnhancedBaseTool<
     category: ToolCategory.NETWORK,
     isConcurrencySafe: true,
     inputSchema: z.object({
-      format: z
-        .enum(['png', 'jpeg'])
-        .optional()
-        .default('png')
-        .describe('图片格式'),
+      format: z.enum(['png', 'jpeg']).optional().default('png').describe('图片格式'),
       quality: z
         .number()
         .min(0)
@@ -523,9 +493,7 @@ export class WebScreenshotTool extends EnhancedBaseTool<
   ): Promise<{ filePath: string }> {
     try {
       // 使用截图辅助脚本
-      const scriptPath =
-        process.env.HOME +
-        '/.claude/skills/kimi-webbridge/scripts/screenshot.sh';
+      const scriptPath = process.env.HOME + '/.claude/skills/kimi-webbridge/scripts/screenshot.sh';
 
       let command = `bash "${scriptPath}"`;
 
@@ -553,9 +521,7 @@ export class WebScreenshotTool extends EnhancedBaseTool<
       throw new Error('Failed to parse screenshot result');
     } catch (error) {
       throw new Error(
-        `Screenshot failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Screenshot failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -600,11 +566,7 @@ export class WebWaitTool extends EnhancedBaseTool<
     category: ToolCategory.NETWORK,
     isConcurrencySafe: true,
     inputSchema: z.object({
-      duration: z
-        .number()
-        .min(100)
-        .max(60000)
-        .describe('等待时长（毫秒）'),
+      duration: z.number().min(100).max(60000).describe('等待时长（毫秒）'),
       session: z.string().optional().describe('会话名称'),
     }),
     outputSchema: z.object({
@@ -646,10 +608,7 @@ export class WebExtractTextTool extends EnhancedBaseTool<
     category: ToolCategory.NETWORK,
     isConcurrencySafe: true,
     inputSchema: z.object({
-      selector: z
-        .string()
-        .optional()
-        .describe('可选的元素选择器'),
+      selector: z.string().optional().describe('可选的元素选择器'),
       session: z.string().optional().describe('会话名称'),
     }),
     outputSchema: z.object({
@@ -666,11 +625,7 @@ export class WebExtractTextTool extends EnhancedBaseTool<
   ): Promise<{ text: string }> {
     try {
       // 先获取快照
-      const snapshotResult = await sendWebBridgeCommand(
-        'snapshot',
-        {},
-        input.session
-      );
+      const snapshotResult = await sendWebBridgeCommand('snapshot', {}, input.session);
 
       let text = '';
 
@@ -700,9 +655,7 @@ export class WebExtractTextTool extends EnhancedBaseTool<
       return { text: text.trim() };
     } catch (error) {
       throw new Error(
-        `Extract text failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Extract text failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -734,11 +687,7 @@ export class WebScrollTool extends EnhancedBaseTool<
         .optional()
         .default('down')
         .describe('滚动方向'),
-      amount: z
-        .number()
-        .optional()
-        .default(300)
-        .describe('滚动距离（像素）'),
+      amount: z.number().optional().default(300).describe('滚动距离（像素）'),
       session: z.string().optional().describe('会话名称'),
     }),
     outputSchema: z.object({
@@ -766,11 +715,7 @@ export class WebScrollTool extends EnhancedBaseTool<
 
       return { success: true };
     } catch (error) {
-      throw new Error(
-        `Scroll failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      throw new Error(`Scroll failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

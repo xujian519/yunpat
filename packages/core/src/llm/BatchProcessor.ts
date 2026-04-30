@@ -71,8 +71,8 @@ export class BatchProcessor {
    */
   async batchGenerate(
     sections: string[],
-    plan: any,
-    context: any
+    plan: unknown,
+    context: unknown
   ): Promise<Map<string, BatchSectionResult>> {
     // 检查是否启用批处理
     if (!this.config.enabled) {
@@ -132,8 +132,8 @@ export class BatchProcessor {
    */
   private async processBatch(
     sections: string[],
-    plan: any,
-    context: any,
+    plan: unknown,
+    context: unknown,
     batchIndex: number,
     totalBatches: number
   ): Promise<Map<string, BatchSectionResult>> {
@@ -148,7 +148,7 @@ export class BatchProcessor {
         messages: [
           {
             role: 'system',
-            content: `你是技术写作专家。语气：${plan.tone}。你需要批量生成多个章节的内容。`,
+            content: `你是技术写作专家。语气：${(plan as any).tone}。你需要批量生成多个章节的内容。`,
           },
           {
             role: 'user',
@@ -175,15 +175,15 @@ export class BatchProcessor {
   /**
    * 构建批量提示
    */
-  private buildBatchPrompt(sections: string[], plan: any): string {
-    const wordsPerSection = Math.round(plan.targetLength / sections.length);
+  private buildBatchPrompt(sections: string[], plan: unknown): string {
+    const wordsPerSection = Math.round((plan as any).targetLength / sections.length);
 
-    return `请为文档"${plan.structure.title}"批量生成以下${sections.length}个章节的内容：
+    return `请为文档"${(plan as any).structure.title}"批量生成以下${sections.length}个章节的内容：
 
 ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
 
 **要求**：
-1. 语气：${plan.tone}
+1. 语气：${(plan as any).tone}
 2. 目标长度：每章节约${wordsPerSection}词
 3. 内容详细、准确
 
@@ -240,12 +240,12 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
       }
 
       // 构建结果映射
-      parsed.sections.forEach((section: any) => {
-        if (section.heading && section.content) {
-          resultMap.set(section.heading, {
-            heading: section.heading,
-            content: section.content,
-            wordCount: section.content.split(/\s+/).length,
+      parsed.sections.forEach((section: unknown) => {
+        if ((section as any).heading && (section as any).content) {
+          resultMap.set((section as any).heading, {
+            heading: (section as any).heading,
+            content: (section as any).content,
+            wordCount: (section as any).content.split(/\s+/).length,
           });
         }
       });
@@ -271,9 +271,9 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
    */
   private async fallbackToSequential(
     sections: string[],
-    plan: any,
+    plan: unknown,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    context: any
+    context: unknown
   ): Promise<Map<string, BatchSectionResult>> {
     console.log('[BatchProcessor] 回退到顺序处理模式');
 
@@ -287,7 +287,7 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
           messages: [
             {
               role: 'system',
-              content: `你是技术写作专家。语气：${plan.tone}。`,
+              content: `你是技术写作专家。语气：${(plan as any).tone}。`,
             },
             {
               role: 'user',
@@ -319,15 +319,17 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
   /**
    * 构建单个章节提示（用于回退模式）
    */
-  private buildSectionPrompt(heading: string, plan: any): string {
-    const wordsPerSection = Math.round(plan.targetLength / plan.structure.sections.length);
+  private buildSectionPrompt(heading: string, plan: unknown): string {
+    const wordsPerSection = Math.round(
+      (plan as any).targetLength / (plan as any).structure.sections.length
+    );
 
-    return `请为文档"${plan.structure.title}"撰写以下章节的内容：
+    return `请为文档"${(plan as any).structure.title}"撰写以下章节的内容：
 
 **章节标题**：${heading}
 
 **要求**：
-1. 语气：${plan.tone}
+1. 语气：${(plan as any).tone}
 2. 目标长度：约${wordsPerSection}词
 3. 内容详细、准确
 

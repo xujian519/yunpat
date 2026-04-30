@@ -113,9 +113,7 @@ describe('SourceAttributionValidator', () => {
 
       const issues = await validator.validateAttribution(content);
 
-      const missingCitations = issues.filter(
-        i => i.type === 'missing_citation'
-      );
+      const missingCitations = issues.filter((i) => i.type === 'missing_citation');
       expect(missingCitations.length).toBeGreaterThan(0);
       expect(missingCitations[0].severity).toBe('critical');
     });
@@ -125,9 +123,7 @@ describe('SourceAttributionValidator', () => {
 
       const issues = await validator.validateAttribution(content);
 
-      const missingCitations = issues.filter(
-        i => i.type === 'missing_citation'
-      );
+      const missingCitations = issues.filter((i) => i.type === 'missing_citation');
       expect(missingCitations.length).toBeGreaterThan(0);
     });
 
@@ -136,9 +132,7 @@ describe('SourceAttributionValidator', () => {
 
       const issues = await validator.validateAttribution(content);
 
-      const missingCitations = issues.filter(
-        i => i.type === 'missing_citation'
-      );
+      const missingCitations = issues.filter((i) => i.type === 'missing_citation');
 
       // 应该检测到缺少引用
       expect(missingCitations.length).toBeGreaterThan(0);
@@ -158,9 +152,7 @@ describe('SourceAttributionValidator', () => {
 
       const issues = await validator.validateAttribution(content);
 
-      const missingCitations = issues.filter(
-        i => i.type === 'missing_citation'
-      );
+      const missingCitations = issues.filter((i) => i.type === 'missing_citation');
       expect(missingCitations.length).toBe(0);
     });
   });
@@ -171,9 +163,7 @@ describe('SourceAttributionValidator', () => {
 
       const issues = await validator.validateAttribution(content);
 
-      const formatIssues = issues.filter(
-        i => i.type === 'incorrect_citation_format'
-      );
+      const formatIssues = issues.filter((i) => i.type === 'incorrect_citation_format');
       expect(formatIssues.length).toBe(0);
     });
 
@@ -182,9 +172,7 @@ describe('SourceAttributionValidator', () => {
 
       const issues = await validator.validateAttribution(content);
 
-      const formatIssues = issues.filter(
-        i => i.type === 'incorrect_citation_format'
-      );
+      const formatIssues = issues.filter((i) => i.type === 'incorrect_citation_format');
       expect(formatIssues.length).toBe(0);
     });
 
@@ -193,9 +181,7 @@ describe('SourceAttributionValidator', () => {
 
       const issues = await validator.validateAttribution(content);
 
-      const formatIssues = issues.filter(
-        i => i.type === 'incorrect_citation_format'
-      );
+      const formatIssues = issues.filter((i) => i.type === 'incorrect_citation_format');
       expect(formatIssues.length).toBeGreaterThan(0);
     });
 
@@ -209,8 +195,7 @@ describe('SourceAttributionValidator', () => {
       const issues = await validator.validateAttribution(content);
 
       const formatIssues = issues.filter(
-        i => i.type === 'incorrect_citation_format' &&
-             i.description.includes('混用')
+        (i) => i.type === 'incorrect_citation_format' && i.description.includes('混用')
       );
       expect(formatIssues.length).toBeGreaterThan(0);
     });
@@ -222,9 +207,7 @@ describe('SourceAttributionValidator', () => {
 
       const issues = await validator.validateAttribution(content);
 
-      const credibilityIssues = issues.filter(
-        i => i.type === 'unreliable_source'
-      );
+      const credibilityIssues = issues.filter((i) => i.type === 'unreliable_source');
       expect(credibilityIssues.length).toBe(0);
     });
 
@@ -257,10 +240,7 @@ describe('SourceAttributionValidator', () => {
         location: { start: 0, end: 12 },
       };
 
-      const hasCitation = (validator as any).hasCitationNearby(
-        content,
-        claim
-      );
+      const hasCitation = (validator as any).hasCitationNearby(content, claim);
 
       expect(hasCitation).toBe(true);
     });
@@ -272,10 +252,7 @@ describe('SourceAttributionValidator', () => {
         location: { start: 0, end: 15 },
       };
 
-      const hasCitation = (validator as any).hasCitationNearby(
-        content,
-        claim
-      );
+      const hasCitation = (validator as any).hasCitationNearby(content, claim);
 
       expect(hasCitation).toBe(false);
     });
@@ -289,10 +266,7 @@ describe('SourceAttributionValidator', () => {
         location: { start: 250, end: 270 },
       };
 
-      const hasCitation = (validator as any).hasCitationNearby(
-        content,
-        claim
-      );
+      const hasCitation = (validator as any).hasCitationNearby(content, claim);
 
       // 引用距离超过200字符，应该检测不到
       // claim在250-270，上下文窗口是50-470，而[1]在521-523位置
@@ -423,7 +397,7 @@ describe('SourceAttributionValidator', () => {
 
       const issues = await validator.validateAttribution(content);
       // 可能没有问题，或者只有格式问题（不包含missing_citation）
-      const missingCitations = issues.filter(i => i.type === 'missing_citation');
+      const missingCitations = issues.filter((i) => i.type === 'missing_citation');
       expect(missingCitations.length).toBe(0);
     });
 

@@ -5,7 +5,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DynamicReplanner } from '../../src/replanning/index.js';
 import { Priority, TaskStatus, PlanStatus } from '../../src/planning/types.js';
-import { ReplanningTriggerType, DeviationType, RecoveryStrategyType } from '../../src/replanning/types.js';
+import {
+  ReplanningTriggerType,
+  DeviationType,
+  RecoveryStrategyType,
+} from '../../src/replanning/types.js';
 
 describe('DynamicReplanner', () => {
   let replanner: DynamicReplanner;
@@ -36,17 +40,19 @@ describe('DynamicReplanner', () => {
           id: 'goal1',
           title: '研究阶段',
           description: '收集信息',
-          tasks: [{
-            id: 'task1',
-            title: '搜索资料',
-            description: '搜索相关资料',
-            type: 'research' as any,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['search'],
-            estimatedTokens: 2000,
-            estimatedDuration: 300,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task1',
+              title: '搜索资料',
+              description: '搜索相关资料',
+              type: 'research' as any,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['search'],
+              estimatedTokens: 2000,
+              estimatedDuration: 300,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.HIGH,
           status: TaskStatus.PENDING,
@@ -57,17 +63,19 @@ describe('DynamicReplanner', () => {
           id: 'goal2',
           title: '撰写阶段',
           description: '撰写内容',
-          tasks: [{
-            id: 'task2',
-            title: '撰写草稿',
-            description: '撰写初稿',
-            type: 'writing' as any,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 3000,
-            estimatedDuration: 600,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task2',
+              title: '撰写草稿',
+              description: '撰写初稿',
+              type: 'writing' as any,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 3000,
+              estimatedDuration: 600,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: ['goal1'],
           priority: Priority.HIGH,
           status: TaskStatus.PENDING,
@@ -259,7 +267,7 @@ describe('DynamicReplanner', () => {
       expect(report.deviations.length).toBeGreaterThan(0);
 
       const scheduleDeviation = report.deviations.find(
-        d => d.type === DeviationType.SCHEDULE_DEVIATION
+        (d) => d.type === DeviationType.SCHEDULE_DEVIATION
       );
       expect(scheduleDeviation).toBeDefined();
     });
@@ -278,7 +286,7 @@ describe('DynamicReplanner', () => {
       expect(report.hasDeviation).toBe(true);
 
       const qualityDeviation = report.deviations.find(
-        d => d.type === DeviationType.QUALITY_DEVIATION
+        (d) => d.type === DeviationType.QUALITY_DEVIATION
       );
       expect(qualityDeviation).toBeDefined();
     });
@@ -337,11 +345,13 @@ describe('DynamicReplanner', () => {
       const plan = createTestPlan();
       const adjustment: any = {
         type: RecoveryStrategyType.REORDER,
-        modifications: Array(10).fill(null).map((_, i) => ({
-          type: 'modify',
-          goalId: `goal${i}`,
-          changes: {},
-        })),
+        modifications: Array(10)
+          .fill(null)
+          .map((_, i) => ({
+            type: 'modify',
+            goalId: `goal${i}`,
+            changes: {},
+          })),
         estimatedImprovement: 0.5,
         reasoning: '测试调整',
       };
@@ -421,10 +431,7 @@ describe('DynamicReplanner', () => {
       const plan = createTestPlan();
       const executionState = createExecutionState(['goal1', 'goal2']);
 
-      const result = await replanner.shouldReplan(
-        executionState,
-        executionState
-      );
+      const result = await replanner.shouldReplan(executionState, executionState);
 
       expect(result.shouldReplan).toBe(false);
     });

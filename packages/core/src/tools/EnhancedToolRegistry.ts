@@ -173,7 +173,7 @@ export class EnhancedToolRegistry {
     };
 
     // 通过中间件管道执行
-    return await this.middleware.execute(executionContext);
+    return (await this.middleware.execute(executionContext)) as TOutput;
   }
 
   /**
@@ -209,7 +209,7 @@ export class EnhancedToolRegistry {
     const readOnlyResults = await Promise.all(readOnlyPromises);
 
     // 串行执行写工具
-    const writeResults: Array<{ index: number; result: any }> = [];
+    const writeResults: Array<{ index: number; result: unknown }> = [];
     for (const call of writeCalls) {
       const result = await this.call(call.name, call.input, context);
       writeResults.push({ index: call.index, result });
@@ -219,7 +219,7 @@ export class EnhancedToolRegistry {
     const allResults = [...readOnlyResults, ...writeResults];
     allResults.sort((a, b) => a.index - b.index);
 
-    return allResults.map((r) => r.result);
+    return allResults.map((r) => r.result) as TOutput[];
   }
 
   /**
@@ -379,7 +379,7 @@ export class EnhancedToolRegistry {
   /**
    * 验证输入参数
    */
-  private async validateInput<TInput>(tool: EnhancedTool<TInput>, input: any): Promise<TInput> {
+  private async validateInput<TInput>(tool: EnhancedTool<TInput>, input: unknown): Promise<TInput> {
     try {
       return await tool.metadata.inputSchema.parseAsync(input);
     } catch (error) {

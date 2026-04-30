@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  PatentDetailTool,
-  HighCitationPatentsTool,
-} from '../../src/tools/PatentDetailTool.js';
+import { PatentDetailTool, HighCitationPatentsTool } from '../../src/tools/PatentDetailTool.js';
 import { GooglePatentDetailTool } from '../../src/tools/GooglePatentsTool.js';
 import { GooglePatentsFetchTool } from '../../src/tools/GooglePatentsTool.js';
 

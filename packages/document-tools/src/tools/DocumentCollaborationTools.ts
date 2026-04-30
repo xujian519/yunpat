@@ -85,9 +85,7 @@ export class DocumentCollaborationTool extends EnhancedBaseTool<
     category: 'utility' as any,
     isConcurrencySafe: true,
     inputSchema: z.object({
-      action: z
-        .enum(['start', 'propose', 'review', 'merge', 'history'])
-        .describe('协作操作类型'),
+      action: z.enum(['start', 'propose', 'review', 'merge', 'history']).describe('协作操作类型'),
       documentPath: z.string().describe('文档路径'),
       sessionId: z.string().optional().describe('会话ID'),
       change: z
@@ -183,9 +181,7 @@ export class DocumentCollaborationTool extends EnhancedBaseTool<
       throw new Error(`Session not found: ${sessionId}`);
     }
 
-    const session: DocumentCollaborationSession = JSON.parse(
-      fs.readFileSync(sessionFile, 'utf-8')
-    );
+    const session: DocumentCollaborationSession = JSON.parse(fs.readFileSync(sessionFile, 'utf-8'));
 
     // 添加到待处理变更
     change.timestamp = new Date().toISOString();
@@ -212,9 +208,7 @@ export class DocumentCollaborationTool extends EnhancedBaseTool<
       throw new Error(`Session not found: ${sessionId}`);
     }
 
-    const session: DocumentCollaborationSession = JSON.parse(
-      fs.readFileSync(sessionFile, 'utf-8')
-    );
+    const session: DocumentCollaborationSession = JSON.parse(fs.readFileSync(sessionFile, 'utf-8'));
 
     return {
       sessionId,
@@ -235,9 +229,7 @@ export class DocumentCollaborationTool extends EnhancedBaseTool<
       throw new Error(`Session not found: ${sessionId}`);
     }
 
-    const session: DocumentCollaborationSession = JSON.parse(
-      fs.readFileSync(sessionFile, 'utf-8')
-    );
+    const session: DocumentCollaborationSession = JSON.parse(fs.readFileSync(sessionFile, 'utf-8'));
 
     // 读取原始文档
     let content = fs.readFileSync(session.documentPath, 'utf-8');
@@ -291,8 +283,8 @@ export class DocumentCollaborationTool extends EnhancedBaseTool<
    */
   private async getHistory(documentPath: string): Promise<DocumentVersion[]> {
     const sessionFiles = await this.findSessionFiles();
-    const relatedSessions = sessionFiles.filter((f) =>
-      JSON.parse(fs.readFileSync(f, 'utf-8')).documentPath === documentPath
+    const relatedSessions = sessionFiles.filter(
+      (f) => JSON.parse(fs.readFileSync(f, 'utf-8')).documentPath === documentPath
     );
 
     const allVersions: DocumentVersion[] = [];
@@ -320,9 +312,7 @@ export class DocumentCollaborationTool extends EnhancedBaseTool<
     }
 
     const files = fs.readdirSync(sessionDir);
-    return files
-      .filter((f) => f.endsWith('.json'))
-      .map((f) => path.join(sessionDir, f));
+    return files.filter((f) => f.endsWith('.json')).map((f) => path.join(sessionDir, f));
   }
 
   /**
@@ -377,10 +367,7 @@ export class PatentTemplateLibraryTool extends EnhancedBaseTool<
     isConcurrencySafe: true,
     inputSchema: z.object({
       action: z.enum(['list', 'get', 'apply']).describe('操作类型'),
-      templateType: z
-        .string()
-        .optional()
-        .describe('模板类型（application/response/analysis等）'),
+      templateType: z.string().optional().describe('模板类型（application/response/analysis等）'),
       templateId: z.string().optional().describe('模板ID'),
       outputPath: z.string().optional().describe('输出路径'),
       variables: z.record(z.any()).optional().describe('模板变量'),
@@ -406,11 +393,7 @@ export class PatentTemplateLibraryTool extends EnhancedBaseTool<
       case 'get':
         return this.getTemplate(input.templateId!);
       case 'apply':
-        return this.applyTemplate(
-          input.templateId!,
-          input.outputPath!,
-          input.variables
-        );
+        return this.applyTemplate(input.templateId!, input.outputPath!, input.variables);
       default:
         throw new Error(`Unknown action: ${input.action}`);
     }

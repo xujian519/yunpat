@@ -34,7 +34,8 @@ describe('TreeOfThoughtsStrategy (优化版)', () => {
       mockLLM.chat.mockResolvedValueOnce({
         message: {
           role: 'assistant' as const,
-          content: '1. 可行性: 8分, 创新性: 7分, 完整性: 9分, 清晰度: 8分, 总分: 32分\n2. 可行性: 6分, 创新性: 9分, 完整性: 7分, 清晰度: 8分, 总分: 30分',
+          content:
+            '1. 可行性: 8分, 创新性: 7分, 完整性: 9分, 清晰度: 8分, 总分: 32分\n2. 可行性: 6分, 创新性: 9分, 完整性: 7分, 清晰度: 8分, 总分: 30分',
         },
         usage: { totalTokens: 100 },
       });
@@ -92,7 +93,8 @@ describe('TreeOfThoughtsStrategy (优化版)', () => {
       mockLLM.chat.mockResolvedValue({
         message: {
           role: 'assistant' as const,
-          content: '1. 可行性: 8分, 创新性: 9分, 完整性: 7分, 清晰度: 8分, 总分: 32分\n2. 可行性: 6分, 创新性: 5分, 完整性: 7分, 清晰度: 6分, 总分: 24分\n3. 可行性: 7分, 创新性: 8分, 完整性: 8分, 清晰度: 7分, 总分: 30分',
+          content:
+            '1. 可行性: 8分, 创新性: 9分, 完整性: 7分, 清晰度: 8分, 总分: 32分\n2. 可行性: 6分, 创新性: 5分, 完整性: 7分, 清晰度: 6分, 总分: 24分\n3. 可行性: 7分, 创新性: 8分, 完整性: 8分, 清晰度: 7分, 总分: 30分',
         },
         usage: { totalTokens: 150 },
       });
@@ -118,7 +120,8 @@ describe('TreeOfThoughtsStrategy (优化版)', () => {
       mockLLM.chat.mockResolvedValue({
         message: {
           role: 'assistant' as const,
-          content: '1. 可行性: 8分, 创新性: 7分, 完整性: 9分, 清晰度: 8分, 总分: 32分\n2. 可行性: 6分, 创新性: 5分, 完整性: 7分, 清晰度: 6分, 总分: 24分',
+          content:
+            '1. 可行性: 8分, 创新性: 7分, 完整性: 9分, 清晰度: 8分, 总分: 32分\n2. 可行性: 6分, 创新性: 5分, 完整性: 7分, 清晰度: 6分, 总分: 24分',
         },
         usage: { totalTokens: 100 },
       });
@@ -263,13 +266,13 @@ describe('PlanAndSolveStrategy (优化版)', () => {
       expect(results[0].validation).toBeDefined();
 
       // 检查执行步骤
-      const step1 = results.find(r => r.step === 1);
+      const step1 = results.find((r) => r.step === 1);
       expect(step1?.result).toContain('问题分析完成');
 
-      const step2 = results.find(r => r.step === 2);
+      const step2 = results.find((r) => r.step === 2);
       expect(step2?.result).toContain('解决方案');
 
-      const step3 = results.find(r => r.step === 3);
+      const step3 = results.find((r) => r.step === 3);
       expect(step3?.done).toBe(true);
     });
 
@@ -310,12 +313,12 @@ describe('PlanAndSolveStrategy (优化版)', () => {
       }
 
       // 应该在步骤2失败后停止
-      const failedStep = results.find(r => r.step === 2);
+      const failedStep = results.find((r) => r.step === 2);
       expect(failedStep?.success).toBe(false);
       expect(failedStep?.error).toContain('执行失败');
 
       // 不应该有步骤3
-      const step3 = results.find(r => r.step === 3);
+      const step3 = results.find((r) => r.step === 3);
       expect(step3).toBeUndefined();
     });
 
@@ -363,9 +366,10 @@ describe('PlanAndSolveStrategy (优化版)', () => {
 
       // 检查所有调用
       const calls = mockLLM.chat.mock.calls;
-      const step2Call = calls.find(call =>
-        call[0].messages[1].content.includes('步骤2') &&
-        call[0].messages[1].content.includes('当前步骤')
+      const step2Call = calls.find(
+        (call) =>
+          call[0].messages[1].content.includes('步骤2') &&
+          call[0].messages[1].content.includes('当前步骤')
       );
 
       expect(step2Call).toBeDefined();
@@ -378,7 +382,8 @@ describe('PlanAndSolveStrategy (优化版)', () => {
       mockLLM.chat.mockResolvedValue({
         message: {
           role: 'assistant' as const,
-          content: '计划质量评估：\n完整性：9/10\n可行性：8/10\n逻辑性：9/10\n清晰性：8/10\n总体评分：8.5/10\n\n建议：可以考虑增加风险评估步骤。',
+          content:
+            '计划质量评估：\n完整性：9/10\n可行性：8/10\n逻辑性：9/10\n清晰性：8/10\n总体评分：8.5/10\n\n建议：可以考虑增加风险评估步骤。',
         },
         usage: { totalTokens: 100 },
       });

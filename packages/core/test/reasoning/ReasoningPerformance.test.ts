@@ -3,14 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  ReasoningCache,
-  createReasoningCache,
-} from '../../src/reasoning/ReasoningCache.js';
-import {
-  ReasoningMonitor,
-  reasoningMonitor,
-} from '../../src/reasoning/ReasoningMonitor.js';
+import { ReasoningCache, createReasoningCache } from '../../src/reasoning/ReasoningCache.js';
+import { ReasoningMonitor, reasoningMonitor } from '../../src/reasoning/ReasoningMonitor.js';
 import {
   ReasoningBatchProcessor,
   createBatchProcessor,
@@ -117,18 +111,18 @@ describe('ReasoningCache', () => {
 
       // 添加小延迟确保 lastAccessedAt 不同
       await smallCache.store('问题1', { data: '1' }, 10);
-      await new Promise(resolve => setTimeout(resolve, 2));
+      await new Promise((resolve) => setTimeout(resolve, 2));
 
       await smallCache.store('问题2', { data: '2' }, 10);
-      await new Promise(resolve => setTimeout(resolve, 2));
+      await new Promise((resolve) => setTimeout(resolve, 2));
 
       await smallCache.store('问题3', { data: '3' }, 10);
-      await new Promise(resolve => setTimeout(resolve, 2));
+      await new Promise((resolve) => setTimeout(resolve, 2));
 
-      await smallCache.query('问题1');  // 使问题1成为最近使用
-      await new Promise(resolve => setTimeout(resolve, 2));
+      await smallCache.query('问题1'); // 使问题1成为最近使用
+      await new Promise((resolve) => setTimeout(resolve, 2));
 
-      await smallCache.store('问题4', { data: '4' }, 10);  // 应该驱逐问题2或问题3
+      await smallCache.store('问题4', { data: '4' }, 10); // 应该驱逐问题2或问题3
 
       const stats = smallCache.getStats();
       expect(stats.totalEntries).toBe(3);
@@ -146,7 +140,7 @@ describe('ReasoningCache', () => {
       const result3 = await smallCache.query('问题3');
 
       // 至少一个应该被驱逐
-      const 驱逐Count = [result2.found, result3.found].filter(f => !f).length;
+      const 驱逐Count = [result2.found, result3.found].filter((f) => !f).length;
       expect(驱逐Count).toBeGreaterThan(0);
     });
   });
@@ -160,7 +154,7 @@ describe('ReasoningCache', () => {
       let result = await shortCache.query('问题1');
       expect(result.found).toBe(true);
 
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       result = await shortCache.query('问题1');
       expect(result.found).toBe(false);
@@ -240,7 +234,7 @@ describe('ReasoningBatchProcessor', () => {
       });
 
       const processFn = async (input: string) => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return { result: input.toUpperCase() };
       };
 
@@ -249,7 +243,7 @@ describe('ReasoningBatchProcessor', () => {
       const results = await processor.processBatch(inputs, processFn);
 
       expect(results).toHaveLength(3);
-      results.forEach(r => {
+      results.forEach((r) => {
         expect(r.error).toBeUndefined();
         expect(r.result).toBeDefined();
       });
@@ -306,7 +300,7 @@ describe('ReasoningBatchProcessor', () => {
       });
 
       const processFn = async (input: string) => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return { result: input };
       };
 

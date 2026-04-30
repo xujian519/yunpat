@@ -46,7 +46,7 @@ export class ToolDescriptionEnhancer {
    */
   enhanceMetadata(tool: EnhancedTool): EnhancedToolMetadata {
     const baseMetadata = tool.metadata;
-    const toolName = baseMetadata.name;
+    // const toolName = baseMetadata.name; // 保留用于未来扩展
 
     return {
       ...baseMetadata,
@@ -265,7 +265,7 @@ ${metadata.description}
 
   // ==================== 示例生成器 ====================
 
-  private generatePdfExamples(metadata: unknown): ToolExample[] {
+  private generatePdfExamples(_metadata: unknown): ToolExample[] {
     return [
       {
         description: '解析PDF文件并提取文本',
@@ -284,7 +284,7 @@ ${metadata.description}
     ];
   }
 
-  private generateDocxExamples(metadata: unknown): ToolExample[] {
+  private generateDocxExamples(_metadata: unknown): ToolExample[] {
     return [
       {
         description: '将Word文档转换为Markdown',
@@ -296,7 +296,7 @@ ${metadata.description}
     ];
   }
 
-  private generateExcelExamples(metadata: unknown): ToolExample[] {
+  private generateExcelExamples(_metadata: unknown): ToolExample[] {
     return [
       {
         description: '将Excel数据转换为JSON',
@@ -308,7 +308,7 @@ ${metadata.description}
     ];
   }
 
-  private generateWebExamples(metadata: unknown): ToolExample[] {
+  private generateWebExamples(_metadata: unknown): ToolExample[] {
     return [
       {
         description: '导航到指定URL',
@@ -362,7 +362,7 @@ ${metadata.description}
     lines.push('# 工具描述文档\n');
     lines.push('本文档包含所有工具的详细描述和使用说明。\n');
 
-    for (const [name, metadata] of enhancedMetadata) {
+    for (const [_name, metadata] of enhancedMetadata) {
       lines.push(`## ${metadata.name}\n`);
       lines.push(`**分类**: ${metadata.category}\n`);
       lines.push(`**描述**: ${metadata.description}\n`);

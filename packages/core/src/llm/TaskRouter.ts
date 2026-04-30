@@ -103,17 +103,16 @@ export class TaskRouter {
   private forceMode: TaskRouterConfig['forceMode'];
 
   constructor(config: TaskRouterConfig) {
-    const cfg = config as any;
     // 初始化本地 OMLX 适配器
     this.localAdapter = new OMLXAdapter({
-      baseURL: (config as any).omxlBaseURL || 'http://localhost:8009/v1',
-      apiKey: (config as any).omxlApiKey,
-      modelName: (config as any).omxlModelName || 'gemma-4-e2b-it-4bit',
+      baseURL: config.omlxBaseURL || 'http://localhost:8009/v1',
+      apiKey: config.omlxApiKey,
+      modelName: config.omlxModelName || 'gemma-4-e2b-it-4bit',
     });
 
     // 初始化云端 DeepSeek 适配器
     this.cloudAdapter = new NativeLLMAdapter({
-      name: cfg.deepSeekModelName || 'deepseek-chat',
+      name: config.deepSeekModelName || 'deepseek-chat',
       apiKey: config.deepSeekApiKey,
       baseURL: 'https://api.deepseek.com/v1',
     });

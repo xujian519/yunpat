@@ -218,9 +218,13 @@ export const OfficeActionSchema = z.object({
   officeActionDate: z.date().describe('审查意见日期'),
   examiner: z.string().optional().describe('审查员'),
   objections: z.array(ObjectionSchema).describe('审查意见列表'),
-  citedReferences: z.array(z.object({
-    documentNumber: z.string(),
-    relevance: z.enum(['high', 'medium', 'low']),
-    relevantPassages: z.array(z.string()),
-  })).describe('引用文献列表'),
+  citedReferences: z
+    .array(
+      z.object({
+        documentNumber: z.string(),
+        relevance: z.enum(['high', 'medium', 'low']),
+        relevantPassages: z.array(z.string()),
+      })
+    )
+    .describe('引用文献列表'),
 });

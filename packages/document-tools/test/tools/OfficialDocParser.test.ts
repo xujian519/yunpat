@@ -25,12 +25,15 @@ vi.mock('child_process', () => ({
     child.stderr = new EventEmitter();
 
     setTimeout(() => {
-      child.stdout.emit('data', JSON.stringify({
-        text: '审查意见通知书 申请号：2023100000001 发明名称：一种测试方法',
-        markdown: '# 审查意见通知书',
-        totalPages: 2,
-        version: '1.0.0',
-      }));
+      child.stdout.emit(
+        'data',
+        JSON.stringify({
+          text: '审查意见通知书 申请号：2023100000001 发明名称：一种测试方法',
+          markdown: '# 审查意见通知书',
+          totalPages: 2,
+          version: '1.0.0',
+        })
+      );
       child.emit('close', 0);
     }, 10);
 
@@ -60,12 +63,17 @@ describe('OfficialDocParser', () => {
       const { existsSync } = await import('fs');
       vi.mocked(existsSync).mockReturnValueOnce(false);
       const tool = new OfficialDocParserTool();
-      await expect(tool.execute({ filePath: '/nonexistent.pdf' }, mockContext)).rejects.toThrow('文件不存在');
+      await expect(tool.execute({ filePath: '/nonexistent.pdf' }, mockContext)).rejects.toThrow(
+        '文件不存在'
+      );
     });
 
     it('parses official document', async () => {
       const tool = new OfficialDocParserTool();
-      const result = await tool.execute({ filePath: '/mock/review.pdf', useOcr: false }, mockContext);
+      const result = await tool.execute(
+        { filePath: '/mock/review.pdf', useOcr: false },
+        mockContext
+      );
       expect(result.rawText).toContain('审查意见通知书');
       expect(result.metadata.filename).toBe('review.pdf');
       expect(result.metadata.parseTime).toBeGreaterThanOrEqual(0);

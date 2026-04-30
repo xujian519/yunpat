@@ -158,10 +158,7 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
   /**
    * 规划阶段：制定分析策略
    */
-  protected async plan(
-    input: PatentAnalysisInput,
-    context: any
-  ): Promise<any> {
+  protected async plan(input: PatentAnalysisInput, context: any): Promise<any> {
     console.log(`\n📊 [专利分析] 开始制定分析策略`);
     console.log(`   分析类型: ${input.analysisType}`);
     console.log(`   技术领域: ${input.technicalField || '未指定'}`);
@@ -169,10 +166,14 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
     // patent-core IPC 分类
     let ipcClassification: any = null;
     try {
-      const classifyText = [input.technicalField, input.parameters?.keywords].filter(Boolean).join(' ');
+      const classifyText = [input.technicalField, input.parameters?.keywords]
+        .filter(Boolean)
+        .join(' ');
       if (classifyText) {
         ipcClassification = await PatentCore.classifyIpc(classifyText);
-        console.log(`[PatentAnalyzerAgent] IPC 分类: ${ipcClassification.classifications.map((c: any) => `${c.section}(${c.description})`).join(', ')}`);
+        console.log(
+          `[PatentAnalyzerAgent] IPC 分类: ${ipcClassification.classifications.map((c: any) => `${c.section}(${c.description})`).join(', ')}`
+        );
       }
     } catch (e) {
       console.warn('[PatentAnalyzerAgent] patent-core IPC 分类失败:', (e as Error).message);
@@ -193,7 +194,7 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
 1. 数据检索策略
 2. 分析方法选择
 3. 评估指标体系
-4. 结果呈现方式`
+4. 结果呈现方式`,
         },
         {
           role: 'user',
@@ -202,8 +203,8 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
 目标专利数量：${input.targetPatents?.length || 0}
 竞争对手：${input.competitors?.join('、') || '未指定'}
 时间范围：${input.timeRange?.start || '未指定'} - ${input.timeRange?.end || '未指定'}
-${ipcContext}`
-        }
+${ipcContext}`,
+        },
       ],
       temperature: 0.3,
     });
@@ -219,10 +220,7 @@ ${ipcContext}`
   /**
    * 执行阶段：执行分析
    */
-  protected async act(
-    plan: any,
-    context: any
-  ): Promise<PatentAnalysisOutput> {
+  protected async act(plan: any, context: any): Promise<PatentAnalysisOutput> {
     console.log(`\n🔍 [专利分析] 开始执行分析`);
 
     const startTime = Date.now();
@@ -263,10 +261,7 @@ ${ipcContext}`
   /**
    * 反思阶段：质量评估
    */
-  protected async reflect(
-    output: PatentAnalysisOutput,
-    context: any
-  ): Promise<any> {
+  protected async reflect(output: PatentAnalysisOutput, context: any): Promise<any> {
     console.log(`\n🤔 [专利分析] 质量评估`);
 
     // patent-core IPC 验证
@@ -295,15 +290,15 @@ ${ipcContext}`
 3. 结论是否合理
 4. 建议是否可行
 
-给出评分（0-100）和改进建议。`
+给出评分（0-100）和改进建议。`,
         },
         {
           role: 'user',
           content: `分析类型：${output.analysisType}
 专利总数：${output.metrics.totalPatents}
 可信度：${output.metrics.confidence}
-建议数量：${output.recommendations.length}${ipcInfo}`
-        }
+建议数量：${output.recommendations.length}${ipcInfo}`,
+        },
       ],
       temperature: 0.3,
     });
@@ -347,7 +342,7 @@ ${ipcContext}`
     {"patentNumber": "专利号", "score": 85, "reasons": ["理由1", "理由2"]}
   ],
   "valueDistribution": {"high": 5, "medium": 10, "low": 15}
-}`
+}`,
           },
           {
             role: 'user',
@@ -356,8 +351,8 @@ ${ipcContext}`
 竞争对手：${input.competitors?.join('、') || '未指定'}
 时间范围：${input.timeRange?.start || '未指定'} - ${input.timeRange?.end || '未指定'}
 分析参数：${JSON.stringify(input.parameters || {})}
-分析策略：${plan?.strategy || '未指定'}`
-          }
+分析策略：${plan?.strategy || '未指定'}`,
+          },
         ],
         temperature: 0.3,
       });
@@ -421,7 +416,7 @@ ${ipcContext}`
     {"technology": "技术方向名称", "growth": 25.5, "description": "该技术方向的发展描述"}
   ],
   "keyPlayers": ["公司A", "公司B"]
-}`
+}`,
           },
           {
             role: 'user',
@@ -429,8 +424,8 @@ ${ipcContext}`
 目标专利：${input.targetPatents?.join('、') || '未指定'}
 时间范围：${input.timeRange?.start || '未指定'} - ${input.timeRange?.end || '未指定'}
 分析参数：${JSON.stringify(input.parameters || {})}
-分析策略：${plan?.strategy || '未指定'}`
-          }
+分析策略：${plan?.strategy || '未指定'}`,
+          },
         ],
         temperature: 0.3,
       });
@@ -442,7 +437,9 @@ ${ipcContext}`
 
       return {
         trendAnalysis: {
-          stage: ['emerging', 'growing', 'mature', 'declining'].includes(parsed.stage) ? parsed.stage : 'growing',
+          stage: ['emerging', 'growing', 'mature', 'declining'].includes(parsed.stage)
+            ? parsed.stage
+            : 'growing',
           keyTrends: Array.isArray(parsed.keyTrends) ? parsed.keyTrends : [],
           keyPlayers: Array.isArray(parsed.keyPlayers) ? parsed.keyPlayers : [],
         },
@@ -453,9 +450,15 @@ ${ipcContext}`
         trendAnalysis: {
           stage: 'growing',
           keyTrends: [
-            { technology: input.technicalField || '相关技术', growth: 15.0, description: '该技术领域持续发展，创新活跃' },
+            {
+              technology: input.technicalField || '相关技术',
+              growth: 15.0,
+              description: '该技术领域持续发展，创新活跃',
+            },
           ],
-          keyPlayers: input.competitors?.length ? input.competitors : ['主要参与者A', '主要参与者B'],
+          keyPlayers: input.competitors?.length
+            ? input.competitors
+            : ['主要参与者A', '主要参与者B'],
         },
       };
     }
@@ -492,7 +495,7 @@ ${ipcContext}`
     {"company": "公司名称", "patentCount": 100, "marketShare": 15.5, "strength": ["优势1", "优势2"]}
   ],
   "competitionLandscape": {"intense": true, "growthRate": 12.5, "barriers": ["壁垒1", "壁垒2"]}
-}`
+}`,
           },
           {
             role: 'user',
@@ -501,8 +504,8 @@ ${ipcContext}`
 竞争对手：${input.competitors?.join('、') || '未指定'}
 时间范围：${input.timeRange?.start || '未指定'} - ${input.timeRange?.end || '未指定'}
 分析参数：${JSON.stringify(input.parameters || {})}
-分析策略：${plan?.strategy || '未指定'}`
-          }
+分析策略：${plan?.strategy || '未指定'}`,
+          },
         ],
         temperature: 0.3,
       });
@@ -515,7 +518,11 @@ ${ipcContext}`
       return {
         competitorAnalysis: {
           rankings: Array.isArray(parsed.rankings) ? parsed.rankings : [],
-          competitionLandscape: parsed.competitionLandscape || { intense: false, growthRate: 0, barriers: [] },
+          competitionLandscape: parsed.competitionLandscape || {
+            intense: false,
+            growthRate: 0,
+            barriers: [],
+          },
         },
       };
     } catch (error) {
@@ -527,8 +534,19 @@ ${ipcContext}`
             patentCount: 50,
             marketShare: 20,
             strength: ['在该领域有专利布局'],
-          })) || [{ company: '主要竞争对手', patentCount: 50, marketShare: 20, strength: ['专利数量领先'] }],
-          competitionLandscape: { intense: true, growthRate: 10, barriers: ['技术壁垒', '资金门槛'] },
+          })) || [
+            {
+              company: '主要竞争对手',
+              patentCount: 50,
+              marketShare: 20,
+              strength: ['专利数量领先'],
+            },
+          ],
+          competitionLandscape: {
+            intense: true,
+            growthRate: 10,
+            barriers: ['技术壁垒', '资金门槛'],
+          },
         },
       };
     }
@@ -568,7 +586,7 @@ ${ipcContext}`
   ],
   "whiteSpaces": ["空白领域1", "空白领域2"],
   "hotspots": ["热点领域1", "热点领域2"]
-}`
+}`,
           },
           {
             role: 'user',
@@ -577,8 +595,8 @@ ${ipcContext}`
 竞争对手：${input.competitors?.join('、') || '未指定'}
 时间范围：${input.timeRange?.start || '未指定'} - ${input.timeRange?.end || '未指定'}
 分析参数：${JSON.stringify(input.parameters || {})}
-分析策略：${plan?.strategy || '未指定'}`
-          }
+分析策略：${plan?.strategy || '未指定'}`,
+          },
         ],
         temperature: 0.3,
       });
@@ -600,7 +618,11 @@ ${ipcContext}`
       return {
         patentLandscape: {
           clusters: [
-            { name: input.technicalField || '核心技术领域', patentCount: 30, keyPatents: input.targetPatents?.slice(0, 2) || ['代表性专利'] },
+            {
+              name: input.technicalField || '核心技术领域',
+              patentCount: 30,
+              keyPatents: input.targetPatents?.slice(0, 2) || ['代表性专利'],
+            },
           ],
           whiteSpaces: ['交叉技术领域', '新兴应用场景'],
           hotspots: ['核心技术优化', '工艺改进方向'],
@@ -624,14 +646,14 @@ ${ipcContext}`
 3. 专利布局建议
 4. 风险防范建议
 
-每条建议应当具体、可执行。`
+每条建议应当具体、可执行。`,
         },
         {
           role: 'user',
           content: `分析结果：
 ${JSON.stringify(results, null, 2).substring(0, 1000)}...
-`
-        }
+`,
+        },
       ],
       temperature: 0.5,
     });

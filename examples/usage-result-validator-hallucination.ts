@@ -5,9 +5,15 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { ResultValidator, ValidationErrorType } from '../packages/core/src/validation/ResultValidator.js';
+import {
+  ResultValidator,
+  ValidationErrorType,
+} from '../packages/core/src/validation/ResultValidator.js';
 import { createDeepSeekModel } from '../packages/core/src/llm/NativeLLMAdapter.js';
-import { KnowledgeBase, createKnowledgeBase } from '../packages/core/src/knowledge/KnowledgeBase.js';
+import {
+  KnowledgeBase,
+  createKnowledgeBase,
+} from '../packages/core/src/knowledge/KnowledgeBase.js';
 import { z } from 'zod';
 
 describe('ResultValidator 集成幻觉检测', () => {
@@ -57,16 +63,12 @@ describe('ResultValidator 集成幻觉检测', () => {
     };
 
     // 6. 执行验证
-    const result = await validator.validateWithHallucinationCheck(
-      patentData,
-      patentSchema,
-      {
-        factCheckThreshold: 0.7,
-        enableFactCheck: true,
-        enableLogicalConsistencyCheck: true,
-        enableSourceAttribution: true,
-      }
-    );
+    const result = await validator.validateWithHallucinationCheck(patentData, patentSchema, {
+      factCheckThreshold: 0.7,
+      enableFactCheck: true,
+      enableLogicalConsistencyCheck: true,
+      enableSourceAttribution: true,
+    });
 
     // 7. 验证结果
     expect(result).toBeDefined();
@@ -213,13 +215,9 @@ async function runExample() {
 
   console.log('📝 验证专利申请文件...\n');
 
-  const result = await validator.validateWithHallucinationCheck(
-    exampleData,
-    patentSchema,
-    {
-      factCheckThreshold: 0.7,
-    }
-  );
+  const result = await validator.validateWithHallucinationCheck(exampleData, patentSchema, {
+    factCheckThreshold: 0.7,
+  });
 
   console.log('\n✅ 验证结果:');
   console.log(`通过: ${result.valid}`);

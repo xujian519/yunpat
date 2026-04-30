@@ -21,12 +21,9 @@ export class ComplianceChecker {
   private principles: ConstitutionalPrinciple[];
   private config: ConstitutionalAIConfig;
 
-  constructor(
-    principles: ConstitutionalPrinciple[],
-    config: ConstitutionalAIConfig
-  ) {
+  constructor(principles: ConstitutionalPrinciple[], config: ConstitutionalAIConfig) {
     // 根据配置过滤启用的原则
-    this.principles = principles.filter(p => {
+    this.principles = principles.filter((p) => {
       if (config.enabledPrinciples.length === 0) {
         return true; // 空数组表示启用所有
       }
@@ -43,9 +40,7 @@ export class ComplianceChecker {
     const startTime = Date.now();
 
     // 按优先级排序原则（高优先级先检查）
-    const sortedPrinciples = [...this.principles].sort(
-      (a, b) => b.priority - a.priority
-    );
+    const sortedPrinciples = [...this.principles].sort((a, b) => b.priority - a.priority);
 
     // 并发检查所有原则
     const results: ComplianceResult[] = await this.checkPrinciplesConcurrently(
@@ -66,7 +61,7 @@ export class ComplianceChecker {
     // 生成统计信息
     for (const principle of sortedPrinciples) {
       const principleResults = results.find(
-        r => r.violations.length > 0 || r.warnings.length > 0
+        (r) => r.violations.length > 0 || r.warnings.length > 0
       );
 
       if (principleResults) {
@@ -114,7 +109,7 @@ export class ComplianceChecker {
 
     for (const batch of batches) {
       const batchResults = await Promise.all(
-        batch.map(principle => this.checkSinglePrinciple(content, principle))
+        batch.map((principle) => this.checkSinglePrinciple(content, principle))
       );
       allResults.push(...batchResults);
     }
@@ -133,7 +128,7 @@ export class ComplianceChecker {
       const result = await principle.checkFunction(content);
 
       // 为每个违规添加原则信息
-      result.violations.forEach(v => {
+      result.violations.forEach((v) => {
         if (!v.principleId) {
           v.principleId = principle.id;
         }
@@ -143,7 +138,7 @@ export class ComplianceChecker {
       });
 
       // 为每个警告添加原则信息
-      result.warnings.forEach(w => {
+      result.warnings.forEach((w) => {
         if (!w.principleId) {
           w.principleId = principle.id;
         }
@@ -155,21 +150,20 @@ export class ComplianceChecker {
       return result;
     } catch (error) {
       // 如果检查失败，返回合规结果但不标记违规
-      console.error(
-        `[ComplianceChecker] 原则 ${principle.id} 检查失败:`,
-        error
-      );
+      console.error(`[ComplianceChecker] 原则 ${principle.id} 检查失败:`, error);
 
       return {
         compliant: true, // 默认合规，避免误报
         score: 1.0,
         violations: [],
-        warnings: [{
-          principleId: principle.id,
-          principleName: principle.name,
-          description: `检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
-          suggestion: '请手动检查该原则的合规性',
-        }],
+        warnings: [
+          {
+            principleId: principle.id,
+            principleName: principle.name,
+            description: `检查失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            suggestion: '请手动检查该原则的合规性',
+          },
+        ],
       };
     }
   }
@@ -239,7 +233,7 @@ export class ComplianceChecker {
     // 重新过滤启用的原则
     const enabledPrinciples = this.config.enabledPrinciples || [];
     if (config.enabledPrinciples) {
-      this.principles = this.principles.filter(p => {
+      this.principles = this.principles.filter((p) => {
         if (enabledPrinciples.length === 0) {
           return true;
         }

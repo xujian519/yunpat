@@ -25,17 +25,19 @@ describe('TextRenderer', () => {
           id: 'goal1',
           title: '技术方案理解',
           description: '理解技术方案',
-          tasks: [{
-            id: 'task1',
-            title: '分析技术要点',
-            description: '分析技术要点',
-            type: 'research' as any,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['analysis'],
-            estimatedTokens: 2000,
-            estimatedDuration: 300,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task1',
+              title: '分析技术要点',
+              description: '分析技术要点',
+              type: 'research' as any,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['analysis'],
+              estimatedTokens: 2000,
+              estimatedDuration: 300,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: [],
           priority: Priority.HIGH,
           status: TaskStatus.COMPLETED,
@@ -46,17 +48,19 @@ describe('TextRenderer', () => {
           id: 'goal2',
           title: '权利要求生成',
           description: '生成权利要求',
-          tasks: [{
-            id: 'task2',
-            title: '撰写独立权利要求',
-            description: '撰写独立权利要求',
-            type: 'writing' as any,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 3000,
-            estimatedDuration: 600,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task2',
+              title: '撰写独立权利要求',
+              description: '撰写独立权利要求',
+              type: 'writing' as any,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 3000,
+              estimatedDuration: 600,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: ['goal1'],
           priority: Priority.CRITICAL,
           status: TaskStatus.IN_PROGRESS,
@@ -67,17 +71,19 @@ describe('TextRenderer', () => {
           id: 'goal3',
           title: '说明书撰写',
           description: '撰写说明书',
-          tasks: [{
-            id: 'task3',
-            title: '撰写实施方式',
-            description: '撰写实施方式',
-            type: 'writing' as any,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['writing'],
-            estimatedTokens: 4000,
-            estimatedDuration: 900,
-            createdAt: new Date(),
-          }],
+          tasks: [
+            {
+              id: 'task3',
+              title: '撰写实施方式',
+              description: '撰写实施方式',
+              type: 'writing' as any,
+              status: TaskStatus.PENDING,
+              requiredCapabilities: ['writing'],
+              estimatedTokens: 4000,
+              estimatedDuration: 900,
+              createdAt: new Date(),
+            },
+          ],
           dependencies: ['goal2'],
           priority: Priority.HIGH,
           status: TaskStatus.PENDING,
@@ -203,7 +209,7 @@ describe('TextRenderer', () => {
 
       // 深度为1时，只显示根节点
       const lines = result.content.split('\n');
-      const rootCount = lines.filter(line => line.includes('└─')).length;
+      const rootCount = lines.filter((line) => line.includes('└─')).length;
       expect(rootCount).toBeGreaterThan(0);
     });
   });
@@ -370,7 +376,7 @@ describe('TextRenderer', () => {
 
     it('应该处理所有任务完成的计划', () => {
       const plan = createTestPlan();
-      plan.subGoals.forEach(goal => {
+      plan.subGoals.forEach((goal) => {
         goal.status = TaskStatus.COMPLETED;
       });
 

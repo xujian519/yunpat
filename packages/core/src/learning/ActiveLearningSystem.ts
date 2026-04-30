@@ -24,10 +24,10 @@ export interface Sample {
   id: string;
 
   /** 输入内容 */
-  input: any;
+  input: unknown;
 
   /** 当前预测结果 */
-  prediction?: any;
+  prediction?: unknown;
 
   /** 真实标注（如有） */
   annotation?: Annotation;
@@ -42,7 +42,7 @@ export interface Sample {
   source: 'prediction' | 'validation' | 'user_upload' | 'synthetic';
 
   /** 元数据 */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -53,7 +53,7 @@ export interface Annotation {
   id: string;
 
   /** 标注值 */
-  label: any;
+  label: unknown;
 
   /** 标注者 */
   annotator: string;
@@ -316,7 +316,7 @@ export class ActiveLearningSystem {
    * @returns 不确定性分数
    */
   estimateUncertainty(
-    result: any,
+    result: unknown,
     method: 'entropy' | 'variance' | 'margin' | 'confidence' = 'entropy'
   ): UncertaintyScore {
     // 预测不确定性 - 基于模型输出的置信度
@@ -326,8 +326,8 @@ export class ActiveLearningSystem {
     const semantic = this.estimateSemanticUncertainty(result);
 
     // 分布不确定性 - 如果有多次预测结果
-    const distribution = result.multiplePredictions
-      ? this.estimateDistributionUncertainty(result.multiplePredictions)
+    const distribution = (result as any).multiplePredictions
+      ? this.estimateDistributionUncertainty((result as any).multiplePredictions)
       : undefined;
 
     // 总体不确定性（加权平均）
@@ -345,31 +345,31 @@ export class ActiveLearningSystem {
   /**
    * 估计预测不确定性
    */
-  private estimatePredictionUncertainty(result: any, method: string): number {
+  private estimatePredictionUncertainty(result: unknown, method: string): number {
     // 从结果中提取置信度
-    const confidence = result.confidence ?? result.score ?? 0.5;
+    const confidence = (result as any).confidence ?? (result as any).score ?? 0.5;
 
     switch (method) {
       case 'entropy':
         // 熵不确定性：H = -sum(p * log(p))
         // 当 p = 0.5 时熵最大（最不确定）
-        if (result.probabilities) {
-          return this.calculateEntropy(result.probabilities);
+        if ((result as any).probabilities) {
+          return this.calculateEntropy((result as any).probabilities);
         }
         // 简化：使用 1 - |2*confidence - 1|
         return 1 - Math.abs(2 * confidence - 1);
 
       case 'variance':
         // 方差不确定性
-        if (result.variance !== undefined) {
-          return Math.min(result.variance, 1);
+        if ((result as any).variance !== undefined) {
+          return Math.min((result as any).variance, 1);
         }
         return 1 - confidence;
 
       case 'margin':
         // 边缘不确定性：1 - (p_max - p_second_max)
-        if (result.probabilities && result.probabilities.length >= 2) {
-          const sorted = [...result.probabilities].sort((a, b) => b - a);
+        if ((result as any).probabilities && (result as any).probabilities.length >= 2) {
+          const sorted = [...(result as any).probabilities].sort((a, b) => b - a);
           return 1 - (sorted[0] - sorted[1]);
         }
         return 1 - confidence;
@@ -400,10 +400,10 @@ export class ActiveLearningSystem {
    *
    * 基于输入的模糊、歧义程度
    */
-  private estimateSemanticUncertainty(result: any): number {
+  private estimateSemanticUncertainty(result: unknown): number {
     let uncertainty = 0;
 
-    const input = result.input ?? result.query ?? result.prompt;
+    const input = (result as any).input ?? (result as any).query ?? (result as any).prompt;
     if (typeof input !== 'string') {
       return 0.5; // 默认中等不确定性
     }
@@ -474,10 +474,10 @@ export class ActiveLearningSystem {
   /**
    * 比较两个预测的差异
    */
-  private comparePredictions(pred1: any, pred2: any): number {
+  private comparePredictions(pred1: unknown, pred2: unknown): number {
     // 简化实现：基于字符串相似度
-    const str1 = JSON.stringify(pred1.result ?? pred1);
-    const str2 = JSON.stringify(pred2.result ?? pred2);
+    const str1 = JSON.stringify((pred1 as any).result ?? (pred1 as any));
+    const str2 = JSON.stringify((pred2 as any).result ?? (pred2 as any));
 
     if (str1 === str2) return 0;
 
@@ -676,7 +676,7 @@ export class ActiveLearningSystem {
    * @returns 标注结果
    */
   async annotateWithHuman(sample: Sample, annotator: string): Promise<Annotation> {
-    const startTime = Date.now();
+    const _startTime = Date.now(); // 保留用于未来实现耗时计算
 
     // 触发标注请求事件（由外部系统处理实际标注流程）
     // 这里返回一个待处理的标注请求
@@ -915,13 +915,13 @@ export class ActiveLearningSystem {
   /**
    * 添加样本到池
    */
-  addSample(result: any, source: Sample['source'] = 'prediction'): Sample {
+  addSample(result: unknown, source: Sample['source'] = 'prediction'): Sample {
     const uncertainty = this.estimateUncertainty(result);
 
     const sample: Sample = {
       id: uuidv4(),
-      input: result.input ?? result.query ?? result.prompt,
-      prediction: result.result ?? result.output,
+      input: (result as any).input ?? (result as any).query ?? (result as any).prompt,
+      prediction: (result as any).result ?? (result as any).output,
       uncertaintyScore: uncertainty.total,
       createdAt: new Date(),
       source,

@@ -239,11 +239,7 @@ describe('幻觉检测系统集成测试', () => {
     it('应该批量检测多个文档', async () => {
       const detector = new HallucinationDetector(llm, knowledgeBase);
 
-      const documents = [
-        '内容1',
-        '内容2',
-        '内容3',
-      ];
+      const documents = ['内容1', '内容2', '内容3'];
 
       const reports = await detector.detectBatch(documents);
 
@@ -293,13 +289,9 @@ describe('幻觉检测系统集成测试', () => {
         `,
       };
 
-      const result = await validator.validateWithHallucinationCheck(
-        patentData,
-        patentSchema,
-        {
-          factCheckThreshold: 0.7,
-        }
-      );
+      const result = await validator.validateWithHallucinationCheck(patentData, patentSchema, {
+        factCheckThreshold: 0.7,
+      });
 
       // 验证基础功能
       expect(result.valid).toBe(true);
@@ -312,7 +304,9 @@ describe('幻觉检测系统集成测试', () => {
       console.log('\n📊 专利申请验证结果:');
       console.log(`  结构验证: ${result.valid ? '✅ 通过' : '❌ 失败'}`);
       console.log(`  幻觉分数: ${(result.hallucinationReport!.overallScore * 100).toFixed(1)}%`);
-      console.log(`  事实验证: ${result.hallucinationReport!.factCheckResults?.length || 0} 个声明`);
+      console.log(
+        `  事实验证: ${result.hallucinationReport!.factCheckResults?.length || 0} 个声明`
+      );
       console.log(`  逻辑问题: ${result.hallucinationReport!.logicalInconsistencies.length} 个`);
       console.log(`  源归属问题: ${result.hallucinationReport!.sourceAttributionIssues.length} 个`);
     });
@@ -337,13 +331,9 @@ describe('幻觉检测系统集成测试', () => {
         `,
       };
 
-      const result = await validator.validateWithHallucinationCheck(
-        lowQualityData,
-        schema,
-        {
-          factCheckThreshold: 0.5, // 降低阈值
-        }
-      );
+      const result = await validator.validateWithHallucinationCheck(lowQualityData, schema, {
+        factCheckThreshold: 0.5, // 降低阈值
+      });
 
       // 结构验证应该通过
       expect(result.valid).toBe(true);
@@ -376,13 +366,9 @@ describe('幻觉检测系统集成测试', () => {
         content: '这是一个简单的技术方案，采用深度学习算法进行图像识别。',
       };
 
-      const result = await validator.validateWithHallucinationCheck(
-        highQualityData,
-        schema,
-        {
-          factCheckThreshold: 0.7,
-        }
-      );
+      const result = await validator.validateWithHallucinationCheck(highQualityData, schema, {
+        factCheckThreshold: 0.7,
+      });
 
       // 高质量内容应该通过验证
       expect(result.valid).toBe(true);
@@ -393,7 +379,9 @@ describe('幻觉检测系统集成测试', () => {
       }
 
       console.log('\n✅ 高质量内容检测结果:');
-      console.log(`  幻觉分数: ${(result.hallucinationReport?.overallScore ?? 0 * 100).toFixed(1)}%`);
+      console.log(
+        `  幻觉分数: ${(result.hallucinationReport?.overallScore ?? 0 * 100).toFixed(1)}%`
+      );
       console.log(`  错误: ${result.errors.length}`);
       console.log(`  警告: ${result.warnings.length}`);
     });

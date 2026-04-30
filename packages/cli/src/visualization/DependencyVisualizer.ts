@@ -36,10 +36,7 @@ export class DependencyVisualizer {
   /**
    * 渲染为指定格式
    */
-  render(
-    plan: HierarchicalPlan,
-    options: VisualizationOptions = { format: 'text' }
-  ): RenderResult {
+  render(plan: HierarchicalPlan, options: VisualizationOptions = { format: 'text' }): RenderResult {
     switch (options.format) {
       case 'tree':
       case 'graph':
@@ -121,10 +118,7 @@ export class DependencyVisualizer {
   /**
    * 导出为PNG图片
    */
-  private async exportAsPNG(
-    plan: HierarchicalPlan,
-    options: ExportOptions
-  ): Promise<void> {
+  private async exportAsPNG(plan: HierarchicalPlan, options: ExportOptions): Promise<void> {
     // 1. 先生成DOT文件
     const dotPath = options.outputPath.replace('.png', '.dot');
     await this.exportAsDOT(plan, dotPath);
@@ -141,19 +135,14 @@ export class DependencyVisualizer {
       // 3. 清理临时DOT文件
       await execAsync(`rm "${dotPath}"`);
     } catch (error) {
-      throw new Error(
-        `导出PNG失败: ${error}. 请确保已安装Graphviz (brew install graphviz)`
-      );
+      throw new Error(`导出PNG失败: ${error}. 请确保已安装Graphviz (brew install graphviz)`);
     }
   }
 
   /**
    * 导出为SVG矢量图
    */
-  private async exportAsSVG(
-    plan: HierarchicalPlan,
-    options: ExportOptions
-  ): Promise<void> {
+  private async exportAsSVG(plan: HierarchicalPlan, options: ExportOptions): Promise<void> {
     // 1. 先生成DOT文件
     const dotPath = options.outputPath.replace('.svg', '.dot');
     await this.exportAsDOT(plan, dotPath);
@@ -166,9 +155,7 @@ export class DependencyVisualizer {
       // 3. 清理临时DOT文件
       await execAsync(`rm "${dotPath}"`);
     } catch (error) {
-      throw new Error(
-        `导出SVG失败: ${error}. 请确保已安装Graphviz (brew install graphviz)`
-      );
+      throw new Error(`导出SVG失败: ${error}. 请确保已安装Graphviz (brew install graphviz)`);
     }
   }
 

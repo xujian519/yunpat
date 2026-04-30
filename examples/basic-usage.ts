@@ -4,12 +4,7 @@
  * 演示如何创建和使用智能体
  */
 
-import {
-  EventBus,
-  ShortTermMemory,
-  ToolRegistry,
-  LangChainAdapter,
-} from '@yunpat/core';
+import { EventBus, ShortTermMemory, ToolRegistry, LangChainAdapter } from '@yunpat/core';
 import { WriterAgent } from '@yunpat/agent-writer';
 import { ResearcherAgent } from '@yunpat/agent-researcher';
 

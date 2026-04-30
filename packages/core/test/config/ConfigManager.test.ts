@@ -3,7 +3,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ConfigManager, getConfigManager, resetConfigManager } from '../../src/config/ConfigManager.js';
+import {
+  ConfigManager,
+  getConfigManager,
+  resetConfigManager,
+} from '../../src/config/ConfigManager.js';
 
 describe('ConfigManager', () => {
   beforeEach(() => {

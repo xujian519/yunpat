@@ -13,7 +13,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@yunpat/core": "workspace:*",
@@ -27,7 +29,8 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/inquirer": "^9.0.7",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
   },
   "keywords": [
     "cli",

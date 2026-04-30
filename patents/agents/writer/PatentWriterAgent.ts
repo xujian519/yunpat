@@ -22,6 +22,8 @@ import type { EmbeddingAdapter } from '@yunpat/core/src/llm/EmbeddingAdapter.js'
 import { PromptTemplateManager } from '../../prompts/PromptTemplateManager.js';
 import * as PatentCore from '../../core/PatentCoreBridge.js';
 import { renderDraftingClaimsPrompt, renderDraftingSpecificationPrompt } from '../../prompts/business/drafting.js';
+import { HallucinationDetector } from '@yunpat/core/src/validation/HallucinationDetector.js';
+import { KnowledgeBase } from '@yunpat/core/src/knowledge/KnowledgeBase.js';
 
 /**
  * 专利撰写输入
@@ -114,6 +116,7 @@ export interface PatentWriterConfig {
   enableTemplates?: boolean;
   maxIterations?: number;
   embedder?: EmbeddingAdapter;
+  enableHallucinationCheck?: boolean;
 }
 
 /**
@@ -125,6 +128,8 @@ export class PatentWriterAgent extends Agent<PatentWritingInput, PatentWritingOu
   private promptManager: PromptTemplateManager;
   private config: PatentWriterConfig;
   private currentStage: string = 'idle';
+  private hallucinationDetector?: HallucinationDetector;
+  private knowledgeBase?: KnowledgeBase;
 
   constructor(config: PatentWriterConfig) {
     super({
@@ -165,6 +170,79 @@ export class PatentWriterAgent extends Agent<PatentWritingInput, PatentWritingOu
     if (config.enableTemplates !== false) {
       this.promptManager = new PromptTemplateManager(config.templateDir);
       console.log('[PatentWriterAgent] 提示词模板已启用');
+    }
+
+    // 初始化幻觉检测器（如果启用）
+    if (config.enableHallucinationCheck && config.llm) {
+      // 创建知识库实例（如果还没有）
+      if (!this.knowledgeBase) {
+        const knowledgeBasePath = config.knowledgeBasePath || process.env.KNOWLEDGE_BASE_PATH;
+        if (knowledgeBasePath) {
+          // 这里简化处理，实际应该与 ObsidianKnowledgeBridge 共享知识库
+          // 暂时禁用嵌入以提高性能
+          this.knowledgeBase = (await import('@yunpat/core')).createKnowledgeBase({
+            enableEmbedding: false,
+            persistent: false,
+            storagePath: '/tmp/yunpat-knowledge-hallucination',
+          });
+
+          // 预加载一些专利相关知识到知识库
+          await this.loadPatentKnowledgeToBase();
+        }
+      }
+
+      if (this.knowledgeBase) {
+        this.hallucinationDetector = new HallucinationDetector(
+          config.llm,
+          this.knowledgeBase,
+          {
+            enableFactCheck: true,
+            enableLogicalConsistencyCheck: true,
+            enableSourceAttribution: true,
+            factCheckThreshold: 0.7,
+          }
+        );
+        console.log('[PatentWriterAgent] 幻觉检测已启用');
+      }
+    }
+  }
+
+  /**
+   * 加载专利相关知识到知识库（用于幻觉检测）
+   */
+  private async loadPatentKnowledgeToBase(): Promise<void> {
+    if (!this.knowledgeBase) return;
+
+    try {
+      // 这里可以添加一些基础的专利法律知识
+      const patentKnowledge = [
+        {
+          id: 'patent-law-25',
+          type: 'document',
+          title: '专利法第25条',
+          content: '根据专利法第25条，授予专利权的条件是：新颖性、创造性和实用性。',
+          category: 'legal',
+          tags: ['专利法', '授权条件'],
+          priority: 9,
+        },
+        {
+          id: 'patent-clarity',
+          type: 'document',
+          title: '权利要求清楚性要求',
+          content: '权利要求应当清楚、简要地限定保护范围。权利要求中的技术特征应当描述明确，避免使用模糊不清的表达。',
+          category: 'legal',
+          tags: ['权利要求', '清楚性'],
+          priority: 8,
+        },
+      ];
+
+      for (const knowledge of patentKnowledge) {
+        await this.knowledgeBase.store(knowledge);
+      }
+
+      console.log(`[PatentWriterAgent] 已加载 ${patentKnowledge.length} 条专利知识到知识库`);
+    } catch (error) {
+      console.warn('[PatentWriterAgent] 加载专利知识失败:', error);
     }
   }
 
@@ -364,6 +442,48 @@ ${preprocessedInfo}`,
       console.warn('[PatentWriterAgent] patent-core 质量评估失败:', (e as Error).message);
     }
 
+    // 幻觉检测（如果启用）
+    let hallucinationReport: any = null;
+    if (this.halluchinationDetector) {
+      console.log('[PatentWriterAgent] 执行幻觉检测...');
+      try {
+        // 合并所有文本内容进行检测
+        const fullContent = `
+摘要：
+${output.patentApplication.abstract}
+
+权利要求：
+${output.patentApplication.claims.map((c, i) => `${i + 1}. ${c.content}`).join('\n')}
+
+说明书：
+${output.patentApplication.description}
+        `.trim();
+
+        hallucinationReport = await this.hallucinationDetector.detect(fullContent);
+        console.log(`[PatentWriterAgent] 幻觉检测分数: ${(hallucinationReport.overallScore * 100).toFixed(1)}%`);
+
+        if (hallucinationReport.factCheckResults.length > 0) {
+          const unverified = hallucinationReport.factCheckResults.filter((r: any) => !r.isVerified);
+          if (unverified.length > 0) {
+            console.log(`[PatentWriterAgent] 发现 ${unverified.length} 个未验证的事实声明`);
+          }
+        }
+
+        if (hallucinationReport.logicalInconsistencies.length > 0) {
+          console.log(`[PatentWriterAgent] 发现 ${hallucinationReport.logicalInconsistencies.length} 个逻辑问题`);
+        }
+
+        if (hallucinationReport.sourceAttributionIssues.length > 0) {
+          const critical = hallucinationReport.sourceAttributionIssues.filter((i: any) => i.severity === 'critical');
+          if (critical.length > 0) {
+            console.log(`[PatentWriterAgent] 发现 ${critical.length} 个关键源归属问题`);
+          }
+        }
+      } catch (e) {
+        console.warn('[PatentWriterAgent] 幻觉检测失败:', (e as Error).message);
+      }
+    }
+
     // 懒加载所有模板（质量评估需要）
     if (this.promptManager) {
       console.log('[PatentWriterAgent] 加载所有模板用于质量评估...');
@@ -376,6 +496,10 @@ ${preprocessedInfo}`,
 
     const coreInfo = coreAssessment
       ? `\n\n## patent-core 规则化评估\n清晰性: ${coreAssessment.clarity_score}\n支持性: ${coreAssessment.support_score}\n保护范围: ${coreAssessment.scope_score}\n综合: ${coreAssessment.overall_score}\n${coreAssessment.issues?.map((i: any) => `- [${i.severity}] ${i.dimension}: ${i.suggestion}`).join('\n') || ''}`
+      : '';
+
+    const hallucinationInfo = hallucinationReport
+      ? `\n\n## 幻觉检测评估\n幻觉分数: ${(hallucinationReport.overallScore * 100).toFixed(1)}%\n事实验证: ${hallucinationReport.factCheckResults.length} 个声明\n逻辑问题: ${hallucinationReport.logicalInconsistencies.length} 个\n源归属问题: ${hallucinationReport.sourceAttributionIssues.length} 个\n${hallucinationReport.suggestions?.slice(0, 3).map((s: any) => `- ${s.action}: ${s.description}`).join('\n') || ''}`
       : '';
 
     const qualityCheck = await context.llm.chat({
@@ -397,7 +521,7 @@ ${preprocessedInfo}`,
           role: 'user',
           content: `权利要求数量：${output.metrics.claimsCount}
 摘要：${output.patentApplication.abstract}
-说明书长度：${output.metrics.descriptionWordCount} 字${coreInfo}`,
+说明书长度：${output.metrics.descriptionWordCount} 字${coreInfo}${hallucinationInfo}`,
         },
       ],
       temperature: 0.3,
@@ -406,7 +530,12 @@ ${preprocessedInfo}`,
     return {
       qualityCheck: qualityCheck.message.content,
       coreAssessment,
-      improvementSuggestions: coreAssessment?.issues?.map((i: any) => i.suggestion) || [],
+      hallucinationReport,
+      improvementSuggestions: [
+        ...(coreAssessment?.issues?.map((i: any) => i.suggestion) || []),
+        ...(hallucinationReport?.suggestions?.map((s: any) => s.description) || []),
+      ],
+      shouldContinue: !hallucinationReport || hallucinationReport.overallScore < 0.7,
     };
   }
 

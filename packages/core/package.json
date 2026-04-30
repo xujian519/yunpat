@@ -9,6 +9,22 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./planning/types": {
+      "types": "./dist/planning/types.d.ts",
+      "import": "./dist/planning/types.js"
+    },
+    "./planning/*": {
+      "types": "./dist/planning/*.d.ts",
+      "import": "./dist/planning/*.js"
+    },
+    "./replanning/types": {
+      "types": "./dist/replanning/types.d.ts",
+      "import": "./dist/replanning/types.js"
+    },
+    "./replanning/*": {
+      "types": "./dist/replanning/*.d.ts",
+      "import": "./dist/replanning/*.js"
     }
   },
   "files": [

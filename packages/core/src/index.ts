@@ -147,7 +147,7 @@ export {
   CostAwareLLMAdapter,
   createCostAwareAdapter,
   TaskComplexity,
-  type Task,
+  type Task as RoutingTask,
   type RoutingDecision,
   type TaskRouterConfig,
 } from './llm/TaskRouter.js';
@@ -331,7 +331,7 @@ export {
 // ========== 验证 (Validation) ==========
 export {
   ResultValidator,
-  CorrectionStrategy,
+  CorrectionStrategy as ValidationCorrectionStrategy,
   ValidationErrorType,
 } from './validation/ResultValidator.js';
 
@@ -342,6 +342,97 @@ export type {
   Inconsistency,
   ResultValidatorConfig,
 } from './validation/ResultValidator.js';
+
+// ========== 规划系统 (Planning) ==========
+export {
+  TaskDecomposer,
+  DependencyAnalyzer,
+  TaskScheduler,
+} from './planning/index.js';
+
+export type {
+  // 配置和选项
+  DecompositionOptions,
+  DecompositionRule,
+  SubGoalTemplate,
+  TaskTemplate,
+  TaskDecomposerConfig,
+  DependencyAnalyzerConfig,
+  TaskSchedulerConfig,
+
+  // 调度和分析
+  ScheduleResult,
+  DeviationDetail,
+
+  // 统计
+  DecompositionStats,
+
+  // 核心接口
+  SubGoal,
+  Dependency,
+  DependencyGraph,
+  HierarchicalPlan,
+  DeviationReport as PlanningDeviationReport,
+  ReplanningContext as PlanningReplanningContext,
+  PlanAdjustment as PlanningPlanAdjustment,
+  TaskModification as PlanningTaskModification,
+} from './planning/types.js';
+
+export {
+  // 基础类型（enum）
+  Priority,
+  TaskStatus,
+  TaskType,
+  PlanStatus,
+} from './planning/types.js';
+
+// ========== Constitutional AI ==========
+export {
+  ConstitutionalAI,
+  ComplianceChecker,
+  AutoCorrector,
+  PATENT_PRINCIPLES,
+} from './constitutional/index.js';
+
+export type {
+  PrincipleCheckFunction,
+  ConstitutionalPrinciple,
+  ComplianceResult,
+  Violation,
+  Warning,
+  ComplianceReport,
+  CorrectionResult,
+  AppliedCorrection,
+  ConstitutionalAIConfig,
+  ConflictResolution,
+} from './constitutional/types.js';
+
+export { PrincipleCategory, ViolationSeverity, CorrectionStrategy } from './constitutional/types.js';
+
+// ========== 动态重规划 (Dynamic Replanning) ==========
+export {
+  DynamicReplanner,
+  DeviationDetector,
+  RecoveryStrategySelector,
+  IncrementalPlanner,
+} from './replanning/index.js';
+
+export type {
+  ReplanningTrigger,
+  ExecutionState,
+  QualityMetrics,
+  ResourceUsage,
+  Deviation,
+  RecoveryStrategy,
+  ReplanningHistory,
+  ReplanningResult,
+  DynamicReplannerConfig,
+  IncrementalPlannerConfig,
+  DeviationReport,
+  PlanAdjustment,
+  TaskModification,
+  ReplanningContext,
+} from './replanning/types.js';
 
 // ========== 主动学习 (Active Learning) ==========
 export {

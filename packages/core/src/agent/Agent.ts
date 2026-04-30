@@ -245,7 +245,8 @@ export abstract class Agent<TInput = any, TOutput = any> {
 
           // 如果反思返回了 shouldContinue 标志，使用它
           if (reflection && typeof reflection === 'object') {
-            shouldContinue = ((reflection as Record<string, unknown>).shouldContinue as boolean) ?? false;
+            shouldContinue =
+              ((reflection as Record<string, unknown>).shouldContinue as boolean) ?? false;
           } else {
             shouldContinue = false;
           }

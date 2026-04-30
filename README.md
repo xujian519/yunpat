@@ -1,333 +1,235 @@
 # YunPat - 知识产权全生命周期智能体平台
 
-**版本**: v1.0.0 (专利专业版)
+**版本**: v0.1.0 (开发中)
 **定位**: 为专利代理所、律师事务所和企业 IP 部门提供智能化专利管理
 
 ---
 
-## 🎯 产品定位
+## 产品定位
 
 **使命**：让专利工作更智能、更高效、更专业
 
 **核心价值**：
-- ⚡ **撰写效率提升 3-5 倍**：AI 辅助撰写专利申请文件
-- 🎯 **授权率提高 20-30%**：智能审查答复，提高专利授权率
-- 💰 **成本降低 40-60%**：自动化流程，减少人力投入
-- 📊 **全流程可视**：专利全景视图，风险实时预警
+- 撰写效率提升 3-5 倍：AI 辅助撰写专利申请文件
+- 授权率提高 20-30%：智能审查答复，提高专利授权率
+- 成本降低 40-60%：自动化流程，减少人力投入
+- 全流程可视：专利全景视图，风险实时预警
 
 ---
 
-## 👥 目标客户
+## 目标客户
 
 ### T1: 小型专利代理所（5-50人）
-- 💰 年收入：500万-5000万
-- 📄 专利量：100-1000 件/年
-- ⚡ 核心需求：撰写效率、答复质量
+- 年收入：500万-5000万
+- 专利量：100-1000 件/年
+- 核心需求：撰写效率、答复质量
 
 ### T2: 律师事务所 IP 团队
-- 💰 年收入：1000万-1亿
-- 👥 IP 团队：5-20 人
-- ⚡ 核心需求：专业深度、诉讼支持
+- 年收入：1000万-1亿
+- IP 团队：5-20 人
+- 核心需求：专业深度、诉讼支持
 
 ### T3: 企业 IP 管理部门
-- 💰 预算：50万-500万/年
-- 📄 专利组合：500-5000 件
-- ⚡ 核心需求：资产管控、风险防范
+- 预算：50万-500万/年
+- 专利组合：500-5000 件
+- 核心需求：资产管控、风险防范
 
 ---
 
-## 🏗️ 项目结构
+## 项目结构
 
 ```
 yunpat/
-│
-├── packages/                # 可复用代码包
-│   ├── core/                # 核心框架（TypeScript）
+├── packages/                # 可复用代码包（pnpm workspace）
+│   ├── core/                # 核心框架（TypeScript，~85% 完成）
+│   │   └── src/
+│   │       ├── agent/       # Agent 抽象基类
+│   │       ├── gateway/     # 交互层（多模态、HITL、安全网关）
+│   │       ├── reasoning/   # 推理层（ReAct/PlanAndSolve/ToT）
+│   │       ├── llm/         # LLM 适配器（DeepSeek/Qwen/Ollama）
+│   │       ├── memory/      # 记忆层（检查点、时间旅行）
+│   │       ├── tools/       # 工具层（注册表、中间件、选择优化）
+│   │       ├── eventbus/    # 事件总线（53 个测试用例）
+│   │       ├── knowledge/   # 知识库系统（卡片、管道）
+│   │       ├── validation/  # 结果验证与修正
+│   │       ├── observability/ # 可观测性（遥测、告警）
+│   │       └── config/      # 配置管理
+│   │
 │   ├── agents/              # 通用智能体
-│   ├── rust-tools/          # Rust 工具（性能关键）
-│   ├── python-tools/        # Python 工具（科学计算）
-│   └── cli/                 # 命令行工具
+│   │   ├── writer/          # 技术写作助手（~65%）
+│   │   └── researcher/      # 研究分析师（~40%）
+│   │
+│   ├── patent-tools/        # 专利专用工具（~70%）
+│   ├── builtin-tools/       # 内置基础工具（~60%）
+│   ├── document-tools/      # 文档解析工具（~75%）
+│   ├── grpc-server/         # gRPC 服务器（~50%）
+│   └── cli/                 # 命令行工具（~20%，骨架实现）
 │
 ├── patents/                 # 专利专用业务逻辑
 │   ├── agents/              # 四大专利智能体
-│   │   ├── writer/          # 专利撰写智能体
-│   │   ├── responder/       # 审查答复智能体
-│   │   ├── analyzer/        # 专利分析智能体
-│   │   └── manager/         # 专利管理智能体
-│   ├── prompts/             # Prompt 模板
-│   ├── generation/          # 文档生成器
-│   ├── retrieval/           # 检索系统
-│   ├── knowledge/           # 知识库集成
-│   └── mcp/                 # MCP 工具服务器
+│   │   ├── writer/          # 专利撰写智能体（~80%，最成熟）
+│   │   ├── responder/       # 审查答复智能体（~50%）
+│   │   ├── analyzer/        # 专利分析智能体（~50%）
+│   │   └── manager/         # 专利管理智能体（~20%）
+│   ├── prompts/             # Prompt 模板（~80%，1821 行模板代码）
+│   ├── knowledge/           # ObsidianKnowledgeBridge
+│   ├── core/                # Rust 桥接层（PatentCoreBridge）
+│   └── mcp/                 # MCP 工具服务器（~40%，硬编码数据）
 │
-├── knowledge-base/          # 专利知识库
-│   ├── cards/               # Wiki 卡片
-│   ├── 法律法规/            # 法律文档
-│   ├── 复审无效/            # 复审无效案例
-│   ├── 审查指南/            # 专利审查指南
-│   ├── 专利判决/            # 专利判决书
-│   ├── 专利侵权/            # 侵权案例
-│   └── 专利实务/            # 专利实务
-│
+├── cli/patent-cli/          # 独立 CLI 工具（空壳）
+├── knowledge-base/          # 专利知识库（1139+ 文件）
 ├── docs/                    # 项目文档
-│   ├── reports/             # 工作报告
-│   ├── plans/               # 计划文档
-│   ├── guides/              # 开发指南
-│   ├── architecture/        # 架构文档
-│   └── business/            # 业务文档
-│
-├── examples/                # 使用示例
-├── scripts/                 # 维护脚本
+├── examples/                # 使用示例（19 个）
+├── scripts/                 # 维护脚本（14 个）
 ├── test/                    # 测试文件
-└── docker/                  # Docker 配置
+├── docker/                  # Docker 配置
+└── protos/                  # gRPC/Protobuf 定义
 ```
 
 ---
 
-## 🎉 最新更新（2026-04-28）
+## 当前状态（2026-04-30）
 
-### ✅ 已完成
+**总体完成度**: ~30%（基于实际代码审计）
 
-1. **核心框架 (packages/core)**
-   - ✅ Agent 基类：plan/act/reflect 生命周期
-   - ✅ EventBus：发布订阅 + RPC 请求响应（53 个测试用例）
-   - ✅ LLM 适配器：LangChain ChatOpenAI，支持流式调用
+### 已完成
 
-2. **PatentWriterAgent（最完善的智能体）**
-   - ✅ 集成 ObsidianKnowledgeBridge（知识库增强）
-   - ✅ 集成 PromptTemplateManager（提示词模板，分步加载）
-   - ✅ 权利要求生成、说明书生成、摘要生成（通过 LLM）
-   - ⚠️ 未经端到端验证
+| 模块 | 完成度 | 说明 |
+|------|--------|------|
+| 核心框架 (packages/core) | 85% | Agent/EventBus/LLM/推理/记忆/工具/知识库，356+ 导出 |
+| 知识库集成 | 100% | 1139 个文件，ObsidianKnowledgeBridge |
+| PatentWriterAgent | 80% | 知识库+模板+Rust桥接，未经端到端验证 |
+| 提示词模板 | 80% | 1821 行，懒加载策略 |
+| 文档体系 | 90% | 60+ 文档文件，80000+ 字 |
 
-3. **知识库集成**
-   - ✅ ObsidianKnowledgeBridge：桥接宝宸知识库（1139 个文件）
-   - ✅ 3 个核心提示词模板（权利要求/说明书/创造性分析，1821 行）
-   - ✅ PromptTemplateManager：懒加载策略
+### 待完成
 
-4. **代码质量优化（两轮重构）**
-   - ✅ 删除 ~3,568 行过度设计代码
-   - ✅ EventBus Bug 修复 + 53 个测试用例
-   - ✅ ESLint/Prettier 配置
+| 模块 | 完成度 | 问题 |
+|------|--------|------|
+| Rust 工具链 | 40% | 25 个编译错误，无法构建 |
+| CLI 工具 | 20% | 所有方法返回 TODO |
+| MCP 服务器 | 40% | 4 个工具返回硬编码数据 |
+| PatentAnalyzerAgent | 50% | 分析方法返回 LLM 生成数据，无真实数据库 |
+| PatentResponderAgent | 50% | OA 解析有 patent-core 集成，缺真实先验检索 |
+| PatentManagerAgent | 20% | 无数据库后端 |
+| 测试覆盖 | 5% | 仅 EventBus 有可靠测试（53 用例） |
 
-5. **文档体系（38000+ 字）**
-   - ✅ 开发指南、API 文档、变更日志、路线图、贡献指南
-
-### 🔴 待完成
-
-- 🔴 **Rust 工具链**：25 个编译错误，无法构建
-- 🔴 **CLI 工具**：所有方法返回 TODO + 空数据
-- 🔴 **MCP 服务器**：4 个工具返回硬编码数据
-- 🔴 **PatentAnalyzerAgent**：4 个分析方法全部返回空数据
-- 🔴 **PatentResponderAgent**：核心逻辑未实现
-- 🔴 **PatentManagerAgent**：无数据库后端
-- 🔴 **测试覆盖**：仅 EventBus 有可靠测试（~5%）
-- ⏳ **应用层 / 服务层 / 基础设施层**：15 个空目录
-
-### 📊 完成进度
-
-**总体进度**: ~30%（基于 2026-04-28 实际代码审计）
-
-- ✅ 产品定位转型
-- ✅ 架构设计
-- ✅ 核心框架（Agent 基类、EventBus、LLM 适配器）
-- ✅ PatentWriterAgent（60%，基本功能完成）
-- ✅ 知识库集成（1139 个文件，唯一有真实数据的模块）
-- ✅ 文档体系完善
-- 🔴 Rust 工具（25 个编译错误，不可用）
-- 🔴 CLI 工具（空壳，所有方法返回 TODO）
-- 🔴 MCP 服务器（4 个工具返回硬编码数据）
-- 🔴 其他 3 个智能体（核心逻辑未实现）
-- ⏳ 应用层 / 服务层 / 基础设施层（全部为空目录）
-
-详细审计见 [DEVELOPMENT_PROGRESS.md](./DEVELOPMENT_PROGRESS.md)
-
-### 🚀 下一步（按优先级）
+### 下一步（按优先级）
 
 1. 修复 Rust 编译错误（25 个）
 2. 实现 CLI 工具和 MCP 服务器的真实逻辑
 3. PatentWriterAgent 端到端验证
 4. 实现其余 3 个智能体的核心逻辑
 5. 补充测试覆盖率（目标 40%）
-6. 应用层 / 服务层开发
 
 ---
 
-## 🚀 快速开始
+## 快速开始
 
 ### 安装
 
 ```bash
-# 克隆项目
 git clone https://github.com/your-org/yunpat.git
 cd yunpat
-
-# 安装依赖
 pnpm install
-
-# 启动开发环境
-pnpm dev
+pnpm build
 ```
 
-### 立即可用的工具 ⭐
+### 配置环境变量
 
-> **注意**: 以下工具的代码框架已就位，但 CLI 和 MCP 当前为空壳（返回 TODO/硬编码数据）。
-> 真正可用的功能通过 TypeScript API 调用 PatentWriterAgent（需配置 LLM API Key）。
+```bash
+cp .env.example .env
+# 编辑 .env，至少配置一个 LLM API Key
+# DEEPSEEK_API_KEY=sk-...
+# DASHSCOPE_API_KEY=sk-...
+```
 
-#### 1. 智能体 API（✅ 可用）
+### 使用智能体 API
 
 ```typescript
-import { PatentWriterAgent } from '@yunpat/agents';
+import { PatentWriterAgent } from './patents/agents/writer/PatentWriterAgent.js';
 
 const writer = new PatentWriterAgent({
-  llm: yourLLMAdapter,  // 需要配置 LLM
+  name: 'patent-writer',
+  description: '专利撰写智能体',
+  eventBus, memory, tools, llm,
 });
+
 const result = await writer.execute({
   title: '一种基于深度学习的图像识别方法',
   field: '人工智能',
-  // ...
+  technicalSolution: '...',
 });
 ```
 
-#### 2. CLI 工具（🔴 空壳，方法返回 TODO）
-
-```bash
-# 框架已就位，但实际逻辑未实现
-patent-cli search -k 深度学习 图像识别   # → 返回空数据
-patent-cli generate -t method -f "特征1"   # → 返回空数据
-```
-
-#### 3. MCP 服务器（🔴 返回硬编码数据）
-
-```typescript
-const server = createPatentMcpServer();
-await server.callTool('search_patents', { keywords: ['深度学习'] });
-// → 返回 { total: 100, patents: [一个硬编码条目] }
-```
-
-### 运行应用
-
-```bash
-# 专利撰写应用
-pnpm --filter @yunpat/patent-writer dev
-
-# 审查答复应用
-pnpm --filter @yunpat/office-action dev
-
-# 客户门户
-pnpm --filter @yunpat/client-portal dev
-```
-
 ---
 
-## 📦 核心应用
+## 技术架构
 
-### 1. 专利撰写 (Patent Writer)
+### 五层架构
 
-**功能**：
-- 技术方案理解
-- 权利要求设计
-- 说明书生成
-- 申请文件导出
-
-### 2. 审查答复 (Office Action)
-
-**功能**：
-- 审查意见分析
-- 对比文件检索
-- 答复策略制定
-- 答复书生成
-
-### 3. 专利分析 (Patent Analyzer)
-
-**功能**：
-- 专利价值评估
-- 技术趋势分析
-- 竞品监控
-- 专利地图绘制
-
-### 4. 专利管理 (Patent Manager)
-
-**功能**：
-- 期限管理
-- 流程管理
-- 费用管理
-- 客户门户
-
----
-
-## 💡 技术架构
+```
+① 交互层 (Gateway) → 多模态输入、HITL、安全网关
+         ↓
+② 推理层 (Reasoning) → ReAct 循环、PlanAndSolve、思维树
+         ↓
+③ 核心引擎 (LLM) → DeepSeek/通义千问/Ollama
+         ↓
+④ 记忆层 (Memory) → 检查点、时间旅行、断点续传
+         ↓
+⑤ 工具层 (Tools) → 函数调用、MCP 协议、中间件管道
+```
 
 ### 多语言架构
 
 - **TypeScript (70%)**: 应用层、业务逻辑层
-- **Rust (30%)**: 检索引擎、ML 推理
-- **Python (隔离)**: ML 模型、数据分析
+- **Rust (30%)**: 性能关键型算法（IPC 分类、质量评估、特征提取）
+- **Python (隔离)**: ML 模型、数据分析（gRPC 通信）
 
 ### 接口设计
 
 - **gRPC/Protobuf**: 服务间通信
 - **REST API**: 外部接口
 - **WebSocket**: 实时通信
+- **EventBus**: 智能体间通信（发布订阅 + RPC）
 
 ---
 
-## 📚 文档
+## 文档
 
-### 核心文档 ⭐ 新增
+### 核心文档
 
-- [开发指南](./DEVELOPMENT.md) - 环境搭建、架构说明、开发流程、测试指南、部署指南
-- [API 文档](./API.md) - 智能体 API、Rust 工具 API、MCP 工具接口、REST API、gRPC API
-- [变更日志](./CHANGELOG.md) - 版本历史、新增功能、Bug 修复、已知问题
-- [发展路线图](./ROADMAP.md) - 当前状态、短期目标、中期目标、长期愿景
-- [贡献指南](./CONTRIBUTING.md) - 如何报告问题、提交代码、开发规范
+- [CLAUDE.md](./CLAUDE.md) - Claude Code 协作指南（含架构详解、开发命令）
+- [AGENTS.md](./AGENTS.md) - AI 编程助手指南（完整技术参考）
+- [CHANGELOG.md](./CHANGELOG.md) - 版本历史
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - 贡献指南
+- [路线图](./docs/roadmap.md) - 发展路线图
 
-### 架构文档
+### 开发文档
 
-- [专利平台架构设计](./docs/RESTRUCTURE_PATENT_PLATFORM.md) - 三层架构设计
-- [重构执行计划](./docs/RESTRUCTURE_EXECUTION_PLAN.md) - 分阶段实施计划
-- [重构状态](./docs/RESTRUCTURE_STATUS.md) - 当前进度和里程碑
-- [项目结构](./docs/PROJECT_STRUCTURE.md) - 完整的目录结构说明
+- [开发指南](./docs/guides/development.md) - 环境搭建、开发流程
+- [API 文档](./docs/guides/api.md) - API 接口文档
+- [项目结构](./docs/PROJECT_STRUCTURE.md) - 目录结构说明
+- [安全指南](./docs/SECURITY_GUIDELINES.md) - 安全最佳实践
+- [文件管理规则](./docs/FILE_MANAGEMENT_RULES.md) - 文档组织规范
 
-### 历史文档和分析 ⭐ 新增
+### 文档中心
 
-- [归档项目分析](./docs/ARCHIVE_PROJECTS_ANALYSIS.md) - claude-code 和 claw-code 项目分析（6000+ 字）
-- [归档项目总结](./docs/ARCHIVE_PROJECTS_SUMMARY.md) - 核心发现和优化建议
-- [项目转型总结](./FINAL_PATENT_PLATFORM_SUMMARY.md) - 从通用框架到专利平台的完整转型过程
-
-### 使用示例 ⭐ 新增
-
-- [专利智能体使用示例](./examples/patent-agents-usage.README.md) - 如何使用四大核心智能体
-- [MCP 使用示例](./examples/mcp-usage.ts) - 如何使用 MCP 服务器
-
-### 其他文档
-
-- [文档中心](./docs/README.md) - 完整的文档索引
-- [Claude Code 指南](./CLAUDE.md) - 开发者协作指南
+- [docs/README.md](./docs/README.md) - 完整的文档索引
 
 ---
 
-## 🎯 商业模式
+## 商业模式（规划中）
 
 ### SaaS 订阅
 
-- **基础版**: ¥5,000/月（5 用户，100 件/年）
-- **专业版**: ¥20,000/月（20 用户，500 件/年）
-- **企业版**: ¥50,000/月（50 用户，2000 件/年）
-
-### 增值服务
-
-- 培训服务：¥5,000/次
-- 定制开发：按需报价
-- 数据服务：按次收费
+- **基础版**: 5,000/月（5 用户，100 件/年）
+- **专业版**: 20,000/月（20 用户，500 件/年）
+- **企业版**: 50,000/月（50 用户，2000 件/年）
 
 ---
 
-## 📞 联系我们
+## 联系方式
 
-- 官网：https://yunpat.ai
-- 邮箱：contact@yunpat.ai
-- 微信：YunPat助手
-
----
-
-**© 2026 YunPat - 智能专利助手，赋能创新保护**
+- 作者：Xu Jian <xujian519@gmail.com>
+- 许可证：MIT

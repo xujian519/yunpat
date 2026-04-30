@@ -20,11 +20,12 @@
 3. **智能体间不直接调用**：通过 `EventBus` 进行发布订阅和 RPC 式请求响应。
 4. **优先国产大模型**：DeepSeek（默认推荐）、通义千问（分析任务）、本地 Ollama（离线/隐私场景）。
 
-### 当前完成度（基于 2026-04-28 代码审计）
+### 当前完成度（基于 2026-04-30 代码审计）
 
 - **约 30%** 完成度。
-- **可用**：`PatentWriterAgent` 框架基本成型（集成知识库、提示词模板），`EventBus` 通过 53 个测试用例。
-- **不可用/空壳**：Rust 工具链（25 个编译错误）、CLI 工具（返回 TODO）、MCP 服务器（硬编码数据）、其余 3 个专利智能体（核心逻辑未实现）。
+- **可用**：核心框架（packages/core，~85%，356+ 导出），`PatentWriterAgent`（~80%，集成知识库+模板+Rust桥接），`EventBus` 通过 53 个测试用例，知识库（1139 文件），提示词模板（1821 行）。
+- **部分可用**：`PatentAnalyzerAgent`（~50%，分析返回 LLM 生成数据）、`PatentResponderAgent`（~50%，有 patent-core 集成但缺真实检索）。
+- **不可用/空壳**：Rust 工具链（25 个编译错误）、CLI 工具（返回 TODO）、MCP 服务器（硬编码数据）、`PatentManagerAgent`（无数据库后端）。
 - **测试覆盖率极低**：仅 `EventBus` 有可靠测试，整体约 5%。
 
 ---
@@ -401,4 +402,4 @@ cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 ---
 
-**最后更新**：2026-04-29
+**最后更新**：2026-04-30

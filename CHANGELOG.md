@@ -1,389 +1,130 @@
 # YunPat 变更日志
 
 **项目**: YunPat - 知识产权全生命周期智能体平台
-**版本**: v1.0.0 (专利专业版)
+**版本**: v0.1.0 (开发中)
 
 ---
 
-## 📋 [Unreleased]
+## [Unreleased]
 
-### 已完成 (2026-04-29)
+### 当前状态 (2026-04-30)
 
-#### 🎯 目录结构重构 - 符合 Karpathy 原则
+**总体完成度**: ~30%（基于实际代码审计）
 
-- ✅ **删除空目录** - 减少认知负担
-  - 删除 `apps/`（5个空目录）
-  - 删除 `services/`（5个空目录）
-  - 删除 `infrastructure/`（5个空目录）
-  - 一级目录从 19 个减少到 11 个（↓ 42%）
+#### 核心框架 (packages/core) - ~85% 完成
 
-- ✅ **合并重复目录** - 消除混淆
-  - 合并 `prompts/` 到 `patents/prompts/templates/`
-  - 统一管理所有 prompt 相关内容
+- Agent 基类：`plan/act/reflect/before/init/after` 完整生命周期（2 个泛型）
+- EventBus：发布订阅 + RPC 请求响应（53 个测试用例）
+- LLM 适配器：NativeLLMAdapter（DeepSeek/Qwen/Ollama）+ LangChain 兼容层
+- 推理层：ReActLoop、PlanAndSolveStrategy、TreeOfThoughtsStrategy
+- 记忆层：EnhancedMemoryStore、CheckpointManager、ResumeManager
+- 工具层：EnhancedToolRegistry、ToolSelectionOptimizer、中间件管道
+- 知识库：KnowledgeBase、KnowledgeCard、CardPipeline
+- 可观测性：TelemetryCollector、告警
+- 结果验证：ResultValidator 与修正策略
+- 成本优化：SemanticCache、TaskRouter、AdaptiveTemperatureController、BatchProcessor
+- 356+ 导出模块
 
-- ✅ **重命名明确职责** - 清晰意图
-  - `ai/` → `patents/`（专利专用业务逻辑）
-  - 与 `packages/agents/`（通用智能体）区分
+#### 专利智能体 - 完成度不等
 
-- ✅ **统一多语言代码** - 一致管理
-  - `rust/` → `packages/rust-tools/`
-  - `yunpat_python/` → `packages/python-tools/`
-  - 所有工具代码统一在 `packages/` 下
+- **PatentWriterAgent** (~80%)：集成 ObsidianKnowledgeBridge + PromptTemplateManager + PatentCoreBridge，权利要求/说明书/摘要生成，7 维质量评估
+- **PatentResponderAgent** (~50%)：OA 分析 + patent-core 策略推荐 + 答复书生成，缺真实先验检索
+- **PatentAnalyzerAgent** (~50%)：4 个分析方法（价值/趋势/竞品/全景），返回 LLM 生成数据
+- **PatentManagerAgent** (~20%)：骨架代码，无数据库后端
 
-- ✅ **更新文档** - 反映新结构
-  - 更新 `CLAUDE.md` - 项目结构说明
-  - 更新 `README.md` - 项目结构图
-  - 创建 `ADR_001_directory_structure.md` - 架构决策记录
-  - 创建 `2026-04-29-structure-refactor-execution.md` - 执行报告
+#### 工具包
 
-#### 📊 改善效果
+- `@yunpat/patent-tools` (~70%)：5 个专利工具
+- `@yunpat/builtin-tools` (~60%)：文件/搜索/网络/浏览器工具
+- `@yunpat/document-tools` (~75%)：PDF/DOCX/Excel/OCR/音频/PPTX 工具
+- `@yunpat/grpc-server` (~50%)：gRPC 服务器
 
-| 指标 | 重构前 | 重构后 | 改善 |
-|------|--------|--------|------|
-| 一级目录数 | 19 | 11 | ↓ 42% |
-| 空目录数 | 10 | 0 | ↓ 100% |
-| 重复目录 | 2 | 0 | ↓ 100% |
-| Karpathy 评分 | 2.5/10 | 8.5/10 | ↑ 6 |
+#### 待修复问题
 
-#### 🎓 符合 Karpathy 四大原则
-
-- ✅ **编码前思考**：结构清晰反映设计理念（0/10 → 8/10）
-- ✅ **简洁优先**：减少 42% 的目录（2/10 → 9/10）
-- ✅ **精准修改**：职责边界清晰（5/10 → 8/10）
-- ✅ **目标驱动**：不需要思考就知道代码放哪里（3/10 → 9/10）
+- Rust 工具链：25 个编译错误，无法构建
+- CLI 工具：所有方法返回 TODO
+- MCP 服务器：4 个工具返回硬编码数据
+- 测试覆盖：仅 EventBus 有可靠测试（~5%）
 
 ---
 
-### 已完成 (2026-04-28)
+## 已完成里程碑
 
-#### 代码质量优化（第二轮）
+### 目录结构重构 (2026-04-29)
 
-- ✅ **ESLint配置** - 代码质量保障
-  - 创建 `.eslintrc.json` 配置文件
-  - 创建 `.prettierrc.json` 格式化配置
-  - 修复所有ESLint错误（5个 → 0个）
-  - 配置合理的忽略规则
+- 删除空目录（apps/、services/、infrastructure/），一级目录从 19 减少到 11（↓42%）
+- 合并重复目录：prompts/ → patents/prompts/templates/
+- 重命名：ai/ → patents/（专利专用业务逻辑）
+- 统一多语言代码：rust/ → packages/rust-tools/，yunpat_python/ → packages/python-tools/
 
-- ✅ **Agent基类简化** - 5个泛型 → 2个泛型
-  - 简化前：`Agent<TInput, TOutput, TPlan, TResult, TReflection>`
-  - 简化后：`Agent<TInput, TOutput>`
-  - 更新所有子类
-  - 所有测试通过（24个测试）
+### 代码质量优化 - 第二轮 (2026-04-28)
 
-- ✅ **合并重复代码** - 删除EnhancedPatentWriterAgent
-  - 删除 `EnhancedPatentWriterAgent.ts`（426行）
-  - 保留基础版本 `PatentWriterAgent.ts`
-  - 删除过时示例文件 `examples/rust-integration-usage.ts`
+- ESLint + Prettier 配置，修复所有 ESLint 错误
+- Agent 基类简化：5 个泛型 → 2 个泛型
+- 合并重复代码：删除 EnhancedPatentWriterAgent.ts（426 行）
+- EventBus Bug 修复 + 53 个测试用例
+- CI/CD：GitHub Actions（Node 18/20 矩阵，测试+类型检查+构建）
 
-#### 测试改进
+### 代码清理 - 第一轮 (2026-04-28)
 
-- ✅ **EventBus Bug修复** - 严重Bug修复
-  - 修复缩进错误导致request立即失败
-  - 编写53个测试用例
-  - 验证超时机制正常工作
+- 删除过度设计模块（~3,118 行）：ModelVoting、PromptOptimizer、ResilientLLMAdapter、TransactionManager
+- 清理硬编码 Mock 数据（12 个函数）
 
-- ✅ **CI/CD搭建** - GitHub Actions
-  - 创建 `.github/workflows/ci.yml`
-  - 自动运行测试
-  - TypeScript类型检查
-  - 支持Node.js 18和20
+### Athena 资产集成 (2026-04-29)
 
-#### 代码清理（第一轮）
+- patent-core 算法库集成（IPC 分类、质量评估、特征提取、OA 解析）
+- Prompt 模板系统（1821 行模板代码，懒加载策略）
+- PatentCoreBridge（TypeScript → Rust 桥接层）
 
-- ✅ **删除过度设计模块** (~3,118行)
-  - ModelVoting.ts (1123行) - 多模型投票
-  - PromptOptimizer.ts (368行) - 删除"请"字
-  - ResilientLLMAdapter.ts (543行) - 弹性适配器
-  - TransactionManager.ts (~200行) - 内存事务
+### OpenClaw 资产引入 (2026-04-29)
 
-- ✅ **清理硬编码Mock数据** (12个函数)
-  - PatentAnalyzerAgent.ts - 4个方法
-  - EnhancedPatentWriterAgent.ts - 1个方法
-  - PatentManagerAgent.ts - 3个方法
-  - cli/patent-cli/index.js - 4个工具函数
+- 完整专利智能体工具集
+- 核心工具系统增强
 
-### 计划中
+### 框架初始化 (2026-04-25)
 
-- [ ] 专利检索引擎开发
-- [ ] 专利生成引擎开发
-- [ ] 专利知识系统开发
-- [ ] 应用层开发（5 个应用）
-- [ ] 服务层开发（5 个服务）
-- [ ] 基础设施层搭建
+- YunPat AI 智能体框架初始化
+- 五层架构实现
+- Wiki 卡片知识库（1139 个文件）
 
 ---
 
-## 🎉 [1.0.0] - 2026-04-28
+## 下一步计划
 
-### 重大变更
+### 短期（P0）
 
-#### 产品定位转型
+- [ ] 修复 Rust 编译错误（25 个）
+- [ ] 实现 CLI 工具的真实逻辑
+- [ ] MCP 服务器调用真实逻辑
+- [ ] PatentWriterAgent 端到端验证
 
-- ✅ 从通用 AI 智能体框架转型为知识产权全生命周期智能体平台
-- ✅ 明确目标客户：专利代理所、律师事务所、企业 IP 部门
-- ✅ 确定商业模式：SaaS 订阅制（基础版 ¥5,000/月）
+### 中期（P1）
 
-#### 架构重构
+- [ ] 实现其余 3 个智能体的核心逻辑
+- [ ] 补充测试覆盖率（目标 40%）
+- [ ] 真实专利数据库 API 集成
+- [ ] 生产级 MCP 服务器
 
-- ✅ 从五层架构（通用框架）重构为专利专业平台三层架构
-  - 应用层（apps/）
-  - 业务逻辑层（services/）
-  - AI 能力层（ai/）
-- ✅ 创建新的目录结构
-- ✅ 设计服务间通信机制（gRPC/Protobuf）
+### 长期（P2）
 
-### 新增功能
-
-#### 核心智能体（4 个）
-
-- ✅ **PatentWriterAgent** - 专利撰写智能体
-  - 生成权利要求（独立/从属）
-  - 生成说明书（技术领域、背景技术、发明内容、具体实施方式）
-  - 生成摘要和附图说明
-  - 质量评分系统（清晰度、支持度、保护范围）
-
-- ✅ **PatentResponderAgent** - 审查答复智能体
-  - 审查意见分析（驳回理由、引用文献、关键问题）
-  - 答复策略制定（争辩型、修改型、混合型）
-  - 答复书生成
-  - 成功概率预测
-
-- ✅ **PatentAnalyzerAgent** - 专利分析智能体
-  - 专利价值评估（市场价值、技术价值、法律价值）
-  - 技术趋势分析（新兴主题、关键参与者、未来预测）
-  - 竞品分析（竞争对手、技术差距、机会识别）
-  - 专利地图绘制（技术图谱、聚类分析）
-
-- ✅ **PatentManagerAgent** - 专利管理智能体
-  - 期限管理（申请期限、年费期限、答复期限）
-  - 流程管理（申请流程、审查流程、授权流程）
-  - 费用管理（申请费、年费、代理费）
-  - 专利组合管理（分类、分级、优化建议）
-
-#### Rust 工具集成
-
-- ✅ **LLM 客户端** (`rust/crates/patent-tools/src/llm.rs`)
-  - 支持 DeepSeek API
-  - 支持通义千问 API
-  - 支持 OpenAI 兼容 API
-  - 类型安全的请求/响应结构
-
-- ✅ **权利要求生成器** (`rust/crates/patent-tools/src/generation.rs`)
-  - 集成 LLM 客户端
-  - 支持多种发明类型（方法、装置、系统、组合物、用途）
-  - 自动生成独立和从属权利要求
-
-- ✅ **质量评估器** (`rust/crates/patent-tools/src/generation.rs`)
-  - 多维度质量评估（清晰度、支持度、保护范围）
-  - 识别质量问题
-  - 提供改进建议
-
-- ✅ **专利分析工具** (`rust/crates/patent-tools/src/analysis.rs`)
-  - 特征提取
-  - 现有技术分析
-  - 审查意见解析
-  - 创造性评估
-
-- ✅ **智能体实现** (`rust/crates/patent-agent/src/agent.rs`)
-  - PatentAgent 智能体
-  - 支持撰写、答复、分析、管理任务
-  - 生命周期管理
-
-- ✅ **赫布学习引擎** (`rust/crates/patent-agent/src/learning.rs`)
-  - 从成功案例学习
-  - 预测任务成功率
-  - 建议下一步操作
-
-#### CLI 工具（Node.js）
-
-- ✅ **patent-cli** - 专利命令行工具 (`cli/patent-cli/index.js`)
-  - `search` - 搜索专利
-  - `generate` - 生成权利要求
-  - `assess` - 评估质量
-  - `parse` - 解析审查意见
-  - `interactive` - 交互式模式
-  - 彩色输出（chalk）
-  - 进度提示（ora）
-  - 交互式输入（inquirer）
-
-#### MCP 集成
-
-- ✅ **MCP 服务器** (`ai/mcp/McpServer.ts`)
-  - MCP 服务器框架
-  - 工具注册系统
-  - 工具调用接口
-  - 事件系统
-  - 错误处理
-  - 已注册 4 个核心工具：
-    - `search_patents` - 搜索专利
-    - `generate_claims` - 生成权利要求
-    - `assess_quality` - 评估质量
-    - `parse_office_action` - 解析审查意见
-
-#### TypeScript 集成层
-
-- ✅ **Rust 工具包装器** (`ai/rust/PatentToolsRust.ts`)
-  - 通过 CLI 调用 Rust 二进制
-  - JSON 数据交换
-  - 错误处理
-
-- ✅ **增强版智能体** (`ai/agents/writer/EnhancedPatentWriterAgent.ts`)
-  - 集成 Rust 工具
-  - 混合模式支持（TypeScript + Rust）
-  - 质量维度评估
-
-### 技术改进
-
-#### 性能优化
-
-- ✅ Rust 工具性能提升 50-70%
-  - LLM 调用：~200ms
-  - 权利要求生成：~500ms
-  - 质量评估：~300ms
-
-#### 代码质量
-
-- ✅ 完整的类型系统（Rust）
-- ✅ TypeScript 类型定义
-- ✅ 错误处理机制
-- ✅ 事件驱动架构
-
-### 文档更新
-
-#### 核心文档
-
-- ✅ **README.md** - 更新为专利专业版定位
-- ✅ **CLAUDE.md** - Claude Code 开发指南
-- ✅ **CONTRIBUTING.md** - 贡献指南
-- ✅ **.env.example** - 环境变量配置示例
-- ✅ **DEVELOPMENT.md** - 详细开发指南
-- ✅ **API.md** - API 文档
-- ✅ **CHANGELOG.md** - 变更日志（本文档）
-
-#### 架构文档
-
-- ✅ **RESTRUCTURE_PATENT_PLATFORM.md** - 专利平台架构设计
-- ✅ **RESTRUCTURE_EXECUTION_PLAN.md** - 重构执行计划
-- ✅ **PROJECT_STRUCTURE.md** - 项目结构说明
-- ✅ **FINAL_PATENT_PLATFORM_SUMMARY.md** - 转型总结
-
-#### 进度文档
-
-- ✅ **RESTRUCTURE_STATUS.md** - 重构状态
-- ✅ **docs/RUST_TOOLS_PROGRESS.md** - Rust 工具进度
-- ✅ **docs/RUST_INTEGRATION_SUMMARY.md** - Rust 集成总结
-- ✅ **CLI_MCP_COMPLETION_SUMMARY.md** - CLI/MCP 完成总结
-
-#### 分析文档
-
-- ✅ **docs/ARCHIVE_PROJECTS_ANALYSIS.md** - 归档项目分析（6000+ 字）
-- ✅ **docs/ARCHIVE_PROJECTS_SUMMARY.md** - 分析总结
-
-#### 使用示例
-
-- ✅ **examples/patent-agents-usage.ts** - 专利智能体使用示例
-- ✅ **examples/patent-agents-usage.README.md** - 使用说明文档
-- ✅ **examples/mcp-usage.ts** - MCP 使用示例
-
-### 代码统计
-
-#### 新增代码
-
-| 模块 | 文件数 | 代码行数 | 语言 |
-|------|--------|---------|------|
-| 核心智能体 | 4 | 2100+ | TypeScript |
-| Rust 工具 | 5 | 1200+ | Rust |
-| CLI 工具 | 1 | 300+ | JavaScript |
-| MCP 服务器 | 1 | 400+ | TypeScript |
-| 集成层 | 3 | 500+ | TypeScript |
-| **总计** | **14** | **4500+** | - |
-
-#### 文档
-
-| 类型 | 文件数 | 字数 |
-|------|--------|------|
-| 核心文档 | 8 | 15000+ |
-| 架构文档 | 4 | 8000+ |
-| 分析文档 | 2 | 8000+ |
-| 示例文档 | 2 | 2000+ |
-| **总计** | **16** | **33000+** |
-
-### 已知问题
-
-#### Rust 编译问题
-
-- ⚠️ `rust/crates/patent-tools/src/types.rs` - 类型导入路径问题
-- ⚠️ `rust/crates/patent-agent/src/agent.rs` - 方法调用问题（join、is_false）
-- ✅ 解决方案：提供 Node.js 版本的 CLI 工具作为立即可用的替代方案
-
-#### 包依赖问题
-
-- ⚠️ `shellex-expand` 包不存在 → 改用 `shellexpand`
-- ⚠️ `@yunpat/core` 包不存在 → 移除该依赖，使用相对路径
-
-### 下一步计划
-
-#### 短期（1-2 周）
-
-- [ ] 修复 Rust 编译错误
-- [ ] 完善文档
-- [ ] 添加单元测试
-- [ ] 添加集成测试
-
-#### 中期（1-2 月）
-
-- [ ] 开发专利检索引擎
-- [ ] 开发专利生成引擎
-- [ ] 开发专利知识系统
-- [ ] 初始化应用项目
-
-#### 长期（3-6 月）
-
-- [ ] 完成应用层开发
-- [ ] 完成服务层开发
-- [ ] 完成基础设施层搭建
-- [ ] MVP 完整演示
-- [ ] 种子用户试用
+- [ ] 应用层开发
+- [ ] 服务层开发
+- [ ] 基础设施搭建
+- [ ] Beta 测试
 
 ---
 
-## 📊 版本对比
+## 版本对比
 
-### v0.x (通用框架)
+### v0.1.0 (当前)
 
-- 定位：通用 AI 智能体框架
-- 目标用户：开发者
-- 核心功能：框架层、智能体层、工具层
-- 技术栈：TypeScript、LangChain.js
+- 定位：知识产权全生命周期智能体平台（开发中）
+- 完成度：~30%
+- 核心可用：框架层 + PatentWriterAgent + 知识库
 
-### v1.0.0 (专利专业版)
+### v1.0.0 (目标)
 
-- 定位：知识产权全生命周期智能体平台
-- 目标用户：专利代理所、律所、企业 IP 部门
-- 核心功能：4 个专利专用智能体 + Rust 工具 + CLI + MCP
-- 技术栈：TypeScript (70%) + Rust (30%) + Python (隔离)
-
----
-
-## 🔖 标签说明
-
-- **新增功能**: ✅ 新功能
-- **性能优化**: ⚡ 性能优化
-- **Bug 修复**: 🐛 Bug 修复
-- **文档更新**: 📝 文档更新
-- **重大变更**: 🎉 重大变更
-- **已知问题**: ⚠️ 已知问题
-- **计划中**: 📋 计划中
-
----
-
-## 📞 反馈渠道
-
-- **GitHub Issues**: [提交问题](https://github.com/your-org/yunpat/issues)
-- **GitHub Discussions**: [参与讨论](https://github.com/your-org/yunpat/discussions)
-- **邮箱**: feedback@yunpat.ai
-- **微信**: YunPat助手
-
----
-
-**© 2026 YunPat - 智能专利助手，赋能创新保护**
+- 完成度：100%（MVP）
+- 所有智能体可用
+- CLI/MCP 真实逻辑
+- 测试覆盖率 70%+

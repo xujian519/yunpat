@@ -98,7 +98,8 @@ export async function runAgent(
 
     // 订阅进度事件
     eventBus.subscribe('agent:progress', (event) => {
-      spinner.text = chalk.blue(`执行中... 迭代 ${event.data.iteration}`);
+      const data = event.data as { iteration: number };
+      spinner.text = chalk.blue(`执行中... 迭代 ${data.iteration}`);
     });
 
     let result: any;

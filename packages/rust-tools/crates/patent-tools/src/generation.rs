@@ -288,8 +288,6 @@ impl SpecificationWriter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[tokio::test]
     async fn test_generate_independent_claim() {
         // 此测试需要真实的 LLM 客户端，暂时跳过

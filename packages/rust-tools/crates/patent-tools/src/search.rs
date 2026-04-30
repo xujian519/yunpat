@@ -1,18 +1,18 @@
 //! 专利搜索模块
 
-use crate::types::{PatentRecord, PatentSearchQuery, SortField, SortOrder};
-use crate::{Error, Result};
+use crate::types::{PatentRecord, PatentSearchQuery};
+use crate::Result;
 
 /// 专利搜索引擎
 pub struct SearchEngine {
     /// 搜索 API 端点
-    api_endpoint: String,
+    _api_endpoint: String,
 }
 
 impl SearchEngine {
     /// 创建新的搜索引擎
     pub fn new(api_endpoint: String) -> Self {
-        Self { api_endpoint }
+        Self { _api_endpoint: api_endpoint }
     }
 
     /// 创建默认搜索引擎（Google Patents）
@@ -21,7 +21,7 @@ impl SearchEngine {
     }
 
     /// 执行搜索
-    pub async fn search(&self, query: &PatentSearchQuery) -> Result<SearchResult> {
+    pub async fn search(&self, _query: &PatentSearchQuery) -> Result<SearchResult> {
         // TODO: 实现实际的搜索逻辑
         // 这里返回模拟数据
         Ok(SearchResult {
@@ -41,13 +41,13 @@ impl SearchEngine {
     }
 
     /// 根据专利号搜索
-    pub async fn search_by_number(&self, patent_number: &str) -> Result<Option<PatentRecord>> {
+    pub async fn search_by_number(&self, _patent_number: &str) -> Result<Option<PatentRecord>> {
         // TODO: 实现实际的搜索逻辑
         Ok(None)
     }
 
     /// 按申请人搜索
-    pub async fn search_by_applicant(&self, applicant: &str) -> Result<Vec<PatentRecord>> {
+    pub async fn search_by_applicant(&self, _applicant: &str) -> Result<Vec<PatentRecord>> {
         // TODO: 实现实际的搜索逻辑
         Ok(vec![])
     }
@@ -65,6 +65,7 @@ pub struct SearchResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::{SortField, SortOrder};
 
     #[tokio::test]
     async fn test_search() {

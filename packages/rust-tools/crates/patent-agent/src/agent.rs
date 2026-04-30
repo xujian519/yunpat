@@ -35,9 +35,9 @@ pub enum PatentAgentType {
 /// 专利智能体
 pub struct PatentAgent {
     /// 配置
-    config: PatentAgentConfig,
+    _config: PatentAgentConfig,
     /// LLM 客户端
-    llm_client: LlmClient,
+    _llm_client: LlmClient,
     /// 权利要求生成器
     claim_generator: ClaimGenerator,
     /// 说明书撰写器
@@ -45,7 +45,7 @@ pub struct PatentAgent {
     /// 审查意见解析器
     office_action_parser: OfficeActionParser,
     /// 现有技术分析器
-    prior_art_analyzer: PriorArtAnalyzer,
+    _prior_art_analyzer: PriorArtAnalyzer,
 }
 
 impl PatentAgent {
@@ -64,12 +64,12 @@ impl PatentAgent {
         let llm_client = LlmClient::new(llm_config.clone());
 
         Self {
-            config,
+            _config: config,
             claim_generator: ClaimGenerator::new(LlmClient::new(llm_config.clone())),
             specification_writer: SpecificationWriter::new(LlmClient::new(llm_config.clone())),
             office_action_parser: OfficeActionParser::new(LlmClient::new(llm_config.clone())),
-            prior_art_analyzer: PriorArtAnalyzer::new(LlmClient::new(llm_config)),
-            llm_client,
+            _prior_art_analyzer: PriorArtAnalyzer::new(LlmClient::new(llm_config)),
+            _llm_client: llm_client,
         }
     }
 
@@ -312,6 +312,6 @@ mod tests {
 
         let agent = PatentAgent::new(config);
         // 测试通过即表示创建成功
-        assert_eq!(agent.config.name, "test-agent");
+        assert_eq!(agent._config.name, "test-agent");
     }
 }

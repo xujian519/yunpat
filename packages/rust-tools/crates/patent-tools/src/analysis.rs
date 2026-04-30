@@ -216,7 +216,7 @@ impl PriorArtAnalyzer {
     /// 查找最接近的现有技术
     pub async fn find_closest_prior_art(
         &self,
-        invention: &[TechnicalFeature],
+        _invention: &[TechnicalFeature],
         prior_art: &[PatentRecord],
     ) -> Result<Option<PatentRecord>> {
         if prior_art.is_empty() {

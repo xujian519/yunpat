@@ -20,7 +20,11 @@ import {
  * 支持的国产模型列表
  */
 export enum NativeModel {
-  /** DeepSeek (深度求索) */
+  /** DeepSeek V4 (深度求索) - 2025 新版本 */
+  DEEPSEEK_V4_FLASH = 'deepseek-v4-flash',
+  DEEPSEEK_V4_PRO = 'deepseek-v4-pro',
+
+  /** DeepSeek 旧版本 (将于 2026/07/24 弃用) */
   DEEPSEEK_CHAT = 'deepseek-chat',
   DEEPSEEK_CODER = 'deepseek-coder',
 
@@ -35,8 +39,11 @@ export enum NativeModel {
   ERNIE_BOT_4 = 'ernie-bot-4',
 
   /** 智谱 GLM */
+  GLM_4_7 = 'glm-4.7', // 2025 最新旗舰
+  GLM_4_FLASH = 'glm-4-flash', // 快速响应
+  GLM_4_PLUS = 'glm-4-plus', // 平衡性能
+  GLM_4_AIR = 'glm-4-air', // 轻量级
   GLM_4 = 'glm-4',
-  GLM_4_AIR = 'glm-4-air',
   GLM_3_TURBO = 'glm-3-turbo',
 
   /** 本地模型 (Ollama) */
@@ -44,6 +51,19 @@ export enum NativeModel {
   OLLAMA_MISTRAL = 'ollama/mistral',
   OLLAMA_QWEN = 'ollama/qwen',
 }
+
+/**
+ * 思考模式配置
+ */
+export interface ThinkingConfig {
+  /** 思考模式类型 */
+  type: 'enabled' | 'disabled';
+}
+
+/**
+ * 推理强度
+ */
+export type ReasoningEffort = 'high' | 'medium' | 'low';
 
 /**
  * 模型配置
@@ -66,6 +86,12 @@ export interface ModelConfig {
 
   /** 超时时间（毫秒） */
   timeout?: number;
+
+  /** 思考模式配置（仅 DeepSeek V4 支持） */
+  thinking?: ThinkingConfig;
+
+  /** 推理强度（仅 DeepSeek V4 支持） */
+  reasoningEffort?: ReasoningEffort;
 }
 
 /**
@@ -93,7 +119,7 @@ export enum ModelProvider {
  */
 const DEFAULT_CONFIGS: Record<ModelProvider, Partial<ModelConfig>> = {
   [ModelProvider.DEEPSEEK]: {
-    baseURL: 'https://api.deepseek.com/v1',
+    baseURL: 'https://api.deepseek.com',
     temperature: 0.7,
     maxTokens: 4096,
   },
@@ -170,13 +196,22 @@ export class NativeLLMAdapter implements ILLMAdapter {
   async chat(params: ChatParams): Promise<ChatResponse> {
     const url = `${this.config.baseURL}/chat/completions`;
 
-    const body = {
+    // 构建请求体
+    const body: Record<string, unknown> = {
       model: this.config.name,
       messages: params.messages,
       temperature: params.temperature ?? this.config.temperature,
       max_tokens: params.maxTokens ?? this.config.maxTokens,
       stream: false,
     };
+
+    // 添加 DeepSeek V4 特有参数
+    if (this.config.thinking) {
+      body.thinking = this.config.thinking;
+    }
+    if (this.config.reasoningEffort) {
+      body.reasoning_effort = this.config.reasoningEffort;
+    }
 
     try {
       const response = await fetch(url, {
@@ -397,13 +432,22 @@ export class MultiModelManager {
  */
 
 /**
- * 创建 DeepSeek 模型
+ * 创建 DeepSeek 模型（推荐使用 V4 版本）
  */
-export function createDeepSeekModel(apiKey: string, model?: NativeModel): NativeLLMAdapter {
+export function createDeepSeekModel(
+  apiKey: string,
+  model?: NativeModel,
+  options?: {
+    thinking?: ThinkingConfig;
+    reasoningEffort?: ReasoningEffort;
+  }
+): NativeLLMAdapter {
   return new NativeLLMAdapter({
-    name: model ?? NativeModel.DEEPSEEK_CHAT,
+    name: model ?? NativeModel.DEEPSEEK_V4_PRO,
     apiKey,
     baseURL: DEFAULT_CONFIGS[ModelProvider.DEEPSEEK].baseURL!,
+    thinking: options?.thinking,
+    reasoningEffort: options?.reasoningEffort,
   });
 }
 
@@ -415,6 +459,17 @@ export function createQwenModel(apiKey: string, model?: NativeModel): NativeLLMA
     name: model ?? NativeModel.QWEN_PLUS,
     apiKey,
     baseURL: DEFAULT_CONFIGS[ModelProvider.ALIYUN].baseURL!,
+  });
+}
+
+/**
+ * 创建智谱 GLM 模型（推荐使用 GLM-4.7）
+ */
+export function createZhipuModel(apiKey: string, model?: NativeModel): NativeLLMAdapter {
+  return new NativeLLMAdapter({
+    name: model ?? NativeModel.GLM_4_7,
+    apiKey,
+    baseURL: DEFAULT_CONFIGS[ModelProvider.ZHIPU].baseURL!,
   });
 }
 

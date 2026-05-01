@@ -19,7 +19,28 @@
       "Bash(./scripts/cleanup.sh --dry-run --safe)",
       "Bash(./scripts/cleanup.sh --safe)",
       "Bash(./scripts/cleanup.sh --dry-run --aggressive)",
-      "Bash(./scripts/cleanup.sh --aggressive)"
+      "Bash(./scripts/cleanup.sh --aggressive)",
+      "Bash(xargs -I {} gh run view {} --json-status --json-conclusion --json-name --json-headSha --json-jobs --json_workflowDatabaseId)",
+      "Bash(ssh -o ConnectTimeout=5 m1-air \"echo '✅ 连接成功' && hostname && uptime\")",
+      "Bash(ssh xujian@100.91.197.114 \"~/manage-runner.sh status\")",
+      "Bash(ssh xujian@100.91.197.114 \"tail -50 ~/actions-runner/_diag/Runner_*.log 2>/dev/null | tail -30\")",
+      "Bash(ssh xujian@100.91.197.114 \"cat ~/actions-runner/.runner 2>/dev/null | grep -E 'tags|label' -i\")",
+      "Bash(ssh xujian@100.91.197.114 '~/manage-runner.sh restart')",
+      "Bash(ssh xujian@100.91.197.114 '~/manage-runner.sh status')",
+      "Bash(xargs -I {} gh run view {} --json status --jq '.status')",
+      "Bash(ssh xujian@100.91.197.114 \"tail -20 ~/actions-runner/_diag/Runner_*.log | grep -E 'Job|Running|MESSAGE'\")",
+      "Bash(ssh xujian@100.91.197.114 \"ps aux | grep -i 'runner\\\\|actions' | grep -v grep | wc -l\")",
+      "Bash(ssh xujian@100.91.197.114 \"tail -50 ~/actions-runner/_diag/Worker_*.log 2>/dev/null | tail -30\")",
+      "Bash(ssh xujian@100.91.197.114 \"ls -lt ~/actions-runner/_work/ 2>/dev/null | head -10\")",
+      "Bash(./scripts/monitor-cicd.sh --verbose --auto-fix --interval 15 --timeout 300)",
+      "Bash(echo \"监控进程 PID: $!\")",
+      "Bash(/Users/xujian/projects/YunPat/scripts/cicd-status.sh)",
+      "Bash(ssh xujian@100.91.197.114 \"tail -30 ~/actions-runner/_diag/Worker_*.log 2>/dev/null | grep -E 'Running|Job|MESSAGE|ERROR' | tail -20\")",
+      "Bash(ssh xujian@100.91.197.114 \"ps aux | grep -i 'run' | grep -v grep | grep -E 'Runner|Worker' | head -10\")",
+      "Bash(ssh xujian@100.91.197.114 \"ls -lt ~/actions-runner/_work/_temp/ 2>/dev/null | head -10\")",
+      "Bash(ssh xujian@100.91.197.114 \"tail -20 ~/actions-runner/_diag/Runner_*.log | grep -E 'Job|Running|MESSAGE|started' | tail -10\")",
+      "Bash(ssh xujian@100.91.197.114 \"ps aux | grep -i 'node\\\\|runner' | grep -v grep | wc -l\")",
+      "Bash(ssh xujian@100.91.197.114 \"tail -30 ~/actions-runner/_diag/Worker_*.log | grep -E 'step|job|Job|Running|ERROR' | tail -15\")"
     ]
   }
 }

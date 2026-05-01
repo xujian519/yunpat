@@ -12,7 +12,14 @@
       "Bash(sed -n '335,345p' packages/core/src/replanning/IncrementalPlanner.ts)",
       "Bash(sed -n '490,500p' packages/core/src/replanning/IncrementalPlanner.ts)",
       "Bash(/tmp/ci-check.sh)",
-      "Bash(psql -U postgres -c \"CREATE DATABASE yunpat_test;\")"
+      "Bash(psql -U postgres -c \"CREATE DATABASE yunpat_test;\")",
+      "Bash(/tmp/analyze-yunpat-structure.sh)",
+      "Bash(awk '{print $9, $5, $6, $7, $8}')",
+      "Bash(/tmp/generate-summary.sh)",
+      "Bash(./scripts/cleanup.sh --dry-run --safe)",
+      "Bash(./scripts/cleanup.sh --safe)",
+      "Bash(./scripts/cleanup.sh --dry-run --aggressive)",
+      "Bash(./scripts/cleanup.sh --aggressive)"
     ]
   }
 }

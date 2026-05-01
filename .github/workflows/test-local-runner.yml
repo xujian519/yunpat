@@ -1,0 +1,97 @@
+name: Test Local Runner
+
+on:
+  workflow_dispatch:  # 手动触发测试
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/test-local-runner.yml'
+
+jobs:
+  test-local:
+    name: 测试本地 Runner
+    runs-on: self-hosted
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+
+      - name: 🔍 系统信息
+        run: |
+          echo "## 🔍 Runner 系统信息"
+          echo "📍 主机名: $(hostname)"
+          echo "💻 操作系统: $(uname -s) $(uname -r)"
+          echo "🏗️  架构: $(uname -m)"
+          echo "👤 用户: $(whoami)"
+          echo "📂 工作目录: $(pwd)"
+          echo ""
+
+      - name: 🟢 Node.js 环境
+        run: |
+          echo "## 🟢 Node.js 环境"
+          if command -v node &> /dev/null; then
+            echo "✅ Node 版本: $(node -v)"
+            echo "✅ npm 版本: $(npm -v)"
+          else
+            echo "❌ Node.js 未安装"
+          fi
+          echo ""
+
+      - name: 📦 pnpm 环境
+        run: |
+          echo "## 📦 pnpm 环境"
+          if command -v pnpm &> /dev/null; then
+            echo "✅ pnpm 版本: $(pnpm -v)"
+          else
+            echo "⚠️  pnpm 未安装，正在安装..."
+            npm install -g pnpm
+            echo "✅ pnpm 版本: $(pnpm -v)"
+          fi
+          echo ""
+
+      - name: 🔧 Rust 环境
+        run: |
+          echo "## 🔧 Rust 环境"
+          if command -v rustc &> /dev/null; then
+            echo "✅ Rust 版本: $(rustc --version)"
+            echo "✅ Cargo 版本: $(cargo --version)"
+          else
+            echo "⚠️  Rust 未安装"
+          fi
+          echo ""
+
+      - name: 🐍 Python 环境
+        run: |
+          echo "## 🐍 Python 环境"
+          if command -v python3 &> /dev/null; then
+            echo "✅ Python 版本: $(python3 --version)"
+          else
+            echo "⚠️  Python 未安装"
+          fi
+          echo ""
+
+      - name: 💾 磁盘空间
+        run: |
+          echo "## 💾 磁盘空间"
+          df -h | grep -E "Filesystem|/$"
+          echo ""
+
+      - name: 🧠 内存信息
+        run: |
+          echo "## 🧠 内存信息"
+          if command -v vm_stat &> /dev/null; then
+            vm_stat | head -10
+          fi
+          echo ""
+
+      - name: ✅ 测试完成
+        run: |
+          echo "## ✅ 所有检查完成"
+          echo ""
+          echo "🎉 本地 Runner 工作正常！"
+          echo "📊 你可以在 GitHub Actions 页面查看详细日志"
+          echo ""
+          echo "🔗 下一步："
+          echo "  1. 创建实际的 CI/CD 工作流"
+          echo "  2. 使用 'runs-on: self-hosted' 指定使用此 runner"

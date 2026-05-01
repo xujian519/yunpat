@@ -223,14 +223,26 @@ export class ApiKeyManager {
    */
   async verifyApiKey(apiKey: string): Promise<ApiKeyInfo | null> {
     try {
-      // 解析 API Key 格式
-      const parts = apiKey.split('_');
-
-      if (parts.length !== 3 || parts[0] !== 'yunpat') {
+      // 解析 API Key 格式：yunpat_<keyId>_<secret>
+      // 注意：secret 部分可能包含下划线，所以限制分割次数为 3
+      if (!apiKey.startsWith('yunpat_')) {
         return null;
       }
 
-      const [, keyId, secret] = parts;
+      // 移除前缀后，分割第一个下划线获取 keyId，剩余部分为 secret
+      const remaining = apiKey.slice('yunpat_'.length);
+      const firstUnderscoreIndex = remaining.indexOf('_');
+
+      if (firstUnderscoreIndex === -1) {
+        return null;
+      }
+
+      const keyId = remaining.slice(0, firstUnderscoreIndex);
+      const secret = remaining.slice(firstUnderscoreIndex + 1);
+
+      if (!keyId || !secret) {
+        return null;
+      }
 
       // 检查速率限制
       const rateLimitOk = await this.checkRateLimit(keyId);

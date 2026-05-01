@@ -220,3 +220,94 @@ export interface IncrementalPlannerConfig {
   allowDependencyChanges: boolean; // 允许修改依赖关系
   minImprovementThreshold: number; // 最低改进阈值
 }
+
+/**
+ * 关键路径定义
+ */
+export interface CriticalPath {
+  /** 关键路径上的任务ID列表 */
+  tasks: string[];
+  /** 关键路径总时长 */
+  duration: number;
+  /** 每个任务的松弛时间（任务ID -> 松弛时间） */
+  slackTime: Map<string, number>;
+  /** 瓶颈任务列表（有多个依赖任务的关键任务） */
+  bottleneckTasks: string[];
+}
+
+/**
+ * 影响评估报告
+ */
+export interface ImpactAssessment {
+  /** 受影响的任务ID列表 */
+  affectedTasks: string[];
+  /** 影响级别 */
+  impactLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  /** 新的项目完成时间 */
+  newProjectDuration: number;
+  /** 延迟时间（正数表示延迟，负数表示提前） */
+  delay: number;
+  /** 资源冲突列表 */
+  resourceConflicts: ResourceConflict[];
+  /** 关键路径是否改变 */
+  criticalPathChanged: boolean;
+  /** 建议措施 */
+  recommendations: string[];
+}
+
+/**
+ * 资源冲突
+ */
+export interface ResourceConflict {
+  /** 冲突的资源类型 */
+  resourceType: string;
+  /** 冲突的任务ID列表 */
+  taskIds: string[];
+  /** 冲突严重程度 */
+  severity: 'minor' | 'moderate' | 'severe';
+}
+
+/**
+ * 任务添加结果
+ */
+export interface TaskAdditionResult {
+  /** 新添加的任务 */
+  addedTask: {
+    /** 任务ID */
+    taskId: string;
+    /** 任务数据 */
+    task: SubGoal;
+  };
+  /** 受影响的任务列表 */
+  affectedTasks: string[];
+  /** 新的关键路径 */
+  newCriticalPath: CriticalPath;
+  /** 影响评估 */
+  impact: ImpactAssessment;
+}
+
+/**
+ * 计划冲突错误
+ */
+export class PlanConflictError extends Error {
+  public conflicts: string[];
+
+  constructor(conflicts: string[]) {
+    super(`计划冲突: ${conflicts.join(', ')}`);
+    this.name = 'PlanConflictError';
+    this.conflicts = conflicts;
+  }
+}
+
+/**
+ * 循环依赖错误
+ */
+export class CircularDependencyError extends Error {
+  public taskId: string;
+
+  constructor(taskId: string) {
+    super(`检测到循环依赖: ${taskId}`);
+    this.name = 'CircularDependencyError';
+    this.taskId = taskId;
+  }
+}

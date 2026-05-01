@@ -12,6 +12,8 @@ import {
   ChatChunk,
 } from '../lifecycle/Lifecycle.js';
 
+import { EmbeddingError, EmbeddingErrorCode } from './EmbeddingProvider.js';
+
 /**
  * OMLX 配置
  */
@@ -192,9 +194,62 @@ export class OMLXAdapter implements ILLMAdapter {
 
   /**
    * 嵌入 - 生成向量
+   *
+   * 使用 OMLX 的 /embeddings 端点
+   * 支持 BGE-M3 等本地嵌入模型
    */
-  async embed(_texts: string[]): Promise<number[][]> {
-    throw new Error('OMXL 嵌入功能尚未实现');
+  async embed(texts: string[]): Promise<number[][]> {
+    if (texts.length === 0) {
+      return [];
+    }
+
+    const url = `${this.config.baseURL}/embeddings`;
+
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (this.config.apiKey) {
+        headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: 'bge-m3-mlx-8bit',
+          input: texts,
+        }),
+        signal: AbortSignal.timeout(this.config.timeout!),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new EmbeddingError(
+          `OMXL 嵌入 API 请求失败: ${response.status} ${errorText}`,
+          EmbeddingErrorCode.API_ERROR,
+          'omxl'
+        );
+      }
+
+      const data = (await response.json()) as Record<string, unknown>;
+      const embeddingsData = data.data as Array<Record<string, unknown>>;
+
+      // BGE-M3 返回 1024 维向量
+      return embeddingsData
+        .sort((a, b) => (a.index as number) - (b.index as number))
+        .map((item) => item.embedding as number[]);
+    } catch (error) {
+      if (error instanceof EmbeddingError) {
+        throw error;
+      }
+      throw new EmbeddingError(
+        `OMXL 嵌入失败: ${error instanceof Error ? error.message : String(error)}`,
+        EmbeddingErrorCode.API_ERROR,
+        'omxl'
+      );
+    }
   }
 }
 

@@ -16,6 +16,8 @@ import {
   ChatChunk,
 } from '../lifecycle/Lifecycle.js';
 
+import { EmbeddingError, EmbeddingErrorCode } from './EmbeddingProvider.js';
+
 /**
  * 支持的国产模型列表
  */
@@ -332,10 +334,241 @@ export class NativeLLMAdapter implements ILLMAdapter {
   /**
    * 嵌入 - 生成向量
    *
-   * TODO: 实现嵌入功能
+   * 支持的嵌入端点：
+   * - DeepSeek: 使用 OpenAI 兼容的 /embeddings 端点
+   * - 通义千问: 使用 DashScope 嵌入 API
+   * - 智谱 GLM: 使用 GLM 嵌入 API
    */
-  async embed(_texts: string[]): Promise<number[][]> {
-    throw new Error('嵌入功能尚未实现');
+  async embed(texts: string[]): Promise<number[][]> {
+    if (texts.length === 0) {
+      return [];
+    }
+
+    // 根据提供商选择嵌入实现
+    switch (this.provider) {
+      case ModelProvider.DEEPSEEK:
+        return await this.embedDeepSeek(texts);
+      case ModelProvider.ALIYUN:
+        return await this.embedQwen(texts);
+      case ModelProvider.ZHIPU:
+        return await this.embedZhipu(texts);
+      case ModelProvider.OLLAMA:
+        return await this.embedOllama(texts);
+      default:
+        throw new EmbeddingError(
+          `提供商 ${this.provider} 不支持嵌入功能`,
+          EmbeddingErrorCode.MODEL_UNAVAILABLE,
+          this.provider
+        );
+    }
+  }
+
+  /**
+   * DeepSeek 嵌入
+   *
+   * 使用 OpenAI 兼容的 /embeddings 端点
+   * 模型: deepseek-ai/deepseek-v2-lite (支持 1024 维)
+   */
+  private async embedDeepSeek(texts: string[]): Promise<number[][]> {
+    const url = `${this.config.baseURL}/embeddings`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'deepseek-ai/deepseek-v2-lite',
+          input: texts,
+          encoding_format: 'float',
+        }),
+        signal: AbortSignal.timeout(this.config.timeout ?? 60000),
+      });
+
+      if (!response.ok) {
+        throw new EmbeddingError(
+          `DeepSeek 嵌入 API 请求失败: ${response.status}`,
+          EmbeddingErrorCode.API_ERROR,
+          'deepseek'
+        );
+      }
+
+      const data = (await response.json()) as Record<string, unknown>;
+      const embeddingsData = data.data as Array<Record<string, unknown>>;
+
+      // DeepSeek 返回 1024 维向量
+      return embeddingsData
+        .sort((a, b) => (a.index as number) - (b.index as number))
+        .map((item) => item.embedding as number[]);
+    } catch (error) {
+      if (error instanceof EmbeddingError) {
+        throw error;
+      }
+      throw new EmbeddingError(
+        `DeepSeek 嵌入失败: ${error instanceof Error ? error.message : String(error)}`,
+        EmbeddingErrorCode.API_ERROR,
+        'deepseek'
+      );
+    }
+  }
+
+  /**
+   * 通义千问嵌入
+   *
+   * 使用 DashScope text-embedding-v3 模型
+   * 维度: 1024
+   */
+  private async embedQwen(texts: string[]): Promise<number[][]> {
+    const url =
+      'https://dashscope.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding';
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-v3',
+          input: {
+            texts: texts,
+          },
+          parameters: {
+            text_type: 'document',
+          },
+        }),
+        signal: AbortSignal.timeout(this.config.timeout ?? 60000),
+      });
+
+      if (!response.ok) {
+        throw new EmbeddingError(
+          `通义千问嵌入 API 请求失败: ${response.status}`,
+          EmbeddingErrorCode.API_ERROR,
+          'qwen'
+        );
+      }
+
+      const data = (await response.json()) as Record<string, unknown>;
+      const embeddingsData = data.output as Record<string, unknown>;
+      const embeddings = embeddingsData.embeddings as Array<Record<string, unknown>>;
+
+      // text-embedding-v3 返回 1024 维向量
+      return embeddings.map((item) => item.embedding as number[]);
+    } catch (error) {
+      if (error instanceof EmbeddingError) {
+        throw error;
+      }
+      throw new EmbeddingError(
+        `通义千问嵌入失败: ${error instanceof Error ? error.message : String(error)}`,
+        EmbeddingErrorCode.API_ERROR,
+        'qwen'
+      );
+    }
+  }
+
+  /**
+   * 智谱 GLM 嵌入
+   *
+   * 使用 Embedding-3 模型
+   * 维度: 1024
+   */
+  private async embedZhipu(texts: string[]): Promise<number[][]> {
+    const url = `${this.config.baseURL}/embeddings`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'embedding-3',
+          input: texts,
+        }),
+        signal: AbortSignal.timeout(this.config.timeout ?? 60000),
+      });
+
+      if (!response.ok) {
+        throw new EmbeddingError(
+          `智谱 GLM 嵌入 API 请求失败: ${response.status}`,
+          EmbeddingErrorCode.API_ERROR,
+          'zhipu'
+        );
+      }
+
+      const data = (await response.json()) as Record<string, unknown>;
+      const embeddingsData = data.data as Array<Record<string, unknown>>;
+
+      // Embedding-3 返回 1024 维向量
+      return embeddingsData
+        .sort((a, b) => (a.index as number) - (b.index as number))
+        .map((item) => item.embedding as number[]);
+    } catch (error) {
+      if (error instanceof EmbeddingError) {
+        throw error;
+      }
+      throw new EmbeddingError(
+        `智谱 GLM 嵌入失败: ${error instanceof Error ? error.message : String(error)}`,
+        EmbeddingErrorCode.API_ERROR,
+        'zhipu'
+      );
+    }
+  }
+
+  /**
+   * Ollama 嵌入
+   *
+   * 使用本地 Ollama 嵌入端点
+   * 默认模型: nomic-embed-text (768 维)
+   */
+  private async embedOllama(texts: string[]): Promise<number[][]> {
+    const url = `${this.config.baseURL}/embeddings`;
+
+    try {
+      // Ollama 不支持批量，需要逐个处理
+      const embeddings: number[][] = [];
+
+      for (const text of texts) {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'nomic-embed-text',
+            prompt: text,
+          }),
+          signal: AbortSignal.timeout(this.config.timeout ?? 60000),
+        });
+
+        if (!response.ok) {
+          throw new EmbeddingError(
+            `Ollama 嵌入 API 请求失败: ${response.status}`,
+            EmbeddingErrorCode.API_ERROR,
+            'ollama'
+          );
+        }
+
+        const data = (await response.json()) as Record<string, unknown>;
+        const embedding = data.embedding as number[];
+        embeddings.push(embedding);
+      }
+
+      return embeddings;
+    } catch (error) {
+      if (error instanceof EmbeddingError) {
+        throw error;
+      }
+      throw new EmbeddingError(
+        `Ollama 嵌入失败: ${error instanceof Error ? error.message : String(error)}`,
+        EmbeddingErrorCode.API_ERROR,
+        'ollama'
+      );
+    }
   }
 
   /**

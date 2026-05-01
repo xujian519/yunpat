@@ -14,6 +14,16 @@ import {
   SourceType,
   FactCheckerConfig,
 } from './hallucination-types.js';
+import {
+  ExternalFactChecker,
+  ExternalFactCheckOptions,
+  ExternalFactCheckResult,
+  AggregatedFactCheck,
+  aggregateResults,
+  calculateConsensus,
+  getSourceWeight,
+  FactCheckError,
+} from './ExternalFactChecker.js';
 
 /**
  * 事实验证器
@@ -22,6 +32,7 @@ export class FactChecker {
   private llm: LLMAdapter;
   private knowledgeBase: KnowledgeBase;
   private config: FactCheckerConfig;
+  private externalChecker?: ExternalFactChecker;
 
   constructor(llm: LLMAdapter, knowledgeBase: KnowledgeBase, config?: Partial<FactCheckerConfig>) {
     this.llm = llm;
@@ -35,6 +46,15 @@ export class FactChecker {
       },
       ...config,
     };
+
+    // 初始化外部验证器（如果配置中启用）
+    if (this.config.verificationMethods.includes('external_api')) {
+      this.externalChecker = new ExternalFactChecker(
+        this.config.externalAPIConfig as
+          | { apiKey?: string; enableCache?: boolean; cacheTTL?: number }
+          | undefined
+      );
+    }
   }
 
   /**
@@ -222,9 +242,12 @@ ${content}
         const result = await this.verifyWithKnowledgeBase(claim);
         results.push(result);
       } else if (method === 'external_api') {
-        // TODO: 实现外部API验证
-        // const result = await this.verifyWithExternalAPI(claim);
-        // results.push(result);
+        try {
+          const result = await this.verifyWithExternalAPI(claim);
+          results.push(result);
+        } catch (error) {
+          console.warn('外部API验证失败:', error);
+        }
       }
     }
 
@@ -457,5 +480,208 @@ ${content}
       verificationRate: verifiable.length > 0 ? verified.length / verifiable.length : 0,
       avgConfidence: results.length > 0 ? totalConfidence / results.length : 0,
     };
+  }
+
+  /**
+   * 使用外部 API 验证声明
+   *
+   * @param claim 要验证的声明
+   * @param options 验证选项
+   * @returns 事实验证结果
+   */
+  async verifyWithExternalAPI(
+    claim: Claim,
+    options?: ExternalFactCheckOptions
+  ): Promise<FactCheckResult> {
+    if (!this.externalChecker) {
+      throw new FactCheckError(
+        '外部 API 未启用',
+        undefined,
+        'FactChecker'
+      );
+    }
+
+    const externalResult = await this.externalChecker.verifyClaim(
+      claim.content,
+      options
+    );
+
+    // 转换为 FactCheckResult 格式
+    return {
+      claim,
+      isVerifiable: externalResult.isValid !== 'UNKNOWN',
+      isVerified: externalResult.isValid === 'TRUE',
+      confidence: externalResult.confidence,
+      sources: externalResult.sources.map((s) => ({
+        id: s.url,
+        type: SourceType.EXTERNAL_API,
+        title: s.name,
+        url: s.url,
+        credibility: this.calculateSourceCredibility(externalResult.isValid),
+        lastVerified: new Date(s.date || Date.now()),
+      })),
+      verificationMethod: 'external_api',
+      details: `外部 API 验证结果: ${externalResult.isValid}`,
+    };
+  }
+
+  /**
+   * 多源交叉验证
+   *
+   * @param claim 要验证的声明
+   * @param options 验证选项
+   * @returns 聚合验证结果
+   */
+  async verifyCrossSources(
+    claim: Claim,
+    options?: ExternalFactCheckOptions
+  ): Promise<AggregatedFactCheck> {
+    const results: ExternalFactCheckResult[] = [];
+
+    // 1. 知识库验证
+    try {
+      const kbResult = await this.getKnowledgeBaseResult(claim);
+      if (kbResult) {
+        results.push(kbResult);
+      }
+    } catch (error) {
+      console.warn('知识库验证失败:', error);
+    }
+
+    // 2. 外部 API 验证
+    if (this.externalChecker) {
+      try {
+        const externalResult = await this.externalChecker.verifyClaim(
+          claim.content,
+          options
+        );
+        results.push(externalResult);
+      } catch (error) {
+        console.warn('外部 API 验证失败:', error);
+      }
+    }
+
+    // 3. 聚合结果
+    return aggregateResults(results);
+  }
+
+  /**
+   * 获取知识库验证结果（转换为外部结果格式）
+   *
+   * @param claim 声明
+   * @returns 外部验证结果或 undefined
+   */
+  private async getKnowledgeBaseResult(
+    claim: Claim
+  ): Promise<ExternalFactCheckResult | undefined> {
+    const kbResult = await this.verifyWithKnowledgeBase(claim);
+
+    if (!kbResult.isVerifiable || kbResult.sources.length === 0) {
+      return undefined;
+    }
+
+    return {
+      claim: claim.content,
+      isValid: kbResult.isVerified ? 'TRUE' : 'FALSE',
+      confidence: kbResult.confidence,
+      sources: kbResult.sources.map((s) => ({
+        name: s.title,
+        url: s.url || '',
+        rating: kbResult.isVerified ? 'Verified' : 'Unverified',
+        date: s.lastVerified?.toISOString(),
+      })),
+      source: 'knowledge_base',
+      timestamp: new Date(),
+    };
+  }
+
+  /**
+   * 计算来源可信度
+   *
+   * @param isValid 验证状态
+   * @returns 可信度分数
+   */
+  private calculateSourceCredibility(
+    isValid: 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN'
+  ): number {
+    switch (isValid) {
+      case 'TRUE':
+        return 0.9;
+      case 'MIXED':
+        return 0.5;
+      case 'FALSE':
+        return 0.1;
+      default:
+        return 0;
+    }
+  }
+
+  /**
+   * 批量外部验证
+   *
+   * @param claims 声明列表
+   * @param options 验证选项
+   * @returns 验证结果列表
+   */
+  async verifyClaimsWithExternalAPI(
+    claims: Claim[],
+    options?: ExternalFactCheckOptions
+  ): Promise<FactCheckResult[]> {
+    if (!this.externalChecker) {
+      throw new FactCheckError(
+        '外部 API 未启用',
+        undefined,
+        'FactChecker'
+      );
+    }
+
+    const externalResults = await this.externalChecker.verifyClaims(
+      claims.map((c) => c.content),
+      options
+    );
+
+    return externalResults.map((result, index) => ({
+      claim: claims[index],
+      isVerifiable: result.isValid !== 'UNKNOWN',
+      isVerified: result.isValid === 'TRUE',
+      confidence: result.confidence,
+      sources: result.sources.map((s) => ({
+        id: s.url,
+        type: SourceType.EXTERNAL_API,
+        title: s.name,
+        url: s.url,
+        credibility: this.calculateSourceCredibility(result.isValid),
+        lastVerified: new Date(s.date || Date.now()),
+      })),
+      verificationMethod: 'external_api',
+      details: `外部 API 验证结果: ${result.isValid}`,
+    }));
+  }
+
+  /**
+   * 获取外部验证器状态
+   *
+   * @returns 状态信息
+   */
+  getExternalCheckerStatus(): {
+    enabled: boolean;
+    configured: boolean;
+    cacheStats?: { size: number; keys: string[] };
+  } {
+    const enabled = this.config.verificationMethods.includes('external_api');
+    const configured = !!this.externalChecker;
+
+    return {
+      enabled,
+      configured,
+      cacheStats: this.externalChecker?.getCacheStats(),
+    };
+  }
+
+  /**
+   * 清除外部验证缓存
+   */
+  clearExternalCache(): void {
+    this.externalChecker?.clearCache();
   }
 }

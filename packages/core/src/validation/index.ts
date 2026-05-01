@@ -42,3 +42,28 @@ export { LogicalConsistencyChecker } from './LogicalConsistencyChecker.js';
 export { SourceAttributionValidator } from './SourceAttributionValidator.js';
 
 export { HallucinationDetector } from './HallucinationDetector.js';
+
+// 外部事实验证系统
+export {
+  ExternalFactChecker,
+  FactCheckError,
+  aggregateResults,
+  calculateConsensus,
+  getSourceWeight,
+  type ExternalFactCheckerConfig,
+  type ExternalFactCheckOptions,
+  type AggregatedFactCheck,
+  type ExternalFactCheckResult,
+  type ExternalSource,
+  type GoogleFactCheckResponse,
+  type ClaimReview,
+} from './ExternalFactChecker.js';
+
+// 外部事实验证提供者
+export {
+  GoogleFactCheckAPI,
+  createGoogleFactCheckAPI,
+  type GoogleFactCheckAPIConfig,
+  type GoogleFactCheckMetadata,
+  type ClaimDetail,
+} from './providers/index.js';

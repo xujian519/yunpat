@@ -8,6 +8,8 @@
 
 import { ReasoningCache } from './ReasoningCache.js';
 import { reasoningMonitor } from './ReasoningMonitor.js';
+import { TokenCounter, tokenCounter as defaultTokenCounter } from '../llm/tokenization/TokenCounter.js';
+import { BatchProcessorOptimizer, createBatchProcessorOptimizer } from '../llm/tokenization/BatchProcessorOptimizer.js';
 
 export interface BatchProcessConfig {
   /** 并发数 */
@@ -24,6 +26,18 @@ export interface BatchProcessConfig {
 
   /** 进度回调 */
   onProgress?: (completed: number, total: number) => void;
+
+  /** 最大 Token 限制（用于优化批次大小） */
+  maxTokens?: number;
+
+  /** 最大批处理大小 */
+  maxBatchSize?: number;
+
+  /** 是否启用动态批次调整 */
+  enableDynamicBatching?: boolean;
+
+  /** 模型名称（用于精确 Token 计数） */
+  modelName?: string;
 }
 
 export interface BatchResult<TInput, TResult> {
@@ -55,6 +69,8 @@ export interface BatchResult<TInput, TResult> {
 export class ReasoningBatchProcessor<TInput = any, TResult = any> {
   private cache?: ReasoningCache<TResult>;
   private config: BatchProcessConfig;
+  private tokenCounter: TokenCounter;
+  private batchOptimizer?: BatchProcessorOptimizer;
 
   constructor(config?: Partial<BatchProcessConfig>, cache?: ReasoningCache<TResult>) {
     this.config = {
@@ -63,10 +79,24 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
       timeout: 30000,
       useCache: !!cache,
       onProgress: undefined,
+      maxTokens: 4000,
+      maxBatchSize: 20,
+      enableDynamicBatching: true,
+      modelName: 'gpt-3.5-turbo',
       ...config,
     };
 
     this.cache = cache;
+    this.tokenCounter = defaultTokenCounter;
+
+    // 如果启用动态批次调整，初始化批处理器优化器
+    if (this.config.enableDynamicBatching && this.config.maxTokens) {
+      this.batchOptimizer = createBatchProcessorOptimizer({
+        maxTokens: this.config.maxTokens,
+        maxBatchSize: this.config.maxBatchSize || 20,
+        enableDynamicAdjustment: true,
+      }, this.tokenCounter);
+    }
   }
 
   /**
@@ -300,20 +330,124 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
 
   /**
    * 估算 Token 消耗
-   * TODO: 可以实现更精确的估算
    */
   private estimateTokens(input: TInput): number {
     if (typeof input === 'string') {
-      // 粗略估算：1 Token ≈ 4 字符（中文）或 0.75 个单词（英文）
-      const isChinese = /[一-龥]/.test(input);
-      return isChinese ? Math.ceil(input.length / 2) : Math.ceil(input.length / 4);
+      // 使用 Token 计数器进行精确估算
+      return this.tokenCounter.estimateTokens(input, this.config.modelName || 'gpt-3.5-turbo');
     }
 
     if (typeof input === 'object') {
-      return JSON.stringify(input).length / 4;
+      const jsonString = JSON.stringify(input);
+      return this.tokenCounter.estimateTokens(jsonString, this.config.modelName || 'gpt-3.5-turbo');
     }
 
     return 100; // 默认值
+  }
+
+  /**
+   * 智能分批处理
+   *
+   * 根据输入内容动态调整批次大小
+   *
+   * @param inputs 输入数组
+   * @param processFn 处理函数
+   * @param getCacheKey 获取缓存键的函数
+   * @returns 结果数组
+   */
+  async processBatchSmart(
+    inputs: TInput[],
+    processFn: (input: TInput) => Promise<TResult>,
+    getCacheKey?: (input: TInput) => string
+  ): Promise<BatchResult<TInput, TResult>[]> {
+    // 如果未启用动态批次调整，回退到普通批处理
+    if (!this.batchOptimizer) {
+      return this.processBatch(inputs, processFn, getCacheKey);
+    }
+
+    // 将输入转换为文本（用于 Token 估算）
+    const texts = inputs.map(input => this.inputToText(input));
+
+    // 使用智能分批
+    const modelName = this.config.modelName || 'gpt-3.5-turbo';
+    const optimizationResult = this.batchOptimizer.smartPartition(texts, modelName);
+
+    console.log(`[ReasoningBatchProcessor] 智能分批: ${inputs.length}个任务分为${optimizationResult.totalBatches}批`);
+    console.log(`[ReasoningBatchProcessor] 平均批次大小: ${optimizationResult.averageBatchSize.toFixed(2)}`);
+    console.log(`[ReasoningBatchProcessor] 总Token数: ${optimizationResult.totalTokens}`);
+
+    // 按批次处理
+    const allResults: BatchResult<TInput, TResult>[] = [];
+    let processedCount = 0;
+
+    for (let i = 0; i < optimizationResult.batches.length; i++) {
+      const batch = optimizationResult.batches[i];
+      const startIndex = processedCount;
+      const endIndex = processedCount + batch.length;
+      const batchInputs = inputs.slice(startIndex, endIndex);
+
+      // 处理当前批次
+      const batchResults = await this.processBatch(batchInputs, processFn, getCacheKey);
+
+      allResults.push(...batchResults);
+      processedCount = endIndex;
+
+      // 更新进度
+      if (this.config.onProgress) {
+        this.config.onProgress(processedCount, inputs.length);
+      }
+    }
+
+    return allResults;
+  }
+
+  /**
+   * 将输入转换为文本（用于 Token 估算）
+   */
+  private inputToText(input: TInput): string {
+    if (typeof input === 'string') {
+      return input;
+    }
+
+    if (typeof input === 'object') {
+      return JSON.stringify(input);
+    }
+
+    return String(input);
+  }
+
+  /**
+   * 获取批处理统计信息
+   *
+   * @param inputs 输入数组
+   * @returns 统计信息
+   */
+  getBatchStatistics(inputs: TInput[]): {
+    totalItems: number;
+    totalTokens: number;
+    avgTokensPerItem: number;
+    maxTokensPerItem: number;
+    minTokensPerItem: number;
+    recommendedBatchSize: number;
+  } {
+    const texts = inputs.map(input => this.inputToText(input));
+    const modelName = this.config.modelName || 'gpt-3.5-turbo';
+
+    const tokenCounts = this.tokenCounter.estimateTokensBatch(texts, modelName);
+    const totalTokens = tokenCounts.reduce((sum, count) => sum + count, 0);
+
+    const recommendedBatchSize = this.batchOptimizer
+      ? this.batchOptimizer.calculateOptimalBatchSize(texts, modelName)
+      : Math.min(this.config.maxBatchSize || 20, inputs.length);
+
+    return {
+      totalItems: inputs.length,
+      totalTokens,
+      avgTokensPerItem: totalTokens / inputs.length,
+      maxTokensPerItem: Math.max(...tokenCounts),
+      minTokensPerItem: Math.min(...tokenCounts),
+      recommendedBatchSize,
+    };
   }
 
   /**

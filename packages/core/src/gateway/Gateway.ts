@@ -10,8 +10,11 @@
 import {
   ApiKeyManager,
   JwtManager,
+  OAuthManager,
   SessionManager,
   type ApiKeyInfo,
+  type AuthorizationUrlResult,
+  type OAuthCallbackResult,
 } from './auth/index.js';
 
 /**
@@ -229,6 +232,14 @@ export interface Credentials {
     token?: string;
     username?: string;
     password?: string;
+    /** OAuth 提供商 */
+    provider?: 'google' | 'github';
+    /** OAuth 授权码 */
+    code?: string;
+    /** OAuth State */
+    state?: string;
+    /** OAuth 重定向 URI */
+    redirectUri?: string;
   };
 }
 
@@ -290,6 +301,9 @@ export interface SecurityGatewayConfig {
 
   /** 会话管理器（可选） */
   sessionManager?: SessionManager;
+
+  /** OAuth 管理器（可选） */
+  oauthManager?: OAuthManager;
 }
 
 /**
@@ -454,6 +468,7 @@ export class BaseGateway implements Gateway {
   private apiKeyManager?: ApiKeyManager;
   private jwtManager?: JwtManager;
   private sessionManager?: SessionManager;
+  private oauthManager?: OAuthManager;
 
   constructor(config: SecurityGatewayConfig) {
     this.config = config;
@@ -461,6 +476,7 @@ export class BaseGateway implements Gateway {
     this.apiKeyManager = config.apiKeyManager;
     this.jwtManager = config.jwtManager;
     this.sessionManager = config.sessionManager;
+    this.oauthManager = config.oauthManager;
   }
 
   async receiveInput(source: InputSourceType): Promise<MultimodalInput> {
@@ -618,12 +634,76 @@ export class BaseGateway implements Gateway {
           };
         }
 
-        case 'oauth':
-          // OAuth 认证（待实现）
-          return {
-            success: false,
-            error: 'OAuth 认证暂未实现',
-          };
+        case 'oauth': {
+          // OAuth 认证
+          if (!this.oauthManager) {
+            return {
+              success: false,
+              error: 'OAuth 管理器未配置',
+            };
+          }
+
+          const provider = credentials.data.provider;
+          const code = credentials.data.code;
+          const state = credentials.data.state;
+          const redirectUri = credentials.data.redirectUri;
+
+          if (!provider || !code || !state || !redirectUri) {
+            return {
+              success: false,
+              error: '缺少 OAuth 参数',
+            };
+          }
+
+          try {
+            const result = await this.oauthManager.handleCallback(
+              provider,
+              code,
+              state,
+              redirectUri
+            );
+
+            // 创建会话
+            let sessionId: string | undefined;
+            if (this.sessionManager) {
+              const session = await this.sessionManager.createSession({
+                userId: result.userInfo.id,
+                roles: ['user'],
+                permissions: ['read', 'write'],
+                ttl: 3600, // 1 小时
+              });
+              sessionId = session.sessionId;
+            }
+
+            // 生成 JWT Token（如果配置了）
+            let token: string | undefined;
+            let expiresAt: Date | undefined;
+
+            if (this.jwtManager) {
+              const tokenPair = await this.jwtManager.generateTokenPair(
+                result.userInfo.id,
+                ['user'],
+                ['read', 'write']
+              );
+              token = tokenPair.accessToken;
+              expiresAt = new Date(tokenPair.expiresAt * 1000);
+            }
+
+            return {
+              success: true,
+              userId: result.userInfo.id,
+              roles: ['user'],
+              permissions: ['read', 'write'],
+              token,
+              expiresAt,
+            };
+          } catch (error) {
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : String(error),
+            };
+          }
+        }
 
         case 'basic':
           // Basic 认证（待实现）
@@ -756,5 +836,110 @@ export class BaseGateway implements Gateway {
       // 默认实现：输出到控制台
       console.log('[审计日志]', JSON.stringify(log));
     }
+  }
+
+  /**
+   * 生成 OAuth 授权 URL
+   *
+   * @param provider OAuth 提供商
+   * @param redirectUri 重定向 URI
+   * @param scope 授权范围（可选）
+   * @returns 授权 URL 和 State
+   */
+  async generateOAuthAuthorizationUrl(
+    provider: 'google' | 'github',
+    redirectUri: string,
+    scope?: string[]
+  ): Promise<AuthorizationUrlResult> {
+    if (!this.oauthManager) {
+      throw new Error('OAuth 管理器未配置');
+    }
+
+    return await this.oauthManager.generateAuthorizationUrl(
+      provider,
+      redirectUri,
+      scope
+    );
+  }
+
+  /**
+   * 处理 OAuth 回调
+   *
+   * @param provider OAuth 提供商
+   * @param code 授权码
+   * @param state State 参数
+   * @param redirectUri 重定向 URI
+   * @returns OAuth 回调结果
+   */
+  async handleOAuthCallback(
+    provider: 'google' | 'github',
+    code: string,
+    state: string,
+    redirectUri: string
+  ): Promise<OAuthCallbackResult> {
+    if (!this.oauthManager) {
+      throw new Error('OAuth 管理器未配置');
+    }
+
+    return await this.oauthManager.handleCallback(
+      provider,
+      code,
+      state,
+      redirectUri
+    );
+  }
+
+  /**
+   * 刷新 OAuth Token
+   *
+   * @param provider OAuth 提供商
+   * @param refreshToken 刷新令牌
+   * @returns 新的 Token
+   */
+  async refreshOAuthToken(
+    provider: 'google' | 'github',
+    refreshToken: string
+  ) {
+    if (!this.oauthManager) {
+      throw new Error('OAuth 管理器未配置');
+    }
+
+    return await this.oauthManager.refreshToken(provider, refreshToken);
+  }
+
+  /**
+   * 验证 OAuth Token
+   *
+   * @param provider OAuth 提供商
+   * @param accessToken 访问令牌
+   * @returns Token 是否有效
+   */
+  async verifyOAuthToken(
+    provider: 'google' | 'github',
+    accessToken: string
+  ): Promise<boolean> {
+    if (!this.oauthManager) {
+      throw new Error('OAuth 管理器未配置');
+    }
+
+    return await this.oauthManager.verifyToken(provider, accessToken);
+  }
+
+  /**
+   * 获取 OAuth 用户信息
+   *
+   * @param provider OAuth 提供商
+   * @param accessToken 访问令牌
+   * @returns 用户信息
+   */
+  async getOAuthUserInfo(
+    provider: 'google' | 'github',
+    accessToken: string
+  ) {
+    if (!this.oauthManager) {
+      throw new Error('OAuth 管理器未配置');
+    }
+
+    return await this.oauthManager.getUserInfo(provider, accessToken);
   }
 }

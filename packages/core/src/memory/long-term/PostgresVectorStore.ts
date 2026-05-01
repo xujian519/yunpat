@@ -3,15 +3,16 @@
  *
  * 基于 pgvector 扩展的向量搜索
  * 支持：
- * - HNSW 索引加速
- * - 元数据过滤
+ * - HNSW 索引加速（m=16, ef_construction=64）
+ * - 元数据过滤（JSONB）
  * - 混合检索（向量 + 关键词）
- * - 批量操作
+ * - 批量操作（连接池优化）
+ * - 性能监控（查询计时）
  */
 
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import postgres, { Sql } from 'postgres';
 import { memories, type Memory, type NewMemory } from './schema.js';
 
 /**
@@ -60,6 +61,12 @@ export interface PostgresVectorStoreConfig {
   /** HNSW 索引参数（M: 连接数，ef_construction: 构建时参数） */
   hnswM?: number;
   hnswEfConstruction?: number;
+  /** 连接池配置 */
+  poolMax?: number;
+  poolIdleTimeout?: number;
+  poolConnectTimeout?: number;
+  /** 性能监控 */
+  enablePerformanceMonitoring?: boolean;
 }
 
 /**
@@ -74,19 +81,70 @@ export interface PostgresVectorStoreConfig {
 export class PostgresVectorStore {
   private db: ReturnType<typeof drizzle>;
   private vectorDimension: number;
-  private client: postgres.Sql<{}>;
+  private client: Sql<{}>;
+  private enablePerformanceMonitoring: boolean;
+  private performanceMetrics: Map<string, number[]> = new Map();
 
   constructor(config: PostgresVectorStoreConfig) {
     this.vectorDimension = config.vectorDimension ?? 1024; // BGE-M3 默认维度（必须匹配）
+    this.enablePerformanceMonitoring = config.enablePerformanceMonitoring ?? false;
 
-    // 创建 PostgreSQL 连接
+    // 创建 PostgreSQL 连接（优化的连接池配置）
     this.client = postgres(config.databaseUrl, {
-      max: 10, // 连接池大小
-      idle_timeout: 20,
-      connect_timeout: 10,
+      max: config.poolMax ?? 20,           // 增加连接池大小以支持并发
+      idle_timeout: config.poolIdleTimeout ?? 20,
+      connect_timeout: config.poolConnectTimeout ?? 10,
+      max_lifetime: 60 * 30,              // 连接最大生命周期 30 分钟
     });
 
     this.db = drizzle(this.client);
+  }
+
+  /**
+   * 记录性能指标
+   */
+  private recordMetric(operation: string, duration: number): void {
+    if (!this.enablePerformanceMonitoring) return;
+
+    if (!this.performanceMetrics.has(operation)) {
+      this.performanceMetrics.set(operation, []);
+    }
+
+    const metrics = this.performanceMetrics.get(operation)!;
+    metrics.push(duration);
+
+    // 只保留最近 100 条记录
+    if (metrics.length > 100) {
+      metrics.shift();
+    }
+  }
+
+  /**
+   * 获取性能统计信息
+   */
+  getPerformanceStats(): Record<string, { avg: number; min: number; max: number; count: number }> {
+    const stats: Record<string, { avg: number; min: number; max: number; count: number }> = {};
+
+    for (const [operation, durations] of this.performanceMetrics.entries()) {
+      if (durations.length === 0) continue;
+
+      const sum = durations.reduce((a, b) => a + b, 0);
+      stats[operation] = {
+        avg: sum / durations.length,
+        min: Math.min(...durations),
+        max: Math.max(...durations),
+        count: durations.length,
+      };
+    }
+
+    return stats;
+  }
+
+  /**
+   * 清空性能指标
+   */
+  clearPerformanceStats(): void {
+    this.performanceMetrics.clear();
   }
 
   /**
@@ -196,55 +254,80 @@ export class PostgresVectorStore {
 
   /**
    * 批量插入记忆（真批量，单次 SQL）
+   *
+   * 性能优化：
+   * - 使用 VALUES 批量插入
+   * - 分批处理避免内存溢出
+   * - 并行处理更新操作
    */
   async upsertBatch(items: Array<NewMemory & { id?: number }>): Promise<number[]> {
+    const startTime = Date.now();
     const now = new Date();
     const ids: number[] = [];
 
-    // 分离新增和更新
-    const toInsert = items.filter((item) => !item.id);
-    const toUpdate = items.filter((item) => item.id);
+    try {
+      // 分离新增和更新
+      const toInsert = items.filter((item) => !item.id);
+      const toUpdate = items.filter((item) => item.id);
 
-    // 批量插入
-    if (toInsert.length > 0) {
-      const values = toInsert.map((item) => ({
-        type: item.type,
-        content: item.content,
-        embedding: sql`${typeof item.embedding === 'string' ? item.embedding : JSON.stringify(item.embedding)}::vector(1024)`,
-        metadata: item.metadata ?? null,
-        isArchived: item.isArchived ?? false,
-        createdAt: now,
-        updatedAt: now,
-      }));
+      // 批量插入（分批处理，每批 1000 条）
+      const batchSize = 1000;
+      for (let i = 0; i < toInsert.length; i += batchSize) {
+        const batch = toInsert.slice(i, i + batchSize);
+        const values = batch.map((item) => ({
+          type: item.type,
+          content: item.content,
+          embedding: sql`${typeof item.embedding === 'string' ? item.embedding : JSON.stringify(item.embedding)}::vector(1024)`,
+          metadata: item.metadata ?? null,
+          isArchived: item.isArchived ?? false,
+          createdAt: now,
+          updatedAt: now,
+        }));
 
-      const results = await this.db
-        .insert(memories)
-        .values(values)
-        .returning({ id: memories.id });
+        const results = await this.db
+          .insert(memories)
+          .values(values)
+          .returning({ id: memories.id });
 
-      ids.push(...results.map((r) => r.id));
-    }
-
-    // 逐条更新（更新通常较少，且需要按 ID 匹配）
-    for (const item of toUpdate) {
-      if (item.id) {
-        await this.db
-          .update(memories)
-          .set({
-            type: item.type,
-            content: item.content,
-            embedding: sql`${JSON.stringify(item.embedding)}::vector(1024)`,
-            metadata: item.metadata,
-            isArchived: item.isArchived ?? false,
-            updatedAt: now,
-          })
-          .where(eq(memories.id, item.id));
-
-        ids.push(item.id);
+        ids.push(...results.map((r) => r.id));
       }
-    }
 
-    return ids;
+      // 并行处理更新操作（限制并发数）
+      const updateConcurrency = 10;
+      for (let i = 0; i < toUpdate.length; i += updateConcurrency) {
+        const batch = toUpdate.slice(i, i + updateConcurrency);
+        await Promise.all(
+          batch.map(async (item) => {
+            if (item.id) {
+              await this.db
+                .update(memories)
+                .set({
+                  type: item.type,
+                  content: item.content,
+                  embedding: sql`${JSON.stringify(item.embedding)}::vector(1024)`,
+                  metadata: item.metadata,
+                  isArchived: item.isArchived ?? false,
+                  updatedAt: now,
+                })
+                .where(eq(memories.id, item.id));
+
+              ids.push(item.id);
+            }
+          })
+        );
+      }
+
+      // 记录性能指标
+      const duration = Date.now() - startTime;
+      this.recordMetric('upsert_batch', duration);
+      this.recordMetric('upsert_batch_count', items.length);
+
+      return ids;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.recordMetric('upsert_batch_error', duration);
+      throw error;
+    }
   }
 
   /**
@@ -252,72 +335,90 @@ export class PostgresVectorStore {
    *
    * 使用余弦距离计算相似度
    * 返回 Top-K 最相似的记录
+   *
+   * 性能优化：
+   * - HNSW 索引加速
+   * - 参数化查询防止 SQL 注入
+   * - 性能监控
    */
   async search(
     queryEmbedding: number[],
     topK: number = 10,
     filter?: SearchFilter
   ): Promise<SimilarityResult[]> {
-    // 验证向量维度
-    if (queryEmbedding.length !== this.vectorDimension) {
-      throw new Error(
-        `向量维度不匹配：期望 ${this.vectorDimension}，实际 ${queryEmbedding.length}`
-      );
+    const startTime = Date.now();
+
+    try {
+      // 验证向量维度
+      if (queryEmbedding.length !== this.vectorDimension) {
+        throw new Error(
+          `向量维度不匹配：期望 ${this.vectorDimension}，实际 ${queryEmbedding.length}`
+        );
+      }
+
+      // 构建查询条件
+      const conditions = [];
+
+      if (filter?.types && filter.types.length > 0) {
+        conditions.push(inArray(memories.type, filter.types));
+      }
+
+      if (filter?.tags && filter.tags.length > 0) {
+        // JSONB 数组包含查询（使用参数化查询）
+        for (const tag of filter.tags) {
+          conditions.push(sql`${memories.metadata}->'tags' @> ${JSON.stringify([tag])}::jsonb`);
+        }
+      }
+
+      if (filter?.agent) {
+        conditions.push(sql`${memories.metadata}->>'agent' = ${filter.agent}`);
+      }
+
+      if (filter?.userId) {
+        conditions.push(sql`${memories.metadata}->>'userId' = ${filter.userId}`);
+      }
+
+      if (filter?.excludeArchived) {
+        conditions.push(eq(memories.isArchived, false));
+      }
+
+      if (filter?.createdAtAfter) {
+        conditions.push(sql`${memories.createdAt} >= ${filter.createdAtAfter}`);
+      }
+
+      if (filter?.createdAtBefore) {
+        conditions.push(sql`${memories.createdAt} <= ${filter.createdAtBefore}`);
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      // 执行向量搜索（使用余弦距离）
+      const embeddingStr = JSON.stringify(queryEmbedding);
+
+      const results = await this.db
+        .select({
+          id: memories.id,
+          content: memories.content,
+          metadata: memories.metadata,
+          type: memories.type,
+          similarity: sql`1 - (${memories.embedding} <=> ${embeddingStr}::vector)`,
+        })
+        .from(memories)
+        .where(whereClause)
+        .orderBy(desc(sql`1 - (${memories.embedding} <=> ${embeddingStr}::vector)`))
+        .limit(topK);
+
+      // 记录性能指标
+      const duration = Date.now() - startTime;
+      this.recordMetric('search', duration);
+
+      return results as SimilarityResult[];
+    } catch (error) {
+      // 记录错误性能指标
+      const duration = Date.now() - startTime;
+      this.recordMetric('search_error', duration);
+      throw error;
     }
-
-    // 构建查询条件
-    const conditions = [];
-
-    if (filter?.types && filter.types.length > 0) {
-      conditions.push(inArray(memories.type, filter.types));
-    }
-
-    if (filter?.tags && filter.tags.length > 0) {
-      // JSONB 数组包含查询
-      conditions.push(
-        sql`${memories.metadata}->'tags' ?| ${filter.tags}`
-      );
-    }
-
-    if (filter?.agent) {
-      conditions.push(sql`${memories.metadata}->>'agent' = ${filter.agent}`);
-    }
-
-    if (filter?.userId) {
-      conditions.push(sql`${memories.metadata}->>'userId' = ${filter.userId}`);
-    }
-
-    if (filter?.excludeArchived) {
-      conditions.push(eq(memories.isArchived, false));
-    }
-
-    if (filter?.createdAtAfter) {
-      conditions.push(sql`${memories.createdAt} >= ${filter.createdAtAfter}`);
-    }
-
-    if (filter?.createdAtBefore) {
-      conditions.push(sql`${memories.createdAt} <= ${filter.createdAtBefore}`);
-    }
-
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-    // 执行向量搜索
-    const embeddingStr = JSON.stringify(queryEmbedding);
-
-    const results = await this.db
-      .select({
-        id: memories.id,
-        content: memories.content,
-        metadata: memories.metadata,
-        type: memories.type,
-        similarity: sql`1 - (${memories.embedding}::vector <=> ${embeddingStr}::vector)`,
-      })
-      .from(memories)
-      .where(whereClause)
-      .orderBy(desc(sql`1 - (${memories.embedding}::vector <=> ${embeddingStr}::vector)`))
-      .limit(topK);
-
-    return results as SimilarityResult[];
   }
 
   /**

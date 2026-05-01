@@ -58,7 +58,11 @@ async function example2() {
 
   const messages = [
     { role: 'user' as const, content: '你好，我想申请一个专利', timestamp: new Date() },
-    { role: 'assistant' as const, content: '你好！我可以帮助你撰写专利申请文件。', timestamp: new Date() },
+    {
+      role: 'assistant' as const,
+      content: '你好！我可以帮助你撰写专利申请文件。',
+      timestamp: new Date(),
+    },
     { role: 'user' as const, content: '专利的核心创新点是什么？', timestamp: new Date() },
     {
       role: 'assistant' as const,
@@ -132,7 +136,11 @@ async function example4() {
 
   const messages = [
     { role: 'user' as const, content: '专利的核心创新点是什么？', timestamp: new Date() },
-    { role: 'assistant' as const, content: '核心创新点是技术方案中的创造性特征。', timestamp: new Date() },
+    {
+      role: 'assistant' as const,
+      content: '核心创新点是技术方案中的创造性特征。',
+      timestamp: new Date(),
+    },
     { role: 'user' as const, content: '谢谢', timestamp: new Date() },
     { role: 'assistant' as const, content: '不客气！', timestamp: new Date() },
   ];

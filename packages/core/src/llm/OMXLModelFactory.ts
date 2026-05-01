@@ -123,7 +123,7 @@ export class OMXLModelFactory {
     modelName: 'gemma-4-e2b-it-4bit',
     temperature: 0.7,
     maxTokens: 2048,
-    timeout: 180000,  // 本地模型需要更长时间，增加到3分钟
+    timeout: 180000, // 本地模型需要更长时间，增加到3分钟
   };
 
   /**

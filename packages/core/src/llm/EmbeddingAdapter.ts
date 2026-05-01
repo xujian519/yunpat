@@ -5,7 +5,20 @@
  * 默认使用 BGE-M3 模型 (localhost:8009)
  */
 
-export interface EmbeddingConfig {
+import {
+  BaseEmbeddingProvider,
+  EmbeddingParams,
+  EmbeddingResult,
+  SingleEmbeddingResult,
+  EmbeddingCapabilities,
+  EmbeddingError,
+  EmbeddingErrorCode,
+} from './EmbeddingProvider.js';
+
+/**
+ * OpenAI 兼容嵌入配置
+ */
+export interface OpenAIEmbeddingConfig {
   /** API 基础 URL */
   baseURL: string;
   /** 模型名称 */
@@ -16,101 +29,272 @@ export interface EmbeddingConfig {
   timeout?: number;
   /** 单次请求最大文本数 */
   batchSize?: number;
+  /** 是否自动归一化 */
+  normalize?: boolean;
 }
 
-export interface EmbeddingResponse {
-  /** 嵌入向量 */
-  embeddings: number[][];
-  /** 使用的 token 数 */
+/**
+ * OpenAI 兼容 API 响应格式
+ */
+interface OpenAIEmbeddingResponse {
+  data: Array<{
+    embedding: number[];
+    index: number;
+  }>;
+  model: string;
   usage?: {
-    promptTokens: number;
-    totalTokens: number;
+    prompt_tokens: number;
+    total_tokens: number;
   };
 }
 
+/**
+ * 默认配置
+ */
 const DEFAULT_CONFIG = {
   model: 'bge-m3-mlx-8bit',
   timeout: 30000,
   batchSize: 32,
+  normalize: true,
 };
 
-export class EmbeddingAdapter {
-  private config: Required<Pick<EmbeddingConfig, 'baseURL' | 'model' | 'timeout' | 'batchSize'>> & {
+/**
+ * OpenAI 兼容嵌入适配器
+ *
+ * 支持 BGE-M3、M3E 等兼容 OpenAI /embeddings 端点的模型
+ */
+export class EmbeddingAdapter extends BaseEmbeddingProvider {
+  private config: Required<
+    Pick<OpenAIEmbeddingConfig, 'baseURL' | 'model' | 'timeout' | 'batchSize' | 'normalize'>
+  > & {
     apiKey?: string;
   };
+  private capabilities: EmbeddingCapabilities;
 
-  constructor(config: EmbeddingConfig) {
+  constructor(config: OpenAIEmbeddingConfig) {
+    super();
+
     this.config = {
       baseURL: config.baseURL,
       model: config.model ?? DEFAULT_CONFIG.model,
       timeout: config.timeout ?? DEFAULT_CONFIG.timeout,
       batchSize: config.batchSize ?? DEFAULT_CONFIG.batchSize,
+      normalize: config.normalize ?? DEFAULT_CONFIG.normalize,
       apiKey: config.apiKey,
+    };
+
+    // 设置默认能力（BGE-M3: 1024 维）
+    this.capabilities = {
+      dimension: 1024,
+      maxTokens: 8192,
+      maxBatchSize: this.config.batchSize,
+      supportsNormalization: true,
     };
   }
 
-  async embed(texts: string[]): Promise<number[][]> {
-    if (texts.length === 0) return [];
+  /**
+   * 批量嵌入
+   */
+  async embed(params: EmbeddingParams): Promise<EmbeddingResult> {
+    const { texts, normalize = this.config.normalize } = params;
 
-    // 分批处理，避免内存过高
-    const results: number[][] = [];
-    for (let i = 0; i < texts.length; i += this.config.batchSize) {
-      const batch = texts.slice(i, i + this.config.batchSize);
-      const batchResult = await this.embedBatch(batch);
-      results.push(...batchResult);
+    // 验证输入
+    this.validateInput(texts);
+
+    if (texts.length === 0) {
+      return {
+        embeddings: [],
+        dimension: this.capabilities.dimension,
+        model: this.config.model,
+      };
     }
-    return results;
+
+    try {
+      // 分批处理
+      const embeddings = await this.processBatch(texts, this.config.batchSize, async (batch) => {
+        return await this.embedBatch(batch);
+      });
+
+      // 归一化处理
+      const finalEmbeddings = normalize ? embeddings.map((emb) => this.normalize(emb)) : embeddings;
+
+      return {
+        embeddings: finalEmbeddings,
+        dimension: this.capabilities.dimension,
+        model: this.config.model,
+      };
+    } catch (error) {
+      if (error instanceof EmbeddingError) {
+        throw error;
+      }
+      throw new EmbeddingError(
+        `嵌入失败: ${error instanceof Error ? error.message : String(error)}`,
+        EmbeddingErrorCode.API_ERROR,
+        this.config.model
+      );
+    }
   }
 
-  async embedSingle(text: string): Promise<number[]> {
-    const results = await this.embedBatch([text]);
-    return results[0];
+  /**
+   * 嵌入单个文本
+   */
+  async embedSingle(
+    text: string,
+    normalize = this.config.normalize
+  ): Promise<SingleEmbeddingResult> {
+    const result = await this.embed({ texts: [text], normalize });
+
+    return {
+      embedding: result.embeddings[0],
+      model: result.model,
+    };
   }
 
+  /**
+   * 获取能力元数据
+   */
+  getCapabilities(): EmbeddingCapabilities {
+    return { ...this.capabilities };
+  }
+
+  /**
+   * 获取模型名称
+   */
+  getModel(): string {
+    return this.config.model;
+  }
+
+  /**
+   * 调用 API 嵌入一批文本
+   */
   private async embedBatch(texts: string[]): Promise<number[][]> {
     const url = `${this.config.baseURL}/embeddings`;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
+
     if (this.config.apiKey) {
       headers['Authorization'] = `Bearer ${this.config.apiKey}`;
     }
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model: this.config.model,
-        input: texts,
-      }),
-      signal: AbortSignal.timeout(this.config.timeout),
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: this.config.model,
+          input: texts,
+        }),
+        signal: AbortSignal.timeout(this.config.timeout),
+      });
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(`Embedding API 请求失败: ${response.status} ${text}`);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new EmbeddingError(
+          `API 请求失败: ${response.status} ${errorText}`,
+          EmbeddingErrorCode.API_ERROR,
+          this.config.model
+        );
+      }
+
+      const data = (await response.json()) as OpenAIEmbeddingResponse;
+
+      // 验证响应格式
+      if (!data.data || !Array.isArray(data.data)) {
+        throw new EmbeddingError(
+          'API 返回格式异常: 缺少 data 字段',
+          EmbeddingErrorCode.API_ERROR,
+          this.config.model
+        );
+      }
+
+      // 按 index 排序确保顺序正确
+      const sorted = data.data.sort((a, b) => a.index - b.index);
+
+      // 验证向量维度
+      const embeddings = sorted.map((item) => {
+        const embedding = item.embedding;
+        this.validateDimension(embedding, this.capabilities.dimension);
+        return embedding;
+      });
+
+      return embeddings;
+    } catch (error) {
+      if (error instanceof EmbeddingError) {
+        throw error;
+      }
+
+      // 网络错误或其他异常
+      throw new EmbeddingError(
+        `网络请求失败: ${error instanceof Error ? error.message : String(error)}`,
+        EmbeddingErrorCode.API_ERROR,
+        this.config.model
+      );
     }
+  }
 
-    const data: unknown = await response.json();
-
-    // OpenAI 兼容格式: data.data[].embedding
-    if (!(data as any).data || !Array.isArray((data as any).data)) {
-      throw new Error('Embedding API 返回格式异常');
-    }
-
-    // 按 index 排序确保顺序正确
-    const sorted = (data as any).data.sort(
-      (a: unknown, b: unknown) => (a as any).index - (b as any).index
-    );
-    return sorted.map((item: unknown) => (item as any).embedding);
+  /**
+   * 更新能力配置
+   *
+   * 用于不同模型的能力设置
+   */
+  setCapabilities(capabilities: Partial<EmbeddingCapabilities>): void {
+    this.capabilities = {
+      ...this.capabilities,
+      ...capabilities,
+    };
   }
 }
 
-export function createBGEEmbedding(baseURL?: string, apiKey?: string): EmbeddingAdapter {
-  return new EmbeddingAdapter({
-    baseURL: baseURL ?? 'http://localhost:8009/v1',
+/**
+ * 创建 BGE-M3 嵌入适配器
+ *
+ * BGE-M3: 1024 维，支持多语言
+ */
+export function createBGEEmbedding(
+  baseURL: string = 'http://localhost:8009/v1',
+  apiKey?: string
+): EmbeddingAdapter {
+  const adapter = new EmbeddingAdapter({
+    baseURL,
     model: 'bge-m3-mlx-8bit',
     apiKey,
   });
+
+  // BGE-M3: 1024 维
+  adapter.setCapabilities({
+    dimension: 1024,
+    maxTokens: 8192,
+    maxBatchSize: 32,
+    supportsNormalization: true,
+  });
+
+  return adapter;
+}
+
+/**
+ * 创建 M3E-base 嵌入适配器
+ *
+ * M3E-base: 768 维，中文优化
+ */
+export function createM3EEmbedding(
+  baseURL: string = 'http://localhost:8009/v1',
+  apiKey?: string
+): EmbeddingAdapter {
+  const adapter = new EmbeddingAdapter({
+    baseURL,
+    model: 'm3e-base',
+    apiKey,
+  });
+
+  // M3E-base: 768 维
+  adapter.setCapabilities({
+    dimension: 768,
+    maxTokens: 512,
+    maxBatchSize: 32,
+    supportsNormalization: true,
+  });
+
+  return adapter;
 }

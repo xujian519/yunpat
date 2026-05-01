@@ -735,9 +735,7 @@ export class BaseGateway implements Gateway {
     }
 
     // 检查通配符权限
-    const hasWildcardPermission = permissions.some(
-      (p) => p.resource === '*' && p.action === '*'
-    );
+    const hasWildcardPermission = permissions.some((p) => p.resource === '*' && p.action === '*');
     if (hasWildcardPermission) {
       return { authorized: true };
     }
@@ -745,8 +743,7 @@ export class BaseGateway implements Gateway {
     // 检查资源级权限
     // 1. 先找完全匹配的权限（resource 和 action 都匹配）
     const exactPermission = permissions.find(
-      (p) => p.resource === action.resource &&
-             (p.action === action.type || p.action === '*')
+      (p) => p.resource === action.resource && (p.action === action.type || p.action === '*')
     );
 
     if (exactPermission) {
@@ -798,10 +795,7 @@ export class BaseGateway implements Gateway {
               const pattern = new RegExp(rule.content, rule.flags || '');
               matched = pattern.test(content);
             } catch (error) {
-              console.error(
-                `[Gateway] 无效的正则表达式: ${rule.content}`,
-                error
-              );
+              console.error(`[Gateway] 无效的正则表达式: ${rule.content}`, error);
               matched = false;
             }
           }
@@ -855,11 +849,7 @@ export class BaseGateway implements Gateway {
       throw new Error('OAuth 管理器未配置');
     }
 
-    return await this.oauthManager.generateAuthorizationUrl(
-      provider,
-      redirectUri,
-      scope
-    );
+    return await this.oauthManager.generateAuthorizationUrl(provider, redirectUri, scope);
   }
 
   /**
@@ -881,12 +871,7 @@ export class BaseGateway implements Gateway {
       throw new Error('OAuth 管理器未配置');
     }
 
-    return await this.oauthManager.handleCallback(
-      provider,
-      code,
-      state,
-      redirectUri
-    );
+    return await this.oauthManager.handleCallback(provider, code, state, redirectUri);
   }
 
   /**
@@ -896,10 +881,7 @@ export class BaseGateway implements Gateway {
    * @param refreshToken 刷新令牌
    * @returns 新的 Token
    */
-  async refreshOAuthToken(
-    provider: 'google' | 'github',
-    refreshToken: string
-  ) {
+  async refreshOAuthToken(provider: 'google' | 'github', refreshToken: string) {
     if (!this.oauthManager) {
       throw new Error('OAuth 管理器未配置');
     }
@@ -914,10 +896,7 @@ export class BaseGateway implements Gateway {
    * @param accessToken 访问令牌
    * @returns Token 是否有效
    */
-  async verifyOAuthToken(
-    provider: 'google' | 'github',
-    accessToken: string
-  ): Promise<boolean> {
+  async verifyOAuthToken(provider: 'google' | 'github', accessToken: string): Promise<boolean> {
     if (!this.oauthManager) {
       throw new Error('OAuth 管理器未配置');
     }
@@ -932,10 +911,7 @@ export class BaseGateway implements Gateway {
    * @param accessToken 访问令牌
    * @returns 用户信息
    */
-  async getOAuthUserInfo(
-    provider: 'google' | 'github',
-    accessToken: string
-  ) {
+  async getOAuthUserInfo(provider: 'google' | 'github', accessToken: string) {
     if (!this.oauthManager) {
       throw new Error('OAuth 管理器未配置');
     }

@@ -18,9 +18,9 @@ async function runTest() {
     // 1. 导入必要的模块
     console.log('1️⃣ 加载模块...');
 
-    const { AgentMemoryManager } = await import('./patents/agents/AgentMemoryManager.js');
-    const { PostgresVectorStore } = await import('./packages/core/dist/memory/long-term/PostgresVectorStore.js');
-    const { BGEEmbedding } = await import('./packages/core/dist/memory/embedding/BGEEmbedding.js');
+    const { AgentMemoryManager } = await import('../../patents/agents/AgentMemoryManager.js');
+    const { PostgresVectorStore } = await import('../../packages/core/src/memory/long-term/PostgresVectorStore.js');
+    const { BGEEmbedding } = await import('../../packages/core/src/memory/embedding/BGEEmbedding.js');
 
     console.log('✅ 模块加载完成\n');
 
@@ -88,7 +88,7 @@ async function runTest() {
     });
 
     console.log(`✅ 搜索到 ${searchResults.length} 条相关记忆：`);
-    searchResults.forEach((result, index) => {
+    searchResults.forEach((result: { type: string; content: string; similarity: number }, index: number) => {
       console.log(`   ${index + 1}. [${result.type}] ${result.content.slice(0, 50)}...`);
       console.log(`      相似度: ${(result.similarity * 100).toFixed(1)}%`);
     });

@@ -70,10 +70,8 @@ export class GoogleFactCheckAPI {
   private timeout: number;
 
   constructor(config?: GoogleFactCheckAPIConfig) {
-    this.apiKey =
-      config?.apiKey || process.env.GOOGLE_FACT_CHECK_API_KEY || '';
-    this.baseURL =
-      config?.baseURL || 'https://factchecktools.googleapis.com/v1alpha1';
+    this.apiKey = config?.apiKey || process.env.GOOGLE_FACT_CHECK_API_KEY || '';
+    this.baseURL = config?.baseURL || 'https://factchecktools.googleapis.com/v1alpha1';
     this.defaultLanguage = config?.defaultLanguage || 'zh-CN';
     this.defaultPageSize = config?.defaultPageSize || 10;
     this.timeout = config?.timeout || 10000;
@@ -101,11 +99,7 @@ export class GoogleFactCheckAPI {
     metadata: GoogleFactCheckMetadata;
   }> {
     if (!this.apiKey) {
-      throw new FactCheckError(
-        'API Key 未配置',
-        undefined,
-        'GoogleFactCheckAPI'
-      );
+      throw new FactCheckError('API Key 未配置', undefined, 'GoogleFactCheckAPI');
     }
 
     try {
@@ -283,8 +277,7 @@ export class GoogleFactCheckAPI {
    * @returns 相似度分数 (0-1)
    */
   private calculateSimilarity(text1: string, text2: string): number {
-    const normalize = (text: string) =>
-      text.toLowerCase().trim().replace(/\s+/g, ' ');
+    const normalize = (text: string) => text.toLowerCase().trim().replace(/\s+/g, ' ');
 
     const norm1 = normalize(text1);
     const norm2 = normalize(text2);
@@ -308,10 +301,7 @@ export class GoogleFactCheckAPI {
    * @param reviews 评审列表
    * @returns 验证结果
    */
-  private aggregateReviews(
-    claim: string,
-    reviews: ClaimReview[]
-  ): ExternalFactCheckResult {
+  private aggregateReviews(claim: string, reviews: ClaimReview[]): ExternalFactCheckResult {
     // 按评级分组
     const ratingGroups = this.groupByRating(reviews);
 
@@ -344,9 +334,7 @@ export class GoogleFactCheckAPI {
    * @param reviews 评审列表
    * @returns 评级分组
    */
-  private groupByRating(
-    reviews: ClaimReview[]
-  ): Map<string, ClaimReview[]> {
+  private groupByRating(reviews: ClaimReview[]): Map<string, ClaimReview[]> {
     const groups = new Map<string, ClaimReview[]>();
 
     for (const review of reviews) {
@@ -407,9 +395,7 @@ export class GoogleFactCheckAPI {
    * @param ratingGroups 评级分组
    * @returns 主导评级
    */
-  private findDominantRating(
-    ratingGroups: Map<string, ClaimReview[]>
-  ): string {
+  private findDominantRating(ratingGroups: Map<string, ClaimReview[]>): string {
     let maxCount = 0;
     let dominantRating = 'UNKNOWN';
 
@@ -436,9 +422,7 @@ export class GoogleFactCheckAPI {
   ): number {
     if (reviews.length === 0) return 0;
 
-    const maxGroupSize = Math.max(
-      ...Array.from(ratingGroups.values()).map((g) => g.length)
-    );
+    const maxGroupSize = Math.max(...Array.from(ratingGroups.values()).map((g) => g.length));
     const agreementRatio = maxGroupSize / reviews.length;
 
     // 基础置信度基于一致性
@@ -456,9 +440,7 @@ export class GoogleFactCheckAPI {
    * @param rating 归一化后的评级
    * @returns 验证状态
    */
-  private parseRating(
-    rating: string
-  ): 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN' {
+  private parseRating(rating: string): 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN' {
     switch (rating) {
       case 'TRUE':
         return 'TRUE';
@@ -508,8 +490,6 @@ export class GoogleFactCheckAPI {
  * @param config 配置
  * @returns API 客户端实例
  */
-export function createGoogleFactCheckAPI(
-  config?: GoogleFactCheckAPIConfig
-): GoogleFactCheckAPI {
+export function createGoogleFactCheckAPI(config?: GoogleFactCheckAPIConfig): GoogleFactCheckAPI {
   return new GoogleFactCheckAPI(config);
 }

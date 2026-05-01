@@ -87,11 +87,7 @@ export class BatchProcessorOptimizer {
    * @param maxBatchSize 最大批处理大小
    * @returns 最优批次大小
    */
-  calculateOptimalBatchSize(
-    texts: string[],
-    model: string,
-    maxBatchSize?: number
-  ): number {
+  calculateOptimalBatchSize(texts: string[], model: string, maxBatchSize?: number): number {
     const effectiveMaxBatchSize = maxBatchSize ?? this.config.maxBatchSize;
 
     // 1. 估算每个文本的 Token 数
@@ -135,14 +131,11 @@ export class BatchProcessorOptimizer {
 
       // 检查是否超过最大 Token 限制
       if (textTokens > this.config.maxTokens) {
-        throw new Error(
-          `单个文本超过最大 Token 限制: ${textTokens} > ${this.config.maxTokens}`
-        );
+        throw new Error(`单个文本超过最大 Token 限制: ${textTokens} > ${this.config.maxTokens}`);
       }
 
       // 检查是否可以加入当前批次
-      const wouldExceedTokenLimit =
-        currentTokens + textTokens > effectiveMaxTokens;
+      const wouldExceedTokenLimit = currentTokens + textTokens > effectiveMaxTokens;
       const wouldExceedSizeLimit = currentBatch.length >= effectiveMaxBatchSize;
 
       if (wouldExceedTokenLimit || wouldExceedSizeLimit) {
@@ -164,7 +157,7 @@ export class BatchProcessorOptimizer {
     }
 
     // 计算统计信息
-    const batchTokenCounts = batches.map(batch =>
+    const batchTokenCounts = batches.map((batch) =>
       this.tokenCounter.calculateTotalTokens(batch, model)
     );
 
@@ -192,12 +185,11 @@ export class BatchProcessorOptimizer {
     }
 
     // 分析历史批次的 Token 使用情况
-    const tokenUsages = previousBatches.map(batch =>
+    const tokenUsages = previousBatches.map((batch) =>
       this.tokenCounter.calculateTotalTokens(batch, model)
     );
 
-    const avgUsage =
-      tokenUsages.reduce((a, b) => a + b, 0) / tokenUsages.length;
+    const avgUsage = tokenUsages.reduce((a, b) => a + b, 0) / tokenUsages.length;
     const maxUsage = Math.max(...tokenUsages);
     const currentBatchSize = previousBatches[0].length;
 
@@ -225,11 +217,7 @@ export class BatchProcessorOptimizer {
    * @param maxBatchSize 最大批处理大小
    * @returns 优化后的分批结果
    */
-  smartPartition(
-    texts: string[],
-    model: string,
-    maxBatchSize?: number
-  ): BatchOptimizationResult {
+  smartPartition(texts: string[], model: string, maxBatchSize?: number): BatchOptimizationResult {
     // 1. 计算最优批次大小
     const optimalBatchSize = this.calculateOptimalBatchSize(texts, model, maxBatchSize);
 
@@ -269,7 +257,10 @@ export class BatchProcessorOptimizer {
    * @param model 模型名称
    * @returns 统计信息
    */
-  getBatchStatistics(batches: string[][], model: string): {
+  getBatchStatistics(
+    batches: string[][],
+    model: string
+  ): {
     totalBatches: number;
     totalItems: number;
     totalTokens: number;
@@ -279,7 +270,7 @@ export class BatchProcessorOptimizer {
     minTokensPerBatch: number;
     tokenVariance: number;
   } {
-    const tokenCounts = batches.map(batch =>
+    const tokenCounts = batches.map((batch) =>
       this.tokenCounter.calculateTotalTokens(batch, model)
     );
 
@@ -308,7 +299,10 @@ export class BatchProcessorOptimizer {
    * @param model 模型名称
    * @returns 验证结果
    */
-  validateBatches(batches: string[][], model: string): {
+  validateBatches(
+    batches: string[][],
+    model: string
+  ): {
     valid: boolean;
     errors: string[];
   } {
@@ -320,16 +314,12 @@ export class BatchProcessorOptimizer {
 
       // 检查批次大小
       if (batch.length > this.config.maxBatchSize) {
-        errors.push(
-          `批次 ${i}: 大小 ${batch.length} 超过最大限制 ${this.config.maxBatchSize}`
-        );
+        errors.push(`批次 ${i}: 大小 ${batch.length} 超过最大限制 ${this.config.maxBatchSize}`);
       }
 
       // 检查 Token 限制
       if (batchTokens > this.config.maxTokens) {
-        errors.push(
-          `批次 ${i}: Token 数 ${batchTokens} 超过最大限制 ${this.config.maxTokens}`
-        );
+        errors.push(`批次 ${i}: Token 数 ${batchTokens} 超过最大限制 ${this.config.maxTokens}`);
       }
     }
 

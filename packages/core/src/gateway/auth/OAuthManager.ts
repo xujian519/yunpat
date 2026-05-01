@@ -9,11 +9,7 @@ import { randomBytes, createCipheriv, createDecipheriv } from 'crypto';
 import { BaseOAuthProvider } from './providers/BaseOAuthProvider.js';
 import { GoogleOAuth } from './providers/GoogleOAuth.js';
 import { GitHubOAuth } from './providers/GitHubOAuth.js';
-import {
-  OAuthToken,
-  OAuthUserInfo,
-  PkcePair,
-} from './providers/BaseOAuthProvider.js';
+import { OAuthToken, OAuthUserInfo, PkcePair } from './providers/BaseOAuthProvider.js';
 
 /**
  * OAuth 提供商类型
@@ -118,19 +114,15 @@ export class OAuthManager {
     // 初始化配置
     this.config = {
       providers: config.providers,
-      tokenEncryptionKey:
-        config.tokenEncryptionKey || process.env.OAUTH_ENCRYPTION_KEY || '',
+      tokenEncryptionKey: config.tokenEncryptionKey || process.env.OAUTH_ENCRYPTION_KEY || '',
       stateExpiration: config.stateExpiration || 600,
     };
 
     // 安全检查：生产环境必须提供加密密钥
-    if (
-      !this.config.tokenEncryptionKey ||
-      this.config.tokenEncryptionKey.length < 32
-    ) {
+    if (!this.config.tokenEncryptionKey || this.config.tokenEncryptionKey.length < 32) {
       throw new Error(
         'OAuth 加密密钥必须提供且至少 32 字节。' +
-        '通过 config.tokenEncryptionKey 或环境变量 OAUTH_ENCRYPTION_KEY 设置。'
+          '通过 config.tokenEncryptionKey 或环境变量 OAUTH_ENCRYPTION_KEY 设置。'
       );
     }
 
@@ -238,10 +230,7 @@ export class OAuthManager {
    * @param refreshToken 刷新令牌
    * @returns 新的 Token
    */
-  async refreshToken(
-    provider: OAuthProviderType,
-    refreshToken: string
-  ): Promise<OAuthToken> {
+  async refreshToken(provider: OAuthProviderType, refreshToken: string): Promise<OAuthToken> {
     const providerInstance = this.getProvider(provider);
     return await providerInstance.refreshAccessToken(refreshToken);
   }
@@ -253,10 +242,7 @@ export class OAuthManager {
    * @param accessToken 访问令牌
    * @returns 用户信息
    */
-  async getUserInfo(
-    provider: OAuthProviderType,
-    accessToken: string
-  ): Promise<OAuthUserInfo> {
+  async getUserInfo(provider: OAuthProviderType, accessToken: string): Promise<OAuthUserInfo> {
     const providerInstance = this.getProvider(provider);
     return await providerInstance.getUserInfo(accessToken);
   }
@@ -268,10 +254,7 @@ export class OAuthManager {
    * @param accessToken 访问令牌
    * @returns Token 是否有效
    */
-  async verifyToken(
-    provider: OAuthProviderType,
-    accessToken: string
-  ): Promise<boolean> {
+  async verifyToken(provider: OAuthProviderType, accessToken: string): Promise<boolean> {
     const providerInstance = this.getProvider(provider);
     return await providerInstance.verifyToken(accessToken);
   }
@@ -299,12 +282,7 @@ export class OAuthManager {
     const authTag = cipher.getAuthTag();
 
     // 组合: salt + iv + authTag + encrypted
-    const combined = Buffer.concat([
-      salt,
-      iv,
-      authTag,
-      Buffer.from(encrypted, 'hex'),
-    ]);
+    const combined = Buffer.concat([salt, iv, authTag, Buffer.from(encrypted, 'hex')]);
 
     return combined.toString('base64');
   }
@@ -387,10 +365,7 @@ export class OAuthManager {
    * @param provider 提供商类型
    * @returns 存储的 State 数据
    */
-  private validateState(
-    state: string,
-    provider: OAuthProviderType
-  ): StoredState {
+  private validateState(state: string, provider: OAuthProviderType): StoredState {
     const storedState = this.states.get(state);
 
     if (!storedState) {

@@ -3,8 +3,8 @@
  * 不依赖 AgentMemoryManager，直接测试核心功能
  */
 
-import { PostgresVectorStore } from './packages/core/dist/memory/long-term/PostgresVectorStore.js';
-import { createBGEM3Client } from './packages/core/dist/memory/integration/BGEIntegration.js';
+import { PostgresVectorStore } from '../../packages/core/src/memory/long-term/PostgresVectorStore.js';
+import { createBGEM3Client } from '../../packages/core/src/memory/integration/BGEIntegration.js';
 
 async function testMultiAgentCoordination() {
   console.log('=== 测试 6: 多 Agent 协同 ===\n');
@@ -95,7 +95,7 @@ async function testMultiAgentCoordination() {
   });
 
   console.log(`✅ Responder Agent 搜索到 ${searchResults.length} 条相关记忆：`);
-  searchResults.forEach((result, index) => {
+  searchResults.forEach((result: { metadata?: { agent?: string }; content: string; similarity: number; type: string }, index: number) => {
     const agent = result.metadata?.agent || 'unknown';
     console.log(`   ${index + 1}. [${agent}] ${result.content.slice(0, 40)}...`);
     console.log(`      相似度: ${(result.similarity * 100).toFixed(1)}% | 类型: ${result.type}`);
@@ -111,13 +111,13 @@ async function testMultiAgentCoordination() {
   });
 
   const writerResults = writerOnlyResults.filter(
-    (r) => r.metadata?.agent === 'writer'
+    (r: { metadata?: { agent?: string } }) => r.metadata?.agent === 'writer'
   );
 
   console.log(`✅ 仅 Writer Agent 的记忆：${writerResults.length} 条`);
 
   const analyzerResults = writerOnlyResults.filter(
-    (r) => r.metadata?.agent === 'analyzer'
+    (r: { metadata?: { agent?: string } }) => r.metadata?.agent === 'analyzer'
   );
 
   console.log(`✅ 仅 Analyzer Agent 的记忆：${analyzerResults.length} 条\n`);
@@ -145,7 +145,7 @@ async function testMultiAgentCoordination() {
   });
 
   console.log(`✅ 融合搜索结果（${fusionResults.length} 条）：`);
-  const agentCounts = fusionResults.reduce((acc, result) => {
+  const agentCounts = fusionResults.reduce((acc: Record<string, number>, result: { metadata?: { agent?: string } }) => {
     const agent = result.metadata?.agent || 'unknown';
     acc[agent] = (acc[agent] || 0) + 1;
     return acc;

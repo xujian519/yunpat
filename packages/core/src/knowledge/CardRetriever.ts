@@ -61,8 +61,8 @@ export class CardRetriever {
     let queryEmbedding: number[] | null = null;
     if ((mode === 'semantic' || mode === 'hybrid') && this.embedder) {
       try {
-        const [emb] = await this.embedder.embed([query]);
-        queryEmbedding = emb;
+        const embeddingResult = await this.embedder.embed({texts: [query], normalize: true});
+        queryEmbedding = embeddingResult.embeddings[0];
       } catch {
         // 忽略错误，使用默认值
       }

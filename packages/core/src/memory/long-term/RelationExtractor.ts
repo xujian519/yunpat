@@ -11,24 +11,24 @@ import type { Entity } from './EntityExtractor.js';
  * 关系类型定义
  */
 export type RelationType =
-  | 'applicant-inventor'    // 申请人-发明人
-  | 'cites'                 // 引用
-  | 'cited-by'              // 被引用
-  | 'priority'              // 优先权
-  | 'family'                // 同族
-  | 'continuation'          // 连续申请
-  | 'related-to';           // 相关
+  | 'applicant-inventor' // 申请人-发明人
+  | 'cites' // 引用
+  | 'cited-by' // 被引用
+  | 'priority' // 优先权
+  | 'family' // 同族
+  | 'continuation' // 连续申请
+  | 'related-to'; // 相关
 
 /**
  * 关系接口
  */
 export interface Relation {
-  fromEntity: string;       // 源实体名称
-  toEntity: string;         // 目标实体名称
+  fromEntity: string; // 源实体名称
+  toEntity: string; // 目标实体名称
   relationType: RelationType;
   weight: number;
   confidence: number;
-  evidence?: string;        // 证据文本
+  evidence?: string; // 证据文本
   properties?: Record<string, any>;
 }
 
@@ -80,24 +80,22 @@ export class RelationExtractor {
     {
       type: 'cites',
       patterns: [
-        /(?:引用|参考|基于|依据)[：:]?\s*([A-Z]{2}\d{9,11}[A-Z]?)/g,
-        /(?:本申请|本案|本专利).{0,50}(?:引用|参考|基于|依据).{0,50}([A-Z]{2}\d{9,11}[A-Z]?)/g,
+        /(?:引用|参考|基于|依据)[：:]?\s*([A-Z]{2}\d{12,13}(?:\.\d|[A-Z])?)/g,
+        /(?:本申请|本案|本专利).{0,50}(?:引用|参考|基于|依据).{0,50}([A-Z]{2}\d{12,13}(?:\.\d|[A-Z])?)/g,
       ],
       weight: 0.85,
       description: '引用关系',
     },
     {
       type: 'cited-by',
-      patterns: [
-        /(?:被引用|被参考|作为基础)/g,
-      ],
+      patterns: [/(?:被引用|被参考|作为基础)/g],
       weight: 0.85,
       description: '被引用关系',
     },
     {
       type: 'priority',
       patterns: [
-        /(?:优先权|在先申请)[：:]?\s*([A-Z]{2}\d{9,11}[A-Z]?)/g,
+        /(?:优先权|在先申请)[：:]?\s*([A-Z]{2}\d{12,13}(?:\.\d|[A-Z])?)/g,
         /(?:要求|享有).{0,20}(?:优先权)/g,
       ],
       weight: 0.9,
@@ -105,25 +103,19 @@ export class RelationExtractor {
     },
     {
       type: 'family',
-      patterns: [
-        /(?:同族|family|相关申请|关联申请)/g,
-      ],
+      patterns: [/(?:同族|family|相关申请|关联申请)/g],
       weight: 0.8,
       description: '同族专利关系',
     },
     {
       type: 'continuation',
-      patterns: [
-        /(?:连续申请|分案申请|继续申请)/g,
-      ],
+      patterns: [/(?:连续申请|分案申请|继续申请)/g],
       weight: 0.85,
       description: '连续申请关系',
     },
     {
       type: 'related-to',
-      patterns: [
-        /(?:相关|关联|类似)/g,
-      ],
+      patterns: [/(?:相关|关联|类似)/g],
       weight: 0.7,
       description: '相关关系',
     },
@@ -140,15 +132,12 @@ export class RelationExtractor {
   /**
    * 从文本中抽取关系
    */
-  async extractRelations(
-    text: string,
-    entities: Entity[]
-  ): Promise<Relation[]> {
+  async extractRelations(text: string, entities: Entity[]): Promise<Relation[]> {
     const relations: Relation[] = [];
     const entityMap = new Map<string, Entity>();
 
     // 建立实体名称映射
-    entities.forEach(e => {
+    entities.forEach((e) => {
       entityMap.set(e.name, e);
     });
 
@@ -227,20 +216,27 @@ export class RelationExtractor {
   /**
    * 计算关系置信度
    */
-  private calculateConfidence(
-    relation: Relation,
-    entityMap: Map<string, Entity>
-  ): number {
-    let confidence = 0.7;
+  private calculateConfidence(relation: Relation, entityMap: Map<string, Entity>): number {
+    let confidence = 0.75; // 基础置信度
 
-    // 如果两端实体都在实体列表中，提高置信度
+    // 如果至少一端实体在实体列表中，适当提高置信度
+    if (entityMap.has(relation.fromEntity) || entityMap.has(relation.toEntity)) {
+      confidence += 0.1;
+    }
+
+    // 如果两端实体都在实体列表中，进一步提高置信度
     if (entityMap.has(relation.fromEntity) && entityMap.has(relation.toEntity)) {
-      confidence += 0.15;
+      confidence += 0.1;
     }
 
     // 如果有证据文本，提高置信度
     if (relation.evidence) {
-      confidence += 0.1;
+      confidence += 0.05;
+    }
+
+    // 特殊处理：对于"本专利"这样的虚拟实体，降低置信度要求
+    if (relation.fromEntity === '本专利' || relation.toEntity === '本专利') {
+      confidence = Math.max(confidence - 0.1, 0.6);
     }
 
     return Math.min(confidence, 1.0);
@@ -279,7 +275,7 @@ export class RelationExtractor {
   private deduplicateRelations(relations: Relation[]): Relation[] {
     const uniqueMap = new Map<string, Relation>();
 
-    relations.forEach(r => {
+    relations.forEach((r) => {
       const key = `${r.fromEntity}|${r.toEntity}|${r.relationType}`;
       const existing = uniqueMap.get(key);
 
@@ -294,10 +290,7 @@ export class RelationExtractor {
   /**
    * 计算关系权重
    */
-  calculateWeight(
-    relation: Relation,
-    context: string
-  ): number {
+  calculateWeight(relation: Relation, context: string): number {
     let weight = relation.weight;
 
     // 根据证据文本长度调整权重
@@ -328,22 +321,14 @@ export class RelationExtractor {
   /**
    * 批量抽取关系
    */
-  async extractRelationsBatch(
-    texts: string[],
-    entitiesList: Entity[][]
-  ): Promise<Relation[][]> {
-    return Promise.all(
-      texts.map((text, i) => this.extractRelations(text, entitiesList[i]))
-    );
+  async extractRelationsBatch(texts: string[], entitiesList: Entity[][]): Promise<Relation[][]> {
+    return Promise.all(texts.map((text, i) => this.extractRelations(text, entitiesList[i])));
   }
 
   /**
    * 从实体对推断关系
    */
-  inferRelationFromEntities(
-    fromEntity: Entity,
-    toEntity: Entity
-  ): Relation | null {
+  inferRelationFromEntities(fromEntity: Entity, toEntity: Entity): Relation | null {
     // 根据实体类型推断可能的关系
     if (fromEntity.type === 'Organization' && toEntity.type === 'Person') {
       return {
@@ -381,7 +366,7 @@ export class RelationExtractor {
     let totalConfidence = 0;
     let totalWeight = 0;
 
-    relations.forEach(r => {
+    relations.forEach((r) => {
       relationTypes[r.relationType] = (relationTypes[r.relationType] || 0) + 1;
       totalConfidence += r.confidence;
       totalWeight += r.weight;
@@ -399,8 +384,6 @@ export class RelationExtractor {
 /**
  * 创建关系抽取器实例
  */
-export function createRelationExtractor(
-  config?: RelationExtractorConfig
-): RelationExtractor {
+export function createRelationExtractor(config?: RelationExtractorConfig): RelationExtractor {
   return new RelationExtractor(config);
 }

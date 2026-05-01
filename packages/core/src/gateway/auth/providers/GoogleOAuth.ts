@@ -110,10 +110,7 @@ export class GoogleOAuth extends BaseOAuthProvider {
    * @param allowedDomains 允许的域名列表
    * @returns 是否在允许的域名中
    */
-  static verifyHostedDomain(
-    userInfo: OAuthUserInfo,
-    allowedDomains: string[]
-  ): boolean {
+  static verifyHostedDomain(userInfo: OAuthUserInfo, allowedDomains: string[]): boolean {
     const hd = userInfo.raw.hd as string | undefined;
 
     if (!hd) {

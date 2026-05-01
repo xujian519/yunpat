@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "Bash": [
+      {
+        "rule": "vitest run *",
+        "behavior": "allow"
+      },
+      {
+        "rule": "pnpm test *",
+        "behavior": "allow"
+      },
+      {
+        "rule": "node esbuild.config.mjs *",
+        "behavior": "allow"
+      }
+    ]
+  }
+}

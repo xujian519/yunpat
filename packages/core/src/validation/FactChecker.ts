@@ -494,17 +494,10 @@ ${content}
     options?: ExternalFactCheckOptions
   ): Promise<FactCheckResult> {
     if (!this.externalChecker) {
-      throw new FactCheckError(
-        '外部 API 未启用',
-        undefined,
-        'FactChecker'
-      );
+      throw new FactCheckError('外部 API 未启用', undefined, 'FactChecker');
     }
 
-    const externalResult = await this.externalChecker.verifyClaim(
-      claim.content,
-      options
-    );
+    const externalResult = await this.externalChecker.verifyClaim(claim.content, options);
 
     // 转换为 FactCheckResult 格式
     return {
@@ -551,10 +544,7 @@ ${content}
     // 2. 外部 API 验证
     if (this.externalChecker) {
       try {
-        const externalResult = await this.externalChecker.verifyClaim(
-          claim.content,
-          options
-        );
+        const externalResult = await this.externalChecker.verifyClaim(claim.content, options);
         results.push(externalResult);
       } catch (error) {
         console.warn('外部 API 验证失败:', error);
@@ -571,9 +561,7 @@ ${content}
    * @param claim 声明
    * @returns 外部验证结果或 undefined
    */
-  private async getKnowledgeBaseResult(
-    claim: Claim
-  ): Promise<ExternalFactCheckResult | undefined> {
+  private async getKnowledgeBaseResult(claim: Claim): Promise<ExternalFactCheckResult | undefined> {
     const kbResult = await this.verifyWithKnowledgeBase(claim);
 
     if (!kbResult.isVerifiable || kbResult.sources.length === 0) {
@@ -601,9 +589,7 @@ ${content}
    * @param isValid 验证状态
    * @returns 可信度分数
    */
-  private calculateSourceCredibility(
-    isValid: 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN'
-  ): number {
+  private calculateSourceCredibility(isValid: 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN'): number {
     switch (isValid) {
       case 'TRUE':
         return 0.9;
@@ -628,11 +614,7 @@ ${content}
     options?: ExternalFactCheckOptions
   ): Promise<FactCheckResult[]> {
     if (!this.externalChecker) {
-      throw new FactCheckError(
-        '外部 API 未启用',
-        undefined,
-        'FactChecker'
-      );
+      throw new FactCheckError('外部 API 未启用', undefined, 'FactChecker');
     }
 
     const externalResults = await this.externalChecker.verifyClaims(

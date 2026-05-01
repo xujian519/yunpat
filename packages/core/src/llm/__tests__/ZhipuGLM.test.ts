@@ -92,11 +92,7 @@ describe('智谱 GLM 模型测试', () => {
     it('应该能够处理多种编程语言', async () => {
       const glm = createZhipuModel(process.env.ZHIPU_API_KEY || '', NativeModel.GLM_4_7);
 
-      const tasks = [
-        '用 Python 写一个装饰器',
-        '用 Rust 实现一个结构体',
-        '用 Go 写一个并发示例',
-      ];
+      const tasks = ['用 Python 写一个装饰器', '用 Rust 实现一个结构体', '用 Go 写一个并发示例'];
 
       for (const task of tasks) {
         const response = await glm.chat({

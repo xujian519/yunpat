@@ -9,7 +9,8 @@
 import { PostgresVectorStore } from './PostgresVectorStore.js';
 import { PostgresGraphStore } from './PostgresGraphStore.js';
 
-const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://yunpat:yunpat123@localhost:5432/yunpat';
+const DATABASE_URL =
+  process.env.DATABASE_URL ?? 'postgres://yunpat:yunpat123@localhost:5432/yunpat';
 
 async function verify() {
   console.log('🔍 验证 PostgreSQL + pgvector 环境...\n');
@@ -89,7 +90,6 @@ async function verify() {
     console.log('   1. 运行示例: tsx example.ts');
     console.log('   2. 运行测试: pnpm test packages/core/src/memory/tests');
     console.log('   3. 查看文档: cat README.md');
-
   } catch (error) {
     console.error('\n❌ 验证失败:', error);
     console.error('\n💡 故障排查:');

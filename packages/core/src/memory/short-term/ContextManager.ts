@@ -114,14 +114,12 @@ export class ContextManager {
   /**
    * 格式化单条消息
    */
-  private formatSingleMessage(
-    message: Message,
-    options?: FormatOptions
-  ): string {
+  private formatSingleMessage(message: Message, options?: FormatOptions): string {
     const roleLabel = this.getRoleLabel(message.role);
-    const timestamp = this.includeTimestamp && message.timestamp
-      ? ` [${message.timestamp.toLocaleTimeString('zh-CN')}]`
-      : '';
+    const timestamp =
+      this.includeTimestamp && message.timestamp
+        ? ` [${message.timestamp.toLocaleTimeString('zh-CN')}]`
+        : '';
 
     if (options?.asMarkdown) {
       return `**${roleLabel}**${timestamp}:\n${message.content}`;
@@ -150,10 +148,7 @@ export class ContextManager {
   /**
    * 添加消息到上下文
    */
-  async addMessage(
-    messages: Message[],
-    newMessage: Message
-  ): Promise<Message[]> {
+  async addMessage(messages: Message[], newMessage: Message): Promise<Message[]> {
     return [...messages, newMessage];
   }
 
@@ -169,9 +164,7 @@ export class ContextManager {
     }
 
     const now = Date.now();
-    return messages.filter(
-      (msg) => !msg.timestamp || (now - msg.timestamp.getTime()) <= maxAge
-    );
+    return messages.filter((msg) => !msg.timestamp || now - msg.timestamp.getTime() <= maxAge);
   }
 
   /**

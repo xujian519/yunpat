@@ -753,11 +753,11 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //  */
 // export class TreeOfThoughtsStrategy {
 //   private llm: LLMAdapter;
-// 
+//
 //   constructor(llm: LLMAdapter) {
 //     this.llm = llm;
 //   }
-// 
+//
 //   /**
 //    * 生成思维树
 //    */
@@ -766,16 +766,16 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //     branchFactor: number = 3
 //   ): Promise<Array<{ thought: string; score: number }>> {
 //     const prompt = `针对以下问题，请生成 ${branchFactor} 个不同的解决思路。
-// 
+//
 // **要求**：
 // 1. 每个思路要有明确的策略
 // 2. 思路之间要有差异化
 // 3. 格式：1. [思路描述]
-// 
+//
 // 问题：${problem}
-// 
+//
 // 请生成 ${branchFactor} 个思路：`;
-// 
+//
 //     const response = await this.llm.chat({
 //       messages: [
 //         {
@@ -789,13 +789,13 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //       ],
 //       temperature: 0.8,
 //     });
-// 
+//
 //     // 解析多个思路
 //     const thoughts = this.parseThoughts(response.message.content);
-// 
+//
 //     return thoughts.slice(0, branchFactor);
 //   }
-// 
+//
 //   /**
 //    * 评估思路（多维度评估）
 //    */
@@ -804,23 +804,23 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //     thoughts: Array<{ thought: string; score: number }>
 //   ): Promise<Array<{ thought: string; score: number; evaluation?: unknown }>> {
 //     const prompt = `请对以下解决思路进行多维度评估（每个维度 1-10 分）：
-// 
+//
 // **评估维度**：
 // - 可行性：是否容易实施
 // - 创新性：是否有新意
 // - 完整性：是否考虑全面
 // - 清晰度：表述是否清楚
-// 
+//
 // **问题**：${problem}
-// 
+//
 // **待评估思路**：
 // ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
-// 
+//
 // **请按以下格式返回**：
 // 1. 可行性: X分, 创新性: X分, 完整性: X分, 清晰度: X分, 总分: XX分
 // 2. 可行性: X分, 创新性: X分, 完整性: X分, 清晰度: X分, 总分: XX分
 // ...`;
-// 
+//
 //     const response = await this.llm.chat({
 //       messages: [
 //         {
@@ -834,11 +834,11 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //       ],
 //       temperature: 0.3,
 //     });
-// 
+//
 //     // 解析评估结果
 //     return this.parseEvaluations(response.message.content, thoughts);
 //   }
-// 
+//
 //   /**
 //    * 最佳优先搜索 - 寻找最佳解决方案
 //    */
@@ -853,22 +853,22 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //       score: 0,
 //       depth: 0,
 //     };
-// 
+//
 //     // 优先队列（按分数排序）
 //     const queue: ThoughtNode[] = [root];
 //     let bestNode = root;
-// 
+//
 //     while (queue.length > 0) {
 //       // 取出最佳节点
 //       const current = queue.shift()!;
 //       if (current.depth >= maxDepth) {
 //         continue;
 //       }
-// 
+//
 //       // 生成子节点
 //       const thoughts = await this.generateThoughts(current.thought, branchFactor);
 //       const evaluated = await this.evaluateThoughts(current.thought, thoughts);
-// 
+//
 //       // 创建子节点
 //       const children: ThoughtNode[] = [];
 //       for (const t of evaluated) {
@@ -882,50 +882,50 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //             | undefined,
 //         };
 //         children.push(node);
-// 
+//
 //         // 更新最佳节点
 //         if (node.score > bestNode.score) {
 //           bestNode = node;
 //         }
 //       }
-// 
+//
 //       current.children = children;
-// 
+//
 //       // 添加到队列（按分数排序）
 //       queue.push(...children);
 //       queue.sort((a, b) => b.score - a.score);
 //     }
-// 
+//
 //     return bestNode;
 //   }
-// 
+//
 //   /**
 //    * 获取最佳思路的完整路径
 //    */
 //   getBestPath(node: ThoughtNode): string[] {
 //     const path: string[] = [];
 //     let current: ThoughtNode | undefined = node;
-// 
+//
 //     while (current) {
 //       path.unshift(current.thought);
 //       current = current.parent;
 //     }
-// 
+//
 //     return path;
 //   }
-// 
+//
 //   /**
 //    * 解析思路列表
 //    */
 //   private parseThoughts(content: string): Array<{ thought: string; score: number }> {
 //     const thoughts: Array<{ thought: string; score: number }> = [];
-// 
+//
 //     // 尝试多种格式
 //     const patterns = [
 //       /^\d+[\.\)]\s*(.+)$/gm, // "1. 思路" 或 "1) 思路"
 //       /^[-•]\s*(.+)$/gm, // "- 思路" 或 "• 思路"
 //     ];
-// 
+//
 //     for (const pattern of patterns) {
 //       const matches = Array.from(content.matchAll(pattern));
 //       if (matches && matches.length > 0) {
@@ -938,7 +938,7 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //         if (thoughts.length > 0) break;
 //       }
 //     }
-// 
+//
 //     // 如果没有匹配到，按段落分割
 //     if (thoughts.length === 0) {
 //       const paragraphs = content.split(/\n\n+/).filter((p) => p.trim());
@@ -949,10 +949,10 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //         }
 //       }
 //     }
-// 
+//
 //     return thoughts;
 //   }
-// 
+//
 //   /**
 //    * 解析评估结果
 //    */
@@ -961,17 +961,17 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //     originalThoughts: Array<{ thought: string; score: number }>
 //   ): Array<{ thought: string; score: number; evaluation?: unknown }> {
 //     const results: Array<{ thought: string; score: number; evaluation?: unknown }> = [];
-// 
+//
 //     // 按行解析
 //     const lines = content.split('\n').filter((line) => line.trim());
-// 
+//
 //     for (let i = 0; i < Math.min(lines.length, originalThoughts.length); i++) {
 //       const line = lines[i];
 //       const thought = originalThoughts[i].thought;
-// 
+//
 //       // 解析分数
 //       const scores = this.parseScores(line);
-// 
+//
 //       results.push({
 //         thought,
 //         score: scores.total || 5.0,
@@ -983,10 +983,10 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //         },
 //       });
 //     }
-// 
+//
 //     return results;
 //   }
-// 
+//
 //   /**
 //    * 解析单个评估分数
 //    */
@@ -1004,11 +1004,11 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //       clarity: 5.0,
 //       total: 5.0,
 //     };
-// 
+//
 //     // 尝试匹配 "可行性: X分, 创新性: X分, 完整性: X分, 清晰度: X分" 格式
 //     const pattern = /可行性[:：]\s*(\d+(?:\.\d+)?)\s*分/;
 //     const match = line.match(pattern);
-// 
+//
 //     if (match) {
 //       // 使用更精确的匹配
 //       const patterns = {
@@ -1018,14 +1018,14 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //         clarity: /清晰度[:：]\s*(\d+(?:\.\d+)?)/,
 //         total: /总分[:：]\s*(\d+(?:\.\d+)?)/,
 //       };
-// 
+//
 //       for (const [key, regex] of Object.entries(patterns)) {
 //         const m = line.match(regex);
 //         if (m) {
 //           (scores as any)[key] = parseFloat(m[1]);
 //         }
 //       }
-// 
+//
 //       // 计算总分（如果没有明确给出）
 //       if (scores.total === 5.0) {
 //         const sum = scores.feasibility + scores.innovation + scores.completeness + scores.clarity;
@@ -1038,7 +1038,7 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 //       // 降级方案：提取所有数字
 //       const numberPattern = /(\d+(?:\.\d+)?)/g;
 //       const numbers = line.match(numberPattern);
-// 
+//
 //       if (numbers && numbers.length >= 4) {
 //         const nums = numbers.map((n) => parseFloat(n));
 //         scores.feasibility = nums[0];

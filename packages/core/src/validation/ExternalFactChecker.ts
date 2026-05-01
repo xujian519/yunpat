@@ -226,7 +226,7 @@ export class ExternalFactChecker {
         );
       }
 
-      const data: GoogleFactCheckResponse = await response.json();
+      const data = (await response.json()) as GoogleFactCheckResponse;
       const result = this.parseResponse(data, claim, 'google_factcheck');
 
       // 写入缓存
@@ -326,12 +326,14 @@ export class ExternalFactChecker {
       claim,
       isValid: this.parseRating(topReview.textualRating || ''),
       confidence: this.calculateConfidence(reviews),
-      sources: reviews.map((r): ExternalSource => ({
-        name: r.publisher?.name || 'Unknown',
-        url: r.url,
-        rating: r.textualRating || 'Unknown',
-        date: r.reviewDate,
-      })),
+      sources: reviews.map(
+        (r): ExternalSource => ({
+          name: r.publisher?.name || 'Unknown',
+          url: r.url,
+          rating: r.textualRating || 'Unknown',
+          date: r.reviewDate,
+        })
+      ),
       source,
       timestamp: new Date(),
     };
@@ -398,9 +400,7 @@ export class ExternalFactChecker {
 
     // 基于评审数量和一致性计算置信度
     const topRating = reviews[0].textualRating || '';
-    const agreementCount = reviews.filter(
-      (r) => r.textualRating === topRating
-    ).length;
+    const agreementCount = reviews.filter((r) => r.textualRating === topRating).length;
 
     const baseConfidence = agreementCount / reviews.length;
     const sourceBoost = Math.min(reviews.length * 0.1, 0.3); // 最多增加 0.3
@@ -417,9 +417,7 @@ export class ExternalFactChecker {
     const minInterval = 1000 / this.rateLimit;
 
     if (timeSinceLastRequest < minInterval) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, minInterval - timeSinceLastRequest)
-      );
+      await new Promise((resolve) => setTimeout(resolve, minInterval - timeSinceLastRequest));
     }
 
     this.lastRequestTime = Date.now();
@@ -561,9 +559,7 @@ export function calculateConsensus(
  * @param results 验证结果列表
  * @returns 聚合结果
  */
-export function aggregateResults(
-  results: ExternalFactCheckResult[]
-): AggregatedFactCheck {
+export function aggregateResults(results: ExternalFactCheckResult[]): AggregatedFactCheck {
   if (results.length === 0) {
     throw new FactCheckError('无法聚合空的结果列表');
   }

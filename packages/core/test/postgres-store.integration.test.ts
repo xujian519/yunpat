@@ -20,7 +20,7 @@ import { PostgresVectorStore, type SearchFilter } from '../src/memory/long-term/
 import { PostgresGraphStore } from '../src/memory/long-term/PostgresGraphStore.js';
 import { MemoryLayer } from '../src/memory/long-term/MemoryLayer.js';
 
-describe('PostgreSQL 记忆层集成测试', () => {
+describe.skipIf(!process.env.TEST_DATABASE_URL && !process.env.CI)('PostgreSQL 记忆层集成测试', () => {
   let vectorStore: PostgresVectorStore;
   let graphStore: PostgresGraphStore;
   let memoryLayer: MemoryLayer;

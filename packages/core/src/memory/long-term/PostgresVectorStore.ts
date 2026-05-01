@@ -91,10 +91,10 @@ export class PostgresVectorStore {
 
     // 创建 PostgreSQL 连接（优化的连接池配置）
     this.client = postgres(config.databaseUrl, {
-      max: config.poolMax ?? 20,           // 增加连接池大小以支持并发
+      max: config.poolMax ?? 20, // 增加连接池大小以支持并发
       idle_timeout: config.poolIdleTimeout ?? 20,
       connect_timeout: config.poolConnectTimeout ?? 10,
-      max_lifetime: 60 * 30,              // 连接最大生命周期 30 分钟
+      max_lifetime: 60 * 30, // 连接最大生命周期 30 分钟
     });
 
     this.db = drizzle(this.client);
@@ -214,9 +214,8 @@ export class PostgresVectorStore {
     const now = new Date();
 
     // 将数组转换为 vector 类型格式的字符串
-    const embeddingString = typeof memory.embedding === 'string'
-      ? memory.embedding
-      : JSON.stringify(memory.embedding);
+    const embeddingString =
+      typeof memory.embedding === 'string' ? memory.embedding : JSON.stringify(memory.embedding);
 
     if (memory.id) {
       // 更新
@@ -474,9 +473,7 @@ export class PostgresVectorStore {
     archivedMemories: number;
     typeDistribution: Record<string, number>;
   }> {
-    const total = await this.db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(memories);
+    const total = await this.db.select({ count: sql<number>`count(*)::int` }).from(memories);
 
     const archived = await this.db
       .select({ count: sql<number>`count(*)::int` })

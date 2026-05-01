@@ -99,10 +99,14 @@ export const graphRelations = pgTable('graph_relations', {
   id: serial('id').primaryKey(),
 
   /** 源实体 ID */
-  fromEntityId: serial('from_entity_id').notNull().references(() => graphEntities.id),
+  fromEntityId: serial('from_entity_id')
+    .notNull()
+    .references(() => graphEntities.id),
 
   /** 目标实体 ID */
-  toEntityId: serial('to_entity_id').notNull().references(() => graphEntities.id),
+  toEntityId: serial('to_entity_id')
+    .notNull()
+    .references(() => graphEntities.id),
 
   /** 关系类型（RELATED_TO/OWNS/CITED_IN/LOCATED_AT） */
   relationType: text('relation_type').notNull(),

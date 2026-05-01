@@ -64,7 +64,13 @@ export interface HttpApprovalServerConfig {
 /**
  * 审批状态
  */
-type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'corrected' | 'supplemented' | 'timeout';
+type ApprovalStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'corrected'
+  | 'supplemented'
+  | 'timeout';
 
 /**
  * 内部审批请求
@@ -223,12 +229,7 @@ export class HttpApprovalServer {
       const { corrections, feedback } = req.body;
 
       try {
-        const response = await this.processApproval(
-          requestId,
-          false,
-          feedback,
-          corrections
-        );
+        const response = await this.processApproval(requestId, false, feedback, corrections);
         res.json(response);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -464,9 +465,7 @@ export class HttpApprovalServer {
     return new Promise((resolve) => {
       const host = this.config.host || '0.0.0.0';
       this.server = this.app.listen(this.config.port, host, () => {
-        console.log(
-          `[HTTP Approval] Server started on http://${host}:${this.config.port}`
-        );
+        console.log(`[HTTP Approval] Server started on http://${host}:${this.config.port}`);
         resolve();
       });
     });

@@ -192,8 +192,8 @@ export class SessionManager extends EventEmitter {
 
       // 如果超过限制，删除最旧的会话
       if (existingSessions.length >= this.config.maxSessionsPerUser) {
-        const oldestSession = existingSessions.sort((a, b) =>
-          a.createdAt.getTime() - b.createdAt.getTime()
+        const oldestSession = existingSessions.sort(
+          (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
         )[0];
 
         await this.deleteSession(oldestSession.sessionId);
@@ -273,10 +273,7 @@ export class SessionManager extends EventEmitter {
   /**
    * 检查权限
    */
-  async checkPermission(
-    sessionId: string,
-    requiredPermission: string
-  ): Promise<boolean> {
+  async checkPermission(sessionId: string, requiredPermission: string): Promise<boolean> {
     const session = await this.getSession(sessionId);
 
     if (!session) {
@@ -307,11 +304,7 @@ export class SessionManager extends EventEmitter {
   /**
    * 设置会话数据
    */
-  async setSessionData(
-    sessionId: string,
-    key: string,
-    value: unknown
-  ): Promise<void> {
+  async setSessionData(sessionId: string, key: string, value: unknown): Promise<void> {
     const session = await this.getSession(sessionId);
 
     if (session) {
@@ -323,10 +316,7 @@ export class SessionManager extends EventEmitter {
   /**
    * 获取会话数据
    */
-  async getSessionData(
-    sessionId: string,
-    key: string
-  ): Promise<unknown | undefined> {
+  async getSessionData(sessionId: string, key: string): Promise<unknown | undefined> {
     const session = await this.getSession(sessionId);
 
     return session?.data.get(key);
@@ -369,11 +359,8 @@ export class SessionManager extends EventEmitter {
    * 启动清理定时器
    */
   private startCleanup(): void {
-    this.cleanupTimer = setInterval(
-      async () => {
-        await this.cleanupExpired();
-      },
-      this.config.cleanupInterval
-    );
+    this.cleanupTimer = setInterval(async () => {
+      await this.cleanupExpired();
+    }, this.config.cleanupInterval);
   }
 }

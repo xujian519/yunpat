@@ -33,9 +33,7 @@ describe('上下文管理器', () => {
         systemPrompt: '你是一个专业的专利撰写助手。',
       });
 
-      const messages = [
-        { role: 'user' as const, content: '你好' },
-      ];
+      const messages = [{ role: 'user' as const, content: '你好' }];
 
       const { context, stats } = await manager.buildContext(messages);
 
@@ -66,9 +64,7 @@ describe('上下文管理器', () => {
     it('应该使用默认格式化', async () => {
       const manager = new ContextManager();
 
-      const messages = [
-        { role: 'user' as const, content: '你好' },
-      ];
+      const messages = [{ role: 'user' as const, content: '你好' }];
 
       const { context } = await manager.buildContext(messages);
 
@@ -78,9 +74,7 @@ describe('上下文管理器', () => {
     it('应该包含角色标签（如果启用）', async () => {
       const manager = new ContextManager();
 
-      const messages = [
-        { role: 'user' as const, content: '你好' },
-      ];
+      const messages = [{ role: 'user' as const, content: '你好' }];
 
       const { context } = await manager.buildContext(messages, {
         includeRole: true,
@@ -92,9 +86,7 @@ describe('上下文管理器', () => {
     it('应该格式化为 Markdown', async () => {
       const manager = new ContextManager();
 
-      const messages = [
-        { role: 'user' as const, content: '你好' },
-      ];
+      const messages = [{ role: 'user' as const, content: '你好' }];
 
       const { context } = await manager.buildContext(messages, {
         asMarkdown: true,
@@ -109,9 +101,7 @@ describe('上下文管理器', () => {
         includeTimestamp: true,
       });
 
-      const messages = [
-        { role: 'user' as const, content: '你好', timestamp: new Date() },
-      ];
+      const messages = [{ role: 'user' as const, content: '你好', timestamp: new Date() }];
 
       const { context } = await manager.buildContext(messages, {
         includeRole: true,
@@ -127,9 +117,7 @@ describe('上下文管理器', () => {
         formatMessage: customFormat,
       });
 
-      const messages = [
-        { role: 'user' as const, content: '你好' },
-      ];
+      const messages = [{ role: 'user' as const, content: '你好' }];
 
       const { context } = await manager.buildContext(messages);
 
@@ -175,9 +163,7 @@ describe('上下文管理器', () => {
         maxTokens: 1000,
       });
 
-      const messages = [
-        { role: 'user' as const, content: '你好' },
-      ];
+      const messages = [{ role: 'user' as const, content: '你好' }];
 
       const prediction = await manager.predictNextTokens(messages, 500);
 
@@ -191,9 +177,7 @@ describe('上下文管理器', () => {
         maxTokens: 100,
       });
 
-      const messages = [
-        { role: 'user' as const, content: '很长的消息'.repeat(100) },
-      ];
+      const messages = [{ role: 'user' as const, content: '很长的消息'.repeat(100) }];
 
       const prediction = await manager.predictNextTokens(messages, 500);
 
@@ -206,9 +190,7 @@ describe('上下文管理器', () => {
         maxTokens: 100,
       });
 
-      const messages = [
-        { role: 'user' as const, content: '很长的消息'.repeat(100) },
-      ];
+      const messages = [{ role: 'user' as const, content: '很长的消息'.repeat(100) }];
 
       const prediction = await manager.predictNextTokens(messages, 500);
 
@@ -221,9 +203,7 @@ describe('上下文管理器', () => {
     it('应该正确添加消息', async () => {
       const manager = new ContextManager();
 
-      const messages = [
-        { role: 'user' as const, content: '你好' },
-      ];
+      const messages = [{ role: 'user' as const, content: '你好' }];
 
       const newMessage = { role: 'assistant' as const, content: '你好！' };
 

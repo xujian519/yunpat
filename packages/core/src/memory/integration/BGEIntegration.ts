@@ -79,9 +79,9 @@ export class BGEM3Client {
         this.cache.delete(firstKey);
       }
     }
-    this.cache.set(text, embedding);
+    this.cache.set(text, embedding.embedding);
 
-    return embedding;
+    return embedding.embedding;
   }
 
   /**
@@ -111,10 +111,10 @@ export class BGEM3Client {
 
     // 批量生成未缓存的向量
     if (uncached.length > 0) {
-      const embeddings = await this.adapter.embed(uncached);
+      const embeddingResult = await this.adapter.embed({texts: uncached, normalize: true});
 
-      for (let i = 0; i < embeddings.length; i++) {
-        const embedding = embeddings[i];
+      for (let i = 0; i < embeddingResult.embeddings.length; i++) {
+        const embedding = embeddingResult.embeddings[i];
         const text = uncached[i];
         const index = indices[i];
 
@@ -197,9 +197,7 @@ export function getDefaultBGEM3Client(): BGEM3Client {
   if (!defaultClient) {
     const apiKey = process.env.BGE_M3_API_KEY;
     if (!apiKey) {
-      throw new Error(
-        'BGE-M3 API Key 未配置。请设置环境变量 BGE_M3_API_KEY'
-      );
+      throw new Error('BGE-M3 API Key 未配置。请设置环境变量 BGE_M3_API_KEY');
     }
     defaultClient = new BGEM3Client({ apiKey });
   }

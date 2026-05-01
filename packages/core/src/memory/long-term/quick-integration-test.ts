@@ -20,7 +20,12 @@ async function quickTest() {
   const testText = '专利撰写的关键在于权利要求书的撰写';
   const embedding1 = await bgeClient.embed(testText);
   console.log(`   ✅ 向量维度: ${embedding1.length}`);
-  console.log(`   ✅ 前5个值: [${embedding1.slice(0, 5).map(v => v.toFixed(4)).join(', ')}]`);
+  console.log(
+    `   ✅ 前5个值: [${embedding1
+      .slice(0, 5)
+      .map((v) => v.toFixed(4))
+      .join(', ')}]`
+  );
 
   // 测试缓存
   const startCache = Date.now();

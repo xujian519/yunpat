@@ -449,8 +449,7 @@ export class IncrementalPlanner {
     }
 
     // 5. 重新计算依赖关系
-    const newDependencyGraph = this.recalculateDependencies(updatedPlan);
-    updatedPlan.dependencies = newDependencyGraph;
+    this.recalculateDependencies(updatedPlan);
 
     // 6. 重新计算关键路径
     const newCriticalPath = this.recalculateCriticalPath(updatedPlan);
@@ -476,7 +475,7 @@ export class IncrementalPlanner {
    * @param plan 计划
    * @returns 更新后的依赖图
    */
-  recalculateDependencies(plan: HierarchicalPlan): DependencyGraph {
+  recalculateDependencies(plan: HierarchicalPlan): void {
     // 构建节点映射
     const nodes = new Map<string, SubGoal>();
     plan.subGoals.forEach((goal) => {
@@ -502,7 +501,8 @@ export class IncrementalPlanner {
       topologicalOrder = this.dependencyAnalyzer['topologicalSort'](nodes, edges);
     }
 
-    return {
+    // 更新 plan.dependencies
+    plan.dependencies = {
       nodes,
       edges,
       hasCycles,

@@ -78,27 +78,35 @@ describe('PostgreSQL 向量存储', () => {
       await store.upsert({
         type: 'patent',
         content: '专利撰写的关键在于权利要求书的撰写',
-        embedding: Array(128).fill(0.1).map((v, i) => v + i * 0.01), // 线性递增
+        embedding: Array(128)
+          .fill(0.1)
+          .map((v, i) => v + i * 0.01), // 线性递增
         metadata: { agent: 'writer', tags: ['专利', '撰写'] },
       });
 
       await store.upsert({
         type: 'patent',
         content: '专利检索是专利申请前的重要步骤',
-        embedding: Array(128).fill(0.2).map((v, i) => v + i * 0.02),
+        embedding: Array(128)
+          .fill(0.2)
+          .map((v, i) => v + i * 0.02),
         metadata: { agent: 'researcher', tags: ['专利', '检索'] },
       });
 
       await store.upsert({
         type: 'conversation',
         content: '今天天气不错',
-        embedding: Array(128).fill(0.9).map((v, i) => v - i * 0.01),
+        embedding: Array(128)
+          .fill(0.9)
+          .map((v, i) => v - i * 0.01),
         metadata: { tags: ['闲聊'] },
       });
     });
 
     it('应该返回相似的记忆（按相似度排序）', async () => {
-      const query = Array(128).fill(0.1).map((v, i) => v + i * 0.011); // 与第一个更相似
+      const query = Array(128)
+        .fill(0.1)
+        .map((v, i) => v + i * 0.011); // 与第一个更相似
 
       const results = await store.search(query, 3);
 

@@ -8,8 +8,14 @@
 
 import { ReasoningCache } from './ReasoningCache.js';
 import { reasoningMonitor } from './ReasoningMonitor.js';
-import { TokenCounter, tokenCounter as defaultTokenCounter } from '../llm/tokenization/TokenCounter.js';
-import { BatchProcessorOptimizer, createBatchProcessorOptimizer } from '../llm/tokenization/BatchProcessorOptimizer.js';
+import {
+  TokenCounter,
+  tokenCounter as defaultTokenCounter,
+} from '../llm/tokenization/TokenCounter.js';
+import {
+  BatchProcessorOptimizer,
+  createBatchProcessorOptimizer,
+} from '../llm/tokenization/BatchProcessorOptimizer.js';
 
 export interface BatchProcessConfig {
   /** 并发数 */
@@ -91,11 +97,14 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
 
     // 如果启用动态批次调整，初始化批处理器优化器
     if (this.config.enableDynamicBatching && this.config.maxTokens) {
-      this.batchOptimizer = createBatchProcessorOptimizer({
-        maxTokens: this.config.maxTokens,
-        maxBatchSize: this.config.maxBatchSize || 20,
-        enableDynamicAdjustment: true,
-      }, this.tokenCounter);
+      this.batchOptimizer = createBatchProcessorOptimizer(
+        {
+          maxTokens: this.config.maxTokens,
+          maxBatchSize: this.config.maxBatchSize || 20,
+          enableDynamicAdjustment: true,
+        },
+        this.tokenCounter
+      );
     }
   }
 
@@ -366,14 +375,18 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
     }
 
     // 将输入转换为文本（用于 Token 估算）
-    const texts = inputs.map(input => this.inputToText(input));
+    const texts = inputs.map((input) => this.inputToText(input));
 
     // 使用智能分批
     const modelName = this.config.modelName || 'gpt-3.5-turbo';
     const optimizationResult = this.batchOptimizer.smartPartition(texts, modelName);
 
-    console.log(`[ReasoningBatchProcessor] 智能分批: ${inputs.length}个任务分为${optimizationResult.totalBatches}批`);
-    console.log(`[ReasoningBatchProcessor] 平均批次大小: ${optimizationResult.averageBatchSize.toFixed(2)}`);
+    console.log(
+      `[ReasoningBatchProcessor] 智能分批: ${inputs.length}个任务分为${optimizationResult.totalBatches}批`
+    );
+    console.log(
+      `[ReasoningBatchProcessor] 平均批次大小: ${optimizationResult.averageBatchSize.toFixed(2)}`
+    );
     console.log(`[ReasoningBatchProcessor] 总Token数: ${optimizationResult.totalTokens}`);
 
     // 按批次处理
@@ -430,7 +443,7 @@ export class ReasoningBatchProcessor<TInput = any, TResult = any> {
     minTokensPerItem: number;
     recommendedBatchSize: number;
   } {
-    const texts = inputs.map(input => this.inputToText(input));
+    const texts = inputs.map((input) => this.inputToText(input));
     const modelName = this.config.modelName || 'gpt-3.5-turbo';
 
     const tokenCounts = this.tokenCounter.estimateTokensBatch(texts, modelName);

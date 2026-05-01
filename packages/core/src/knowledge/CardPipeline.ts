@@ -108,11 +108,11 @@ export class CardPipeline {
 
         try {
           const texts = batch.map((c) => `${c.question}\n${c.content}`);
-          const embeddings = await this.embedder.embed(texts);
+          const embeddingResult = await this.embedder.embed({texts, normalize: true});
 
           for (let j = 0; j < batch.length; j++) {
-            if (embeddings[j]) {
-              batch[j].embedding = embeddings[j];
+            if (embeddingResult.embeddings[j]) {
+              batch[j].embedding = embeddingResult.embeddings[j];
             }
           }
         } catch (error) {

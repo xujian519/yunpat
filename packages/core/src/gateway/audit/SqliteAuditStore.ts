@@ -7,12 +7,7 @@
 import Database from 'better-sqlite3';
 import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
-import type {
-  AuditLog,
-  AuditLogFilter,
-  AuditLogStore,
-  AuditMetrics,
-} from '../Gateway.js';
+import type { AuditLog, AuditLogFilter, AuditLogStore, AuditMetrics } from '../Gateway.js';
 
 /**
  * SQLite 审计日志存储配置
@@ -146,10 +141,7 @@ export class SqliteAuditStore implements AuditLogStore {
     // 时间范围过滤
     if (filter.timeRange) {
       sql += ' AND timestamp >= ? AND timestamp <= ?';
-      params.push(
-        filter.timeRange.start.getTime(),
-        filter.timeRange.end.getTime()
-      );
+      params.push(filter.timeRange.start.getTime(), filter.timeRange.end.getTime());
     }
 
     // 用户 ID 过滤
@@ -367,8 +359,9 @@ export class SqliteAuditStore implements AuditLogStore {
     retentionDays: number;
   } {
     const logCount = this.getCount();
-    const dbSize = this.db.pragma('page_count', { simple: true }) as number *
-                   (this.db.pragma('page_size', { simple: true }) as number);
+    const dbSize =
+      (this.db.pragma('page_count', { simple: true }) as number) *
+      (this.db.pragma('page_size', { simple: true }) as number);
 
     return {
       logCount,

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls *)",
+      "Bash(awk '{print $9, $5}')",
+      "Bash(ssh -o ConnectTimeout=10 xujian@100.107.99.32 \"echo '✅ SSH 连接成功' && uname -a\")",
+      "Bash(ssh -o ConnectTimeout=10 xujian@m3-air \"echo '✅ SSH 连接成功' && uname -a\")",
+      "Bash(tailscale status *)",
+      "Bash(ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no xujian519@100.91.197.114 \"echo '✅ SSH 连接成功' && uname -a && node -v 2>/dev/null || echo 'Node.js 未安装'\")",
+      "Bash(grep -E \"\\\\.ya?ml$\")",
+      "Bash(/tmp/code-quality-audit.sh)",
+      "Bash(sed -n '335,345p' packages/core/src/replanning/IncrementalPlanner.ts)",
+      "Bash(sed -n '490,500p' packages/core/src/replanning/IncrementalPlanner.ts)",
+      "Bash(/tmp/ci-check.sh)",
+      "Bash(psql -U postgres -c \"CREATE DATABASE yunpat_test;\")"
+    ]
+  }
+}

@@ -76,22 +76,13 @@ export interface ApiKeyStore {
  * 内存存储实现（用于开发/测试）
  */
 export class InMemoryApiKeyStore implements ApiKeyStore {
-  private store = new Map<
-    string,
-    { apiKeyHash: string; info: ApiKeyInfo }
-  >();
+  private store = new Map<string, { apiKeyHash: string; info: ApiKeyInfo }>();
 
-  async save(
-    keyId: string,
-    apiKeyHash: string,
-    info: ApiKeyInfo
-  ): Promise<void> {
+  async save(keyId: string, apiKeyHash: string, info: ApiKeyInfo): Promise<void> {
     this.store.set(keyId, { apiKeyHash, info });
   }
 
-  async find(
-    keyId: string
-  ): Promise<{ apiKeyHash: string; info: ApiKeyInfo } | null> {
+  async find(keyId: string): Promise<{ apiKeyHash: string; info: ApiKeyInfo } | null> {
     return this.store.get(keyId) || null;
   }
 
@@ -99,9 +90,7 @@ export class InMemoryApiKeyStore implements ApiKeyStore {
     this.store.delete(keyId);
   }
 
-  async listByUser(
-    userId: string
-  ): Promise<Array<{ keyId: string; info: ApiKeyInfo }>> {
+  async listByUser(userId: string): Promise<Array<{ keyId: string; info: ApiKeyInfo }>> {
     const results: Array<{ keyId: string; info: ApiKeyInfo }> = [];
 
     for (const [keyId, data] of this.store.entries()) {
@@ -272,12 +261,7 @@ export class ApiKeyManager {
       // 验证哈希（使用 timing-safe 比较防止时序攻击）
       const secretHash = this.hashApiKey(secret);
 
-      if (
-        !timingSafeEqual(
-          Buffer.from(apiKeyHash),
-          Buffer.from(secretHash)
-        )
-      ) {
+      if (!timingSafeEqual(Buffer.from(apiKeyHash), Buffer.from(secretHash))) {
         return null;
       }
 
@@ -309,9 +293,7 @@ export class ApiKeyManager {
   /**
    * 列出用户的所有 API Key
    */
-  async listUserApiKeys(userId: string): Promise<
-    Array<{ keyId: string; info: ApiKeyInfo }>
-  > {
+  async listUserApiKeys(userId: string): Promise<Array<{ keyId: string; info: ApiKeyInfo }>> {
     return await this.store.listByUser(userId);
   }
 

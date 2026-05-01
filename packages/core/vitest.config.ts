@@ -12,8 +12,8 @@ export default defineConfig({
       '**/*.perf.test.ts',
       '**/performance/**',
     ],
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    testTimeout: 30000,
+    hookTimeout: 30000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],

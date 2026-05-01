@@ -52,9 +52,7 @@ export class InMemoryAuditStore implements AuditLogStore {
     if (filter.timeRange) {
       const { start, end } = filter.timeRange;
       result = result.filter((log) => {
-        const timestamp = log.timestamp instanceof Date
-          ? log.timestamp
-          : new Date(log.timestamp);
+        const timestamp = log.timestamp instanceof Date ? log.timestamp : new Date(log.timestamp);
         return timestamp >= start && timestamp <= end;
       });
     }
@@ -81,8 +79,10 @@ export class InMemoryAuditStore implements AuditLogStore {
 
     // 按时间倒序排序
     result.sort((a, b) => {
-      const timeA = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
-      const timeB = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+      const timeA =
+        a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+      const timeB =
+        b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
       return timeB - timeA;
     });
 
@@ -92,7 +92,9 @@ export class InMemoryAuditStore implements AuditLogStore {
   /**
    * 统计审计日志
    */
-  async stats(metrics: { byAction?: boolean; byUser?: boolean; byAgent?: boolean; byResult?: boolean } = {}): Promise<Record<string, number>> {
+  async stats(
+    metrics: { byAction?: boolean; byUser?: boolean; byAgent?: boolean; byResult?: boolean } = {}
+  ): Promise<Record<string, number>> {
     const result: Record<string, number> = {};
 
     if (metrics.byAction) {

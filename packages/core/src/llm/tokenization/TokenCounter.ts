@@ -95,7 +95,7 @@ export class TokenCounter implements ITokenCounter {
    * @returns Token 数量数组
    */
   estimateTokensBatch(texts: string[], model: string): number[] {
-    return texts.map(text => this.estimateTokens(text, model));
+    return texts.map((text) => this.estimateTokens(text, model));
   }
 
   /**

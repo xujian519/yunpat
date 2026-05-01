@@ -111,11 +111,7 @@ export interface UserDataProvider {
  */
 export interface TokenStore {
   /** 保存 Token */
-  save(
-    tokenId: string,
-    payload: TokenPayload,
-    expiresIn: number
-  ): Promise<void>;
+  save(tokenId: string, payload: TokenPayload, expiresIn: number): Promise<void>;
 
   /** 查找 Token */
   find(tokenId: string): Promise<TokenPayload | null>;
@@ -133,11 +129,7 @@ export interface TokenStore {
 export class InMemoryTokenStore implements TokenStore {
   private store = new Map<string, { payload: TokenPayload; expiresAt: number }>();
 
-  async save(
-    tokenId: string,
-    payload: TokenPayload,
-    expiresIn: number
-  ): Promise<void> {
+  async save(tokenId: string, payload: TokenPayload, expiresIn: number): Promise<void> {
     this.store.set(tokenId, {
       payload,
       expiresAt: Date.now() + expiresIn * 1000,
@@ -192,7 +184,7 @@ export class JwtManager {
     if (!secret || secret === 'yunpat-secret-key') {
       throw new Error(
         'JWT_SECRET must be provided in production environment. ' +
-        'Set it via config.secret or environment variable JWT_SECRET.'
+          'Set it via config.secret or environment variable JWT_SECRET.'
       );
     }
 
@@ -230,15 +222,11 @@ export class JwtManager {
       permissions,
     };
 
-    const accessToken = sign(
-      accessTokenPayload,
-      this.config.secret,
-      {
-        expiresIn: this.config.accessTokenExpiresIn,
-        issuer: this.config.issuer,
-        jwtid: this.generateTokenId(),
-      }
-    );
+    const accessToken = sign(accessTokenPayload, this.config.secret, {
+      expiresIn: this.config.accessTokenExpiresIn,
+      issuer: this.config.issuer,
+      jwtid: this.generateTokenId(),
+    });
 
     // 解析 Token 以获取 jti
     const decoded = verify(accessToken, this.config.secret, {
@@ -246,11 +234,7 @@ export class JwtManager {
     }) as unknown as { payload: TokenPayload };
 
     // 保存到存储
-    await this.store.save(
-      decoded.payload.jti,
-      decoded.payload,
-      this.config.accessTokenExpiresIn
-    );
+    await this.store.save(decoded.payload.jti, decoded.payload, this.config.accessTokenExpiresIn);
 
     // 生成刷新 Token
     const refreshTokenPayload = {
@@ -347,7 +331,7 @@ export class JwtManager {
         // 生产环境应该提供 userDataProvider
         console.warn(
           '[JwtManager] No userDataProvider configured, using default roles/permissions. ' +
-          'This is not recommended for production.'
+            'This is not recommended for production.'
         );
         roles = ['user'];
         permissions = ['read', 'write'];

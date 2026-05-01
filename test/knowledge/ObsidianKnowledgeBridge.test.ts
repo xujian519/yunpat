@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { ObsidianKnowledgeBridge } from '../../ai/knowledge/ObsidianKnowledgeBridge';
+import { ObsidianKnowledgeBridge } from '../../patents/knowledge/ObsidianKnowledgeBridge.js';
 
 describe('Obsidian知识库桥接测试', () => {
   let bridge: ObsidianKnowledgeBridge;

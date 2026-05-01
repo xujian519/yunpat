@@ -297,12 +297,7 @@ export class PostgresGraphStore {
     // 先删除相关关系
     await this.db
       .delete(graphRelations)
-      .where(
-        or(
-          eq(graphRelations.fromEntityId, id),
-          eq(graphRelations.toEntityId, id)
-        )
-      );
+      .where(or(eq(graphRelations.fromEntityId, id), eq(graphRelations.toEntityId, id)));
 
     // 检查实体是否存在
     const existing = await this.getEntity(id);
@@ -377,8 +372,6 @@ export class PostgresGraphStore {
 /**
  * 创建 PostgreSQL 图存储实例
  */
-export function createPostgresGraphStore(
-  config: PostgresGraphStoreConfig
-): PostgresGraphStore {
+export function createPostgresGraphStore(config: PostgresGraphStoreConfig): PostgresGraphStore {
   return new PostgresGraphStore(config);
 }

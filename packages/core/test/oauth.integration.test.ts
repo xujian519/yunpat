@@ -412,7 +412,7 @@ describe('OAuth 提供商配置', () => {
       'http://localhost:3000/auth/callback'
     );
 
-    // 禁用 PKCE 后，仍然会生成（因为默认启用），但可以配置
-    expect(result.pkce).toBeDefined();
+    // 禁用 PKCE 后，不应该生成 codeVerifier 和 codeChallenge
+    expect(result.pkce).toBeUndefined();
   });
 });

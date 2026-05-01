@@ -97,11 +97,13 @@ export class RAGEngine {
   /**
    * 批量添加文档
    */
-  async addDocuments(documents: Array<{
-    type: string;
-    content: string;
-    metadata?: Record<string, any>;
-  }>): Promise<number[]> {
+  async addDocuments(
+    documents: Array<{
+      type: string;
+      content: string;
+      metadata?: Record<string, any>;
+    }>
+  ): Promise<number[]> {
     // 批量生成向量
     const texts = documents.map((d) => d.content);
     const embeddings = await this.bgeClient.embedBatch(texts);
@@ -120,20 +122,25 @@ export class RAGEngine {
   /**
    * 检索相关文档（核心功能）
    */
-  async retrieve(query: string, options?: {
-    topK?: number;
-    threshold?: number;
-    filter?: {
-      types?: string[];
-      tags?: string[];
-      agent?: string;
-    };
-  }): Promise<Array<{
-    content: string;
-    similarity: number;
-    metadata: Record<string, any> | null;
-    type: string;
-  }>> {
+  async retrieve(
+    query: string,
+    options?: {
+      topK?: number;
+      threshold?: number;
+      filter?: {
+        types?: string[];
+        tags?: string[];
+        agent?: string;
+      };
+    }
+  ): Promise<
+    Array<{
+      content: string;
+      similarity: number;
+      metadata: Record<string, any> | null;
+      type: string;
+    }>
+  > {
     // 生成查询向量
     const queryEmbedding = await this.bgeClient.embed(query);
 

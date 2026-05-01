@@ -68,7 +68,6 @@ export class AgentMemoryManager {
 
     this.config = {
       bgeApiKey: envConfig.bgeApiKey,
-      bgeBaseUrl: envConfig.bgeBaseUrl,
       databaseUrl: envConfig.databaseUrl,
       vectorDimension: envConfig.vectorDimension,
       maxTokens: envConfig.maxTokens,
@@ -110,8 +109,7 @@ export class AgentMemoryManager {
     // 1. 初始化 BGE-M3（如果启用 RAG）
     if (this.config.enableRAG) {
       this.bgeClient = createBGEM3Client({
-        apiKey: this.config.bgeApiKey,
-        baseUrl: this.config.bgeBaseUrl,
+        apiKey: this.config.bgeApiKey!,
         cacheMaxSize: this.config.cacheMaxSize,
       });
       console.log('✅ BGE-M3 客户端已初始化');
@@ -121,8 +119,8 @@ export class AgentMemoryManager {
 
     // 2. 初始化向量存储
     this.vectorStore = new PostgresVectorStore({
-      databaseUrl: this.config.databaseUrl,
-      vectorDimension: this.config.vectorDimension,
+      databaseUrl: this.config.databaseUrl || 'postgres://localhost:5432/yunpat',
+      vectorDimension: this.config.vectorDimension || 1024,
     });
     await this.vectorStore.initialize();
     console.log('✅ PostgreSQL 向量存储已初始化');

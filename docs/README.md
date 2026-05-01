@@ -1,7 +1,7 @@
 # YunPat 文档中心
 
 **版本**: v0.1.0 (开发中)
-**更新时间**: 2026-04-30
+**更新时间**: 2026-05-01
 
 ---
 
@@ -18,8 +18,15 @@
 
 ### 开发指南 (guides/)
 
+- [快速开始指南](./guides/quick-start.md) - 推理层增强功能快速上手
+- [GLM 快速开始](./guides/quickstart-glm.md) - GLM 模型快速配置指南
+- [GLM 设置指南](./guides/glm-setup.md) - GLM 环境配置详解
+- [GLM 使用指南](./guides/glm-usage.md) - GLM 模型使用指南
 - [API 文档](./guides/api.md) - 智能体 API、Rust 工具 API、MCP 工具接口
 - [开发指南](./guides/development.md) - 环境搭建、开发流程
+- [生产环境使用指南](./guides/production-usage.md) - 生产环境最佳实践
+- [智能体集成指南](./guides/agent-integration.md) - 智能体集成完整指南
+- [写作风格指南](./guides/writing-style.md) - 文档写作风格规范
 - [向后兼容指南](./guides/backward-compatibility.md) - 版本升级说明
 - [安全指南](./SECURITY_GUIDELINES.md) - 安全最佳实践
 
@@ -27,6 +34,33 @@
 
 - [项目结构说明](./PROJECT_STRUCTURE.md) - 完整目录结构
 - [文件管理规则](./FILE_MANAGEMENT_RULES.md) - 文档组织规范
+
+---
+
+## 工具文档 (tools/)
+
+- [工具系统总览](./tools/overview.md) - YunPat 工具系统概述
+- [工具状态报告](./tools/status.md) - 工具库完成情况
+- [工具选择准确性改进](./tools/selection-accuracy-improvement.md) - 智能体工具选择优化方案
+- [ClawCode 专利工具](./tools/clawcode-patent-tools.md) - claw-code 专利检索工具清单
+
+---
+
+## 总结文档 (summaries/)
+
+- [最终总结](./summaries/final-summary.md) - YunPat 工具库实施完成总结
+- [集成测试总结](./summaries/integration-test.md) - PatentWriterAgent 集成测试完成总结
+- [知识库集成总结](./summaries/knowledge-base-integration.md) - 知识库集成与提示词提炼完成总结
+- [Rust 集成总结](./summaries/rust-integration.md) - Rust 工具移植工作总结
+- [专利工具实现总结](./summaries/patent-tools-implementation.md) - 专利检索工具实施完成报告
+- [工具实现总结](./summaries/tools-implementation.md) - YunPat 工具体系实施总结
+- [提示词模板总结](./summaries/prompt-templates.md) - 提示词模板提炼完成总结
+
+---
+
+## 进度追踪 (progress/)
+
+- [Rust 工具进度](./progress/rust-tools.md) - Rust 工具和 CLI/MCP 集成进度报告
 
 ---
 
@@ -84,6 +118,20 @@
 
 ## 工作报告 (reports/)
 
+**2026年5月**
+- [代码清理总结](./reports/2026-05/code-cleanup-summary.md) - 代码清理工作总结
+- [代码审查总结](./reports/2026-05/code-review-summary.md) - 代码审查报告
+- [综合修复报告](./reports/2026-05/comprehensive-fix-report.md) - 综合问题修复报告
+- [网关层进度报告](./reports/2026-05/gateway-progress.md) - 交互层网关开发进度
+- [交互层修复总结](./reports/2026-05/interactive-layer-fixes.md) - 交互层修复工作总结
+- [Phase 1 完成报告](./reports/2026-05/phase1-completion.md) - Phase 1 完成报告
+- [Phase 1 最终总结](./reports/2026-05/phase1-final-summary.md) - Phase 1 最终总结
+- [安全修复报告](./reports/2026-05/security-fixes.md) - 安全问题修复报告
+- [工具验证报告](./reports/2026-05/tools-verification.md) - 工具验证测试报告
+- [GLM 测试报告](./reports/2026-05/glm-test.md) - GLM 模型测试报告
+- [代码质量审计（Karpathy）](./reports/2026-05/code-quality-audit-karpathy.md) - 基于 Karpathy 原则的代码质量审计
+- [目录结构审计](./reports/2026-05/directory-structure-audit.md) - 目录结构审计报告
+
 **2026年4月**
 - [2026-04-28 工作总结](./reports/2026-04/2026-04-28-work-summary.md)
 - [2026-04-28 清理总结](./reports/2026-04/2026-04-28-cleanup-summary.md)
@@ -92,8 +140,18 @@
 - [2026-04-29 目录重构](./reports/2026-04/2026-04-29-structure-refactor-execution.md)
 - [2026-04-29 完整重构总结](./reports/2026-04/2026-04-29-complete-refactor-summary.md)
 
+**综合报告**
+- [CI/CD 状态检查报告](./reports/ci-cd-status.md) - YunPat CI/CD 状态检查
+- [CI 质量报告](./reports/ci-quality-20260430.md) - 2026-04-30 CI/CD 质量检查
+- [代码审查报告](./reports/code-review.md) - 推理层增强代码审查
+- [代码质量审查报告](./reports/code-quality-review.md) - 推理层增强代码质量审查
+- [最终验证报告](./reports/final-verification.md) - 代码质量最终验证
+- [阶段5进度报告](./reports/stage5-progress.md) - 推理层增强阶段5进度
+- [项目总结报告](./reports/project-summary.md) - 推理层增强项目总结
+
 ## 计划文档 (plans/)
 
+- [知识库集成计划](./plans/knowledge-base-integration.md) - 知识库集成与提示词提炼方案
 - [重构计划](./plans/refactor/2026-04-refactor-plan.md)
 - [重构执行报告](./plans/refactor/2026-04-refactor-execution-report.md)
 
@@ -107,16 +165,68 @@
 - [归档项目分析](./archive/ARCHIVE_PROJECTS_ANALYSIS.md)
 - [归档项目总结](./archive/ARCHIVE_PROJECTS_SUMMARY.md)
 
-## 其他文档
+---
 
-- [Rust 工具进度](./RUST_TOOLS_PROGRESS.md)
-- [Rust 集成总结](./RUST_INTEGRATION_SUMMARY.md)
-- [知识库集成计划](./KNOWLEDGE_BASE_INTEGRATION_PLAN.md)
-- [知识库集成总结](./KNOWLEDGE_BASE_INTEGRATION_SUMMARY.md)
-- [Prompt 模板总结](./PROMPT_TEMPLATES_SUMMARY.md)
-- [生产使用指南](./PRODUCTION_USAGE_GUIDE.md)
-- [智能体集成指南](./AGENT_INTEGRATION_GUIDE.md)
-- [最终总结](./FINAL_SUMMARY.md)
+## 目录结构概览
+
+```
+docs/
+├── README.md                    # 文档中心首页（本文件）
+├── roadmap.md                   # 发展路线图
+├── PROJECT_STRUCTURE.md         # 项目结构说明
+├── FILE_MANAGEMENT_RULES.md     # 文件管理规则
+├── SECURITY_GUIDELINES.md       # 安全指南
+│
+├── guides/                      # 开发指南
+│   ├── quick-start.md          # 快速开始指南
+│   ├── api.md                  # API 文档
+│   ├── development.md          # 开发指南
+│   ├── production-usage.md     # 生产环境使用指南
+│   ├── agent-integration.md    # 智能体集成指南
+│   ├── writing-style.md        # 写作风格指南
+│   └── backward-compatibility.md # 向后兼容指南
+│
+├── tools/                       # 工具文档
+│   ├── overview.md             # 工具系统总览
+│   ├── status.md               # 工具状态报告
+│   ├── selection-accuracy-improvement.md # 工具选择准确性改进
+│   └── clawcode-patent-tools.md # ClawCode 专利工具
+│
+├── summaries/                   # 总结文档
+│   ├── final-summary.md        # 最终总结
+│   ├── integration-test.md     # 集成测试总结
+│   ├── knowledge-base-integration.md # 知识库集成总结
+│   ├── rust-integration.md     # Rust 集成总结
+│   ├── patent-tools-implementation.md # 专利工具实现总结
+│   ├── tools-implementation.md # 工具实现总结
+│   └── prompt-templates.md     # 提示词模板总结
+│
+├── progress/                    # 进度追踪
+│   └── rust-tools.md           # Rust 工具进度
+│
+├── reports/                     # 工作报告
+│   ├── 2026-04/                # 2026年4月报告
+│   ├── ci-quality-20260430.md  # CI 质量报告
+│   ├── ci-cd-status.md         # CI/CD 状态检查
+│   ├── code-review.md          # 代码审查报告
+│   ├── code-quality-review.md  # 代码质量审查报告
+│   ├── final-verification.md   # 最终验证报告
+│   ├── stage5-progress.md      # 阶段5进度报告
+│   └── project-summary.md      # 项目总结报告
+│
+├── plans/                       # 计划文档
+│   ├── knowledge-base-integration.md # 知识库集成计划
+│   └── refactor/               # 重构计划
+│
+├── architecture/                # 架构文档
+├── ci/                         # CI/CD 相关
+├── quality/                    # 质量保证
+├── testing/                    # 测试文档
+├── meta/                       # 元数据
+├── history/                    # 历史记录
+├── archive/                    # 归档文档
+└── 资产引入/                    # 数据资产引入文档
+```
 
 ---
 

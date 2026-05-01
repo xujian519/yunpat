@@ -195,8 +195,8 @@ export class ReasoningCache<T = any> {
     let embedding: number[] | undefined;
     if (this.config.enableEmbedding && this.embeddingAdapter) {
       try {
-        const embedResult = await this.embeddingAdapter.embed([problem]);
-        embedding = embedResult[0];
+        const embedResult = await this.embeddingAdapter.embed({texts: [problem], normalize: true});
+        embedding = embedResult.embeddings[0];
       } catch (error) {
         // 嵌入失败，继续但不使用嵌入
         console.warn('Failed to generate embedding:', error);
@@ -268,8 +268,8 @@ export class ReasoningCache<T = any> {
   private async queryByEmbedding(problem: string, threshold: number): Promise<CacheQueryResult<T>> {
     try {
       // 生成查询的嵌入向量
-      const embedResult = await this.embeddingAdapter!.embed([problem]);
-      const queryEmbedding = embedResult[0];
+      const embedResult = await this.embeddingAdapter!.embed({texts: [problem], normalize: true});
+      const queryEmbedding = embedResult.embeddings[0];
 
       let bestMatch: CacheEntry<T> | undefined;
       let bestSimilarity = 0;

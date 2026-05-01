@@ -131,12 +131,12 @@ export class TreeOfThoughtsStrategy {
           content: '你是一个创意思考专家，擅长从不同角度思考问题。',
         },
         {
-      role: 'user',
-      content: prompt,
-    },
-  ],
-  temperature: this.config.temperature,
-});
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: this.config.temperature,
+    });
 
     // 解析多个思路
     const thoughts = this.parseThoughts(response.message.content);
@@ -293,9 +293,7 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
   /**
    * 解析思路列表
    */
-  private parseThoughts(
-    content: string
-  ): Array<{ thought: string; score: number }> {
+  private parseThoughts(content: string): Array<{ thought: string; score: number }> {
     const thoughts: Array<{ thought: string; score: number }> = [];
 
     // 尝试多种格式

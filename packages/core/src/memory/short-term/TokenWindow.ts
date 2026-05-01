@@ -89,7 +89,7 @@ export class TokenWindowManager {
       };
     }
 
-    let selectedMessages: Message[] = [];
+    const selectedMessages: Message[] = [];
     let currentTokens = 0;
     let summaryUsed = false;
 
@@ -209,7 +209,8 @@ export class TokenWindowManager {
     // 简化实现：提取关键信息
     const keyPoints: string[] = [];
 
-    for (const msg of messages.slice(-5)) { // 只看最近 5 条
+    for (const msg of messages.slice(-5)) {
+      // 只看最近 5 条
       if (msg.role === 'user') {
         // 提取用户问题（前 50 字）
         const question = msg.content.slice(0, 50);
@@ -290,13 +291,11 @@ export class TokenWindowManager {
   /**
    * 检查是否重复
    */
-  private async checkDuplicate(
-    message: Message,
-    recentMessages: Message[]
-  ): Promise<boolean> {
+  private async checkDuplicate(message: Message, recentMessages: Message[]): Promise<boolean> {
     const content = message.content.toLowerCase().trim();
 
-    for (const msg of recentMessages.slice(-3)) { // 只看最近 3 条
+    for (const msg of recentMessages.slice(-3)) {
+      // 只看最近 3 条
       const recentContent = msg.content.toLowerCase().trim();
       if (content === recentContent) {
         return true;
@@ -309,10 +308,7 @@ export class TokenWindowManager {
   /**
    * 计算相关性（简单实现）
    */
-  private async calculateRelevance(
-    message: Message,
-    task: string
-  ): Promise<number> {
+  private async calculateRelevance(message: Message, task: string): Promise<number> {
     const msgContent = message.content.toLowerCase();
     const taskContent = task.toLowerCase();
 
@@ -364,8 +360,7 @@ export class TokenWindowManager {
       .sort((a, b) => b.importance - a.importance);
 
     // 计算平均重要性
-    const avgImportance =
-      filtered.reduce((sum, s) => sum + s.importance, 0) / filtered.length;
+    const avgImportance = filtered.reduce((sum, s) => sum + s.importance, 0) / filtered.length;
 
     return {
       messages: filtered.map((s) => s.message),
@@ -400,8 +395,6 @@ export class TokenWindowManager {
 /**
  * 创建 Token 窗口管理器
  */
-export function createTokenWindowManager(
-  config?: TokenWindowConfig
-): TokenWindowManager {
+export function createTokenWindowManager(config?: TokenWindowConfig): TokenWindowManager {
   return new TokenWindowManager(config);
 }

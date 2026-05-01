@@ -102,10 +102,7 @@ export class MemoryLayer {
   /**
    * 抽取实体和关系
    */
-  private async extractEntitiesAndRelations(
-    memoryId: number,
-    memory: MemoryItem
-  ): Promise<void> {
+  private async extractEntitiesAndRelations(memoryId: number, memory: MemoryItem): Promise<void> {
     try {
       // 1. 抽取实体
       const entities = await this.entityExtractor.extractEntities(memory.content);
@@ -141,10 +138,7 @@ export class MemoryLayer {
       }
 
       // 3. 抽取关系
-      const relations = await this.relationExtractor.extractRelations(
-        memory.content,
-        entities
-      );
+      const relations = await this.relationExtractor.extractRelations(memory.content, entities);
 
       // 4. 为每个关系创建图边
       for (const relation of relations) {
@@ -167,7 +161,10 @@ export class MemoryLayer {
             });
           }
         } catch (error) {
-          console.warn(`Failed to create relation ${relation.fromEntity} -> ${relation.toEntity}:`, error);
+          console.warn(
+            `Failed to create relation ${relation.fromEntity} -> ${relation.toEntity}:`,
+            error
+          );
         }
       }
 
@@ -187,11 +184,7 @@ export class MemoryLayer {
   /**
    * 搜索记忆（向量相似度）
    */
-  async searchMemories(
-    queryEmbedding: number[],
-    topK: number = 10,
-    filter?: SearchFilter
-  ) {
+  async searchMemories(queryEmbedding: number[], topK: number = 10, filter?: SearchFilter) {
     return await this.vectorStore.search(queryEmbedding, topK, filter);
   }
 
@@ -229,11 +222,7 @@ export class MemoryLayer {
   /**
    * 查找最短路径
    */
-  async findShortestPath(
-    fromEntityId: number,
-    toEntityId: number,
-    maxHops?: number
-  ) {
+  async findShortestPath(fromEntityId: number, toEntityId: number, maxHops?: number) {
     return await this.graphStore.findShortestPath(fromEntityId, toEntityId, maxHops);
   }
 
@@ -263,19 +252,14 @@ export class MemoryLayer {
    * 关闭连接
    */
   async close(): Promise<void> {
-    await Promise.all([
-      this.vectorStore.close(),
-      this.graphStore.close(),
-    ]);
+    await Promise.all([this.vectorStore.close(), this.graphStore.close()]);
   }
 }
 
 /**
  * 创建记忆层实例
  */
-export async function createMemoryLayer(
-  config: MemoryLayerConfig
-): Promise<MemoryLayer> {
+export async function createMemoryLayer(config: MemoryLayerConfig): Promise<MemoryLayer> {
   const layer = new MemoryLayer(config);
   await layer.initialize();
 

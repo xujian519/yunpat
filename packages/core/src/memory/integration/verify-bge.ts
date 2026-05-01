@@ -38,7 +38,12 @@ async function verifyBGE() {
     const embedding1 = await client.embed(text1);
 
     console.log(`   ✅ 向量维度: ${embedding1.length}`);
-    console.log(`   ✅ 前 5 个值: [${embedding1.slice(0, 5).map(v => v.toFixed(4)).join(', ')}]`);
+    console.log(
+      `   ✅ 前 5 个值: [${embedding1
+        .slice(0, 5)
+        .map((v) => v.toFixed(4))
+        .join(', ')}]`
+    );
 
     // 4. 测试批量向量化
     console.log('\n4️⃣ 测试批量向量化...');
@@ -84,7 +89,6 @@ async function verifyBGE() {
     console.log('📝 下一步：');
     console.log('   1. 运行 RAG 示例: tsx rag-example.ts');
     console.log('   2. 查看完整文档: cat README.md');
-
   } catch (error) {
     console.error('\n❌ 验证失败:', error);
     console.error('\n💡 故障排查：');

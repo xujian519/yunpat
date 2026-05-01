@@ -173,15 +173,17 @@ describe('TokenCounter', () => {
       const qwenTokens = counter.estimateTokens(chineseText, 'qwen-turbo');
 
       // DeepSeek 和 Qwen 对中文应该更高效（更少的 Token）
-      // 由于我们的实现中 DeepSeek 和 Qwen 使用相同的计数方法（中文 2 字符/token）
-      // 而 GPT 使用中文 2.5 字符/token，所以 DeepSeek 和 Qwen 应该更高效
+      // GPT: 中文 2.5 字符/token
+      // DeepSeek/Qwen: 中文 3 字符/token（更高效，token 更少）
       expect(deepseekTokens).toBeLessThanOrEqual(gptTokens);
       expect(qwenTokens).toBeLessThanOrEqual(gptTokens);
 
-      // 验证具体数值：GPT 应该使用更多 tokens
+      // 验证具体数值（包含中文字符和其他字符）
       const chineseChars = (chineseText.match(/[一-龥]/g) || []).length;
-      const expectedGptTokens = Math.ceil(chineseChars / 2.5);
-      const expectedDeepseekTokens = Math.ceil(chineseChars / 2);
+      const otherChars = chineseText.length - chineseChars;
+
+      const expectedGptTokens = Math.ceil(chineseChars / 2.5 + otherChars / 4);
+      const expectedDeepseekTokens = Math.ceil(chineseChars / 3 + otherChars / 4);
 
       expect(gptTokens).toBeCloseTo(expectedGptTokens, 0);
       expect(deepseekTokens).toBeCloseTo(expectedDeepseekTokens, 0);

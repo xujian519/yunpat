@@ -9,14 +9,14 @@
  * 实体类型定义
  */
 export type EntityType =
-  | 'Applicant'      // 申请人
-  | 'Inventor'       // 发明人
-  | 'IPC'            // 专利分类号
-  | 'ApplicationNumber'  // 申请号
-  | 'PublicationNumber'  // 公开号
-  | 'Date'           // 日期
-  | 'Organization'   // 组织机构
-  | 'Person';        // 人物
+  | 'Applicant' // 申请人
+  | 'Inventor' // 发明人
+  | 'IPC' // 专利分类号
+  | 'ApplicationNumber' // 申请号
+  | 'PublicationNumber' // 公开号
+  | 'Date' // 日期
+  | 'Organization' // 组织机构
+  | 'Person'; // 人物
 
 /**
  * 实体接口
@@ -69,11 +69,11 @@ export class EntityExtractor {
 
   // 专利实体正则表达式
   private readonly patterns = {
-    // 申请号：CN12位数字（中国专利申请号格式）
-    // 支持：CN202310123456.7 或 CN202310123456U 或 CN2023101234567
-    applicationNumber: /\b[A-Z]{2}\d{12}[A-Z]?\b|\b[A-Z]{2}\d{12}\.\d\b/g,
+    // 申请号：CN + 12-13位数字 + 可选版本号（中国专利申请号格式）
+    // 支持：CN202310123456.7 或 CN202310123456U 或 CN2023101234567 或 CN20231012345678
+    applicationNumber: /\b[A-Z]{2}\d{12,13}(?:\.\d|[A-Z])?\b/g,
     // 公开号：类似申请号
-    publicationNumber: /\b[A-Z]{2}\d{8,12}[A-Z]?\b/g,
+    publicationNumber: /\b[A-Z]{2}\d{8,13}(?:\.\d|[A-Z])?\b/g,
     // IPC 分类号：G06F 40/00 (字母 + 数字 + 字母数字)
     ipc: /\b[A-Z]\d{2}[A-Z]?\s?\d{1,4}\/?\d{2}[A-Z]?\b/g,
     // 日期：2023-01-01 或 2023年01月01日
@@ -94,10 +94,7 @@ export class EntityExtractor {
   /**
    * 从文本中抽取实体
    */
-  async extractEntities(
-    text: string,
-    entityType?: EntityType
-  ): Promise<Entity[]> {
+  async extractEntities(text: string, entityType?: EntityType): Promise<Entity[]> {
     const entities: Entity[] = [];
 
     // 如果指定了实体类型，只抽取该类型
@@ -138,11 +135,11 @@ export class EntityExtractor {
 
     // 应用实体归一化
     if (this.config.enableNormalization) {
-      entities.forEach(e => this.normalizeEntity(e));
+      entities.forEach((e) => this.normalizeEntity(e));
     }
 
     // 过滤低置信度实体
-    return entities.filter(e => e.confidence >= this.config.minConfidence);
+    return entities.filter((e) => e.confidence >= this.config.minConfidence);
   }
 
   /**
@@ -150,7 +147,7 @@ export class EntityExtractor {
    */
   private extractApplicationNumbers(text: string): Entity[] {
     const matches = this.findOverlappingMatches(text, this.patterns.applicationNumber);
-    return matches.map(m => ({
+    return matches.map((m) => ({
       type: 'ApplicationNumber' as EntityType,
       name: m.text,
       confidence: 0.95,
@@ -164,7 +161,7 @@ export class EntityExtractor {
    */
   private extractPublicationNumbers(text: string): Entity[] {
     const matches = this.findOverlappingMatches(text, this.patterns.publicationNumber);
-    return matches.map(m => ({
+    return matches.map((m) => ({
       type: 'PublicationNumber' as EntityType,
       name: m.text,
       confidence: 0.95,
@@ -178,7 +175,7 @@ export class EntityExtractor {
    */
   private extractIPCs(text: string): Entity[] {
     const matches = this.findOverlappingMatches(text, this.patterns.ipc);
-    return matches.map(m => ({
+    return matches.map((m) => ({
       type: 'IPC' as EntityType,
       name: m.text.trim(),
       confidence: 0.9,
@@ -195,14 +192,14 @@ export class EntityExtractor {
     const seen = new Set<string>();
 
     return matches
-      .map(m => ({
+      .map((m) => ({
         type: 'Date' as EntityType,
         name: m.text.replace(/年|月/g, '-').replace(/日/g, '').trim(),
         confidence: 0.85,
         startOffset: m.start,
         endOffset: m.end,
       }))
-      .filter(e => {
+      .filter((e) => {
         // 去重
         if (seen.has(e.name)) return false;
         seen.add(e.name);
@@ -217,7 +214,7 @@ export class EntityExtractor {
     const matches = this.findOverlappingMatches(text, this.patterns.companyName);
     const orgs = new Map<string, Entity>();
 
-    matches.forEach(m => {
+    matches.forEach((m) => {
       const name = m.text.trim();
       // 去重
       if (orgs.has(name)) return;
@@ -250,17 +247,21 @@ export class EntityExtractor {
 
       for (const match of matches) {
         // 从匹配的文本中提取人名
-        const names = this.extractChineseNames(match.text);
-        for (const name of names) {
-          if (name.length >= 2 && name.length <= 4 && !seen.has(name)) {
-            seen.add(name);
-            persons.push({
-              type: 'Person',
-              name,
-              confidence: 0.8,
-              startOffset: match.start,
-              endOffset: match.start + match.text.length,
-            });
+        // 先按顿号、空格等分隔符分割
+        const parts = match.text.split(/[、\s,，]+/);
+        for (const part of parts) {
+          const names = this.extractChineseNames(part);
+          for (const name of names) {
+            if (name.length >= 2 && name.length <= 4 && !seen.has(name)) {
+              seen.add(name);
+              persons.push({
+                type: 'Person',
+                name,
+                confidence: 0.85,
+                startOffset: match.start,
+                endOffset: match.start + match.text.length,
+              });
+            }
           }
         }
       }
@@ -276,10 +277,29 @@ export class EntityExtractor {
     // 匹配2-4个连续的汉字
     const nameRegex = /[一-龥]{2,4}/g;
     const matches = text.match(nameRegex) || [];
-    return matches.filter(name => {
+    return matches.filter((name) => {
       // 过滤掉常见的非人名词汇
-      const excludeWords = ['公司', '集团', '科技', '技术', '有限', '股份', '发明', '设计', '申请', '权利', '专利', '方法', '系统'];
-      return !excludeWords.some(word => name.includes(word));
+      const excludeWords = [
+        '公司',
+        '集团',
+        '科技',
+        '技术',
+        '有限',
+        '股份',
+        '发明',
+        '设计',
+        '申请',
+        '权利',
+        '专利',
+        '方法',
+        '系统',
+        '本专利',
+        '本申请',
+        '本案',
+        '优先权',
+        '同族',
+      ];
+      return !excludeWords.some((word) => name.includes(word));
     });
   }
 
@@ -361,7 +381,7 @@ export class EntityExtractor {
    * 添加自定义词典
    */
   addCustomDictionary(words: string[]): void {
-    words.forEach(word => {
+    words.forEach((word) => {
       this.customDictionary.add(word);
     });
   }
@@ -370,9 +390,7 @@ export class EntityExtractor {
    * 批量抽取实体
    */
   async extractEntitiesBatch(texts: string[]): Promise<Entity[][]> {
-    return Promise.all(
-      texts.map(text => this.extractEntities(text))
-    );
+    return Promise.all(texts.map((text) => this.extractEntities(text)));
   }
 
   /**
@@ -392,8 +410,6 @@ export class EntityExtractor {
 /**
  * 创建实体抽取器实例
  */
-export function createEntityExtractor(
-  config?: EntityExtractorConfig
-): EntityExtractor {
+export function createEntityExtractor(config?: EntityExtractorConfig): EntityExtractor {
   return new EntityExtractor(config);
 }

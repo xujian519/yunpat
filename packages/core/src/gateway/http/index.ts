@@ -2,7 +2,4 @@
  * HTTP 模块导出
  */
 
-export {
-  HttpApprovalServer,
-  type HttpApprovalServerConfig,
-} from './HttpApprovalServer.js';
+export { HttpApprovalServer, type HttpApprovalServerConfig } from './HttpApprovalServer.js';

@@ -6,7 +6,13 @@
  * @module llm/tokenization
  */
 
-export { TokenCounter, ITokenCounter, ModelType, createTokenCounter, tokenCounter } from './TokenCounter.js';
+export {
+  TokenCounter,
+  ITokenCounter,
+  ModelType,
+  createTokenCounter,
+  tokenCounter,
+} from './TokenCounter.js';
 export {
   BatchProcessorOptimizer,
   createBatchProcessorOptimizer,

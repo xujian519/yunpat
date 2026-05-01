@@ -4,7 +4,7 @@
  * 核心功能：
  * 1. 批量生成章节 - 将多个章节合并为单个请求
  * 2. 批量接口适配 - 使用结构化输出格式
- * 3. 智能分批 - 根据章节数量自动分批
+ * 3. 智能分批 - 根据章节数量和 Token 长度自动分批
  *
  * 成本节省：
  * - 当前：5个章节 = 5次API调用
@@ -13,6 +13,11 @@
  */
 
 import { LLMAdapter } from '../lifecycle/Lifecycle.js';
+import { TokenCounter, tokenCounter as defaultTokenCounter } from './tokenization/TokenCounter.js';
+import {
+  BatchProcessorOptimizer,
+  createBatchProcessorOptimizer,
+} from './tokenization/BatchProcessorOptimizer.js';
 
 /**
  * 章节生成结果
@@ -36,6 +41,12 @@ export interface BatchConfig {
   timeout: number;
   /** 是否启用批处理 */
   enabled: boolean;
+  /** 最大 Token 限制（默认 4000） */
+  maxTokens?: number;
+  /** 模型名称（用于精确 Token 计数） */
+  modelName?: string;
+  /** 是否启用智能分批（基于 Token） */
+  enableSmartBatching?: boolean;
 }
 
 /**
@@ -45,6 +56,9 @@ const DEFAULT_BATCH_CONFIG: BatchConfig = {
   maxSectionsPerBatch: 8,
   timeout: 120000, // 2分钟
   enabled: true,
+  maxTokens: 4000,
+  modelName: 'gpt-3.5-turbo',
+  enableSmartBatching: true,
 };
 
 /**
@@ -55,10 +69,25 @@ const DEFAULT_BATCH_CONFIG: BatchConfig = {
 export class BatchProcessor {
   private config: BatchConfig;
   private llm: LLMAdapter;
+  private tokenCounter: TokenCounter;
+  private batchOptimizer?: BatchProcessorOptimizer;
 
   constructor(llm: LLMAdapter, config?: Partial<BatchConfig>) {
     this.llm = llm;
     this.config = { ...DEFAULT_BATCH_CONFIG, ...config };
+    this.tokenCounter = defaultTokenCounter;
+
+    // 如果启用智能分批，初始化批处理器优化器
+    if (this.config.enableSmartBatching && this.config.maxTokens) {
+      this.batchOptimizer = createBatchProcessorOptimizer(
+        {
+          maxTokens: this.config.maxTokens,
+          maxBatchSize: this.config.maxSectionsPerBatch,
+          enableDynamicAdjustment: true,
+        },
+        this.tokenCounter
+      );
+    }
   }
 
   /**
@@ -110,7 +139,20 @@ export class BatchProcessor {
   /**
    * 创建批次 - 智能分批策略
    */
-  private createBatches(sections: string[]): string[][] {
+  private createBatches(sections: string[], plan?: unknown): string[][] {
+    // 如果启用智能分批且有 Token 限制
+    if (this.config.enableSmartBatching && this.batchOptimizer && plan) {
+      return this.createSmartBatches(sections, plan);
+    }
+
+    // 否则使用传统分批策略
+    return this.createSimpleBatches(sections);
+  }
+
+  /**
+   * 简单分批策略（基于章节数量）
+   */
+  private createSimpleBatches(sections: string[]): string[][] {
     const batches: string[][] = [];
     const maxPerBatch = this.config.maxSectionsPerBatch;
 
@@ -125,6 +167,57 @@ export class BatchProcessor {
     }
 
     return batches;
+  }
+
+  /**
+   * 智能分批策略（基于 Token 长度）
+   */
+  private createSmartBatches(sections: string[], plan: unknown): string[][] {
+    const modelName = this.config.modelName || 'gpt-3.5-turbo';
+
+    // 估算每个章节的 Token 数（基于标题和目标长度）
+    const wordsPerSection = Math.round((plan as any).targetLength / sections.length);
+    const estimatedTokensPerSection = wordsPerSection * 1.5; // 1 词 ≈ 1.5 tokens
+
+    const sectionTokens = sections.map(() => estimatedTokensPerSection);
+
+    // 使用批处理器优化器进行智能分批
+    if (this.batchOptimizer) {
+      const result = this.batchOptimizer.partitionIntoBatches(
+        sections,
+        modelName,
+        this.config.maxSectionsPerBatch
+      );
+
+      console.log(
+        `[BatchProcessor] 智能分批: ${sections.length}个章节分为${result.totalBatches}批`
+      );
+      console.log(`[BatchProcessor] 预估总Token数: ${result.totalTokens}`);
+      console.log(`[BatchProcessor] 平均批次大小: ${result.averageBatchSize.toFixed(2)}`);
+
+      return result.batches;
+    }
+
+    // 回退到简单分批
+    return this.createSimpleBatches(sections);
+  }
+
+  /**
+   * 估算章节的 Token 数量
+   */
+  private estimateSectionTokens(sectionHeading: string, plan: unknown): number {
+    const modelName = this.config.modelName || 'gpt-3.5-turbo';
+    const wordsPerSection = Math.round(
+      (plan as any).targetLength / (plan as any).structure.sections.length
+    );
+
+    // 标题 Token
+    const headingTokens = this.tokenCounter.estimateTokens(sectionHeading, modelName);
+
+    // 内容 Token（估算）
+    const contentTokens = wordsPerSection * 1.5;
+
+    return headingTokens + contentTokens;
   }
 
   /**
@@ -178,13 +271,27 @@ export class BatchProcessor {
   private buildBatchPrompt(sections: string[], plan: unknown): string {
     const wordsPerSection = Math.round((plan as any).targetLength / sections.length);
 
+    // 估算提示 Token 数
+    const modelName = this.config.modelName || 'gpt-3.5-turbo';
+    const promptTokens = this.estimatePromptTokens(sections, plan, wordsPerSection);
+
+    // 如果提示 Token 接近限制，减少每章的目标长度
+    let adjustedWordsPerSection = wordsPerSection;
+    if (this.config.maxTokens && promptTokens > this.config.maxTokens * 0.7) {
+      const ratio = (this.config.maxTokens * 0.7) / promptTokens;
+      adjustedWordsPerSection = Math.floor(wordsPerSection * ratio);
+      console.log(
+        `[BatchProcessor] 调整目标长度: ${wordsPerSection} -> ${adjustedWordsPerSection} 词`
+      );
+    }
+
     return `请为文档"${(plan as any).structure.title}"批量生成以下${sections.length}个章节的内容：
 
 ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
 
 **要求**：
 1. 语气：${(plan as any).tone}
-2. 目标长度：每章节约${wordsPerSection}词
+2. 目标长度：每章节约${adjustedWordsPerSection}词
 3. 内容详细、准确
 
 **输出格式**：
@@ -207,6 +314,32 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
 - "heading"必须与上述章节标题完全一致
 - "content"为该章节的完整内容
 - 不要添加任何其他说明文字`;
+  }
+
+  /**
+   * 估算提示 Token 数
+   */
+  private estimatePromptTokens(sections: string[], plan: unknown, wordsPerSection: number): number {
+    const modelName = this.config.modelName || 'gpt-3.5-turbo';
+
+    // 基础提示 Token
+    let promptTokens = this.tokenCounter.estimateTokens(
+      `请为文档"${(plan as any).structure.title}"批量生成以下${sections.length}个章节的内容`,
+      modelName
+    );
+
+    // 章节列表 Token
+    for (const section of sections) {
+      promptTokens += this.tokenCounter.estimateTokens(section, modelName);
+    }
+
+    // 要求和格式说明 Token（粗略估算）
+    promptTokens += 200;
+
+    // 预期输出 Token（每章节约 wordsPerSection * 1.5 tokens）
+    const estimatedOutputTokens = sections.length * wordsPerSection * 1.5;
+
+    return promptTokens + estimatedOutputTokens;
   }
 
   /**

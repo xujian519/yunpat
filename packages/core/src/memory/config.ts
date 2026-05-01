@@ -11,10 +11,7 @@
  */
 export function getBGEApiKey(): string {
   return (
-    process.env.BGE_API_KEY ||
-    process.env.BGE_M3_API_KEY ||
-    process.env.EMBEDDING_API_KEY ||
-    ''
+    process.env.BGE_API_KEY || process.env.BGE_M3_API_KEY || process.env.EMBEDDING_API_KEY || ''
   );
 }
 

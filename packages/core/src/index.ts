@@ -136,7 +136,7 @@ export { OMLXAdapter, createOMXLModel, type OMLXConfig } from './llm/OMXLAdapter
 export {
   EmbeddingAdapter,
   createBGEEmbedding,
-  type EmbeddingConfig,
+  type OpenAIEmbeddingConfig as EmbeddingConfig,
 } from './llm/EmbeddingAdapter.js';
 
 // 保留原有的 LangChain 适配器（兼容性）

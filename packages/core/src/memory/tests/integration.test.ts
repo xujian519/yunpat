@@ -41,11 +41,7 @@ describe('记忆层集成测试', () => {
       expect(memoryId).toBeGreaterThan(0);
 
       // 2. 搜索记忆
-      const results = await memory.searchMemories(
-        Array(128).fill(0.11),
-        5,
-        { types: ['patent'] }
-      );
+      const results = await memory.searchMemories(Array(128).fill(0.11), 5, { types: ['patent'] });
 
       expect(results.length).toBeGreaterThan(0);
 

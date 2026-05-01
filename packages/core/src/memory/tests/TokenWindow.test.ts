@@ -210,7 +210,11 @@ describe('Token 窗口管理器', () => {
 
       const messages = [
         { role: 'user' as const, content: '重要问题', timestamp: new Date() },
-        { role: 'assistant' as const, content: '不重要', timestamp: new Date(Date.now() - 10 * 60 * 60 * 1000) },
+        {
+          role: 'assistant' as const,
+          content: '不重要',
+          timestamp: new Date(Date.now() - 10 * 60 * 60 * 1000),
+        },
       ];
 
       const { messages: result, stats } = await manager.optimizeWindow(messages);

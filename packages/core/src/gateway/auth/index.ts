@@ -57,12 +57,6 @@ export {
   OAuthProviderError,
 } from './providers/BaseOAuthProvider.js';
 
-export {
-  GoogleOAuth,
-  type GoogleOAuthConfig,
-} from './providers/GoogleOAuth.js';
+export { GoogleOAuth, type GoogleOAuthConfig } from './providers/GoogleOAuth.js';
 
-export {
-  GitHubOAuth,
-  type GitHubOAuthConfig,
-} from './providers/GitHubOAuth.js';
+export { GitHubOAuth, type GitHubOAuthConfig } from './providers/GitHubOAuth.js';

@@ -12,16 +12,21 @@ import { UnifiedModelFactory, createModel } from '../UnifiedModelFactory.js';
 describe('DeepSeek V4 模型测试', () => {
   describe('1. DeepSeek V4 Pro', () => {
     it('应该能够启用思考模式和推理强度', async () => {
-      const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '', NativeModel.DEEPSEEK_V4_PRO, {
-        thinking: { type: 'enabled' },
-        reasoningEffort: 'high',
-      });
+      const llm = createDeepSeekModel(
+        process.env.DEEPSEEK_API_KEY || '',
+        NativeModel.DEEPSEEK_V4_PRO,
+        {
+          thinking: { type: 'enabled' },
+          reasoningEffort: 'high',
+        }
+      );
 
       const response = await llm.chat({
         messages: [
           {
             role: 'user',
-            content: '请分析：为什么深度学习在图像识别任务上比传统机器学习方法更有效？请给出3个关键原因。',
+            content:
+              '请分析：为什么深度学习在图像识别任务上比传统机器学习方法更有效？请给出3个关键原因。',
           },
         ],
         maxTokens: 500,
@@ -35,7 +40,10 @@ describe('DeepSeek V4 模型测试', () => {
     });
 
     it('应该支持流式输出', async () => {
-      const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '', NativeModel.DEEPSEEK_V4_PRO);
+      const llm = createDeepSeekModel(
+        process.env.DEEPSEEK_API_KEY || '',
+        NativeModel.DEEPSEEK_V4_PRO
+      );
 
       const chunks: string[] = [];
       for await (const chunk of llm.chatStream({
@@ -54,7 +62,10 @@ describe('DeepSeek V4 模型测试', () => {
 
   describe('2. DeepSeek V4 Flash', () => {
     it('应该能够快速响应简单对话', async () => {
-      const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '', NativeModel.DEEPSEEK_V4_FLASH);
+      const llm = createDeepSeekModel(
+        process.env.DEEPSEEK_API_KEY || '',
+        NativeModel.DEEPSEEK_V4_FLASH
+      );
 
       const response = await llm.chat({
         messages: [{ role: 'user', content: '你好，请简短自我介绍' }],
@@ -87,7 +98,8 @@ describe('Kimi Code 模型测试', () => {
     console.log('\n✅ Kimi Code 生成代码长度:', response.message.content.length);
 
     // 验证是否包含 TypeScript 相关内容
-    const hasTypescript = response.message.content.includes('function') || response.message.content.includes('const');
+    const hasTypescript =
+      response.message.content.includes('function') || response.message.content.includes('const');
     expect(hasTypescript).toBe(true);
   });
 

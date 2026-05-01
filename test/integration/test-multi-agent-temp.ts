@@ -3,11 +3,11 @@
  * 使用相对路径导入
  */
 
-import { AgentMemoryManager } from './patents/agents/AgentMemoryManager.js';
-import { createPatentWriterAgentWithMemory } from './patents/agents/writer/PatentWriterAgentWithMemory.js';
-import { createPatentResponderAgentWithMemory } from './patents/agents/responder/PatentResponderAgentWithMemory.js';
-import { createPatentAnalyzerAgentWithMemory } from './patents/agents/analyzer/PatentAnalyzerAgentWithMemory.js';
-import { createDeepSeekModel } from './packages/core/dist/index.js';
+import { AgentMemoryManager } from '../../patents/agents/AgentMemoryManager.js';
+import { createPatentWriterAgentWithMemory } from '../../patents/agents/writer/PatentWriterAgentWithMemory.js';
+import { createPatentResponderAgentWithMemory } from '../../patents/agents/responder/PatentResponderAgentWithMemory.js';
+import { createPatentAnalyzerAgentWithMemory } from '../../patents/agents/analyzer/PatentAnalyzerAgentWithMemory.js';
+import { createDeepSeekModel } from '../../packages/core/src/index.js';
 
 async function main() {
   console.log('=== 测试 6: 多 Agent 协同 ===\n');

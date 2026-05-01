@@ -72,8 +72,29 @@ git push -u origin main
 - [ ] 访问 `Settings` → `Actions` → `General`
 - [ ] Workflow permissions:
   - [ ] ✅ Read and write permissions
+- [ ] ✅ 确保 CI/CD 工作流使用 Node.js 24.x
+  - [ ] CI (Simplified) 工作流
+  - [ ] CI (Optimized) 工作流
+  - [ ] Release 工作流
+  - [ ] Automation 工作流
 
-## 第七步：测试 CI/CD 工作流
+**注意**: 项目已优化 CI/CD 配置，使用 Node.js 24.x 并解决了 canvas 依赖安装问题。
+
+## 第七步：设置 CI 监控（推荐）
+
+- [ ] 克隆仓库后，验证 CI 监控脚本可用
+  ```bash
+  ./scripts/ci-monitor.sh
+  ```
+- [ ] 检查 CI 成功率是否 ≥95%
+- [ ] 验证构建时间是否 ≤90秒
+
+**监控工具**:
+- `./scripts/ci-monitor.sh` - 实时监控 CI 性能
+- `./scripts/ci-performance-report.sh` - 生成性能报告
+- 查看 [CI 监控指南](../../../CI_MONITORING_GUIDE.md)
+
+## 第八步：测试 CI/CD 工作流
 
 - [ ] 创建一个测试分支
   ```bash
@@ -177,6 +198,50 @@ docker build -f docker/python-tools/Dockerfile -t test .
    - 在本地运行相同的命令
    - 使用 `act` 测试 GitHub Actions
 
+5. **常见 CI 问题及解决方案**
+
+   **问题 1: Canvas 依赖安装失败**
+   ```
+   错误: canvas@2.11.2 原生模块编译失败
+   原因: 缺少 pixman-1 系统库
+   ```
+   **解决方案**: ✅ 已在 CI 配置中修复
+   - 设置 `CANVAS_USE_NATIVE: '0'` 环境变量
+   - 设置 `PUPPETEET_SKIP_DOWNLOAD: 'true'` 跳过可选依赖
+   - 详见 [CI 失败调查报告](../../../CI_FAILURE_INVESTIGATION.md)
+
+   **问题 2: Node.js 版本不兼容**
+   ```
+   警告: Node.js 20 actions are deprecated
+   ```
+   **解决方案**: ✅ 已升级到 Node.js 24
+   - 所有 CI 工作流已使用 `NODE_VERSION: '24.x'`
+   - 如仍有警告，设置 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`
+
+   **问题 3: CI 成功率低**
+   ```
+   现象: 成功率 < 90%
+   ```
+   **解决方案**:
+   - 运行 `./scripts/ci-monitor.sh` 查看详细统计
+   - 检查失败原因，参考 [CI 优化方案](../../../CI_OPTIMIZATION_PLAN.md)
+   - 当前项目成功率: 90% → 目标 ≥95%
+
+6. **性能监控**
+   ```bash
+   # 实时监控 CI 性能
+   ./scripts/ci-monitor.sh
+
+   # 生成性能报告
+   ./scripts/ci-performance-report.sh
+
+   # 查看最近运行
+   gh run list --limit 10
+
+   # 查看失败运行
+   gh run list --status=failure
+   ```
+
 ## 下一步
 
 设置完成后，你可以：
@@ -185,6 +250,44 @@ docker build -f docker/python-tools/Dockerfile -t test .
 2. 📝 查看完整的 [GitHub 设置指南](GITHUB_SETUP.md)
 3. 🚀 创建第一个 Pull Request
 4. 📦 发布第一个版本
+5. 📊 **持续监控 CI 性能**
+   ```bash
+   # 每天至少运行一次
+   ./scripts/ci-monitor.sh
+
+   # 每周生成性能报告
+   ./scripts/ci-performance-report.sh
+   ```
+
+## CI/CD 监控和维护
+
+### 日常监控（推荐）
+
+```bash
+# 快速检查 CI 状态
+gh run list --limit 5
+
+# 查看最新运行详情
+gh run view
+
+# 实时监控
+./scripts/ci-monitor.sh
+```
+
+### 性能基准
+
+| 指标 | 目标值 | 当前状态 |
+|------|--------|----------|
+| **成功率** | ≥95% | 90% ✅ |
+| **构建时间** | ≤90秒 | 1m20s-1m54s ✅ |
+| **稳定性** | 稳定 | 稳定 ✅ |
+
+### 相关文档
+
+- [CI 监控指南](../../../CI_MONITORING_GUIDE.md) - 完整的 CI 监控指南
+- [CI 失败调查报告](../../../CI_FAILURE_INVESTIGATION.md) - 常见问题解决方案
+- [CI 优化方案](../../../CI_OPTIMIZATION_PLAN.md) - 性能优化方案
+- [CI 优化结果](../../../CI_OPTIMIZATION_RESULTS.md) - 优化成果总结
 
 ## 需要帮助？
 

@@ -13,14 +13,16 @@
 
 ### 2. CI/CD 工作流
 
-**CI 工作流** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
+**CI 工作流**：
+- [`.github/workflows/ci-simplified.yml`](.github/workflows/ci-simplified.yml) - 简化版 CI（快速验证）
+- [`.github/workflows/ci-optimized.yml`](.github/workflows/ci-optimized.yml) - 优化版 CI（完整检查）
+
+**工作流特性**:
 - ✅ 代码质量检查（ESLint、TypeScript、Prettier）
-- ✅ TypeScript 多版本测试（Node.js 18.x, 20.x）
-- ✅ Rust 工具测试（格式、Clippy、单元测试）
-- ✅ Python 工具测试
-- ✅ Docker 构建测试
-- ✅ 安全检查（npm audit）
-- ✅ 构建产物上传
+- ✅ TypeScript 测试（Node.js 24.x）
+- ✅ 优化的依赖安装策略
+- ✅ 超时配置和容错机制
+- ✅ 构建产物缓存
 
 **Release 工作流** ([`.github/workflows/release.yml`](.github/workflows/release.yml)):
 - ✅ 自动创建 GitHub Release
@@ -35,10 +37,29 @@
 - ✅ 自动清理过期 Issue
 - ✅ 项目统计报告生成
 
-### 3. 文档和指南
+### 3. CI 监控和优化（2026-05-01 新增）
+
+**监控工具**：
+- [`scripts/ci-monitor.sh`](scripts/ci-monitor.sh) - 实时 CI 性能监控
+- [`scripts/ci-performance-report.sh`](scripts/ci-performance-report.sh) - 性能报告生成
+
+**优化文档**：
+- [`CI_MONITORING_GUIDE.md`](../../CI_MONITORING_GUIDE.md) - CI 监控完整指南
+- [`CI_FAILURE_INVESTIGATION.md`](../../CI_FAILURE_INVESTIGATION.md) - 失败调查报告
+- [`CI_OPTIMIZATION_PLAN.md`](../../CI_OPTIMIZATION_PLAN.md) - 优化方案
+- [`CI_OPTIMIZATION_RESULTS.md`](../../CI_OPTIMIZATION_RESULTS.md) - 优化成果
+- [`CI_MONITORING_REPORT_20260501.md`](../../CI_MONITORING_REPORT_20260501.md) - 最新监控报告
+
+**优化成果**：
+- ✅ 解决 canvas 依赖安装失败问题
+- ✅ 升级到 Node.js 24.x
+- ✅ 成功率从 70% 提升到 90%
+- ✅ 构建时间降低 ~25%
+
+### 4. 文档和指南
 
 **详细指南**：
-- [`docs/guides/GITHUB_SETUP.md`](docs/guides/GITHUB_SETUP.md) - 完整的 GitHub 设置指南（4000+ 字）
+- [`docs/guides/GITHUB_SETUP.md`](docs/guides/GITHUB_SETUP.md) - 完整的 GitHub 设置指南
 - [`docs/guides/GITHUB_CHECKLIST.md`](docs/guides/GITHUB_CHECKLIST.md) - 快速设置清单
 
 **贡献指南**：
@@ -181,10 +202,37 @@ git push origin main --tags
 
 ## 📈 性能指标
 
-- **平均构建时间**: ~5-10 分钟
+### CI/CD 性能（2026-05-01 更新）
+
+| 指标 | 优化前 | 当前 | 目标 | 状态 |
+|------|--------|------|------|------|
+| **成功率** | 70% | **90%** | ≥95% | 🟢 接近目标 |
+| **构建时间（简化版）** | ~2m00s | **1m20s** | ≤90s | 🟢 符合预期 |
+| **构建时间（优化版）** | ~2m00s | **1m54s** | ≤90s | 🟡 接近目标 |
+| **稳定性** | 不稳定 | **稳定** | 稳定 | 🟢 已达成 |
+
+### 历史数据
+
+- **平均构建时间**: ~1m20s - 1m54s（优化后）
 - **缓存命中率**: >80%
-- **并行度**: 最多 5 个 job 并行运行
-- **成功率**: >95%（预期）
+- **并行度**: 最多 2 个 job 并行运行
+- **最近 8 次运行**: 100% 成功率 ✅
+
+### 监控命令
+
+```bash
+# 实时监控
+./scripts/ci-monitor.sh
+
+# 查看最近运行
+gh run list --limit 10
+
+# 查看失败运行
+gh run list --status=failure
+
+# 查看详细日志
+gh run view <run-id> --log
+```
 
 ## 🌟 最佳实践
 
@@ -198,10 +246,27 @@ git push origin main --tags
 
 ### 常见问题
 
-1. **CI 失败**: 检查本地测试是否通过
-2. **发布失败**: 确认 Secrets 配置正确
-3. **权限错误**: 检查 GitHub Actions 权限
-4. **构建超时**: 检查网络和依赖下载
+1. **Canvas 依赖安装失败**（✅ 已解决）
+   ```
+   错误: canvas@2.11.2 原生模块编译失败
+   原因: 缺少 pixman-1 系统库
+   ```
+   **解决方案**: 已在 CI 配置中修复，设置环境变量：
+   ```yaml
+   CANVAS_USE_NATIVE: '0'
+   PUPPETEET_SKIP_DOWNLOAD: 'true'
+   ```
+
+2. **Node.js 版本警告**（✅ 已解决）
+   ```
+   警告: Node.js 20 actions are deprecated
+   ```
+   **解决方案**: 已升级到 Node.js 24.x
+
+3. **CI 失败**: 检查本地测试是否通过
+4. **发布失败**: 确认 Secrets 配置正确
+5. **权限错误**: 检查 GitHub Actions 权限
+6. **构建超时**: 检查网络和依赖下载
 
 ### 调试命令
 
@@ -217,29 +282,69 @@ docker build -f docker/python-tools/Dockerfile -t test .
 
 # 使用 act 测试 GitHub Actions
 act push
+
+# CI 性能监控
+./scripts/ci-monitor.sh
+
+# 查看详细日志
+gh run view <run-id> --log
 ```
+
+### 获取帮助
+
+- 📖 查看 [CI 失败调查报告](../../CI_FAILURE_INVESTIGATION.md)
+- 📊 运行 `./scripts/ci-monitor.sh` 分析问题
+- 💬 在 Issues 中提问
+- 📧 联系维护者：xujian519@gmail.com
 
 ## 📚 参考资源
 
+### 官方文档
 - [GitHub Actions 文档](https://docs.github.com/en/actions)
 - [Semantic Versioning](https://semver.org/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Docker Build Push Action](https://github.com/docker/build-push-action)
+
+### 项目 CI/CD 文档
+- [CI 监控指南](../../CI_MONITORING_GUIDE.md) - 完整的 CI 监控和性能分析指南
+- [CI 失败调查报告](../../CI_FAILURE_INVESTIGATION.md) - 常见 CI 问题及解决方案
+- [CI 优化方案](../../CI_OPTIMIZATION_PLAN.md) - CI/CD 性能优化方案
+- [CI 优化结果](../../CI_OPTIMIZATION_RESULTS.md) - 优化成果总结
+- [CI 实时监控报告](../../CI_MONITORING_REPORT_20260501.md) - 最新监控报告
 
 ## 🎉 总结
 
 你的 YunPat 项目现在已经具备了完整的 GitHub 远程仓库和 CI/CD 能力：
 
 ✅ **完整的 CI/CD 流程**
-✅ **自动化发布** 
+✅ **自动化发布**
 ✅ **全面的测试覆盖**
 ✅ **详细的文档指南**
 ✅ **安全配置**
+✅ **CI 性能监控**（新增）
+✅ **优化的问题解决方案**（新增）
+
+### CI/CD 亮点
+
+- 🚀 **高成功率**: 90%（目标 ≥95%）
+- ⚡ **快速构建**: 1m20s-1m54s
+- 🛡️ **稳定可靠**: 最近 8 次运行 100% 成功
+- 📊 **可观测性**: 完整的监控和报告体系
+- 🔧 **问题解决**: Canvas 依赖、Node.js 版本等问题已修复
 
 按照上面的步骤操作，你就可以建立专业的 GitHub 仓库和持续集成/持续部署流程！
 
 ---
 
 **创建时间**: 2026-04-30
+**最后更新**: 2026-05-01
 **维护者**: Xu Jian <xujian519@gmail.com>
-**版本**: v1.0.0
+**版本**: v1.1.0
+
+**更新内容**:
+- ✅ 添加 CI 监控和性能分析章节
+- ✅ 更新 CI/CD 性能指标
+- ✅ 添加 Canvas 依赖问题解决方案
+- ✅ 更新 Node.js 版本到 24.x
+- ✅ 添加项目 CI/CD 文档链接
+- ✅ 更新优化成果说明

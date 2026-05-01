@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { TreeOfThoughtsStrategy } from '../../src/reasoning/TreeOfThoughtsStrategy.js';
 import {
-  TreeOfThoughtsStrategy,
   PlanAndSolveStrategy,
   type ThoughtNode,
 } from '../../src/reasoning/ReActLoop.js';

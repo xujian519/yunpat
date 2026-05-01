@@ -46,7 +46,6 @@ export {
 export {
   ReActLoop,
   PlanAndSolveStrategy,
-  TreeOfThoughtsStrategy,
   type ReActConfig,
   type ReActIteration,
   type Observation,
@@ -55,6 +54,12 @@ export {
   type ActionResult,
   type ThoughtNode,
 } from './reasoning/ReActLoop.js';
+
+export {
+  TreeOfThoughtsStrategy,
+  type ThoughtOption,
+  type ToTConfig,
+} from './reasoning/TreeOfThoughtsStrategy.js';
 
 export { ReasoningStrategy } from './reasoning/ReActLoop.js';
 

@@ -19,6 +19,9 @@ export enum TaskType {
   /** 专利撰写 */
   PATENT_WRITING = 'patent_writing',
 
+  /** 专利检索 */
+  PATENT_RETRIEVAL = 'patent_retrieval',
+
   /** 代码生成 */
   CODE_GENERATION = 'code_generation',
 
@@ -77,6 +80,14 @@ const TASK_MODEL_MAP: Record<TaskType, ModelRecommendation> = {
     memoryGB: 17,
   },
 
+  [TaskType.PATENT_RETRIEVAL]: {
+    modelName: 'gemma-4-e2b-it-4bit',
+    reason: '快速检索，适合关键词匹配',
+    speed: 50,
+    quality: 3,
+    memoryGB: 5,
+  },
+
   [TaskType.CODE_GENERATION]: {
     modelName: 'Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit',
     reason: 'Qwen 系列在代码任务上表现优秀',
@@ -112,7 +123,7 @@ export class OMXLModelFactory {
     modelName: 'gemma-4-e2b-it-4bit',
     temperature: 0.7,
     maxTokens: 2048,
-    timeout: 60000,
+    timeout: 180000,  // 本地模型需要更长时间，增加到3分钟
   };
 
   /**

@@ -7,6 +7,13 @@
  * - 安全网关：身份认证、权限控制、审计日志
  */
 
+import {
+  ApiKeyManager,
+  JwtManager,
+  SessionManager,
+  type ApiKeyInfo,
+} from './auth/index.js';
+
 /**
  * 输入源类型
  */
@@ -233,7 +240,7 @@ export interface Permission {
   resource: string;
 
   /** 操作 */
-  action: 'read' | 'write' | 'execute' | 'admin';
+  action: 'read' | 'write' | 'execute' | 'admin' | '*';
 
   /** 作用域 */
   scope?: string[];
@@ -249,8 +256,8 @@ export interface Action {
   /** 目标资源 */
   resource?: string;
 
-  /** 参数 */
-  params?: Record<string, unknown>;
+  /** 操作 */
+  action?: 'read' | 'write' | 'execute' | 'admin' | '*';
 }
 
 /**
@@ -274,6 +281,15 @@ export interface SecurityGatewayConfig {
 
   /** 审计日志存储 */
   auditLogStore?: AuditLogStore;
+
+  /** API Key 管理器（可选） */
+  apiKeyManager?: ApiKeyManager;
+
+  /** JWT 管理器（可选） */
+  jwtManager?: JwtManager;
+
+  /** 会话管理器（可选） */
+  sessionManager?: SessionManager;
 }
 
 /**
@@ -286,8 +302,15 @@ export interface ContentFilterRule {
   /** 规则类型 */
   type: 'keyword' | 'pattern' | 'ml';
 
-  /** 规则内容 */
+  /** 规则内容
+   * - keyword: 字符串
+   * - pattern: 正则表达式字符串或 RegExp 对象
+   * - ml: 模型名称或配置
+   */
   content: string | RegExp;
+
+  /** 正则表达式标志（仅当 type 为 'pattern' 且 content 为字符串时使用） */
+  flags?: 'i' | 'g' | 'm' | 's' | string;
 
   /** 动作 */
   action: 'block' | 'flag' | 'sanitize';
@@ -406,7 +429,10 @@ export interface Gateway {
   /**
    * 权限检查
    */
-  authorize(action: Action, permissions: Permission[]): Promise<boolean>;
+  authorize(
+    action: Action,
+    permissions: Permission[]
+  ): Promise<{ authorized: boolean; reason?: string }>;
 
   /**
    * 内容过滤
@@ -425,10 +451,16 @@ export interface Gateway {
 export class BaseGateway implements Gateway {
   private config: SecurityGatewayConfig;
   private auditStore?: AuditLogStore;
+  private apiKeyManager?: ApiKeyManager;
+  private jwtManager?: JwtManager;
+  private sessionManager?: SessionManager;
 
   constructor(config: SecurityGatewayConfig) {
     this.config = config;
     this.auditStore = config.auditLogStore;
+    this.apiKeyManager = config.apiKeyManager;
+    this.jwtManager = config.jwtManager;
+    this.sessionManager = config.sessionManager;
   }
 
   async receiveInput(source: InputSourceType): Promise<MultimodalInput> {
@@ -484,53 +516,233 @@ export class BaseGateway implements Gateway {
       };
     }
 
-    // 简化实现：API Key 认证
-    if (credentials.type === 'apikey') {
-      // TODO: 实际应该验证 API Key
+    try {
+      switch (credentials.type) {
+        case 'apikey': {
+          // API Key 认证
+          if (!this.apiKeyManager) {
+            return {
+              success: false,
+              error: 'API Key 管理器未配置',
+            };
+          }
+
+          const apiKey = credentials.data.apiKey;
+
+          if (!apiKey) {
+            return {
+              success: false,
+              error: '缺少 API Key',
+            };
+          }
+
+          const keyInfo = await this.apiKeyManager.verifyApiKey(apiKey);
+
+          if (!keyInfo) {
+            return {
+              success: false,
+              error: '无效的 API Key',
+            };
+          }
+
+          // 创建会话
+          let sessionId: string | undefined;
+          if (this.sessionManager) {
+            const session = await this.sessionManager.createSession({
+              userId: keyInfo.userId,
+              roles: keyInfo.roles,
+              permissions: keyInfo.permissions,
+              ttl: 3600, // 1 小时
+            });
+            sessionId = session.sessionId;
+          }
+
+          // 生成 JWT Token（如果配置了）
+          let token: string | undefined;
+          let expiresAt: Date | undefined;
+
+          if (this.jwtManager) {
+            const tokenPair = await this.jwtManager.generateTokenPair(
+              keyInfo.userId,
+              keyInfo.roles,
+              keyInfo.permissions
+            );
+            token = tokenPair.accessToken;
+            expiresAt = new Date(tokenPair.expiresAt * 1000);
+          }
+
+          return {
+            success: true,
+            userId: keyInfo.userId,
+            roles: keyInfo.roles,
+            permissions: keyInfo.permissions,
+            token,
+            expiresAt,
+          };
+        }
+
+        case 'jwt': {
+          // JWT Token 认证
+          if (!this.jwtManager) {
+            return {
+              success: false,
+              error: 'JWT 管理器未配置',
+            };
+          }
+
+          const token = credentials.data.token;
+
+          if (!token) {
+            return {
+              success: false,
+              error: '缺少 Token',
+            };
+          }
+
+          const result = await this.jwtManager.verifyAccessToken(token);
+
+          if (!result.success || !result.payload) {
+            return {
+              success: false,
+              error: `无效的 Token: ${result.error || 'unknown'}`,
+            };
+          }
+
+          return {
+            success: true,
+            userId: result.payload.sub,
+            roles: result.payload.roles,
+            permissions: result.payload.permissions,
+            token,
+            expiresAt: new Date(result.payload.exp * 1000),
+          };
+        }
+
+        case 'oauth':
+          // OAuth 认证（待实现）
+          return {
+            success: false,
+            error: 'OAuth 认证暂未实现',
+          };
+
+        case 'basic':
+          // Basic 认证（待实现）
+          return {
+            success: false,
+            error: 'Basic 认证暂未实现',
+          };
+
+        default:
+          return {
+            success: false,
+            error: '不支持的认证类型',
+          };
+      }
+    } catch (error) {
       return {
-        success: true,
-        userId: 'user',
-        roles: ['user'],
-        permissions: ['read', 'write', 'execute'],
-        token: 'mock-token',
-        expiresAt: new Date(Date.now() + 3600000), // 1小时后过期
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
+  }
 
+  async authorize(
+    action: Action,
+    permissions: Permission[]
+  ): Promise<{ authorized: boolean; reason?: string }> {
+    if (!this.config.enableAuthorization) {
+      return { authorized: true };
+    }
+
+    // 检查通配符权限
+    const hasWildcardPermission = permissions.some(
+      (p) => p.resource === '*' && p.action === '*'
+    );
+    if (hasWildcardPermission) {
+      return { authorized: true };
+    }
+
+    // 检查资源级权限
+    // 1. 先找完全匹配的权限（resource 和 action 都匹配）
+    const exactPermission = permissions.find(
+      (p) => p.resource === action.resource &&
+             (p.action === action.type || p.action === '*')
+    );
+
+    if (exactPermission) {
+      return { authorized: true };
+    }
+
+    // 2. 找通配符资源权限
+    const wildcardResourcePermission = permissions.find(
+      (p) => p.resource === '*' && (p.action === action.type || p.action === '*')
+    );
+
+    if (wildcardResourcePermission) {
+      return { authorized: true };
+    }
+
+    // 3. 没有找到匹配的权限
     return {
-      success: false,
-      error: '不支持的认证类型',
+      authorized: false,
+      reason: `Missing permission: ${action.resource}:${action.type}`,
     };
   }
 
-  async authorize(action: Action, permissions: Permission[]): Promise<boolean> {
-    if (!this.config.enableAuthorization) {
-      return true;
-    }
-
-    // 简化实现：检查权限
-    const requiredPermission = permissions.find((p) => p.resource === action.resource);
-    if (!requiredPermission) {
-      return false;
-    }
-
-    return permissions.some((p) => p.action === requiredPermission.action);
-  }
-
-  async filterContent(content: string): Promise<{ filtered: boolean; reason?: string }> {
+  async filterContent(content: string): Promise<{
+    filtered: boolean;
+    reason?: string;
+    matchedRule?: string;
+  }> {
     if (!this.config.enableContentFilter || !this.config.contentFilterRules) {
       return { filtered: false };
     }
 
-    // 简化实现：关键词过滤
     for (const rule of this.config.contentFilterRules) {
-      if (rule.type === 'keyword' && typeof rule.content === 'string') {
-        if (content.includes(rule.content)) {
-          return {
-            filtered: rule.action === 'block',
-            reason: `触发规则: ${rule.name}`,
-          };
-        }
+      let matched = false;
+
+      switch (rule.type) {
+        case 'keyword':
+          matched =
+            typeof rule.content === 'string' &&
+            content.toLowerCase().includes(rule.content.toLowerCase());
+          break;
+
+        case 'pattern':
+          // 支持字符串形式的正则表达式和 RegExp 对象
+          if (rule.content instanceof RegExp) {
+            matched = rule.content.test(content);
+          } else if (typeof rule.content === 'string') {
+            try {
+              // 从字符串创建正则表达式，支持可选的标志
+              const pattern = new RegExp(rule.content, rule.flags || '');
+              matched = pattern.test(content);
+            } catch (error) {
+              console.error(
+                `[Gateway] 无效的正则表达式: ${rule.content}`,
+                error
+              );
+              matched = false;
+            }
+          }
+          break;
+
+        case 'ml':
+          // TODO: 集成 ML 模型进行内容检测
+          // 这里可以调用外部 ML 服务进行内容审核
+          // 示例：调用内容审核 API
+          // const result = await this.mlService.classify(content);
+          // matched = result.isUnsafe;
+          matched = false;
+          break;
+      }
+
+      if (matched) {
+        return {
+          filtered: rule.action === 'block',
+          reason: `触发规则: ${rule.name}`,
+          matchedRule: rule.name,
+        };
       }
     }
 

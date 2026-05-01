@@ -12,6 +12,8 @@ import { v4 as uuidv4 } from 'uuid';
 import readline from 'readline';
 import type { ExecutionContext } from '../lifecycle/Lifecycle.js';
 import type { EventBus } from '../eventbus/EventBus.js';
+import { HttpApprovalServer } from './http/HttpApprovalServer.js';
+import type { ApprovalRequest } from './Gateway.js';
 
 /**
  * 审批响应
@@ -102,6 +104,15 @@ export interface ApprovalFlowConfig {
 
   /** 反馈存储路径（可选） */
   feedbackStorePath?: string;
+
+  /** HTTP 服务器配置（HTTP 模式时需要） */
+  httpServerConfig?: {
+    port: number;
+    host?: string;
+    apiPrefix?: string;
+    corsOrigin?: string | string[];
+    apiKey?: string;
+  };
 }
 
 /**
@@ -142,10 +153,34 @@ export class ApprovalFlow {
     supplementedCount: 0,
     accuracy: 0,
   };
+  private httpServer?: HttpApprovalServer;
 
   constructor(config: ApprovalFlowConfig, eventBus?: EventBus) {
     this.config = config;
     this.eventBus = eventBus;
+
+    // 初始化 HTTP 服务器（如果配置了）
+    if (config.mode === ApprovalMode.HTTP && config.httpServerConfig) {
+      this.httpServer = new HttpApprovalServer(config.httpServerConfig);
+    }
+  }
+
+  /**
+   * 启动审批流程（启动必要的服务）
+   */
+  async start(): Promise<void> {
+    if (this.httpServer) {
+      await this.httpServer.start();
+    }
+  }
+
+  /**
+   * 停止审批流程（清理资源）
+   */
+  async stop(): Promise<void> {
+    if (this.httpServer) {
+      await this.httpServer.stop();
+    }
   }
 
   /**
@@ -404,21 +439,37 @@ export class ApprovalFlow {
   }
 
   /**
-   * HTTP审批模式（预留接口）
+   * HTTP审批模式
    */
   private async httpApproval(
-    _approvalId: string,
-    _result: unknown,
-    _context: ExecutionContext,
-    _timeout: number
+    approvalId: string,
+    result: unknown,
+    context: ExecutionContext,
+    timeout: number
   ): Promise<ApprovalResponse> {
-    // TODO: 实现HTTP API端点
-    // 返回默认批准（实际应该等待HTTP请求）
-    return {
-      approvalId: _approvalId,
-      approved: true,
-      timestamp: new Date(),
+    if (!this.httpServer) {
+      throw new Error('HTTP server not configured');
+    }
+
+    // 构建审批请求
+    const request: ApprovalRequest = {
+      requestId: approvalId,
+      agentName: context.agentName,
+      content: {
+        type: 'output',
+        data: result,
+      },
+      context: {
+        goal: context.executionId,
+        reasoning: 'Pending approval via HTTP API',
+        alternatives: [],
+      },
+      timeout,
+      level: 'info',
     };
+
+    // 通过 HTTP 服务器请求审批
+    return await this.httpServer.requestApproval(request, context, timeout);
   }
 
   /**
@@ -462,14 +513,44 @@ export class ApprovalFlow {
   }
 
   /**
-   * 收集HTTP反馈（预留）
+   * 收集HTTP反馈
    */
-  private async collectHttpFeedback(_approvalId: string): Promise<UserFeedback> {
-    // TODO: 实现HTTP反馈收集
+  private async collectHttpFeedback(approvalId: string): Promise<UserFeedback> {
+    if (!this.httpServer) {
+      throw new Error('HTTP server not configured');
+    }
+
+    // 从 HTTP 服务器获取已完成的审批
+    const completedApproval = this.httpServer.getCompletedApproval(approvalId);
+
+    if (!completedApproval || !completedApproval.response) {
+      // 审批尚未完成或不存在，返回默认批准
+      return {
+        type: 'approve',
+        content: 'Auto-approved (no feedback received)',
+        timestamp: new Date(),
+      };
+    }
+
+    const response = completedApproval.response;
+
+    // 将 ApprovalResponse 转换为 UserFeedback
+    if (response.feedback) {
+      return {
+        type: response.feedback.type,
+        content: response.feedback.content,
+        corrections: response.feedback.corrections,
+        supplements: response.feedback.supplements,
+        rejectionReason: response.feedback.rejectionReason,
+        timestamp: response.feedback.timestamp,
+      };
+    }
+
+    // 如果没有反馈信息，根据批准状态返回默认反馈
     return {
-      type: 'approve',
-      content: '',
-      timestamp: new Date(),
+      type: response.approved ? 'approve' : 'reject',
+      content: response.approved ? 'Approved' : 'Rejected',
+      timestamp: response.timestamp,
     };
   }
 

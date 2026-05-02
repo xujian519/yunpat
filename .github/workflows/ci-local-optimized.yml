@@ -35,6 +35,20 @@ jobs:
       max-parallel: 2
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          # 强制使用 HTTP/1.1 避免 HTTP/2 帧层错误
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          # 增加缓冲区大小
+          git config --global http.postBuffer 524288000
+          # 禁用 HTTP/2
+          git config --global http.useHTTP2 false
+          # 显示配置
+          echo "✅ Git HTTP 配置:"
+          git config --global --get-regexp http
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
         with:
@@ -127,6 +141,14 @@ jobs:
       max-parallel: 2  # 限制并发数
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
 
@@ -174,6 +196,14 @@ jobs:
     timeout-minutes: 25
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
         with:
@@ -252,6 +282,14 @@ jobs:
     timeout-minutes: 20
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
 
@@ -357,6 +395,14 @@ jobs:
       max-parallel: 2
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
 

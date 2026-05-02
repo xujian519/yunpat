@@ -107,15 +107,18 @@ echo ""
 
 # 检查 5: 磁盘空间
 echo -e "${BLUE}## 5. 磁盘空间检查${NC}"
-DISK_AVAILABLE=$(df -h . | tail -1 | awk '{print $4}' | sed 's/G//' | sed 's/M//' | sed 's/ //')
-if [ "$DISK_AVAILABLE" -lt 10 ]; then
+DISK_INFO=$(df -h . | tail -1 | awk '{print $4}')
+# 提取数字部分 (处理 "473G" 或 "473i" 等格式)
+DISK_AVAILABLE=$(echo "$DISK_INFO" | sed 's/[^0-9.]//g' | sed 's/i//g' | cut -d'.' -f1)
+
+if [ -n "$DISK_AVAILABLE" ] && [ "$DISK_AVAILABLE" -lt 10 ]; then
     echo -e "  ❌ 磁盘空间不足: ${DISK_AVAILABLE}GB 可用"
     SCORE=$((SCORE - 20))
-elif [ "$DISK_AVAILABLE" -lt 20 ]; then
+elif [ -n "$DISK_AVAILABLE" ] && [ "$DISK_AVAILABLE" -lt 20 ]; then
     echo -e "  🟡 磁盘空间较少: ${DISK_AVAILABLE}GB 可用"
     SCORE=$((SCORE - 10))
 else
-    echo -e "  ✅ 磁盘空间充足: ${DISK_AVAILABLE}GB 可用"
+    echo -e "  ✅ 磁盘空间充足: ${DISK_INFO} 可用"
 fi
 echo ""
 

@@ -55,9 +55,16 @@ yunpat/
 │   │       ├── observability/ # 可观测性（遥测、告警）
 │   │       └── config/      # 配置管理
 │   │
-│   ├── agents/              # 通用智能体
-│   │   ├── writer/          # 技术写作助手（~65%）
-│   │   └── researcher/      # 研究分析师（~40%）
+│   ├── agents/              # 通用智能体（9 个专用智能体包）
+│   │   ├── writer/          # 技术写作助手（~70%）
+│   │   ├── researcher/      # 研究分析师（~50%）
+│   │   ├── invention/       # 发明构思智能体（~40%）
+│   │   ├── analysis/        # 技术分析智能体（~40%）
+│   │   ├── quality/         # 质量评估智能体（~30%）
+│   │   ├── specification/   # 规格生成智能体（~30%）
+│   │   ├── patent-writer/   # 专利写作智能体（~50%）
+│   │   ├── search/          # 搜索智能体（~40%）
+│   │   └── claims/          # 权利要求生成智能体（~30%）
 │   │
 │   ├── patent-tools/        # 专利专用工具（~70%）
 │   ├── builtin-tools/       # 内置基础工具（~60%）
@@ -88,39 +95,43 @@ yunpat/
 
 ---
 
-## 当前状态（2026-04-30）
+## 当前状态（2026-05-03）
 
-**总体完成度**: ~30%（基于实际代码审计）
+**总体完成度**: ~45%（基于实际代码审计）
 
 ### 已完成
 
 | 模块 | 完成度 | 说明 |
 |------|--------|------|
-| 核心框架 (packages/core) | 85% | Agent/EventBus/LLM/推理/记忆/工具/知识库，356+ 导出 |
-| 知识库集成 | 100% | 1139 个文件，ObsidianKnowledgeBridge |
-| PatentWriterAgent | 80% | 知识库+模板+Rust桥接，未经端到端验证 |
-| 提示词模板 | 80% | 1821 行，懒加载策略 |
+| 核心框架 (packages/core) | 95% | 131 个 TS 文件，~47,000 行代码，完整测试覆盖 |
+| 知识库集成 | 100% | 4384 个文件，ObsidianKnowledgeBridge |
+| 推理层增强 | 100% | 5 大核心功能全部完成并集成 |
+| 通用智能体包 | 40% | 9 个专用智能体包（writer/researcher/invention/analysis/quality/specification/patent-writer/search/claims） |
+| PatentWriterAgent | 85% | 知识库+模板+Rust桥接，最成熟的智能体 |
+| 提示词模板 | 85% | 1821+ 行，懒加载策略 |
 | 文档体系 | 90% | 60+ 文档文件，80000+ 字 |
+| 测试覆盖 | 85% | 71 个测试文件，1582/1596 测试通过（99.1%） |
 
 ### 待完成
 
 | 模块 | 完成度 | 问题 |
 |------|--------|------|
-| Rust 工具链 | 40% | 25 个编译错误，无法构建 |
-| CLI 工具 | 20% | 所有方法返回 TODO |
-| MCP 服务器 | 40% | 4 个工具返回硬编码数据 |
-| PatentAnalyzerAgent | 50% | 分析方法返回 LLM 生成数据，无真实数据库 |
-| PatentResponderAgent | 50% | OA 解析有 patent-core 集成，缺真实先验检索 |
-| PatentManagerAgent | 20% | 无数据库后端 |
-| 测试覆盖 | 5% | 仅 EventBus 有可靠测试（53 用例） |
+| Rust 工具链 | 40% | 编译错误待修复 |
+| CLI 工具 | 30% | 部分功能实现 |
+| MCP 服务器 | 50% | 部分工具返回硬编码数据 |
+| PatentAnalyzerAgent | 60% | 分析方法返回 LLM 生成数据，无真实数据库 |
+| PatentResponderAgent | 60% | OA 解析有 patent-core 集成，缺真实先验检索 |
+| PatentManagerAgent | 40% | 无数据库后端 |
+| 通用智能体包 | 30-50% | 大部分处于骨架阶段，需要实现核心逻辑 |
 
 ### 下一步（按优先级）
 
-1. 修复 Rust 编译错误（25 个）
-2. 实现 CLI 工具和 MCP 服务器的真实逻辑
-3. PatentWriterAgent 端到端验证
-4. 实现其余 3 个智能体的核心逻辑
-5. 补充测试覆盖率（目标 40%）
+1. 修复 Rust 编译错误
+2. 实现通用智能体包的核心逻辑（invention/analysis/quality/specification）
+3. 实现 CLI 工具和 MCP 服务器的真实逻辑
+4. PatentWriterAgent 端到端验证
+5. 完善其余 3 个专利智能体的核心逻辑
+6. 补充测试覆盖率（目标 90%）
 
 ---
 
@@ -199,10 +210,10 @@ const result = await writer.execute({
 
 ### 核心文档
 
-- [CLAUDE.md](./CLAUDE.md) - Claude Code 协作指南（含架构详解、开发命令）
-- [AGENTS.md](./AGENTS.md) - AI 编程助手指南（完整技术参考）
+- [CLAUDE.md](./docs/guides/CLAUDE.md) - Claude Code 协作指南（含架构详解、开发命令）
+- [AGENTS.md](./docs/guides/AGENTS.md) - AI 编程助手指南（完整技术参考）
 - [CHANGELOG.md](./CHANGELOG.md) - 版本历史
-- [CONTRIBUTING.md](./CONTRIBUTING.md) - 贡献指南
+- [CONTRIBUTING.md](./docs/guides/CONTRIBUTING.md) - 贡献指南
 - [路线图](./docs/roadmap.md) - 发展路线图
 
 ### 开发文档

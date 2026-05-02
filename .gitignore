@@ -84,3 +84,4 @@ packages/rust-tools/target/
 packages/rust-tools/crates/*/target/
 
 **/.DS_Store
+.tsbuildinfo

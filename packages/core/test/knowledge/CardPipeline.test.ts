@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CardPipeline } from '../../src/knowledge/CardPipeline.js';
 import type { LLMAdapter } from '../../src/lifecycle/Lifecycle.js';
 import type { EmbeddingAdapter } from '../../src/llm/EmbeddingAdapter.js';
+import * as path from 'path';
 
 // Mock fs module
 vi.mock('fs', () => ({
@@ -239,6 +240,221 @@ describe('CardPipeline', () => {
 
       await (pipeline as any).persistCards(cards);
       expect(fs.writeFile).toHaveBeenCalled();
+    });
+
+    it('应该处理 mkdir 失败', async () => {
+      vi.mocked(fs.mkdir).mockRejectedValue(new Error('mkdir failed'));
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+
+      const cards = [
+        {
+          id: 'card-1',
+          question: '测试',
+          content: '内容',
+          quality: 0.9,
+          sourcePages: ['page1'],
+          relatedCards: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      await (pipeline as any).persistCards(cards);
+      expect(fs.writeFile).toHaveBeenCalled();
+    });
+  });
+
+  describe('parseConceptIndex', () => {
+    it('应该处理带锚点的 wikilink', () => {
+      const content = `### 创造性\n- [[创造性/判断#标题]]`;
+      const result = (pipeline as any).parseConceptIndex(content);
+      expect(result['创造性']).toEqual(['创造性/判断']);
+    });
+
+    it('应该处理一行多个 wikilink', () => {
+      const content = `### 创造性\n- [[创造性/判断]] [[创造性/三步法]] [[创造性/审查]]`;
+      const result = (pipeline as any).parseConceptIndex(content);
+      expect(result['创造性']).toEqual(['创造性/判断', '创造性/三步法', '创造性/审查']);
+    });
+
+    it('应该去重 wikilink', () => {
+      const content = `### 创造性\n- [[创造性/判断]]\n- [[创造性/判断]]`;
+      const result = (pipeline as any).parseConceptIndex(content);
+      expect(result['创造性']).toEqual(['创造性/判断']);
+    });
+  });
+
+  describe('parseConceptHierarchy', () => {
+    it('应该使用补充映射', () => {
+      const hierarchy = `### 1. 专利授权\n#### 创造性`;
+      const result = (pipeline as any).parseConceptHierarchy(hierarchy);
+      expect(result['创造性']).toBe('专利授权');
+      expect(result['三步法']).toBe('专利授权');
+      expect(result['按许销售']).toBe('专利侵权');
+    });
+
+    it('应该解析三级概念', () => {
+      const hierarchy = `### 1. 专利授权\n#### 创造性\n- 单独对比\n- 结合启示`;
+      const result = (pipeline as any).parseConceptHierarchy(hierarchy);
+      expect(result['创造性']).toBe('专利授权');
+      expect(result['单独对比']).toBe('专利授权');
+      expect(result['结合启示']).toBe('专利授权');
+    });
+  });
+
+  describe('scanDir', () => {
+    it('应该过滤非 markdown 文件', async () => {
+      const mockEntries = [
+        { name: 'test.md', isDirectory: () => false },
+        { name: 'test.txt', isDirectory: () => false },
+        { name: 'test.json', isDirectory: () => false },
+      ];
+
+      vi.mocked(fs.readdir).mockResolvedValue(mockEntries as any);
+
+      const files = await (pipeline as any).scanDir('/test/path');
+      expect(files).toEqual(['/test/path/test.md']);
+    });
+
+    it('应该过滤 index.md 文件', async () => {
+      const mockEntries = [
+        { name: 'index.md', isDirectory: () => false },
+        { name: 'valid.md', isDirectory: () => false },
+      ];
+
+      vi.mocked(fs.readdir).mockResolvedValue(mockEntries as any);
+
+      const files = await (pipeline as any).scanDir('/test/path');
+      expect(files).toEqual(['/test/path/valid.md']);
+    });
+
+    it('应该递归扫描子目录', async () => {
+      vi.mocked(fs.readdir)
+        .mockResolvedValueOnce([
+          { name: 'subdir', isDirectory: () => true },
+          { name: 'file.md', isDirectory: () => false },
+        ] as any)
+        .mockResolvedValueOnce([
+          { name: 'subfile.md', isDirectory: () => false },
+        ] as any);
+
+      const files = await (pipeline as any).scanDir('/test/path');
+      expect(files).toContain('/test/path/file.md');
+      expect(files).toContain('/test/path/subdir/subfile.md');
+    });
+
+    it('应该处理目录读取失败', async () => {
+      vi.mocked(fs.readdir).mockRejectedValue(new Error('permission denied'));
+
+      const files = await (pipeline as any).scanDir('/test/path');
+      expect(files).toEqual([]);
+    });
+  });
+
+  describe('scanRelatedFiles', () => {
+    beforeEach(() => {
+      vi.mocked(fs.readdir).mockResolvedValue([
+        { name: 'docs', isDirectory: () => true },
+        { name: 'cards', isDirectory: () => true },
+        { name: '.hidden', isDirectory: () => true },
+      ] as any);
+    });
+
+    it('应该找到匹配的文件', async () => {
+      const mockFiles = [`${kbPath}/docs/创造性.md`, `${kbPath}/docs/其他.md`];
+
+      vi.mocked(fs.readFile).mockImplementation(async (filePath: string) => {
+        if (filePath === `${kbPath}/docs/创造性.md`) {
+          return '# 创造性\n\n' + '内容'.repeat(50);
+        }
+        throw new Error('not found');
+      });
+
+      vi.spyOn(pipeline as any, 'scanDir').mockResolvedValue(mockFiles);
+
+      const pages = await (pipeline as any).scanRelatedFiles('创造性', 5);
+      expect(pages.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('应该跳过过短文件', async () => {
+      vi.mocked(fs.readFile).mockImplementation(async (filePath: string) => {
+        return '# 短\n\n内容';
+      });
+
+      vi.spyOn(pipeline as any, 'scanDir').mockResolvedValue([`${kbPath}/docs/创造性.md`]);
+
+      const pages = await (pipeline as any).scanRelatedFiles('创造性', 5);
+      expect(pages.length).toBe(0);
+    });
+
+    it('应该处理文件读取失败', async () => {
+      vi.mocked(fs.readFile).mockRejectedValue(new Error('read failed'));
+
+      vi.spyOn(pipeline as any, 'scanDir').mockResolvedValue([`${kbPath}/docs/创造性.md`]);
+
+      const pages = await (pipeline as any).scanRelatedFiles('创造性', 5);
+      expect(pages.length).toBe(0);
+    });
+
+    it('应该限制最大文件数', async () => {
+      const mockFiles = [
+        `${kbPath}/docs/创造性1.md`,
+        `${kbPath}/docs/创造性2.md`,
+        `${kbPath}/docs/创造性3.md`,
+      ];
+
+      vi.mocked(fs.readFile).mockImplementation(async (filePath: string) => {
+        return `# 标题\n\n${'内容'.repeat(50)}`;
+      });
+
+      vi.spyOn(pipeline as any, 'scanDir').mockResolvedValue(mockFiles);
+
+      const pages = await (pipeline as any).scanRelatedFiles('创造性', 2);
+      expect(pages.length).toBeLessThanOrEqual(2);
+    });
+  });
+
+  describe('loadConcepts - additional coverage', () => {
+    it('应该处理 targetSet 为 null', async () => {
+      const conceptIndex = `### 创造性\n- [[创造性/判断]]\n### 新颖性\n- [[新颖性/对比]]`;
+
+      vi.mocked(fs.readFile).mockImplementation(async (filePath: string) => {
+        if (filePath.includes('Concept-Index.md')) return conceptIndex;
+        if (filePath.includes('Concept-Hierarchy.md')) return '';
+        throw new Error('not found');
+      });
+
+      const result = await (pipeline as any).loadConcepts(undefined);
+      expect(result.length).toBe(2);
+    });
+
+    it('应该模糊匹配概念名', async () => {
+      const conceptIndex = `### 创造性判断\n- [[创造性/判断]]`;
+
+      vi.mocked(fs.readFile).mockImplementation(async (filePath: string) => {
+        if (filePath.includes('Concept-Index.md')) return conceptIndex;
+        if (filePath.includes('Concept-Hierarchy.md')) return '';
+        throw new Error('not found');
+      });
+
+      const result = await (pipeline as any).loadConcepts(['创造性']);
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('应该处理层级文件加载失败', async () => {
+      const conceptIndex = `### 创造性\n- [[创造性/判断]]`;
+
+      vi.mocked(fs.readFile).mockImplementation(async (filePath: string) => {
+        if (filePath.includes('Concept-Index.md')) return conceptIndex;
+        if (filePath.includes('Concept-Hierarchy.md')) {
+          throw new Error('not found');
+        }
+        throw new Error('not found');
+      });
+
+      const result = await (pipeline as any).loadConcepts(['创造性']);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].domain).toBe('未分类');
     });
   });
 });

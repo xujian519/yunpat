@@ -9,7 +9,7 @@ import { Agent } from '../../src/agent/Agent.js';
 import { EventBus } from '../../src/eventbus/EventBus.js';
 import { ShortTermMemory } from '../../src/memory/MemoryStore.js';
 import { ToolRegistry, ToolWrapper } from '../../src/tools/ToolRegistry.js';
-import { createMockLLM, createMockToolRegistry, createTestAgent } from '../helpers/mocks.js';
+import { createMockLLM, createMockToolRegistry, createTestAgent, TestAgent } from '../helpers/mocks.js';
 import type { ExecutionContext, AgentEvent } from '../../src/lifecycle/Lifecycle.js';
 
 /**
@@ -539,6 +539,771 @@ describe('Agent', () => {
       await agent.execute('test');
 
       expect(sharedValue).toBe('plan-value');
+    });
+  });
+
+  describe('性能优化功能', () => {
+    it('应正确初始化推理缓存', () => {
+      const eventBus = new EventBus();
+
+      class CacheAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'cache-agent',
+            description: 'cache agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enableReasoningCache: true,
+            cacheConfig: { maxEntries: 100, similarityThreshold: 0.8, ttl: 3600000 },
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new CacheAgent();
+      expect(agent).toBeDefined();
+    });
+
+    it('应正确初始化性能监控', () => {
+      const eventBus = new EventBus();
+
+      class MonitorAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'monitor-agent',
+            description: 'monitor agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enablePerformanceMonitoring: true,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new MonitorAgent();
+      expect(agent).toBeDefined();
+    });
+
+    it('queryCache 应在无缓存时返回 found: false', async () => {
+      const { agent } = createTestAgent();
+
+      const result = await agent.queryCache('test-query');
+
+      expect(result.found).toBe(false);
+      expect(result.result).toBeUndefined();
+      expect(result.similarity).toBeUndefined();
+    });
+
+    it('storeToCache 应在无缓存时不执行操作', async () => {
+      const { agent } = createTestAgent();
+
+      await expect(
+        agent.storeToCache('test-key', 'test-result', 100)
+      ).resolves.not.toThrow();
+    });
+
+    it('getPerformanceStats 应返回空对象当无性能功能启用', () => {
+      const { agent } = createTestAgent();
+
+      const stats = agent.getPerformanceStats();
+
+      expect(stats).toEqual({});
+    });
+
+    it('getPerformanceStats 应返回缓存统计当启用推理缓存', () => {
+      const eventBus = new EventBus();
+
+      class CacheAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'cache-agent',
+            description: 'cache agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enableReasoningCache: true,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new CacheAgent();
+      const stats = agent.getPerformanceStats();
+
+      expect(stats).toHaveProperty('cache');
+    });
+
+    it('clearCache 应在无缓存时不执行操作', () => {
+      const { agent } = createTestAgent();
+
+      expect(() => agent.clearCache()).not.toThrow();
+    });
+
+    it('exportPerformanceReport 应返回空报告当无性能统计', () => {
+      const { agent } = createTestAgent();
+
+      const report = agent.exportPerformanceReport();
+
+      expect(report).toContain('test-agent 性能报告');
+    });
+  });
+
+  describe('审批流程', () => {
+    it('PLAN 阶段审批拒绝时应抛出错误', async () => {
+      const eventBus = new EventBus();
+
+      const mockApprovalFlow = {
+        requestApproval: vi.fn().mockResolvedValue({
+          approvalId: '123',
+          approved: false,
+          timestamp: new Date(),
+          feedback: { message: '需要修改' },
+        }),
+      };
+
+      class ApprovalAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'approval-agent',
+            description: 'approval agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            approvalFlow: mockApprovalFlow,
+            approvalStages: ['plan' as any],
+          });
+        }
+        protected async plan() {
+          return 'plan-data';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new ApprovalAgent();
+
+      await expect(agent.execute('test')).rejects.toThrow('Plan阶段未通过审批');
+      expect(mockApprovalFlow.requestApproval).toHaveBeenCalled();
+    });
+
+    it('PLAN 阶段审批通过且有修正时应使用修正后的 plan', async () => {
+      const eventBus = new EventBus();
+      let capturedPlan: unknown;
+
+      const mockApprovalFlow = {
+        requestApproval: vi.fn().mockResolvedValue({
+          approvalId: '123',
+          approved: true,
+          timestamp: new Date(),
+          feedback: {
+            corrections: { plan: 'corrected-plan' },
+          },
+        }),
+      };
+
+      class ApprovalAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'approval-agent',
+            description: 'approval agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            approvalFlow: mockApprovalFlow,
+            approvalStages: ['plan' as any],
+          });
+        }
+        protected async plan() {
+          return 'original-plan';
+        }
+        protected async act(plan: unknown) {
+          capturedPlan = plan;
+          return 'done';
+        }
+      }
+
+      const agent = new ApprovalAgent();
+      await agent.execute('test');
+
+      expect(capturedPlan).toBe('corrected-plan');
+    });
+
+    it('ACT 阶段审批拒绝时应抛出错误', async () => {
+      const eventBus = new EventBus();
+
+      const mockApprovalFlow = {
+        requestApproval: vi.fn().mockResolvedValue({
+          approvalId: '123',
+          approved: false,
+          timestamp: new Date(),
+        }),
+      };
+
+      class ApprovalAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'approval-agent',
+            description: 'approval agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            approvalFlow: mockApprovalFlow,
+            approvalStages: ['act' as any],
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'result';
+        }
+      }
+
+      const agent = new ApprovalAgent();
+
+      await expect(agent.execute('test')).rejects.toThrow('Act阶段未通过审批');
+    });
+
+    it('ACT 阶段审批通过且有修正时应继续执行', async () => {
+      const eventBus = new EventBus();
+      let actCallCount = 0;
+      let firstApproval = true;
+
+      const mockApprovalFlow = {
+        requestApproval: vi.fn().mockImplementation(() => {
+          if (firstApproval) {
+            firstApproval = false;
+            return Promise.resolve({
+              approvalId: '123',
+              approved: true,
+              timestamp: new Date(),
+              feedback: {
+                corrections: { result: 'corrected-result' },
+              },
+            });
+          }
+          return Promise.resolve({
+            approvalId: '124',
+            approved: true,
+            timestamp: new Date(),
+          });
+        }),
+      };
+
+      class ApprovalAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'approval-agent',
+            description: 'approval agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            approvalFlow: mockApprovalFlow,
+            approvalStages: ['act' as any],
+            maxIterations: 10,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          actCallCount++;
+          return actCallCount === 1 ? 'first-result' : 'final-result';
+        }
+        protected async reflect() {
+          if (actCallCount === 1) {
+            return { shouldContinue: false, result: 'first-result' };
+          }
+          return { shouldContinue: false, result: 'final-result' };
+        }
+      }
+
+      const agent = new ApprovalAgent();
+      await agent.execute('test');
+
+      expect(actCallCount).toBe(2);
+      expect(mockApprovalFlow.requestApproval).toHaveBeenCalledTimes(2);
+    });
+
+    it('shouldRequestApproval 应在无 approvalFlow 时返回 false', () => {
+      const { agent } = createTestAgent();
+
+      const result = (agent as any).shouldRequestApproval('plan' as any);
+
+      expect(result).toBe(false);
+    });
+
+    it('shouldRequestApproval 应在 approvalStages 不包含阶段时返回 false', async () => {
+      const eventBus = new EventBus();
+
+      class ApprovalAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'approval-agent',
+            description: 'approval agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            approvalFlow: {
+              requestApproval: vi.fn().mockResolvedValue({ approved: true, approvalId: '123', timestamp: new Date() }),
+            },
+            approvalStages: ['plan' as any],
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'result';
+        }
+      }
+
+      const agent = new ApprovalAgent();
+      const result = (agent as any).shouldRequestApproval('act' as any);
+
+      expect(result).toBe(false);
+    });
+
+    it('requestApprovalIfNeeded 应在无 approvalFlow 时返回自动批准', async () => {
+      const { agent } = createTestAgent();
+
+      const result = await (agent as any).requestApprovalIfNeeded('data', {} as ExecutionContext);
+
+      expect(result.approved).toBe(true);
+      expect(result.approvalId).toBeDefined();
+    });
+  });
+
+  describe('检查点管理', () => {
+    it('应正确初始化检查点管理器', () => {
+      const eventBus = new EventBus();
+      const mockCheckpointManager = {
+        saveCheckpoint: vi.fn(),
+        loadCheckpoint: vi.fn(),
+      };
+
+      class CheckpointAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'checkpoint-agent',
+            description: 'checkpoint agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enableCheckpoints: true,
+            checkpointManager: mockCheckpointManager as any,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new CheckpointAgent();
+      expect(agent).toBeDefined();
+    });
+
+    it('enableCheckpoints 为 false 时不保存检查点', async () => {
+      const eventBus = new EventBus();
+      const mockCheckpointManager = {
+        saveCheckpoint: vi.fn(),
+        loadCheckpoint: vi.fn(),
+      };
+
+      class CheckpointAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'checkpoint-agent',
+            description: 'checkpoint agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enableCheckpoints: false,
+            checkpointManager: mockCheckpointManager as any,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new CheckpointAgent();
+      await agent.execute('test');
+
+      expect(mockCheckpointManager.saveCheckpoint).not.toHaveBeenCalled();
+    });
+
+    it('无 checkpointManager 时不保存检查点', async () => {
+      const eventBus = new EventBus();
+
+      class CheckpointAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'checkpoint-agent',
+            description: 'checkpoint agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enableCheckpoints: true,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new CheckpointAgent();
+      await agent.execute('test');
+
+      await expect(agent.execute('test')).resolves.toBeDefined();
+    });
+
+    it('resumeFromCheckpoint 应在无 checkpointManager 时抛出错误', async () => {
+      const { agent } = createTestAgent();
+
+      await expect(agent.resumeFromCheckpoint('checkpoint-id')).rejects.toThrow(
+        'CheckpointManager 未配置，无法恢复检查点'
+      );
+    });
+
+    it('resumeFromCheckpoint 应在检查点不存在时抛出错误', async () => {
+      const eventBus = new EventBus();
+      const mockCheckpointManager = {
+        saveCheckpoint: vi.fn(),
+        loadCheckpoint: vi.fn().mockResolvedValue(null),
+      };
+
+      class CheckpointAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'checkpoint-agent',
+            description: 'checkpoint agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            checkpointManager: mockCheckpointManager as any,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new CheckpointAgent();
+      await expect(agent.resumeFromCheckpoint('checkpoint-id')).rejects.toThrow(
+        '检查点不存在: checkpoint-id'
+      );
+    });
+
+    it('resumeFromCheckpoint 应成功恢复检查点', async () => {
+      const eventBus = new EventBus();
+      const mockCheckpoint = {
+        checkpointId: 'test-checkpoint',
+        iteration: 1,
+        timestamp: new Date(),
+        memorySnapshot: { key: 'value' },
+        contextSnapshot: { executionId: '123' },
+        stateSnapshot: { initialized: true },
+        tags: ['test'],
+      };
+
+      const mockCheckpointManager = {
+        saveCheckpoint: vi.fn(),
+        loadCheckpoint: vi.fn().mockResolvedValue(mockCheckpoint),
+      };
+
+      class CheckpointAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'checkpoint-agent',
+            description: 'checkpoint agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            checkpointManager: mockCheckpointManager as any,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new CheckpointAgent();
+      const result = await agent.resumeFromCheckpoint('test-checkpoint');
+
+      expect(result.checkpoint).toBe(mockCheckpoint);
+      expect(result.context).toEqual({ executionId: '123' });
+    });
+
+    it('saveCheckpointIfEnabled 应在保存失败时不影响执行', async () => {
+      const eventBus = new EventBus();
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const mockCheckpointManager = {
+        saveCheckpoint: vi.fn().mockRejectedValue(new Error('保存失败')),
+        loadCheckpoint: vi.fn(),
+      };
+
+      class CheckpointAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'checkpoint-agent',
+            description: 'checkpoint agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enableCheckpoints: true,
+            checkpointManager: mockCheckpointManager as any,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new CheckpointAgent();
+      await expect(agent.execute('test')).resolves.toBeDefined();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('初始化配置', () => {
+    it('应使用默认 maxIterations 和 timeout', () => {
+      const { agent } = createTestAgent();
+
+      expect((agent as any).maxIterations).toBe(10);
+      expect((agent as any).timeout).toBe(300000);
+    });
+
+    it('应使用自定义 maxIterations 和 timeout', () => {
+      const eventBus = new EventBus();
+
+      class ConfigAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'config-agent',
+            description: 'config agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            maxIterations: 20,
+            timeout: 600000,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new ConfigAgent();
+      expect((agent as any).maxIterations).toBe(20);
+      expect((agent as any).timeout).toBe(600000);
+    });
+
+    it('应正确初始化审批流程配置', () => {
+      const eventBus = new EventBus();
+      const mockApprovalFlow = {
+        requestApproval: vi.fn(),
+      };
+
+      class ApprovalAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'approval-agent',
+            description: 'approval agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            approvalFlow: mockApprovalFlow as any,
+            approvalStages: ['plan' as any, 'act' as any],
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new ApprovalAgent();
+      expect((agent as any).approvalFlow).toBe(mockApprovalFlow);
+      expect((agent as any).approvalStages).toEqual(['plan', 'act']);
+    });
+
+    it('应正确创建 CheckpointManager 当启用检查点但未提供管理器', () => {
+      const eventBus = new EventBus();
+      const mockCheckpointConfig = {
+        maxCheckpoints: 10,
+        retentionDays: 7,
+      };
+
+      class CheckpointAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'checkpoint-agent',
+            description: 'checkpoint agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enableCheckpoints: true,
+            checkpointConfig: mockCheckpointConfig as any,
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          return 'done';
+        }
+      }
+
+      const agent = new CheckpointAgent();
+      expect((agent as any).checkpointManager).toBeDefined();
+    });
+  });
+
+  describe('工具和 LLM 访问', () => {
+    it('getTools 应返回工具注册表', () => {
+      const { agent, toolRegistry } = createTestAgent();
+
+      const tools = agent.getTools();
+
+      expect(tools).toBe(toolRegistry);
+    });
+
+    it('getLlm 应返回 LLM 适配器', () => {
+      const { agent } = createTestAgent();
+
+      const llm = agent.getLlm();
+
+      expect(llm).toBeDefined();
+    });
+  });
+
+  describe('反射行为', () => {
+    it('reflect 返回非对象时应停止循环', async () => {
+      const eventBus = new EventBus();
+      let actCallCount = 0;
+
+      class ReflectAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'reflect-agent',
+            description: 'reflect agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          actCallCount++;
+          return 'result';
+        }
+        protected async reflect() {
+          return 'not-an-object';
+        }
+      }
+
+      const agent = new ReflectAgent();
+      await agent.execute('test');
+
+      expect(actCallCount).toBe(1);
+    });
+
+    it('reflect 返回对象但无 shouldContinue 属性时应停止循环', async () => {
+      const eventBus = new EventBus();
+      let actCallCount = 0;
+
+      class ReflectAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'reflect-agent',
+            description: 'reflect agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+          });
+        }
+        protected async plan() {
+          return 'plan';
+        }
+        protected async act() {
+          actCallCount++;
+          return 'result';
+        }
+        protected async reflect() {
+          return { quality: 'good' };
+        }
+      }
+
+      const agent = new ReflectAgent();
+      await agent.execute('test');
+
+      expect(actCallCount).toBe(1);
     });
   });
 });

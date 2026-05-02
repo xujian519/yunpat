@@ -26,6 +26,9 @@ coverage/
 *.swo
 *~
 
+# Claude Code 配置
+.claude/settings.json
+
 # 构建产物
 dist/
 build/

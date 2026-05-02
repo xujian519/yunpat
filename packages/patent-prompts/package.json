@@ -1,7 +1,7 @@
 {
-  "name": "@yunpat/agent-writer",
+  "name": "@yunpat/patent-prompts",
   "version": "0.1.0",
-  "description": "专利撰写智能体 - 集成知识库和分步加载提示词模板",
+  "description": "专利提示词模板管理器 - 支持分步加载和缓存",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,21 +20,14 @@
     "dev": "tsc --watch",
     "test": "echo \"Test not implemented yet\""
   },
-  "dependencies": {
-    "@yunpat/core": "workspace:*",
-    "@yunpat/patent-core": "workspace:*",
-    "@yunpat/patent-knowledge": "workspace:*",
-    "@yunpat/patent-prompts": "workspace:*",
-    "zod": "^3.22.4"
-  },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "typescript": "^5.3.3"
   },
   "keywords": [
-    "agent",
     "patent",
-    "writer",
+    "prompts",
+    "templates",
     "yunpat"
   ],
   "author": "Xu Jian <xujian519@gmail.com>",

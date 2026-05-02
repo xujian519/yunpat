@@ -1,7 +1,7 @@
 {
-  "name": "@yunpat/agent-writer",
+  "name": "@yunpat/agent-invention",
   "version": "0.1.0",
-  "description": "专利撰写智能体 - 集成知识库和分步加载提示词模板",
+  "description": "发明理解智能体 - 专利交底书分析与结构化理解",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,11 +21,7 @@
     "test": "echo \"Test not implemented yet\""
   },
   "dependencies": {
-    "@yunpat/core": "workspace:*",
-    "@yunpat/patent-core": "workspace:*",
-    "@yunpat/patent-knowledge": "workspace:*",
-    "@yunpat/patent-prompts": "workspace:*",
-    "zod": "^3.22.4"
+    "@yunpat/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -34,7 +30,7 @@
   "keywords": [
     "agent",
     "patent",
-    "writer",
+    "invention",
     "yunpat"
   ],
   "author": "Xu Jian <xujian519@gmail.com>",

@@ -10,14 +10,20 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { writeFileSync, unlinkSync, mkdtempSync, rmSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { tmpdir } from 'os';
+import { fileURLToPath } from 'url';
 import {
   extractFeaturesFallback,
   parseDisclosureFallback,
   generateClaimsFallback,
+  classifyIpcFallback,
   isFallbackResult,
 } from './PatentCoreFallback.js';
+
+// ESM 模块中的 __dirname polyfill
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const execFileAsync = promisify(execFile);
 
@@ -272,6 +278,14 @@ export async function assessQuality(claims: ClaimDraft[]): Promise<QualityAssess
 /** IPC 分类 */
 export async function classifyIpc(text: string): Promise<{
   classifications: IpcClassification[];
+  fallback?: true;
 }> {
-  return runCli(['classify-ipc', '--text', text]);
+  const result = await runCli(['classify-ipc', '--text', text]);
+
+  if (isFallbackResult(result)) {
+    console.warn('[PatentCoreBridge] classifyIpc 降级到 TypeScript 实现');
+    return classifyIpcFallback(text);
+  }
+
+  return result;
 }

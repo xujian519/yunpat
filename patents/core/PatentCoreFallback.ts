@@ -236,3 +236,9 @@ export async function generateClaimsFallback(
 export function isFallbackResult(result: any): result is { fallback: true; error?: string } {
   return result && typeof result === 'object' && 'fallback' in result && result.fallback === true;
 }
+
+/**
+ * IPC 分类 Fallback 实现
+ * 导出自 IpcClassifierFallback.ts
+ */
+export { classifyIpcFallback } from './IpcClassifierFallback.js';

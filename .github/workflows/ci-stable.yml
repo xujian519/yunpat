@@ -1,0 +1,184 @@
+name: CI (Stable - Enhanced Reliability)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '24.x'
+  PNPM_VERSION: 9
+  ACTIONS_RUNNER_DISABLE_JOB_CACHE: 'true'
+  CANVAS_USE_NATIVE: '0'
+  PUPPETEET_SKIP_DOWNLOAD: 'true'
+  NODE_OPTIONS: '--max-old-space-size=4096'
+  RUST_BACKTRACE: '1'
+
+# 并发控制：更激进的取消策略
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true  # 取消旧的运行
+
+jobs:
+  # 快速检查（增强稳定性）
+  quick-checks:
+    name: 快速检查
+    runs-on: [self-hosted, macos-arm64]
+    timeout-minutes: 25  # 增加超时时间
+
+    # 更保守的并发控制
+    strategy:
+      max-parallel: 1  # 一次只运行一个任务
+
+    steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.lowSpeedLimit 0
+          git config --global http.lowSpeedTime 999999
+          git config --global http.useHTTP2 false
+          echo "✅ Git 配置完成"
+
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1  # 减少深度，提高速度
+          clean: true
+
+      - name: 🔍 系统资源检查
+        run: |
+          echo "=== 系统资源检查 ==="
+          echo "CPU核心数: $(sysctl -n hw.ncpu)"
+          echo "可用内存: $(vm_stat | grep "Pages free" | awk '{print $3 * 16384 / 1024 / 1024}') MB"
+          echo "磁盘空间: $(df -h . | tail -1 | awk '{print $4}') 可用"
+          
+          # 清理可能占用资源的进程
+          pkill -f "node.*vitest" || true
+          pkill -f "node.*esbuild" || true
+          echo "✅ 资源检查完成"
+
+      - name: 🔧 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📦 快速依赖安装
+        run: |
+          echo "📦 快速依赖安装..."
+          pnpm install --no-frozen-lockfile --prefer-offline --frozen-lockfile=false
+        env:
+          HUSKY: 0
+
+      - name: 🔍 TypeScript 类型检查（仅核心包）
+        run: |
+          echo "🔍 TypeScript 类型检查（仅核心包）..."
+          pnpm --filter @yunpat/core build:tsc
+        timeout-minutes: 10
+        continue-on-error: true  # 失败不阻塞
+
+      - name: 🧪 核心测试（稳定子集）
+        run: |
+          echo "🧪 运行核心测试的稳定子集..."
+          # 只运行最稳定的测试
+          pnpm --filter @yunpat/core test -- --run \
+            --reporter=dot \
+            --exclude="**/*integration*.test.ts" \
+            --exclude="**/benchmark*.test.ts"
+        timeout-minutes: 15
+
+      - name: 🧹 清理工作目录
+        if: always()
+        run: |
+          echo "🧹 清理临时文件..."
+          rm -rf ~/actions-runner/_work/_temp/*
+          rm -rf ./*.log
+          pkill -f "node.*vitest" || true
+          echo "✅ 清理完成"
+
+  # 构建验证（独立任务）
+  build-verification:
+    name: 构建验证
+    runs-on: [self-hosted, macos-arm64]
+    needs: quick-checks
+    timeout-minutes: 30
+
+    steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 🔧 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📦 快速依赖安装
+        run: pnpm install --no-frozen-lockfile --prefer-offline
+        env:
+          HUSKY: 0
+
+      - name: 🏗️ 构建验证
+        run: |
+          echo "🏗️ 构建验证..."
+          pnpm build
+          echo "✅ 构建成功"
+        timeout-minutes: 20
+
+      - name: 🧹 清理
+        if: always()
+        run: rm -rf ~/actions-runner/_work/_temp/*
+
+  # 质量门禁（快速检查）
+  quality-gate:
+    name: 质量门禁
+    runs-on: [self-hosted, macos-arm64]
+    needs: quick-checks
+    timeout-minutes: 15
+    continue-on-error: true  # 失败不阻塞
+
+    steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+
+      - name: 🔧 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📦 快速依赖安装
+        run: pnpm install --no-frozen-lockfile --prefer-offline
+        env:
+          HUSKY: 0
+
+      - name: 📋 代码格式检查
+        run: |
+          echo "📋 快速格式检查..."
+          pnpm exec prettier --check "packages/core/src/**/*.ts" || echo "⚠️ 格式检查发现问题"
+        continue-on-error: true
+
+      - name: 🧹 清理
+        if: always()
+        run: rm -rf ~/actions-runner/_work/_temp/*

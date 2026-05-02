@@ -1,7 +1,6 @@
 name: CI (Local Runner - Optimized)
 
 on:
-  push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
@@ -17,12 +16,25 @@ env:
 
 jobs:
   # 快速检查（本地 Runner 优化）
-  quick-checks:
     name: 快速检查
     runs-on: [self-hosted, macos-arm64]
     timeout-minutes: 15
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          # 强制使用 HTTP/1.1 避免 HTTP/2 帧层错误
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          # 增加缓冲区大小
+          git config --global http.postBuffer 524288000
+          # 禁用 HTTP/2
+          git config --global http.useHTTP2 false
+          # 显示配置
+          echo "✅ Git HTTP 配置:"
+          git config --global --get-regexp http
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
         with:
@@ -88,7 +100,6 @@ jobs:
           echo "✅ 清理完成"
 
   # 并行测试任务（使用矩阵策略）
-  parallel-tests:
     name: 并行测试 - 分片 ${{ matrix.shard }}/${{ matrix.total }}
     runs-on: [self-hosted, macos-arm64]
     needs: quick-checks
@@ -101,6 +112,14 @@ jobs:
       fail-fast: false  # 一个分片失败不影响其他分片
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
 
@@ -135,13 +154,20 @@ jobs:
         run: rm -rf ~/actions-runner/_work/_temp/*
 
   # 增量构建（仅构建变更的包）
-  incremental-build:
     name: 增量构建
     runs-on: [self-hosted, macos-arm64]
     needs: quick-checks
     timeout-minutes: 20
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
         with:
@@ -210,7 +236,6 @@ jobs:
         run: rm -rf ~/actions-runner/_work/_temp/*
 
   # 代码质量检查（并行）
-  quality:
     name: 代码质量 - ${{ matrix.check }}
     runs-on: [self-hosted, macos-arm64]
     needs: quick-checks
@@ -223,6 +248,14 @@ jobs:
       fail-fast: false
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
 
@@ -275,7 +308,6 @@ jobs:
         run: rm -rf ~/actions-runner/_work/_temp/*
 
   # 性能基准测试（可选）
-  benchmark:
     name: 性能基准测试
     runs-on: [self-hosted, macos-arm64]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -283,6 +315,14 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
 
@@ -326,7 +366,6 @@ jobs:
         run: rm -rf ~/actions-runner/_work/_temp/*
 
   # Rust 工具链检查（如果需要）
-  rust-checks:
     name: Rust 工具链检查
     runs-on: [self-hosted, macos-arm64]
     if: github.event_name == 'push'
@@ -334,6 +373,14 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          echo "🔧 修复 Git HTTP/2 连接问题..."
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
       - name: 📥 检出代码
         uses: actions/checkout@v4
 
@@ -389,7 +436,6 @@ jobs:
         run: rm -rf ~/actions-runner/_work/_temp/*
 
   # CI 摘要报告
-  summary:
     name: CI 执行摘要
     runs-on: [self-hosted, macos-arm64]
     needs: [quick-checks, parallel-tests, incremental-build, quality]

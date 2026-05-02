@@ -1,9 +1,25 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
+  # 手动触发部署（推荐）
   workflow_dispatch:
+    inputs:
+      environment:
+        description: '部署环境'
+        required: true
+        type: choice
+        options:
+        - staging
+        - production
+      rollback:
+        description: '是否回滚'
+        type: boolean
+        default: false
+
+  # 在创建 release tag 时自动部署到 production
+  push:
+    tags:
+      - 'v*'
     inputs:
       environment:
         description: '部署环境'

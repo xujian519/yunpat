@@ -10,6 +10,63 @@
 import { MemoryStore as IMemoryStore, MemoryEntry } from '../lifecycle/Lifecycle.js';
 
 /**
+ * 深度克隆工具函数
+ *
+ * 处理特殊类型：Date, Map, Set, 循环引用
+ */
+function deepClone<T>(obj: T, hash = new WeakMap()): T {
+  // 处理null和基本类型
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  // 处理Date
+  if (obj instanceof Date) {
+    return new Date(obj.getTime()) as T;
+  }
+
+  // 处理Map
+  if (obj instanceof Map) {
+    const cloned = new Map();
+    obj.forEach((value, key) => {
+      cloned.set(key, deepClone(value, hash));
+    });
+    return cloned as T;
+  }
+
+  // 处理Set
+  if (obj instanceof Set) {
+    const cloned = new Set();
+    obj.forEach((value) => {
+      cloned.add(deepClone(value, hash));
+    });
+    return cloned as T;
+  }
+
+  // 处理Array
+  if (Array.isArray(obj)) {
+    return obj.map((item) => deepClone(item, hash)) as T;
+  }
+
+  // 处理循环引用
+  if (hash.has(obj)) {
+    return obj; // 返回原对象，避免循环
+  }
+  hash.set(obj, obj);
+
+  // 处理普通对象
+  const cloned = {} as T;
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      (cloned as any)[key] = deepClone((obj as any)[key], hash);
+    }
+  }
+
+  return cloned;
+}
+import { FileSystemCheckpointStore } from './FileSystemCheckpointStore.js';
+
+/**
  * 检查点
  */
 export interface Checkpoint {
@@ -67,6 +124,30 @@ export interface TimeMachine {
 }
 
 /**
+ * 检查点存储接口
+ */
+export interface CheckpointStore {
+  save(checkpoint: Checkpoint): Promise<void>;
+  load(checkpointId: string, executionId?: string): Promise<Checkpoint>;
+  listCheckpoints(executionId: string): Promise<Checkpoint[]>;
+  delete(checkpointId: string, executionId?: string): Promise<void>;
+}
+
+/**
+ * 检查点管理器配置
+ */
+export interface CheckpointManagerConfig {
+  /** 是否自动保存，默认为 true */
+  autoSave?: boolean;
+  /** 自动保存间隔（迭代次数），默认为 1 */
+  autoSaveInterval?: number;
+  /** 最大检查点数量，默认为 100 */
+  maxCheckpoints?: number;
+  /** 外部存储（可选） */
+  store?: CheckpointStore;
+}
+
+/**
  * 检查点管理器
  */
 export class CheckpointManager {
@@ -74,11 +155,14 @@ export class CheckpointManager {
   private autoSaveEnabled: boolean;
   private autoSaveInterval: number;
   private maxCheckpoints: number;
+  private store?: CheckpointStore;
+  private sequenceNumbers = new Map<string, number>(); // 每个执行的序列号
 
-  constructor(config?: { autoSave?: boolean; autoSaveInterval?: number; maxCheckpoints?: number }) {
+  constructor(config?: CheckpointManagerConfig) {
     this.autoSaveEnabled = config?.autoSave ?? true;
     this.autoSaveInterval = config?.autoSaveInterval ?? 1; // 每次迭代保存
     this.maxCheckpoints = config?.maxCheckpoints ?? 100;
+    this.store = config?.store;
   }
 
   /**
@@ -94,20 +178,43 @@ export class CheckpointManager {
     tags?: string[],
     notes?: string
   ): Promise<Checkpoint> {
+    // 获取并递增序列号
+    const currentSeq = this.sequenceNumbers.get(executionId) ?? 0;
+    this.sequenceNumbers.set(executionId, currentSeq + 1);
+
     const checkpoint: Checkpoint = {
-      id: this.generateCheckpointId(executionId, iteration),
+      id: this.generateCheckpointId(executionId, iteration, currentSeq),
       agentName,
       executionId,
       timestamp: new Date(),
       iteration,
-      memorySnapshot: JSON.parse(JSON.stringify(memory)), // 深拷贝
-      contextSnapshot: JSON.parse(JSON.stringify(context)),
-      stateSnapshot: JSON.parse(JSON.stringify(state)),
+      memorySnapshot: deepClone(memory), // 使用proper的深拷贝
+      contextSnapshot: deepClone(context),
+      stateSnapshot: deepClone(state),
       tags,
       notes,
     };
 
+    // 保存到内存
     this.checkpoints.set(checkpoint.id, checkpoint);
+
+    // 如果配置了外部存储，也保存到外部存储
+    if (this.store) {
+      try {
+        await this.store.save(checkpoint);
+      } catch (error) {
+        console.error({
+          message: '[检查点管理器] 保存到外部存储失败',
+          checkpointId: checkpoint.id,
+          executionId: checkpoint.executionId,
+          agentName: checkpoint.agentName,
+          iteration: checkpoint.iteration,
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+        });
+        // 不抛出错误，继续使用内存存储
+      }
+    }
 
     // 检查是否超过最大数量
     if (this.checkpoints.size > this.maxCheckpoints) {
@@ -120,8 +227,29 @@ export class CheckpointManager {
   /**
    * 加载检查点
    */
-  async loadCheckpoint(checkpointId: string): Promise<Checkpoint> {
-    const checkpoint = this.checkpoints.get(checkpointId);
+  async loadCheckpoint(checkpointId: string, executionId?: string): Promise<Checkpoint> {
+    // 先尝试从内存加载
+    let checkpoint = this.checkpoints.get(checkpointId);
+
+    // 如果内存中没有，且配置了外部存储，尝试从外部存储加载
+    if (!checkpoint && this.store) {
+      try {
+        checkpoint = await this.store.load(checkpointId, executionId);
+
+        // 加载到内存
+        if (checkpoint) {
+          this.checkpoints.set(checkpoint.id, checkpoint);
+        }
+      } catch (error) {
+        console.error({
+          message: '[检查点管理器] 从外部存储加载失败',
+          checkpointId,
+          executionId,
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }
 
     if (!checkpoint) {
       throw new Error(`检查点不存在: ${checkpointId}`);
@@ -138,8 +266,30 @@ export class CheckpointManager {
     executionId?: string;
     tags?: string[];
   }): Promise<Checkpoint[]> {
-    let checkpoints = Array.from(this.checkpoints.values());
+    let checkpoints: Checkpoint[];
 
+    // 如果配置了外部存储，且指定了executionId，从外部存储加载
+    if (this.store && filter?.executionId) {
+      try {
+        checkpoints = await this.store.listCheckpoints(filter.executionId);
+      } catch (error) {
+        console.error({
+          message: '[检查点管理器] 从外部存储列出检查点失败',
+          executionId: filter.executionId,
+          agentName: filter.agentName,
+          tags: filter.tags,
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+        });
+        // 降级到内存存储
+        checkpoints = Array.from(this.checkpoints.values());
+      }
+    } else {
+      // 从内存列出
+      checkpoints = Array.from(this.checkpoints.values());
+    }
+
+    // 应用过滤条件
     if (filter?.agentName) {
       checkpoints = checkpoints.filter((c) => c.agentName === filter.agentName);
     }
@@ -160,6 +310,20 @@ export class CheckpointManager {
    */
   async deleteCheckpoint(checkpointId: string): Promise<void> {
     this.checkpoints.delete(checkpointId);
+
+    // 如果配置了外部存储，也从外部存储删除
+    if (this.store) {
+      try {
+        await this.store.delete(checkpointId);
+      } catch (error) {
+        console.error({
+          message: '[检查点管理器] 从外部存储删除失败',
+          checkpointId,
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }
   }
 
   /**
@@ -167,6 +331,50 @@ export class CheckpointManager {
    */
   async clearCheckpoints(): Promise<void> {
     this.checkpoints.clear();
+  }
+
+  /**
+   * 列出所有可恢复的执行
+   */
+  async listResumableExecutions(): Promise<
+    Array<{ executionId: string; agentName: string; iteration: number; timestamp: Date }>
+  > {
+    // 如果配置了外部存储，使用外部存储的方法
+    if (this.store && 'listResumableExecutions' in this.store) {
+      try {
+        return await (this.store as any).listResumableExecutions();
+      } catch (error) {
+        console.error(`[检查点管理器] 从外部存储列出执行失败: ${error}`);
+      }
+    }
+
+    // 降级到内存存储
+    const executions = new Map<string, { executionId: string; agentName: string; iteration: number; timestamp: Date }>();
+
+    for (const checkpoint of this.checkpoints.values()) {
+      if (!executions.has(checkpoint.executionId)) {
+        executions.set(checkpoint.executionId, {
+          executionId: checkpoint.executionId,
+          agentName: checkpoint.agentName,
+          iteration: checkpoint.iteration,
+          timestamp: checkpoint.timestamp,
+        });
+      } else {
+        // 更新为最新的迭代
+        const existing = executions.get(checkpoint.executionId)!;
+        if (checkpoint.iteration > existing.iteration) {
+          executions.set(checkpoint.executionId, {
+            executionId: checkpoint.executionId,
+            agentName: checkpoint.agentName,
+            iteration: checkpoint.iteration,
+            timestamp: checkpoint.timestamp,
+          });
+        }
+      }
+    }
+
+    // 按时间戳排序（最新的在前）
+    return Array.from(executions.values()).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }
 
   /**
@@ -179,8 +387,8 @@ export class CheckpointManager {
   /**
    * 生成检查点 ID
    */
-  private generateCheckpointId(executionId: string, iteration: number): string {
-    return `${executionId}-iter${iteration}-${Date.now()}`;
+  private generateCheckpointId(executionId: string, iteration: number, sequence: number): string {
+    return `${executionId}-iter${iteration}-seq${sequence}-${Date.now()}`;
   }
 
   /**

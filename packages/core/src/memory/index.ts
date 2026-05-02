@@ -19,6 +19,7 @@ export * from './long-term/schema.js';
 
 // 检查点与状态管理
 export * from './CheckpointManager.js';
+export * from './FileSystemCheckpointStore.js';
 export * from './MemoryStore.js';
 
 // 集成模块

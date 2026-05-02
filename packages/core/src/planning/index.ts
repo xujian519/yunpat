@@ -8,3 +8,4 @@ export * from './types.js';
 export { TaskDecomposer } from './TaskDecomposer.js';
 export { DependencyAnalyzer } from './DependencyAnalyzer.js';
 export { TaskScheduler } from './TaskScheduler.js';
+export * from './WorkflowEngine.js';

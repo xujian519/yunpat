@@ -14,6 +14,8 @@ import {
   type ReasoningCacheStats,
 } from '../reasoning/ReasoningCache.js';
 import { ReasoningMonitor } from '../reasoning/ReasoningMonitor.js';
+import { ApprovalFlow, ApprovalResponse } from '../gateway/ApprovalFlow.js';
+import { CheckpointManager, CheckpointManagerConfig } from '../memory/CheckpointManager.js';
 
 /**
  * 智能体配置
@@ -60,6 +62,23 @@ export interface AgentConfig {
 
   /** 推理策略选择 */
   reasoningStrategy?: 'auto' | 'always-cache' | 'never-cache';
+
+  /** ========== 人机协作配置 ========== */
+
+  /** 审批流程（可选） */
+  approvalFlow?: ApprovalFlow;
+
+  /** 哪些生命周期阶段需要人工审批 */
+  approvalStages?: LifecycleStage[];
+
+  /** 检查点管理器（可选） */
+  checkpointManager?: CheckpointManager;
+
+  /** 是否启用自动检查点 */
+  enableCheckpoints?: boolean;
+
+  /** 检查点配置 */
+  checkpointConfig?: CheckpointManagerConfig;
 }
 
 /**
@@ -107,6 +126,20 @@ export abstract class Agent<TInput = any, TOutput = any> {
   /** 性能监控（可选） */
   protected performanceMonitor?: ReasoningMonitor;
 
+  /** ========== 人机协作字段 ========== */
+
+  /** 审批流程（可选） */
+  protected approvalFlow?: ApprovalFlow;
+
+  /** 需要审批的生命周期阶段 */
+  protected approvalStages?: LifecycleStage[];
+
+  /** 检查点管理器（可选） */
+  protected checkpointManager?: CheckpointManager;
+
+  /** 是否启用自动检查点 */
+  protected enableCheckpoints?: boolean;
+
   constructor(config: AgentConfig) {
     this.name = config.name;
     this.description = config.description;
@@ -119,6 +152,9 @@ export abstract class Agent<TInput = any, TOutput = any> {
 
     // 初始化性能优化功能
     this.initializePerformanceFeatures(config);
+
+    // 初始化人机协作功能
+    this.initializeCollaborationFeatures(config);
   }
 
   /**
@@ -133,6 +169,25 @@ export abstract class Agent<TInput = any, TOutput = any> {
     // 初始化性能监控
     if (config.enablePerformanceMonitoring) {
       this.performanceMonitor = new ReasoningMonitor();
+    }
+  }
+
+  /**
+   * 初始化人机协作功能
+   */
+  private initializeCollaborationFeatures(config: AgentConfig): void {
+    // 初始化审批流程
+    this.approvalFlow = config.approvalFlow;
+    this.approvalStages = config.approvalStages;
+
+    // 初始化检查点管理器
+    this.enableCheckpoints = config.enableCheckpoints ?? false;
+
+    if (config.checkpointManager) {
+      this.checkpointManager = config.checkpointManager;
+    } else if (this.enableCheckpoints && config.checkpointConfig) {
+      // 如果启用了检查点但没有提供管理器，创建一个新的
+      this.checkpointManager = new CheckpointManager(config.checkpointConfig);
     }
   }
 
@@ -236,6 +291,7 @@ export abstract class Agent<TInput = any, TOutput = any> {
   private async executeInternal(input: TInput): Promise<TOutput> {
     const executionId = uuidv4();
     const startTime = new Date();
+    let iteration = 0;
 
     // 创建执行上下文
     const context: ExecutionContext = {
@@ -263,6 +319,9 @@ export abstract class Agent<TInput = any, TOutput = any> {
         context.currentStage = LifecycleStage.INIT;
         await this.init(context);
         this.initialized = true;
+
+        // 保存init检查点
+        await this.saveCheckpointIfEnabled(executionId, iteration, context, 'init');
       }
 
       // 3. 发送启动事件
@@ -274,7 +333,22 @@ export abstract class Agent<TInput = any, TOutput = any> {
 
       // 4. plan 阶段
       context.currentStage = LifecycleStage.PLAN;
-      const plan = await this.plan(input, context);
+      let plan = await this.plan(input, context);
+
+      // 保存plan检查点
+      await this.saveCheckpointIfEnabled(executionId, ++iteration, context, 'plan', { plan });
+
+      // 如果配置了plan阶段审批，请求审批
+      if (this.shouldRequestApproval(LifecycleStage.PLAN)) {
+        const approval = await this.requestApprovalIfNeeded(plan, context);
+        if (!approval.approved) {
+          throw new Error('Plan阶段未通过审批');
+        }
+        // 如果有修正，使用修正后的plan
+        if (approval.feedback?.corrections) {
+          plan = approval.feedback.corrections.plan as unknown;
+        }
+      }
 
       // 5. act 阶段（循环执行）
       context.currentStage = LifecycleStage.ACT;
@@ -286,10 +360,28 @@ export abstract class Agent<TInput = any, TOutput = any> {
         result = await this.act(plan, context);
         iterations++;
 
+        // 保存act检查点（每次迭代）
+        await this.saveCheckpointIfEnabled(
+          executionId,
+          ++iteration,
+          context,
+          `act-iter${iterations}`,
+          { result, iteration: iterations }
+        );
+
         // 6. reflect 阶段（检查是否继续）
         if (this.reflect) {
           context.currentStage = LifecycleStage.REFLECT;
           const reflection = await this.reflect(result, context);
+
+          // 保存reflect检查点
+          await this.saveCheckpointIfEnabled(
+            executionId,
+            iteration,
+            context,
+            `reflect-iter${iterations}`,
+            { reflection }
+          );
 
           // 如果反思返回了 shouldContinue 标志，使用它
           if (reflection && typeof reflection === 'object') {
@@ -301,6 +393,19 @@ export abstract class Agent<TInput = any, TOutput = any> {
         } else {
           // 没有 reflect 钩子，只执行一次
           shouldContinue = false;
+        }
+
+        // 如果配置了act阶段审批，请求审批（最后一次迭代后）
+        if (!shouldContinue && this.shouldRequestApproval(LifecycleStage.ACT)) {
+          const approval = await this.requestApprovalIfNeeded(result, context);
+          if (!approval.approved) {
+            throw new Error('Act阶段未通过审批');
+          }
+          // 如果有修正，使用修正后的result并继续
+          if (approval.feedback?.corrections) {
+            result = approval.feedback.corrections.result as unknown;
+            shouldContinue = true; // 继续执行
+          }
         }
 
         // 发送进度事件
@@ -328,6 +433,15 @@ export abstract class Agent<TInput = any, TOutput = any> {
         iterations,
         duration: Date.now() - startTime.getTime(),
       });
+
+      // 保存completed检查点
+      await this.saveCheckpointIfEnabled(
+        executionId,
+        ++iteration,
+        context,
+        'completed',
+        { output }
+      );
 
       return output;
     } catch (error) {
@@ -462,6 +576,130 @@ export abstract class Agent<TInput = any, TOutput = any> {
     if (this.reasoningCache) {
       this.reasoningCache.clear();
     }
+  }
+
+  /**
+   * 获取工具注册表（供WorkflowEngine等外部模块访问）
+   */
+  getTools(): ToolRegistry {
+    return this.tools;
+  }
+
+  /**
+   * 获取LLM适配器（供WorkflowEngine等外部模块访问）
+   */
+  getLlm(): LLMAdapter {
+    return this.llm;
+  }
+
+  // ========== 人机协作辅助方法 ==========
+
+  /**
+   * 检查是否需要请求审批
+   *
+   * @param stage 生命周期阶段
+   * @returns 是否需要审批
+   */
+  protected shouldRequestApproval(stage: LifecycleStage): boolean {
+    return this.approvalFlow !== undefined && this.approvalStages?.includes(stage) === true;
+  }
+
+  /**
+   * 请求审批（如果需要）
+   *
+   * @param result 结果数据
+   * @param context 执行上下文
+   * @returns 审批响应
+   */
+  protected async requestApprovalIfNeeded(
+    result: unknown,
+    context: ExecutionContext
+  ): Promise<ApprovalResponse> {
+    if (!this.approvalFlow) {
+      // 没有配置审批流程，自动批准
+      return {
+        approvalId: uuidv4(),
+        approved: true,
+        timestamp: new Date(),
+      };
+    }
+
+    return this.approvalFlow.requestApproval(result, context);
+  }
+
+  /**
+   * 保存检查点（如果启用）
+   *
+   * @param executionId 执行ID
+   * @param iteration 迭代次数
+   * @param context 执行上下文
+   * @param stageName 阶段名称
+   * @param additionalData 额外数据（可选）
+   */
+  protected async saveCheckpointIfEnabled(
+    executionId: string,
+    iteration: number,
+    context: ExecutionContext,
+    stageName: string,
+    additionalData?: Record<string, unknown>
+  ): Promise<void> {
+    if (!this.enableCheckpoints || !this.checkpointManager) {
+      return;
+    }
+
+    try {
+      // 收集记忆快照
+      const memorySnapshot = await this.memory.getAll();
+
+      // 收集上下文快照
+      const contextSnapshot: Record<string, unknown> = {
+        executionId: context.executionId,
+        agentName: context.agentName,
+        currentStage: context.currentStage,
+        metadata: context.metadata,
+      };
+
+      // 收集状态快照
+      const stateSnapshot: Record<string, unknown> = {
+        initialized: this.initialized,
+        ...additionalData,
+      };
+
+      await this.checkpointManager.saveCheckpoint(
+        this.name,
+        executionId,
+        iteration,
+        memorySnapshot,
+        contextSnapshot,
+        stateSnapshot,
+        [stageName],
+        `阶段: ${stageName}`
+      );
+
+      console.log(`[Agent] 检查点已保存: ${stageName} (迭代 ${iteration})`);
+    } catch (error) {
+      console.error(`[Agent] 保存检查点失败: ${error}`);
+      // 不抛出错误，继续执行
+    }
+  }
+
+  /**
+   * 从检查点恢复执行
+   *
+   * @param checkpointId 检查点ID
+   * @param executionId 执行ID（可选）
+   * @returns 恢复的检查点
+   */
+  static async resumeFromCheckpoint(
+    checkpointId: string,
+    executionId?: string
+  ): Promise<{
+    checkpoint: unknown;
+    context: unknown;
+  }> {
+    // TODO: 实现从检查点恢复的逻辑
+    // 这需要在子类中实现，因为需要知道具体的Agent类型
+    throw new Error('resumeFromCheckpoint需要在子类中实现');
   }
 
   /**

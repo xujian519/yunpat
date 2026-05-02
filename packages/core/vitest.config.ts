@@ -11,6 +11,8 @@ export default defineConfig({
       '**/*.bench.test.ts',
       '**/*.perf.test.ts',
       '**/performance/**',
+      '**/*integration*.test.ts',
+      '**/integration/**',
     ],
     testTimeout: 30000,
     hookTimeout: 30000,

@@ -129,8 +129,8 @@ describe('ApiKeyManager', () => {
       };
 
       const apiKey = await apiKeyManager.generateApiKey(info);
-      const parts = apiKey.split('_');
-      const keyId = parts[1];
+      // keyId 是 base64url(8 bytes) = 固定 11 字符，位于 "yunpat_" 之后
+      const keyId = apiKey.slice('yunpat_'.length, 'yunpat_'.length + 11);
 
       await apiKeyManager.deleteApiKey(keyId);
 

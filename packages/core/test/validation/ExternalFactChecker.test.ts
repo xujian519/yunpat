@@ -140,11 +140,12 @@ describe('ExternalFactChecker', () => {
         { rating: '部分真实', expected: 'MIXED' },
       ];
 
-      for (const testCase of testCases) {
+      for (let i = 0; i < testCases.length; i++) {
+        const testCase = testCases[i];
         const mockResponse: GoogleFactCheckResponse = {
           claims: [
             {
-              text: '测试声明',
+              text: `测试声明${i}`,
               claimReview: [
                 {
                   publisher: { name: '测试来源', site: 'https://test.com' },
@@ -161,7 +162,7 @@ describe('ExternalFactChecker', () => {
           json: async () => mockResponse,
         });
 
-        const result = await checker.verifyClaim('测试声明');
+        const result = await checker.verifyClaim(`测试声明${i}`);
         expect(result.isValid).toBe(testCase.expected);
       }
     });

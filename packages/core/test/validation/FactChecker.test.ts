@@ -238,4 +238,64 @@ describe('FactChecker', () => {
       expect(Array.isArray(results)).toBe(true);
     });
   });
+
+  describe('外部API验证', () => {
+    it('应该抛出错误（未启用外部API）', async () => {
+      const claim = {
+        id: '1',
+        content: 'test',
+        category: 'general_statement' as any,
+        confidence: 0.5,
+      };
+
+      await expect(factChecker.verifyWithExternalAPI(claim)).rejects.toThrow();
+    });
+
+    it('应该批量抛出错误（未启用外部API）', async () => {
+      const claims = [{
+        id: '1',
+        content: 'test',
+        category: 'general_statement' as any,
+        confidence: 0.5,
+      }];
+
+      await expect(factChecker.verifyClaimsWithExternalAPI(claims)).rejects.toThrow();
+    });
+
+    it('应该返回外部验证器状态', () => {
+      const status = factChecker.getExternalCheckerStatus();
+      expect(status.enabled).toBe(false);
+      expect(status.configured).toBe(false);
+    });
+
+    it('应该安全清除外部缓存', () => {
+      expect(() => factChecker.clearExternalCache()).not.toThrow();
+    });
+  });
+
+  describe('交叉验证', () => {
+    it('应该进行交叉验证', async () => {
+      const mockKB = {
+        search: vi.fn().mockResolvedValue([
+          { score: 0.9, entry: { id: '1', title: 'Test', priority: 9 } },
+        ]),
+      };
+
+      const fc = new FactChecker(mockLLM, mockKB as any, {
+        extractionMethod: 'regex',
+        verificationMethods: ['knowledge_base'],
+      });
+
+      const claim = {
+        id: '1',
+        content: '根据专利法第25条规定',
+        category: 'legal_precedent' as any,
+        confidence: 0.9,
+      };
+
+      const result = await fc.verifyCrossSources(claim);
+      expect(result).toBeDefined();
+      expect(result.claim).toBeDefined();
+    });
+  });
 });

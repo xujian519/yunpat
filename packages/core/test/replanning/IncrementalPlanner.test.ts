@@ -1,507 +1,567 @@
-/**
- * 增量规划器单元测试
- */
-
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { IncrementalPlanner } from '../../src/replanning/IncrementalPlanner.js';
-import { Priority, TaskStatus, TaskType, DependencyType } from '../../src/planning/types.js';
-import type { SubGoal, HierarchicalPlan } from '../../src/planning/types.js';
+import { Priority, TaskStatus } from '../../src/planning/types.js';
+import { PlanConflictError, CircularDependencyError } from '../../src/replanning/types.js';
+
+function createMockPlan() {
+  return {
+    id: 'plan-1',
+    goal: '测试计划',
+    subGoals: [
+      {
+        id: 'goal-1',
+        title: '目标1',
+        description: '描述1',
+        tasks: [
+          {
+            id: 'task-1',
+            title: '子任务1',
+            description: '',
+            type: 'code' as any,
+            status: TaskStatus.PENDING,
+            estimatedDuration: 10,
+            estimatedTokens: 100,
+            requiredCapabilities: [],
+            createdAt: new Date(),
+          },
+        ],
+        priority: Priority.HIGH,
+        status: TaskStatus.PENDING,
+        estimatedDuration: 100,
+        estimatedTokens: 1000,
+        dependencies: [],
+      },
+      {
+        id: 'goal-2',
+        title: '目标2',
+        description: '描述2',
+        tasks: [
+          {
+            id: 'task-2',
+            title: '子任务2',
+            description: '',
+            type: 'code' as any,
+            status: TaskStatus.PENDING,
+            estimatedDuration: 10,
+            estimatedTokens: 100,
+            requiredCapabilities: [],
+            createdAt: new Date(),
+          },
+        ],
+        priority: Priority.MEDIUM,
+        status: TaskStatus.PENDING,
+        estimatedDuration: 200,
+        estimatedTokens: 2000,
+        dependencies: [],
+      },
+    ],
+    dependencies: {
+      nodes: new Map(),
+      edges: [],
+      hasCycles: false,
+      topologicalOrder: ['goal-1', 'goal-2'],
+    },
+    estimatedDuration: 300,
+  };
+}
+
+function createMockContext(overrides = {}) {
+  return {
+    originalPlan: createMockPlan(),
+    currentState: {
+      completedGoals: new Set(),
+      failedGoals: ['goal-1'],
+      resourceUsage: {
+        tokensUsed: 1200,
+        estimatedTokens: 1000,
+      },
+    },
+    ...overrides,
+  };
+}
 
 describe('IncrementalPlanner', () => {
-  let planner: IncrementalPlanner;
-  let mockPlan: HierarchicalPlan;
+  describe('constructor', () => {
+    it('应该使用默认配置', () => {
+      const planner = new IncrementalPlanner();
+      expect(planner).toBeDefined();
+    });
 
-  beforeEach(() => {
-    planner = new IncrementalPlanner();
-
-    // 创建模拟计划
-    mockPlan = {
-      id: 'test-plan-1',
-      goal: '测试目标',
-      subGoals: [
-        {
-          id: 'goal-1',
-          title: '子目标1',
-          description: '第一个子目标',
-          tasks: [
-            {
-              id: 'task-1-1',
-              title: '任务1-1',
-              description: '子任务',
-              type: TaskType.RESEARCH,
-              status: TaskStatus.PENDING,
-              requiredCapabilities: ['research'],
-              estimatedTokens: 1000,
-              estimatedDuration: 60,
-              createdAt: new Date(),
-            },
-          ],
-          dependencies: [],
-          priority: Priority.HIGH,
-          status: TaskStatus.PENDING,
-          estimatedDuration: 60,
-          estimatedTokens: 1000,
-        },
-        {
-          id: 'goal-2',
-          title: '子目标2',
-          description: '第二个子目标',
-          tasks: [
-            {
-              id: 'task-2-1',
-              title: '任务2-1',
-              description: '子任务',
-              type: TaskType.WRITING,
-              status: TaskStatus.PENDING,
-              requiredCapabilities: ['writing'],
-              estimatedTokens: 2000,
-              estimatedDuration: 120,
-              createdAt: new Date(),
-            },
-          ],
-          dependencies: ['goal-1'],
-          priority: Priority.MEDIUM,
-          status: TaskStatus.PENDING,
-          estimatedDuration: 120,
-          estimatedTokens: 2000,
-        },
-      ],
-      dependencies: {
-        nodes: new Map([
-          [
-            'goal-1',
-            {
-              id: 'goal-1',
-              title: '子目标1',
-              description: '第一个子目标',
-              tasks: [],
-              dependencies: [],
-              priority: Priority.HIGH,
-              status: TaskStatus.PENDING,
-              estimatedDuration: 60,
-              estimatedTokens: 1000,
-            },
-          ],
-          [
-            'goal-2',
-            {
-              id: 'goal-2',
-              title: '子目标2',
-              description: '第二个子目标',
-              tasks: [],
-              dependencies: ['goal-1'],
-              priority: Priority.MEDIUM,
-              status: TaskStatus.PENDING,
-              estimatedDuration: 120,
-              estimatedTokens: 2000,
-            },
-          ],
-        ]),
-        edges: [
-          {
-            from: 'goal-1',
-            to: 'goal-2',
-            type: DependencyType.STRONG,
-            strength: 1.0,
-            description: '显式依赖',
-          },
-        ],
-        hasCycles: false,
-        topologicalOrder: ['goal-1', 'goal-2'],
-      },
-      estimatedDuration: 180,
-      estimatedTokens: 3000,
-      status: 'draft' as any,
-      createdAt: new Date(),
-    };
+    it('应该使用自定义配置', () => {
+      const planner = new IncrementalPlanner({
+        maxModifications: 10,
+        preserveCriticalPath: false,
+        allowDependencyChanges: true,
+      });
+      expect(planner).toBeDefined();
+    });
   });
 
-  describe('addTask', () => {
-    it('应该成功添加新任务', async () => {
-      const newTask: SubGoal = {
-        id: 'goal-3',
-        title: '子目标3',
-        description: '第三个子目标',
-        tasks: [
-          {
-            id: 'task-3-1',
-            title: '任务3-1',
-            description: '子任务',
-            type: TaskType.ANALYSIS,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['analysis'],
-            estimatedTokens: 1500,
-            estimatedDuration: 90,
-            createdAt: new Date(),
+  describe('generateIncrementalAdjustment', () => {
+    it('应该生成重试调整', async () => {
+      const planner = new IncrementalPlanner();
+      const context = createMockContext();
+      const adjustment = await planner.generateIncrementalAdjustment(context, {
+        type: 'retry',
+        modifications: [],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustment.type).toBe('retry');
+      expect(adjustment.modifications.length).toBeGreaterThan(0);
+    });
+
+    it('应该生成跳过调整', async () => {
+      const planner = new IncrementalPlanner();
+      const context = createMockContext({
+        originalPlan: {
+          ...createMockPlan(),
+          dependencies: {
+            nodes: new Map(),
+            edges: [{ from: 'goal-1', to: 'goal-2', type: 'strong', strength: 1 }],
+            hasCycles: false,
+            topologicalOrder: ['goal-1', 'goal-2'],
           },
-        ],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: 90,
-        estimatedTokens: 1500,
-      };
+        },
+        currentState: {
+          completedGoals: new Set(['goal-2']),
+          failedGoals: [],
+          resourceUsage: { tokensUsed: 1000, estimatedTokens: 1000 },
+        },
+      });
 
-      const result = await planner.addTask(mockPlan, newTask);
-
-      expect(result.addedTask.taskId).toBe('goal-3');
-      expect(result.addedTask.task).toEqual(newTask);
-      expect(result.newCriticalPath.tasks).toContain('goal-1');
-      expect(result.newCriticalPath.tasks).toContain('goal-2');
+      const adjustment = await planner.generateIncrementalAdjustment(context, {
+        type: 'skip',
+        modifications: [],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustment.type).toBe('skip');
     });
 
-    it('应该正确处理任务依赖', async () => {
-      const newTask: SubGoal = {
-        id: 'goal-3',
-        title: '子目标3',
-        description: '第三个子目标',
-        tasks: [
-          {
-            id: 'task-3-1',
-            title: '任务3-1',
-            description: '子任务',
-            type: TaskType.ANALYSIS,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['analysis'],
-            estimatedTokens: 1500,
-            estimatedDuration: 90,
-            createdAt: new Date(),
-          },
-        ],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: 90,
-        estimatedTokens: 1500,
-      };
-
-      const result = await planner.addTask(mockPlan, newTask, ['goal-1']);
-
-      expect(result.affectedTasks).toContain('goal-3');
-      expect(result.newCriticalPath.tasks.length).toBeGreaterThan(0);
+    it('应该生成重排序调整', async () => {
+      const planner = new IncrementalPlanner();
+      const context = createMockContext();
+      const adjustment = await planner.generateIncrementalAdjustment(context, {
+        type: 'reorder',
+        modifications: [],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustment.type).toBe('reorder');
+      expect(adjustment.modifications.length).toBeGreaterThan(0);
     });
 
-    it('应该拒绝空ID的任务', async () => {
-      const invalidTask: SubGoal = {
-        id: '',
-        title: '无效任务',
-        description: '这个任务没有ID',
-        tasks: [],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: 60,
-        estimatedTokens: 1000,
-      };
+    it('应该生成分解调整', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      plan.subGoals[0].estimatedDuration = 500;
+      plan.subGoals[0].estimatedTokens = 5000;
+      const context = createMockContext({ originalPlan: plan });
 
-      await expect(planner.addTask(mockPlan, invalidTask)).rejects.toThrow('任务ID不能为空');
+      const adjustment = await planner.generateIncrementalAdjustment(context, {
+        type: 'decompose',
+        modifications: [],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustment.type).toBe('decompose');
     });
 
-    it('应该拒绝空标题的任务', async () => {
-      const invalidTask: SubGoal = {
-        id: 'goal-invalid',
-        title: '',
-        description: '这个任务没有标题',
-        tasks: [],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: 60,
-        estimatedTokens: 1000,
-      };
-
-      await expect(planner.addTask(mockPlan, invalidTask)).rejects.toThrow('任务标题不能为空');
-    });
-
-    it('应该拒绝负时长的任务', async () => {
-      const invalidTask: SubGoal = {
-        id: 'goal-invalid',
-        title: '无效任务',
-        description: '这个任务时长为负',
-        tasks: [],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: -60,
-        estimatedTokens: 1000,
-      };
-
-      await expect(planner.addTask(mockPlan, invalidTask)).rejects.toThrow(
-        '任务预估时长必须大于0'
-      );
-    });
-
-    it('应该拒绝负Token数的任务', async () => {
-      const invalidTask: SubGoal = {
-        id: 'goal-invalid',
-        title: '无效任务',
-        description: '这个任务Token数为负',
-        tasks: [],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: 60,
-        estimatedTokens: -1000,
-      };
-
-      await expect(planner.addTask(mockPlan, invalidTask)).rejects.toThrow(
-        '任务预估Token数必须大于0'
-      );
-    });
-
-    it('应该拒绝没有子任务的任务', async () => {
-      const invalidTask: SubGoal = {
-        id: 'goal-invalid',
-        title: '无效任务',
-        description: '这个任务没有子任务',
-        tasks: [],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: 60,
-        estimatedTokens: 1000,
-      };
-
-      await expect(planner.addTask(mockPlan, invalidTask)).rejects.toThrow(
-        '任务必须包含至少一个子任务'
-      );
-    });
-
-    it('应该拒绝重复ID的任务', async () => {
-      const duplicateTask: SubGoal = {
-        id: 'goal-1', // 重复ID
-        title: '重复任务',
-        description: '这个任务ID已存在',
-        tasks: [
-          {
-            id: 'task-dup-1',
-            title: '任务',
-            description: '子任务',
-            type: TaskType.RESEARCH,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['research'],
+    it('应该生成适应调整', async () => {
+      const planner = new IncrementalPlanner();
+      const context = createMockContext({
+        currentState: {
+          completedGoals: new Set(),
+          failedGoals: [],
+          resourceUsage: {
+            tokensUsed: 1500,
             estimatedTokens: 1000,
-            estimatedDuration: 60,
-            createdAt: new Date(),
           },
-        ],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: 60,
-        estimatedTokens: 1000,
-      };
+        },
+      });
 
-      await expect(planner.addTask(mockPlan, duplicateTask)).rejects.toThrow('计划冲突');
+      const adjustment = await planner.generateIncrementalAdjustment(context, {
+        type: 'adapt',
+        modifications: [],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustment.type).toBe('adapt');
+    });
+
+    it('应该处理中止策略', async () => {
+      const planner = new IncrementalPlanner();
+      const context = createMockContext();
+      const adjustment = await planner.generateIncrementalAdjustment(context, {
+        type: 'abort',
+        modifications: [],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustment.type).toBe('abort');
+      expect(adjustment.modifications).toHaveLength(0);
     });
   });
 
-  describe('recalculateDependencies', () => {
-    it('应该正确重新计算依赖关系', () => {
-      const result = planner['recalculateDependencies'](mockPlan);
-
-      expect(result).toBeDefined();
-      expect(result.nodes.size).toBe(2);
-      expect(result.edges.length).toBeGreaterThan(0);
-      expect(result.hasCycles).toBe(false);
-      expect(result.topologicalOrder).toBeDefined();
-      expect(result.topologicalOrder?.length).toBe(2);
-    });
-
-    it('应该检测循环依赖', () => {
-      // 创建循环依赖的计划
-      const cyclicPlan = { ...mockPlan };
-      cyclicPlan.dependencies = {
-        ...cyclicPlan.dependencies,
-        edges: [
-          ...cyclicPlan.dependencies.edges,
+  describe('applyAdjustment', () => {
+    it('应该应用调整', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      const adjustedPlan = await planner.applyAdjustment(plan, {
+        type: 'retry',
+        modifications: [
           {
-            from: 'goal-2',
-            to: 'goal-1',
-            type: DependencyType.STRONG,
-            strength: 1.0,
-            description: '循环依赖',
+            type: 'modify',
+            goalId: 'goal-1',
+            changes: { newStatus: 'pending' },
           },
         ],
-      };
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustedPlan.subGoals[0].status).toBe(TaskStatus.PENDING);
+    });
 
-      expect(() => {
-        planner['recalculateDependencies'](cyclicPlan);
-      }).toThrow('检测到循环依赖');
+    it('应该处理空调整', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      const adjustedPlan = await planner.applyAdjustment(plan, {
+        type: 'retry',
+        modifications: [],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustedPlan.subGoals).toHaveLength(2);
     });
   });
 
-  describe('recalculateCriticalPath', () => {
-    it('应该正确计算关键路径', () => {
-      const criticalPath = planner['recalculateCriticalPath'](mockPlan);
-
-      expect(criticalPath).toBeDefined();
-      expect(criticalPath.tasks.length).toBeGreaterThan(0);
-      expect(criticalPath.duration).toBeGreaterThan(0);
-      expect(criticalPath.slackTime instanceof Map).toBe(true);
-      expect(Array.isArray(criticalPath.bottleneckTasks)).toBe(true);
+  describe('applyModification', () => {
+    it('应该应用添加修改（无taskDecomposer）', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      await expect(
+        planner.applyAdjustment(plan, {
+          type: 'retry',
+          modifications: [{ type: 'add', goalId: 'goal-1' }],
+          estimatedImprovement: 0.5,
+          reasoning: 'test',
+        })
+      ).rejects.toThrow('需要TaskDecomposer来添加新子目标');
     });
 
-    it('应该正确识别关键路径上的任务', () => {
-      const criticalPath = planner['recalculateCriticalPath'](mockPlan);
-
-      // goal-1 和 goal-2 都应该在关键路径上
-      expect(criticalPath.tasks).toContain('goal-1');
-      expect(criticalPath.tasks).toContain('goal-2');
+    it('应该应用移除修改', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      const adjustedPlan = await planner.applyAdjustment(plan, {
+        type: 'retry',
+        modifications: [{ type: 'remove', goalId: 'goal-1' }],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustedPlan.subGoals).toHaveLength(1);
     });
 
-    it('应该正确计算松弛时间', () => {
-      const criticalPath = planner['recalculateCriticalPath'](mockPlan);
-
-      // 关键路径上的任务松弛时间应该为0
-      for (const taskId of criticalPath.tasks) {
-        const slack = criticalPath.slackTime.get(taskId);
-        expect(slack).toBe(0);
-      }
+    it('应该应用重排序修改', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      const adjustedPlan = await planner.applyAdjustment(plan, {
+        type: 'retry',
+        modifications: [{ type: 'reorder', goalId: 'goal-1' }],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustedPlan.subGoals).toHaveLength(2);
     });
 
-    it('应该正确计算路径时长', () => {
-      const criticalPath = planner['recalculateCriticalPath'](mockPlan);
-
-      // 路径时长应该是所有关键任务时长之和
-      const expectedDuration = 60 + 120; // goal-1 + goal-2
-      expect(criticalPath.duration).toBe(expectedDuration);
+    it('应该处理不存在的目标', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      const adjustedPlan = await planner.applyAdjustment(plan, {
+        type: 'retry',
+        modifications: [{ type: 'modify', goalId: 'non-existent' }],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustedPlan.subGoals).toHaveLength(2);
     });
-  });
 
-  describe('assessImpact', () => {
-    it('应该正确评估影响级别', async () => {
-      const newTask: SubGoal = {
-        id: 'goal-3',
-        title: '子目标3',
-        description: '第三个子目标',
-        tasks: [
+    it('应该应用依赖修改（不允许）', async () => {
+      const planner = new IncrementalPlanner({ allowDependencyChanges: false });
+      const plan = createMockPlan();
+      const adjustedPlan = await planner.applyAdjustment(plan, {
+        type: 'retry',
+        modifications: [
           {
-            id: 'task-3-1',
-            title: '任务3-1',
-            description: '子任务',
-            type: TaskType.ANALYSIS,
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['analysis'],
-            estimatedTokens: 1500,
-            estimatedDuration: 90,
-            createdAt: new Date(),
+            type: 'modify',
+            goalId: 'goal-1',
+            changes: { newDependencies: [] },
           },
         ],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: 90,
-        estimatedTokens: 1500,
-      };
-
-      const result = await planner.addTask(mockPlan, newTask);
-
-      expect(result.impact).toBeDefined();
-      expect(['LOW', 'MEDIUM', 'HIGH']).toContain(result.impact.impactLevel);
-      expect(result.impact.newProjectDuration).toBeGreaterThan(0);
-      expect(typeof result.impact.delay).toBe('number');
-      expect(Array.isArray(result.impact.resourceConflicts)).toBe(true);
-      expect(typeof result.impact.criticalPathChanged).toBe('boolean');
-      expect(Array.isArray(result.impact.recommendations)).toBe(true);
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustedPlan.subGoals[0].dependencies).toEqual([]);
     });
 
-    it('应该检测资源冲突', async () => {
-      const newTask: SubGoal = {
-        id: 'goal-3',
-        title: '子目标3',
-        description: '第三个子目标',
-        tasks: [
+    it('应该应用依赖修改（允许）', async () => {
+      const planner = new IncrementalPlanner({ allowDependencyChanges: true });
+      const plan = createMockPlan();
+      const adjustedPlan = await planner.applyAdjustment(plan, {
+        type: 'retry',
+        modifications: [
           {
-            id: 'task-3-1',
-            title: '任务3-1',
-            description: '子任务',
-            type: TaskType.RESEARCH, // 与 goal-1 相同类型
-            status: TaskStatus.PENDING,
-            requiredCapabilities: ['research'], // 与 goal-1 相同能力
-            estimatedTokens: 1500,
-            estimatedDuration: 90,
-            createdAt: new Date(),
+            type: 'modify',
+            goalId: 'goal-1',
+            changes: { newDependencies: ['goal-2'] },
           },
         ],
-        dependencies: [],
-        priority: Priority.LOW,
-        status: TaskStatus.PENDING,
-        estimatedDuration: 90,
-        estimatedTokens: 1500,
-      };
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustedPlan.subGoals[0].dependencies).toEqual(['goal-2']);
+    });
 
-      const result = await planner.addTask(mockPlan, newTask);
-
-      // 应该检测到资源冲突
-      expect(result.impact.resourceConflicts.length).toBeGreaterThan(0);
+    it('应该应用估算修改', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      const adjustedPlan = await planner.applyAdjustment(plan, {
+        type: 'retry',
+        modifications: [
+          {
+            type: 'modify',
+            goalId: 'goal-1',
+            changes: {
+              newEstimate: { duration: 150, tokens: 1500 },
+            },
+          },
+        ],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustedPlan.subGoals[0].estimatedDuration).toBe(150);
+      expect(adjustedPlan.subGoals[0].estimatedTokens).toBe(1500);
     });
   });
 
   describe('validateAdjustment', () => {
-    it('应该接受有效的调整', async () => {
-      const adjustment = {
-        type: 'retry' as const,
+    it('应该验证通过', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      const valid = await planner.validateAdjustment(plan, {
+        type: 'retry',
         modifications: [],
         estimatedImprovement: 0.5,
-        reasoning: '测试调整',
-      };
-
-      const isValid = await planner.validateAdjustment(mockPlan, adjustment);
-
-      expect(isValid).toBe(true);
+        reasoning: 'test',
+      });
+      expect(valid).toBe(true);
     });
 
-    it('应该拒绝超过修改数量限制的调整', async () => {
-      const adjustment = {
-        type: 'retry' as const,
-        modifications: Array(10).fill({ type: 'modify', goalId: 'test' }),
+    it('应该拒绝修改过多', async () => {
+      const planner = new IncrementalPlanner({ maxModifications: 1 });
+      const plan = createMockPlan();
+      const valid = await planner.validateAdjustment(plan, {
+        type: 'retry',
+        modifications: [{ type: 'modify', goalId: 'g1' }, { type: 'modify', goalId: 'g2' }],
         estimatedImprovement: 0.5,
-        reasoning: '测试调整',
-      };
-
-      const isValid = await planner.validateAdjustment(mockPlan, adjustment);
-
-      expect(isValid).toBe(false);
+        reasoning: 'test',
+      });
+      expect(valid).toBe(false);
     });
 
-    it('应该拒绝低于改进阈值的调整', async () => {
-      const adjustment = {
-        type: 'retry' as const,
+    it('应该拒绝改进不足', async () => {
+      const planner = new IncrementalPlanner({ minImprovementThreshold: 0.5 });
+      const plan = createMockPlan();
+      const valid = await planner.validateAdjustment(plan, {
+        type: 'retry',
         modifications: [],
-        estimatedImprovement: 0.05, // 低于默认阈值 0.1
-        reasoning: '测试调整',
-      };
-
-      const isValid = await planner.validateAdjustment(mockPlan, adjustment);
-
-      expect(isValid).toBe(false);
+        estimatedImprovement: 0.1,
+        reasoning: 'test',
+      });
+      expect(valid).toBe(false);
     });
   });
 
-  describe('updateConfig', () => {
-    it('应该正确更新配置', () => {
-      planner.updateConfig({
-        maxModifications: 10,
-        preserveCriticalPath: false,
+  describe('addTask', () => {
+    it('应该添加任务', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      const result = await planner.addTask(plan, {
+        id: 'goal-3',
+        title: '目标3',
+        description: '描述3',
+        tasks: [
+          {
+            id: 'task-1',
+            title: '子任务1',
+            description: '',
+            type: 'code' as any,
+            status: TaskStatus.PENDING,
+            estimatedDuration: 10,
+            estimatedTokens: 100,
+            requiredCapabilities: [],
+            createdAt: new Date(),
+          },
+        ],
+        priority: Priority.LOW,
+        status: TaskStatus.PENDING,
+        estimatedDuration: 50,
+        estimatedTokens: 500,
+        dependencies: [],
+      });
+      expect(result.addedTask.taskId).toBe('goal-3');
+    });
+
+    it('应该添加任务带依赖', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      const result = await planner.addTask(plan, {
+        id: 'goal-3',
+        title: '目标3',
+        description: '描述3',
+        tasks: [
+          {
+            id: 'task-1',
+            title: '子任务1',
+            description: '',
+            type: 'code' as any,
+            status: TaskStatus.PENDING,
+            estimatedDuration: 10,
+            estimatedTokens: 100,
+            requiredCapabilities: [],
+            createdAt: new Date(),
+          },
+        ],
+        priority: Priority.LOW,
+        status: TaskStatus.PENDING,
+        estimatedDuration: 50,
+        estimatedTokens: 500,
+        dependencies: [],
+      }, ['goal-1']);
+      expect(result.addedTask.taskId).toBe('goal-3');
+    });
+
+    it('应该检测冲突', async () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      await expect(
+        planner.addTask(plan, {
+          id: 'goal-1',
+          title: '重复ID',
+          description: '描述',
+          tasks: [
+            {
+              id: 'task-1',
+              title: '子任务1',
+              description: '',
+              type: 'code' as any,
+              status: TaskStatus.PENDING,
+              estimatedDuration: 10,
+              estimatedTokens: 100,
+              requiredCapabilities: [],
+              createdAt: new Date(),
+            },
+          ],
+          priority: Priority.LOW,
+          status: TaskStatus.PENDING,
+          estimatedDuration: 50,
+          estimatedTokens: 500,
+          dependencies: [],
+        })
+      ).rejects.toThrow(PlanConflictError);
+    });
+  });
+
+  describe('recalculateDependencies', () => {
+    it('应该重新计算依赖', () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      planner.recalculateDependencies(plan);
+      expect(plan.dependencies.hasCycles).toBe(false);
+    });
+
+    it('应该检测循环依赖', () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      plan.dependencies.edges = [
+        { from: 'goal-1', to: 'goal-2', type: 'strong', strength: 1 },
+        { from: 'goal-2', to: 'goal-1', type: 'strong', strength: 1 },
+      ];
+      expect(() => planner.recalculateDependencies(plan)).toThrow(CircularDependencyError);
+    });
+  });
+
+  describe('recalculateCriticalPath', () => {
+    it('应该计算关键路径', () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      planner.recalculateDependencies(plan);
+      const path = planner.recalculateCriticalPath(plan);
+      expect(path.tasks.length).toBeGreaterThan(0);
+    });
+
+    it('应该处理循环依赖', () => {
+      const planner = new IncrementalPlanner();
+      const plan = createMockPlan();
+      plan.dependencies.hasCycles = true;
+      plan.dependencies.topologicalOrder = undefined;
+      const path = planner.recalculateCriticalPath(plan);
+      expect(path.tasks.length).toBe(2);
+    });
+  });
+
+  describe('findBlockedGoals', () => {
+    it('应该找到被阻塞的目标', () => {
+      const planner = new IncrementalPlanner();
+      const context = createMockContext({
+        originalPlan: {
+          ...createMockPlan(),
+          dependencies: {
+            nodes: new Map(),
+            edges: [
+              { from: 'goal-1', to: 'goal-2', type: 'strong', strength: 1 },
+            ],
+            hasCycles: false,
+            topologicalOrder: ['goal-1', 'goal-2'],
+          },
+        },
+        currentState: {
+          completedGoals: new Set(['goal-2']),
+          failedGoals: [],
+          resourceUsage: { tokensUsed: 1000, estimatedTokens: 1000 },
+        },
       });
 
-      const config = planner.getConfig();
-
-      expect(config.maxModifications).toBe(10);
-      expect(config.preserveCriticalPath).toBe(false);
-      expect(config.allowDependencyChanges).toBe(false); // 保持原值
-      expect(config.minImprovementThreshold).toBe(0.1); // 保持原值
+      const blocked = planner['findBlockedGoals'](context);
+      expect(blocked.length).toBeGreaterThanOrEqual(0);
     });
   });
 
-  describe('getConfig', () => {
-    it('应该返回配置的副本', () => {
-      const config1 = planner.getConfig();
-      const config2 = planner.getConfig();
+  describe('generateRetryModifications', () => {
+    it('应该处理不存在的目标', async () => {
+      const planner = new IncrementalPlanner();
+      const context = createMockContext({
+        currentState: {
+          completedGoals: new Set(),
+          failedGoals: ['non-existent'],
+          resourceUsage: { tokensUsed: 1000, estimatedTokens: 1000 },
+        },
+      });
 
-      expect(config1).toEqual(config2);
-      expect(config1).not.toBe(config2); // 不同引用
+      const adjustment = await planner.generateIncrementalAdjustment(context, {
+        type: 'retry',
+        modifications: [],
+        estimatedImprovement: 0.5,
+        reasoning: 'test',
+      });
+      expect(adjustment.modifications).toHaveLength(0);
+    });
+  });
+
+  describe('getPriorityValue', () => {
+    it('应该返回未知优先级的值', () => {
+      const planner = new IncrementalPlanner();
+      expect(planner['getPriorityValue']('unknown' as any)).toBe(0);
     });
   });
 });

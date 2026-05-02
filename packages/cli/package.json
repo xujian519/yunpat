@@ -18,18 +18,27 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@yunpat/core": "workspace:*",
-    "@yunpat/agent-writer": "workspace:*",
+    "@yunpat/agent-analysis": "workspace:*",
+    "@yunpat/agent-claims": "workspace:*",
+    "@yunpat/agent-quality": "workspace:*",
+    "@yunpat/agent-specification": "workspace:*",
+    "@yunpat/agent-invention": "workspace:*",
     "@yunpat/agent-researcher": "workspace:*",
-    "commander": "^11.1.0",
+    "@yunpat/agent-search": "workspace:*",
+    "@yunpat/agent-writer": "workspace:*",
+    "@yunpat/core": "workspace:*",
+    "@yunpat/patent-tools": "workspace:*",
     "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.12",
     "ora": "^8.0.1",
-    "inquirer": "^9.2.12"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0",
     "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.11.0",
     "typescript": "^5.3.3",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^1.2.0"
   },
   "keywords": [

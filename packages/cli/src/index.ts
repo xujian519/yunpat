@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { createAgentFramework, runAgent, listAgents } from './commands.js';
+import { createAgentFramework, runAgent, listAgents, draftPatent, searchPatents, generateClaims, analyzePatent, generateSpecification, checkPatent, fullPatentWorkflow } from './commands.js';
 
 const program = new Command();
 
@@ -40,7 +40,231 @@ program
     console.log(chalk.gray('交互式对话功能即将推出'));
   });
 
-// 查看日志
+// 专利撰写
+program
+  .command('draft')
+  .description('专利撰写（发明理解阶段）')
+  .requiredOption('--title <title>', '发明名称')
+  .requiredOption('--field <field>', '技术领域')
+  .requiredOption('--disclosure <file>', '技术交底书文件路径')
+  .option('-o, --output <file>', '输出报告文件路径')
+  .action(async (options) => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    let disclosure: string;
+    try {
+      const resolvedPath = path.resolve(options.disclosure);
+      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+    } catch (err) {
+      console.error(
+        chalk.red(
+          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
+        )
+      );
+      process.exit(1);
+    }
+
+    await draftPatent({
+      title: options.title,
+      field: options.field,
+      disclosure,
+      output: options.output,
+    });
+  });
+
+program
+  .command('search')
+  .description('专利检索（发明理解 + 检索策略 + 执行）')
+  .requiredOption('--title <title>', '发明名称')
+  .requiredOption('--field <field>', '技术领域')
+  .requiredOption('--disclosure <file>', '技术交底书文件路径')
+  .option('-o, --output <file>', '输出检索报告文件路径 (JSON)')
+  .action(async (options) => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    let disclosure: string;
+    try {
+      const resolvedPath = path.resolve(options.disclosure);
+      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+    } catch (err) {
+      console.error(
+        chalk.red(
+          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
+        )
+      );
+      process.exit(1);
+    }
+
+    await searchPatents({
+      title: options.title,
+      field: options.field,
+      disclosure,
+      output: options.output,
+    });
+  });
+
+program
+  .command('claims')
+  .description('权利要求生成（发明理解 + 权利要求撰写）')
+  .requiredOption('--title <title>', '发明名称')
+  .requiredOption('--field <field>', '技术领域')
+  .requiredOption('--disclosure <file>', '技术交底书文件路径')
+  .option('-o, --output <file>', '输出权利要求报告文件路径 (JSON)')
+  .action(async (options) => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    let disclosure: string;
+    try {
+      const resolvedPath = path.resolve(options.disclosure);
+      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+    } catch (err) {
+      console.error(
+        chalk.red(
+          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
+        )
+      );
+      process.exit(1);
+    }
+
+    await generateClaims({
+      title: options.title,
+      field: options.field,
+      disclosure,
+      output: options.output,
+    });
+  });
+
+program
+  .command('analyze')
+  .description('专利深度分析（发明理解 + 检索 + 对比分析 + 交底书再分析）')
+  .requiredOption('--title <title>', '发明名称')
+  .requiredOption('--field <field>', '技术领域')
+  .requiredOption('--disclosure <file>', '技术交底书文件路径')
+  .option('-o, --output <file>', '输出分析报告文件路径 (JSON)')
+  .action(async (options) => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    let disclosure: string;
+    try {
+      const resolvedPath = path.resolve(options.disclosure);
+      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+    } catch (err) {
+      console.error(
+        chalk.red(
+          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
+        )
+      );
+      process.exit(1);
+    }
+
+    await analyzePatent({
+      title: options.title,
+      field: options.field,
+      disclosure,
+      output: options.output,
+    });
+  });
+
+program
+  .command('spec')
+  .description('说明书撰写（发明理解 + 权利要求 + 说明书）')
+  .requiredOption('--title <title>', '发明名称')
+  .requiredOption('--field <field>', '技术领域')
+  .requiredOption('--disclosure <file>', '技术交底书文件路径')
+  .option('-o, --output <file>', '输出说明书报告文件路径 (JSON)')
+  .action(async (options) => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    let disclosure: string;
+    try {
+      const resolvedPath = path.resolve(options.disclosure);
+      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+    } catch (err) {
+      console.error(
+        chalk.red(
+          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
+        )
+      );
+      process.exit(1);
+    }
+
+    await generateSpecification({
+      title: options.title,
+      field: options.field,
+      disclosure,
+      output: options.output,
+    });
+  });
+
+program
+  .command('check')
+  .description('质量检查（发明理解 + 权利要求 + 说明书 + 质量检查）')
+  .requiredOption('--title <title>', '发明名称')
+  .requiredOption('--field <field>', '技术领域')
+  .requiredOption('--disclosure <file>', '技术交底书文件路径')
+  .option('-o, --output <file>', '输出质量检查报告文件路径 (JSON)')
+  .action(async (options) => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    let disclosure: string;
+    try {
+      const resolvedPath = path.resolve(options.disclosure);
+      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+    } catch (err) {
+      console.error(
+        chalk.red(
+          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
+        )
+      );
+      process.exit(1);
+    }
+
+    await checkPatent({
+      title: options.title,
+      field: options.field,
+      disclosure,
+      output: options.output,
+    });
+  });
+
+program
+  .command('full')
+  .description('完整专利撰写工作流 v1.1（发明理解 + 检索 + 权利要求 + 说明书 + 质量检查）')
+  .requiredOption('--title <title>', '发明名称')
+  .requiredOption('--field <field>', '技术领域')
+  .requiredOption('--disclosure <file>', '技术交底书文件路径')
+  .option('-o, --output <file>', '输出完整专利文件路径 (JSON)')
+  .action(async (options) => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    let disclosure: string;
+    try {
+      const resolvedPath = path.resolve(options.disclosure);
+      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+    } catch (err) {
+      console.error(
+        chalk.red(
+          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
+        )
+      );
+      process.exit(1);
+    }
+
+    await fullPatentWorkflow({
+      title: options.title,
+      field: options.field,
+      disclosure,
+      output: options.output,
+    });
+  });
+
 program
   .command('logs')
   .description('查看执行日志')

@@ -1,12 +1,8 @@
 import { defineConfig } from 'vitest/config';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@yunpat/core': '../../core/dist/index.js',
-      '@yunpat/core/src/planning/types.js': '../../core/dist/planning/types.js',
-    },
-  },
+  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     environment: 'node',

@@ -13,24 +13,18 @@
  * - TDD方式（测试驱动开发）
  */
 
-import { Agent } from '@yunpat/core';
-import type { LLMAdapter, ExecutionContext } from '@yunpat/core/src/lifecycle/Lifecycle.js';
+import { Agent, type LLMAdapter, type ExecutionContext, type EmbeddingAdapter, CardRetriever, CardPipeline, HallucinationDetector, KnowledgeBase } from '@yunpat/core';
 import {
   ObsidianKnowledgeBridge,
   type WikiCard,
   type WikiPage,
-} from '../../knowledge/ObsidianKnowledgeBridge.js';
-import { CardRetriever } from '@yunpat/core/src/knowledge/CardRetriever.js';
-import { CardPipeline } from '@yunpat/core/src/knowledge/CardPipeline.js';
-import type { EmbeddingAdapter } from '@yunpat/core/src/llm/EmbeddingAdapter.js';
-import { PromptTemplateManager } from '../../prompts/PromptTemplateManager.js';
+} from '@yunpat/patent-knowledge';
+import { PromptTemplateManager } from '@yunpat/patent-prompts';
 import * as PatentCore from '../../core/PatentCoreBridge.js';
 import {
   renderDraftingClaimsPrompt,
   renderDraftingSpecificationPrompt,
 } from '../../prompts/business/drafting.js';
-import { HallucinationDetector } from '@yunpat/core/src/validation/HallucinationDetector.js';
-import { KnowledgeBase } from '@yunpat/core/src/knowledge/KnowledgeBase.js';
 
 /**
  * 专利撰写输入

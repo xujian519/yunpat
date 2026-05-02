@@ -67,6 +67,101 @@ importers:
         specifier: ^5.4.1
         version: 5.4.1
 
+  packages/agents/analysis:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/claims:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@yunpat/patent-prompts':
+        specifier: workspace:*
+        version: link:../../patent-prompts
+      '@yunpat/patent-tools':
+        specifier: workspace:*
+        version: link:../../patent-tools
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/invention:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  packages/agents/patent-writer:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@yunpat/patent-core':
+        specifier: workspace:*
+        version: link:../../patent-core
+      '@yunpat/patent-knowledge':
+        specifier: workspace:*
+        version: link:../../patent-knowledge
+      '@yunpat/patent-prompts':
+        specifier: workspace:*
+        version: link:../../patent-prompts
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vite-tsconfig-paths:
+        specifier: ^6.1.1
+        version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/quality:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
   packages/agents/researcher:
     dependencies:
       '@langchain/core':
@@ -83,16 +178,63 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  packages/agents/writer:
+  packages/agents/search:
     dependencies:
-      '@langchain/core':
-        specifier: ^0.2.26
-        version: 0.2.36(openai@4.104.0(zod@3.25.76))
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
+      '@yunpat/patent-tools':
+        specifier: workspace:*
+        version: link:../../patent-tools
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vite-tsconfig-paths:
+        specifier: ^6.1.1
+        version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/specification:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@yunpat/patent-prompts':
+        specifier: workspace:*
+        version: link:../../patent-prompts
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/writer:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@yunpat/patent-core':
+        specifier: workspace:*
+        version: link:../../patent-core
+      '@yunpat/patent-knowledge':
+        specifier: workspace:*
+        version: link:../../patent-knowledge
+      '@yunpat/patent-prompts':
+        specifier: workspace:*
+        version: link:../../patent-prompts
       zod:
-        specifier: ^3.25.76
+        specifier: ^3.22.4
         version: 3.25.76
     devDependencies:
       '@types/node':
@@ -123,15 +265,36 @@ importers:
 
   packages/cli:
     dependencies:
+      '@yunpat/agent-analysis':
+        specifier: workspace:*
+        version: link:../agents/analysis
+      '@yunpat/agent-claims':
+        specifier: workspace:*
+        version: link:../agents/claims
+      '@yunpat/agent-invention':
+        specifier: workspace:*
+        version: link:../agents/invention
+      '@yunpat/agent-quality':
+        specifier: workspace:*
+        version: link:../agents/quality
       '@yunpat/agent-researcher':
         specifier: workspace:*
         version: link:../agents/researcher
+      '@yunpat/agent-search':
+        specifier: workspace:*
+        version: link:../agents/search
+      '@yunpat/agent-specification':
+        specifier: workspace:*
+        version: link:../agents/specification
       '@yunpat/agent-writer':
         specifier: workspace:*
         version: link:../agents/writer
       '@yunpat/core':
         specifier: workspace:*
         version: link:../core
+      '@yunpat/patent-tools':
+        specifier: workspace:*
+        version: link:../patent-tools
       chalk:
         specifier: ^5.3.0
         version: 5.6.2
@@ -144,6 +307,9 @@ importers:
       ora:
         specifier: ^8.0.1
         version: 8.2.0
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -154,6 +320,9 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      vite-tsconfig-paths:
+        specifier: ^6.1.1
+        version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^1.2.0
         version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
@@ -310,6 +479,33 @@ importers:
       vitest:
         specifier: ^1.2.0
         version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/patent-core:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  packages/patent-knowledge:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  packages/patent-prompts:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
 
   packages/patent-tools:
     dependencies:
@@ -2278,6 +2474,9 @@ packages:
     resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
     engines: {node: '>=10'}
 
+  globrex@0.1.2:
+    resolution: {integrity: sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==}
+
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
     engines: {node: '>= 0.4'}
@@ -3452,6 +3651,16 @@ packages:
     resolution: {integrity: sha512-knJ8dtjn2Pd0c5ZGZG8z9DMiD4PUY8iGI9T9tb8DvGdWRMkLpf0WcPO7G+7cmbZyxvNTAG6ci3fybEaFgMZIvg==}
     hasBin: true
 
+  tsconfck@3.1.6:
+    resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+    peerDependencies:
+      typescript: ^5.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -3530,6 +3739,11 @@ packages:
     resolution: {integrity: sha512-YAXkfvGtuTzwWbDSACdJSg4A4DZiAqckWe90Zapc/sEX3XvHcw1NdurM/6od8J207tSDqNbSsgdCacBgvJKFuA==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
+
+  vite-tsconfig-paths@6.1.1:
+    resolution: {integrity: sha512-2cihq7zliibCCZ8P9cKJrQBkfgdvcFkOOc3Y02o3GWUDLgqjWsZudaoiuOwO/gzTzy17cS5F7ZPo4bsnS4DGkg==}
+    peerDependencies:
+      vite: '*'
 
   vite@5.4.21:
     resolution: {integrity: sha512-o5a9xKjbtuhY6Bi5S3+HvbRERmouabWbyUcpXXUA1u+GNUKoROi9byOJ8M0nHbHYHkYICiMlqxkg1KkYmm25Sw==}
@@ -5502,6 +5716,8 @@ snapshots:
       merge2: 1.4.1
       slash: 3.0.0
 
+  globrex@0.1.2: {}
+
   gopd@1.2.0: {}
 
   graphemer@1.4.0: {}
@@ -6700,6 +6916,10 @@ snapshots:
       ts-poet: 6.12.0
       ts-proto-descriptors: 1.16.0
 
+  tsconfck@3.1.6(typescript@5.9.3):
+    optionalDependencies:
+      typescript: 5.9.3
+
   tslib@2.8.1: {}
 
   tsx@4.21.0:
@@ -6774,6 +6994,16 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+
+  vite-tsconfig-paths@6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3)):
+    dependencies:
+      debug: 4.4.3
+      globrex: 0.1.2
+      tsconfck: 3.1.6(typescript@5.9.3)
+      vite: 8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3)
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
 
   vite@5.4.21(@types/node@20.19.39)(lightningcss@1.32.0):
     dependencies:

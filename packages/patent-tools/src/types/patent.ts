@@ -49,26 +49,7 @@ export enum ObjectionType {
   UNITY = 'unity', // 缺乏单一性
 }
 
-/**
- * 专利记录
- */
-export interface PatentRecord {
-  id: string;
-  patentName: string;
-  patentType: PatentType;
-  applicationNumber: string;
-  applicationDate?: Date;
-  publicationNumber?: string;
-  applicant: string;
-  applicantType: ApplicantType;
-  inventor?: string;
-  ipcCode?: string;
-  abstractText?: string;
-  claimsContent?: string;
-  citationCount: number;
-  citedCount: number;
-  sourceYear?: number;
-}
+export { PatentRecord } from '../tools/PatentSearchTool.js';
 
 /**
  * 权利要求草稿

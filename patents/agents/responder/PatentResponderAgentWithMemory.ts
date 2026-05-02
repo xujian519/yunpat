@@ -10,12 +10,7 @@
  * 4. Token 窗口管理
  */
 
-import { Agent } from '@yunpat/core';
-import type { LLMAdapter, ExecutionContext } from '@yunpat/core/src/lifecycle/Lifecycle.js';
-import { createBGEM3Client } from '../../../packages/core/src/memory/integration/BGEIntegration.js';
-import { PostgresVectorStore } from '../../../packages/core/src/memory/long-term/PostgresVectorStore.js';
-import { createTokenWindowManager } from '../../../packages/core/src/memory/short-term/TokenWindow.js';
-import { loadMemoryConfig, validateMemoryConfig, type MemoryConfig } from '../../../packages/core/src/memory/config.js';
+import { Agent, type LLMAdapter, type ExecutionContext } from '@yunpat/core';
 import type { OfficeActionInput, OfficeActionOutput } from './PatentResponderAgent.js';
 
 /**

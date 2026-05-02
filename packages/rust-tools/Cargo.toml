@@ -4,6 +4,7 @@ members = [
     "crates/patent-agent",
     "crates/patent-cli",
     "crates/patent-core",
+    "vector-service",
 ]
 resolver = "2"
 

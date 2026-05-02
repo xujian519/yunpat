@@ -10,6 +10,8 @@ export { ClaimsGeneratorTool, FeatureExtractorTool } from './tools/ClaimsGenerat
 export { GooglePatentsFetchTool, GooglePatentDetailTool } from './tools/GooglePatentsTool.js';
 
 export { PatentSearchTool, SimilarPatentSearchTool } from './tools/PatentSearchTool.js';
+export { PatentSearchMode } from './tools/PatentSearchTool.js';
+export type { PatentSearchResult } from './tools/PatentSearchTool.js';
 
 export { PatentDetailTool, HighCitationPatentsTool } from './tools/PatentDetailTool.js';
 

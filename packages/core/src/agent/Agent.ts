@@ -15,7 +15,7 @@ import {
 } from '../reasoning/ReasoningCache.js';
 import { ReasoningMonitor } from '../reasoning/ReasoningMonitor.js';
 import { ApprovalFlow, ApprovalResponse } from '../gateway/ApprovalFlow.js';
-import { CheckpointManager, CheckpointManagerConfig } from '../memory/CheckpointManager.js';
+import { CheckpointManager, CheckpointManagerConfig, type Checkpoint } from '../memory/CheckpointManager.js';
 
 /**
  * 智能体配置
@@ -690,16 +690,49 @@ export abstract class Agent<TInput = any, TOutput = any> {
    * @param executionId 执行ID（可选）
    * @returns 恢复的检查点
    */
-  static async resumeFromCheckpoint(
+  async resumeFromCheckpoint(
     checkpointId: string,
     executionId?: string
   ): Promise<{
-    checkpoint: unknown;
-    context: unknown;
+    checkpoint: Checkpoint;
+    context: Record<string, unknown>;
   }> {
-    // TODO: 实现从检查点恢复的逻辑
-    // 这需要在子类中实现，因为需要知道具体的Agent类型
-    throw new Error('resumeFromCheckpoint需要在子类中实现');
+    if (!this.checkpointManager) {
+      throw new Error('CheckpointManager 未配置，无法恢复检查点');
+    }
+
+    const checkpoint = await this.checkpointManager.loadCheckpoint(checkpointId, executionId);
+
+    if (!checkpoint) {
+      throw new Error(`检查点不存在: ${checkpointId}`);
+    }
+
+    // 恢复内存快照
+    if (checkpoint.memorySnapshot && typeof checkpoint.memorySnapshot === 'object' && this.memory) {
+      try {
+        await this.memory.setAll(checkpoint.memorySnapshot);
+      } catch (err) {
+        console.error(`[Agent] 恢复内存快照失败: ${err}`);
+      }
+    }
+
+    // 恢复初始化状态
+    if (
+      checkpoint.stateSnapshot &&
+      typeof checkpoint.stateSnapshot === 'object' &&
+      !Array.isArray(checkpoint.stateSnapshot) &&
+      'initialized' in checkpoint.stateSnapshot
+    ) {
+      const state = checkpoint.stateSnapshot as Record<string, unknown>;
+      this.initialized = typeof state.initialized === 'boolean' ? state.initialized : false;
+    }
+
+    console.log(`[Agent] 已从检查点恢复: ${checkpointId} (迭代 ${checkpoint.iteration})`);
+
+    return {
+      checkpoint,
+      context: checkpoint.contextSnapshot ?? {},
+    };
   }
 
   /**

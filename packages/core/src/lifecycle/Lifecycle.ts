@@ -119,6 +119,9 @@ export interface MemoryStore {
   /** 获取所有短期记忆 */
   getAll(): Promise<Record<string, unknown>>;
 
+  /** 批量写入短期记忆 */
+  setAll(entries: Record<string, unknown>): Promise<void>;
+
   /** 清空短期记忆 */
   clear(): Promise<void>;
 

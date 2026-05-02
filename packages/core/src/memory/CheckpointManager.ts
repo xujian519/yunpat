@@ -530,16 +530,21 @@ export class EnhancedMemoryStore implements IMemoryStore {
     return this.shortTerm.has(key);
   }
 
-  /**
-   * 获取所有记忆
-   */
   async getAll(): Promise<Record<string, unknown>> {
     return Object.fromEntries(this.shortTerm.entries());
   }
 
-  /**
-   * 清空记忆
-   */
+  async setAll(entries: Record<string, unknown>): Promise<void> {
+    for (const [key, value] of Object.entries(entries)) {
+      this.shortTerm.set(key, value);
+      this.history.push({
+        key,
+        value,
+        timestamp: new Date(),
+      });
+    }
+  }
+
   async clear(): Promise<void> {
     this.shortTerm.clear();
     this.history = [];

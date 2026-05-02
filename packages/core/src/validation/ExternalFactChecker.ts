@@ -361,19 +361,7 @@ export class ExternalFactChecker {
       return 'FALSE';
     }
 
-    // 真实性相关关键词
-    if (
-      lower.includes('true') ||
-      (lower.includes('accurate') && !lower.includes('inaccurate')) ||
-      (lower.includes('correct') && !lower.includes('incorrect')) ||
-      rating.includes('准确') ||
-      rating.includes('正确') ||
-      rating.includes('真实')
-    ) {
-      return 'TRUE';
-    }
-
-    // 混合/部分真实
+    // 混合/部分真实（先检查，避免"部分真实"被"真实"匹配）
     if (
       lower.includes('mixed') ||
       lower.includes('partially') ||
@@ -384,6 +372,18 @@ export class ExternalFactChecker {
       rating.includes('半真')
     ) {
       return 'MIXED';
+    }
+
+    // 真实性相关关键词
+    if (
+      lower.includes('true') ||
+      (lower.includes('accurate') && !lower.includes('inaccurate')) ||
+      (lower.includes('correct') && !lower.includes('incorrect')) ||
+      rating.includes('准确') ||
+      rating.includes('正确') ||
+      rating.includes('真实')
+    ) {
+      return 'TRUE';
     }
 
     return 'UNKNOWN';

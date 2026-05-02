@@ -303,7 +303,6 @@ export class WorkflowEngine {
     // 定期清理旧的工作流执行记录
     this.cleanupOldWorkflows();
 
-    // 创建工作流执行上下文
     const execution: WorkflowExecution = {
       workflowId: workflow.id,
       executionId,
@@ -312,16 +311,28 @@ export class WorkflowEngine {
       stepResults: [],
       stepOutputs: new Map(),
       startTime,
+      initialInput,
     };
 
     this.activeWorkflows.set(executionId, execution);
 
-    try {
-      // 按顺序执行每个步骤
-      for (let i = 0; i < workflow.steps.length; i++) {
-        const step = workflow.steps[i];
+    return this.runExecution(execution);
+  }
 
-        // 检查依赖关系
+  private async runExecution(execution: WorkflowExecution): Promise<WorkflowResult> {
+    const workflow = execution.workflow;
+    const startTime = execution.startTime;
+
+    try {
+      for (let i = execution.currentStepIndex; i < workflow.steps.length; i++) {
+        const step = workflow.steps[i];
+        execution.currentStepIndex = i;
+
+        if (execution.paused) {
+          await this.saveCheckpoint(execution);
+          throw new Error(`WORKFLOW_PAUSED:${execution.executionId}`);
+        }
+
         if (workflow.dependencies) {
           const dependencies = workflow.dependencies.filter((d) => d.to === step.id);
           for (const dep of dependencies) {
@@ -332,24 +343,25 @@ export class WorkflowEngine {
           }
         }
 
-        // 执行步骤
-        const stepResult = await this.executeStep(step, execution, initialInput);
+        const stepResult = await this.executeStep(step, execution, execution.initialInput);
         execution.stepResults.push(stepResult);
         execution.stepOutputs.set(step.id, stepResult.output);
 
-        // 如果步骤失败，停止工作流
+        if (workflow.enableCheckpoints) {
+          await this.saveCheckpoint(execution);
+        }
+
         if (!stepResult.success) {
           throw new Error(`步骤 ${step.id} 执行失败: ${stepResult.error}`);
         }
       }
 
-      // 所有步骤执行成功
       const endTime = new Date();
       const finalOutput = this.extractFinalOutput(execution);
 
       const result: WorkflowResult = {
         workflowId: workflow.id,
-        executionId,
+        executionId: execution.executionId,
         success: true,
         stepResults: execution.stepResults,
         finalOutput,
@@ -362,13 +374,27 @@ export class WorkflowEngine {
 
       return result;
     } catch (error) {
-      // 工作流执行失败
       const endTime = new Date();
       const errorMessage = error instanceof Error ? error.message : String(error);
 
+      if (errorMessage.startsWith('WORKFLOW_PAUSED:')) {
+        console.log(`[WorkflowEngine] 工作流已暂停: ${workflow.name} (执行ID: ${execution.executionId})`);
+        return {
+          workflowId: workflow.id,
+          executionId: execution.executionId,
+          success: false,
+          stepResults: execution.stepResults,
+          finalOutput: null,
+          startTime,
+          endTime,
+          totalDuration: endTime.getTime() - startTime.getTime(),
+          error: '工作流已暂停',
+        };
+      }
+
       const result: WorkflowResult = {
         workflowId: workflow.id,
-        executionId,
+        executionId: execution.executionId,
         success: false,
         stepResults: execution.stepResults,
         finalOutput: null,
@@ -382,7 +408,9 @@ export class WorkflowEngine {
 
       return result;
     } finally {
-      this.activeWorkflows.delete(executionId);
+      if (!execution.paused) {
+        this.activeWorkflows.delete(execution.executionId);
+      }
     }
   }
 
@@ -533,18 +561,117 @@ export class WorkflowEngine {
     return execution.stepResults[execution.stepResults.length - 1].output;
   }
 
-  /**
-   * 暂停工作流（未实现）
-   */
-  async pause(workflowId: string): Promise<void> {
-    throw new Error('暂停功能尚未实现');
+  private async saveCheckpoint(execution: WorkflowExecution): Promise<void> {
+    if (!this.config.checkpointManager) {
+      return;
+    }
+
+    try {
+      await this.config.checkpointManager.saveCheckpoint(
+        'workflow-engine',
+        execution.executionId,
+        execution.currentStepIndex,
+        Object.fromEntries(execution.stepOutputs),
+        {
+          workflowId: execution.workflowId,
+          currentStepIndex: execution.currentStepIndex,
+          stepResults: execution.stepResults,
+          initialInput: execution.initialInput,
+        },
+        { paused: execution.paused, workflow: execution.workflow },
+        ['workflow'],
+        `工作流 ${execution.workflowId} 步骤 ${execution.currentStepIndex}`
+      );
+    } catch (error) {
+      console.error(`[WorkflowEngine] 保存检查点失败: ${error}`);
+    }
   }
 
-  /**
-   * 恢复工作流（未实现）
-   */
+  async pause(executionId: string): Promise<void> {
+    const execution = this.activeWorkflows.get(executionId);
+    if (!execution) {
+      throw new Error(`执行不存在: ${executionId}`);
+    }
+
+    execution.paused = true;
+    await this.saveCheckpoint(execution);
+    console.log(`[WorkflowEngine] 工作流已暂停: ${executionId}`);
+  }
+
   async resume(executionId: string): Promise<WorkflowResult> {
-    throw new Error('恢复功能尚未实现');
+    let execution = this.activeWorkflows.get(executionId);
+
+    if (!execution && this.config.checkpointManager) {
+      try {
+        const checkpoints = await this.config.checkpointManager.listCheckpoints({
+          executionId,
+        });
+
+        if (checkpoints.length > 0) {
+          const latest = checkpoints[checkpoints.length - 1];
+
+          if (!latest.contextSnapshot || typeof latest.contextSnapshot !== 'object') {
+            throw new Error(`检查点上下文无效: ${executionId}`);
+          }
+
+          const context = latest.contextSnapshot as Record<string, unknown>;
+          const workflowDef = latest.stateSnapshot?.workflow;
+
+          if (!workflowDef || typeof workflowDef !== 'object') {
+            throw new Error(`检查点中未找到工作流定义: ${executionId}`);
+          }
+
+          const workflowId = typeof context.workflowId === 'string' ? context.workflowId : executionId;
+          const currentStepIndex = typeof context.currentStepIndex === 'number' ? context.currentStepIndex : 0;
+          const stepResults = Array.isArray(context.stepResults) ? (context.stepResults as WorkflowStepResult[]) : [];
+          const startTime = this.parseStartTime(context.startTime);
+
+          execution = {
+            workflowId,
+            executionId,
+            workflow: workflowDef as WorkflowDefinition,
+            currentStepIndex,
+            stepResults,
+            stepOutputs: new Map(Object.entries(latest.memorySnapshot ?? {})),
+            startTime,
+            initialInput: context.initialInput,
+          };
+        }
+      } catch (error) {
+        console.error(`[WorkflowEngine] 从检查点恢复失败: ${error}`);
+        throw error;
+      }
+    }
+
+    if (!execution) {
+      throw new Error(`无法恢复执行: ${executionId}，未找到执行记录或检查点`);
+    }
+
+    execution.paused = false;
+    this.activeWorkflows.set(executionId, execution);
+
+    console.log(`[WorkflowEngine] 恢复工作流执行: ${executionId} (从步骤 ${execution.currentStepIndex})`);
+
+    return this.runExecution(execution);
+  }
+
+  private parseStartTime(value: unknown): Date {
+    if (value instanceof Date) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    if (typeof value === 'number') {
+      const parsed = new Date(value);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return new Date();
   }
 }
 
@@ -572,4 +699,7 @@ interface WorkflowExecution {
 
   /** 开始时间 */
   startTime: Date;
+
+  paused?: boolean;
+  initialInput?: unknown;
 }

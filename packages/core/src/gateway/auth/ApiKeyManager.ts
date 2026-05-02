@@ -218,16 +218,23 @@ export class ApiKeyManager {
         return null;
       }
 
-      // 移除前缀后，分割第一个下划线获取 keyId，剩余部分为 secret
+      // 解析 keyId 和 secret
+      // keyId 是 base64url(8 bytes) = 固定 11 字符
+      // secret 是 base64url(32 bytes) = 固定 43 字符
       const remaining = apiKey.slice('yunpat_'.length);
-      const firstUnderscoreIndex = remaining.indexOf('_');
+      const keyIdLength = 11; // base64url(8 bytes) 固定长度
 
-      if (firstUnderscoreIndex === -1) {
+      if (remaining.length < keyIdLength + 2) {
         return null;
       }
 
-      const keyId = remaining.slice(0, firstUnderscoreIndex);
-      const secret = remaining.slice(firstUnderscoreIndex + 1);
+      const keyId = remaining.slice(0, keyIdLength);
+      const separator = remaining.charAt(keyIdLength);
+      const secret = remaining.slice(keyIdLength + 1);
+
+      if (separator !== '_') {
+        return null;
+      }
 
       if (!keyId || !secret) {
         return null;

@@ -55,6 +55,15 @@ export class ShortTermMemory implements IMemoryStore {
   }
 
   /**
+   * 批量写入记忆
+   */
+  async setAll(entries: Record<string, unknown>): Promise<void> {
+    for (const [key, value] of Object.entries(entries)) {
+      this.storage.set(key, value);
+    }
+  }
+
+  /**
    * 清空记忆
    */
   async clear(): Promise<void> {

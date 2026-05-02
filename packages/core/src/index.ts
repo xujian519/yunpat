@@ -348,7 +348,29 @@ export type {
   ResultValidatorConfig,
 } from './validation/ResultValidator.js';
 
+export { HallucinationDetector } from './validation/HallucinationDetector.js';
+export type {
+  HallucinationReport,
+  HallucinationDetectorConfig,
+  FactCheckResult,
+  LogicalInconsistency,
+  SourceAttributionIssue,
+  ImprovementSuggestion,
+  SuggestionAction,
+  LogicalInconsistencyType,
+  SourceAttributionIssueType,
+} from './validation/hallucination-types.js';
+
 // ========== 规划系统 (Planning) ==========
+export { WorkflowEngine } from './planning/WorkflowEngine.js';
+export type {
+  WorkflowStep,
+  WorkflowDefinition,
+  WorkflowStepResult,
+  WorkflowResult,
+  WorkflowEngineConfig,
+} from './planning/WorkflowEngine.js';
+
 export { TaskDecomposer, DependencyAnalyzer, TaskScheduler } from './planning/index.js';
 
 export type {

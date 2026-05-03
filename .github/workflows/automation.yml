@@ -104,7 +104,7 @@ jobs:
           echo "- 代码行数: $(find . -name "*.ts" -o -name "*.rs" -not -path "*/node_modules/*" -not -path "*/target/*" | xargs wc -l | tail -1 | awk '{print $1}')" >> stats.md
 
       - name: 上传统计报告
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: project-stats
           path: stats.md

@@ -294,3 +294,5 @@ const result = await writer.execute({
 
 - 作者：Xu Jian <xujian519@gmail.com>
 - 许可证：MIT
+
+# 测试PR保护规则 - 2026-05-04 01:29:14

@@ -105,7 +105,7 @@ export async function fullPatentWorkflow(options: {
     const claimsResult = await claimsAgent.execute({
       inventionUnderstanding: inventionResult,
       priorArtSearch: searchResult,
-      specificationDraft: specResult.specification,
+      specificationDraft: JSON.stringify(specResult.specification, null, 2),
     })
 
     spinner.succeed(chalk.green('✓ 权利要求撰写完成'))

@@ -1109,7 +1109,7 @@ export async function fullPatentWorkflow(options: {
     const claimsResult = await claimsAgent.execute({
       inventionUnderstanding: inventionResult,
       priorArtSearch: searchResult,
-      specificationDraft: specResult.specification,
+      specificationDraft: JSON.stringify(specResult.specification, null, 2),
     })
 
     spinner.succeed(chalk.green('✓ 权利要求撰写完成'))
@@ -1168,7 +1168,7 @@ export async function fullPatentWorkflow(options: {
     console.log(chalk.gray(`  核心创新: ${inventionResult.keyFeatures.join(', ')}`))
 
     console.log(chalk.blue('\n【检索结果】'))
-    console.log(chalk.gray(`  检索策略: ${searchResult.searchStrategy.searchQuery}`))
+    console.log(chalk.gray(`  检索策略: ${searchResult.searchStrategy.searchQueries.join(', ')}`))
 
     console.log(chalk.blue('\n【权利要求书】'))
     claimsResult.claimsSet.independent_claims.forEach((claim: any) => {

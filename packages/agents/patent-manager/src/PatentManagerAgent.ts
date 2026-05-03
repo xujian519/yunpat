@@ -348,40 +348,40 @@ export class PatentManagerAgent extends Agent {
     try {
       switch (operation) {
         case 'add_patent':
-          data = this.addPatent(input, context);
+          data = this.addPatent(input);
           break;
         case 'update_patent':
-          data = this.updatePatent(input, context);
+          data = this.updatePatent(input);
           break;
         case 'remove_patent':
-          data = this.removePatent(input, context);
+          data = this.removePatent(input);
           break;
         case 'get_patent':
-          data = this.getPatent(input, context);
+          data = this.getPatent(input);
           break;
         case 'list_patents':
-          data = this.listPatents(input, context);
+          data = this.listPatents(input);
           break;
         case 'add_deadline':
-          data = this.addDeadline(input, context);
+          data = this.addDeadline(input);
           break;
         case 'update_deadline':
-          data = this.updateDeadline(input, context);
+          data = this.updateDeadline(input);
           break;
         case 'get_upcoming_deadlines':
-          data = this.getUpcomingDeadlines(input, context);
+          data = this.getUpcomingDeadlines();
           break;
         case 'add_fee':
-          data = this.addFee(input, context);
+          data = this.addFee(input);
           break;
         case 'update_fee':
-          data = this.updateFee(input, context);
+          data = this.updateFee(input);
           break;
         case 'get_pending_fees':
-          data = this.getPendingFees(input, context);
+          data = this.getPendingFees();
           break;
         case 'get_portfolio':
-          data = this.getPortfolio(input, context);
+          data = this.getPortfolio();
           break;
         case 'generate_report':
           data = await this.generateReport(input, context);
@@ -409,17 +409,17 @@ export class PatentManagerAgent extends Agent {
     };
   }
 
-  private addPatent(_input: PatentManagerInput, _context: ExecutionContext): PatentApplication {
-    if (!_input.patent) {
+  private addPatent(input: PatentManagerInput): PatentApplication {
+    if (!input.patent) {
       throw new Error('专利信息不能为空');
     }
 
-    console.log(`   添加专利: ${_input.patent.applicationNumber}`);
-    this.store.addPatent(_input.patent);
-    return _input.patent;
+    console.log(`   添加专利: ${input.patent.applicationNumber}`);
+    this.store.addPatent(input.patent);
+    return input.patent;
   }
 
-  private updatePatent(input: PatentManagerInput, _context: ExecutionContext): PatentApplication | null {
+  private updatePatent(input: PatentManagerInput): PatentApplication | null {
     if (!input.patent?.applicationNumber) {
       throw new Error('申请号不能为空');
     }
@@ -434,7 +434,7 @@ export class PatentManagerAgent extends Agent {
     return this.store.getPatent(input.patent.applicationNumber)!;
   }
 
-  private removePatent(input: PatentManagerInput, _context: ExecutionContext): boolean {
+  private removePatent(input: PatentManagerInput): boolean {
     if (!input.applicationNumber) {
       throw new Error('申请号不能为空');
     }
@@ -449,7 +449,7 @@ export class PatentManagerAgent extends Agent {
     return true;
   }
 
-  private getPatent(input: PatentManagerInput, _context: ExecutionContext): PatentApplication {
+  private getPatent(input: PatentManagerInput): PatentApplication {
     if (!input.applicationNumber) {
       throw new Error('申请号不能为空');
     }
@@ -462,12 +462,12 @@ export class PatentManagerAgent extends Agent {
     return patent;
   }
 
-  private listPatents(input: PatentManagerInput, _context: ExecutionContext): PatentApplication[] {
+  private listPatents(input: PatentManagerInput): PatentApplication[] {
     console.log(`   列出专利（条件: ${JSON.stringify(input.query)}）`);
     return this.store.listPatents(input.query);
   }
 
-  private addDeadline(input: PatentManagerInput, _context: ExecutionContext): Deadline {
+  private addDeadline(input: PatentManagerInput): Deadline {
     if (!input.applicationNumber) {
       throw new Error('申请号不能为空');
     }
@@ -481,20 +481,17 @@ export class PatentManagerAgent extends Agent {
     return { ...input.deadline, applicationNumber: input.applicationNumber };
   }
 
-  private updateDeadline(input: PatentManagerInput, _context: ExecutionContext): Deadline {
+  private updateDeadline(input: PatentManagerInput): Deadline {
     // 简化实现：添加新的截止日期
-    return this.addDeadline(input, _context);
+    return this.addDeadline(input);
   }
 
-  private getUpcomingDeadlines(
-    _input: PatentManagerInput,
-    _context: ExecutionContext
-  ): Deadline[] {
+  private getUpcomingDeadlines(): Deadline[] {
     console.log('   获取即将到来的截止日期');
     return this.store.getUpcomingDeadlines(30);
   }
 
-  private addFee(input: PatentManagerInput, _context: ExecutionContext): PatentFee {
+  private addFee(input: PatentManagerInput): PatentFee {
     if (!input.applicationNumber) {
       throw new Error('申请号不能为空');
     }
@@ -508,17 +505,17 @@ export class PatentManagerAgent extends Agent {
     return { ...input.fee, applicationNumber: input.applicationNumber };
   }
 
-  private updateFee(input: PatentManagerInput, _context: ExecutionContext): PatentFee {
+  private updateFee(input: PatentManagerInput): PatentFee {
     // 简化实现：添加新的费用记录
-    return this.addFee(input, _context);
+    return this.addFee(input);
   }
 
-  private getPendingFees(_input: PatentManagerInput, _context: ExecutionContext): PatentFee[] {
+  private getPendingFees(): PatentFee[] {
     console.log('   获取待支付费用');
     return this.store.getPendingFees();
   }
 
-  private getPortfolio(_input: PatentManagerInput, _context: ExecutionContext): PatentPortfolio {
+  private getPortfolio(): PatentPortfolio {
     console.log('   获取专利组合概览');
     return this.store.getPortfolio();
   }

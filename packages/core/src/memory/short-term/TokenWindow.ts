@@ -154,6 +154,7 @@ export class TokenWindowManager {
     const content = message.content
 
     // 统计中文字符（包括标点）
+    // eslint-disable-next-line no-irregular-whitespace
     const chineseChars = (content.match(/[一-龥　-〿]/g) || []).length
 
     // 统计英文单词（按空格和常见标点分割）

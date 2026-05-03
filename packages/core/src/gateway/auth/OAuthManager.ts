@@ -5,7 +5,7 @@
  * 支持授权流程、Token 刷新、用户信息获取
  */
 
-import { randomBytes, createCipheriv, createDecipheriv } from 'crypto'
+import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'crypto'
 import { BaseOAuthProvider } from './providers/BaseOAuthProvider.js'
 import { GoogleOAuth } from './providers/GoogleOAuth.js'
 import { GitHubOAuth } from './providers/GitHubOAuth.js'
@@ -404,7 +404,6 @@ export class OAuthManager {
    * @returns 派生的密钥
    */
   private deriveKey(password: string, salt: Buffer): Buffer {
-    const { createHash } = require('crypto')
     const hash = createHash('sha256')
     hash.update(password + salt.toString('hex'))
     return Buffer.from(hash.digest()).subarray(0, 32)

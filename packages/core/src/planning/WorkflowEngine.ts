@@ -450,7 +450,7 @@ export class WorkflowEngine {
       const endTime = new Date()
       const duration = endTime.getTime() - startTime.getTime()
 
-      let stepResult: WorkflowStepResult = {
+      const stepResult: WorkflowStepResult = {
         stepId: step.id,
         stepName: step.name,
         agentName: step.agentName,

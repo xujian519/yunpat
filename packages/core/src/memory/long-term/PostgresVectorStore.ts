@@ -81,7 +81,7 @@ export interface PostgresVectorStoreConfig {
 export class PostgresVectorStore {
   private db: ReturnType<typeof drizzle>
   private vectorDimension: number
-  private client: Sql<{}>
+  private client: Sql<Record<string, unknown>>
   private enablePerformanceMonitoring: boolean
   private performanceMetrics: Map<string, number[]> = new Map()
 

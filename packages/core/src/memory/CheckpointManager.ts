@@ -57,7 +57,7 @@ function deepClone<T>(obj: T, hash = new WeakMap()): T {
   // 处理普通对象
   const cloned = {} as T
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.hasOwn(obj, key)) {
       ;(cloned as any)[key] = deepClone((obj as any)[key], hash)
     }
   }

@@ -64,7 +64,7 @@ export interface PostgresGraphStoreConfig {
  */
 export class PostgresGraphStore {
   private db: ReturnType<typeof drizzle>
-  private client: postgres.Sql<{}>
+  private client: postgres.Sql<Record<string, unknown>>
 
   constructor(config: PostgresGraphStoreConfig) {
     this.client = postgres(config.databaseUrl, {

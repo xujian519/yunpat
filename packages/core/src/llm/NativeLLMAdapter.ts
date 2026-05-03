@@ -41,7 +41,10 @@ export enum NativeModel {
   ERNIE_BOT_4 = 'ernie-bot-4',
 
   /** 智谱 GLM */
-  GLM_4_7 = 'glm-4.7', // 2025 最新旗舰
+  GLM_5_1 = 'glm-5.1', // 2026 最新旗舰（推荐）
+  GLM_4_7_FLASH = 'glm-4.7-flash', // 极速响应（推荐）
+  GLM_4_7 = 'glm-4.7', // 2025 旗舰
+  GLM_4_6_V = 'glm-4.6-v', // 视觉增强版
   GLM_4_FLASH = 'glm-4-flash', // 快速响应
   GLM_4_PLUS = 'glm-4-plus', // 平衡性能
   GLM_4_AIR = 'glm-4-air', // 轻量级

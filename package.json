@@ -35,8 +35,7 @@
     "deploy:status": "bash scripts/deploy-local.sh $ENV status",
     "deploy:legacy": "bash scripts/deploy.sh $1",
     "api:check-deepseek": "node scripts/check-api-key.js",
-    "api:check-glm": "node scripts/check-glm-api.js",
-    "api:check-codegeex": "node scripts/check-codegeex-api.js"
+    "api:check-glm": "node scripts/check-glm-api.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

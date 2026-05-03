@@ -273,8 +273,33 @@ describe('端到端测试 - 专利工作流程', () => {
       expect(responseResult.responseDocument.responseLetter).toBeDefined()
       expect(responseResult.nextSteps).toBeDefined()
 
-      // 导出答复文档
-      const exportResult = await responderAgent.exportToFormat('cn')
+      // 导出答复文档（需要提供input参数）
+      const officeActionForExport = {
+        applicationNumber: 'CN202310000000.0',
+        patentTitle: '一种图像识别方法',
+        notificationDate: '2024-01-15',
+        deadline: '2024-04-15',
+        officeActionContent: '权利要求1-3不具备创造性...',
+        citedReferences: [],
+        rejectionTypes: ['inventiveness'],
+      }
+
+      const mockPatent = {
+        applicationNumber: 'CN202310000000.0',
+        title: '测试专利',
+        claims: ['1. 一种测试方法']
+      }
+
+      const exportResult = await responderAgent.exportToFormat(
+        responseResult,
+        {
+          officeAction: officeActionForExport,
+          patent: mockPatent,
+          responseStrategy: responseResult.strategy,
+          responseDocument: responseResult.responseDocument
+        },
+        'cn'
+      )
 
       expect(exportResult.format).toBe('cn')
       expect(exportResult.content).toContain('审查意见答复书')

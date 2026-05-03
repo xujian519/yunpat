@@ -3,6 +3,12 @@
 **版本**: v0.1.0 (开发中)
 **定位**: 为专利代理所、律师事务所和企业 IP 部门提供智能化专利管理
 
+[![CI](https://github.com/xujian519/yunpat/workflows/CI/badge.svg)](https://github.com/xujian519/yunpat/actions/workflows/ci.yml)
+[![代码质量](https://github.com/xujian519/yunpat/workflows/代码质量/badge.svg)](https://github.com/xujian519/yunpat/actions/workflows/code-quality.yml)
+[![发布](https://github.com/xujian519/yunpat/workflows/发布/badge.svg)](https://github.com/xujian519/yunpat/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm](https://img.shields.io/npm/v/@yunpat/core)](https://www.npmjs.com/package/@yunpat/core)
+
 ---
 
 ## 产品定位

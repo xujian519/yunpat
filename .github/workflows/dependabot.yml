@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # npm依赖更新
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "xujian519"
+    assignees:
+      - "xujian519"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+      prefix-development: false
+      prefix-dependencies: true
+
+  # GitHub Actions更新
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "xujian519"
+    assignees:
+      - "xujian519"

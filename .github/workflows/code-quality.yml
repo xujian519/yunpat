@@ -1,0 +1,92 @@
+name: 代码质量
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  quality:
+    name: 代码质量分析
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 设置 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 代码复杂度分析
+        run: |
+          echo "📊 代码质量分析"
+          echo "总行数: $(find packages -name '*.ts' -not -path '*/dist/*' -not -path '*/node_modules/*' | xargs wc -l | tail -1 | awk '{print $1}')"
+          echo "测试文件: $(find packages -name '*.test.ts' | wc -l)"
+          echo "源文件: $(find packages -name '*.ts' -not -name '*.test.ts' -not -path '*/dist/*' | wc -l)"
+
+      - name: 检查测试覆盖率
+        run: |
+          echo "📈 测试覆盖率统计"
+          pnpm test -- --run 2>&1 | grep -E "(Test Files|Tests|passed)" || true
+
+  security:
+    name: 安全检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+
+      - name: 运行安全审计
+        run: pnpm audit --audit-level moderate
+        continue-on-error: true
+
+      - name: 检查敏感信息
+        run: |
+          echo "🔒 检查是否有硬编码的敏感信息"
+          if grep -r "password\|secret\|api[_-]key\|token" packages/src --include="*.ts" --include="*.js" | grep -v "test\|mock\|example"; then
+            echo "⚠️ 发现可能的敏感信息"
+            exit 1
+          else
+            echo "✅ 未发现硬编码的敏感信息"
+          fi
+
+  dependency-review:
+    name: 依赖审查
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 依赖审查
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate

@@ -8,8 +8,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest --run",
-    "test:watch": "vitest --watch"
+    "test": "vitest",
+    "test:watch": "vitest watch"
   },
   "keywords": [
     "patent",

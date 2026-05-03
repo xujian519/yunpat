@@ -1,0 +1,734 @@
+/**
+ * 专利撰写智能体（增强版 - 集成知识库和分步加载提示词模板）
+ *
+ * 专门用于专利申请文件的智能撰写，包括：
+ * 1. 技术方案理解（使用知识库增强）
+ * 2. 权利要求设计（使用提示词模板）
+ * 3. 说明书生成（使用提示词模板）
+ * 4. 质量评估（7维度评估）
+ *
+ * 特性：
+ * - 分步加载提示词模板（按需加载，节省内存）
+ * - 知识库增强（基于宝宸知识库）
+ * - TDD方式（测试驱动开发）
+ */
+import { Agent, CardRetriever, CardPipeline, HallucinationDetector, } from '@yunpat/core';
+import { ObsidianKnowledgeBridge } from '@yunpat/patent-knowledge';
+import { PromptTemplateManager } from '@yunpat/patent-prompts';
+import * as PatentCore from '../../core/PatentCoreBridge.js';
+/**
+ * 专利撰写智能体
+ */
+export class PatentWriterAgent extends Agent {
+    knowledge;
+    cardRetriever;
+    promptManager;
+    config;
+    currentStage = 'idle';
+    hallucinationDetector;
+    knowledgeBase;
+    constructor(config) {
+        super({
+            ...config,
+            name: config.name || 'patent-writer',
+            description: config.description || '专利撰写智能体 - 专业的专利申请文件撰写助手',
+        });
+        this.config = config;
+        // 初始化知识库桥接（保留兼容性）
+        if (config.enableKnowledge !== false) {
+            const knowledgeBasePath = config.knowledgeBasePath || process.env.KNOWLEDGE_BASE_PATH;
+            if (!knowledgeBasePath) {
+                console.warn('[PatentWriterAgent] 未配置知识库路径，将不使用知识库增强功能');
+            }
+            else {
+                this.knowledge = new ObsidianKnowledgeBridge(knowledgeBasePath);
+                // 初始化卡片检索器（语义检索）
+                this.cardRetriever = new CardRetriever(config.embedder);
+                const pipeline = new CardPipeline({
+                    llm: config.llm,
+                    knowledgeBasePath,
+                    embedder: config.embedder,
+                });
+                pipeline
+                    .loadPersistedCards()
+                    .then((count) => {
+                    if (count > 0) {
+                        this.cardRetriever = pipeline.getRetriever();
+                        console.log(`[PatentWriterAgent] 卡片知识库已加载 ${count} 张卡片`);
+                    }
+                })
+                    .catch(() => { });
+                console.log('[PatentWriterAgent] 知识库已启用');
+            }
+        }
+        // 初始化提示词管理器
+        if (config.enableTemplates !== false) {
+            this.promptManager = new PromptTemplateManager(config.templateDir);
+            console.log('[PatentWriterAgent] 提示词模板已启用');
+        }
+        // 初始化幻觉检测器（如果启用）
+        if (config.enableHallucinationCheck && config.llm) {
+            // 创建知识库实例（如果还没有）
+            if (!this.knowledgeBase) {
+                const knowledgeBasePath = config.knowledgeBasePath || process.env.KNOWLEDGE_BASE_PATH;
+                if (knowledgeBasePath) {
+                    // 这里简化处理，实际应该与 ObsidianKnowledgeBridge 共享知识库
+                    // 暂时禁用嵌入以提高性能
+                    this.knowledgeBase = (await import('@yunpat/core')).createKnowledgeBase({
+                        enableEmbedding: false,
+                        persistent: false,
+                        storagePath: '/tmp/yunpat-knowledge-hallucination',
+                    });
+                    // 预加载一些专利相关知识到知识库
+                    await this.loadPatentKnowledgeToBase();
+                }
+            }
+            if (this.knowledgeBase) {
+                this.hallucinationDetector = new HallucinationDetector(config.llm, this.knowledgeBase, {
+                    enableFactCheck: true,
+                    enableLogicalConsistencyCheck: true,
+                    enableSourceAttribution: true,
+                    factCheckThreshold: 0.7,
+                });
+                console.log('[PatentWriterAgent] 幻觉检测已启用');
+            }
+        }
+    }
+    /**
+     * 加载专利相关知识到知识库（用于幻觉检测）
+     */
+    async loadPatentKnowledgeToBase() {
+        if (!this.knowledgeBase)
+            return;
+        try {
+            // 这里可以添加一些基础的专利法律知识
+            const patentKnowledge = [
+                {
+                    id: 'patent-law-25',
+                    type: 'document',
+                    title: '专利法第25条',
+                    content: '根据专利法第25条，授予专利权的条件是：新颖性、创造性和实用性。',
+                    category: 'legal',
+                    tags: ['专利法', '授权条件'],
+                    priority: 9,
+                },
+                {
+                    id: 'patent-clarity',
+                    type: 'document',
+                    title: '权利要求清楚性要求',
+                    content: '权利要求应当清楚、简要地限定保护范围。权利要求中的技术特征应当描述明确，避免使用模糊不清的表达。',
+                    category: 'legal',
+                    tags: ['权利要求', '清楚性'],
+                    priority: 8,
+                },
+            ];
+            for (const knowledge of patentKnowledge) {
+                await this.knowledgeBase.store(knowledge);
+            }
+            console.log(`[PatentWriterAgent] 已加载 ${patentKnowledge.length} 条专利知识到知识库`);
+        }
+        catch (error) {
+            console.warn('[PatentWriterAgent] 加载专利知识失败:', error);
+        }
+    }
+    /**
+     * 规划阶段：理解技术方案并设计保护策略
+     *
+     * 分步加载策略：
+     * - Stage 1: 发明理解 - 预加载创造性分析模板
+     */
+    async plan(input, context) {
+        console.log('\n📝 [专利撰写] 步骤1: 规划阶段');
+        console.log(`   发明名称: ${input.title}`);
+        console.log(`   技术领域: ${input.field}`);
+        console.log(`   申请人: ${input.applicant}`);
+        this.currentStage = 'planning';
+        // patent-core 预处理：解析交底书 + 提取特征
+        let parsedDisclosure = null;
+        let extractedFeatures = null;
+        try {
+            parsedDisclosure = await PatentCore.parseDisclosure(input.technicalDisclosure);
+            extractedFeatures = await PatentCore.extractFeatures(input.technicalDisclosure);
+            console.log(`[PatentWriterAgent] 交底书解析置信度: ${parsedDisclosure.confidence.toFixed(2)}, 特征数: ${extractedFeatures.features.length}`);
+        }
+        catch (e) {
+            console.warn('[PatentWriterAgent] patent-core 预处理失败，回退到纯 LLM 模式:', e.message);
+        }
+        // 预加载创造性分析模板（发明理解阶段需要）
+        if (this.promptManager) {
+            await this.promptManager.preload('invention-understanding');
+            console.log('[PatentWriterAgent] 已预加载创造性分析模板');
+        }
+        // 构建增强的提示词，包含 patent-core 提取的结构化信息
+        const preprocessedInfo = this.buildPreprocessedContext(parsedDisclosure, extractedFeatures);
+        // 使用 LLM 分析技术交底书
+        const analysis = await context.llm.chat({
+            messages: [
+                {
+                    role: 'system',
+                    content: `你是一位资深的专利代理人，擅长理解技术方案并设计权利要求。
+
+你的任务是：
+1. 深入理解技术交底书中的技术方案
+2. 识别核心创新点
+3. 设计合理的保护范围
+4. 规划权利要求布局
+
+请分析以下技术方案，并给出撰写计划。`,
+                },
+                {
+                    role: 'user',
+                    content: `发明名称：${input.title}
+
+技术领域：${input.field}
+
+申请人：${input.applicant}
+
+发明人：${input.inventors.join('、')}
+
+技术交底书：
+${input.technicalDisclosure}
+
+附图：
+${input.drawings.join('\n')}
+
+${preprocessedInfo}`,
+                },
+            ],
+            temperature: 0.3,
+        });
+        // 知识库增强（如果启用）
+        let enhancedAnalysis = analysis.message.content;
+        if (this.knowledge) {
+            enhancedAnalysis = await this.enhanceWithKnowledge(analysis.message.content, context);
+        }
+        return {
+            plan: enhancedAnalysis,
+            coreInnovation: '待识别',
+            protectionScope: '待设计',
+            parsedDisclosure,
+            extractedFeatures,
+        };
+    }
+    /** 构建 patent-core 预处理上下文 */
+    buildPreprocessedContext(disclosure, features) {
+        if (!disclosure && !features)
+            return '';
+        const parts = ['\n## 算法预处理结果（patent-core）'];
+        if (disclosure) {
+            parts.push(`\n### 交底书结构解析（置信度: ${disclosure.confidence.toFixed(2)}）`);
+            for (const [section, content] of Object.entries(disclosure.sections || {})) {
+                if (content && content.trim()) {
+                    parts.push(`- ${section}: ${content.substring(0, 200)}`);
+                }
+            }
+        }
+        if (features && features.features?.length > 0) {
+            parts.push(`\n### 提取的技术特征（${features.features.length}个）`);
+            for (const f of features.features.slice(0, 10)) {
+                parts.push(`- [${f.category}/${f.feature_type}] ${f.description}`);
+            }
+        }
+        return parts.join('\n');
+    }
+    /**
+     * 执行阶段：撰写专利申请文件
+     *
+     * 分步加载策略：
+     * - Step 1: 权利要求生成 - 按需加载权利要求模板
+     * - Step 2: 说明书撰写 - 按需加载说明书模板
+     * - Step 3: 质量评估 - 懒加载所有模板
+     */
+    async act(plan, context) {
+        console.log('\n✍️ [专利撰写] 步骤2: 执行阶段');
+        const startTime = Date.now();
+        // 1. 生成权利要求（按需加载模板）
+        console.log('   1️⃣ 生成权利要求...');
+        const claims = await this.generateClaims(plan, context);
+        console.log(`      ✅ 生成了 ${claims.length} 项权利要求`);
+        // 2. 生成说明书（按需加载模板）
+        console.log('   2️⃣ 生成说明书...');
+        const description = await this.generateDescription(plan, context);
+        console.log(`      ✅ 说明书长度：${description.split(/\s+/).length} 字`);
+        // 3. 生成摘要
+        console.log('   3️⃣ 生成摘要...');
+        const abstract = await this.generateAbstract(plan, context);
+        console.log(`      ✅ 摘要长度：${abstract.split(/\s+/).length} 字`);
+        // 4. 生成附图说明
+        console.log('   4️⃣ 生成附图说明...');
+        const drawings = await this.generateDrawings(plan, context);
+        console.log('      ✅ 附图说明完成');
+        const duration = (Date.now() - startTime) / 1000 / 60; // 分钟
+        return {
+            patentApplication: {
+                title: context.input.title,
+                abstract,
+                claims,
+                description,
+                drawings,
+            },
+            metrics: {
+                durationMinutes: Math.round(duration),
+                claimsCount: claims.length,
+                descriptionWordCount: description.split(/\s+/).length,
+                qualityScore: this.calculateQualityScore(plan, claims, description),
+            },
+        };
+    }
+    /**
+     * 反思阶段：质量检查和改进建议
+     *
+     * 分步加载策略：
+     * - 懒加载所有模板（质量评估需要全面检查）
+     */
+    async reflect(output, context) {
+        console.log('\n🤔 [专利撰写] 步骤3: 质量检查');
+        this.currentStage = 'quality-assessment';
+        // patent-core 质量评估（规则化评分，不依赖 LLM）
+        let coreAssessment = null;
+        try {
+            const claimDrafts = output.patentApplication.claims.map((c, i) => ({
+                id: String(i + 1),
+                claim_type: (c.type === 'independent' ? 'Independent' : 'Dependent'),
+                preamble: c.content.substring(0, 50),
+                transitional_phrase: '',
+                elements: [c.content],
+                dependent_on: c.type === 'dependent' ? String(Math.max(1, i)) : null,
+            }));
+            coreAssessment = await PatentCore.assessQuality(claimDrafts);
+            console.log(`[PatentWriterAgent] patent-core 质量评分: ${coreAssessment.overall_score.toFixed(2)}`);
+            if (coreAssessment.issues?.length > 0) {
+                console.log(`[PatentWriterAgent] 发现 ${coreAssessment.issues.length} 个质量问题`);
+            }
+        }
+        catch (e) {
+            console.warn('[PatentWriterAgent] patent-core 质量评估失败:', e.message);
+        }
+        // 幻觉检测（如果启用）
+        let hallucinationReport = null;
+        if (this.hallucinationDetector) {
+            console.log('[PatentWriterAgent] 执行幻觉检测...');
+            try {
+                // 合并所有文本内容进行检测
+                const fullContent = `
+摘要：
+${output.patentApplication.abstract}
+
+权利要求：
+${output.patentApplication.claims.map((c, i) => `${i + 1}. ${c.content}`).join('\n')}
+
+说明书：
+${output.patentApplication.description}
+        `.trim();
+                hallucinationReport = await this.hallucinationDetector.detect(fullContent);
+                console.log(`[PatentWriterAgent] 幻觉检测分数: ${(hallucinationReport.overallScore * 100).toFixed(1)}%`);
+                if (hallucinationReport.factCheckResults.length > 0) {
+                    const unverified = hallucinationReport.factCheckResults.filter((r) => !r.isVerified);
+                    if (unverified.length > 0) {
+                        console.log(`[PatentWriterAgent] 发现 ${unverified.length} 个未验证的事实声明`);
+                    }
+                }
+                if (hallucinationReport.logicalInconsistencies.length > 0) {
+                    console.log(`[PatentWriterAgent] 发现 ${hallucinationReport.logicalInconsistencies.length} 个逻辑问题`);
+                }
+                if (hallucinationReport.sourceAttributionIssues.length > 0) {
+                    const critical = hallucinationReport.sourceAttributionIssues.filter((i) => i.severity === 'critical');
+                    if (critical.length > 0) {
+                        console.log(`[PatentWriterAgent] 发现 ${critical.length} 个关键源归属问题`);
+                    }
+                }
+            }
+            catch (e) {
+                console.warn('[PatentWriterAgent] 幻觉检测失败:', e.message);
+            }
+        }
+        // 懒加载所有模板（质量评估需要）
+        if (this.promptManager) {
+            console.log('[PatentWriterAgent] 加载所有模板用于质量评估...');
+            await this.promptManager.loadTemplates([
+                '01-claims-generation',
+                '02-specification-drafting',
+                '03-creativity-analysis',
+            ]);
+        }
+        const coreInfo = coreAssessment
+            ? `\n\n## patent-core 规则化评估\n清晰性: ${coreAssessment.clarity_score}\n支持性: ${coreAssessment.support_score}\n保护范围: ${coreAssessment.scope_score}\n综合: ${coreAssessment.overall_score}\n${coreAssessment.issues?.map((i) => `- [${i.severity}] ${i.dimension}: ${i.suggestion}`).join('\n') || ''}`
+            : '';
+        const hallucinationInfo = hallucinationReport
+            ? `\n\n## 幻觉检测评估\n幻觉分数: ${(hallucinationReport.overallScore * 100).toFixed(1)}%\n事实验证: ${hallucinationReport.factCheckResults.length} 个声明\n逻辑问题: ${hallucinationReport.logicalInconsistencies.length} 个\n源归属问题: ${hallucinationReport.sourceAttributionIssues.length} 个\n${hallucinationReport.suggestions
+                ?.slice(0, 3)
+                .map((s) => `- ${s.action}: ${s.description}`)
+                .join('\n') || ''}`
+            : '';
+        const qualityCheck = await context.llm.chat({
+            messages: [
+                {
+                    role: 'system',
+                    content: `你是一位专利质量审核专家。
+
+请评估以下专利申请文件的质量：
+
+1. 权利要求是否清晰、完整
+2. 说明书是否充分公开
+3. 保护范围是否合理
+4. 是否存在明显的法律风险
+
+给出评分（0-100）和改进建议。`,
+                },
+                {
+                    role: 'user',
+                    content: `权利要求数量：${output.metrics.claimsCount}
+摘要：${output.patentApplication.abstract}
+说明书长度：${output.metrics.descriptionWordCount} 字${coreInfo}${hallucinationInfo}`,
+                },
+            ],
+            temperature: 0.3,
+        });
+        return {
+            qualityCheck: qualityCheck.message.content,
+            coreAssessment,
+            hallucinationReport,
+            improvementSuggestions: [
+                ...(coreAssessment?.issues?.map((i) => i.suggestion) || []),
+                ...(hallucinationReport?.suggestions?.map((s) => s.description) || []),
+            ],
+            shouldContinue: !hallucinationReport || hallucinationReport.overallScore < 0.7,
+        };
+    }
+    /**
+     * 生成权利要求（使用提示词模板）
+     */
+    async generateClaims(plan, context) {
+        // 按需加载权利要求模板
+        if (this.promptManager && !this.promptManager.isLoaded('01-claims-generation')) {
+            console.log('[PatentWriterAgent] 加载权利要求生成模板...');
+            await this.promptManager.loadTemplate('01-claims-generation');
+        }
+        // 使用提示词模板
+        let prompt;
+        if (this.promptManager) {
+            // 准备变量
+            const variables = {
+                invention_title: context.input.title,
+                invention_type: this.extractInventionType(context.input.title, context.input.technicalDisclosure),
+                technical_field: context.input.field,
+                technical_problem: '技术问题',
+                technical_solution: plan.plan.substring(0, 1000), // 取前1000字
+                technical_effects: '技术效果',
+                essential_features: JSON.stringify([]),
+                optional_features: JSON.stringify([]),
+            };
+            // 渲染提示词
+            prompt = this.promptManager.render('01-claims-generation', variables);
+        }
+        else {
+            // 降级到基础提示词
+            prompt = `请根据以下技术方案撰写权利要求：\n\n${plan.plan}`;
+        }
+        const claims = await context.llm.chat({
+            messages: [
+                {
+                    role: 'system',
+                    content: `你是权利要求撰写专家。
+
+请根据技术方案撰写权利要求书：
+
+1. 独立权利要求：包含发明的必要技术特征
+2. 从属权利要求：包含从属权利要求
+3. 每项权利要求应当清晰、简洁、完整
+
+要求：
+- 权利要求以"一种[主题]，其特征在于..."开始
+- 技术特征应当具体、明确
+- 保护范围应当合理，不应过宽或过窄
+
+输出格式：
+1. 独立权利要求 1
+2. 从属权利要求 2（根据权利要求1）
+3. 从属权利要求 3（根据权利要求2）
+...`,
+                },
+                {
+                    role: 'user',
+                    content: `请根据以下技术方案撰写权利要求：
+
+${plan.plan}
+
+技术交底书：
+${context.input.technicalDisclosure}
+
+请撰写 3-5 项权利要求，包括 1 项独立权利要求和 2-4 项从属权利要求。`,
+                },
+            ],
+            temperature: 0.4,
+        });
+        // 解析生成的权利要求
+        const content = claims.message.content;
+        const claimItems = content.split(/\n/).filter((line) => line.trim().length > 0);
+        return claimItems.map((item, index) => ({
+            type: index === 0 ? 'independent' : 'dependent',
+            number: index + 1,
+            content: item.replace(/^\d+\.\s*/, ''), // 移除序号
+        }));
+    }
+    /**
+     * 生成说明书（使用提示词模板）
+     */
+    async generateDescription(plan, context) {
+        // 按需加载说明书模板
+        if (this.promptManager && !this.promptManager.isLoaded('02-specification-drafting')) {
+            console.log('[PatentWriterAgent] 加载说明书撰写模板...');
+            await this.promptManager.loadTemplate('02-specification-drafting');
+        }
+        let prompt;
+        if (this.promptManager) {
+            // 准备变量
+            const variables = {
+                invention_title: context.input.title,
+                technical_field: context.input.field,
+                background_art: '背景技术', // 简化
+                technical_problem: '技术问题',
+                technical_solution: plan.plan.substring(0, 1500),
+                technical_effects: '技术效果',
+                claims_summary: '权利要求摘要',
+            };
+            // 渲染提示词
+            prompt = this.promptManager.render('02-specification-drafting', variables);
+        }
+        else {
+            // 降级到基础提示词
+            prompt = `请根据以下技术方案撰写说明书：\n\n${plan.plan}`;
+        }
+        const description = await context.llm.chat({
+            messages: [
+                {
+                    role: 'system',
+                    content: `你是专利说明书撰写专家。
+
+请撰写完整的专利说明书，包括：
+
+1. 背景技术（介绍发明所属技术领域）
+2. 背景技术（介绍相关现有技术及其缺陷）
+3. 发明内容（详细描述技术方案、实现方式）
+4. 附图说明（结合附图说明具体实施方式）
+
+要求：
+- 说明书应当充分公开技术方案，使本领域技术人员能够实现
+- 不得使用商业性宣传用语
+- 应当清晰、具体、详实
+
+字数：2000-5000 字`,
+                },
+                {
+                    role: 'user',
+                    content: `请根据以下技术方案撰写说明书：
+
+${plan.plan}
+
+技术交底书：
+${context.input.technicalDisclosure}
+
+附图：
+${context.input.drawings.join('\n')}`,
+                },
+            ],
+            temperature: 0.5,
+        });
+        return description.message.content;
+    }
+    /**
+     * 生成摘要
+     */
+    async generateAbstract(plan, context) {
+        const abstract = await context.llm.chat({
+            messages: [
+                {
+                    role: 'system',
+                    content: `请撰写专利摘要，要求：
+1. 简明扼要地说明发明的技术方案
+2. 字数：100-300 字
+3. 客观、准确地描述技术方案及其有益效果`,
+                },
+                {
+                    role: 'user',
+                    content: `请为以下发明撰写摘要：
+
+${context.input.title}
+
+技术领域：${context.input.field}
+
+技术方案：
+${context.input.technicalDisclosure.substring(0, 500)}...
+`,
+                },
+            ],
+            temperature: 0.3,
+        });
+        return abstract.message.content;
+    }
+    /**
+     * 生成附图说明
+     */
+    async generateDrawings(plan, context) {
+        const drawings = await context.llm.chat({
+            messages: [
+                {
+                    role: 'system',
+                    content: `请撰写附图说明，要求：
+1. 结合附图详细描述实施方式
+2. 每幅附图都应当说明
+3. 字数适中，清晰易懂`,
+                },
+                {
+                    role: 'user',
+                    content: `请为以下附图撰写说明：
+
+${context.input.drawings.join('\n')}
+
+技术方案：
+${plan.plan.substring(0, 1000)}...
+`,
+                },
+            ],
+            temperature: 0.4,
+        });
+        return drawings.message.content;
+    }
+    /**
+     * 知识库增强
+     *
+     * 优先使用 CardRetriever 语义检索多张相关知识卡片，
+     * 回退到 ObsidianKnowledgeBridge 单卡片查询
+     */
+    async enhanceWithKnowledge(analysis, context) {
+        // 优先使用语义检索
+        if (this.cardRetriever) {
+            const stats = this.cardRetriever.getStats();
+            if (stats.totalCards > 0) {
+                console.log(`[PatentWriterAgent] 语义检索知识卡片 (库: ${stats.totalCards} 张)`);
+                const { enhancedPrompt, injectedCards } = await this.cardRetriever.injectContext(analysis.slice(0, 500), 3);
+                if (injectedCards.length > 0) {
+                    console.log(`[PatentWriterAgent] 注入 ${injectedCards.length} 张知识卡片: ${injectedCards.map((c) => c.concept).join(', ')}`);
+                    return enhancedPrompt;
+                }
+            }
+        }
+        // 回退到简单卡片查询
+        if (this.knowledge) {
+            console.log('[PatentWriterAgent] 回退到简单卡片查询');
+            const creativityCard = await this.knowledge.queryCard('什么是创造性');
+            if (creativityCard && creativityCard.quality > 0.7) {
+                return analysis + `\n\n## 知识库增强 - 创造性判断要点\n\n${creativityCard.content}`;
+            }
+        }
+        return analysis;
+    }
+    /**
+     * 计算质量评分
+     */
+    calculateQualityScore(plan, claims, description) {
+        let score = 70; // 基础分
+        // 权利要求数量评估（3-5 项最佳）
+        if (claims.length >= 3 && claims.length <= 5) {
+            score += 10;
+        }
+        // 说明书长度评估（2000-5000 字最佳）
+        const wordCount = description.split(/\s+/).length;
+        if (wordCount >= 2000 && wordCount <= 5000) {
+            score += 10;
+        }
+        // 权利要求质量评估
+        const hasIndependentClaim = claims.some((c) => c.type === 'independent');
+        if (hasIndependentClaim) {
+            score += 10;
+        }
+        return Math.min(score, 100);
+    }
+    /**
+     * 导出为正式申请文件格式
+     */
+    async exportToFormat(format) {
+        // 导出为中国或 PCT 格式
+        // TODO: 实现具体的导出逻辑
+        return {};
+    }
+    /**
+     * 获取当前阶段
+     */
+    getCurrentStage() {
+        return this.currentStage;
+    }
+    /**
+     * 从技术交底书中提取发明类型
+     * @param title 发明名称
+     * @param technicalDisclosure 技术交底书
+     * @returns 发明类型（device/method/composition/system）
+     */
+    extractInventionType(title, technicalDisclosure) {
+        const text = (title + ' ' + technicalDisclosure).toLowerCase();
+        // 方法/工艺类关键词
+        const methodKeywords = [
+            '方法',
+            '工艺',
+            '流程',
+            '技术',
+            '制备',
+            '加工',
+            '处理方法',
+            'method',
+            'process',
+            'technique',
+            'procedure',
+        ];
+        // 组合物/材料类关键词
+        const compositionKeywords = [
+            '组合物',
+            '复合材料',
+            '合金',
+            '材料',
+            '催化剂',
+            'composition',
+            'composite',
+            'alloy',
+            'material',
+            'catalyst',
+        ];
+        // 系统类关键词
+        const systemKeywords = [
+            '系统',
+            '装置系统',
+            '设备组',
+            '集成系统',
+            'system',
+            'integrated system',
+            'assembly',
+        ];
+        // 检查关键词
+        const hasMethodKeywords = methodKeywords.some((kw) => text.includes(kw));
+        const hasCompositionKeywords = compositionKeywords.some((kw) => text.includes(kw));
+        const hasSystemKeywords = systemKeywords.some((kw) => text.includes(kw));
+        // 优先级：方法 > 组合物 > 系统 > 设备
+        if (hasMethodKeywords) {
+            return 'method';
+        }
+        else if (hasCompositionKeywords) {
+            return 'composition';
+        }
+        else if (hasSystemKeywords) {
+            return 'system';
+        }
+        else {
+            // 默认为设备
+            return 'device';
+        }
+    }
+    /**
+     * 获取缓存统计
+     */
+    getCacheStats() {
+        return {
+            promptManager: this.promptManager?.getCacheStats(),
+            knowledge: this.knowledge?.getCacheStats(),
+        };
+    }
+}

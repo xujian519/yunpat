@@ -13,8 +13,7 @@ import ora from 'ora'
 import { createInterface } from 'readline'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { resolve, dirname } from 'path'
-import { EventBus, ShortTermMemory, ToolRegistry } from '@yunpat/core'
-import { createDeepSeekModel } from '@yunpat/llm'
+import { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } from '@yunpat/core'
 import { InventionUnderstandingAgent, HumanReadableRenderer } from '@yunpat/agent-invention'
 
 interface DraftOptions {

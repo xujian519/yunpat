@@ -8,8 +8,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "test": "vitest --run",
-    "test:watch": "vitest"
+    "test": "vitest",
+    "test:watch": "vitest watch"
   },
   "keywords": [
     "yunpat",

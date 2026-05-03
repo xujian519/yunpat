@@ -14,8 +14,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { PriorArtSearchAgent, SearchStrategyRenderer } from '@yunpat/agent-prior-art-search'
 import type { InventionUnderstandingOutput } from '@yunpat/agent-invention'
-import { EventBus, ShortTermMemory, ToolRegistry } from '@yunpat/core'
-import { createDeepSeekModel } from '@yunpat/llm'
+import { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } from '@yunpat/core'
 
 describe('Phase 3: 先导技术检索验收测试', () => {
   let agent: PriorArtSearchAgent

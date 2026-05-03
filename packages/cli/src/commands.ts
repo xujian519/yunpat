@@ -1070,7 +1070,6 @@ export async function fullPatentWorkflow(options: {
     console.log(
       chalk.gray(`   最接近现有技术: ${searchResult.comparisonAnalysis.closestPriorArt.title}`)
     )
-    console.log(chalk.gray(`   创造性评估: ${searchResult.creativityAssessment.level}`))
 
     // ===== 步骤3: 说明书撰写 =====
     // 注意：说明书必须在权利要求之前撰写（A26.4支持性原则）
@@ -1110,7 +1109,7 @@ export async function fullPatentWorkflow(options: {
     const claimsResult = await claimsAgent.execute({
       inventionUnderstanding: inventionResult,
       priorArtSearch: searchResult,
-      specification: specResult.specification,
+      specificationDraft: specResult.specification,
     })
 
     spinner.succeed(chalk.green('✓ 权利要求撰写完成'))
@@ -1169,8 +1168,7 @@ export async function fullPatentWorkflow(options: {
     console.log(chalk.gray(`  核心创新: ${inventionResult.keyFeatures.join(', ')}`))
 
     console.log(chalk.blue('\n【检索结果】'))
-    console.log(chalk.gray(`  相关专利: ${searchResult.totalFound} 条`))
-    console.log(chalk.gray(`  检索策略: ${searchResult.strategy.searchQuery}`))
+    console.log(chalk.gray(`  检索策略: ${searchResult.searchStrategy.searchQuery}`))
 
     console.log(chalk.blue('\n【权利要求书】'))
     claimsResult.claimsSet.independent_claims.forEach((claim: any) => {

@@ -39,7 +39,7 @@ class Logger {
     console.log(chalk.gray(`[${this.context}]   ${key}: ${value}`))
   }
 
-  startSpinner(message: string): ora.Ora {
+  startSpinner(message: string): any {
     return ora(message).start()
   }
 }

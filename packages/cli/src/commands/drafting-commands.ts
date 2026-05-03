@@ -72,7 +72,6 @@ export async function fullPatentWorkflow(options: {
     console.log(
       chalk.gray(`   最接近现有技术: ${searchResult.comparisonAnalysis.closestPriorArt.title}`)
     )
-    console.log(chalk.gray(`   创造性评估: ${searchResult.creativityAssessment.level}`))
 
     spinner.start(chalk.blue('步骤3/6: 撰写说明书...'))
     const specAgent = new SpecificationDrafterAgent({
@@ -106,7 +105,7 @@ export async function fullPatentWorkflow(options: {
     const claimsResult = await claimsAgent.execute({
       inventionUnderstanding: inventionResult,
       priorArtSearch: searchResult,
-      specification: specResult.specification,
+      specificationDraft: specResult.specification,
     })
 
     spinner.succeed(chalk.green('✓ 权利要求撰写完成'))

@@ -20,11 +20,11 @@
   "dependencies": {
     "@yunpat/agent-analysis": "workspace:*",
     "@yunpat/agent-claims": "workspace:*",
-    "@yunpat/agent-quality": "workspace:*",
-    "@yunpat/agent-specification": "workspace:*",
     "@yunpat/agent-invention": "workspace:*",
+    "@yunpat/agent-quality": "workspace:*",
     "@yunpat/agent-researcher": "workspace:*",
     "@yunpat/agent-search": "workspace:*",
+    "@yunpat/agent-specification": "workspace:*",
     "@yunpat/agent-writer": "workspace:*",
     "@yunpat/core": "workspace:*",
     "@yunpat/patent-tools": "workspace:*",
@@ -37,6 +37,7 @@
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20.11.0",
+    "@types/ora": "^3.2.0",
     "typescript": "^5.3.3",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^1.2.0"

@@ -33,7 +33,9 @@ if (!GLM_API_KEY.includes('.')) {
 console.log('🔑 正在验证智谱 GLM API Key...\n')
 console.log(`📋 配置信息：`)
 console.log(`   模型：${GLM_MODEL}`)
-console.log(`   API Key：${GLM_API_KEY.substring(0, 10)}...${GLM_API_KEY.substring(GLM_API_KEY.length - 6)}`)
+console.log(
+  `   API Key：${GLM_API_KEY.substring(0, 10)}...${GLM_API_KEY.substring(GLM_API_KEY.length - 6)}`
+)
 console.log('')
 
 // 发送测试请求

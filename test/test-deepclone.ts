@@ -2,21 +2,21 @@
  * deepClone和tags测试
  */
 
-import { deepClone } from '../src/memory/CheckpointManager.js';
+import { deepClone } from '../src/memory/CheckpointManager.js'
 
 // 测试deepClone
 const obj1 = {
   tags: ['init'],
   data: 'test',
-};
+}
 
-const cloned1 = deepClone(obj1);
+const cloned1 = deepClone(obj1)
 
-console.log('原始对象:', obj1);
-console.log('克隆对象:', cloned1);
-console.log('tags相等:', obj1.tags === cloned1.tags);
-console.log('tags内容相等:', JSON.stringify(obj1.tags) === JSON.stringify(cloned1.tags));
-console.log('includes测试:', cloned1.tags.includes('init'));
+console.log('原始对象:', obj1)
+console.log('克隆对象:', cloned1)
+console.log('tags相等:', obj1.tags === cloned1.tags)
+console.log('tags内容相等:', JSON.stringify(obj1.tags) === JSON.stringify(cloned1.tags))
+console.log('includes测试:', cloned1.tags.includes('init'))
 
 // 测试检查点结构
 const checkpoint = {
@@ -29,9 +29,9 @@ const checkpoint = {
   memorySnapshot: {},
   contextSnapshot: {},
   stateSnapshot: {},
-};
+}
 
-const clonedCheckpoint = deepClone(checkpoint);
+const clonedCheckpoint = deepClone(checkpoint)
 
 console.log('\n检查点克隆:')
 console.log('原始tags:', checkpoint.tags)

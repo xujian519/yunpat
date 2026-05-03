@@ -1,0 +1,338 @@
+import { Agent, type ExecutionContext } from '@yunpat/core'
+import type { InventionUnderstandingOutput } from '@yunpat/agent-invention'
+import type { SpecificationContent } from '@yunpat/agent-specification-drafter'
+import type { ClaimsSet } from '@yunpat/agent-claim-generator'
+
+/**
+ * 摘要撰写输入
+ */
+export interface AbstractDrafterInput {
+  /** 发明理解结果 */
+  inventionUnderstanding: InventionUnderstandingOutput
+  /** 说明书内容 */
+  specification: SpecificationContent
+  /** 权利要求集合 */
+  claims?: ClaimsSet
+  /** 摘要字数限制（默认300字） */
+  maxWords?: number
+}
+
+/**
+ * 摘要撰写输出
+ */
+export interface AbstractDrafterOutput {
+  /** 摘要内容 */
+  abstract: {
+    /** 摘要文本 */
+    content: string
+    /** 字数统计 */
+    wordCount: number
+    /** 包含的关键要素 */
+    keyElements: {
+      /** 技术领域 */
+      technicalField: boolean
+      /** 技术方案 */
+      technicalSolution: boolean
+      /** 有益效果 */
+      beneficialEffects: boolean
+      /** 应用领域 */
+      application: boolean
+    }
+  }
+  /** 置信度 */
+  confidence: number
+}
+
+interface AbstractPlan {
+  input: AbstractDrafterInput
+  maxWords: number
+}
+
+/**
+ * 专利摘要撰写智能体
+ *
+ * 功能：
+ * 1. 基于说明书和权利要求撰写摘要
+ * 2. 提炼技术方案、有益效果、应用领域
+ * 3. 确保简洁明了（通常不超过300字）
+ * 4. 准确反映发明的核心内容
+ *
+ * 摘要撰写原则（CNIPA指南）：
+ * - 简明扼要：通常不超过300字
+ * - 客观准确：不包含商业性宣传用语
+ * - 突出核心：技术方案、有益效果、应用领域
+ * - 避免细节：不涉及具体的实施例细节
+ */
+export class AbstractDrafterAgent extends Agent<
+  AbstractDrafterInput,
+  AbstractDrafterOutput
+> {
+  constructor(config: any) {
+    super({
+      ...config,
+      name: config.name || 'abstract-drafter',
+      description: config.description || '专利摘要撰写智能体 - 专业的专利摘要撰写',
+    })
+  }
+
+  protected async plan(
+    input: AbstractDrafterInput,
+    _context: ExecutionContext
+  ): Promise<AbstractPlan> {
+    if (!input.inventionUnderstanding) {
+      throw new Error('发明理解结果不能为空')
+    }
+
+    if (!input.specification) {
+      throw new Error('说明书内容不能为空')
+    }
+
+    const { inventionUnderstanding } = input
+
+    console.log('\n📝 [摘要撰写] 步骤1: 规划阶段')
+    console.log(`   发明名称: ${inventionUnderstanding.technicalField}`)
+    console.log(`   字数限制: ${input.maxWords || 300} 字`)
+
+    return {
+      input,
+      maxWords: input.maxWords || 300,
+    }
+  }
+
+  protected async act(
+    plan: AbstractPlan,
+    context: ExecutionContext
+  ): Promise<AbstractDrafterOutput> {
+    console.log('\n📝 [摘要撰写] 步骤2: 撰写阶段')
+
+    const { inventionUnderstanding, specification, claims } = plan.input
+
+    const systemPrompt = `你是一位资深的专利代理师，拥有15年的专利撰写经验。
+
+请严格按照以下原则撰写专利摘要：
+
+1. 简明扼要原则
+   - 通常不超过300字
+   - 避免冗长描述和无关细节
+   - 精炼表达核心内容
+
+2. 客观准确原则
+   - 不包含商业性宣传用语
+   - 不使用夸张或广告性语言
+   - 准确反映技术方案和有益效果
+
+3. 突出核心原则
+   - 技术方案：发明的核心技术手段
+   - 有益效果：发明带来的技术优势
+   - 应用领域：发明的适用范围
+
+4. 避免细节原则
+   - 不涉及具体的实施例细节
+   - 不描述具体的参数范围（除非是核心创新点）
+   - 不展开描述背景技术
+
+输出必须是严格的 JSON 格式。`
+
+    // 构建上下文信息
+    const contextInfo = this.buildContext(plan.input)
+
+    const userPrompt = `基于以下信息撰写专利摘要：
+
+${contextInfo}
+
+请输出以下 JSON 格式：
+{
+  "content": "摘要内容，通常不超过300字",
+  "wordCount": 实际字数,
+  "keyElements": {
+    "technicalField": true/false,
+    "technicalSolution": true/false,
+    "beneficialEffects": true/false,
+    "application": true/false
+  },
+  "confidence": 0.9
+}
+
+摘要撰写要求：
+1. 简明扼要（${plan.maxWords}字以内）
+2. 包含技术方案的核心内容
+3. 突出有益效果
+4. 提及应用领域
+5. 客观准确，无商业宣传用语`
+
+    if (!context.llm) {
+      throw new Error('LLM 未配置，无法执行摘要撰写')
+    }
+
+    const result = await this.callLLMWithFallback(
+      context.llm,
+      systemPrompt,
+      userPrompt,
+      plan.input
+    )
+
+    console.log(`\n✅ [摘要撰写] 撰写完成 (置信度: ${result.confidence.toFixed(2)})`)
+    console.log(`   字数: ${result.abstract.wordCount}`)
+    console.log(`   技术领域: ${result.abstract.keyElements.technicalField ? '✓' : '✗'}`)
+    console.log(`   技术方案: ${result.abstract.keyElements.technicalSolution ? '✓' : '✗'}`)
+    console.log(`   有益效果: ${result.abstract.keyElements.beneficialEffects ? '✓' : '✗'}`)
+    console.log(`   应用领域: ${result.abstract.keyElements.application ? '✓' : '✗'}`)
+
+    return result
+  }
+
+  /**
+   * 构建上下文信息
+   */
+  private buildContext(input: AbstractDrafterInput): string {
+    const { inventionUnderstanding, specification, claims } = input
+
+    const sections: string[] = []
+
+    // 发明理解
+    sections.push('## 发明理解')
+    sections.push(`### 技术领域`)
+    sections.push(inventionUnderstanding.technicalField)
+    sections.push(`### 技术问题`)
+    sections.push(inventionUnderstanding.technicalProblem)
+    sections.push(`### 技术方案`)
+    sections.push(inventionUnderstanding.technicalSolution)
+    sections.push(`### 有益效果`)
+    sections.push(inventionUnderstanding.beneficialEffects || '无')
+
+    // 说明书（发明内容）
+    if (specification?.invention_content) {
+      sections.push('\n## 说明书 - 发明内容')
+      sections.push(specification.invention_content.content)
+    }
+
+    // 权利要求（独立权利要求）
+    if (claims?.independent_claims && claims.independent_claims.length > 0) {
+      sections.push('\n## 权利要求 - 独立权利要求')
+      claims.independent_claims.forEach(claim => {
+        sections.push(claim.full_text)
+      })
+    }
+
+    return sections.join('\n')
+  }
+
+  private async callLLMWithFallback(
+    llm: NonNullable<ExecutionContext['llm']>,
+    systemPrompt: string,
+    userPrompt: string,
+    input: AbstractDrafterInput
+  ): Promise<AbstractDrafterOutput> {
+    const maxRetries = 2
+    let lastError: Error | undefined
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await llm.chat({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.3,
+        })
+
+        const content = response.message.content
+        const parsed = this.safeParseJSON(content)
+
+        if (parsed) {
+          return this.normalizeOutput(parsed, input)
+        }
+      } catch (e) {
+        lastError = e instanceof Error ? e : new Error(String(e))
+        console.warn(
+          `[AbstractDrafterAgent] LLM 调用失败 (尝试 ${attempt + 1}/${maxRetries + 1}): ${lastError.message}`
+        )
+      }
+    }
+
+    console.error('[AbstractDrafterAgent] 摘要撰写失败，使用回退输出:', lastError)
+    return this.createFallbackOutput(input)
+  }
+
+
+  private normalizeOutput(
+    parsed: Record<string, unknown>,
+    input: AbstractDrafterInput
+  ): AbstractDrafterOutput {
+    const getString = (key: string): string => {
+      const value = parsed[key]
+      return typeof value === 'string' ? value : ''
+    }
+
+    const getNumber = (key: string, fallback: number): number => {
+      const value = parsed[key]
+      return typeof value === 'number' && !isNaN(value) ? value : fallback
+    }
+
+    const content = getString('content')
+
+    // 检查关键要素
+    const keyElements = {
+      technicalField: this.hasTechnicalField(content, input),
+      technicalSolution: this.hasTechnicalSolution(content, input),
+      beneficialEffects: this.hasBeneficialEffects(content, input),
+      application: this.hasApplication(content, input),
+    }
+
+    return {
+      abstract: {
+        content,
+        wordCount: getNumber('wordCount', content.length),
+        keyElements,
+      },
+      confidence: getNumber('confidence', 0.85),
+    }
+  }
+
+  private hasTechnicalField(content: string, input: AbstractDrafterInput): boolean {
+    // 检查是否包含技术领域相关的关键词
+    const field = input.inventionUnderstanding.technicalField
+    return content.includes('领域') || field.split(' ').some(w => content.includes(w))
+  }
+
+  private hasTechnicalSolution(content: string, input: AbstractDrafterInput): boolean {
+    // 检查是否包含技术方案相关的关键词
+    const solution = input.inventionUnderstanding.technicalSolution
+    const keywords = ['方法', '系统', '装置', '包括', '特征']
+    return keywords.some(kw => content.includes(kw)) || solution.split(' ').some(w => content.includes(w))
+  }
+
+  private hasBeneficialEffects(content: string, input: AbstractDrafterInput): boolean {
+    // 检查是否包含有益效果相关的关键词
+    const effects = input.inventionUnderstanding.beneficialEffects || ''
+    const keywords = ['有益效果', '优势', '优点', '提高', '改善', '降低']
+    return keywords.some(kw => content.includes(kw)) || effects.split(' ').some(w => content.includes(w))
+  }
+
+  private hasApplication(content: string, _input: AbstractDrafterInput): boolean {
+    // 检查是否包含应用领域相关的关键词
+    const keywords = ['适用于', '应用于', '应用', '领域', '场景']
+    return keywords.some(kw => content.includes(kw))
+  }
+
+  private createFallbackOutput(input: AbstractDrafterInput): AbstractDrafterOutput {
+    const { inventionUnderstanding, specification } = input
+
+    // 基于发明理解和说明书创建简化摘要
+    const content = `本发明公开了${inventionUnderstanding.technicalField}领域的一种${inventionUnderstanding.technicalSolution.substring(0, 50)}。该技术方案解决了${inventionUnderstanding.technicalProblem}的问题，具有${inventionUnderstanding.beneficialEffects || '良好'}的有益效果。适用于${inventionUnderstanding.technicalField}相关领域。`
+
+    return {
+      abstract: {
+        content,
+        wordCount: content.length,
+        keyElements: {
+          technicalField: true,
+          technicalSolution: true,
+          beneficialEffects: true,
+          application: true,
+        },
+      },
+      confidence: 0.6,
+    }
+  }
+}

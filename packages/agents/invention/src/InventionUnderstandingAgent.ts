@@ -138,28 +138,6 @@ ${input.drawings && input.drawings.length > 0 ? `附图说明：\n${input.drawin
     return this.createFallbackOutput(input)
   }
 
-  private safeParseJSON(content: unknown): Record<string, unknown> | null {
-    if (typeof content !== 'string') {
-      return null
-    }
-
-    const jsonMatch =
-      content.match(/```json\s*([\s\S]*?)\s*```/) ||
-      content.match(/```\s*([\s\S]*?)\s*```/) ||
-      content.match(/{[\s\S]*}/)
-
-    const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content
-
-    try {
-      const parsed = JSON.parse(jsonStr)
-      return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-        ? (parsed as Record<string, unknown>)
-        : null
-    } catch {
-      return null
-    }
-  }
-
   private normalizeOutput(
     parsed: Record<string, unknown>,
     input: InventionUnderstandingInput

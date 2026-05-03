@@ -1018,15 +1018,18 @@ export async function fullPatentWorkflow(options: {
 
     spinner.succeed(chalk.green('✓ 专利撰写工作流已启动'))
 
-    console.log(chalk.green('\n=== v1.1 完整专利撰写工作流 ===\n'))
+    console.log(chalk.green('\n=== v2.0 完整专利撰写工作流（符合专业规范） ===\n'))
 
-    spinner.start(chalk.blue('步骤1/5: 发明理解...'))
-
+    // 导入所有智能体
     const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention')
-    const { PatentSearchAgent } = await import('@yunpat/agent-search')
-    const { ClaimsGenerationAgent } = await import('@yunpat/agent-claims')
-    const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification')
+    const { PriorArtSearchAgent } = await import('@yunpat/agent-prior-art-search')
+    const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification-drafter')
+    const { ClaimGeneratorAgent } = await import('@yunpat/agent-claim-generator')
+    const { AbstractDrafterAgent } = await import('@yunpat/agent-abstract-drafter')
     const { QualityCheckerAgent } = await import('@yunpat/agent-quality')
+
+    // ===== 步骤1: 发明理解 =====
+    spinner.start(chalk.blue('步骤1/6: 发明理解...'))
 
     const inventionAgent = new InventionUnderstandingAgent({
       name: 'invention-understanding',
@@ -1047,11 +1050,12 @@ export async function fullPatentWorkflow(options: {
     console.log(chalk.gray(`   技术领域: ${inventionResult.technicalField}`))
     console.log(chalk.gray(`   关键特征: ${inventionResult.keyFeatures.length} 个`))
 
-    spinner.start(chalk.blue('步骤2/5: 专利检索...'))
+    // ===== 步骤2: 现有技术检索 =====
+    spinner.start(chalk.blue('步骤2/6: 现有技术检索...'))
 
-    const searchAgent = new PatentSearchAgent({
-      name: 'patent-search',
-      description: '专利检索智能体',
+    const searchAgent = new PriorArtSearchAgent({
+      name: 'prior-art-search',
+      description: '现有技术检索智能体',
       llm,
       memory,
       tools,
@@ -1059,36 +1063,16 @@ export async function fullPatentWorkflow(options: {
     })
 
     const searchResult = await searchAgent.execute({
-      title: options.title,
-      field: options.field,
-      technicalProblem: inventionResult.technicalProblem,
-      technicalSolution: inventionResult.technicalSolution,
-      keyFeatures: inventionResult.keyFeatures,
-    })
-
-    spinner.succeed(chalk.green('✓ 专利检索完成'))
-    console.log(chalk.gray(`   找到 ${searchResult.totalFound} 条相关专利`))
-
-    spinner.start(chalk.blue('步骤3/5: 生成权利要求...'))
-
-    const claimsAgent = new ClaimsGenerationAgent({
-      name: 'claims-generation',
-      description: '权利要求生成智能体',
-      llm,
-      memory,
-      tools,
-      eventBus,
-    })
-
-    const claimsResult = await claimsAgent.execute({
       inventionUnderstanding: inventionResult,
     })
 
-    spinner.succeed(chalk.green('✓ 权利要求生成完成'))
-    console.log(chalk.gray(`   独立权利要求: ${claimsResult.independentClaims.length} 项`))
-    console.log(chalk.gray(`   从属权利要求: ${claimsResult.dependentClaims.length} 项`))
+    spinner.succeed(chalk.green('✓ 现有技术检索完成'))
+    console.log(chalk.gray(`   最接近现有技术: ${searchResult.comparisonAnalysis.closestPriorArt.title}`))
+    console.log(chalk.gray(`   创造性评估: ${searchResult.creativityAssessment.level}`))
 
-    spinner.start(chalk.blue('步骤4/5: 撰写说明书...'))
+    // ===== 步骤3: 说明书撰写 =====
+    // 注意：说明书必须在权利要求之前撰写（A26.4支持性原则）
+    spinner.start(chalk.blue('步骤3/6: 撰写说明书...'))
 
     const specAgent = new SpecificationDrafterAgent({
       name: 'specification-drafter',
@@ -1101,27 +1085,60 @@ export async function fullPatentWorkflow(options: {
 
     const specResult = await specAgent.execute({
       inventionUnderstanding: inventionResult,
-      claims: {
-        independentClaims: claimsResult.independentClaims.map((c: IndependentClaim) => ({
-          claimNumber: c.claimNumber,
-          fullText: c.fullText,
-          claimType: c.claimType,
-        })),
-        dependentClaims: claimsResult.dependentClaims.map((c: DependentClaim) => ({
-          claimNumber: c.claimNumber,
-          content: c.content,
-          parentClaim: c.parentClaim,
-        })),
-      },
+      priorArtSearch: searchResult,
     })
 
     spinner.succeed(chalk.green('✓ 说明书撰写完成'))
-    console.log(chalk.gray(`   摘要: ${specResult.abstract.length} 字`))
-    console.log(
-      chalk.gray(`   技术方案: ${specResult.inventionContent.technicalSolution.length} 字`)
-    )
+    console.log(chalk.gray(`   总字数: ${specResult.metrics.totalWordCount}`))
+    console.log(chalk.gray(`   章节数: ${specResult.metrics.chapterCount}`))
 
-    spinner.start(chalk.blue('步骤5/5: 质量检查...'))
+    // ===== 步骤4: 权利要求撰写 =====
+    // 注意：权利要求以说明书为依据（A26.4），因此在说明书之后撰写
+    spinner.start(chalk.blue('步骤4/6: 撰写权利要求...'))
+
+    const claimsAgent = new ClaimGeneratorAgent({
+      name: 'claim-generator',
+      description: '权利要求撰写智能体',
+      llm,
+      memory,
+      tools,
+      eventBus,
+    })
+
+    const claimsResult = await claimsAgent.execute({
+      inventionUnderstanding: inventionResult,
+      priorArtSearch: searchResult,
+      specification: specResult.specification,
+    })
+
+    spinner.succeed(chalk.green('✓ 权利要求撰写完成'))
+    console.log(chalk.gray(`   独立权利要求: ${claimsResult.claimsSet.independent_claims.length} 项`))
+    console.log(chalk.gray(`   从属权利要求: ${claimsResult.claimsSet.dependent_claims.length} 项`))
+
+    // ===== 步骤5: 摘要撰写 =====
+    // 注意：摘要在最后撰写，用于总结整个发明
+    spinner.start(chalk.blue('步骤5/6: 撰写摘要...'))
+
+    const abstractAgent = new AbstractDrafterAgent({
+      name: 'abstract-drafter',
+      description: '摘要撰写智能体',
+      llm,
+      memory,
+      tools,
+      eventBus,
+    })
+
+    const abstractResult = await abstractAgent.execute({
+      inventionUnderstanding: inventionResult,
+      specification: specResult.specification,
+      claims: claimsResult.claimsSet,
+    })
+
+    spinner.succeed(chalk.green('✓ 摘要撰写完成'))
+    console.log(chalk.gray(`   字数: ${abstractResult.abstract.wordCount}`))
+
+    // ===== 步骤6: 质量检查 =====
+    spinner.start(chalk.blue('步骤6/6: 质量检查...'))
 
     const qualityAgent = new QualityCheckerAgent({
       name: 'quality-checker',
@@ -1133,21 +1150,9 @@ export async function fullPatentWorkflow(options: {
     })
 
     const qualityResult = await qualityAgent.execute({
-      claims: {
-        independentClaims: claimsResult.independentClaims.map((c: IndependentClaim) => ({
-          claimNumber: c.claimNumber,
-          fullText: c.fullText,
-          claimType: c.claimType,
-          essentialFeatures: c.essentialFeatures,
-        })),
-        dependentClaims: claimsResult.dependentClaims.map((c: DependentClaim) => ({
-          claimNumber: c.claimNumber,
-          content: c.content,
-          parentClaim: c.parentClaim,
-          additionalFeatures: c.additionalFeatures,
-        })),
-      },
-      specification: specResult,
+      claims: claimsResult.claimsSet,
+      specification: specResult.specification,
+      inventionUnderstanding: inventionResult,
     })
 
     spinner.succeed(chalk.green('✓ 质量检查完成'))
@@ -1164,24 +1169,34 @@ export async function fullPatentWorkflow(options: {
     console.log(chalk.gray(`  检索策略: ${searchResult.strategy.searchQuery}`))
 
     console.log(chalk.blue('\n【权利要求书】'))
-    claimsResult.independentClaims.forEach((claim: IndependentClaim) => {
-      console.log(chalk.gray(`  ${claim.claimNumber}. ${claim.fullText.substring(0, 100)}...`))
+    claimsResult.claimsSet.independent_claims.forEach((claim: any) => {
+      console.log(chalk.gray(`  ${claim.claim_number}. ${claim.full_text.substring(0, 100)}...`))
     })
 
-    console.log(chalk.blue('\n【说明书摘要】'))
-    console.log(chalk.gray(`  ${specResult.abstract}`))
+    console.log(chalk.blue('\n【说明书】'))
+    console.log(chalk.gray(`  技术领域: ${specResult.specification.technical_field.content.substring(0, 100)}...`))
+    console.log(chalk.gray(`  发明内容: ${specResult.specification.invention_content.content.substring(0, 100)}...`))
+
+    console.log(chalk.blue('\n【摘要】'))
+    console.log(chalk.gray(`  ${abstractResult.abstract.content.substring(0, 200)}...`))
 
     console.log(chalk.blue('\n【质量评分】'))
     console.log(chalk.gray(`  综合评分: ${qualityResult.overallScore}/100`))
-    console.log(chalk.gray(`  权利要求: ${qualityResult.claimsCheck.score}/100`))
-    console.log(chalk.gray(`  说明书: ${qualityResult.specificationCheck.score}/100`))
-    console.log(chalk.gray(`  形式: ${qualityResult.formalCheck.score}/100`))
+    if (qualityResult.claimsCheck) {
+      console.log(chalk.gray(`  权利要求: ${qualityResult.claimsCheck.score}/100`))
+    }
+    if (qualityResult.specificationCheck) {
+      console.log(chalk.gray(`  说明书: ${qualityResult.specificationCheck.score}/100`))
+    }
+    if (qualityResult.formalCheck) {
+      console.log(chalk.gray(`  形式: ${qualityResult.formalCheck.score}/100`))
+    }
 
-    if (qualityResult.improvementSuggestions.length > 0) {
+    if (qualityResult.improvementSuggestions && qualityResult.improvementSuggestions.length > 0) {
       console.log(chalk.yellow('\n【待改进项】'))
       qualityResult.improvementSuggestions
         .slice(0, 5)
-        .forEach((suggestion: QualityCheckResult['improvementSuggestions'][0]) => {
+        .forEach((suggestion: any) => {
           console.log(chalk.yellow(`  [${suggestion.priority}] ${suggestion.description}`))
         })
     }
@@ -1189,18 +1204,21 @@ export async function fullPatentWorkflow(options: {
     if (options.output) {
       const fs = await import('fs/promises')
       const report = {
-        version: 'v1.1',
+        version: 'v2.0',
+        timestamp: new Date().toISOString(),
         invention: inventionResult,
         search: searchResult,
-        claims: claimsResult,
-        specification: specResult,
+        specification: specResult.specification,
+        claims: claimsResult.claimsSet,
+        abstract: abstractResult.abstract,
         quality: qualityResult,
       }
       await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8')
       console.log(chalk.green(`\n✓ 完整专利文件已保存到: ${options.output}`))
     }
 
-    console.log(chalk.green('\n🎉 v1.1 完整专利撰写工作流已完成!'))
+    console.log(chalk.green('\n🎉 v2.0 完整专利撰写工作流已完成!'))
+    console.log(chalk.gray('   符合专业专利代理人工作流程：发明理解 → 检索 → 说明书 → 权利要求 → 摘要'))
   } catch (error) {
     spinner.fail(chalk.red('执行失败'))
     console.error(error)

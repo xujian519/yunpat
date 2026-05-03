@@ -159,6 +159,43 @@ cp .env.example .env
 # DASHSCOPE_API_KEY=sk-...
 ```
 
+### 命令行使用
+
+#### 1. 初始化框架
+
+```bash
+export DEEPSEEK_API_KEY=your_key
+yunpat init
+```
+
+#### 2. 完整专利撰写工作流（推荐）
+
+```bash
+yunpat draft-full \
+  --title "一种基于深度学习的图像识别方法" \
+  --field "人工智能" \
+  --disclosure examples/disclosure-example.md \
+  --output patent-application.json
+```
+
+**流程**: 发明理解 → 检索 → 说明书 → 权利要求 → 摘要
+
+#### 3. 专利检索
+
+```bash
+yunpat search \
+  --title "..." \
+  --field "..." \
+  --disclosure examples/disclosure-example.md \
+  --output search-report.json
+```
+
+#### 4. 列出可用智能体
+
+```bash
+yunpat list
+```
+
 ### 使用智能体 API
 
 ```typescript

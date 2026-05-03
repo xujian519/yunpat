@@ -9,10 +9,10 @@ import { resolve } from 'path'
  * 说明书章节
  */
 export type SpecificationChapter =
-  | 'technical_field'      // 技术领域
-  | 'background_art'       // 背景技术
-  | 'invention_content'    // 发明内容
-  | 'embodiments'          // 具体实施方式
+  | 'technical_field' // 技术领域
+  | 'background_art' // 背景技术
+  | 'invention_content' // 发明内容
+  | 'embodiments' // 具体实施方式
   | 'drawings_description' // 附图说明
 
 /**
@@ -119,8 +119,12 @@ export class SpecificationDrafterAgent extends Agent<
       name: config.name || 'specification-drafter',
       description: config.description || '说明书撰写智能体 - 专业的专利说明书撰写',
     })
-    this.templatePath = config.templatePath ||
-      resolve(process.cwd(), 'patents/prompts/templates/patent-drafting/02-specification-drafting.md')
+    this.templatePath =
+      config.templatePath ||
+      resolve(
+        process.cwd(),
+        'patents/prompts/templates/patent-drafting/02-specification-drafting.md'
+      )
   }
 
   protected async plan(
@@ -193,11 +197,11 @@ export class SpecificationDrafterAgent extends Agent<
 输出必须是严格的 JSON 格式。`
 
     // 构建上下文信息
-    const context = this.buildContext(plan.input)
+    const contextInfo = this.buildContext(plan.input)
 
     const userPrompt = `基于以下信息撰写专利说明书：
 
-${context}
+${contextInfo}
 
 请按章节输出以下 JSON 格式：
 {
@@ -240,12 +244,7 @@ ${context}
       throw new Error('LLM 未配置，无法执行说明书撰写')
     }
 
-    const result = await this.callLLMWithFallback(
-      context.llm,
-      systemPrompt,
-      userPrompt,
-      plan.input
-    )
+    const result = await this.callLLMWithFallback(context.llm, systemPrompt, userPrompt, plan.input)
 
     console.log(`\n✅ [说明书撰写] 撰写完成 (置信度: ${result.confidence.toFixed(2)})`)
     console.log(`   总字数: ${result.metrics.totalWordCount}`)
@@ -285,11 +284,11 @@ ${context}
     if (claimsSet) {
       sections.push('\n## 权利要求')
       sections.push('### 独立权利要求')
-      claimsSet.independent_claims.forEach(claim => {
+      claimsSet.independent_claims.forEach((claim) => {
         sections.push(claim.full_text)
       })
       sections.push('### 从属权利要求')
-      claimsSet.dependent_claims.forEach(claim => {
+      claimsSet.dependent_claims.forEach((claim) => {
         sections.push(claim.content)
       })
     }
@@ -300,7 +299,7 @@ ${context}
       sections.push(`### 最接近的现有技术`)
       sections.push(priorArtSearch.comparisonAnalysis.closestPriorArt.title)
       sections.push(`### 区别特征`)
-      priorArtSearch.comparisonAnalysis.differences.forEach(diff => {
+      priorArtSearch.comparisonAnalysis.differences.forEach((diff) => {
         sections.push(`- ${diff}`)
       })
       sections.push(`### 实际解决的技术问题`)
@@ -366,7 +365,6 @@ ${context}
     console.error('[SpecificationDrafterAgent] 说明书撰写失败，使用回退输出:', lastError)
     return this.createFallbackOutput(input)
   }
-
 
   private normalizeOutput(
     parsed: Record<string, unknown>,

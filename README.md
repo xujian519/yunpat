@@ -10,6 +10,7 @@
 **使命**：让专利工作更智能、更高效、更专业
 
 **核心价值**：
+
 - 撰写效率提升 3-5 倍：AI 辅助撰写专利申请文件
 - 授权率提高 20-30%：智能审查答复，提高专利授权率
 - 成本降低 40-60%：自动化流程，减少人力投入
@@ -20,16 +21,19 @@
 ## 目标客户
 
 ### T1: 小型专利代理所（5-50人）
+
 - 年收入：500万-5000万
 - 专利量：100-1000 件/年
 - 核心需求：撰写效率、答复质量
 
 ### T2: 律师事务所 IP 团队
+
 - 年收入：1000万-1亿
 - IP 团队：5-20 人
 - 核心需求：专业深度、诉讼支持
 
 ### T3: 企业 IP 管理部门
+
 - 预算：50万-500万/年
 - 专利组合：500-5000 件
 - 核心需求：资产管控、风险防范
@@ -101,28 +105,28 @@ yunpat/
 
 ### 已完成
 
-| 模块 | 完成度 | 说明 |
-|------|--------|------|
-| 核心框架 (packages/core) | 95% | 131 个 TS 文件，~47,000 行代码，完整测试覆盖 |
-| 知识库集成 | 100% | 4384 个文件，ObsidianKnowledgeBridge |
-| 推理层增强 | 100% | 5 大核心功能全部完成并集成 |
-| 通用智能体包 | 40% | 9 个专用智能体包（writer/researcher/invention/analysis/quality/specification/patent-writer/search/claims） |
-| PatentWriterAgent | 85% | 知识库+模板+Rust桥接，最成熟的智能体 |
-| 提示词模板 | 85% | 1821+ 行，懒加载策略 |
-| 文档体系 | 90% | 60+ 文档文件，80000+ 字 |
-| 测试覆盖 | 85% | 71 个测试文件，1582/1596 测试通过（99.1%） |
+| 模块                     | 完成度 | 说明                                                                                                       |
+| ------------------------ | ------ | ---------------------------------------------------------------------------------------------------------- |
+| 核心框架 (packages/core) | 95%    | 131 个 TS 文件，~47,000 行代码，完整测试覆盖                                                               |
+| 知识库集成               | 100%   | 4384 个文件，ObsidianKnowledgeBridge                                                                       |
+| 推理层增强               | 100%   | 5 大核心功能全部完成并集成                                                                                 |
+| 通用智能体包             | 40%    | 9 个专用智能体包（writer/researcher/invention/analysis/quality/specification/patent-writer/search/claims） |
+| PatentWriterAgent        | 85%    | 知识库+模板+Rust桥接，最成熟的智能体                                                                       |
+| 提示词模板               | 85%    | 1821+ 行，懒加载策略                                                                                       |
+| 文档体系                 | 90%    | 60+ 文档文件，80000+ 字                                                                                    |
+| 测试覆盖                 | 85%    | 71 个测试文件，1582/1596 测试通过（99.1%）                                                                 |
 
 ### 待完成
 
-| 模块 | 完成度 | 问题 |
-|------|--------|------|
-| Rust 工具链 | 40% | 编译错误待修复 |
-| CLI 工具 | 30% | 部分功能实现 |
-| MCP 服务器 | 50% | 部分工具返回硬编码数据 |
-| PatentAnalyzerAgent | 60% | 分析方法返回 LLM 生成数据，无真实数据库 |
-| PatentResponderAgent | 60% | OA 解析有 patent-core 集成，缺真实先验检索 |
-| PatentManagerAgent | 40% | 无数据库后端 |
-| 通用智能体包 | 30-50% | 大部分处于骨架阶段，需要实现核心逻辑 |
+| 模块                 | 完成度 | 问题                                       |
+| -------------------- | ------ | ------------------------------------------ |
+| Rust 工具链          | 40%    | 编译错误待修复                             |
+| CLI 工具             | 30%    | 部分功能实现                               |
+| MCP 服务器           | 50%    | 部分工具返回硬编码数据                     |
+| PatentAnalyzerAgent  | 60%    | 分析方法返回 LLM 生成数据，无真实数据库    |
+| PatentResponderAgent | 60%    | OA 解析有 patent-core 集成，缺真实先验检索 |
+| PatentManagerAgent   | 40%    | 无数据库后端                               |
+| 通用智能体包         | 30-50% | 大部分处于骨架阶段，需要实现核心逻辑       |
 
 ### 下一步（按优先级）
 
@@ -158,19 +162,22 @@ cp .env.example .env
 ### 使用智能体 API
 
 ```typescript
-import { PatentWriterAgent } from './patents/agents/writer/PatentWriterAgent.js';
+import { PatentWriterAgent } from './patents/agents/writer/PatentWriterAgent.js'
 
 const writer = new PatentWriterAgent({
   name: 'patent-writer',
   description: '专利撰写智能体',
-  eventBus, memory, tools, llm,
-});
+  eventBus,
+  memory,
+  tools,
+  llm,
+})
 
 const result = await writer.execute({
   title: '一种基于深度学习的图像识别方法',
   field: '人工智能',
   technicalSolution: '...',
-});
+})
 ```
 
 ---

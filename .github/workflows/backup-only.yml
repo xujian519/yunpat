@@ -1,0 +1,42 @@
+name: Backup Only
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: 代码备份到 GitHub
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+
+      - name: ✅ 备份完成
+        run: |
+          echo "✅ 代码已备份到 GitHub"
+          echo "📦 提交: ${{ github.sha }}"
+          echo "🌿 分支: ${{ github.ref_name }}"
+          echo "👤 作者: ${{ github.actor }}"
+
+      - name: 📊 简单统计
+        run: |
+          echo "📊 代码统计:"
+          echo "  • 文件数: $(find . -type f | wc -l)"
+          echo "  • 代码行数: $(find . -name '*.ts' -o -name '*.js' | xargs wc -l | tail -1 | awk '{print $1}')"
+
+      - name: 🎯 本地 CI 说明
+        run: |
+          echo "🔍 注意: 所有 CI/CD 检查在本地执行"
+          echo ""
+          echo "📋 本地检查命令:"
+          echo "  • pnpm ci          - 快速 CI 检查"
+          echo "  • pnpm ci:full     - 完整 CI 检查"
+          echo "  • pnpm deploy      - 部署"
+          echo ""
+          echo "📚 详细文档: LOCAL_CI_QUICK_REF.md"

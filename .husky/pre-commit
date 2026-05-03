@@ -1,0 +1,21 @@
+#!/bin/bash
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 运行 Pre-commit 检查..."
+
+# 使用 lint-staged 只检查变更的文件
+pnpm exec lint-staged
+
+# 检查退出码
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Pre-commit 检查失败"
+  echo ""
+  echo "提示："
+  echo "  • 运行 'pnpm lint' 查看详细信息"
+  echo "  • 运行 'pnpm format' 自动修复格式问题"
+  echo "  • 使用 'git commit --no-verify' 跳过检查（不推荐）"
+  exit 1
+fi
+
+echo "✅ Pre-commit 检查通过"

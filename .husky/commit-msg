@@ -1,0 +1,38 @@
+#!/bin/bash
+. "$(dirname "$0")/_/husky.sh"
+
+# 检查提交信息格式（推荐使用 Conventional Commits）
+commit_regex='^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert|bump)(\(.+\))?: .{1,50}'
+
+if ! grep -qE "$commit_regex" "$1"; then
+  echo ""
+  echo "⚠️  提交信息格式建议"
+  echo ""
+  echo "推荐使用 Conventional Commits 格式："
+  echo "  <type>(<scope>): <subject>"
+  echo ""
+  echo "类型 (type)："
+  echo "  • feat     - 新功能"
+  echo "  • fix      - Bug 修复"
+  echo "  • docs     - 文档更新"
+  echo "  • style    - 代码格式（不影响功能）"
+  echo "  • refactor - 重构"
+  echo "  • test     - 测试相关"
+  echo "  • chore    - 构建/工具链相关"
+  echo "  • ci       - CI 配置"
+  echo "  • perf     - 性能优化"
+  echo ""
+  echo "示例："
+  echo "  • feat(auth): 添加 OAuth 登录"
+  echo "  • fix(api): 修复用户查询 bug"
+  echo "  • docs: 更新 README"
+  echo ""
+  echo "当前提交信息："
+  cat "$1"
+  echo ""
+  read -p "是否继续提交？(y/N) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 1
+  fi
+fi

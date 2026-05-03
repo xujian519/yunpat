@@ -1,0 +1,28 @@
+#!/bin/bash
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🚀 运行 Pre-push 检查..."
+echo "⚠️  这可能需要几分钟时间..."
+echo ""
+
+# 运行完整 CI 检查
+if [ -f "scripts/ci-check.sh" ]; then
+  bash scripts/ci-check.sh
+else
+  echo "⚠️  未找到 ci-check.sh，运行基础检查"
+  pnpm build && pnpm test
+fi
+
+# 检查退出码
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Pre-push 检查失败"
+  echo ""
+  echo "提示："
+  echo "  • 运行 'pnpm ci' 查看详细信息"
+  echo "  • 使用 'git push --no-verify' 跳过检查（不推荐）"
+  exit 1
+fi
+
+echo "✅ Pre-push 检查通过"
+echo "🎉 可以安全推送代码"

@@ -10,16 +10,20 @@ export class ClaimsRenderer {
     const sections: string[] = []
 
     sections.push(`# 权利要求书`)
-    sections.push(`\n${claimsSet.independent_claims.length + claimsSet.dependent_claims.length}. 一种${claimsSet.independent_claims[0]?.preamble.replace(/^一种/, '') || '发明'}，其特征在于：`)
+    sections.push(
+      `\n${claimsSet.independent_claims.length + claimsSet.dependent_claims.length}. 一种${claimsSet.independent_claims[0]?.preamble.replace(/^一种/, '') || '发明'}，其特征在于：`
+    )
 
     // 渲染独立权利要求
-    claimsSet.independent_claims.forEach(claim => {
+    claimsSet.independent_claims.forEach((claim) => {
       sections.push(`\n${claim.claim_number}. ${claim.full_text}`)
     })
 
     // 渲染从属权利要求
-    claimsSet.dependent_claims.forEach(claim => {
-      sections.push(`\n${claim.claim_number}. 根据权利要求${claim.parent_claim}所述的${this.getClaimType(claim)}，其特征在于：${claim.content}`)
+    claimsSet.dependent_claims.forEach((claim) => {
+      sections.push(
+        `\n${claim.claim_number}. 根据权利要求${claim.parent_claim}所述的${this.getClaimType(claim)}，其特征在于：${claim.content}`
+      )
     })
 
     // 添加布局策略和保护范围分析
@@ -60,15 +64,17 @@ export class ClaimsRenderer {
 
     // 渲染所有权利要求
     const allClaims = [
-      ...claimsSet.independent_claims.map(c => ({ ...c, type: 'independent' })),
-      ...claimsSet.dependent_claims.map(c => ({ ...c, type: 'dependent' })),
+      ...claimsSet.independent_claims.map((c) => ({ ...c, type: 'independent' as const })),
+      ...claimsSet.dependent_claims.map((c) => ({ ...c, type: 'dependent' as const })),
     ].sort((a, b) => a.claim_number - b.claim_number)
 
-    allClaims.forEach(claim => {
+    allClaims.forEach((claim) => {
       if (claim.type === 'independent') {
         lines.push(`${claim.claim_number}. ${claim.full_text}`)
       } else {
-        lines.push(`${claim.claim_number}. 根据权利要求${claim.parent_claim}所述的${this.getClaimType(claim)}，其特征在于：${claim.content}`)
+        lines.push(
+          `${claim.claim_number}. 根据权利要求${claim.parent_claim}所述的${this.getClaimType(claim)}，其特征在于：${claim.content}`
+        )
       }
       lines.push('')
     })

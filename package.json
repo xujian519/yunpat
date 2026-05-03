@@ -33,7 +33,9 @@
     "deploy:prod": "bash scripts/deploy-local.sh production deploy",
     "deploy:rollback": "bash scripts/deploy-local.sh $ENV rollback",
     "deploy:status": "bash scripts/deploy-local.sh $ENV status",
-    "deploy:legacy": "bash scripts/deploy.sh $1"
+    "deploy:legacy": "bash scripts/deploy.sh $1",
+    "api:check-deepseek": "node scripts/check-api-key.js",
+    "api:check-glm": "node scripts/check-glm-api.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

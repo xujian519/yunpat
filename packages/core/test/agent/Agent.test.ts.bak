@@ -547,6 +547,129 @@ describe('Agent', () => {
     })
   })
 
+  describe('性能优化功能', () => {
+    it('应正确初始化推理缓存', () => {
+      const eventBus = new EventBus()
+
+      class CacheAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'cache-agent',
+            description: 'cache agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enableReasoningCache: true,
+            cacheConfig: { maxEntries: 100, similarityThreshold: 0.8, ttl: 3600000 },
+          })
+        }
+        protected async plan() {
+          return 'plan'
+        }
+        protected async act() {
+          return 'done'
+        }
+      }
+
+      const agent = new CacheAgent()
+      expect(agent).toBeDefined()
+    })
+
+    it('应正确初始化性能监控', () => {
+      const eventBus = new EventBus()
+
+      class MonitorAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'monitor-agent',
+            description: 'monitor agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enablePerformanceMonitoring: true,
+          })
+        }
+        protected async plan() {
+          return 'plan'
+        }
+        protected async act() {
+          return 'done'
+        }
+      }
+
+      const agent = new MonitorAgent()
+      expect(agent).toBeDefined()
+    })
+
+    it('queryCache 应在无缓存时返回 found: false', async () => {
+      const { agent } = createTestAgent()
+
+      const result = await agent.queryCache('test-query')
+
+      expect(result.found).toBe(false)
+      expect(result.result).toBeUndefined()
+      expect(result.similarity).toBeUndefined()
+    })
+
+    it('storeToCache 应在无缓存时不执行操作', async () => {
+      const { agent } = createTestAgent()
+
+      await expect(agent.storeToCache('test-key', 'test-result', 100)).resolves.not.toThrow()
+    })
+
+    it('getPerformanceStats 应返回空对象当无性能功能启用', () => {
+      const { agent } = createTestAgent()
+
+      const stats = agent.getPerformanceStats()
+
+      expect(stats).toEqual({})
+    })
+
+    it('getPerformanceStats 应返回缓存统计当启用推理缓存', () => {
+      const eventBus = new EventBus()
+
+      class CacheAgent extends Agent<string, string> {
+        constructor() {
+          super({
+            name: 'cache-agent',
+            description: 'cache agent',
+            eventBus,
+            memory: new ShortTermMemory(),
+            tools: createMockToolRegistry(),
+            llm: createMockLLM(),
+            enableReasoningCache: true,
+          })
+        }
+        protected async plan() {
+          return 'plan'
+        }
+        protected async act() {
+          return 'done'
+        }
+      }
+
+      const agent = new CacheAgent()
+      const stats = agent.getPerformanceStats()
+
+      expect(stats).toHaveProperty('cache')
+    })
+
+    it('clearCache 应在无缓存时不执行操作', () => {
+      const { agent } = createTestAgent()
+
+      expect(() => agent.clearCache()).not.toThrow()
+    })
+
+    it('exportPerformanceReport 应返回空报告当无性能统计', () => {
+      const { agent } = createTestAgent()
+
+      const report = agent.exportPerformanceReport()
+
+      expect(report).toContain('test-agent 性能报告')
+    })
+  })
 
   describe('审批流程', () => {
     it('PLAN 阶段审批拒绝时应抛出错误', async () => {

@@ -117,6 +117,78 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      vitest:
+        specifier: ^1.6.1
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/patent-analyzer:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vite-tsconfig-paths:
+        specifier: ^6.1.1
+        version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/patent-manager:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@yunpat/patent-core':
+        specifier: workspace:*
+        version: link:../../patent-core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vite-tsconfig-paths:
+        specifier: ^6.1.1
+        version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/patent-responder:
+    dependencies:
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@yunpat/patent-core':
+        specifier: workspace:*
+        version: link:../../patent-core
+      '@yunpat/patent-knowledge':
+        specifier: workspace:*
+        version: link:../../patent-knowledge
+      '@yunpat/patent-prompts':
+        specifier: workspace:*
+        version: link:../../patent-prompts
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vite-tsconfig-paths:
+        specifier: ^6.1.1
+        version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
 
   packages/agents/patent-writer:
     dependencies:
@@ -215,6 +287,31 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/test:
+    dependencies:
+      '@yunpat/agent-patent-analyzer':
+        specifier: workspace:*
+        version: link:../patent-analyzer
+      '@yunpat/agent-patent-manager':
+        specifier: workspace:*
+        version: link:../patent-manager
+      '@yunpat/agent-patent-responder':
+        specifier: workspace:*
+        version: link:../patent-responder
+      '@yunpat/agent-patent-writer':
+        specifier: workspace:*
+        version: link:../patent-writer
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      vite-tsconfig-paths:
+        specifier: ^6.1.1
+        version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^1.2.0
         version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)

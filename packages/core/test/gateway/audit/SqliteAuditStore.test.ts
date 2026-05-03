@@ -317,4 +317,170 @@ describe.skipIf(shouldSkip)('SqliteAuditStore', () => {
       expect(stats.retentionDays).toBe(0);
     });
   });
+
+  describe('getCount', () => {
+    it('应该返回日志总数', async () => {
+      await store.write({
+        timestamp: new Date(),
+        userId: 'user-123',
+        agentName: 'Agent1',
+        action: 'test',
+        result: 'success',
+      });
+
+      await store.write({
+        timestamp: new Date(),
+        userId: 'user-456',
+        agentName: 'Agent2',
+        action: 'test',
+        result: 'success',
+      });
+
+      const count = await store.getCount();
+      expect(count).toBe(2);
+    });
+
+    it('应该在空数据库时返回 0', async () => {
+      const count = await store.getCount();
+      expect(count).toBe(0);
+    });
+  });
+
+  describe('getRecentLogs', () => {
+    beforeEach(async () => {
+      const logs: AuditLog[] = [
+        {
+          timestamp: new Date('2026-05-01T10:00:00Z'),
+          userId: 'user-1',
+          agentName: 'Agent1',
+          action: 'action1',
+          result: 'success',
+        },
+        {
+          timestamp: new Date('2026-05-01T11:00:00Z'),
+          userId: 'user-2',
+          agentName: 'Agent2',
+          action: 'action2',
+          result: 'success',
+        },
+        {
+          timestamp: new Date('2026-05-01T12:00:00Z'),
+          userId: 'user-3',
+          agentName: 'Agent3',
+          action: 'action3',
+          result: 'success',
+        },
+      ];
+
+      await store.writeBatch(logs);
+    });
+
+    it('应该返回最近的日志（默认 100 条）', async () => {
+      const recentLogs = await store.getRecentLogs();
+
+      expect(recentLogs).toHaveLength(3);
+      expect(recentLogs[0].userId).toBe('user-3'); // 最新的在前
+    });
+
+    it('应该返回指定数量的最近日志', async () => {
+      const recentLogs = await store.getRecentLogs(2);
+
+      expect(recentLogs).toHaveLength(2);
+      expect(recentLogs[0].userId).toBe('user-3');
+      expect(recentLogs[1].userId).toBe('user-2');
+    });
+
+    it('应该按时间倒序排序', async () => {
+      const recentLogs = await store.getRecentLogs();
+
+      const timestamps = recentLogs.map((log) => log.timestamp.getTime());
+
+      for (let i = 0; i < timestamps.length - 1; i++) {
+        expect(timestamps[i]).toBeGreaterThanOrEqual(timestamps[i + 1]);
+      }
+    });
+  });
+
+  describe('close', () => {
+    it('应该关闭数据库连接', async () => {
+      await store.write({
+        timestamp: new Date(),
+        userId: 'user-123',
+        agentName: 'Agent1',
+        action: 'test',
+        result: 'success',
+      });
+
+      expect(() => store.close()).not.toThrow();
+
+      // 关闭后不应再写入
+      await expect(async () => {
+        await store.write({
+          timestamp: new Date(),
+          userId: 'user-456',
+          agentName: 'Agent2',
+          action: 'test',
+          result: 'success',
+        });
+      }).rejects.toThrow();
+    });
+  });
+
+  describe('构造函数配置', () => {
+    it('应该使用默认的保留天数（0）', async () => {
+      const defaultStore = new SqliteAuditStore({
+        dbPath: '/tmp/test-default-retention.db',
+      });
+
+      const stats = await defaultStore.getStats();
+      expect(stats.retentionDays).toBe(0);
+
+      await defaultStore.close();
+    });
+
+    it('应该使用自定义的保留天数', async () => {
+      const customStore = new SqliteAuditStore({
+        dbPath: '/tmp/test-custom-retention.db',
+        retentionDays: 30,
+      });
+
+      const stats = await customStore.getStats();
+      expect(stats.retentionDays).toBe(30);
+
+      await customStore.close();
+    });
+
+    it('应该创建数据库目录（默认）', async () => {
+      const storeWithDir = new SqliteAuditStore({
+        dbPath: '/tmp/test-audit-dir/subdir/test.db',
+        createDir: true,
+      });
+
+      await storeWithDir.write({
+        timestamp: new Date(),
+        userId: 'user-123',
+        agentName: 'Agent1',
+        action: 'test',
+        result: 'success',
+      });
+
+      const count = await storeWithDir.getCount();
+      expect(count).toBe(1);
+
+      await storeWithDir.close();
+    });
+
+    it('应该不创建数据库目录（配置为 false）', async () => {
+      // 这个测试只是验证不会抛出异常
+      // 实际的目录创建测试需要在有权限的环境中运行
+      const storeWithoutDir = new SqliteAuditStore({
+        dbPath: '/tmp/test-no-dir.db',
+        createDir: false,
+      });
+
+      expect(storeWithoutDir).toBeDefined();
+
+      await storeWithoutDir.close();
+    });
+  });
 });

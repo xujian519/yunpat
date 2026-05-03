@@ -10,7 +10,8 @@ use crate::vector::*;
 
 #[derive(Debug, Default)]
 pub struct VectorServiceImpl {
-    vectors: HashMap<String, Vec<f32>>,
+    // 向量存储字段将在后续实现中添加
+    // 当前版本为模拟实现，返回硬编码数据
 }
 
 #[tonic::async_trait]

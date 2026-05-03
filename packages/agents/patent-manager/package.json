@@ -1,7 +1,7 @@
 {
-  "name": "@yunpat/agent-invention",
+  "name": "@yunpat/agent-patent-manager",
   "version": "0.1.0",
-  "description": "发明理解智能体 - 专利交底书分析与结构化理解",
+  "description": "专利管理智能体 - 专利全生命周期管理与监控",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,20 +18,23 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest"
+    "test": "vitest run"
   },
   "dependencies": {
-    "@yunpat/core": "workspace:*"
+    "@yunpat/core": "workspace:*",
+    "@yunpat/patent-core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "typescript": "^5.3.3",
-    "vitest": "^1.6.1"
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^1.2.0"
   },
   "keywords": [
     "agent",
     "patent",
-    "invention",
+    "manager",
+    "lifecycle",
     "yunpat"
   ],
   "author": "Xu Jian <xujian519@gmail.com>",

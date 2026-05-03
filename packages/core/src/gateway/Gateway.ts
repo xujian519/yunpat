@@ -16,6 +16,12 @@ import {
   type AuthorizationUrlResult,
   type OAuthCallbackResult,
 } from './auth/index.js';
+import {
+  ContentModerationService,
+  RuleBasedModerationService,
+  OpenAIModerationService,
+  type ModerationResult,
+} from './ContentModerationService.js';
 
 /**
  * 输入源类型
@@ -290,6 +296,9 @@ export interface SecurityGatewayConfig {
   /** 内容过滤规则 */
   contentFilterRules?: ContentFilterRule[];
 
+  /** ML 内容审核服务（可选） */
+  mlModerationService?: ContentModerationService;
+
   /** 审计日志存储 */
   auditLogStore?: AuditLogStore;
 
@@ -469,6 +478,7 @@ export class BaseGateway implements Gateway {
   private jwtManager?: JwtManager;
   private sessionManager?: SessionManager;
   private oauthManager?: OAuthManager;
+  private mlModerationService?: ContentModerationService;
 
   constructor(config: SecurityGatewayConfig) {
     this.config = config;
@@ -477,6 +487,7 @@ export class BaseGateway implements Gateway {
     this.jwtManager = config.jwtManager;
     this.sessionManager = config.sessionManager;
     this.oauthManager = config.oauthManager;
+    this.mlModerationService = config.mlModerationService;
   }
 
   async receiveInput(source: InputSourceType): Promise<MultimodalInput> {
@@ -802,12 +813,35 @@ export class BaseGateway implements Gateway {
           break;
 
         case 'ml':
-          // TODO: 集成 ML 模型进行内容检测
-          // 这里可以调用外部 ML 服务进行内容审核
-          // 示例：调用内容审核 API
-          // const result = await this.mlService.classify(content);
-          // matched = result.isUnsafe;
-          matched = false;
+          // 使用 ML 内容审核服务进行内容检测
+          if (this.mlModerationService) {
+            try {
+              const result: ModerationResult = await this.mlModerationService.moderate(content);
+              matched = result.isUnsafe;
+
+              // 记录审核结果
+              if (matched && result.reason) {
+                console.warn(`[Gateway] ML 内容审核触发: ${result.reason} (分数: ${result.score.toFixed(2)})`);
+              }
+            } catch (error) {
+              console.error('[Gateway] ML 内容审核失败:', error);
+              matched = false; // 失败时不阻止
+            }
+          } else {
+            // 未配置 ML 服务，使用默认规则引擎
+            const defaultService = new RuleBasedModerationService();
+            try {
+              const result: ModerationResult = await defaultService.moderate(content);
+              matched = result.isUnsafe;
+
+              if (matched && result.reason) {
+                console.warn(`[Gateway] 默认规则引擎触发: ${result.reason}`);
+              }
+            } catch (error) {
+              console.error('[Gateway] 规则引擎失败:', error);
+              matched = false;
+            }
+          }
           break;
       }
 

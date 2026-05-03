@@ -4,9 +4,10 @@
  * 覆盖 ShortTermMemory CRUD 和 MemoryManager 高级操作
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ShortTermMemory, MemoryManager } from '../../src/memory/MemoryStore.js';
 import { SAMPLE_MEMORY_ENTRIES } from '../helpers/fixtures.js';
+import { PostgresVectorStore } from '../../src/memory/long-term/PostgresVectorStore.js';
 
 describe('ShortTermMemory', () => {
   let memory: ShortTermMemory;
@@ -96,7 +97,7 @@ describe('ShortTermMemory', () => {
   });
 
   describe('search', () => {
-    it('应返回空数组（短期记忆不支持搜索）', async () => {
+    it('应返回空数组（未配置向量存储）', async () => {
       await memory.set('key', 'value');
       const results = await memory.search('query');
       expect(results).toEqual([]);
@@ -105,6 +106,67 @@ describe('ShortTermMemory', () => {
     it('应接受 topK 参数', async () => {
       const results = await memory.search('query', 5);
       expect(results).toEqual([]);
+    });
+
+    it('应接受 filter 参数', async () => {
+      const results = await memory.search('query', 10, {
+        types: ['test'],
+        tags: ['tag1'],
+      });
+      expect(results).toEqual([]);
+    });
+
+    it('应警告未配置向量存储', async () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await memory.search('query');
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ShortTermMemory] 未配置向量存储，无法进行语义搜索'
+      );
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('setVectorStore', () => {
+    it('应设置向量存储和嵌入生成器', async () => {
+      // 创建 mock 向量存储
+      const mockVectorStore = {
+        search: vi.fn().mockResolvedValue([]),
+      } as unknown as PostgresVectorStore;
+
+      const mockEmbeddingGenerator = vi.fn().mockResolvedValue(Array(1024).fill(0.1));
+
+      memory.setVectorStore(mockVectorStore, mockEmbeddingGenerator);
+
+      // 验证配置成功
+      const results = await memory.search('query');
+
+      expect(mockEmbeddingGenerator).toHaveBeenCalledWith('query');
+      expect(mockVectorStore.search).toHaveBeenCalled();
+    });
+
+    it('应处理向量搜索失败', async () => {
+      const mockVectorStore = {
+        search: vi.fn().mockRejectedValue(new Error('Search failed')),
+      } as unknown as PostgresVectorStore;
+
+      const mockEmbeddingGenerator = vi.fn().mockResolvedValue(Array(1024).fill(0.1));
+
+      memory.setVectorStore(mockVectorStore, mockEmbeddingGenerator);
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const results = await memory.search('query');
+
+      expect(results).toEqual([]);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[ShortTermMemory] 向量搜索失败:',
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
   });
 

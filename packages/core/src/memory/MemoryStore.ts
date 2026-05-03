@@ -6,6 +6,7 @@
  */
 
 import { MemoryStore as IMemoryStore, MemoryEntry } from '../lifecycle/Lifecycle.js';
+import { PostgresVectorStore } from './long-term/PostgresVectorStore.js';
 
 /**
  * 短期记忆实现
@@ -14,10 +15,31 @@ import { MemoryStore as IMemoryStore, MemoryEntry } from '../lifecycle/Lifecycle
  * - 对话历史
  * - 当前上下文
  * - 临时数据
+ *
+ * 可选集成长期记忆向量存储进行语义搜索
  */
 export class ShortTermMemory implements IMemoryStore {
   /** 存储后端 */
   protected storage = new Map<string, unknown>();
+
+  /** 长期记忆向量存储（可选） */
+  protected vectorStore?: PostgresVectorStore;
+
+  /** 查询向量生成器（可选） */
+  protected embeddingGenerator?: (query: string) => Promise<number[]>;
+
+  constructor(vectorStore?: PostgresVectorStore, embeddingGenerator?: (query: string) => Promise<number[]>) {
+    this.vectorStore = vectorStore;
+    this.embeddingGenerator = embeddingGenerator;
+  }
+
+  /**
+   * 设置长期记忆存储
+   */
+  setVectorStore(vectorStore: PostgresVectorStore, embeddingGenerator: (query: string) => Promise<number[]>): void {
+    this.vectorStore = vectorStore;
+    this.embeddingGenerator = embeddingGenerator;
+  }
 
   /**
    * 读取记忆
@@ -71,11 +93,50 @@ export class ShortTermMemory implements IMemoryStore {
   }
 
   /**
-   * 搜索长期记忆（占位符）
+   * 搜索长期记忆（向量语义搜索）
+   *
+   * 如果配置了向量存储，则进行语义搜索；否则返回空数组
+   *
+   * @param query 搜索查询文本
+   * @param topK 返回前 K 个结果
+   * @param filter 可选的过滤条件
+   * @returns 相关记忆列表
    */
-  async search(_query: string, _topK = 10): Promise<MemoryEntry[]> {
-    // TODO: 集成长期记忆（向量数据库）
-    return [];
+  async search(query: string, topK: number = 10, filter?: {
+    types?: string[];
+    tags?: string[];
+    agent?: string;
+    userId?: string;
+    excludeArchived?: boolean;
+  }): Promise<MemoryEntry[]> {
+    // 如果未配置向量存储，返回空数组
+    if (!this.vectorStore || !this.embeddingGenerator) {
+      console.warn('[ShortTermMemory] 未配置向量存储，无法进行语义搜索');
+      return [];
+    }
+
+    try {
+      // 生成查询向量
+      const queryEmbedding = await this.embeddingGenerator(query);
+
+      // 执行向量搜索
+      const results = await this.vectorStore.search(queryEmbedding, topK, filter);
+
+      // 转换为 MemoryEntry 格式
+      return results.map((result) => ({
+        key: result.id.toString(),
+        value: {
+          content: result.content,
+          metadata: result.metadata,
+          type: result.type,
+          similarity: result.similarity,
+        },
+        timestamp: new Date(), // 向量存储没有时间戳，使用当前时间
+      }));
+    } catch (error) {
+      console.error('[ShortTermMemory] 向量搜索失败:', error);
+      return [];
+    }
   }
 
   /**

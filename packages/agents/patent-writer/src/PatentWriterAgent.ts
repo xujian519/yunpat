@@ -134,6 +134,8 @@ export class PatentWriterAgent extends Agent<PatentWritingInput, PatentWritingOu
   private promptManager?: PromptTemplateManager;
   private config: PatentWriterConfig;
   private currentStage: string = 'idle';
+  private currentResult?: PatentWritingOutput;
+  private input?: PatentWritingInput;
   private hallucinationDetector?: HallucinationDetector;
   private knowledgeBase?: KnowledgeBase;
 
@@ -251,6 +253,9 @@ export class PatentWriterAgent extends Agent<PatentWritingInput, PatentWritingOu
    * - Stage 1: 发明理解 - 预加载创造性分析模板
    */
   protected async plan(input: PatentWritingInput, context: ExecutionContext): Promise<PatentWritingPlan> {
+    // 存储输入供导出功能使用
+    this.input = input;
+
     this.validateInput(input);
 
     console.log('\n📝 [专利撰写] 步骤1: 规划阶段');
@@ -394,7 +399,7 @@ ${preprocessedInfo}`,
 
     const duration = (Date.now() - startTime) / 1000 / 60; // 分钟
 
-    return {
+    const result = {
       patentApplication: {
         title: plan.input.title,
         abstract,
@@ -409,6 +414,11 @@ ${preprocessedInfo}`,
         qualityScore: this.calculateQualityScore(plan, claims, description),
       },
     };
+
+    // 存储结果供导出功能使用
+    this.currentResult = result;
+
+    return result;
   }
 
   /**
@@ -835,10 +845,132 @@ ${plan.plan.substring(0, 1000)}...
   /**
    * 导出为正式申请文件格式
    */
-  async exportToFormat(format: 'cn' | 'pct'): Promise<any> {
-    // 导出为中国或 PCT 格式
-    // TODO: 实现具体的导出逻辑
-    return {};
+  async exportToFormat(format: 'cn' | 'pct'): Promise<{
+    format: string;
+    content: string;
+    metadata: {
+      exportDate: Date;
+      title: string;
+      applicant: string;
+      inventors: string[];
+      claimsCount: number;
+      wordCount: number;
+    };
+  }> {
+    console.log(`\n📄 [专利导出] 导出为 ${format.toUpperCase()} 格式`);
+
+    // 检查是否有撰写结果
+    if (!this.currentResult) {
+      throw new Error('请先完成专利撰写，再进行导出');
+    }
+
+    const { patentApplication, metrics } = this.currentResult;
+
+    let content = '';
+
+    if (format === 'cn') {
+      // 中国专利申请格式
+      content = this.formatCNApplication(patentApplication);
+    } else if (format === 'pct') {
+      // PCT 国际申请格式
+      content = this.formatPCTApplication(patentApplication);
+    }
+
+    const metadata = {
+      exportDate: new Date(),
+      title: patentApplication.title,
+      applicant: this.input?.applicant || '',
+      inventors: this.input?.inventors || [],
+      claimsCount: metrics.claimsCount,
+      wordCount: metrics.descriptionWordCount,
+    };
+
+    console.log(`✅ [专利导出] 完成`);
+    console.log(`   格式: ${format.toUpperCase()}`);
+    console.log(`   字数: ${metadata.wordCount}`);
+    console.log(`   权利要求: ${metadata.claimsCount} 项`);
+
+    return {
+      format,
+      content,
+      metadata,
+    };
+  }
+
+  /**
+   * 格式化为中国专利申请文件
+   */
+  private formatCNApplication(application: PatentWritingOutput['patentApplication']): string {
+    const lines: string[] = [];
+
+    // 标题
+    lines.push('发明名称：' + application.title);
+    lines.push('');
+
+    // 摘要
+    lines.push('摘要');
+    lines.push(application.abstract);
+    lines.push('');
+
+    // 权利要求书
+    lines.push('权利要求书');
+    application.claims.forEach((claim) => {
+      lines.push(`${claim.number}. ${claim.content}`);
+    });
+    lines.push('');
+
+    // 说明书
+    lines.push('说明书');
+    lines.push(application.description);
+    lines.push('');
+
+    // 附图说明
+    if (application.drawings) {
+      lines.push('附图说明');
+      lines.push(application.drawings);
+      lines.push('');
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * 格式化为 PCT 国际申请文件
+   */
+  private formatPCTApplication(application: PatentWritingOutput['patentApplication']): string {
+    const lines: string[] = [];
+
+    // PCT 标题
+    lines.push('PCT INTERNATIONAL APPLICATION');
+    lines.push('');
+    lines.push('Title: ' + application.title);
+    lines.push('');
+
+    // Abstract
+    lines.push('ABSTRACT');
+    lines.push(application.abstract);
+    lines.push('');
+
+    // Claims
+    lines.push('CLAIMS');
+    application.claims.forEach((claim) => {
+      lines.push(`${claim.number}. ${claim.content}`);
+    });
+    lines.push('');
+
+    // Description
+    lines.push('DESCRIPTION');
+    lines.push(application.description);
+    lines.push('');
+
+    // Drawings
+    if (application.drawings) {
+      lines.push('BRIEF DESCRIPTION OF DRAWINGS');
+      lines.push(application.drawings);
+      lines.push('');
+    }
+
+    return lines.join('\n');
   }
 
   /**

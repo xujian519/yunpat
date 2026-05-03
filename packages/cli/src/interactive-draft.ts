@@ -124,7 +124,11 @@ export async function interactiveDraftPatent(options: DraftOptions): Promise<voi
 
         case 'correct':
           // 修正部分内容
-          console.log(chalk.gray('\n可用字段: technicalField, backgroundArt, technicalProblem, technicalSolution, beneficialEffects, keyFeatures'))
+          console.log(
+            chalk.gray(
+              '\n可用字段: technicalField, backgroundArt, technicalProblem, technicalSolution, beneficialEffects, keyFeatures'
+            )
+          )
           const correction = await waitForInput('请输入修正内容（格式：字段名: 新内容）: ')
 
           spinner.start(chalk.blue('正在应用修正...'))
@@ -147,7 +151,11 @@ export async function interactiveDraftPatent(options: DraftOptions): Promise<voi
             report = renderer.render(result)
           } else {
             spinner.fail(chalk.red(`未知字段: ${fieldName}`))
-            console.log(chalk.gray('可用字段: technicalField, backgroundArt, technicalProblem, technicalSolution, beneficialEffects, keyFeatures'))
+            console.log(
+              chalk.gray(
+                '可用字段: technicalField, backgroundArt, technicalProblem, technicalSolution, beneficialEffects, keyFeatures'
+              )
+            )
           }
           break
 
@@ -197,7 +205,6 @@ export async function interactiveDraftPatent(options: DraftOptions): Promise<voi
     if (iteration >= maxIterations) {
       console.log(chalk.yellow('\n⚠️  达到最大迭代次数，请稍后再试'))
     }
-
   } catch (error) {
     spinner.fail(chalk.red('执行失败'))
     console.error(chalk.red(error instanceof Error ? error.message : String(error)))

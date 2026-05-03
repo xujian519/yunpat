@@ -16,14 +16,10 @@ export async function createAgentFramework(options: {
 
     if (!apiKey) {
       spinner.fail('初始化失败')
-      throw new CLIError(
-        '未找到 API 密钥',
-        'NO_API_KEY',
-        [
-          '设置环境变量: export DEEPSEEK_API_KEY=your_key',
-          '使用参数: yunpat init --api-key your_key',
-        ]
-      )
+      throw new CLIError('未找到 API 密钥', 'NO_API_KEY', [
+        '设置环境变量: export DEEPSEEK_API_KEY=your_key',
+        '使用参数: yunpat init --api-key your_key',
+      ])
     }
 
     const eventBus = new EventBus()

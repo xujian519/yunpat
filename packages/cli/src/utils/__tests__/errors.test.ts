@@ -18,11 +18,7 @@ describe('Error Handling', () => {
   })
 
   it('should create CLIError with code and suggestions', () => {
-    const error = new CLIError(
-      'Test error',
-      'TEST_ERROR',
-      ['Suggestion 1', 'Suggestion 2']
-    )
+    const error = new CLIError('Test error', 'TEST_ERROR', ['Suggestion 1', 'Suggestion 2'])
 
     expect(error.message).toBe('Test error')
     expect(error.code).toBe('TEST_ERROR')
@@ -30,11 +26,7 @@ describe('Error Handling', () => {
   })
 
   it('should handle CLIError and display suggestions', () => {
-    const error = new CLIError(
-      'Test error',
-      'TEST_ERROR',
-      ['Suggestion 1']
-    )
+    const error = new CLIError('Test error', 'TEST_ERROR', ['Suggestion 1'])
 
     expect(() => {
       handleError(error)

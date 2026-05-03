@@ -143,7 +143,6 @@ export async function priorArtSearch(options: SearchOptions): Promise<void> {
     }
 
     console.log(chalk.green('\n✅ 先导技术检索阶段完成！'))
-
   } catch (error) {
     spinner.fail(chalk.red('执行失败'))
     console.error(chalk.red(error instanceof Error ? error.message : String(error)))

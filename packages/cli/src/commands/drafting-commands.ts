@@ -69,7 +69,9 @@ export async function fullPatentWorkflow(options: {
     })
 
     spinner.succeed(chalk.green('✓ 现有技术检索完成'))
-    console.log(chalk.gray(`   最接近现有技术: ${searchResult.comparisonAnalysis.closestPriorArt.title}`))
+    console.log(
+      chalk.gray(`   最接近现有技术: ${searchResult.comparisonAnalysis.closestPriorArt.title}`)
+    )
     console.log(chalk.gray(`   创造性评估: ${searchResult.creativityAssessment.level}`))
 
     spinner.start(chalk.blue('步骤3/6: 撰写说明书...'))
@@ -108,7 +110,9 @@ export async function fullPatentWorkflow(options: {
     })
 
     spinner.succeed(chalk.green('✓ 权利要求撰写完成'))
-    console.log(chalk.gray(`   独立权利要求: ${claimsResult.claimsSet.independent_claims.length} 项`))
+    console.log(
+      chalk.gray(`   独立权利要求: ${claimsResult.claimsSet.independent_claims.length} 项`)
+    )
     console.log(chalk.gray(`   从属权利要求: ${claimsResult.claimsSet.dependent_claims.length} 项`))
 
     spinner.start(chalk.blue('步骤5/6: 撰写摘要...'))
@@ -155,8 +159,16 @@ export async function fullPatentWorkflow(options: {
     })
 
     console.log(chalk.blue('\n【说明书】'))
-    console.log(chalk.gray(`  技术领域: ${specResult.specification.technical_field.content.substring(0, 100)}...`))
-    console.log(chalk.gray(`  发明内容: ${specResult.specification.invention_content.content.substring(0, 100)}...`))
+    console.log(
+      chalk.gray(
+        `  技术领域: ${specResult.specification.technical_field.content.substring(0, 100)}...`
+      )
+    )
+    console.log(
+      chalk.gray(
+        `  发明内容: ${specResult.specification.invention_content.content.substring(0, 100)}...`
+      )
+    )
 
     console.log(chalk.blue('\n【摘要】'))
     console.log(chalk.gray(`  ${abstractResult.abstract.content.substring(0, 200)}...`))

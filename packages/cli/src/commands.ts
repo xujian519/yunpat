@@ -1067,7 +1067,9 @@ export async function fullPatentWorkflow(options: {
     })
 
     spinner.succeed(chalk.green('✓ 现有技术检索完成'))
-    console.log(chalk.gray(`   最接近现有技术: ${searchResult.comparisonAnalysis.closestPriorArt.title}`))
+    console.log(
+      chalk.gray(`   最接近现有技术: ${searchResult.comparisonAnalysis.closestPriorArt.title}`)
+    )
     console.log(chalk.gray(`   创造性评估: ${searchResult.creativityAssessment.level}`))
 
     // ===== 步骤3: 说明书撰写 =====
@@ -1112,7 +1114,9 @@ export async function fullPatentWorkflow(options: {
     })
 
     spinner.succeed(chalk.green('✓ 权利要求撰写完成'))
-    console.log(chalk.gray(`   独立权利要求: ${claimsResult.claimsSet.independent_claims.length} 项`))
+    console.log(
+      chalk.gray(`   独立权利要求: ${claimsResult.claimsSet.independent_claims.length} 项`)
+    )
     console.log(chalk.gray(`   从属权利要求: ${claimsResult.claimsSet.dependent_claims.length} 项`))
 
     // ===== 步骤5: 摘要撰写 =====
@@ -1174,8 +1178,16 @@ export async function fullPatentWorkflow(options: {
     })
 
     console.log(chalk.blue('\n【说明书】'))
-    console.log(chalk.gray(`  技术领域: ${specResult.specification.technical_field.content.substring(0, 100)}...`))
-    console.log(chalk.gray(`  发明内容: ${specResult.specification.invention_content.content.substring(0, 100)}...`))
+    console.log(
+      chalk.gray(
+        `  技术领域: ${specResult.specification.technical_field.content.substring(0, 100)}...`
+      )
+    )
+    console.log(
+      chalk.gray(
+        `  发明内容: ${specResult.specification.invention_content.content.substring(0, 100)}...`
+      )
+    )
 
     console.log(chalk.blue('\n【摘要】'))
     console.log(chalk.gray(`  ${abstractResult.abstract.content.substring(0, 200)}...`))
@@ -1194,11 +1206,9 @@ export async function fullPatentWorkflow(options: {
 
     if (qualityResult.improvementSuggestions && qualityResult.improvementSuggestions.length > 0) {
       console.log(chalk.yellow('\n【待改进项】'))
-      qualityResult.improvementSuggestions
-        .slice(0, 5)
-        .forEach((suggestion: any) => {
-          console.log(chalk.yellow(`  [${suggestion.priority}] ${suggestion.description}`))
-        })
+      qualityResult.improvementSuggestions.slice(0, 5).forEach((suggestion: any) => {
+        console.log(chalk.yellow(`  [${suggestion.priority}] ${suggestion.description}`))
+      })
     }
 
     if (options.output) {
@@ -1218,7 +1228,9 @@ export async function fullPatentWorkflow(options: {
     }
 
     console.log(chalk.green('\n🎉 v2.0 完整专利撰写工作流已完成!'))
-    console.log(chalk.gray('   符合专业专利代理人工作流程：发明理解 → 检索 → 说明书 → 权利要求 → 摘要'))
+    console.log(
+      chalk.gray('   符合专业专利代理人工作流程：发明理解 → 检索 → 说明书 → 权利要求 → 摘要')
+    )
   } catch (error) {
     spinner.fail(chalk.red('执行失败'))
     console.error(error)

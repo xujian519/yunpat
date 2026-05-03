@@ -48,6 +48,11 @@ export enum NativeModel {
   GLM_4 = 'glm-4',
   GLM_3_TURBO = 'glm-3-turbo',
 
+  /** 智谱 CodeGeeX (编程套餐) */
+  CODEGEEX_4 = 'codegeex-4', // 最新代码模型
+  CODEGEEX_4_ALL = 'codegeex-4-all', // 全能代码模型
+  CODEGEEX_TURBO = 'codegeex-turbo', // 快速代码模型
+
   /** 本地模型 (Ollama) */
   OLLAMA_LLAMA3 = 'ollama/llama3',
   OLLAMA_MISTRAL = 'ollama/mistral',
@@ -112,6 +117,9 @@ export enum ModelProvider {
   /** 智谱 */
   ZHIPU = 'zhipu',
 
+  /** 智谱编程套餐 */
+  ZHIPU_CODING = 'zhipu-coding',
+
   /** 本地 Ollama */
   OLLAMA = 'ollama',
 }
@@ -138,6 +146,11 @@ const DEFAULT_CONFIGS: Record<ModelProvider, Partial<ModelConfig>> = {
   [ModelProvider.ZHIPU]: {
     baseURL: 'https://open.bigmodel.cn/api/paas/v4',
     temperature: 0.7,
+    maxTokens: 4096,
+  },
+  [ModelProvider.ZHIPU_CODING]: {
+    baseURL: 'https://open.bigmodel.cn/api/coding/paas/v4',
+    temperature: 0.3,
     maxTokens: 4096,
   },
   [ModelProvider.OLLAMA]: {
@@ -180,6 +193,9 @@ export class NativeLLMAdapter implements ILLMAdapter {
     }
     if (modelName.startsWith('ernie')) {
       return ModelProvider.BAIDU
+    }
+    if (modelName.startsWith('codegeex')) {
+      return ModelProvider.ZHIPU_CODING
     }
     if (modelName.startsWith('glm')) {
       return ModelProvider.ZHIPU
@@ -701,6 +717,25 @@ export function createZhipuModel(apiKey: string, model?: NativeModel): NativeLLM
     name: model ?? NativeModel.GLM_4_7,
     apiKey,
     baseURL: DEFAULT_CONFIGS[ModelProvider.ZHIPU].baseURL!,
+  })
+}
+
+/**
+ * 创建智谱 CodeGeeX 编程模型（推荐使用 CodeGeeX-4）
+ *
+ * 编程套餐专门针对代码相关任务：
+ * - 代码生成和补全
+ * - 代码理解和分析
+ * - 代码审查和优化
+ * - Bug 修复建议
+ *
+ * 端点：https://open.bigmodel.cn/api/coding/paas/v4
+ */
+export function createZhipuCodingModel(apiKey: string, model?: NativeModel): NativeLLMAdapter {
+  return new NativeLLMAdapter({
+    name: model ?? NativeModel.CODEGEEX_4,
+    apiKey,
+    baseURL: DEFAULT_CONFIGS[ModelProvider.ZHIPU_CODING].baseURL!,
   })
 }
 

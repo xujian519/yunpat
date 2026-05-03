@@ -12,6 +12,7 @@ import { LLMHelper } from './llm-helper.js'
 import { LLM_CONSTANTS } from './constants.js'
 import { createModuleLogger, StructuredLogger } from './logger.js'
 import { PerformanceMonitor } from './performance-monitor.js'
+import { createHash } from 'crypto'
 
 /**
  * 缓存项
@@ -455,7 +456,7 @@ export class LLMOptimizer {
   }
 
   /**
-   * 生成缓存键
+   * 生成缓存键（使用加密级哈希防止冲突）
    */
   private generateCacheKey(
     messages: LLMMessage[],
@@ -463,14 +464,8 @@ export class LLMOptimizer {
     maxTokens?: number
   ): string {
     const key = JSON.stringify({ messages, temperature, maxTokens })
-    // 简单的哈希函数
-    let hash = 0
-    for (let i = 0; i < key.length; i++) {
-      const char = key.charCodeAt(i)
-      hash = (hash << 5) - hash + char
-      hash = hash & hash // Convert to 32bit integer
-    }
-    return hash.toString(36)
+    // 使用 SHA-256 哈希算法生成缓存键，取前16个字符
+    return createHash('sha256').update(key).digest('hex').substring(0, 16)
   }
 
   /**

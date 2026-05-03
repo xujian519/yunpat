@@ -36,7 +36,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 运行测试
-        run: pnpm test -- --run
+        run: pnpm test
 
       - name: 上传测试覆盖率
         uses: codecov/codecov-action@v3

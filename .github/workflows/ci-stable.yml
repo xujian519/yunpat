@@ -8,29 +8,23 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '24.x'
+  NODE_VERSION: '20.x'
   PNPM_VERSION: 9
   ACTIONS_RUNNER_DISABLE_JOB_CACHE: 'true'
-  CANVAS_USE_NATIVE: '0'
-  PUPPETEET_SKIP_DOWNLOAD: 'true'
   NODE_OPTIONS: '--max-old-space-size=4096'
   RUST_BACKTRACE: '1'
 
-# 并发控制：更激进的取消策略
+# 并发控制：取消旧的运行
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true  # 取消旧的运行
+  cancel-in-progress: true
 
 jobs:
-  # 快速检查（增强稳定性）
-  quick-checks:
-    name: 快速检查
+  # ========== 任务 1: 代码质量检查 ==========
+  quality:
+    name: 代码质量检查
     runs-on: [self-hosted, macos-arm64]
-    timeout-minutes: 25  # 增加超时时间
-
-    # 更保守的并发控制
-    strategy:
-      max-parallel: 1  # 一次只运行一个任务
+    timeout-minutes: 20
 
     steps:
       - name: 🔧 修复 Git 网络配置
@@ -47,7 +41,7 @@ jobs:
       - name: 📥 检出代码
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1  # 减少深度，提高速度
+          fetch-depth: 1
           clean: true
 
       - name: 🔍 系统资源检查
@@ -56,7 +50,7 @@ jobs:
           echo "CPU核心数: $(sysctl -n hw.ncpu)"
           echo "可用内存: $(vm_stat | grep "Pages free" | awk '{print $3 * 16384 / 1024 / 1024}') MB"
           echo "磁盘空间: $(df -h . | tail -1 | awk '{print $4}') 可用"
-          
+
           # 清理可能占用资源的进程
           pkill -f "node.*vitest" || true
           pkill -f "node.*esbuild" || true
@@ -68,44 +62,34 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: 📦 快速依赖安装
-        run: |
-          echo "📦 快速依赖安装..."
-          pnpm install --no-frozen-lockfile --prefer-offline --frozen-lockfile=false
+      - name: 📦 安装依赖
+        run: pnpm install --frozen-lockfile
         env:
           HUSKY: 0
 
-      - name: 🔍 TypeScript 类型检查（仅核心包）
-        run: |
-          echo "🔍 TypeScript 类型检查（仅核心包）..."
-          pnpm --filter @yunpat/core build:tsc
+      - name: 🔍 运行 ESLint
+        run: pnpm lint
+        timeout-minutes: 5
+
+      - name: 🔍 TypeScript 类型检查
+        run: pnpm build:tsc
         timeout-minutes: 10
-        continue-on-error: true  # 失败不阻塞
 
-      - name: 🧪 核心测试（稳定子集）
-        run: |
-          echo "🧪 运行核心测试的稳定子集..."
-          # 只运行最稳定的测试
-          pnpm --filter @yunpat/core test -- --run \
-            --reporter=dot \
-            --exclude="**/*integration*.test.ts" \
-            --exclude="**/benchmark*.test.ts"
-        timeout-minutes: 15
+      - name: 📋 检查代码格式
+        run: pnpm exec prettier --check "**/*.{ts,js,json,md}"
+        timeout-minutes: 3
 
-      - name: 🧹 清理工作目录
+      - name: 🧹 清理
         if: always()
         run: |
-          echo "🧹 清理临时文件..."
           rm -rf ~/actions-runner/_work/_temp/*
-          rm -rf ./*.log
           pkill -f "node.*vitest" || true
-          echo "✅ 清理完成"
 
-  # 构建验证（独立任务）
-  build-verification:
-    name: 构建验证
+  # ========== 任务 2: TypeScript 测试 ==========
+  test-typescript:
+    name: TypeScript 测试
     runs-on: [self-hosted, macos-arm64]
-    needs: quick-checks
+    needs: quality
     timeout-minutes: 30
 
     steps:
@@ -127,29 +111,34 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: 📦 快速依赖安装
-        run: pnpm install --no-frozen-lockfile --prefer-offline
+      - name: 📦 安装依赖
+        run: pnpm install --frozen-lockfile
         env:
           HUSKY: 0
 
-      - name: 🏗️ 构建验证
-        run: |
-          echo "🏗️ 构建验证..."
-          pnpm build
-          echo "✅ 构建成功"
+      - name: 🏗️ 构建项目
+        run: pnpm build
+        timeout-minutes: 15
+
+      - name: 🧪 运行测试
+        run: pnpm test -- --run
         timeout-minutes: 20
+
+      - name: 📊 生成覆盖率报告
+        run: pnpm test -- --coverage
+        timeout-minutes: 15
+        continue-on-error: true
 
       - name: 🧹 清理
         if: always()
         run: rm -rf ~/actions-runner/_work/_temp/*
 
-  # 质量门禁（快速检查）
-  quality-gate:
-    name: 质量门禁
+  # ========== 任务 3: Rust 测试 ==========
+  test-rust:
+    name: Rust 工具测试
     runs-on: [self-hosted, macos-arm64]
-    needs: quick-checks
-    timeout-minutes: 15
-    continue-on-error: true  # 失败不阻塞
+    needs: quality
+    timeout-minutes: 25
 
     steps:
       - name: 🔧 修复 Git 网络配置
@@ -161,6 +150,66 @@ jobs:
 
       - name: 📥 检出代码
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 🔨 安装 Rust 工具链
+        run: |
+          if ! command -v rustc &> /dev/null; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          fi
+          rustc --version
+          cargo --version
+
+      - name: 🔍 Rust 格式检查
+        working-directory: packages/rust-tools
+        run: cargo fmt -- --check
+        timeout-minutes: 3
+
+      - name: 🔍 Rust Clippy 检查
+        working-directory: packages/rust-tools
+        run: cargo clippy -- -D warnings
+        timeout-minutes: 5
+
+      - name: 🏗️ 构建 Rust 项目
+        working-directory: packages/rust-tools
+        run: cargo build --verbose
+        timeout-minutes: 15
+
+      - name: 🧪 运行 Rust 测试
+        working-directory: packages/rust-tools
+        run: cargo test --verbose
+        timeout-minutes: 10
+
+      - name: 📚 生成 Rust 文档
+        working-directory: packages/rust-tools
+        run: cargo doc --no-deps
+        timeout-minutes: 5
+
+      - name: 🧹 清理
+        if: always()
+        run: rm -rf ~/actions-runner/_work/_temp/*
+
+  # ========== 任务 4: 安全检查 ==========
+  security:
+    name: 安全检查
+    runs-on: [self-hosted, macos-arm64]
+    needs: quality
+    timeout-minutes: 10
+
+    steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: 🔧 设置 Node.js
         uses: actions/setup-node@v4
@@ -168,17 +217,162 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: 📦 快速依赖安装
-        run: pnpm install --no-frozen-lockfile --prefer-offline
+      - name: 📦 安装依赖
+        run: pnpm install --frozen-lockfile
         env:
           HUSKY: 0
 
-      - name: 📋 代码格式检查
-        run: |
-          echo "📋 快速格式检查..."
-          pnpm exec prettier --check "packages/core/src/**/*.ts" || echo "⚠️ 格式检查发现问题"
+      - name: 🔒 运行 npm audit
+        run: pnpm audit --audit-level moderate
+        timeout-minutes: 5
+        continue-on-error: true
+
+      - name: 🔍 检查依赖漏洞
+        run: pnpm audit --json
+        timeout-minutes: 3
         continue-on-error: true
 
       - name: 🧹 清理
         if: always()
         run: rm -rf ~/actions-runner/_work/_temp/*
+
+  # ========== 任务 5: 构建验证 ==========
+  build:
+    name: 构建验证
+    runs-on: [self-hosted, macos-arm64]
+    needs: [test-typescript, test-rust]
+    timeout-minutes: 30
+
+    steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 🔧 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📦 安装依赖
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+
+      - name: 🏗️ 构建所有包
+        run: pnpm build
+        timeout-minutes: 20
+
+      - name: 🦀 构建 Rust 项目（Release）
+        working-directory: packages/rust-tools
+        run: cargo build --release
+        timeout-minutes: 15
+
+      - name: 📦 生成构建信息
+        run: |
+          echo "BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
+          echo "COMMIT_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_ENV
+
+      - name: 📊 构建摘要
+        run: |
+          echo "### 🎉 构建成功" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **构建时间**: ${{ env.BUILD_TIME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **提交 SHA**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **运行 ID**: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node 版本**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **pnpm 版本**: ${{ env.PNPM_VERSION }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🧹 清理
+        if: always()
+        run: rm -rf ~/actions-runner/_work/_temp/*
+
+  # ========== 任务 6: Python 工具测试（可选）==========
+  test-python:
+    name: Python 工具测试
+    runs-on: [self-hosted, macos-arm64]
+    needs: quality
+    timeout-minutes: 15
+    continue-on-error: true  # 失败不阻塞主流程
+
+    steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 🐍 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 📦 安装依赖
+        working-directory: docker/python-tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🧪 运行 Python 测试
+        working-directory: docker/python-tools
+        run: |
+          python -m pytest tests/ -v --cov=. --cov-report=xml || true
+
+      - name: 🧹 清理
+        if: always()
+        run: rm -rf ~/actions-runner/_work/_temp/*
+
+  # ========== 任务 7: Docker 构建测试（可选）==========
+  test-docker:
+    name: Docker 构建测试
+    runs-on: [self-hosted, macos-arm64]
+    needs: quality
+    timeout-minutes: 15
+    continue-on-error: true  # 失败不阻塞主流程
+
+    steps:
+      - name: 🔧 修复 Git 网络配置
+        run: |
+          git config --global http.version HTTP/1.1
+          git config --global https.version HTTP/1.1
+          git config --global http.postBuffer 524288000
+          git config --global http.useHTTP2 false
+
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 🐳 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ 构建 Python 工具镜像
+        working-directory: docker/python-tools
+        run: |
+          docker build -t yunpat-python-tools:test .
+          docker images yunpat-python-tools:test
+
+      - name: 🧪 测试 Docker 镜像
+        run: |
+          docker run --rm yunpat-python-tools:test python --version
+
+      - name: 🧹 清理
+        if: always()
+        run: |
+          rm -rf ~/actions-runner/_work/_temp/*
+          docker rmi yunpat-python-tools:test || true

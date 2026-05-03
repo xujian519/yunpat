@@ -72,6 +72,31 @@ importers:
         specifier: ^5.4.1
         version: 5.4.1
 
+  packages/agents/abstract-drafter:
+    dependencies:
+      '@yunpat/agent-claim-generator':
+        specifier: workspace:*
+        version: link:../claim-generator
+      '@yunpat/agent-invention':
+        specifier: workspace:*
+        version: link:../invention
+      '@yunpat/agent-specification-drafter':
+        specifier: workspace:*
+        version: link:../specification-drafter
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.1
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
   packages/agents/analysis:
     dependencies:
       '@yunpat/core':
@@ -86,6 +111,28 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/claim-generator:
+    dependencies:
+      '@yunpat/agent-invention':
+        specifier: workspace:*
+        version: link:../invention
+      '@yunpat/agent-prior-art-search':
+        specifier: workspace:*
+        version: link:../prior-art-search
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.1
         version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
 
   packages/agents/claims:
@@ -223,6 +270,25 @@ importers:
         specifier: ^1.2.0
         version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
 
+  packages/agents/prior-art-search:
+    dependencies:
+      '@yunpat/agent-invention':
+        specifier: workspace:*
+        version: link:../invention
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.1
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
   packages/agents/quality:
     dependencies:
       '@yunpat/core':
@@ -294,6 +360,31 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/agents/specification-drafter:
+    dependencies:
+      '@yunpat/agent-claim-generator':
+        specifier: workspace:*
+        version: link:../claim-generator
+      '@yunpat/agent-invention':
+        specifier: workspace:*
+        version: link:../invention
+      '@yunpat/agent-prior-art-search':
+        specifier: workspace:*
+        version: link:../prior-art-search
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.1
         version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
 
   packages/agents/test:

@@ -39,6 +39,7 @@
 ## 📅 阶段 1：基础设施（第 1-2 月）
 
 ### 目标
+
 建立 gRPC/Protobuf 接口标准，完成 PoC 验证
 
 ### 任务清单
@@ -46,6 +47,7 @@
 #### 1.1 定义 Protobuf 接口（1 周）
 
 **文件结构**:
+
 ```
 protos/
 ├── agent.proto              # Agent 服务
@@ -58,6 +60,7 @@ protos/
 ```
 
 **示例: agent.proto**:
+
 ```protobuf
 syntax = "proto3";
 
@@ -101,17 +104,19 @@ message ExecutionMetrics {
 #### 1.2 TypeScript gRPC Server（1 周）
 
 **安装依赖**:
+
 ```bash
 pnpm add @grpc/grpc-js @grpc/proto-loader
 ```
 
 **实现示例**:
+
 ```typescript
 // packages/grpc-server/src/AgentServer.ts
-import * as grpc from '@grpc/grpc-js';
-import * as protoLoader from '@grpc/proto-loader';
+import * as grpc from '@grpc/grpc-js'
+import * as protoLoader from '@grpc/proto-loader'
 
-const PROTO_PATH = __dirname + '/../../../protos/agent.proto';
+const PROTO_PATH = __dirname + '/../../../protos/agent.proto'
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
@@ -119,84 +124,72 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   enums: String,
   defaults: true,
   oneofs: true,
-});
+})
 
-const agentProto = grpc.loadPackageDefinition(packageDefinition).yunpat.agent;
+const agentProto = grpc.loadPackageDefinition(packageDefinition).yunpat.agent
 
 export class AgentServer {
-  private server: grpc.Server;
+  private server: grpc.Server
 
   constructor() {
-    this.server = new grpc.Server();
+    this.server = new grpc.Server()
     this.server.addService(agentProto.AgentService.service, {
       executeAgent: this.executeAgent.bind(this),
       streamExecuteAgent: this.streamExecuteAgent.bind(this),
       getAgentStatus: this.getAgentStatus.bind(this),
-    });
+    })
   }
 
-  async executeAgent(
-    call: grpc.ServerUnaryCall<any, any>,
-    callback: grpc.requestCallback<any>
-  ) {
-    const request = call.request;
-    
+  async executeAgent(call: grpc.ServerUnaryCall<any, any>, callback: grpc.requestCallback<any>) {
+    const request = call.request
+
     try {
       // 调用 TypeScript Agent
-      const result = await this.runAgent(request);
-      
+      const result = await this.runAgent(request)
+
       callback(null, {
         success: true,
         output: result.output,
         metrics: result.metrics,
-      });
+      })
     } catch (error) {
       callback({
         code: grpc.status.INTERNAL,
         details: error.message,
-      });
+      })
     }
   }
 
-  async streamExecuteAgent(
-    call: grpc.ServerWritableStream<any, any>
-  ) {
-    const request = call.request;
-    
+  async streamExecuteAgent(call: grpc.ServerWritableStream<any, any>) {
+    const request = call.request
+
     try {
       // 流式执行 Agent
       for await (const progress of this.runAgentStream(request)) {
-        call.write(progress);
+        call.write(progress)
       }
-      
-      call.end();
+
+      call.end()
     } catch (error) {
       call.emit('error', {
         code: grpc.status.INTERNAL,
         details: error.message,
-      });
+      })
     }
   }
 
-  async getAgentStatus(
-    call: grpc.ServerUnaryCall<any, any>,
-    callback: grpc.requestCallback<any>
-  ) {
+  async getAgentStatus(call: grpc.ServerUnaryCall<any, any>, callback: grpc.requestCallback<any>) {
     // 实现 Agent 状态查询
     callback(null, {
       status: 'running',
       uptime: Date.now() - this.startTime,
-    });
+    })
   }
 
   start(port: number) {
-    this.server.bindAsync(
-      `0.0.0.0:${port}`,
-      grpc.ServerCredentials.createInsecure(),
-      () => {
-        console.log(`Agent gRPC Server started on port ${port}`);
-      }
-    );
+    this.server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), () => {
+      console.log(`Agent gRPC Server started on port ${port}`)
+    })
   }
 
   private async runAgent(request: any): Promise<any> {
@@ -210,14 +203,14 @@ export class AgentServer {
         llm_calls: 1,
         tool_calls: 0,
       },
-    };
+    }
   }
 
   private async *runAgentStream(request: any) {
-    yield { stage: 'plan', progress: 25 };
-    yield { stage: 'act', progress: 50 };
-    yield { stage: 'reflect', progress: 75 };
-    yield { stage: 'complete', progress: 100 };
+    yield { stage: 'plan', progress: 25 }
+    yield { stage: 'act', progress: 50 }
+    yield { stage: 'reflect', progress: 75 }
+    yield { stage: 'complete', progress: 100 }
   }
 }
 ```
@@ -225,42 +218,44 @@ export class AgentServer {
 #### 1.3 性能基准测试（1 周）
 
 **测试脚本**:
+
 ```typescript
 // benchmarks/grpc-vs-rest.mjs
-import { AgentServer } from '@yunpat/grpc-server';
-import fetch from 'node-fetch';
+import { AgentServer } from '@yunpat/grpc-server'
+import fetch from 'node-fetch'
 
 async function benchmarkRest() {
-  const start = Date.now();
-  
+  const start = Date.now()
+
   for (let i = 0; i < 1000; i++) {
     await fetch('http://localhost:3000/api/agent/execute', {
       method: 'POST',
       body: JSON.stringify({ task: 'test' }),
-    });
+    })
   }
-  
-  return Date.now() - start;
+
+  return Date.now() - start
 }
 
 async function benchmarkGrpc() {
-  const start = Date.now();
-  
+  const start = Date.now()
+
   for (let i = 0; i < 1000; i++) {
     // gRPC 调用
-    await agentClient.executeAgent({ task: 'test' });
+    await agentClient.executeAgent({ task: 'test' })
   }
-  
-  return Date.now() - start;
+
+  return Date.now() - start
 }
 
-console.log('REST:', await benchmarkRest(), 'ms');
-console.log('gRPC:', await benchmarkGrpc(), 'ms');
+console.log('REST:', await benchmarkRest(), 'ms')
+console.log('gRPC:', await benchmarkGrpc(), 'ms')
 ```
 
 #### 1.4 Rust PoC（2 周）
 
 **创建 Rust 项目**:
+
 ```bash
 cargo new --lib rust/vector-service
 cd rust/vector-service
@@ -268,6 +263,7 @@ cargo add tokio tonic prost async-trait
 ```
 
 **实现向量检索服务**:
+
 ```rust
 // rust/vector-service/src/main.rs
 use tonic::transport::Server;
@@ -291,19 +287,19 @@ impl Vector for VectorService {
         request: tonic::Request<SearchRequest>,
     ) -> Result<tonic::Response<SearchResponse>, tonic::Status> {
         let req = request.into_inner();
-        
+
         // 简单的余弦相似度计算
         let mut results = Vec::new();
-        
+
         for (id, vector) in &self.vectors {
             let similarity = cosine_similarity(&req.query_vector, vector);
             if similarity > 0.8 {
                 results.push((id.clone(), similarity));
             }
         }
-        
+
         results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        
+
         Ok(tonic::Response::new(SearchResponse {
             results: results.into_iter()
                 .take(req.top_k as usize)
@@ -349,6 +345,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## 📅 阶段 2：核心迁移（第 3-4 月）
 
 ### 目标
+
 迁移核心引擎到 Rust，建立 Python 工具容器
 
 ### 任务清单
@@ -356,6 +353,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #### 2.1 Rust 向量检索服务（3 周）
 
 **实现 HNSW 算法**:
+
 ```rust
 // rust/vector-service/src/hnsw.rs
 use std::collections::{HashMap, HashSet};
@@ -400,6 +398,7 @@ impl HNSWIndex {
 #### 2.2 Rust 任务调度服务（3 周）
 
 **实现任务队列**:
+
 ```rust
 // rust/scheduler-service/src/scheduler.rs
 use std::collections::{HashMap, VecDeque};
@@ -431,16 +430,16 @@ impl Scheduler for TaskScheduler {
         request: tonic::Request<SubmitTaskRequest>,
     ) -> Result<tonic::Response<SubmitTaskResponse>, tonic::Status> {
         let req = request.into_inner();
-        
+
         let task = Task {
             id: uuid::Uuid::new_v4().to_string(),
             payload: req.payload,
             priority: req.priority.unwrap_or(Priority::Medium),
             timeout: Duration::from_millis(req.timeout_ms as u64),
         };
-        
+
         self.queues.get_mut(&task.priority).unwrap().push_back(task);
-        
+
         Ok(tonic::Response::new(SubmitTaskResponse {
             task_id: task.id,
         }))
@@ -458,6 +457,7 @@ impl Scheduler for TaskScheduler {
 #### 2.3 Python 工具容器（2 周）
 
 **Dockerfile**:
+
 ```dockerfile
 # docker/python-tools/Dockerfile
 FROM python:3.11-slim
@@ -479,6 +479,7 @@ CMD ["python", "-m", "yunpat_python.tools_server"]
 ```
 
 **requirements.txt**:
+
 ```
 grpcio==1.60.0
 protobuf==4.25.1
@@ -490,6 +491,7 @@ scikit-learn==1.3.2
 ```
 
 **Python gRPC Server**:
+
 ```python
 # yunpat_python/tools_server.py
 import grpc
@@ -505,11 +507,11 @@ class PythonToolsService(tools_pb2_grpc.PythonToolsServicer):
         # 加载 ML 模型
         self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
         self.model = AutoModel.from_pretrained('bert-base-uncased')
-        
+
     def ExecuteTool(self, request, context):
         tool_name = request.tool_name
         args = request.args
-        
+
         if tool_name == 'embed_text':
             # 文本嵌入
             return self.embed_text(args)
@@ -520,17 +522,17 @@ class PythonToolsService(tools_pb2_grpc.PythonToolsServicer):
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details(f'Tool {tool_name} not found')
             return tools_pb2.ToolResponse()
-    
+
     def embed_text(self, args):
         text = args.get('text', '')
-        
+
         # 使用 BERT 生成嵌入
         inputs = self.tokenizer(text, return_tensors='pt')
         with torch.no_grad():
             outputs = self.model(**inputs)
-        
+
         embedding = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
-        
+
         return tools_pb2.ToolResponse(
             success=True,
             result={'embedding': embedding}
@@ -550,6 +552,7 @@ if __name__ == '__main__':
 ```
 
 **资源限制**:
+
 ```yaml
 # docker-compose.yml
 version: '3.8'
@@ -560,17 +563,17 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'      # 最多 2 核
-          memory: 4G     # 最多 4GB
+          cpus: '2' # 最多 2 核
+          memory: 4G # 最多 4GB
         reservations:
-          cpus: '500m'   # 保留 0.5 核
-          memory: 1G     # 保留 1GB
+          cpus: '500m' # 保留 0.5 核
+          memory: 1G # 保留 1GB
     environment:
       - ROLE=tool_provider_only
       - MAX_CONCURRENT_REQUESTS=10
       - TORCH_THREADS=4
     ports:
-      - "50052:50052"
+      - '50052:50052'
 ```
 
 ### 阶段 2 产出
@@ -585,6 +588,7 @@ services:
 ## 📅 阶段 3：集成优化（第 5-6 月）
 
 ### 目标
+
 完善监控系统，优化性能
 
 ### 任务清单
@@ -592,45 +596,47 @@ services:
 #### 3.1 OpenTelemetry 集成（2 周）
 
 **TypeScript**:
+
 ```typescript
 // packages/telemetry/src/TraceService.ts
-import { trace, context } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { JaegerExporter } from '@opentelemetry/exporter-trace-jaeger';
+import { trace, context } from '@opentelemetry/api'
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { Resource } from '@opentelemetry/resources'
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
+import { JaegerExporter } from '@opentelemetry/exporter-trace-jaeger'
 
 const provider = new NodeTracerProvider({
   resource: new Resource({
     [SemanticResourceAttributes.SERVICE_NAME]: 'yunpat-agent',
   }),
-});
+})
 
-provider.register();
+provider.register()
 
 export function traceAgent(name: string, fn: () => Promise<any>) {
-  const tracer = trace.getTracer('yunpat');
-  
+  const tracer = trace.getTracer('yunpat')
+
   return tracer.startActiveSpan(name, async (span) => {
     try {
-      const result = await fn();
-      span.setStatus({ code: SpanStatusCode.OK });
-      return result;
+      const result = await fn()
+      span.setStatus({ code: SpanStatusCode.OK })
+      return result
     } catch (error) {
-      span.recordException(error as Error);
+      span.recordException(error as Error)
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: error.message,
-      });
-      throw error;
+      })
+      throw error
     } finally {
-      span.end();
+      span.end()
     }
-  });
+  })
 }
 ```
 
 **Rust**:
+
 ```rust
 // rust/tracing/src/lib.rs
 use opentelemetry::trace::TraceError;
@@ -647,13 +653,13 @@ pub fn init_tracer(service_name: &'static str) -> Result<Uninstall, TraceError> 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _uninstall = init_tracer("vector-service")?;
-    
+
     let tracer = global::tracer("vector-service");
-    
+
     tracer.in_span("search", |cx| {
         // 执行搜索
     });
-    
+
     Ok(())
 }
 ```
@@ -661,6 +667,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #### 3.2 性能优化（4 周）
 
 **Profiling 驱动优化**:
+
 1. 识别性能热点（Flame Graph）
 2. 优化关键路径
 3. 内存泄漏检测
@@ -685,33 +692,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### 人力投入
 
-| 阶段 | TypeScript | Rust | Python | DevOps | 总计 |
-|------|-----------|------|--------|--------|------|
-| 阶段 1 | 2 人周 | 2 人周 | 0 | 1 人周 | 5 人周 |
-| 阶段 2 | 1 人周 | 6 人周 | 2 人周 | 1 人周 | 10 人周 |
-| 阶段 3 | 2 人周 | 2 人周 | 0 | 2 人周 | 6 人周 |
+| 阶段     | TypeScript | Rust        | Python     | DevOps     | 总计        |
+| -------- | ---------- | ----------- | ---------- | ---------- | ----------- |
+| 阶段 1   | 2 人周     | 2 人周      | 0          | 1 人周     | 5 人周      |
+| 阶段 2   | 1 人周     | 6 人周      | 2 人周     | 1 人周     | 10 人周     |
+| 阶段 3   | 2 人周     | 2 人周      | 0          | 2 人周     | 6 人周      |
 | **总计** | **5 人周** | **10 人周** | **2 人周** | **4 人周** | **21 人周** |
 
 ### 技术栈
 
 **TypeScript**:
+
 - @grpc/grpc-js
 - @opentelemetry/api
 - ts-proto
 
 **Rust**:
+
 - tokio
 - tonic
 - prost
 - opentelemetry
 
 **Python**:
+
 - grpcio
 - torch
 - transformers
 - pandas
 
 **DevOps**:
+
 - Docker
 - Kubernetes
 - Jaeger
@@ -723,12 +734,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### 性能指标
 
-| 指标 | 目标 | 验证方法 |
-|------|------|---------|
-| gRPC 延迟 | P99 < 10ms | 基准测试 |
-| 向量检索 | QPS > 10k | 压力测试 |
+| 指标        | 目标         | 验证方法 |
+| ----------- | ------------ | -------- |
+| gRPC 延迟   | P99 < 10ms   | 基准测试 |
+| 向量检索    | QPS > 10k    | 压力测试 |
 | Python 工具 | 响应 < 500ms | 集成测试 |
-| 端到端 | 延迟 < 2s | E2E 测试 |
+| 端到端      | 延迟 < 2s    | E2E 测试 |
 
 ### 质量指标
 

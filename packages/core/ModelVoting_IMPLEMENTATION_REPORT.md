@@ -24,12 +24,14 @@
 ## 🎯 核心功能
 
 ### 1. 多模型调用
+
 ```typescript
 // 并行调用多个模型（可配置并行数量）
-const results = await voting.callModelsParallel(task, [model1, model2, model3]);
+const results = await voting.callModelsParallel(task, [model1, model2, model3])
 ```
 
 **特性**：
+
 - ✅ 并行执行（默认最多 10 个模型同时运行）
 - ✅ 超时控制（默认 60 秒）
 - ✅ 错误隔离（一个模型失败不影响其他模型）
@@ -38,78 +40,96 @@ const results = await voting.callModelsParallel(task, [model1, model2, model3]);
 ### 2. 投票策略
 
 #### 多数投票 (MAJORITY)
+
 ```typescript
-const result = await voting.vote(task, models, AggregationStrategy.MAJORITY);
+const result = await voting.vote(task, models, AggregationStrategy.MAJORITY)
 ```
+
 - 最简单直接的策略
 - 选择出现次数最多的响应
 - 适用于：简单任务、答案明确的任务
 
 #### 加权投票 (WEIGHTED)
+
 ```typescript
-const result = await voting.vote(task, models, AggregationStrategy.WEIGHTED);
+const result = await voting.vote(task, models, AggregationStrategy.WEIGHTED)
 ```
+
 - 按模型历史准确率加权
 - 可配置自定义权重
 - 适用于：有历史性能数据的场景
 
 #### 置信度投票 (CONFIDENCE)
+
 ```typescript
-const result = await voting.vote(task, models, AggregationStrategy.CONFIDENCE);
+const result = await voting.vote(task, models, AggregationStrategy.CONFIDENCE)
 ```
+
 - 基于模型返回的置信度
 - 自动解析置信度标记
 - 适用于：模型支持置信度输出的场景
 
 #### 最佳响应 (BEST)
+
 ```typescript
-const result = await voting.vote(task, models, AggregationStrategy.BEST);
+const result = await voting.vote(task, models, AggregationStrategy.BEST)
 ```
+
 - 选择置信度最高的单个响应
 - 适用于：需要快速决策的场景
 
 #### 平均响应 (AVERAGE)
+
 ```typescript
-const result = await voting.vote(task, models, AggregationStrategy.AVERAGE);
+const result = await voting.vote(task, models, AggregationStrategy.AVERAGE)
 ```
+
 - 对数值型结果求平均
 - 适用于：计算类任务
 
 ### 3. 冲突解决
 
 #### 自动多数决策
+
 ```typescript
 const voting = createModelVoting({
   conflictResolution: ConflictResolution.AUTO_MAJORITY,
-});
+})
 ```
+
 - 自动使用多数投票结果
 - 无需人工干预
 
 #### 交叉验证
+
 ```typescript
 const voting = createModelVoting({
   conflictResolution: ConflictResolution.CROSS_VALIDATION,
-});
+})
 ```
+
 - 选择最一致的模型子集
 - 提高结果可靠性
 
 #### 最高置信度
+
 ```typescript
 const voting = createModelVoting({
   conflictResolution: ConflictResolution.HIGHEST_CONFIDENCE,
-});
+})
 ```
+
 - 选择置信度最高的响应
 - 快速解决冲突
 
 #### 人工介入
+
 ```typescript
 const voting = createModelVoting({
   conflictResolution: ConflictResolution.HUMAN_INTERVENTION,
-});
+})
 ```
+
 - 标记需要人工确认
 - 记录冲突详情
 - 适用于：关键任务
@@ -117,70 +137,74 @@ const voting = createModelVoting({
 ### 4. 成本优化
 
 #### 语义缓存
+
 ```typescript
 const voting = createModelVoting({
   enableCache: true,
   cacheSimilarityThreshold: 0.85,
-});
+})
 ```
+
 - 自动缓存投票结果
 - 基于语义相似度查找
 - 预期节省 50%+ 成本
 
 #### 统计信息
+
 ```typescript
-const stats = voting.getVotingStats();
-console.log(stats.cacheHitRate);  // 缓存命中率
-console.log(stats.costSaved);     // 节省的成本
+const stats = voting.getVotingStats()
+console.log(stats.cacheHitRate) // 缓存命中率
+console.log(stats.costSaved) // 节省的成本
 ```
 
 ### 5. 集成方式
 
 #### 方式 1: 直接使用 ModelVoting
+
 ```typescript
-import { createModelVoting, AggregationStrategy } from '@yunpat/core';
+import { createModelVoting, AggregationStrategy } from '@yunpat/core'
 
 const voting = createModelVoting({
   defaultStrategy: AggregationStrategy.MAJORITY,
   verbose: true,
-});
+})
 
-const result = await voting.vote(task, [model1, model2]);
+const result = await voting.vote(task, [model1, model2])
 ```
 
 #### 方式 2: 使用 VotingLLMAdapter（推荐）
-```typescript
-import { createVotingAdapter, AggregationStrategy } from '@yunpat/core';
 
-const votingAdapter = createVotingAdapter(
-  [model1, model2],
-  AggregationStrategy.WEIGHTED,
-  { enableCache: true }
-);
+```typescript
+import { createVotingAdapter, AggregationStrategy } from '@yunpat/core'
+
+const votingAdapter = createVotingAdapter([model1, model2], AggregationStrategy.WEIGHTED, {
+  enableCache: true,
+})
 
 // 无缝集成到现有代码
-const response = await votingAdapter.chat({ messages });
+const response = await votingAdapter.chat({ messages })
 ```
 
 #### 方式 3: 与 TaskRouter 配合
-```typescript
-import { TaskRouter, TaskComplexity } from '@yunpat/core';
 
-const router = new TaskRouter({ deepSeekApiKey: '...' });
-const decision = router.route(task);
+```typescript
+import { TaskRouter, TaskComplexity } from '@yunpat/core'
+
+const router = new TaskRouter({ deepSeekApiKey: '...' })
+const decision = router.route(task)
 
 // 复杂任务使用投票
 if (decision.complexity === TaskComplexity.COMPLEX) {
-  const result = await voting.vote(task, [model1, model2]);
+  const result = await voting.vote(task, [model1, model2])
 } else {
-  const response = await decision.adapter.chat({ messages });
+  const response = await decision.adapter.chat({ messages })
 }
 ```
 
 ## 📊 投票统计
 
 ```typescript
-const stats = voting.getVotingStats();
+const stats = voting.getVotingStats()
 
 // {
 //   totalVotes: 100,
@@ -204,24 +228,24 @@ const stats = voting.getVotingStats();
 ## 🎨 使用示例
 
 ### 基础投票
-```typescript
-const deepseek = createDeepSeekModel(process.env.DEEPSEEK_API_KEY);
-const qwen = createQwenModel(process.env.DASHSCOPE_API_KEY);
 
-const voting = createModelVoting();
+```typescript
+const deepseek = createDeepSeekModel(process.env.DEEPSEEK_API_KEY)
+const qwen = createQwenModel(process.env.DASHSCOPE_API_KEY)
+
+const voting = createModelVoting()
 
 const task = {
-  messages: [
-    { role: 'user', content: '什么是机器学习？' },
-  ],
-};
+  messages: [{ role: 'user', content: '什么是机器学习？' }],
+}
 
-const result = await voting.vote(task, [deepseek, qwen]);
-console.log(result.aggregatedResponse.message.content);
-console.log('一致性分数:', result.consistencyScore);
+const result = await voting.vote(task, [deepseek, qwen])
+console.log(result.aggregatedResponse.message.content)
+console.log('一致性分数:', result.consistencyScore)
 ```
 
 ### 加权投票
+
 ```typescript
 const voting = createModelVoting({
   defaultStrategy: AggregationStrategy.WEIGHTED,
@@ -229,21 +253,20 @@ const voting = createModelVoting({
     'deepseek-chat': 0.85,
     'qwen-plus': 0.82,
   },
-});
+})
 
-voting.updateModelAccuracy('deepseek-chat', 0.87);
-voting.updateModelAccuracy('qwen-plus', 0.84);
+voting.updateModelAccuracy('deepseek-chat', 0.87)
+voting.updateModelAccuracy('qwen-plus', 0.84)
 
-const result = await voting.vote(task, models);
+const result = await voting.vote(task, models)
 ```
 
 ### 批量投票
-```typescript
-const tasks = [task1, task2, task3];
 
-const results = await Promise.all(
-  tasks.map(task => voting.vote(task, models))
-);
+```typescript
+const tasks = [task1, task2, task3]
+
+const results = await Promise.all(tasks.map((task) => voting.vote(task, models)))
 ```
 
 ## ✅ 验收标准
@@ -274,28 +297,28 @@ const results = await Promise.all(
 ```typescript
 interface ModelVotingConfig {
   // 默认聚合策略
-  defaultStrategy?: AggregationStrategy;
+  defaultStrategy?: AggregationStrategy
 
   // 模型权重（用于加权投票）
-  modelWeights?: ModelWeights;
+  modelWeights?: ModelWeights
 
   // 冲突解决策略
-  conflictResolution?: ConflictResolution;
+  conflictResolution?: ConflictResolution
 
   // 是否启用缓存
-  enableCache?: boolean;
+  enableCache?: boolean
 
   // 相似度阈值（用于缓存）
-  cacheSimilarityThreshold?: number;
+  cacheSimilarityThreshold?: number
 
   // 最大并行模型数
-  maxParallelModels?: number;
+  maxParallelModels?: number
 
   // 超时时间（毫秒）
-  timeout?: number;
+  timeout?: number
 
   // 是否启用详细日志
-  verbose?: boolean;
+  verbose?: boolean
 }
 ```
 

@@ -5,40 +5,40 @@
  * 支持：审查意见通知书、驳回决定、缴费通知书等
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { z } from 'zod';
-import { spawn } from 'child_process';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import * as fs from 'fs'
+import * as path from 'path'
+import { z } from 'zod'
+import { spawn } from 'child_process'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 /**
  * 官文字段提取结果
  */
 export interface OfficialDocFields {
   /** 申请号 */
-  applicationNumber?: string;
+  applicationNumber?: string
   /** 发明名称 */
-  inventionTitle?: string;
+  inventionTitle?: string
   /** 审查意见摘要 */
-  reviewSummary?: string;
+  reviewSummary?: string
   /** 答复期限 */
-  responseDeadline?: string;
+  responseDeadline?: string
   /** 审查员 */
-  examiner?: string;
+  examiner?: string
   /** 引用文献 */
-  referenceDocuments?: string[];
+  referenceDocuments?: string[]
   /** 驳回理由 */
-  rejectionReason?: string;
+  rejectionReason?: string
   /** 法律条款 */
-  legalArticles?: string[];
+  legalArticles?: string[]
   /** 决定日期 */
-  decisionDate?: string;
+  decisionDate?: string
   /** 费用类型 */
-  feeType?: string;
+  feeType?: string
   /** 缴费金额 */
-  feeAmount?: number;
+  feeAmount?: number
   /** 缴费截止日期 */
-  paymentDeadline?: string;
+  paymentDeadline?: string
 }
 
 /**
@@ -46,19 +46,19 @@ export interface OfficialDocFields {
  */
 export interface OfficialDocParseResult {
   /** 原始文本（Docling解析） */
-  rawText: string;
+  rawText: string
   /** 提取的结构化字段 */
-  fields: OfficialDocFields;
+  fields: OfficialDocFields
   /** Markdown格式内容 */
-  markdown: string;
+  markdown: string
   /** 元数据 */
   metadata: {
-    filename: string;
-    totalPages?: number;
-    parseTime: number;
-    doclingVersion?: string;
-    ocrModel?: string;
-  };
+    filename: string
+    totalPages?: number
+    parseTime: number
+    doclingVersion?: string
+    ocrModel?: string
+  }
 }
 
 /**
@@ -84,10 +84,10 @@ export enum OfficialDocType {
  */
 export class OfficialDocParserTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    docType?: OfficialDocType;
-    useOcr?: boolean;
-    ocrEndpoint?: string;
+    filePath: string
+    docType?: OfficialDocType
+    useOcr?: boolean
+    ocrEndpoint?: string
   },
   OfficialDocParseResult
 > {
@@ -134,35 +134,35 @@ export class OfficialDocParserTool extends EnhancedBaseTool<
     permissions: ['fs:read', 'exec:python'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      filePath: string;
-      docType?: OfficialDocType;
-      useOcr?: boolean;
-      ocrEndpoint?: string;
+      filePath: string
+      docType?: OfficialDocType
+      useOcr?: boolean
+      ocrEndpoint?: string
     },
     _context: ToolContext
   ): Promise<OfficialDocParseResult> {
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 1. 验证文件存在
     if (!fs.existsSync(input.filePath)) {
-      throw new Error(`文件不存在: ${input.filePath}`);
+      throw new Error(`文件不存在: ${input.filePath}`)
     }
 
     // 2. 调用 Python 脚本进行 Docling 解析
-    const doclingResult = await this.runDoclingParse(input.filePath);
+    const doclingResult = await this.runDoclingParse(input.filePath)
 
     // 3. 如果启用 OCR，调用 GLM-OCR 提取字段
-    let fields: OfficialDocFields = {};
+    let fields: OfficialDocFields = {}
     if (input.useOcr) {
       fields = await this.runGlmOcr(
         input.filePath,
         input.docType || this.detectDocType(doclingResult.text),
         input.ocrEndpoint || 'http://localhost:8009'
-      );
+      )
     }
 
     // 4. 返回结果
@@ -177,52 +177,52 @@ export class OfficialDocParserTool extends EnhancedBaseTool<
         doclingVersion: doclingResult.version,
         ocrModel: input.useOcr ? 'GLM-OCR-4bit' : undefined,
       },
-    };
+    }
   }
 
   /**
    * 调用 Docling 进行 PDF 解析
    */
   private async runDoclingParse(filePath: string): Promise<{
-    text: string;
-    markdown: string;
-    totalPages?: number;
-    version?: string;
+    text: string
+    markdown: string
+    totalPages?: number
+    version?: string
   }> {
     return new Promise((resolve, reject) => {
-      const pythonScript = path.join(__dirname, '../../../python-tools/official_doc_parser.py');
+      const pythonScript = path.join(__dirname, '../../../python-tools/official_doc_parser.py')
 
-      const process = spawn('python3', [pythonScript, 'parse', filePath]);
+      const process = spawn('python3', [pythonScript, 'parse', filePath])
 
-      let stdout = '';
-      let stderr = '';
+      let stdout = ''
+      let stderr = ''
 
       process.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
+        stdout += data.toString()
+      })
 
       process.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
+        stderr += data.toString()
+      })
 
       process.on('close', (code) => {
         if (code !== 0) {
-          reject(new Error(`Docling解析失败: ${stderr}`));
-          return;
+          reject(new Error(`Docling解析失败: ${stderr}`))
+          return
         }
 
         try {
-          const result = JSON.parse(stdout);
-          resolve(result);
+          const result = JSON.parse(stdout)
+          resolve(result)
         } catch (error) {
-          reject(new Error(`解析Docling输出失败: ${error}`));
+          reject(new Error(`解析Docling输出失败: ${error}`))
         }
-      });
+      })
 
       process.on('error', (error) => {
-        reject(new Error(`启动Python进程失败: ${error.message}`));
-      });
-    });
+        reject(new Error(`启动Python进程失败: ${error.message}`))
+      })
+    })
   }
 
   /**
@@ -234,7 +234,7 @@ export class OfficialDocParserTool extends EnhancedBaseTool<
     ocrEndpoint: string
   ): Promise<OfficialDocFields> {
     return new Promise((resolve, reject) => {
-      const pythonScript = path.join(__dirname, '../../../python-tools/official_doc_parser.py');
+      const pythonScript = path.join(__dirname, '../../../python-tools/official_doc_parser.py')
 
       const process = spawn('python3', [
         pythonScript,
@@ -244,37 +244,37 @@ export class OfficialDocParserTool extends EnhancedBaseTool<
         docType,
         '--ocr-endpoint',
         ocrEndpoint,
-      ]);
+      ])
 
-      let stdout = '';
-      let stderr = '';
+      let stdout = ''
+      let stderr = ''
 
       process.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
+        stdout += data.toString()
+      })
 
       process.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
+        stderr += data.toString()
+      })
 
       process.on('close', (code) => {
         if (code !== 0) {
-          reject(new Error(`GLM-OCR提取失败: ${stderr}`));
-          return;
+          reject(new Error(`GLM-OCR提取失败: ${stderr}`))
+          return
         }
 
         try {
-          const fields = JSON.parse(stdout);
-          resolve(fields);
+          const fields = JSON.parse(stdout)
+          resolve(fields)
         } catch (error) {
-          reject(new Error(`解析GLM-OCR输出失败: ${error}`));
+          reject(new Error(`解析GLM-OCR输出失败: ${error}`))
         }
-      });
+      })
 
       process.on('error', (error) => {
-        reject(new Error(`启动Python进程失败: ${error.message}`));
-      });
-    });
+        reject(new Error(`启动Python进程失败: ${error.message}`))
+      })
+    })
   }
 
   /**
@@ -282,17 +282,17 @@ export class OfficialDocParserTool extends EnhancedBaseTool<
    */
   private detectDocType(text: string): OfficialDocType {
     if (text.includes('审查意见') && text.includes('通知书')) {
-      return OfficialDocType.REVIEW_OPINION;
+      return OfficialDocType.REVIEW_OPINION
     } else if (text.includes('驳回决定')) {
-      return OfficialDocType.REJECTION_DECISION;
+      return OfficialDocType.REJECTION_DECISION
     } else if (text.includes('缴费') && text.includes('通知书')) {
-      return OfficialDocType.PAYMENT_NOTICE;
+      return OfficialDocType.PAYMENT_NOTICE
     } else if (text.includes('授予专利权')) {
-      return OfficialDocType.GRANT_DECISION;
+      return OfficialDocType.GRANT_DECISION
     } else if (text.includes('复审') || text.includes('无效')) {
-      return OfficialDocType.REEXAMINATION_DECISION;
+      return OfficialDocType.REEXAMINATION_DECISION
     }
-    return OfficialDocType.REVIEW_OPINION; // 默认
+    return OfficialDocType.REVIEW_OPINION // 默认
   }
 }
 
@@ -344,4 +344,4 @@ export const OFFICIAL_DOC_PROMPTS = {
   "legalArticles": ["法条1", "法条2"],
   "decisionDate": "决定日期（YYYY-MM-DD格式）"
 }`,
-};
+}

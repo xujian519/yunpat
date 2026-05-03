@@ -5,6 +5,6 @@ export {
   DRAFTING_SPECIFICATION_PROMPT,
   renderDraftingClaimsPrompt,
   renderDraftingSpecificationPrompt,
-} from './drafting.js';
+} from './drafting.js'
 
-export { OA_ANALYSIS_PROMPT, renderOaAnalysisPrompt } from './oa-response.js';
+export { OA_ANALYSIS_PROMPT, renderOaAnalysisPrompt } from './oa-response.js'

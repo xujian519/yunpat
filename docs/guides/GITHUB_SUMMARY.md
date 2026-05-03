@@ -5,19 +5,23 @@
 ### 1. GitHub 模板文件
 
 **Issue 模板**：
+
 - [`.github/ISSUE_TEMPLATE/bug_report.md`](.github/ISSUE_TEMPLATE/bug_report.md) - Bug 报告模板
 - [`.github/ISSUE_TEMPLATE/feature_request.md`](.github/ISSUE_TEMPLATE/feature_request.md) - 功能请求模板
 
 **PR 模板**：
+
 - [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) - Pull Request 模板
 
 ### 2. CI/CD 工作流
 
 **CI 工作流**：
+
 - [`.github/workflows/ci-simplified.yml`](.github/workflows/ci-simplified.yml) - 简化版 CI（快速验证）
 - [`.github/workflows/ci-optimized.yml`](.github/workflows/ci-optimized.yml) - 优化版 CI（完整检查）
 
 **工作流特性**:
+
 - ✅ 代码质量检查（ESLint、TypeScript、Prettier）
 - ✅ TypeScript 测试（Node.js 24.x）
 - ✅ 优化的依赖安装策略
@@ -25,6 +29,7 @@
 - ✅ 构建产物缓存
 
 **Release 工作流** ([`.github/workflows/release.yml`](.github/workflows/release.yml)):
+
 - ✅ 自动创建 GitHub Release
 - ✅ 发布到 npm
 - ✅ 构建和发布 Docker 镜像
@@ -32,6 +37,7 @@
 - ✅ 生成和发布 API 文档
 
 **Automation 工作流** ([`.github/workflows/automation.yml`](.github/workflows/automation.yml)):
+
 - ✅ 依赖安全检查
 - ✅ 代码质量检查
 - ✅ 自动清理过期 Issue
@@ -40,10 +46,12 @@
 ### 3. CI 监控和优化（2026-05-01 新增）
 
 **监控工具**：
+
 - [`scripts/ci-monitor.sh`](scripts/ci-monitor.sh) - 实时 CI 性能监控
 - [`scripts/ci-performance-report.sh`](scripts/ci-performance-report.sh) - 性能报告生成
 
 **优化文档**：
+
 - [`CI_MONITORING_GUIDE.md`](../../CI_MONITORING_GUIDE.md) - CI 监控完整指南
 - [`CI_FAILURE_INVESTIGATION.md`](../../CI_FAILURE_INVESTIGATION.md) - 失败调查报告
 - [`CI_OPTIMIZATION_PLAN.md`](../../CI_OPTIMIZATION_PLAN.md) - 优化方案
@@ -51,6 +59,7 @@
 - [`CI_MONITORING_REPORT_20260501.md`](../../CI_MONITORING_REPORT_20260501.md) - 最新监控报告
 
 **优化成果**：
+
 - ✅ 解决 canvas 依赖安装失败问题
 - ✅ 升级到 Node.js 24.x
 - ✅ 成功率从 70% 提升到 90%
@@ -59,10 +68,12 @@
 ### 4. 文档和指南
 
 **详细指南**：
+
 - [`docs/guides/GITHUB_SETUP.md`](docs/guides/GITHUB_SETUP.md) - 完整的 GitHub 设置指南
 - [`docs/guides/GITHUB_CHECKLIST.md`](docs/guides/GITHUB_CHECKLIST.md) - 快速设置清单
 
 **贡献指南**：
+
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) - 更新的贡献指南（包含开发规范、工作流程等）
 
 ## 🚀 下一步操作
@@ -87,26 +98,31 @@ git push -u origin main
 在 GitHub 仓库设置中添加以下 Secrets：
 
 **必需的 Secrets**：
+
 - `NPM_TOKEN` - npm 发布令牌
 - `DOCKER_USERNAME` - Docker Hub 用户名
 - `DOCKER_PASSWORD` - Docker Hub 密码/令牌
 - `CRATES_IO_TOKEN` - Rust crates.io 令牌
 
 **可选的 Secrets**：
+
 - `CODECOV_TOKEN` - Codecov 覆盖率令牌
 - `SLACK_WEBHOOK_URL` - Slack 通知 URL
 
 ### 3. 配置仓库设置
 
 **分支保护**：
+
 - 保护 `main` 分支
 - 需要 PR 审查
 - 需要 CI 检查通过
 
 **GitHub Actions 权限**：
+
 - 启用读写权限
 
 **GitHub Pages**（可选）：
+
 - 启用 GitHub Actions 部署
 
 ### 4. 测试 CI/CD
@@ -141,23 +157,27 @@ git push origin main --tags
 ## 📊 CI/CD 工作流特性
 
 ### 全面的测试覆盖
+
 - **TypeScript**: 多版本兼容性测试、覆盖率报告
 - **Rust**: 格式检查、静态分析、单元测试
 - **Python**: 单元测试、覆盖率报告
 - **Docker**: 镜像构建和运行测试
 
 ### 自动化发布流程
+
 - **npm**: 自动发布所有包到 npm
 - **Docker Hub**: 自动构建和推送镜像
 - **crates.io**: 自动发布 Rust crate
 - **GitHub Pages**: 自动部署 API 文档
 
 ### 持续维护
+
 - **安全检查**: 自动检测依赖漏洞
 - **Issue 管理**: 自动清理过期问题
 - **项目统计**: 定期生成项目报告
 
 ### 性能优化
+
 - **依赖缓存**: 加速构建过程
 - **并行执行**: 独立任务同时运行
 - **智能策略**: 只在必要时运行工作流
@@ -174,6 +194,7 @@ git push origin main --tags
 ## 📝 重要文件
 
 ### GitHub 配置
+
 - `.github/workflows/ci.yml` - CI 工作流
 - `.github/workflows/release.yml` - 发布工作流
 - `.github/workflows/automation.yml` - 自动化工作流
@@ -181,6 +202,7 @@ git push origin main --tags
 - `.github/PULL_REQUEST_TEMPLATE.md` - PR 模板
 
 ### 文档
+
 - `docs/guides/GITHUB_SETUP.md` - 详细设置指南
 - `docs/guides/GITHUB_CHECKLIST.md` - 快速设置清单
 - `CONTRIBUTING.md` - 贡献指南
@@ -204,12 +226,12 @@ git push origin main --tags
 
 ### CI/CD 性能（2026-05-01 更新）
 
-| 指标 | 优化前 | 当前 | 目标 | 状态 |
-|------|--------|------|------|------|
-| **成功率** | 70% | **90%** | ≥95% | 🟢 接近目标 |
+| 指标                   | 优化前 | 当前      | 目标 | 状态        |
+| ---------------------- | ------ | --------- | ---- | ----------- |
+| **成功率**             | 70%    | **90%**   | ≥95% | 🟢 接近目标 |
 | **构建时间（简化版）** | ~2m00s | **1m20s** | ≤90s | 🟢 符合预期 |
 | **构建时间（优化版）** | ~2m00s | **1m54s** | ≤90s | 🟡 接近目标 |
-| **稳定性** | 不稳定 | **稳定** | 稳定 | 🟢 已达成 |
+| **稳定性**             | 不稳定 | **稳定**  | 稳定 | 🟢 已达成   |
 
 ### 历史数据
 
@@ -247,20 +269,25 @@ gh run view <run-id> --log
 ### 常见问题
 
 1. **Canvas 依赖安装失败**（✅ 已解决）
+
    ```
    错误: canvas@2.11.2 原生模块编译失败
    原因: 缺少 pixman-1 系统库
    ```
+
    **解决方案**: 已在 CI 配置中修复，设置环境变量：
+
    ```yaml
    CANVAS_USE_NATIVE: '0'
    PUPPETEET_SKIP_DOWNLOAD: 'true'
    ```
 
 2. **Node.js 版本警告**（✅ 已解决）
+
    ```
    警告: Node.js 20 actions are deprecated
    ```
+
    **解决方案**: 已升级到 Node.js 24.x
 
 3. **CI 失败**: 检查本地测试是否通过
@@ -300,12 +327,14 @@ gh run view <run-id> --log
 ## 📚 参考资源
 
 ### 官方文档
+
 - [GitHub Actions 文档](https://docs.github.com/en/actions)
 - [Semantic Versioning](https://semver.org/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Docker Build Push Action](https://github.com/docker/build-push-action)
 
 ### 项目 CI/CD 文档
+
 - [CI 监控指南](../../CI_MONITORING_GUIDE.md) - 完整的 CI 监控和性能分析指南
 - [CI 失败调查报告](../../CI_FAILURE_INVESTIGATION.md) - 常见 CI 问题及解决方案
 - [CI 优化方案](../../CI_OPTIMIZATION_PLAN.md) - CI/CD 性能优化方案
@@ -342,6 +371,7 @@ gh run view <run-id> --log
 **版本**: v1.1.0
 
 **更新内容**:
+
 - ✅ 添加 CI 监控和性能分析章节
 - ✅ 更新 CI/CD 性能指标
 - ✅ 添加 Canvas 依赖问题解决方案

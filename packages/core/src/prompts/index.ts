@@ -13,7 +13,7 @@ export {
   TemplateManager,
   createTemplate,
   createTemplateManager,
-} from './PromptTemplate.js';
+} from './PromptTemplate.js'
 
 export type {
   FewShotExample,
@@ -21,4 +21,4 @@ export type {
   TemplateMetadata,
   ValidationResult,
   RenderOptions,
-} from './PromptTemplate.js';
+} from './PromptTemplate.js'

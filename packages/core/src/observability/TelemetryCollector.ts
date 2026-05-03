@@ -21,23 +21,23 @@ import {
   AlertSeverity,
   AlertConfig,
   TelemetryConfig,
-} from './types.js';
+} from './types.js'
 
 export class TelemetryCollector {
-  private events: TelemetryEvent[] = [];
-  private errors: Map<string, ErrorMetric> = new Map();
-  private alerts: Alert[] = [];
-  private agentMetrics: Map<string, AgentMetrics> = new Map();
-  private stageMetrics: Map<string, StageMetrics> = new Map();
+  private events: TelemetryEvent[] = []
+  private errors: Map<string, ErrorMetric> = new Map()
+  private alerts: Alert[] = []
+  private agentMetrics: Map<string, AgentMetrics> = new Map()
+  private stageMetrics: Map<string, StageMetrics> = new Map()
 
   private readonly config: {
-    maxEvents: number;
-    maxErrors: number;
-    retentionPeriod: number;
-    alertConfig: Required<AlertConfig>;
-  };
-  private alertIdCounter = 0;
-  private eventIdCounter = 0;
+    maxEvents: number
+    maxErrors: number
+    retentionPeriod: number
+    alertConfig: Required<AlertConfig>
+  }
+  private alertIdCounter = 0
+  private eventIdCounter = 0
 
   constructor(config: TelemetryConfig = {}) {
     this.config = {
@@ -50,7 +50,7 @@ export class TelemetryCollector {
         errorSpikeThreshold: config.alertConfig?.errorSpikeThreshold ?? 10,
         enableAlerts: config.alertConfig?.enableAlerts ?? true,
       },
-    };
+    }
   }
 
   /**
@@ -59,36 +59,36 @@ export class TelemetryCollector {
   record(event: TelemetryEvent): void {
     // 分配唯一ID
     if (!event.id) {
-      event.id = `evt_${++this.eventIdCounter}`;
+      event.id = `evt_${++this.eventIdCounter}`
     }
 
     // 确保时间戳
     if (!event.timestamp) {
-      event.timestamp = Date.now();
+      event.timestamp = Date.now()
     }
 
     // 清理过期事件
-    this.cleanup();
+    this.cleanup()
 
     // 存储事件
-    this.events.push(event);
+    this.events.push(event)
 
     // 限制事件数量
     if (this.events.length > this.config.maxEvents) {
-      this.events.shift();
+      this.events.shift()
     }
 
     // 更新指标
-    this.updateMetrics(event);
+    this.updateMetrics(event)
 
     // 追踪错误
     if (event.status === EventStatus.FAILURE && event.error) {
-      this.trackError(event);
+      this.trackError(event)
     }
 
     // 触发告警
     if (this.config.alertConfig.enableAlerts) {
-      this.checkAlerts(event);
+      this.checkAlerts(event)
     }
   }
 
@@ -96,18 +96,18 @@ export class TelemetryCollector {
    * 获取遥测报告
    */
   getReport(): TelemetryReport {
-    const now = Date.now();
-    const oldestEvent = this.events[0];
-    const start = oldestEvent?.timestamp ?? now;
+    const now = Date.now()
+    const oldestEvent = this.events[0]
+    const start = oldestEvent?.timestamp ?? now
 
     // 计算汇总指标
-    const totalEvents = this.events.length;
-    const successEvents = this.events.filter((e) => e.status === EventStatus.SUCCESS).length;
-    const failedEvents = this.events.filter((e) => e.status === EventStatus.FAILURE).length;
+    const totalEvents = this.events.length
+    const successEvents = this.events.filter((e) => e.status === EventStatus.SUCCESS).length
+    const failedEvents = this.events.filter((e) => e.status === EventStatus.FAILURE).length
 
-    const durations = this.events.filter((e) => e.duration !== undefined).map((e) => e.duration!);
+    const durations = this.events.filter((e) => e.duration !== undefined).map((e) => e.duration!)
     const avgDuration =
-      durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
+      durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0
 
     return {
       period: {
@@ -125,75 +125,75 @@ export class TelemetryCollector {
       byStage: this.stageMetrics,
       topErrors: this.getTopErrors(10),
       alerts: [...this.alerts],
-    };
+    }
   }
 
   /**
    * 打印可读报告
    */
   printReport(): void {
-    const report = this.getReport();
+    const report = this.getReport()
 
-    console.log('\n========== 遥测报告 ==========');
+    console.log('\n========== 遥测报告 ==========')
     console.log(
       `时间范围: ${new Date(report.period.start).toLocaleString()} - ${new Date(report.period.end).toLocaleString()}`
-    );
-    console.log('\n--- 汇总 ---');
-    console.log(`总事件数: ${report.summary.totalEvents}`);
-    console.log(`成功事件: ${report.summary.successEvents}`);
-    console.log(`失败事件: ${report.summary.failedEvents}`);
-    console.log(`成功率: ${(report.summary.successRate * 100).toFixed(2)}%`);
-    console.log(`平均延迟: ${report.summary.avgDuration.toFixed(2)}ms`);
+    )
+    console.log('\n--- 汇总 ---')
+    console.log(`总事件数: ${report.summary.totalEvents}`)
+    console.log(`成功事件: ${report.summary.successEvents}`)
+    console.log(`失败事件: ${report.summary.failedEvents}`)
+    console.log(`成功率: ${(report.summary.successRate * 100).toFixed(2)}%`)
+    console.log(`平均延迟: ${report.summary.avgDuration.toFixed(2)}ms`)
 
-    console.log('\n--- 智能体指标 ---');
+    console.log('\n--- 智能体指标 ---')
     report.byAgent.forEach((metrics, agentName) => {
-      console.log(`\n${agentName}:`);
-      console.log(`  执行次数: ${metrics.totalExecutions}`);
-      console.log(`  成功率: ${(metrics.successRate * 100).toFixed(2)}%`);
-      console.log(`  平均延迟: ${metrics.avgDuration.toFixed(2)}ms`);
+      console.log(`\n${agentName}:`)
+      console.log(`  执行次数: ${metrics.totalExecutions}`)
+      console.log(`  成功率: ${(metrics.successRate * 100).toFixed(2)}%`)
+      console.log(`  平均延迟: ${metrics.avgDuration.toFixed(2)}ms`)
       console.log(
         `  延迟范围: ${metrics.minDuration.toFixed(2)}ms - ${metrics.maxDuration.toFixed(2)}ms`
-      );
-    });
+      )
+    })
 
-    console.log('\n--- 阶段指标 ---');
+    console.log('\n--- 阶段指标 ---')
     report.byStage.forEach((metrics, stage) => {
-      console.log(`\n${stage}:`);
-      console.log(`  执行次数: ${metrics.totalExecutions}`);
-      console.log(`  成功率: ${(metrics.successRate * 100).toFixed(2)}%`);
-      console.log(`  平均延迟: ${metrics.avgDuration.toFixed(2)}ms`);
-    });
+      console.log(`\n${stage}:`)
+      console.log(`  执行次数: ${metrics.totalExecutions}`)
+      console.log(`  成功率: ${(metrics.successRate * 100).toFixed(2)}%`)
+      console.log(`  平均延迟: ${metrics.avgDuration.toFixed(2)}ms`)
+    })
 
     if (report.topErrors.length > 0) {
-      console.log('\n--- Top 错误 ---');
+      console.log('\n--- Top 错误 ---')
       report.topErrors.forEach((error, index) => {
-        console.log(`\n${index + 1}. ${error.error}`);
-        console.log(`   次数: ${error.count}`);
-        console.log(`   最后发生: ${new Date(error.lastOccurrence).toLocaleString()}`);
-        console.log(`   影响智能体: ${error.affectedAgents.join(', ')}`);
-      });
+        console.log(`\n${index + 1}. ${error.error}`)
+        console.log(`   次数: ${error.count}`)
+        console.log(`   最后发生: ${new Date(error.lastOccurrence).toLocaleString()}`)
+        console.log(`   影响智能体: ${error.affectedAgents.join(', ')}`)
+      })
     }
 
     if (report.alerts.length > 0) {
-      console.log('\n--- 告警 ---');
+      console.log('\n--- 告警 ---')
       report.alerts.forEach((alert) => {
-        console.log(`\n[${alert.severity.toUpperCase()}] ${alert.message}`);
-        console.log(`  类型: ${alert.type}`);
-        console.log(`  时间: ${new Date(alert.timestamp).toLocaleString()}`);
+        console.log(`\n[${alert.severity.toUpperCase()}] ${alert.message}`)
+        console.log(`  类型: ${alert.type}`)
+        console.log(`  时间: ${new Date(alert.timestamp).toLocaleString()}`)
         if (alert.threshold !== undefined && alert.actualValue !== undefined) {
-          console.log(`  阈值: ${alert.threshold}, 实际: ${alert.actualValue}`);
+          console.log(`  阈值: ${alert.threshold}, 实际: ${alert.actualValue}`)
         }
-      });
+      })
     }
 
-    console.log('\n============================\n');
+    console.log('\n============================\n')
   }
 
   /**
    * 触发告警
    */
   alert(type: string, event: TelemetryEvent): void {
-    const alertType = type as AlertType;
+    const alertType = type as AlertType
     const alert: Alert = {
       id: `alert_${++this.alertIdCounter}`,
       type: alertType,
@@ -201,42 +201,42 @@ export class TelemetryCollector {
       message: this.getAlertMessage(alertType, event),
       timestamp: Date.now(),
       event,
-    };
+    }
 
-    this.alerts.push(alert);
+    this.alerts.push(alert)
 
     // 限制告警数量
     if (this.alerts.length > 100) {
-      this.alerts.shift();
+      this.alerts.shift()
     }
 
     // 打印告警
-    console.warn(`[告警] ${alert.message}`);
+    console.warn(`[告警] ${alert.message}`)
   }
 
   /**
    * 清除所有数据
    */
   clear(): void {
-    this.events = [];
-    this.errors.clear();
-    this.alerts = [];
-    this.agentMetrics.clear();
-    this.stageMetrics.clear();
+    this.events = []
+    this.errors.clear()
+    this.alerts = []
+    this.agentMetrics.clear()
+    this.stageMetrics.clear()
   }
 
   /**
    * 获取特定智能体的事件
    */
   getEventsByAgent(agentName: string): TelemetryEvent[] {
-    return this.events.filter((e) => e.agentName === agentName);
+    return this.events.filter((e) => e.agentName === agentName)
   }
 
   /**
    * 获取特定类型的事件
    */
   getEventsByType(type: TelemetryEventType): TelemetryEvent[] {
-    return this.events.filter((e) => e.type === type);
+    return this.events.filter((e) => e.type === type)
   }
 
   /**
@@ -246,7 +246,7 @@ export class TelemetryCollector {
     return this.events
       .filter((e) => e.status === EventStatus.FAILURE)
       .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, limit);
+      .slice(0, limit)
   }
 
   // ========== 私有方法 ==========
@@ -255,20 +255,20 @@ export class TelemetryCollector {
    * 清理过期事件
    */
   private cleanup(): void {
-    const cutoff = Date.now() - this.config.retentionPeriod;
+    const cutoff = Date.now() - this.config.retentionPeriod
 
     // 清理事件
-    this.events = this.events.filter((e) => e.timestamp > cutoff);
+    this.events = this.events.filter((e) => e.timestamp > cutoff)
 
     // 清理错误指标
     for (const [key, error] of this.errors.entries()) {
       if (error.lastOccurrence < cutoff) {
-        this.errors.delete(key);
+        this.errors.delete(key)
       }
     }
 
     // 清理告警
-    this.alerts = this.alerts.filter((a) => a.timestamp > cutoff);
+    this.alerts = this.alerts.filter((a) => a.timestamp > cutoff)
   }
 
   /**
@@ -277,22 +277,22 @@ export class TelemetryCollector {
   private updateMetrics(event: TelemetryEvent): void {
     // 更新智能体指标
     if (event.agentName) {
-      let metrics = this.agentMetrics.get(event.agentName);
+      let metrics = this.agentMetrics.get(event.agentName)
       if (!metrics) {
-        metrics = this.createAgentMetrics(event.agentName);
-        this.agentMetrics.set(event.agentName, metrics);
+        metrics = this.createAgentMetrics(event.agentName)
+        this.agentMetrics.set(event.agentName, metrics)
       }
-      this.updateAgentMetrics(metrics, event);
+      this.updateAgentMetrics(metrics, event)
     }
 
     // 更新阶段指标
     if (event.stage) {
-      let metrics = this.stageMetrics.get(event.stage);
+      let metrics = this.stageMetrics.get(event.stage)
       if (!metrics) {
-        metrics = this.createStageMetrics(event.stage);
-        this.stageMetrics.set(event.stage, metrics);
+        metrics = this.createStageMetrics(event.stage)
+        this.stageMetrics.set(event.stage, metrics)
       }
-      this.updateStageMetrics(metrics, event);
+      this.updateStageMetrics(metrics, event)
     }
   }
 
@@ -309,35 +309,35 @@ export class TelemetryCollector {
       avgDuration: 0,
       minDuration: Infinity,
       maxDuration: 0,
-    };
+    }
   }
 
   /**
    * 更新智能体指标
    */
   private updateAgentMetrics(metrics: AgentMetrics, event: TelemetryEvent): void {
-    metrics.totalExecutions++;
+    metrics.totalExecutions++
 
     if (event.status === EventStatus.SUCCESS) {
-      metrics.successCount++;
+      metrics.successCount++
     } else if (event.status === EventStatus.FAILURE) {
-      metrics.failureCount++;
+      metrics.failureCount++
     }
 
-    metrics.successRate = metrics.successCount / metrics.totalExecutions;
+    metrics.successRate = metrics.successCount / metrics.totalExecutions
 
     if (event.duration !== undefined) {
       // 更新平均延迟
-      const totalDuration = metrics.avgDuration * (metrics.totalExecutions - 1) + event.duration;
-      metrics.avgDuration = totalDuration / metrics.totalExecutions;
+      const totalDuration = metrics.avgDuration * (metrics.totalExecutions - 1) + event.duration
+      metrics.avgDuration = totalDuration / metrics.totalExecutions
 
       // 更新最小/最大延迟
-      metrics.minDuration = Math.min(metrics.minDuration, event.duration);
-      metrics.maxDuration = Math.max(metrics.maxDuration, event.duration);
+      metrics.minDuration = Math.min(metrics.minDuration, event.duration)
+      metrics.maxDuration = Math.max(metrics.maxDuration, event.duration)
     } else {
       // 如果没有 duration，重置 minDuration
       if (metrics.minDuration === Infinity) {
-        metrics.minDuration = 0;
+        metrics.minDuration = 0
       }
     }
   }
@@ -353,27 +353,27 @@ export class TelemetryCollector {
       failureCount: 0,
       successRate: 0,
       avgDuration: 0,
-    };
+    }
   }
 
   /**
    * 更新阶段指标
    */
   private updateStageMetrics(metrics: StageMetrics, event: TelemetryEvent): void {
-    metrics.totalExecutions++;
+    metrics.totalExecutions++
 
     if (event.status === EventStatus.SUCCESS) {
-      metrics.successCount++;
+      metrics.successCount++
     } else if (event.status === EventStatus.FAILURE) {
-      metrics.failureCount++;
+      metrics.failureCount++
     }
 
     metrics.successRate =
-      metrics.totalExecutions > 0 ? metrics.successCount / metrics.totalExecutions : 0;
+      metrics.totalExecutions > 0 ? metrics.successCount / metrics.totalExecutions : 0
 
     if (event.duration !== undefined) {
-      const totalDuration = metrics.avgDuration * (metrics.totalExecutions - 1) + event.duration;
-      metrics.avgDuration = totalDuration / metrics.totalExecutions;
+      const totalDuration = metrics.avgDuration * (metrics.totalExecutions - 1) + event.duration
+      metrics.avgDuration = totalDuration / metrics.totalExecutions
     }
   }
 
@@ -381,10 +381,10 @@ export class TelemetryCollector {
    * 追踪错误
    */
   private trackError(event: TelemetryEvent): void {
-    if (!event.error) return;
+    if (!event.error) return
 
-    const errorKey = event.error.message || 'Unknown Error';
-    let errorMetric = this.errors.get(errorKey);
+    const errorKey = event.error.message || 'Unknown Error'
+    let errorMetric = this.errors.get(errorKey)
 
     if (!errorMetric) {
       errorMetric = {
@@ -392,23 +392,23 @@ export class TelemetryCollector {
         count: 0,
         lastOccurrence: 0,
         affectedAgents: [],
-      };
-      this.errors.set(errorKey, errorMetric);
+      }
+      this.errors.set(errorKey, errorMetric)
     }
 
-    errorMetric.count++;
-    errorMetric.lastOccurrence = event.timestamp;
+    errorMetric.count++
+    errorMetric.lastOccurrence = event.timestamp
 
     if (event.agentName && !errorMetric.affectedAgents.includes(event.agentName)) {
-      errorMetric.affectedAgents.push(event.agentName);
+      errorMetric.affectedAgents.push(event.agentName)
     }
 
     // 限制错误数量
     if (this.errors.size > this.config.maxErrors) {
       const oldestKey = [...this.errors.entries()].sort(
         (a, b) => a[1].lastOccurrence - b[1].lastOccurrence
-      )[0][0];
-      this.errors.delete(oldestKey);
+      )[0][0]
+      this.errors.delete(oldestKey)
     }
   }
 
@@ -416,7 +416,7 @@ export class TelemetryCollector {
    * 获取 Top N 错误
    */
   private getTopErrors(n: number): ErrorMetric[] {
-    return [...this.errors.values()].sort((a, b) => b.count - a.count).slice(0, n);
+    return [...this.errors.values()].sort((a, b) => b.count - a.count).slice(0, n)
   }
 
   /**
@@ -428,25 +428,25 @@ export class TelemetryCollector {
       event.duration !== undefined &&
       event.duration > this.config.alertConfig.slowExecutionThreshold
     ) {
-      this.alert(AlertType.SLOW_EXECUTION, event);
+      this.alert(AlertType.SLOW_EXECUTION, event)
     }
 
     // 高失败率告警
     if (event.agentName) {
-      const metrics = this.agentMetrics.get(event.agentName);
+      const metrics = this.agentMetrics.get(event.agentName)
       if (
         metrics &&
         metrics.totalExecutions >= 10 &&
         metrics.successRate < this.config.alertConfig.highFailureRateThreshold
       ) {
-        this.alert(AlertType.HIGH_FAILURE_RATE, event);
+        this.alert(AlertType.HIGH_FAILURE_RATE, event)
       }
     }
 
     // 错误激增告警
-    const recentErrors = this.getRecentFailures(10);
+    const recentErrors = this.getRecentFailures(10)
     if (recentErrors.length >= this.config.alertConfig.errorSpikeThreshold) {
-      this.alert(AlertType.ERROR_SPIKE, event);
+      this.alert(AlertType.ERROR_SPIKE, event)
     }
   }
 
@@ -456,15 +456,15 @@ export class TelemetryCollector {
   private getAlertSeverity(type: AlertType): AlertSeverity {
     switch (type) {
       case AlertType.SLOW_EXECUTION:
-        return AlertSeverity.WARNING;
+        return AlertSeverity.WARNING
       case AlertType.HIGH_FAILURE_RATE:
-        return AlertSeverity.ERROR;
+        return AlertSeverity.ERROR
       case AlertType.ERROR_SPIKE:
-        return AlertSeverity.CRITICAL;
+        return AlertSeverity.CRITICAL
       case AlertType.MEMORY_LEAK:
-        return AlertSeverity.CRITICAL;
+        return AlertSeverity.CRITICAL
       default:
-        return AlertSeverity.INFO;
+        return AlertSeverity.INFO
     }
   }
 
@@ -472,20 +472,20 @@ export class TelemetryCollector {
    * 获取告警消息
    */
   private getAlertMessage(type: AlertType, event: TelemetryEvent): string {
-    const agent = event.agentName || 'Unknown';
-    const stage = event.stage || '';
+    const agent = event.agentName || 'Unknown'
+    const stage = event.stage || ''
 
     switch (type) {
       case AlertType.SLOW_EXECUTION:
-        return `慢执行检测: ${agent}${stage ? ` (${stage})` : ''} 耗时 ${event.duration}ms`;
+        return `慢执行检测: ${agent}${stage ? ` (${stage})` : ''} 耗时 ${event.duration}ms`
       case AlertType.HIGH_FAILURE_RATE:
-        return `高失败率: ${agent} 失败率超过 ${this.config.alertConfig.highFailureRateThreshold * 100}%`;
+        return `高失败率: ${agent} 失败率超过 ${this.config.alertConfig.highFailureRateThreshold * 100}%`
       case AlertType.ERROR_SPIKE:
-        return `错误激增: 最近检测到 ${this.config.alertConfig.errorSpikeThreshold}+ 个错误`;
+        return `错误激增: 最近检测到 ${this.config.alertConfig.errorSpikeThreshold}+ 个错误`
       case AlertType.MEMORY_LEAK:
-        return `内存泄漏警告: ${agent} 内存使用异常`;
+        return `内存泄漏警告: ${agent} 内存使用异常`
       default:
-        return `未知告警类型: ${type}`;
+        return `未知告警类型: ${type}`
     }
   }
 }

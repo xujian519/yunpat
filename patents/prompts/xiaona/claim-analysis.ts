@@ -16,11 +16,11 @@ export const CLAIM_ANALYSIS_PROMPT = `
 - 问题描述
 - 严重程度（高/中/低）
 - 修改建议
-`;
+`
 
 export function renderClaimAnalysisPrompt(params: {
-  claims: string;
-  description?: string;
+  claims: string
+  description?: string
 }): string {
   return `${CLAIM_ANALYSIS_PROMPT}
 
@@ -28,5 +28,5 @@ export function renderClaimAnalysisPrompt(params: {
 ${params.claims}
 
 ${params.description ? `## 说明书摘要\n${params.description}` : ''}
-`;
+`
 }

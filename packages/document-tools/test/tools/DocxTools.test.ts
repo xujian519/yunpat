@@ -1,116 +1,116 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   DocxExtractTextTool,
   DocxToHtmlTool,
   DocxToMarkdownTool,
   DocxParseTool,
-} from '../../src/tools/DocxTools.js';
-import { OutputFormat } from '../../src/types/document.js';
-import { ToolCategory } from '@yunpat/core';
+} from '../../src/tools/DocxTools.js'
+import { OutputFormat } from '../../src/types/document.js'
+import { ToolCategory } from '@yunpat/core'
 
 vi.mock('mammoth', () => ({
   default: {
     extractRawText: vi.fn(() => Promise.resolve({ value: 'Hello from DOCX', messages: [] })),
     convertToHtml: vi.fn(() => Promise.resolve({ value: '<p>Hello from DOCX</p>', messages: [] })),
   },
-}));
+}))
 
 vi.mock('turndown', () => ({
   default: class TurndownService {
     constructor(public options?: any) {}
     turndown(html: string) {
-      return html.replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').trim();
+      return html.replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').trim()
     }
   },
-}));
+}))
 
 vi.mock('fs', async () => {
-  const actual = await vi.importActual<typeof import('fs')>('fs');
+  const actual = await vi.importActual<typeof import('fs')>('fs')
   return {
     ...actual,
     existsSync: vi.fn(() => true),
     statSync: vi.fn(() => ({ size: 1024 }) as any),
     readFileSync: vi.fn(() => Buffer.from('mock docx content')),
-  };
-});
+  }
+})
 
 const mockContext: any = {
   registry: {},
   llm: {} as any,
   memory: {} as any,
   eventBus: {} as any,
-};
+}
 
 describe('DocxTools', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   describe('DocxExtractTextTool', () => {
     it('has correct metadata', () => {
-      const tool = new DocxExtractTextTool();
-      expect(tool.metadata.name).toBe('docx_extract_text');
-      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT);
-      expect(tool.metadata.isConcurrencySafe).toBe(true);
-      expect(tool.metadata.permissions).toContain('fs:read');
-    });
+      const tool = new DocxExtractTextTool()
+      expect(tool.metadata.name).toBe('docx_extract_text')
+      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT)
+      expect(tool.metadata.isConcurrencySafe).toBe(true)
+      expect(tool.metadata.permissions).toContain('fs:read')
+    })
 
     it('extracts text from DOCX', async () => {
-      const tool = new DocxExtractTextTool();
-      const result = await tool.execute({ filePath: '/mock/test.docx' }, mockContext);
-      expect(result.text).toBe('Hello from DOCX');
-      expect(result.metadata.filename).toBe('test.docx');
-      expect(result.metadata.size).toBe(1024);
-    });
-  });
+      const tool = new DocxExtractTextTool()
+      const result = await tool.execute({ filePath: '/mock/test.docx' }, mockContext)
+      expect(result.text).toBe('Hello from DOCX')
+      expect(result.metadata.filename).toBe('test.docx')
+      expect(result.metadata.size).toBe(1024)
+    })
+  })
 
   describe('DocxToHtmlTool', () => {
     it('has correct metadata', () => {
-      const tool = new DocxToHtmlTool();
-      expect(tool.metadata.name).toBe('docx_to_html');
-      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT);
-    });
+      const tool = new DocxToHtmlTool()
+      expect(tool.metadata.name).toBe('docx_to_html')
+      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT)
+    })
 
     it('converts DOCX to HTML', async () => {
-      const tool = new DocxToHtmlTool();
-      const result = await tool.execute({ filePath: '/mock/test.docx' }, mockContext);
-      expect(result.html).toContain('Hello from DOCX');
-      expect(Array.isArray(result.messages)).toBe(true);
-    });
-  });
+      const tool = new DocxToHtmlTool()
+      const result = await tool.execute({ filePath: '/mock/test.docx' }, mockContext)
+      expect(result.html).toContain('Hello from DOCX')
+      expect(Array.isArray(result.messages)).toBe(true)
+    })
+  })
 
   describe('DocxToMarkdownTool', () => {
     it('has correct metadata', () => {
-      const tool = new DocxToMarkdownTool();
-      expect(tool.metadata.name).toBe('docx_to_markdown');
-      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT);
-    });
+      const tool = new DocxToMarkdownTool()
+      expect(tool.metadata.name).toBe('docx_to_markdown')
+      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT)
+    })
 
     it('converts DOCX to Markdown', async () => {
-      const tool = new DocxToMarkdownTool();
-      const result = await tool.execute({ filePath: '/mock/test.docx' }, mockContext);
-      expect(result.markdown).toBeDefined();
-      expect(result.metadata.filename).toBe('test.docx');
-    });
-  });
+      const tool = new DocxToMarkdownTool()
+      const result = await tool.execute({ filePath: '/mock/test.docx' }, mockContext)
+      expect(result.markdown).toBeDefined()
+      expect(result.metadata.filename).toBe('test.docx')
+    })
+  })
 
   describe('DocxParseTool', () => {
     it('has correct metadata', () => {
-      const tool = new DocxParseTool();
-      expect(tool.metadata.name).toBe('docx_parse');
-      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT);
-    });
+      const tool = new DocxParseTool()
+      expect(tool.metadata.name).toBe('docx_parse')
+      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT)
+    })
 
     it('parses DOCX to DocumentParseResult', async () => {
-      const tool = new DocxParseTool();
+      const tool = new DocxParseTool()
       const result = await tool.execute(
         { filePath: '/mock/test.docx', outputFormat: OutputFormat.TEXT },
         mockContext
-      );
-      expect(result.documentType).toBe('docx');
-      expect(result.filename).toBe('test.docx');
-      expect(result.elements.length).toBeGreaterThanOrEqual(0);
-      expect(result.parseTime).toBeGreaterThanOrEqual(0);
-    });
-  });
-});
+      )
+      expect(result.documentType).toBe('docx')
+      expect(result.filename).toBe('test.docx')
+      expect(result.elements.length).toBeGreaterThanOrEqual(0)
+      expect(result.parseTime).toBeGreaterThanOrEqual(0)
+    })
+  })
+})

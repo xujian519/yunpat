@@ -61,7 +61,7 @@ testIgnore: [
 在测试文件顶部添加：
 
 ```typescript
-vi.setConfig({ testTimeout: 30000 });
+vi.setConfig({ testTimeout: 30000 })
 ```
 
 ### 方案 C: 优化实体抽取

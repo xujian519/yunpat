@@ -9,11 +9,11 @@
  */
 export interface EmbeddingParams {
   /** 要嵌入的文本列表 */
-  texts: string[];
+  texts: string[]
   /** 是否归一化向量（默认 true） */
-  normalize?: boolean;
+  normalize?: boolean
   /** 批次大小（可选，用于性能优化） */
-  batchSize?: number;
+  batchSize?: number
 }
 
 /**
@@ -21,16 +21,16 @@ export interface EmbeddingParams {
  */
 export interface EmbeddingResult {
   /** 嵌入向量列表，与输入文本一一对应 */
-  embeddings: number[][];
+  embeddings: number[][]
   /** 使用的 token 数（如果提供） */
   usage?: {
-    promptTokens: number;
-    totalTokens: number;
-  };
+    promptTokens: number
+    totalTokens: number
+  }
   /** 模型信息 */
-  model?: string;
+  model?: string
   /** 向量维度 */
-  dimension: number;
+  dimension: number
 }
 
 /**
@@ -38,14 +38,14 @@ export interface EmbeddingResult {
  */
 export interface SingleEmbeddingResult {
   /** 嵌入向量 */
-  embedding: number[];
+  embedding: number[]
   /** 使用的 token 数（如果提供） */
   usage?: {
-    promptTokens: number;
-    totalTokens: number;
-  };
+    promptTokens: number
+    totalTokens: number
+  }
   /** 模型信息 */
-  model?: string;
+  model?: string
 }
 
 /**
@@ -53,13 +53,13 @@ export interface SingleEmbeddingResult {
  */
 export interface EmbeddingCapabilities {
   /** 支持的向量维度 */
-  dimension: number;
+  dimension: number
   /** 支持的最大文本长度（tokens） */
-  maxTokens: number;
+  maxTokens: number
   /** 支持的批量大小 */
-  maxBatchSize: number;
+  maxBatchSize: number
   /** 是否支持归一化 */
-  supportsNormalization: boolean;
+  supportsNormalization: boolean
 }
 
 /**
@@ -74,7 +74,7 @@ export interface EmbeddingProvider {
    * @param params 嵌入参数
    * @returns 嵌入结果
    */
-  embed(params: EmbeddingParams): Promise<EmbeddingResult>;
+  embed(params: EmbeddingParams): Promise<EmbeddingResult>
 
   /**
    * 嵌入单个文本
@@ -83,17 +83,17 @@ export interface EmbeddingProvider {
    * @param normalize 是否归一化（默认 true）
    * @returns 嵌入向量
    */
-  embedSingle(text: string, normalize?: boolean): Promise<SingleEmbeddingResult>;
+  embedSingle(text: string, normalize?: boolean): Promise<SingleEmbeddingResult>
 
   /**
    * 获取嵌入能力元数据
    */
-  getCapabilities(): EmbeddingCapabilities;
+  getCapabilities(): EmbeddingCapabilities
 
   /**
    * 获取模型名称
    */
-  getModel(): string;
+  getModel(): string
 
   /**
    * 计算余弦相似度
@@ -102,7 +102,7 @@ export interface EmbeddingProvider {
    * @param vec2 向量2
    * @returns 相似度（0-1，1表示完全相同）
    */
-  cosineSimilarity(vec1: number[], vec2: number[]): number;
+  cosineSimilarity(vec1: number[], vec2: number[]): number
 
   /**
    * L2 归一化向量
@@ -110,7 +110,7 @@ export interface EmbeddingProvider {
    * @param vec 要归一化的向量
    * @returns 归一化后的向量
    */
-  normalize(vec: number[]): number[];
+  normalize(vec: number[]): number[]
 }
 
 /**
@@ -119,52 +119,52 @@ export interface EmbeddingProvider {
  * 提供通用的工具方法实现
  */
 export abstract class BaseEmbeddingProvider implements EmbeddingProvider {
-  abstract embed(params: EmbeddingParams): Promise<EmbeddingResult>;
-  abstract embedSingle(text: string, normalize?: boolean): Promise<SingleEmbeddingResult>;
-  abstract getCapabilities(): EmbeddingCapabilities;
-  abstract getModel(): string;
+  abstract embed(params: EmbeddingParams): Promise<EmbeddingResult>
+  abstract embedSingle(text: string, normalize?: boolean): Promise<SingleEmbeddingResult>
+  abstract getCapabilities(): EmbeddingCapabilities
+  abstract getModel(): string
 
   /**
    * 计算余弦相似度
    */
   cosineSimilarity(vec1: number[], vec2: number[]): number {
     if (vec1.length !== vec2.length) {
-      throw new Error('向量维度不匹配');
+      throw new Error('向量维度不匹配')
     }
 
-    let dotProduct = 0;
-    let norm1 = 0;
-    let norm2 = 0;
+    let dotProduct = 0
+    let norm1 = 0
+    let norm2 = 0
 
     for (let i = 0; i < vec1.length; i++) {
-      dotProduct += vec1[i] * vec2[i];
-      norm1 += vec1[i] * vec1[i];
-      norm2 += vec2[i] * vec2[i];
+      dotProduct += vec1[i] * vec2[i]
+      norm1 += vec1[i] * vec1[i]
+      norm2 += vec2[i] * vec2[i]
     }
 
-    const denominator = Math.sqrt(norm1) * Math.sqrt(norm2);
+    const denominator = Math.sqrt(norm1) * Math.sqrt(norm2)
     if (denominator === 0) {
-      return 0;
+      return 0
     }
 
-    return dotProduct / denominator;
+    return dotProduct / denominator
   }
 
   /**
    * L2 归一化向量
    */
   normalize(vec: number[]): number[] {
-    let norm = 0;
+    let norm = 0
     for (const val of vec) {
-      norm += val * val;
+      norm += val * val
     }
 
-    norm = Math.sqrt(norm);
+    norm = Math.sqrt(norm)
     if (norm === 0) {
-      return vec; // 零向量无法归一化，返回原向量
+      return vec // 零向量无法归一化，返回原向量
     }
 
-    return vec.map((val) => val / norm);
+    return vec.map((val) => val / norm)
   }
 
   /**
@@ -172,7 +172,7 @@ export abstract class BaseEmbeddingProvider implements EmbeddingProvider {
    */
   protected validateDimension(embedding: number[], expectedDim: number): void {
     if (embedding.length !== expectedDim) {
-      throw new Error(`嵌入向量维度不匹配: 期望 ${expectedDim}, 实际 ${embedding.length}`);
+      throw new Error(`嵌入向量维度不匹配: 期望 ${expectedDim}, 实际 ${embedding.length}`)
     }
   }
 
@@ -181,12 +181,12 @@ export abstract class BaseEmbeddingProvider implements EmbeddingProvider {
    */
   protected validateInput(texts: string[]): void {
     if (!Array.isArray(texts)) {
-      throw new Error('输入必须是字符串数组');
+      throw new Error('输入必须是字符串数组')
     }
 
     for (let i = 0; i < texts.length; i++) {
       if (typeof texts[i] !== 'string') {
-        throw new Error(`输入[${i}] 不是字符串: ${typeof texts[i]}`);
+        throw new Error(`输入[${i}] 不是字符串: ${typeof texts[i]}`)
       }
     }
   }
@@ -199,15 +199,15 @@ export abstract class BaseEmbeddingProvider implements EmbeddingProvider {
     batchSize: number,
     processor: (batch: T[]) => Promise<R[]>
   ): Promise<R[]> {
-    const results: R[] = [];
+    const results: R[] = []
 
     for (let i = 0; i < items.length; i += batchSize) {
-      const batch = items.slice(i, i + batchSize);
-      const batchResults = await processor(batch);
-      results.push(...batchResults);
+      const batch = items.slice(i, i + batchSize)
+      const batchResults = await processor(batch)
+      results.push(...batchResults)
     }
 
-    return results;
+    return results
   }
 }
 
@@ -225,22 +225,22 @@ export class EmbeddingCacheKeyGenerator {
    */
   static generate(model: string, text: string, normalize: boolean): string {
     // 使用简单的哈希算法生成缓存键
-    const normalized = normalize ? '1' : '0';
-    const textHash = this.simpleHash(text);
-    return `${model}:${normalized}:${textHash}`;
+    const normalized = normalize ? '1' : '0'
+    const textHash = this.simpleHash(text)
+    return `${model}:${normalized}:${textHash}`
   }
 
   /**
    * 简单哈希函数（用于缓存键）
    */
   private static simpleHash(str: string): string {
-    let hash = 0;
+    let hash = 0
     for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // 转换为 32 位整数
+      const char = str.charCodeAt(i)
+      hash = (hash << 5) - hash + char
+      hash = hash & hash // 转换为 32 位整数
     }
-    return Math.abs(hash).toString(36);
+    return Math.abs(hash).toString(36)
   }
 }
 
@@ -253,8 +253,8 @@ export class EmbeddingError extends Error {
     public readonly code: string,
     public readonly provider?: string
   ) {
-    super(message);
-    this.name = 'EmbeddingError';
+    super(message)
+    this.name = 'EmbeddingError'
   }
 }
 

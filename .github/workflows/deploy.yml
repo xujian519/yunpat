@@ -9,8 +9,8 @@ on:
         required: true
         type: choice
         options:
-        - staging
-        - production
+          - staging
+          - production
       rollback:
         description: '是否回滚'
         type: boolean
@@ -26,8 +26,8 @@ on:
         required: true
         type: choice
         options:
-        - staging
-        - production
+          - staging
+          - production
       rollback:
         description: '是否回滚'
         type: boolean

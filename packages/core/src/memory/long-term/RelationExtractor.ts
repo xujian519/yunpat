@@ -5,7 +5,7 @@
  * 基于规则和模式匹配识别专利关系
  */
 
-import type { Entity } from './EntityExtractor.js';
+import type { Entity } from './EntityExtractor.js'
 
 /**
  * 关系类型定义
@@ -17,19 +17,19 @@ export type RelationType =
   | 'priority' // 优先权
   | 'family' // 同族
   | 'continuation' // 连续申请
-  | 'related-to'; // 相关
+  | 'related-to' // 相关
 
 /**
  * 关系接口
  */
 export interface Relation {
-  fromEntity: string; // 源实体名称
-  toEntity: string; // 目标实体名称
-  relationType: RelationType;
-  weight: number;
-  confidence: number;
-  evidence?: string; // 证据文本
-  properties?: Record<string, any>;
+  fromEntity: string // 源实体名称
+  toEntity: string // 目标实体名称
+  relationType: RelationType
+  weight: number
+  confidence: number
+  evidence?: string // 证据文本
+  properties?: Record<string, any>
 }
 
 /**
@@ -37,21 +37,21 @@ export interface Relation {
  */
 export interface RelationExtractorConfig {
   /** 最小置信度阈值 */
-  minConfidence?: number;
+  minConfidence?: number
   /** 最小关系权重 */
-  minWeight?: number;
+  minWeight?: number
   /** 是否启用证据提取 */
-  enableEvidence?: boolean;
+  enableEvidence?: boolean
 }
 
 /**
  * 关系模式定义
  */
 interface RelationPattern {
-  type: RelationType;
-  patterns: RegExp[];
-  weight: number;
-  description: string;
+  type: RelationType
+  patterns: RegExp[]
+  weight: number
+  description: string
 }
 
 /**
@@ -64,7 +64,7 @@ interface RelationPattern {
  * 4. 批量抽取
  */
 export class RelationExtractor {
-  private config: Required<RelationExtractorConfig>;
+  private config: Required<RelationExtractorConfig>
 
   // 关系模式定义
   private readonly relationPatterns: RelationPattern[] = [
@@ -119,46 +119,46 @@ export class RelationExtractor {
       weight: 0.7,
       description: '相关关系',
     },
-  ];
+  ]
 
   constructor(config: RelationExtractorConfig = {}) {
     this.config = {
       minConfidence: config.minConfidence ?? 0.6,
       minWeight: config.minWeight ?? 0.5,
       enableEvidence: config.enableEvidence ?? true,
-    };
+    }
   }
 
   /**
    * 从文本中抽取关系
    */
   async extractRelations(text: string, entities: Entity[]): Promise<Relation[]> {
-    const relations: Relation[] = [];
-    const entityMap = new Map<string, Entity>();
+    const relations: Relation[] = []
+    const entityMap = new Map<string, Entity>()
 
     // 建立实体名称映射
     entities.forEach((e) => {
-      entityMap.set(e.name, e);
-    });
+      entityMap.set(e.name, e)
+    })
 
     // 遍历所有关系模式
     for (const pattern of this.relationPatterns) {
       for (const regex of pattern.patterns) {
-        const matches = [...text.matchAll(new RegExp(regex.source, regex.flags))];
+        const matches = [...text.matchAll(new RegExp(regex.source, regex.flags))]
 
         for (const match of matches) {
-          const relation = this.parseMatch(match, pattern, text, entityMap);
+          const relation = this.parseMatch(match, pattern, text, entityMap)
           if (relation && this.isValidRelation(relation)) {
-            relations.push(relation);
+            relations.push(relation)
           }
         }
       }
     }
 
     // 去重（相同 from + to + type）
-    const uniqueRelations = this.deduplicateRelations(relations);
+    const uniqueRelations = this.deduplicateRelations(relations)
 
-    return uniqueRelations;
+    return uniqueRelations
   }
 
   /**
@@ -177,69 +177,69 @@ export class RelationExtractor {
       weight: pattern.weight,
       confidence: 0.8,
       evidence: this.config.enableEvidence ? match[0] : undefined,
-    };
+    }
 
     // 根据关系类型解析
     switch (pattern.type) {
       case 'applicant-inventor':
         // match[1] 和 match[2] 分别是申请人和发明人
         if (match[1] && match[2]) {
-          relation.fromEntity = match[1].trim();
-          relation.toEntity = match[2].trim();
+          relation.fromEntity = match[1].trim()
+          relation.toEntity = match[2].trim()
         } else {
-          return null;
+          return null
         }
-        break;
+        break
 
       case 'cites':
       case 'priority':
         // match[1] 是专利号
         if (match[1]) {
-          relation.fromEntity = '本专利';
-          relation.toEntity = match[1].trim();
+          relation.fromEntity = '本专利'
+          relation.toEntity = match[1].trim()
         } else {
-          return null;
+          return null
         }
-        break;
+        break
 
       default:
         // 其他关系类型需要从上下文推断
-        return null;
+        return null
     }
 
     // 计算置信度
-    relation.confidence = this.calculateConfidence(relation, entityMap);
+    relation.confidence = this.calculateConfidence(relation, entityMap)
 
-    return relation;
+    return relation
   }
 
   /**
    * 计算关系置信度
    */
   private calculateConfidence(relation: Relation, entityMap: Map<string, Entity>): number {
-    let confidence = 0.75; // 基础置信度
+    let confidence = 0.75 // 基础置信度
 
     // 如果至少一端实体在实体列表中，适当提高置信度
     if (entityMap.has(relation.fromEntity) || entityMap.has(relation.toEntity)) {
-      confidence += 0.1;
+      confidence += 0.1
     }
 
     // 如果两端实体都在实体列表中，进一步提高置信度
     if (entityMap.has(relation.fromEntity) && entityMap.has(relation.toEntity)) {
-      confidence += 0.1;
+      confidence += 0.1
     }
 
     // 如果有证据文本，提高置信度
     if (relation.evidence) {
-      confidence += 0.05;
+      confidence += 0.05
     }
 
     // 特殊处理：对于"本专利"这样的虚拟实体，降低置信度要求
     if (relation.fromEntity === '本专利' || relation.toEntity === '本专利') {
-      confidence = Math.max(confidence - 0.1, 0.6);
+      confidence = Math.max(confidence - 0.1, 0.6)
     }
 
-    return Math.min(confidence, 1.0);
+    return Math.min(confidence, 1.0)
   }
 
   /**
@@ -248,58 +248,58 @@ export class RelationExtractor {
   private isValidRelation(relation: Relation): boolean {
     // 检查置信度
     if (relation.confidence < this.config.minConfidence) {
-      return false;
+      return false
     }
 
     // 检查权重
     if (relation.weight < this.config.minWeight) {
-      return false;
+      return false
     }
 
     // 检查实体名称非空
     if (!relation.fromEntity || !relation.toEntity) {
-      return false;
+      return false
     }
 
     // 检查不自环
     if (relation.fromEntity === relation.toEntity) {
-      return false;
+      return false
     }
 
-    return true;
+    return true
   }
 
   /**
    * 关系去重
    */
   private deduplicateRelations(relations: Relation[]): Relation[] {
-    const uniqueMap = new Map<string, Relation>();
+    const uniqueMap = new Map<string, Relation>()
 
     relations.forEach((r) => {
-      const key = `${r.fromEntity}|${r.toEntity}|${r.relationType}`;
-      const existing = uniqueMap.get(key);
+      const key = `${r.fromEntity}|${r.toEntity}|${r.relationType}`
+      const existing = uniqueMap.get(key)
 
       if (!existing || r.confidence > existing.confidence) {
-        uniqueMap.set(key, r);
+        uniqueMap.set(key, r)
       }
-    });
+    })
 
-    return Array.from(uniqueMap.values());
+    return Array.from(uniqueMap.values())
   }
 
   /**
    * 计算关系权重
    */
   calculateWeight(relation: Relation, context: string): number {
-    let weight = relation.weight;
+    let weight = relation.weight
 
     // 根据证据文本长度调整权重
     if (relation.evidence) {
-      const evidenceLength = relation.evidence.length;
+      const evidenceLength = relation.evidence.length
       if (evidenceLength > 50) {
-        weight += 0.05;
+        weight += 0.05
       } else if (evidenceLength > 100) {
-        weight += 0.1;
+        weight += 0.1
       }
     }
 
@@ -307,22 +307,22 @@ export class RelationExtractor {
     switch (relation.relationType) {
       case 'applicant-inventor':
       case 'priority':
-        weight = Math.min(weight + 0.1, 1.0);
-        break;
+        weight = Math.min(weight + 0.1, 1.0)
+        break
       case 'cites':
       case 'cited-by':
-        weight = Math.min(weight + 0.05, 1.0);
-        break;
+        weight = Math.min(weight + 0.05, 1.0)
+        break
     }
 
-    return Math.min(weight, 1.0);
+    return Math.min(weight, 1.0)
   }
 
   /**
    * 批量抽取关系
    */
   async extractRelationsBatch(texts: string[], entitiesList: Entity[][]): Promise<Relation[][]> {
-    return Promise.all(texts.map((text, i) => this.extractRelations(text, entitiesList[i])));
+    return Promise.all(texts.map((text, i) => this.extractRelations(text, entitiesList[i])))
   }
 
   /**
@@ -337,7 +337,7 @@ export class RelationExtractor {
         relationType: 'applicant-inventor',
         weight: 0.7,
         confidence: 0.6,
-      };
+      }
     }
 
     if (fromEntity.type === 'ApplicationNumber' && toEntity.type === 'ApplicationNumber') {
@@ -347,37 +347,37 @@ export class RelationExtractor {
         relationType: 'family',
         weight: 0.6,
         confidence: 0.5,
-      };
+      }
     }
 
-    return null;
+    return null
   }
 
   /**
    * 获取统计信息
    */
   getStats(relations: Relation[]): {
-    totalRelations: number;
-    relationTypes: Record<string, number>;
-    averageConfidence: number;
-    averageWeight: number;
+    totalRelations: number
+    relationTypes: Record<string, number>
+    averageConfidence: number
+    averageWeight: number
   } {
-    const relationTypes: Record<string, number> = {};
-    let totalConfidence = 0;
-    let totalWeight = 0;
+    const relationTypes: Record<string, number> = {}
+    let totalConfidence = 0
+    let totalWeight = 0
 
     relations.forEach((r) => {
-      relationTypes[r.relationType] = (relationTypes[r.relationType] || 0) + 1;
-      totalConfidence += r.confidence;
-      totalWeight += r.weight;
-    });
+      relationTypes[r.relationType] = (relationTypes[r.relationType] || 0) + 1
+      totalConfidence += r.confidence
+      totalWeight += r.weight
+    })
 
     return {
       totalRelations: relations.length,
       relationTypes,
       averageConfidence: relations.length > 0 ? totalConfidence / relations.length : 0,
       averageWeight: relations.length > 0 ? totalWeight / relations.length : 0,
-    };
+    }
   }
 }
 
@@ -385,5 +385,5 @@ export class RelationExtractor {
  * 创建关系抽取器实例
  */
 export function createRelationExtractor(config?: RelationExtractorConfig): RelationExtractor {
-  return new RelationExtractor(config);
+  return new RelationExtractor(config)
 }

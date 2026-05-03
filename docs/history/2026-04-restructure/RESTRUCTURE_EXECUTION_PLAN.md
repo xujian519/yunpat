@@ -73,6 +73,7 @@ pnpm init
 ```
 
 **package.json**:
+
 ```json
 {
   "name": "@yunpat/patent-writer",

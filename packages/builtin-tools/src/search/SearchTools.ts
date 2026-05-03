@@ -1,8 +1,8 @@
-import { z } from 'zod';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { glob } from 'glob';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import { z } from 'zod'
+import { promises as fs } from 'fs'
+import path from 'path'
+import { glob } from 'glob'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 /**
  * Grep 搜索工具
@@ -11,21 +11,21 @@ import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
  */
 export class GrepTool extends EnhancedBaseTool<
   {
-    pattern: string;
-    filePath?: string;
-    directory?: string;
-    filePattern?: string;
-    caseInsensitive?: boolean;
-    regex?: boolean;
-    maxResults?: number;
+    pattern: string
+    filePath?: string
+    directory?: string
+    filePattern?: string
+    caseInsensitive?: boolean
+    regex?: boolean
+    maxResults?: number
   },
   {
     matches: Array<{
-      file: string;
-      lineNumber: number;
-      line: string;
-      match: string;
-    }>;
+      file: string
+      lineNumber: number
+      line: string
+      match: string
+    }>
   }
 > {
   readonly metadata = {
@@ -55,26 +55,26 @@ export class GrepTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      pattern: string;
-      filePath?: string;
-      directory?: string;
-      filePattern?: string;
-      caseInsensitive?: boolean;
-      regex?: boolean;
-      maxResults?: number;
+      pattern: string
+      filePath?: string
+      directory?: string
+      filePattern?: string
+      caseInsensitive?: boolean
+      regex?: boolean
+      maxResults?: number
     },
     _context: ToolContext
   ): Promise<{
     matches: Array<{
-      file: string;
-      lineNumber: number;
-      line: string;
-      match: string;
-    }>;
+      file: string
+      lineNumber: number
+      line: string
+      match: string
+    }>
   }> {
     const {
       pattern,
@@ -84,67 +84,67 @@ export class GrepTool extends EnhancedBaseTool<
       caseInsensitive = true,
       regex = false,
       maxResults = 100,
-    } = input;
+    } = input
 
     // 构建正则表达式
-    let regexPattern: RegExp;
+    let regexPattern: RegExp
     try {
-      const flags = caseInsensitive ? 'gi' : 'g';
+      const flags = caseInsensitive ? 'gi' : 'g'
       regexPattern = regex
         ? new RegExp(pattern, flags)
         : new RegExp(
             pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), // 转义特殊字符
             flags
-          );
+          )
     } catch (error) {
       throw new Error(
         `Invalid search pattern: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
 
     // 确定要搜索的文件列表
-    let files: string[] = [];
+    let files: string[] = []
 
     if (filePath) {
-      files.push(filePath);
+      files.push(filePath)
     } else if (directory) {
       const searchPattern = filePattern
         ? path.join(directory, '**', filePattern)
-        : path.join(directory, '**', '*');
+        : path.join(directory, '**', '*')
 
       files = await glob(searchPattern, {
         nodir: true,
         absolute: true,
-      });
+      })
     } else {
-      throw new Error('Either filePath or directory must be specified');
+      throw new Error('Either filePath or directory must be specified')
     }
 
     // 搜索文件
     const matches: Array<{
-      file: string;
-      lineNumber: number;
-      line: string;
-      match: string;
-    }> = [];
+      file: string
+      lineNumber: number
+      line: string
+      match: string
+    }> = []
 
     for (const file of files) {
       if (matches.length >= maxResults) {
-        break;
+        break
       }
 
       try {
-        const content = await fs.readFile(file, 'utf-8');
-        const lines = content.split('\n');
+        const content = await fs.readFile(file, 'utf-8')
+        const lines = content.split('\n')
 
         for (let i = 0; i < lines.length; i++) {
           if (matches.length >= maxResults) {
-            break;
+            break
           }
 
-          const line = lines[i];
-          regexPattern.lastIndex = 0; // 重置正则表达式
-          const match = regexPattern.exec(line);
+          const line = lines[i]
+          regexPattern.lastIndex = 0 // 重置正则表达式
+          const match = regexPattern.exec(line)
 
           if (match) {
             matches.push({
@@ -152,16 +152,16 @@ export class GrepTool extends EnhancedBaseTool<
               lineNumber: i + 1,
               line: line.trim(),
               match: match[0],
-            });
+            })
           }
         }
       } catch (error) {
         // 跳过无法读取的文件
-        continue;
+        continue
       }
     }
 
-    return { matches };
+    return { matches }
   }
 }
 
@@ -172,9 +172,9 @@ export class GrepTool extends EnhancedBaseTool<
  */
 export class GlobTool extends EnhancedBaseTool<
   {
-    pattern: string;
-    cwd?: string;
-    includeHidden?: boolean;
+    pattern: string
+    cwd?: string
+    includeHidden?: boolean
   },
   { files: string[] }
 > {
@@ -194,13 +194,13 @@ export class GlobTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { pattern: string; cwd?: string; includeHidden?: boolean },
     _context: ToolContext
   ): Promise<{ files: string[] }> {
-    const { pattern, cwd, includeHidden = false } = input;
+    const { pattern, cwd, includeHidden = false } = input
 
     try {
       const files = await glob(pattern, {
@@ -208,13 +208,13 @@ export class GlobTool extends EnhancedBaseTool<
         nodir: true,
         absolute: true,
         dot: includeHidden,
-      });
+      })
 
-      return { files };
+      return { files }
     } catch (error) {
       throw new Error(
         `Glob search failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 }

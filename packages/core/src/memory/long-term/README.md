@@ -43,13 +43,13 @@ TEST_DATABASE_URL="postgres://yunpat:yunpat123@localhost:5432/yunpat_test"
 ### 基础用法
 
 ```typescript
-import { MemoryLayer } from '@yunpat/core';
+import { MemoryLayer } from '@yunpat/core'
 
 // 创建记忆层实例
 const memory = await createMemoryLayer({
   databaseUrl: process.env.DATABASE_URL!,
   vectorDimension: 1024, // BGE-M3
-});
+})
 
 // 添加记忆
 const memoryId = await memory.addMemory({
@@ -60,19 +60,15 @@ const memoryId = await memory.addMemory({
     agent: 'writer',
     tags: ['AI', '专利'],
   },
-});
+})
 
 // 搜索记忆
-const results = await memory.searchMemories(
-  queryEmbedding,
-  10,
-  { types: ['patent'], tags: ['AI'] }
-);
+const results = await memory.searchMemories(queryEmbedding, 10, { types: ['patent'], tags: ['AI'] })
 
-console.log('搜索结果:', results);
+console.log('搜索结果:', results)
 
 // 关闭连接
-await memory.close();
+await memory.close()
 ```
 
 ### 图查询
@@ -83,12 +79,12 @@ const patentId = await memory.createEntity({
   type: 'Patent',
   name: 'CN123456',
   properties: { field: 'NLP' },
-});
+})
 
 const companyId = await memory.createEntity({
   type: 'Company',
   name: '宝宸科技',
-});
+})
 
 // 创建关系
 await memory.createRelation({
@@ -96,15 +92,15 @@ await memory.createRelation({
   toEntityId: companyId,
   relationType: 'OWNS',
   weight: 0.95,
-});
+})
 
 // 查找邻居
-const neighbors = await memory.getNeighbors(patentId, 'OWNS');
-console.log('相关公司:', neighbors);
+const neighbors = await memory.getNeighbors(patentId, 'OWNS')
+console.log('相关公司:', neighbors)
 
 // 查找路径
-const path = await memory.findShortestPath(personId, companyId, 5);
-console.log('最短路径:', path);
+const path = await memory.findShortestPath(personId, companyId, 5)
+console.log('最短路径:', path)
 ```
 
 ## 🧪 运行测试
@@ -124,16 +120,17 @@ pnpm test:coverage
 
 ### 预期性能
 
-| 操作 | 数据规模 | 预期延迟 |
-|------|---------|---------|
-| 向量搜索 | 10 万 | <100ms |
-| 向量搜索 | 100 万 | <300ms |
-| 批量插入 | 1000 条 | <5s |
-| 图路径查询 | 5 跳 | <200ms |
+| 操作       | 数据规模 | 预期延迟 |
+| ---------- | -------- | -------- |
+| 向量搜索   | 10 万    | <100ms   |
+| 向量搜索   | 100 万   | <300ms   |
+| 批量插入   | 1000 条  | <5s      |
+| 图路径查询 | 5 跳     | <200ms   |
 
 ### 性能优化技巧
 
 1. **HNSW 索引调优**
+
    ```sql
    -- 增加连接数（更精确但更慢）
    SET hnsw.m = 32;
@@ -143,9 +140,10 @@ pnpm test:coverage
    ```
 
 2. **批量操作**
+
    ```typescript
    // 批量插入（比单条快 10 倍）
-   await memory.addMemories(items);
+   await memory.addMemories(items)
    ```
 
 3. **元数据预过滤**
@@ -155,7 +153,7 @@ pnpm test:coverage
      queryEmbedding,
      10,
      { types: ['patent'] } // 先缩小范围
-   );
+   )
    ```
 
 ## 🛠️ 故障排查
@@ -209,6 +207,7 @@ A: 1-3 跳查询 <100ms，5 跳查询 <500ms。复杂图建议迁移到 Neo4j。
 
 **Q: 如何备份数据？**
 A: 使用 `pg_dump`：
+
 ```bash
 pg_dump -U yunpat -d yunpat > backup.sql
 ```

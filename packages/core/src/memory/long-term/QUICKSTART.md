@@ -3,17 +3,20 @@
 ## ✅ 已完成的文件
 
 ### 核心实现
+
 - [x] `schema.ts` - 数据模型定义
 - [x] `PostgresVectorStore.ts` - 向量存储实现
 - [x] `PostgresGraphStore.ts` - 图存储实现
 - [x] `MemoryLayer.ts` - 统一记忆层接口
 
 ### 测试文件
+
 - [x] `PostgresVectorStore.test.ts` - 向量存储测试
 - [x] `PostgresGraphStore.test.ts` - 图存储测试
 - [x] `integration.test.ts` - 集成测试
 
 ### 配置文件
+
 - [x] `docker-compose.yml` - Docker 编排
 - [x] `init.sql` - 数据库初始化脚本
 - [x] `example.ts` - 使用示例
@@ -144,18 +147,20 @@ docker-compose up -d
 ## 📚 下一步
 
 1. **运行测试**
+
    ```bash
    pnpm test packages/core/src/memory/tests
    ```
 
 2. **集成到现有代码**
+
    ```typescript
-   import { createMemoryLayer } from '@yunpat/core';
+   import { createMemoryLayer } from '@yunpat/core'
 
    const memory = await createMemoryLayer({
      databaseUrl: process.env.DATABASE_URL!,
      vectorDimension: 1024,
-   });
+   })
    ```
 
 3. **性能测试**
@@ -172,12 +177,12 @@ docker-compose up -d
 
 ## 🎯 核心功能
 
-| 功能 | 状态 | 说明 |
-|------|------|------|
-| 向量搜索 | ✅ 完成 | HNSW 索引，<100ms |
-| 元数据过滤 | ✅ 完成 | JSONB 查询 |
-| 图查询 | ✅ 完成 | 路径查找，邻居发现 |
-| 批量操作 | ✅ 完成 | 性能优化 |
-| 测试覆盖 | ✅ 完成 | 单元测试 + 集成测试 |
+| 功能       | 状态    | 说明                |
+| ---------- | ------- | ------------------- |
+| 向量搜索   | ✅ 完成 | HNSW 索引，<100ms   |
+| 元数据过滤 | ✅ 完成 | JSONB 查询          |
+| 图查询     | ✅ 完成 | 路径查找，邻居发现  |
+| 批量操作   | ✅ 完成 | 性能优化            |
+| 测试覆盖   | ✅ 完成 | 单元测试 + 集成测试 |
 
 **开始使用吧！** 🚀

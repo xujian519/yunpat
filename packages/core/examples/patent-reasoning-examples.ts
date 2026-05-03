@@ -269,7 +269,7 @@ async function example4_Reflection_QualityCheck() {
 
   console.log('\n💡 改进建议：');
   if (report.improvements.length === 0) {
-    console.log  '  无需改进');
+    console.log('  无需改进'));
   } else {
     report.improvements.forEach((imp, i) => {
       console.log(`\n  ${i + 1}. [${imp.priority}] ${imp.description}`);

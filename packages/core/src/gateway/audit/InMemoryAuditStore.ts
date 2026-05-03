@@ -6,39 +6,39 @@
  * 生产环境应该使用 SqliteAuditStore
  */
 
-import type { AuditLog, AuditLogStore, AuditLogFilter } from '../Gateway.js';
+import type { AuditLog, AuditLogStore, AuditLogFilter } from '../Gateway.js'
 
 /**
  * 内存审计存储配置
  */
 export interface InMemoryAuditStoreConfig {
   /** 最大日志条数（默认 10000） */
-  maxLogs?: number;
+  maxLogs?: number
 }
 
 /**
  * 内存审计日志存储
  */
 export class InMemoryAuditStore implements AuditLogStore {
-  private logs: AuditLog[] = [];
-  private config: InMemoryAuditStoreConfig;
+  private logs: AuditLog[] = []
+  private config: InMemoryAuditStoreConfig
 
   constructor(config: InMemoryAuditStoreConfig = {}) {
     this.config = {
       maxLogs: 10000,
       ...config,
-    };
+    }
   }
 
   /**
    * 写入审计日志
    */
   async write(log: AuditLog): Promise<void> {
-    this.logs.push({ ...log });
+    this.logs.push({ ...log })
 
     // 限制日志数量
     if (this.logs.length > this.config.maxLogs!) {
-      this.logs.shift(); // 删除最旧的日志
+      this.logs.shift() // 删除最旧的日志
     }
   }
 
@@ -46,47 +46,47 @@ export class InMemoryAuditStore implements AuditLogStore {
    * 查询审计日志
    */
   async query(filter: AuditLogFilter = {}): Promise<AuditLog[]> {
-    let result = [...this.logs];
+    let result = [...this.logs]
 
     // 时间范围过滤
     if (filter.timeRange) {
-      const { start, end } = filter.timeRange;
+      const { start, end } = filter.timeRange
       result = result.filter((log) => {
-        const timestamp = log.timestamp instanceof Date ? log.timestamp : new Date(log.timestamp);
-        return timestamp >= start && timestamp <= end;
-      });
+        const timestamp = log.timestamp instanceof Date ? log.timestamp : new Date(log.timestamp)
+        return timestamp >= start && timestamp <= end
+      })
     }
 
     // 用户 ID 过滤
     if (filter.userId) {
-      result = result.filter((log) => log.userId === filter.userId);
+      result = result.filter((log) => log.userId === filter.userId)
     }
 
     // 智能体名称过滤
     if (filter.agentName) {
-      result = result.filter((log) => log.agentName === filter.agentName);
+      result = result.filter((log) => log.agentName === filter.agentName)
     }
 
     // 动作过滤
     if (filter.action) {
-      result = result.filter((log) => log.action === filter.action);
+      result = result.filter((log) => log.action === filter.action)
     }
 
     // 结果过滤
     if (filter.result !== undefined) {
-      result = result.filter((log) => log.result === filter.result);
+      result = result.filter((log) => log.result === filter.result)
     }
 
     // 按时间倒序排序
     result.sort((a, b) => {
       const timeA =
-        a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+        a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime()
       const timeB =
-        b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
-      return timeB - timeA;
-    });
+        b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime()
+      return timeB - timeA
+    })
 
-    return result;
+    return result
   }
 
   /**
@@ -95,37 +95,37 @@ export class InMemoryAuditStore implements AuditLogStore {
   async stats(
     metrics: { byAction?: boolean; byUser?: boolean; byAgent?: boolean; byResult?: boolean } = {}
   ): Promise<Record<string, number>> {
-    const result: Record<string, number> = {};
+    const result: Record<string, number> = {}
 
     if (metrics.byAction) {
       for (const log of this.logs) {
-        const key = `action:${log.action}`;
-        result[key] = (result[key] || 0) + 1;
+        const key = `action:${log.action}`
+        result[key] = (result[key] || 0) + 1
       }
     }
 
     if (metrics.byUser) {
       for (const log of this.logs) {
-        const key = `user:${log.userId}`;
-        result[key] = (result[key] || 0) + 1;
+        const key = `user:${log.userId}`
+        result[key] = (result[key] || 0) + 1
       }
     }
 
     if (metrics.byAgent) {
       for (const log of this.logs) {
-        const key = `agent:${log.agentName}`;
-        result[key] = (result[key] || 0) + 1;
+        const key = `agent:${log.agentName}`
+        result[key] = (result[key] || 0) + 1
       }
     }
 
     if (metrics.byResult) {
       for (const log of this.logs) {
-        const key = `result:${log.result}`;
-        result[key] = (result[key] || 0) + 1;
+        const key = `result:${log.result}`
+        result[key] = (result[key] || 0) + 1
       }
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -133,7 +133,7 @@ export class InMemoryAuditStore implements AuditLogStore {
    */
 
   async clear(): Promise<void> {
-    this.logs = [];
+    this.logs = []
   }
 
   /**

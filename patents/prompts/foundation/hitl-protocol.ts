@@ -16,7 +16,7 @@ export const HITL_PROTOCOL_PROMPT = `
 - 法律依据选择
 - 策略确定
 - 修改方案验证
-`;
+`
 
 export function renderHitlPrompt(params: { taskType: string; decisionPoints?: string[] }): string {
   return `${HITL_PROTOCOL_PROMPT}
@@ -25,5 +25,5 @@ export function renderHitlPrompt(params: { taskType: string; decisionPoints?: st
 ${params.taskType}
 
 ${params.decisionPoints?.length ? `## 本任务确认点\n${params.decisionPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}` : ''}
-`;
+`
 }

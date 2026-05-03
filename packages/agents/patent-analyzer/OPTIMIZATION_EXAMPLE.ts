@@ -4,8 +4,8 @@
  * 展示如何使用 JSONParser 简化解析方法
  */
 
-import { Agent, type ExecutionContext } from '@yunpat/core';
-import { JSONParser } from './utils/index.js';
+import { Agent, type ExecutionContext } from '@yunpat/core'
+import { JSONParser } from './utils/index.js'
 
 export class PatentAnalyzerAgentOptimized extends Agent {
   /**
@@ -31,10 +31,10 @@ export class PatentAnalyzerAgentOptimized extends Agent {
     },
     priorArt: {
       closestPriorArt: [] as Array<{
-        publicationNumber: string;
-        title: string;
-        similarity: number;
-        differences: string[];
+        publicationNumber: string
+        title: string
+        similarity: number
+        differences: string[]
       }>,
       innovations: [] as string[],
     },
@@ -48,7 +48,7 @@ export class PatentAnalyzerAgentOptimized extends Agent {
       infringementRisk: 'medium' as const,
       riskFactors: [] as string[],
     },
-  } as const;
+  } as const
 
   /**
    * 解析技术分析响应 - 优化版
@@ -63,7 +63,7 @@ export class PatentAnalyzerAgentOptimized extends Agent {
       solution: data.solution || '',
       effects: Array.isArray(data.effects) ? data.effects : [],
       keyFeatures: Array.isArray(data.keyFeatures) ? data.keyFeatures : [],
-    }));
+    }))
   }
 
   /**
@@ -79,7 +79,7 @@ export class PatentAnalyzerAgentOptimized extends Agent {
         risk: data.protectionScope?.risk || 'medium',
       },
       qualityScore: data.qualityScore || 70,
-    }));
+    }))
   }
 
   /**
@@ -89,7 +89,7 @@ export class PatentAnalyzerAgentOptimized extends Agent {
     return JSONParser.parse(content, this.DEFAULTS.priorArt, (data) => ({
       closestPriorArt: Array.isArray(data.closestPriorArt) ? data.closestPriorArt : [],
       innovations: Array.isArray(data.innovations) ? data.innovations : [],
-    }));
+    }))
   }
 
   /**
@@ -98,26 +98,26 @@ export class PatentAnalyzerAgentOptimized extends Agent {
    * 展示如何处理验证逻辑
    */
   private parseCreativityAssessment(content: string): PatentAnalysisOutput['creativityAssessment'] {
-    const validLevels = ['inventive', 'obvious', 'lacksInventiveness'] as const;
+    const validLevels = ['inventive', 'obvious', 'lacksInventiveness'] as const
 
     return JSONParser.parse(content, this.DEFAULTS.creativity, (data) => ({
       level: validLevels.includes(data.level) ? data.level : 'obvious',
       score: typeof data.score === 'number' ? data.score : 50,
       reasoning: data.reasoning || '未提供详细理由',
-    }));
+    }))
   }
 
   /**
    * 解析风险评估响应 - 优化版
    */
   private parseRiskAssessment(content: string): PatentAnalysisOutput['riskAssessment'] {
-    const validRisks = ['low', 'medium', 'high'] as const;
+    const validRisks = ['low', 'medium', 'high'] as const
 
     return JSONParser.parse(content, this.DEFAULTS.risk, (data) => ({
       invalidityRisk: validRisks.includes(data.invalidityRisk) ? data.invalidityRisk : 'medium',
       infringementRisk: validRisks.includes(data.infringementRisk) ? data.infringement : 'medium',
       riskFactors: Array.isArray(data.riskFactors) ? data.riskFactors : [],
-    }));
+    }))
   }
 }
 

@@ -10,31 +10,31 @@ import {
   ChatParams,
   ChatResponse,
   ChatChunk,
-} from '../lifecycle/Lifecycle.js';
+} from '../lifecycle/Lifecycle.js'
 
-import { EmbeddingError, EmbeddingErrorCode } from './EmbeddingProvider.js';
+import { EmbeddingError, EmbeddingErrorCode } from './EmbeddingProvider.js'
 
 /**
  * OMLX 配置
  */
 export interface OMLXConfig {
   /** API 基础 URL */
-  baseURL: string;
+  baseURL: string
 
   /** API 密钥（OMXL 可能需要） */
-  apiKey?: string;
+  apiKey?: string
 
   /** 模型名称 */
-  modelName?: string;
+  modelName?: string
 
   /** 温度 */
-  temperature?: number;
+  temperature?: number
 
   /** 最大 Token 数 */
-  maxTokens?: number;
+  maxTokens?: number
 
   /** 超时时间（毫秒） */
-  timeout?: number;
+  timeout?: number
 }
 
 /**
@@ -43,7 +43,7 @@ export interface OMLXConfig {
  * 连接本地 OMLX 服务
  */
 export class OMLXAdapter implements ILLMAdapter {
-  private config: OMLXConfig;
+  private config: OMLXConfig
 
   constructor(config: OMLXConfig) {
     this.config = {
@@ -52,14 +52,14 @@ export class OMLXAdapter implements ILLMAdapter {
       temperature: config.temperature ?? 0.7,
       maxTokens: config.maxTokens ?? 4096,
       timeout: config.timeout ?? 60000,
-    };
+    }
   }
 
   /**
    * 聊天 - 单次调用
    */
   async chat(params: ChatParams): Promise<ChatResponse> {
-    const url = `${this.config.baseURL}/chat/completions`;
+    const url = `${this.config.baseURL}/chat/completions`
 
     const body = {
       model: this.config.modelName,
@@ -67,16 +67,16 @@ export class OMLXAdapter implements ILLMAdapter {
       temperature: params.temperature ?? this.config.temperature,
       max_tokens: params.maxTokens ?? this.config.maxTokens,
       stream: false,
-    };
+    }
 
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-      };
+      }
 
       // 如果有 API Key，添加到请求头
       if (this.config.apiKey) {
-        headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+        headers['Authorization'] = `Bearer ${this.config.apiKey}`
       }
 
       const response = await fetch(url, {
@@ -84,13 +84,13 @@ export class OMLXAdapter implements ILLMAdapter {
         headers,
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(this.config.timeout!),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error(`OMXL API 请求失败: ${response.status} ${response.statusText}`);
+        throw new Error(`OMXL API 请求失败: ${response.status} ${response.statusText}`)
       }
 
-      const data: unknown = await response.json();
+      const data: unknown = await response.json()
 
       return {
         message: {
@@ -104,9 +104,9 @@ export class OMLXAdapter implements ILLMAdapter {
               totalTokens: (data as any).usage.total_tokens || 0,
             }
           : undefined,
-      };
+      }
     } catch (error) {
-      throw new Error(`OMXL 调用失败: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`OMXL 调用失败: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -114,7 +114,7 @@ export class OMLXAdapter implements ILLMAdapter {
    * 聊天 - 流式调用
    */
   async *chatStream(params: ChatParams): AsyncIterable<ChatChunk> {
-    const url = `${this.config.baseURL}/chat/completions`;
+    const url = `${this.config.baseURL}/chat/completions`
 
     const body = {
       model: this.config.modelName,
@@ -122,15 +122,15 @@ export class OMLXAdapter implements ILLMAdapter {
       temperature: params.temperature ?? this.config.temperature,
       max_tokens: params.maxTokens ?? this.config.maxTokens,
       stream: true,
-    };
+    }
 
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-      };
+      }
 
       if (this.config.apiKey) {
-        headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+        headers['Authorization'] = `Bearer ${this.config.apiKey}`
       }
 
       const response = await fetch(url, {
@@ -138,46 +138,46 @@ export class OMLXAdapter implements ILLMAdapter {
         headers,
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(this.config.timeout!),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error(`OMXL API 请求失败: ${response.status} ${response.statusText}`);
+        throw new Error(`OMXL API 请求失败: ${response.status} ${response.statusText}`)
       }
 
-      const reader = response.body?.getReader();
+      const reader = response.body?.getReader()
       if (!reader) {
-        throw new Error('无法获取响应流');
+        throw new Error('无法获取响应流')
       }
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+      const decoder = new TextDecoder()
+      let buffer = ''
 
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await reader.read()
 
-        if (done) break;
+        if (done) break
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const data = line.slice(6);
+            const data = line.slice(6)
             if (data === '[DONE]') {
-              yield { delta: '', done: true };
-              return;
+              yield { delta: '', done: true }
+              return
             }
 
             try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices[0]?.delta?.content || '';
+              const parsed = JSON.parse(data)
+              const content = parsed.choices[0]?.delta?.content || ''
 
               if (content) {
                 yield {
                   delta: content,
                   done: false,
-                };
+                }
               }
             } catch (e) {
               // 跳过解析失败的行
@@ -188,7 +188,7 @@ export class OMLXAdapter implements ILLMAdapter {
     } catch (error) {
       throw new Error(
         `OMXL 流式调用失败: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 
@@ -200,18 +200,18 @@ export class OMLXAdapter implements ILLMAdapter {
    */
   async embed(texts: string[]): Promise<number[][]> {
     if (texts.length === 0) {
-      return [];
+      return []
     }
 
-    const url = `${this.config.baseURL}/embeddings`;
+    const url = `${this.config.baseURL}/embeddings`
 
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-      };
+      }
 
       if (this.config.apiKey) {
-        headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+        headers['Authorization'] = `Bearer ${this.config.apiKey}`
       }
 
       const response = await fetch(url, {
@@ -222,33 +222,33 @@ export class OMLXAdapter implements ILLMAdapter {
           input: texts,
         }),
         signal: AbortSignal.timeout(this.config.timeout!),
-      });
+      })
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
+        const errorText = await response.text().catch(() => '')
         throw new EmbeddingError(
           `OMXL 嵌入 API 请求失败: ${response.status} ${errorText}`,
           EmbeddingErrorCode.API_ERROR,
           'omxl'
-        );
+        )
       }
 
-      const data = (await response.json()) as Record<string, unknown>;
-      const embeddingsData = data.data as Array<Record<string, unknown>>;
+      const data = (await response.json()) as Record<string, unknown>
+      const embeddingsData = data.data as Array<Record<string, unknown>>
 
       // BGE-M3 返回 1024 维向量
       return embeddingsData
         .sort((a, b) => (a.index as number) - (b.index as number))
-        .map((item) => item.embedding as number[]);
+        .map((item) => item.embedding as number[])
     } catch (error) {
       if (error instanceof EmbeddingError) {
-        throw error;
+        throw error
       }
       throw new EmbeddingError(
         `OMXL 嵌入失败: ${error instanceof Error ? error.message : String(error)}`,
         EmbeddingErrorCode.API_ERROR,
         'omxl'
-      );
+      )
     }
   }
 }
@@ -261,5 +261,5 @@ export function createOMXLModel(apiKey?: string): OMLXAdapter {
     baseURL: 'http://localhost:8009/v1',
     apiKey,
     modelName: 'gemma-4-e2b-it-4bit',
-  });
+  })
 }

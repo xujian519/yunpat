@@ -4,8 +4,11 @@
  * 测试知识库增强和提示词模板懒加载功能
  */
 
-import { PatentWriterAgent, type PatentWritingInput } from '../patents/agents/writer/PatentWriterAgent';
-import { createDeepSeekModel } from '../packages/core/src/llm/NativeLLMAdapter';
+import {
+  PatentWriterAgent,
+  type PatentWritingInput,
+} from '../patents/agents/writer/PatentWriterAgent'
+import { createDeepSeekModel } from '../packages/core/src/llm/NativeLLMAdapter'
 
 /**
  * 睿羿科技专利案例 - 便携式智能牙刷
@@ -55,86 +58,86 @@ const ruiyiTestCase: PatentWritingInput = {
     '图4：磁吸式充电接口结构示意图',
     '图5：智能控制方法流程图',
   ],
-};
+}
 
 /**
  * 运行集成测试
  */
 async function runIntegrationTest() {
-  console.log('🧪 [集成测试] PatentWriterAgent 知识库增强 + 懒加载\n');
+  console.log('🧪 [集成测试] PatentWriterAgent 知识库增强 + 懒加载\n')
 
   // 1. 初始化 LLM
-  console.log('1️⃣ 初始化 LLM...');
-  const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '');
-  console.log('   ✅ LLM 初始化完成\n');
+  console.log('1️⃣ 初始化 LLM...')
+  const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '')
+  console.log('   ✅ LLM 初始化完成\n')
 
   // 2. 初始化 PatentWriterAgent
-  console.log('2️⃣ 初始化 PatentWriterAgent...');
+  console.log('2️⃣ 初始化 PatentWriterAgent...')
   const agent = new PatentWriterAgent({
     llm,
     enableKnowledge: true, // 启用知识库
     enableTemplates: true, // 启用提示词模板
     knowledgeBasePath: process.env.KNOWLEDGE_BASE_PATH,
     templateDir: './prompts/patent-drafting',
-  });
-  console.log('   ✅ Agent 初始化完成\n');
+  })
+  console.log('   ✅ Agent 初始化完成\n')
 
   // 3. 检查初始缓存状态
-  console.log('3️⃣ 检查初始缓存状态...');
-  const initialStats = agent.getCacheStats();
-  console.log('   提示词模板缓存:', initialStats.promptManager);
-  console.log('   知识库缓存:', initialStats.knowledge);
-  console.log('');
+  console.log('3️⃣ 检查初始缓存状态...')
+  const initialStats = agent.getCacheStats()
+  console.log('   提示词模板缓存:', initialStats.promptManager)
+  console.log('   知识库缓存:', initialStats.knowledge)
+  console.log('')
 
   // 4. 执行专利撰写
-  console.log('4️⃣ 执行专利撰写...');
-  console.log('   ========================================\n');
+  console.log('4️⃣ 执行专利撰写...')
+  console.log('   ========================================\n')
 
-  const startTime = Date.now();
+  const startTime = Date.now()
 
   try {
     const result = await agent.execute(ruiyiTestCase, {
       llm,
       tools: null,
-    });
+    })
 
-    const duration = (Date.now() - startTime) / 1000;
+    const duration = (Date.now() - startTime) / 1000
 
-    console.log('\n   ========================================');
-    console.log('   ✅ 专利撰写完成\n');
+    console.log('\n   ========================================')
+    console.log('   ✅ 专利撰写完成\n')
 
     // 5. 输出撰写结果
-    console.log('5️⃣ 撰写结果统计:');
-    console.log(`   ⏱️  耗时: ${Math.round(duration)}秒`);
-    console.log(`   📝 权利要求数: ${result.metrics.claimsCount}`);
-    console.log(`   📄 说明书字数: ${result.metrics.descriptionWordCount}`);
-    console.log(`   ⭐ 质量评分: ${result.metrics.qualityScore}/100`);
-    console.log('');
+    console.log('5️⃣ 撰写结果统计:')
+    console.log(`   ⏱️  耗时: ${Math.round(duration)}秒`)
+    console.log(`   📝 权利要求数: ${result.metrics.claimsCount}`)
+    console.log(`   📄 说明书字数: ${result.metrics.descriptionWordCount}`)
+    console.log(`   ⭐ 质量评分: ${result.metrics.qualityScore}/100`)
+    console.log('')
 
     // 6. 检查最终缓存状态
-    console.log('6️⃣ 检查最终缓存状态...');
-    const finalStats = agent.getCacheStats();
-    console.log('   提示词模板缓存:', finalStats.promptManager);
-    console.log('   知识库缓存:', finalStats.knowledge);
-    console.log('');
+    console.log('6️⃣ 检查最终缓存状态...')
+    const finalStats = agent.getCacheStats()
+    console.log('   提示词模板缓存:', finalStats.promptManager)
+    console.log('   知识库缓存:', finalStats.knowledge)
+    console.log('')
 
     // 7. 输出权利要求预览
-    console.log('7️⃣ 权利要求预览:');
+    console.log('7️⃣ 权利要求预览:')
     result.patentApplication.claims.slice(0, 2).forEach((claim, index) => {
-      console.log(`   ${index + 1}. [${claim.type === 'independent' ? '独立' : '从属'}]`);
-      console.log(`      ${claim.content.substring(0, 100)}...`);
-    });
-    console.log('');
+      console.log(`   ${index + 1}. [${claim.type === 'independent' ? '独立' : '从属'}]`)
+      console.log(`      ${claim.content.substring(0, 100)}...`)
+    })
+    console.log('')
 
     // 8. 输出摘要预览
-    console.log('8️⃣ 摘要预览:');
-    console.log(`   ${result.patentApplication.abstract.substring(0, 200)}...`);
-    console.log('');
+    console.log('8️⃣ 摘要预览:')
+    console.log(`   ${result.patentApplication.abstract.substring(0, 200)}...`)
+    console.log('')
 
-    console.log('✅ 集成测试完成！');
+    console.log('✅ 集成测试完成！')
   } catch (error) {
-    console.error('❌ 测试失败:', error);
-    throw error;
+    console.error('❌ 测试失败:', error)
+    throw error
   }
 }
 
@@ -142,9 +145,9 @@ async function runIntegrationTest() {
  * 测试懒加载策略
  */
 async function testLazyLoadingStrategy() {
-  console.log('\n🧪 [懒加载测试] 测试分步加载策略\n');
+  console.log('\n🧪 [懒加载测试] 测试分步加载策略\n')
 
-  const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '');
+  const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '')
 
   const agent = new PatentWriterAgent({
     llm,
@@ -152,65 +155,65 @@ async function testLazyLoadingStrategy() {
     enableTemplates: true,
     knowledgeBasePath: process.env.KNOWLEDGE_BASE_PATH,
     templateDir: './prompts/patent-drafting',
-  });
+  })
 
-  console.log('📊 加载策略:');
-  console.log('   Stage 1 (planning): preload [03-creativity-analysis]');
-  console.log('   Stage 2 (claims): onDemand [01-claims-generation]');
-  console.log('   Stage 3 (specification): onDemand [02-specification-drafting]');
-  console.log('   Stage 4 (quality): lazy [all templates]');
-  console.log('');
+  console.log('📊 加载策略:')
+  console.log('   Stage 1 (planning): preload [03-creativity-analysis]')
+  console.log('   Stage 2 (claims): onDemand [01-claims-generation]')
+  console.log('   Stage 3 (specification): onDemand [02-specification-drafting]')
+  console.log('   Stage 4 (quality): lazy [all templates]')
+  console.log('')
 
   // 检查初始状态
-  let stats = agent.getCacheStats();
-  console.log('初始状态:');
-  console.log(`   已加载模板: ${stats.promptManager?.templates || 0}个`);
-  console.log('');
+  let stats = agent.getCacheStats()
+  console.log('初始状态:')
+  console.log(`   已加载模板: ${stats.promptManager?.templates || 0}个`)
+  console.log('')
 
   // 执行撰写
-  const result = await agent.execute(ruiyiTestCase, { llm, tools: null });
+  const result = await agent.execute(ruiyiTestCase, { llm, tools: null })
 
   // 检查最终状态
-  stats = agent.getCacheStats();
-  console.log('最终状态:');
-  console.log(`   已加载模板: ${stats.promptManager?.templates || 0}个`);
+  stats = agent.getCacheStats()
+  console.log('最终状态:')
+  console.log(`   已加载模板: ${stats.promptManager?.templates || 0}个`)
   console.log(
     `   加载时间: ${stats.promptManager?.loadedAt?.map((t: any) => `${t.name}: ${t.loadedAt}`).join('\n                ') || 'N/A'}`
-  );
-  console.log('');
+  )
+  console.log('')
 
-  console.log('✅ 懒加载测试完成！');
+  console.log('✅ 懒加载测试完成！')
 }
 
 /**
  * 测试知识库增强
  */
 async function testKnowledgeEnhancement() {
-  console.log('\n🧪 [知识库测试] 测试知识库增强功能\n');
+  console.log('\n🧪 [知识库测试] 测试知识库增强功能\n')
 
-  const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '');
+  const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY || '')
 
   const agent = new PatentWriterAgent({
     llm,
     enableKnowledge: true,
     enableTemplates: false, // 关闭模板，只测试知识库
     knowledgeBasePath: process.env.KNOWLEDGE_BASE_PATH,
-  });
+  })
 
-  console.log('📚 知识库查询测试:');
-  console.log('   查询: "什么是创造性"');
-  console.log('   查询: "什么是充分公开"');
-  console.log('');
+  console.log('📚 知识库查询测试:')
+  console.log('   查询: "什么是创造性"')
+  console.log('   查询: "什么是充分公开"')
+  console.log('')
 
   try {
-    const result = await agent.execute(ruiyiTestCase, { llm, tools: null });
+    const result = await agent.execute(ruiyiTestCase, { llm, tools: null })
 
-    console.log('✅ 知识库增强测试完成！');
-    console.log(`   生成了 ${result.metrics.claimsCount} 项权利要求`);
-    console.log(`   说明书长度: ${result.metrics.descriptionWordCount} 字`);
+    console.log('✅ 知识库增强测试完成！')
+    console.log(`   生成了 ${result.metrics.claimsCount} 项权利要求`)
+    console.log(`   说明书长度: ${result.metrics.descriptionWordCount} 字`)
   } catch (error) {
-    console.error('❌ 测试失败:', error);
-    throw error;
+    console.error('❌ 测试失败:', error)
+    throw error
   }
 }
 
@@ -218,24 +221,24 @@ async function testKnowledgeEnhancement() {
 async function main() {
   try {
     // 完整集成测试
-    await runIntegrationTest();
+    await runIntegrationTest()
 
     // 懒加载测试
-    await testLazyLoadingStrategy();
+    await testLazyLoadingStrategy()
 
     // 知识库增强测试
-    await testKnowledgeEnhancement();
+    await testKnowledgeEnhancement()
 
-    console.log('\n🎉 所有测试完成！\n');
+    console.log('\n🎉 所有测试完成！\n')
   } catch (error) {
-    console.error('\n💥 测试失败:', error);
-    process.exit(1);
+    console.error('\n💥 测试失败:', error)
+    process.exit(1)
   }
 }
 
 // 如果直接运行此文件
 if (require.main === module) {
-  main();
+  main()
 }
 
-export { runIntegrationTest, testLazyLoadingStrategy, testKnowledgeEnhancement };
+export { runIntegrationTest, testLazyLoadingStrategy, testKnowledgeEnhancement }

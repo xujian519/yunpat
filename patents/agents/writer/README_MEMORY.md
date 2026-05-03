@@ -30,33 +30,36 @@ npx tsx packages/core/src/memory/long-term/quick-integration-test.ts
 ### 3. 使用 Agent
 
 ```typescript
-import { createPatentWriterAgentWithMemory } from './PatentWriterAgentWithMemory.js';
-import { createDeepSeekModel } from '@yunpat/core';
+import { createPatentWriterAgentWithMemory } from './PatentWriterAgentWithMemory.js'
+import { createDeepSeekModel } from '@yunpat/core'
 
 const agent = await createPatentWriterAgentWithMemory({
   llm: createDeepSeekModel(process.env.DEEPSEEK_API_KEY),
-});
+})
 
-const result = await agent.run({
-  title: '基于注意力机制的医学图像分析方法',
-  field: '医学影像分析',
-  applicant: '某科技公司',
-  inventors: ['张三', '李四'],
-  technicalDisclosure: '本发明提供了一种基于注意力机制的医学图像分析方法...',
-  drawings: ['图1：流程图'],
-}, {});
+const result = await agent.run(
+  {
+    title: '基于注意力机制的医学图像分析方法',
+    field: '医学影像分析',
+    applicant: '某科技公司',
+    inventors: ['张三', '李四'],
+    technicalDisclosure: '本发明提供了一种基于注意力机制的医学图像分析方法...',
+    drawings: ['图1：流程图'],
+  },
+  {}
+)
 
-console.log(result.patentApplication.description);
+console.log(result.patentApplication.description)
 ```
 
 ## 📊 性能指标
 
-| 操作 | 延迟 | 成本 |
-|------|------|------|
-| 文本向量化 | ~50ms | ¥0.001/次 |
-| 向量检索 | <50ms | ¥0.0001/次 |
-| RAG 增强 | <200ms | ¥0.0002/次 |
-| Token 压缩 | <50ms | ¥0 |
+| 操作       | 延迟   | 成本       |
+| ---------- | ------ | ---------- |
+| 文本向量化 | ~50ms  | ¥0.001/次  |
+| 向量检索   | <50ms  | ¥0.0001/次 |
+| RAG 增强   | <200ms | ¥0.0002/次 |
+| Token 压缩 | <50ms  | ¥0         |
 
 **月成本**: ¥240（相比传统方案降低 95%）
 
@@ -81,21 +84,21 @@ console.log(result.patentApplication.description);
 ### 语义搜索专利
 
 ```typescript
-const patents = await agent.searchPatents('深度学习图像识别', 5);
+const patents = await agent.searchPatents('深度学习图像识别', 5)
 
 for (const patent of patents) {
-  console.log(`标题: ${patent.metadata.title}`);
-  console.log(`相似度: ${(patent.similarity * 100).toFixed(2)}%`);
+  console.log(`标题: ${patent.metadata.title}`)
+  console.log(`相似度: ${(patent.similarity * 100).toFixed(2)}%`)
 }
 ```
 
 ### 获取统计信息
 
 ```typescript
-const stats = await agent.getStats();
+const stats = await agent.getStats()
 
-console.log('向量存储:', stats.vector.totalMemories, '条专利');
-console.log('缓存命中率:', (stats.bge.cacheHitRate * 100).toFixed(2), '%');
+console.log('向量存储:', stats.vector.totalMemories, '条专利')
+console.log('缓存命中率:', (stats.bge.cacheHitRate * 100).toFixed(2), '%')
 ```
 
 ## 🔧 配置

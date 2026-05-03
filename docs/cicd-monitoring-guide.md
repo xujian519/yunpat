@@ -37,13 +37,15 @@
 ### 1. 性能监控
 
 #### 自动监控
+
 ```yaml
 # .github/workflows/monitoring.yml
 schedule:
-  - cron: '0 * * * *'  # 每小时
+  - cron: '0 * * * *' # 每小时
 ```
 
 #### 手动监控
+
 ```bash
 # 运行完整监控
 ./scripts/monitoring.sh [webhook_url]
@@ -55,6 +57,7 @@ schedule:
 ### 2. 告警配置
 
 #### Slack 通知
+
 ```bash
 # 设置 Slack Webhook
 export SLACK_WEBHOOK="https://hooks.slack.com/services/..."
@@ -64,7 +67,9 @@ export SLACK_WEBHOOK="https://hooks.slack.com/services/..."
 ```
 
 #### Email 通知
+
 在 GitHub Actions 中配置：
+
 ```yaml
 - name: 📧 发送邮件通知
   if: failure()
@@ -74,23 +79,26 @@ export SLACK_WEBHOOK="https://hooks.slack.com/services/..."
     server_port: 587
     username: ${{ secrets.EMAIL_USERNAME }}
     password: ${{ secrets.EMAIL_PASSWORD }}
-    subject: "CI 失败 - ${{ github.repository }}"
+    subject: 'CI 失败 - ${{ github.repository }}'
     to: admin@example.com
 ```
 
 ### 3. 关键指标监控
 
 #### CI 成功率
+
 - **目标**: > 95%
 - **告警**: < 90%
 - **严重告警**: < 80%
 
 #### 平均执行时间
+
 - **快速检查**: < 15 分钟
 - **完整测试**: < 45 分钟
 - **构建**: < 25 分钟
 
 #### Runner 资源
+
 - **CPU 使用率**: < 80%
 - **内存使用率**: < 85%
 - **磁盘空间**: > 20GB 可用
@@ -104,6 +112,7 @@ export SLACK_WEBHOOK="https://hooks.slack.com/services/..."
 **访问**: https://github.com/xujian519/yunpat/actions
 
 **功能**:
+
 - 查看所有运行记录
 - 过滤特定的工作流
 - 查看日志和输出
@@ -125,17 +134,18 @@ ssh xujian@m4-air "tail -f ~/actions-runner/_diag/Worker_*.log"
 
 ### 告警级别
 
-| 级别 | 条件 | 通知方式 |
-|------|------|---------|
-| 🟢 INFO | CI 成功 | 不通知 |
-| 🟡 WARNING | 成功率 < 90% | Slack |
-| 🟠 WARNING | 执行时间超标 | Slack |
-| 🔴 ERROR | CI 失败 | Slack + Email |
+| 级别        | 条件         | 通知方式             |
+| ----------- | ------------ | -------------------- |
+| 🟢 INFO     | CI 成功      | 不通知               |
+| 🟡 WARNING  | 成功率 < 90% | Slack                |
+| 🟠 WARNING  | 执行时间超标 | Slack                |
+| 🔴 ERROR    | CI 失败      | Slack + Email        |
 | 🚨 CRITICAL | 3 次连续失败 | Slack + Email + 短信 |
 
 ### 自动修复
 
 某些告警会触发自动修复：
+
 - **磁盘空间不足**: 自动清理临时文件
 - **内存不足**: 重启 Runner 服务
 - **网络问题**: 自动重试连接
@@ -168,6 +178,7 @@ gh run list --repo xujian519/yunpat --limit 20 | \
 ### 3. 异常检测
 
 自动检测：
+
 - 连续失败模式
 - 性能突然下降
 - 资源使用异常
@@ -178,18 +189,21 @@ gh run list --repo xujian519/yunpat --limit 20 | \
 ## 📊 监控报告
 
 ### 日报
+
 - 当天 CI 运行统计
 - 成功率和失败原因
 - 性能指标变化
 - 异常事件记录
 
 ### 周报
+
 - 一周性能趋势
 - 失败原因分析
 - 改进建议
 - 下周计划
 
 ### 月报
+
 - 月度性能总结
 - 容量规划建议
 - 技术债务评估
@@ -200,12 +214,14 @@ gh run list --repo xujian519/yunpat --limit 20 | \
 ## 🎯 监控最佳实践
 
 ### DO (推荐)
+
 1. **多层次监控**: 应用 → 基础设施 → 业务
 2. **实时告警**: 关键问题立即通知
 3. **定期审查**: 每周审查监控效果
 4. **持续优化**: 根据监控数据优化配置
 
 ### DON'T (避免)
+
 1. **过度告警**: 避免告警疲劳
 2. **忽略告警**: 所有的告警都需要处理
 3. **监控不足**: 不要只监控表面指标

@@ -209,7 +209,7 @@ export const xuJianWritingStyle = {
     cohesion: 'high', // 段内连贯性强
     unity: 'single-idea', // 一段一意
   },
-};
+}
 
 // ========== 风格提示词生成器 ==========
 
@@ -217,69 +217,69 @@ export const xuJianWritingStyle = {
  * 生成徐健风格的写作提示词
  */
 export function generateXuJianStylePrompt(topic: string): string {
-  let prompt = `请按照徐健的写作风格完成以下写作任务：${topic}\n\n`;
+  let prompt = `请按照徐健的写作风格完成以下写作任务：${topic}\n\n`
 
-  prompt += `## 📋 写作风格要求\n\n`;
+  prompt += `## 📋 写作风格要求\n\n`
 
   // 开头要求
-  prompt += `### 开头风格\n`;
-  prompt += `- 直接切入主题，不要绕弯子\n`;
-  prompt += `- 可以使用"基于..."、"本文将..."等开头\n`;
-  prompt += `- 明确文章的写作目的和读者对象\n\n`;
+  prompt += `### 开头风格\n`
+  prompt += `- 直接切入主题，不要绕弯子\n`
+  prompt += `- 可以使用"基于..."、"本文将..."等开头\n`
+  prompt += `- 明确文章的写作目的和读者对象\n\n`
 
   // 词汇要求
-  prompt += `### 用词要求\n`;
-  prompt += `- 专业术语保留英文（如 Gateway、AI、API 等）\n`;
-  prompt += `- 适度使用口语化表达（如"说白了"、"咱们"、"实际上"）\n`;
-  prompt += `- 避免使用"笔者"、"显而易见"等词汇\n`;
-  prompt += `- 多用强调性词汇（核心、关键、主要、重点）\n\n`;
+  prompt += `### 用词要求\n`
+  prompt += `- 专业术语保留英文（如 Gateway、AI、API 等）\n`
+  prompt += `- 适度使用口语化表达（如"说白了"、"咱们"、"实际上"）\n`
+  prompt += `- 避免使用"笔者"、"显而易见"等词汇\n`
+  prompt += `- 多用强调性词汇（核心、关键、主要、重点）\n\n`
 
   // 句式要求
-  prompt += `### 句式要求\n`;
-  prompt += `- 长短句结合，短句用于强调重点\n`;
-  prompt += `- 经常使用举例说明（"例如..."、"举个例子..."）\n`;
-  prompt += `- 使用对比说明（"相较于..."、"与...不同..."）\n`;
-  prompt += `- 总结时使用"总的来说"、"综上所述"等\n\n`;
+  prompt += `### 句式要求\n`
+  prompt += `- 长短句结合，短句用于强调重点\n`
+  prompt += `- 经常使用举例说明（"例如..."、"举个例子..."）\n`
+  prompt += `- 使用对比说明（"相较于..."、"与...不同..."）\n`
+  prompt += `- 总结时使用"总的来说"、"综上所述"等\n\n`
 
   // 逻辑结构
-  prompt += `### 逻辑结构\n`;
-  prompt += `- 采用金字塔原理：先说结论，再展开论述\n`;
-  prompt += `- 层级递进：概述 → 核心内容 → 案例分析 → 总结\n`;
-  prompt += `- 每个部分都要有明确的小标题\n\n`;
+  prompt += `### 逻辑结构\n`
+  prompt += `- 采用金字塔原理：先说结论，再展开论述\n`
+  prompt += `- 层级递进：概述 → 核心内容 → 案例分析 → 总结\n`
+  prompt += `- 每个部分都要有明确的小标题\n\n`
 
   // 格式要求
-  prompt += `### 格式要求\n`;
-  prompt += `- 使用 Markdown 格式\n`;
-  prompt += `- 层级标题：# ## ###\n`;
-  prompt += `- 使用 **加粗**强调重点\n`;
-  prompt += `- 使用代码块展示技术内容\n`;
-  prompt += `- 使用表格进行对比分析\n`;
-  prompt += `- 使用列表（1. 2. 3. 或 ① ② ③）进行分点论述\n`;
-  prompt += `- 适度使用 emoji 增强可读性\n\n`;
+  prompt += `### 格式要求\n`
+  prompt += `- 使用 Markdown 格式\n`
+  prompt += `- 层级标题：# ## ###\n`
+  prompt += `- 使用 **加粗**强调重点\n`
+  prompt += `- 使用代码块展示技术内容\n`
+  prompt += `- 使用表格进行对比分析\n`
+  prompt += `- 使用列表（1. 2. 3. 或 ① ② ③）进行分点论述\n`
+  prompt += `- 适度使用 emoji 增强可读性\n\n`
 
   // 引用要求
-  prompt += `### 引用要求\n`;
-  prompt += `- 引用权威来源时要明确标注\n`;
-  prompt += `- 使用案例说明时要具体\n`;
-  prompt += `- 引用法律条文或决定书时要注明来源\n\n`;
+  prompt += `### 引用要求\n`
+  prompt += `- 引用权威来源时要明确标注\n`
+  prompt += `- 使用案例说明时要具体\n`
+  prompt += `- 引用法律条文或决定书时要注明来源\n\n`
 
   // 风格示例
-  prompt += `## 📝 风格示例\n\n`;
-  prompt += `以下是我的写作风格示例：\n\n`;
+  prompt += `## 📝 风格示例\n\n`
+  prompt += `以下是我的写作风格示例：\n\n`
 
   xuJianWritingStyle.examples.forEach((example, i) => {
-    prompt += `${i + 1}. ${example}\n`;
-  });
+    prompt += `${i + 1}. ${example}\n`
+  })
 
-  prompt += `\n## 🎯 写作目标\n\n`;
-  prompt += `请严格按照以上风格要求生成内容，确保：\n`;
-  prompt += `1. 结构清晰，层级分明\n`;
-  prompt += `2. 逻辑严密，论证充分\n`;
-  prompt += `3. 举例恰当，案例具体\n`;
-  prompt += `4. 用词准确，专业但不刻板\n`;
-  prompt += `5. 格式规范，易于阅读\n`;
+  prompt += `\n## 🎯 写作目标\n\n`
+  prompt += `请严格按照以上风格要求生成内容，确保：\n`
+  prompt += `1. 结构清晰，层级分明\n`
+  prompt += `2. 逻辑严密，论证充分\n`
+  prompt += `3. 举例恰当，案例具体\n`
+  prompt += `4. 用词准确，专业但不刻板\n`
+  prompt += `5. 格式规范，易于阅读\n`
 
-  return prompt;
+  return prompt
 }
 
 /**
@@ -295,7 +295,7 @@ export function createStyledWritingTask(
     topic,
     format: 'markdown',
     requirements: [generateXuJianStylePrompt(topic), ...additionalRequirements],
-  };
+  }
 }
 
 /**
@@ -317,4 +317,4 @@ export const xuJianStyleSummary = {
   strengths: ['结构化程度高', '逻辑清晰', '举例说明充分', '技术专业性强', '格式规范统一'],
 
   bestFor: ['技术文档', '系统设计文档', '专利分析报告', '技术方案说明', '部署总结报告'],
-};
+}

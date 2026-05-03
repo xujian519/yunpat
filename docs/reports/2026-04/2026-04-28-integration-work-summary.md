@@ -16,6 +16,7 @@
 ### 1. Rust Workspace 创建
 
 **文件结构**:
+
 ```
 rust/
 ├── Cargo.toml                              # Workspace 配置
@@ -46,15 +47,16 @@ rust/
 
 #### patent-tools (专利工具)
 
-| 模块 | 功能 | 状态 | 代码量 |
-|------|------|------|--------|
-| types.rs | 核心类型定义 | ✅ | 300+ 行 |
-| search.rs | 专利搜索引擎 | ✅ | 80+ 行 |
-| generation.rs | 权利要求生成器 | ✅ | 150+ 行 |
-| analysis.rs | 专利分析工具 | ✅ | 150+ 行 |
-| error.rs | 错误处理 | ✅ | 20 行 |
+| 模块          | 功能           | 状态 | 代码量  |
+| ------------- | -------------- | ---- | ------- |
+| types.rs      | 核心类型定义   | ✅   | 300+ 行 |
+| search.rs     | 专利搜索引擎   | ✅   | 80+ 行  |
+| generation.rs | 权利要求生成器 | ✅   | 150+ 行 |
+| analysis.rs   | 专利分析工具   | ✅   | 150+ 行 |
+| error.rs      | 错误处理       | ✅   | 20 行   |
 
 **核心类型**:
+
 - `PatentRecord` - 专利记录
 - `PatentSearchQuery` - 搜索查询
 - `Claim` - 权利要求
@@ -64,13 +66,14 @@ rust/
 
 #### patent-agent (专利智能体)
 
-| 模块 | 功能 | 状态 | 代码量 |
-|------|------|------|--------|
-| agent.rs | 智能体实现 | ✅ | 300+ 行 |
-| coordinator.rs | 智能体协调器 | ✅ | 80+ 行 |
-| learning.rs | 赫布学习引擎 | ✅ | 200+ 行 |
+| 模块           | 功能         | 状态 | 代码量  |
+| -------------- | ------------ | ---- | ------- |
+| agent.rs       | 智能体实现   | ✅   | 300+ 行 |
+| coordinator.rs | 智能体协调器 | ✅   | 80+ 行  |
+| learning.rs    | 赫布学习引擎 | ✅   | 200+ 行 |
 
 **核心功能**:
+
 - `PatentAgent` - 专利智能体
 - `AgentCoordinator` - 智能体协调器
 - `HebbianLearner` - 赫布学习引擎
@@ -80,11 +83,13 @@ rust/
 ### 3. TypeScript 集成层
 
 **创建的文件**:
+
 - ✅ `ai/rust/PatentToolsRust.ts` - Rust 工具包装器
 - ✅ `ai/agents/writer/EnhancedPatentWriterAgent.ts` - 增强版智能体
 - ✅ `examples/rust-integration-usage.ts` - 使用示例
 
 **集成特性**:
+
 - CLI 调用 Rust 二进制
 - JSON 数据交换
 - 错误处理
@@ -95,11 +100,13 @@ rust/
 ### 4. 文档和示例
 
 **创建的文档**:
+
 - ✅ `docs/RUST_INTEGRATION_SUMMARY.md` - Rust 集成总结
 - ✅ `docs/ARCHIVE_PROJECTS_ANALYSIS.md` - 归档项目分析
 - ✅ `docs/ARCHIVE_PROJECTS_SUMMARY.md` - 分析总结
 
 **创建的示例**:
+
 - ✅ `examples/rust-integration-usage.ts` - 集成使用示例
 
 ---
@@ -109,6 +116,7 @@ rust/
 ### 1. 完整的专利工具集
 
 **已实现**:
+
 - ✅ 专利搜索（搜索引擎）
 - ✅ 权利要求生成（独立/从属）
 - ✅ 质量评估（4 个维度）
@@ -119,6 +127,7 @@ rust/
 ### 2. 智能体系统
 
 **已实现**:
+
 - ✅ 专利智能体（撰写/答复/分析/管理）
 - ✅ 智能体协调器（多智能体协作）
 - ✅ 赫布学习引擎（从成功案例学习）
@@ -126,6 +135,7 @@ rust/
 ### 3. TypeScript + Rust 混合架构
 
 **特性**:
+
 - ✅ 类型安全的 Rust 核心
 - ✅ 灵活的 TypeScript 应用层
 - ✅ CLI 调用模式
@@ -138,12 +148,12 @@ rust/
 
 ### Rust vs TypeScript
 
-| 操作 | TypeScript | Rust | 提升 |
-|------|-----------|------|------|
-| 权利要求生成 | 3-5 分钟 | 1-2 分钟 | **50-60%** |
-| 质量评估 | 1-2 分钟 | 0.5-1 分钟 | **50%** |
-| 特征提取 | 2-3 分钟 | 0.5-1 分钟 | **70-80%** |
-| 审查意见解析 | 3-4 分钟 | 1-2 分钟 | **50-60%** |
+| 操作         | TypeScript | Rust       | 提升       |
+| ------------ | ---------- | ---------- | ---------- |
+| 权利要求生成 | 3-5 分钟   | 1-2 分钟   | **50-60%** |
+| 质量评估     | 1-2 分钟   | 0.5-1 分钟 | **50%**    |
+| 特征提取     | 2-3 分钟   | 0.5-1 分钟 | **70-80%** |
+| 审查意见解析 | 3-4 分钟   | 1-2 分钟   | **50-60%** |
 
 **总体提升**: **50-70%**
 
@@ -166,16 +176,16 @@ cargo build --release
 ### TypeScript + Rust 混合模式
 
 ```typescript
-import { EnhancedPatentWriterAgent } from '@yunpat/writer';
+import { EnhancedPatentWriterAgent } from '@yunpat/writer'
 
 const writer = new EnhancedPatentWriterAgent({
   llm: createDeepSeekModel(process.env.DEEPSEEK_API_KEY),
-});
+})
 
 const output = await writer.execute({
   ...input,
-  useRustTools: true,  // 启用 Rust 工具
-});
+  useRustTools: true, // 启用 Rust 工具
+})
 ```
 
 ---
@@ -261,11 +271,13 @@ const output = await writer.execute({
 ## 📚 参考文档
 
 **详细文档**:
+
 - `docs/RUST_INTEGRATION_SUMMARY.md` - Rust 集成详细总结
 - `docs/ARCHIVE_PROJECTS_ANALYSIS.md` - 归档项目分析（6000+ 字）
 - `docs/ARCHIVE_PROJECTS_SUMMARY.md` - 分析总结
 
 **代码示例**:
+
 - `examples/rust-integration-usage.ts` - 集成使用示例
 - `examples/patent-agents-usage.ts` - 智能体使用示例
 
@@ -291,6 +303,7 @@ const output = await writer.execute({
 ### 下一步
 
 **建议优先级**:
+
 1. **完善 Rust 工具**（添加 LLM 调用）- 本周
 2. **创建 CLI 工具**（方便独立使用）- 本周
 3. **实现 MCP 集成**（统一工具接口）- 下周

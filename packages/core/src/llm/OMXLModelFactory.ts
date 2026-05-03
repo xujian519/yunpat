@@ -4,7 +4,7 @@
  * 根据任务类型自动选择合适的本地模型
  */
 
-import { OMLXAdapter, type OMLXConfig } from './OMXLAdapter.js';
+import { OMLXAdapter, type OMLXConfig } from './OMXLAdapter.js'
 
 /**
  * 任务类型
@@ -37,19 +37,19 @@ export enum TaskType {
  */
 export interface ModelRecommendation {
   /** 模型名称 */
-  modelName: string;
+  modelName: string
 
   /** 推荐理由 */
-  reason: string;
+  reason: string
 
   /** 预期速度 (tokens/s) */
-  speed: number;
+  speed: number
 
   /** 预期质量 (1-5) */
-  quality: number;
+  quality: number
 
   /** 内存占用 (GB) */
-  memoryGB: number;
+  memoryGB: number
 }
 
 /**
@@ -111,7 +111,7 @@ const TASK_MODEL_MAP: Record<TaskType, ModelRecommendation> = {
     quality: 5,
     memoryGB: 17,
   },
-};
+}
 
 /**
  * OMXL 模型工厂
@@ -124,20 +124,20 @@ export class OMXLModelFactory {
     temperature: 0.7,
     maxTokens: 2048,
     timeout: 180000, // 本地模型需要更长时间，增加到3分钟
-  };
+  }
 
   /**
    * 根据任务类型创建适配器
    */
   static createForTask(taskType: TaskType): OMLXAdapter {
-    const recommendation = TASK_MODEL_MAP[taskType];
+    const recommendation = TASK_MODEL_MAP[taskType]
 
-    console.log(`\n🎯 任务类型: ${taskType}`);
-    console.log(`📦 推荐模型: ${recommendation.modelName}`);
-    console.log(`💡 推荐理由: ${recommendation.reason}`);
-    console.log(`⚡ 预期速度: ~${recommendation.speed} tokens/s`);
-    console.log(`⭐ 质量评分: ${recommendation.quality}/5`);
-    console.log(`💾 内存占用: ~${recommendation.memoryGB} GB\n`);
+    console.log(`\n🎯 任务类型: ${taskType}`)
+    console.log(`📦 推荐模型: ${recommendation.modelName}`)
+    console.log(`💡 推荐理由: ${recommendation.reason}`)
+    console.log(`⚡ 预期速度: ~${recommendation.speed} tokens/s`)
+    console.log(`⭐ 质量评分: ${recommendation.quality}/5`)
+    console.log(`💾 内存占用: ~${recommendation.memoryGB} GB\n`)
 
     return new OMLXAdapter({
       baseURL: this.defaultConfig.baseURL,
@@ -146,14 +146,14 @@ export class OMXLModelFactory {
       temperature: this.getDefaultTemperature(taskType),
       maxTokens: this.getDefaultMaxTokens(taskType),
       timeout: this.defaultConfig.timeout,
-    });
+    })
   }
 
   /**
    * 智能选择模型（基于任务描述）
    */
   static selectModel(taskDescription: string): OMLXAdapter {
-    const desc = taskDescription.toLowerCase();
+    const desc = taskDescription.toLowerCase()
 
     // 检测任务类型
     if (
@@ -162,11 +162,11 @@ export class OMXLModelFactory {
       desc.includes('长文本') ||
       desc.includes('报告')
     ) {
-      return this.createForTask(TaskType.PATENT_WRITING);
+      return this.createForTask(TaskType.PATENT_WRITING)
     }
 
     if (desc.includes('代码') || desc.includes('编程') || desc.includes('code')) {
-      return this.createForTask(TaskType.CODE_GENERATION);
+      return this.createForTask(TaskType.CODE_GENERATION)
     }
 
     if (
@@ -175,35 +175,35 @@ export class OMXLModelFactory {
       desc.includes('复杂') ||
       desc.includes('深度')
     ) {
-      return this.createForTask(TaskType.REASONING_COMPLEX);
+      return this.createForTask(TaskType.REASONING_COMPLEX)
     }
 
     if (desc.includes('摘要') || desc.includes('总结')) {
-      return this.createForTask(TaskType.DOCUMENT_SUMMARY);
+      return this.createForTask(TaskType.DOCUMENT_SUMMARY)
     }
 
     // 默认使用 Gemma
-    return this.createForTask(TaskType.CHAT_SIMPLE);
+    return this.createForTask(TaskType.CHAT_SIMPLE)
   }
 
   /**
    * 获取任务推荐
    */
   static getRecommendation(taskType: TaskType): ModelRecommendation {
-    return TASK_MODEL_MAP[taskType];
+    return TASK_MODEL_MAP[taskType]
   }
 
   /**
    * 列出所有可用模型
    */
   static listAvailableModels(): Array<{
-    taskType: TaskType;
-    recommendation: ModelRecommendation;
+    taskType: TaskType
+    recommendation: ModelRecommendation
   }> {
     return Object.entries(TASK_MODEL_MAP).map(([taskType, recommendation]) => ({
       taskType: taskType as TaskType,
       recommendation,
-    }));
+    }))
   }
 
   /**
@@ -212,14 +212,14 @@ export class OMXLModelFactory {
   private static getDefaultTemperature(taskType: TaskType): number {
     switch (taskType) {
       case TaskType.CODE_GENERATION:
-        return 0.2; // 代码需要确定性
+        return 0.2 // 代码需要确定性
       case TaskType.PATENT_WRITING:
       case TaskType.LONG_FORM_GENERATION:
-        return 0.8; // 创造性任务需要更高温度
+        return 0.8 // 创造性任务需要更高温度
       case TaskType.REASONING_COMPLEX:
-        return 0.7; // 推理需要平衡
+        return 0.7 // 推理需要平衡
       default:
-        return 0.7;
+        return 0.7
     }
   }
 
@@ -230,13 +230,13 @@ export class OMXLModelFactory {
     switch (taskType) {
       case TaskType.PATENT_WRITING:
       case TaskType.LONG_FORM_GENERATION:
-        return 8192; // 长文本
+        return 8192 // 长文本
       case TaskType.DOCUMENT_SUMMARY:
-        return 1024; // 摘要较短
+        return 1024 // 摘要较短
       case TaskType.CODE_GENERATION:
-        return 4096; // 代码中等
+        return 4096 // 代码中等
       default:
-        return 2048; // 默认
+        return 2048 // 默认
     }
   }
 }
@@ -249,33 +249,33 @@ export class OMXLModelFactory {
  * 创建简单对话模型
  */
 export function createChatModel(): OMLXAdapter {
-  return OMXLModelFactory.createForTask(TaskType.CHAT_SIMPLE);
+  return OMXLModelFactory.createForTask(TaskType.CHAT_SIMPLE)
 }
 
 /**
  * 创建推理模型
  */
 export function createReasoningModel(): OMLXAdapter {
-  return OMXLModelFactory.createForTask(TaskType.REASONING_COMPLEX);
+  return OMXLModelFactory.createForTask(TaskType.REASONING_COMPLEX)
 }
 
 /**
  * 创建专利撰写模型
  */
 export function createPatentWritingModel(): OMLXAdapter {
-  return OMXLModelFactory.createForTask(TaskType.PATENT_WRITING);
+  return OMXLModelFactory.createForTask(TaskType.PATENT_WRITING)
 }
 
 /**
  * 创建代码生成模型
  */
 export function createCodeGenerationModel(): OMLXAdapter {
-  return OMXLModelFactory.createForTask(TaskType.CODE_GENERATION);
+  return OMXLModelFactory.createForTask(TaskType.CODE_GENERATION)
 }
 
 /**
  * 智能创建模型（基于任务描述）
  */
 export function createModelForTask(taskDescription: string): OMLXAdapter {
-  return OMXLModelFactory.selectModel(taskDescription);
+  return OMXLModelFactory.selectModel(taskDescription)
 }

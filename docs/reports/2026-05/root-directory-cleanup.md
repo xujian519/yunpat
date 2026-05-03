@@ -16,36 +16,36 @@
 
 ### 📊 报告类文件 (docs/reports/2026-05/)
 
-| 原文件名 | 新位置 | 说明 |
-|---------|--------|------|
-| `CODE_CLEANUP_SUMMARY.md` | `docs/reports/2026-05/code-cleanup-summary.md` | 代码清理工作总结 |
-| `CODE_REVIEW_SUMMARY.md` | `docs/reports/2026-05/code-review-summary.md` | 代码审查报告 |
-| `COMPREHENSIVE_FIX_REPORT.md` | `docs/reports/2026-05/comprehensive-fix-report.md` | 综合问题修复报告 |
-| `GATEWAY_PROGRESS_REPORT.md` | `docs/reports/2026-05/gateway-progress.md` | 交互层网关开发进度 |
-| `INTERACTIVE_LAYER_FIXES_SUMMARY.md` | `docs/reports/2026-05/interactive-layer-fixes.md` | 交互层修复工作总结 |
-| `PHASE1_COMPLETION_REPORT.md` | `docs/reports/2026-05/phase1-completion.md` | Phase 1 完成报告 |
-| `PHASE1_FINAL_SUMMARY.md` | `docs/reports/2026-05/phase1-final-summary.md` | Phase 1 最终总结 |
-| `SECURITY_FIXES_REPORT.md` | `docs/reports/2026-05/security-fixes.md` | 安全问题修复报告 |
-| `TOOLS_VERIFICATION_REPORT.md` | `docs/reports/2026-05/tools-verification.md` | 工具验证测试报告 |
-| `GLM_TEST_REPORT.md` | `docs/reports/2026-05/glm-test.md` | GLM 模型测试报告 |
-| `CODE_QUALITY_AUDIT_KARPATHY.md` | `docs/reports/2026-05/code-quality-audit-karpathy.md` | 代码质量审计（Karpathy 原则） |
-| `DIRECTORY_STRUCTURE_AUDIT.md` | `docs/reports/2026-05/directory-structure-audit.md` | 目录结构审计报告 |
+| 原文件名                             | 新位置                                                | 说明                          |
+| ------------------------------------ | ----------------------------------------------------- | ----------------------------- |
+| `CODE_CLEANUP_SUMMARY.md`            | `docs/reports/2026-05/code-cleanup-summary.md`        | 代码清理工作总结              |
+| `CODE_REVIEW_SUMMARY.md`             | `docs/reports/2026-05/code-review-summary.md`         | 代码审查报告                  |
+| `COMPREHENSIVE_FIX_REPORT.md`        | `docs/reports/2026-05/comprehensive-fix-report.md`    | 综合问题修复报告              |
+| `GATEWAY_PROGRESS_REPORT.md`         | `docs/reports/2026-05/gateway-progress.md`            | 交互层网关开发进度            |
+| `INTERACTIVE_LAYER_FIXES_SUMMARY.md` | `docs/reports/2026-05/interactive-layer-fixes.md`     | 交互层修复工作总结            |
+| `PHASE1_COMPLETION_REPORT.md`        | `docs/reports/2026-05/phase1-completion.md`           | Phase 1 完成报告              |
+| `PHASE1_FINAL_SUMMARY.md`            | `docs/reports/2026-05/phase1-final-summary.md`        | Phase 1 最终总结              |
+| `SECURITY_FIXES_REPORT.md`           | `docs/reports/2026-05/security-fixes.md`              | 安全问题修复报告              |
+| `TOOLS_VERIFICATION_REPORT.md`       | `docs/reports/2026-05/tools-verification.md`          | 工具验证测试报告              |
+| `GLM_TEST_REPORT.md`                 | `docs/reports/2026-05/glm-test.md`                    | GLM 模型测试报告              |
+| `CODE_QUALITY_AUDIT_KARPATHY.md`     | `docs/reports/2026-05/code-quality-audit-karpathy.md` | 代码质量审计（Karpathy 原则） |
+| `DIRECTORY_STRUCTURE_AUDIT.md`       | `docs/reports/2026-05/directory-structure-audit.md`   | 目录结构审计报告              |
 
 **小计**: 12 个报告文件
 
 ### 📚 指南类文件 (docs/guides/)
 
-| 原文件名 | 新位置 | 说明 |
-|---------|--------|------|
-| `GLM_SETUP_GUIDE.md` | `docs/guides/glm-setup.md` | GLM 环境配置详解 |
-| `QUICKSTART_GLM.md` | `docs/guides/quickstart-glm.md` | GLM 快速配置指南 |
+| 原文件名             | 新位置                          | 说明             |
+| -------------------- | ------------------------------- | ---------------- |
+| `GLM_SETUP_GUIDE.md` | `docs/guides/glm-setup.md`      | GLM 环境配置详解 |
+| `QUICKSTART_GLM.md`  | `docs/guides/quickstart-glm.md` | GLM 快速配置指南 |
 
 **小计**: 2 个指南文件
 
 ### 🔧 配置文件
 
-| 原文件名 | 新位置 | 说明 |
-|---------|--------|------|
+| 原文件名   | 新位置             | 说明                 |
+| ---------- | ------------------ | -------------------- |
 | `.env.glm` | `.env.glm.example` | 重命名为示例配置文件 |
 
 **小计**: 1 个配置文件
@@ -56,13 +56,13 @@
 
 ### ✅ 保留的核心文档（5个）
 
-| 文件 | 说明 | 状态 |
-|------|------|------|
-| `README.md` | 项目介绍和快速开始 | ✅ 保留 |
-| `CLAUDE.md` | Claude Code 开发指南 | ✅ 保留 |
-| `AGENTS.md` | AI 助手技术参考 | ✅ 保留 |
-| `CHANGELOG.md` | 版本变更历史 | ✅ 保留 |
-| `CONTRIBUTING.md` | 贡献指南 | ✅ 保留 |
+| 文件              | 说明                 | 状态    |
+| ----------------- | -------------------- | ------- |
+| `README.md`       | 项目介绍和快速开始   | ✅ 保留 |
+| `CLAUDE.md`       | Claude Code 开发指南 | ✅ 保留 |
+| `AGENTS.md`       | AI 助手技术参考      | ✅ 保留 |
+| `CHANGELOG.md`    | 版本变更历史         | ✅ 保留 |
+| `CONTRIBUTING.md` | 贡献指南             | ✅ 保留 |
 
 **说明**: 这些是项目根目录应保留的标准文档，符合开源项目惯例。
 

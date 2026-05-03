@@ -17,12 +17,12 @@ export const LEGAL_REASONING_PROMPT = `
 ## 引用规范
 - 法条引用：完整法条编号+条/款/项
 - 案例引用：案件编号+裁判要点
-`;
+`
 
 export function renderLegalReasoningPrompt(params: {
-  question: string;
-  context?: string;
-  legalBasis?: string;
+  question: string
+  context?: string
+  legalBasis?: string
 }): string {
   return `${LEGAL_REASONING_PROMPT}
 
@@ -33,5 +33,5 @@ ${params.context ? `## 案件背景\n${params.context}` : ''}
 ${params.legalBasis ? `## 相关法条\n${params.legalBasis}` : ''}
 
 请给出专业的法律分析意见。
-`;
+`
 }

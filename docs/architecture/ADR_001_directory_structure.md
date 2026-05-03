@@ -56,6 +56,7 @@ mv ai patents
 ```
 
 **理由**：
+
 - `patents/` 清晰表明这是专利专用业务代码
 - 与 `packages/agents/`（通用智能体）区分
 
@@ -67,6 +68,7 @@ mv yunpat_python packages/python-tools
 ```
 
 **理由**：
+
 - 所有工具代码统一放在 `packages/` 下
 - 清晰表明这些是"工具包"
 - 符合 monorepo 最佳实践
@@ -100,6 +102,7 @@ yunpat/
 ```
 
 **改进**：
+
 - 19 个一级目录 → 11 个（减少 42%）
 - 消除所有空目录
 - 消除重复目录
@@ -112,11 +115,13 @@ yunpat/
 ### packages/ - 可复用代码
 
 **适用场景**：
+
 - 通用智能体（writer, researcher）
 - 框架核心（Agent 基类、EventBus）
 - 工具库（rust-tools, python-tools）
 
 **命名规范**：
+
 - TypeScript：`packages/{name}/`
 - Rust：`packages/rust-tools/`
 - Python：`packages/python-tools/`
@@ -124,11 +129,13 @@ yunpat/
 ### patents/ - 业务逻辑
 
 **适用场景**：
+
 - 专利专用智能体（PatentWriterAgent, PatentResponderAgent）
 - 业务 prompt 模板
 - 业务生成器、检索器
 
 **命名规范**：
+
 - 所有代码放在 `patents/` 下
 - 按功能分类（agents/, prompts/, generation/）
 

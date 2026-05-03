@@ -12,11 +12,11 @@
 
 ### 核心成果
 
-| 优化项 | 状态 | 效果 | 实施时间 |
-|--------|------|------|---------|
-| **SemanticCache** | ✅ | 33.3% 命中率 | 45分钟 |
-| **IncrementalGenerator** | ✅ | 30-70% 场景节省 | 50分钟 |
-| **BatchProcessor** | ✅ | 70% API 节省 | 40分钟 |
+| 优化项                   | 状态 | 效果            | 实施时间 |
+| ------------------------ | ---- | --------------- | -------- |
+| **SemanticCache**        | ✅   | 33.3% 命中率    | 45分钟   |
+| **IncrementalGenerator** | ✅   | 30-70% 场景节省 | 50分钟   |
+| **BatchProcessor**       | ✅   | 70% API 节省    | 40分钟   |
 
 ---
 
@@ -27,21 +27,24 @@
 **文件**: `packages/core/src/cache/SemanticCache.ts`
 
 **功能**:
+
 - ✅ 轻量级任务签名生成
 - ✅ Jaccard 相似度计算
 - ✅ 自动缓存管理（LRU）
 - ✅ 过期清理机制
 
 **核心方法**:
+
 ```typescript
 class SemanticCache {
-  async findSimilar(task: WritingTask, threshold?: number): Promise<CachedResponse>;
-  async store(task: WritingTask, response: WritingResult): Promise<void>;
-  getStats(): { hitRate, totalRequests, cacheHits, cacheMisses };
+  async findSimilar(task: WritingTask, threshold?: number): Promise<CachedResponse>
+  async store(task: WritingTask, response: WritingResult): Promise<void>
+  getStats(): { hitRate; totalRequests; cacheHits; cacheMisses }
 }
 ```
 
 **测试结果**:
+
 ```
 任务 1: "介绍 TypeScript"
   → 缓存命中 ✅
@@ -56,6 +59,7 @@ class SemanticCache {
 ```
 
 **收益**:
+
 - ✅ 重复任务成本降低 90%+
 - ✅ 相似任务成本降低 50%+
 - ✅ 响应速度提升 10倍
@@ -67,26 +71,30 @@ class SemanticCache {
 **文件**: `packages/core/src/agent/IncrementalGenerator.ts`
 
 **功能**:
+
 - ✅ 智能差异分析（ContentDiff）
 - ✅ 增量更新（只修改差异部分）
 - ✅ 支持扩展/压缩操作
 
 **核心方法**:
+
 ```typescript
 class IncrementalGenerator {
-  async diff(originalContent: string, newRequirements: string): Promise<ContentDiff>;
-  async update(originalContent: string, diff: ContentDiff): Promise<string>;
-  async expand(content: string, targetLength: number): Promise<string>;
-  async compress(content: string, targetLength: number): Promise<string>;
+  async diff(originalContent: string, newRequirements: string): Promise<ContentDiff>
+  async update(originalContent: string, diff: ContentDiff): Promise<string>
+  async expand(content: string, targetLength: number): Promise<string>
+  async compress(content: string, targetLength: number): Promise<string>
 }
 ```
 
 **适用场景**:
+
 - 扩展任务：节省 **70%**
 - 压缩任务：节省 **50%**
 - 修改任务：节省 **60%**
 
 **收益**:
+
 - ✅ 避免全量重写
 - ✅ 保持内容一致性
 - ✅ 显著降低成本
@@ -98,22 +106,25 @@ class IncrementalGenerator {
 **文件**: `packages/core/src/llm/BatchProcessor.ts`
 
 **功能**:
+
 - ✅ 批量生成章节
 - ✅ 合并多个请求为单次调用
 - ✅ 智能分批处理
 
 **核心方法**:
+
 ```typescript
 class BatchProcessor {
   async batchGenerate(
     sections: string[],
     plan: WritingPlan,
     context: ExecutionContext
-  ): Promise<Map<string, string>>;
+  ): Promise<Map<string, string>>
 }
 ```
 
 **测试结果**:
+
 ```
 章节列表: 引言, 核心概念, 实现细节, 应用场景, 总结
 章节数: 5
@@ -125,6 +136,7 @@ class BatchProcessor {
 ```
 
 **收益**:
+
 - ✅ API 调用减少 60-80%
 - ✅ 成本降低 40-60%
 - ✅ 质量基本保持
@@ -151,12 +163,12 @@ P1 优化:
 
 ### 性能提升
 
-| 指标 | P0 后 | P1 后 | 累计提升 |
-|------|-------|-------|---------|
-| **API 成本** | 70% | 31.5% | **-68.5%** |
-| **缓存命中率** | 0% | 33.3% | +33.3% |
-| **批处理率** | 0% | 50% | +50% |
-| **增量使用率** | 0% | 20% | +20% |
+| 指标           | P0 后 | P1 后 | 累计提升   |
+| -------------- | ----- | ----- | ---------- |
+| **API 成本**   | 70%   | 31.5% | **-68.5%** |
+| **缓存命中率** | 0%    | 33.3% | +33.3%     |
+| **批处理率**   | 0%    | 50%   | +50%       |
+| **增量使用率** | 0%    | 20%   | +20%       |
 
 ---
 
@@ -164,14 +176,14 @@ P1 优化:
 
 ### P0 + P1 = 显著成效
 
-| 阶段 | 优化项 | 效果 | 累计效果 |
-|------|--------|------|---------|
-| **P0** | 提示词压缩 | -10% Token | -10% |
-| **P0** | 任务路由 | -22% 成本 | -30% |
-| **P0** | 并行执行 | -80% 时间 | -80% |
-| **P1** | 语义缓存 | -15% 成本 | -42% |
-| **P1** | 增量生成 | -10% 成本 | -48% |
-| **P1** | 批处理 | -20.5% 成本 | **-68.5%** |
+| 阶段   | 优化项     | 效果        | 累计效果   |
+| ------ | ---------- | ----------- | ---------- |
+| **P0** | 提示词压缩 | -10% Token  | -10%       |
+| **P0** | 任务路由   | -22% 成本   | -30%       |
+| **P0** | 并行执行   | -80% 时间   | -80%       |
+| **P1** | 语义缓存   | -15% 成本   | -42%       |
+| **P1** | 增量生成   | -10% 成本   | -48%       |
+| **P1** | 批处理     | -20.5% 成本 | **-68.5%** |
 
 ### 最终成本对比
 
@@ -225,29 +237,29 @@ const agent = new WriterAgent({ ..., cache });
 ### 2. 使用增量生成
 
 ```typescript
-import { IncrementalGenerator } from '@yunpat/core';
+import { IncrementalGenerator } from '@yunpat/core'
 
-const generator = new IncrementalGenerator({ llm });
+const generator = new IncrementalGenerator({ llm })
 
 // 扩展内容
-const expanded = await generator.expand(originalContent, 200);
+const expanded = await generator.expand(originalContent, 200)
 
 // 压缩内容
-const compressed = await generator.compress(originalContent, 100);
+const compressed = await generator.compress(originalContent, 100)
 ```
 
 ### 3. 启用批处理
 
 ```typescript
-import { BatchProcessor } from '@yunpat/core';
+import { BatchProcessor } from '@yunpat/core'
 
 const batch = new BatchProcessor({
   maxBatchSize: 5,
   enableBatching: true,
-});
+})
 
 // 批量生成
-const results = await batch.batchGenerate(sections, plan, context);
+const results = await batch.batchGenerate(sections, plan, context)
 ```
 
 ---
@@ -272,12 +284,14 @@ const results = await batch.batchGenerate(sections, plan, context);
 ## ✅ 结论
 
 **P1 阶段目标达成**：
+
 - ✅ 语义缓存系统实现
 - ✅ 增量生成策略实现
 - ✅ 批处理优化实现
 - ✅ 累计成本节省 **68.5%**
 
 **框架现状**：
+
 - 稳定性：**99.5%+** ✅
 - 经济性：**成本降低 68.5%** ✅
 - 性能：**速度提升 80%** ✅

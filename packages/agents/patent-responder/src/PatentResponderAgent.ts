@@ -9,211 +9,205 @@
  * 5. 先例检索支持
  */
 
-import { Agent, type ExecutionContext } from '@yunpat/core';
+import { Agent, type ExecutionContext } from '@yunpat/core'
 
 export interface OAOfficeAction {
   /** 申请号 */
-  applicationNumber: string;
+  applicationNumber: string
   /** 专利名称 */
-  patentTitle: string;
+  patentTitle: string
   /** 审查员 */
-  examiner?: string;
+  examiner?: string
   /** 审查通知日期 */
-  notificationDate?: string;
+  notificationDate?: string
   /** 答复期限 */
-  deadline?: string;
+  deadline?: string
   /** 审查意见内容 */
-  officeActionContent: string;
+  officeActionContent: string
   /** 引用的对比文件 */
   citedReferences?: Array<{
-    publicationNumber: string;
-    title: string;
-    relevance: string;
-  }>;
+    publicationNumber: string
+    title: string
+    relevance: string
+  }>
   /** 审查意见类型 */
-  rejectionTypes?: ('novelty' | 'inventiveness' | 'support' | 'clarity' | 'other')[];
+  rejectionTypes?: ('novelty' | 'inventiveness' | 'support' | 'clarity' | 'other')[]
 }
 
 export interface ResponseStrategy {
   /** 总体策略 */
-  overallStrategy: 'argue' | 'amend' | 'abandon' | 'appeal';
+  overallStrategy: 'argue' | 'amend' | 'abandon' | 'appeal'
   /** 成功概率评估 */
-  successProbability: number;
+  successProbability: number
   /** 关键论点 */
-  keyArguments: string[];
+  keyArguments: string[]
   /** 建议修改内容 */
   suggestedAmendments: Array<{
-    claimNumber: number;
-    currentText: string;
-    proposedText: string;
-    reason: string;
-  }>;
+    claimNumber: number
+    currentText: string
+    proposedText: string
+    reason: string
+  }>
   /** 需要补充的证据 */
-  additionalEvidence: string[];
+  additionalEvidence: string[]
   /** 风险提示 */
-  risks: string[];
+  risks: string[]
 }
 
 export interface ResponseDocument {
   /** 答复文档类型 */
-  documentType: 'cn' | 'pct' | 'us';
+  documentType: 'cn' | 'pct' | 'us'
   /** 答复书 */
-  responseLetter: string;
+  responseLetter: string
   /** 修改后的权利要求书 */
-  amendedClaims?: string;
+  amendedClaims?: string
   /** 修改后的说明书部分 */
-  amendedDescription?: string;
+  amendedDescription?: string
   /** 论点详细说明 */
   detailedArguments: Array<{
-    category: string;
-    argument: string;
-    evidence: string[];
-  }>;
+    category: string
+    argument: string
+    evidence: string[]
+  }>
   /** 统计信息 */
   metrics: {
-    wordCount: number;
-    argumentCount: number;
-    amendmentCount: number;
-    generationTime: number;
-  };
+    wordCount: number
+    argumentCount: number
+    amendmentCount: number
+    generationTime: number
+  }
 }
 
 export interface PatentResponderInput {
   /** 审查意见信息 */
-  officeAction: OAOfficeAction;
+  officeAction: OAOfficeAction
   /** 原始专利申请文件 */
   originalApplication: {
-    title: string;
-    claims: string;
-    description: string;
-    abstract?: string;
-  };
+    title: string
+    claims: string
+    description: string
+    abstract?: string
+  }
   /** 答复策略偏好 */
-  strategyPreference?: 'aggressive' | 'moderate' | 'conservative';
+  strategyPreference?: 'aggressive' | 'moderate' | 'conservative'
   /** 是否进行先例检索 */
-  enablePriorArtSearch?: boolean;
+  enablePriorArtSearch?: boolean
   /** 文档类型 */
-  documentType?: 'cn' | 'pct' | 'us';
+  documentType?: 'cn' | 'pct' | 'us'
 }
 
 export interface PatentResponderOutput {
   /** 审查意见分析 */
   analysis: {
     /** 审查意见摘要 */
-    summary: string;
+    summary: string
     /** 关键问题识别 */
     keyIssues: Array<{
-      type: string;
-      description: string;
-      severity: 'high' | 'medium' | 'low';
-    }>;
+      type: string
+      description: string
+      severity: 'high' | 'medium' | 'low'
+    }>
     /** 可决性评估 */
-    overcomeProbability: number;
-  };
+    overcomeProbability: number
+  }
   /** 答复策略 */
-  strategy: ResponseStrategy;
+  strategy: ResponseStrategy
   /** 答复文档 */
-  responseDocument: ResponseDocument;
+  responseDocument: ResponseDocument
   /** 后续建议 */
-  nextSteps: string[];
+  nextSteps: string[]
 }
 
 /**
  * 格式化配置接口
  */
 interface FormatConfig {
-  title: string;
+  title: string
   labels: {
-    applicationNo: string;
-    title: string;
-    applicant?: string;
-    responseLetter: string;
-    amendedClaims: string;
-    amendedDescription?: string;
-    detailedArguments: string;
-    evidence: string;
-  };
-  includeApplicant?: boolean;
-  includeAmendedDescription?: boolean;
+    applicationNo: string
+    title: string
+    applicant?: string
+    responseLetter: string
+    amendedClaims: string
+    amendedDescription?: string
+    detailedArguments: string
+    evidence: string
+  }
+  includeApplicant?: boolean
+  includeAmendedDescription?: boolean
 }
 
 interface ResponsePlan {
-  input: PatentResponderInput;
-  analysisTypes: string[];
+  input: PatentResponderInput
+  analysisTypes: string[]
 }
 
 export class PatentResponderAgent extends Agent {
-
   protected async plan(
     input: PatentResponderInput,
     _context: ExecutionContext
   ): Promise<ResponsePlan> {
     if (!input.officeAction?.officeActionContent?.trim()) {
-      throw new Error('审查意见内容不能为空');
+      throw new Error('审查意见内容不能为空')
     }
     if (!input.originalApplication?.claims?.trim()) {
-      throw new Error('原始权利要求书不能为空');
+      throw new Error('原始权利要求书不能为空')
     }
     if (!input.originalApplication?.description?.trim()) {
-      throw new Error('原始说明书不能为空');
+      throw new Error('原始说明书不能为空')
     }
 
-    console.log('[PatentResponder] 步骤1: 规划阶段');
-    console.log(`   申请号: ${input.officeAction.applicationNumber}`);
-    console.log(`   专利名称: ${input.officeAction.patentTitle}`);
-    console.log(`   答略偏好: ${input.strategyPreference || 'moderate'}`);
+    console.log('[PatentResponder] 步骤1: 规划阶段')
+    console.log(`   申请号: ${input.officeAction.applicationNumber}`)
+    console.log(`   专利名称: ${input.officeAction.patentTitle}`)
+    console.log(`   答略偏好: ${input.strategyPreference || 'moderate'}`)
 
-    const analysisTypes = ['analyze', 'strategy', 'document'];
+    const analysisTypes = ['analyze', 'strategy', 'document']
 
-    return { input, analysisTypes };
+    return { input, analysisTypes }
   }
 
   protected async act(
     plan: ResponsePlan,
     context: ExecutionContext
   ): Promise<PatentResponderOutput> {
-    console.log('[PatentResponder] 步骤2: 答复阶段');
+    console.log('[PatentResponder] 步骤2: 答复阶段')
 
-    const { input } = plan;
+    const { input } = plan
 
     if (!context.llm) {
-      throw new Error('LLM 未配置，无法执行答复生成');
+      throw new Error('LLM 未配置，无法执行答复生成')
     }
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 1. 分析审查意见
-    console.log('   1. 分析审查意见...');
-    const analysis = await this.analyzeOfficeAction(input, context);
+    console.log('   1. 分析审查意见...')
+    const analysis = await this.analyzeOfficeAction(input, context)
 
     // 2. 生成答复策略
-    console.log('   2. 生成答复策略...');
-    const strategy = await this.generateStrategy(input, analysis, context);
+    console.log('   2. 生成答复策略...')
+    const strategy = await this.generateStrategy(input, analysis, context)
 
     // 3. 撰写答复文档
-    console.log('   3. 撰写答复文档...');
-    const responseDocument = await this.generateResponseDocument(
-      input,
-      analysis,
-      strategy,
-      context
-    );
+    console.log('   3. 撰写答复文档...')
+    const responseDocument = await this.generateResponseDocument(input, analysis, strategy, context)
 
     // 4. 生成后续建议
-    console.log('   4. 生成后续建议...');
-    const nextSteps = await this.generateNextSteps(input, analysis, strategy, context);
+    console.log('   4. 生成后续建议...')
+    const nextSteps = await this.generateNextSteps(input, analysis, strategy, context)
 
-    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`[PatentResponder] 完成 (耗时 ${duration}s)`);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+    console.log(`[PatentResponder] 完成 (耗时 ${duration}s)`)
 
     const output: PatentResponderOutput = {
       analysis,
       strategy,
       responseDocument,
       nextSteps,
-    };
+    }
 
-    return output;
+    return output
   }
 
   /**
@@ -231,7 +225,7 @@ export class PatentResponderAgent extends Agent {
 3. 评估问题的严重程度
 4. 评估克服问题的可能性
 
-输出严格的 JSON 格式。`;
+输出严格的 JSON 格式。`
 
     const userPrompt = `## 审查意见
 
@@ -272,7 +266,7 @@ ${input.originalApplication.claims}
     }
   ],
   "overcomeProbability": 0-100的克服概率
-}`;
+}`
 
     const response = await context.llm.chat({
       messages: [
@@ -280,9 +274,9 @@ ${input.originalApplication.claims}
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-    });
+    })
 
-    return this.parseAnalysis(response.message.content);
+    return this.parseAnalysis(response.message.content)
   }
 
   /**
@@ -312,7 +306,7 @@ ${input.originalApplication.claims}
 
 6. 风险提示：潜在的风险和不确定性
 
-输出 JSON 格式。`;
+输出 JSON 格式。`
 
     const userPrompt = `## 审查意见分析
 
@@ -340,7 +334,7 @@ ${input.originalApplication.claims}
   ],
   "additionalEvidence": ["证据1", "证据2"],
   "risks": ["风险1", "风险2"]
-}`;
+}`
 
     const response = await context.llm.chat({
       messages: [
@@ -348,9 +342,9 @@ ${input.originalApplication.claims}
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.4,
-    });
+    })
 
-    return this.parseStrategy(response.message.content);
+    return this.parseStrategy(response.message.content)
   }
 
   /**
@@ -373,7 +367,7 @@ ${input.originalApplication.claims}
 4. 详细论点说明
 5. 结论
 
-输出 JSON 格式。`;
+输出 JSON 格式。`
 
     const userPrompt = `## 审查意见
 
@@ -432,7 +426,7 @@ ${input.originalApplication.description.substring(0, 3000)}...
       "evidence": ["证据1", "证据2"]
     }
   ]
-}`;
+}`
 
     const response = await context.llm.chat({
       messages: [
@@ -440,10 +434,10 @@ ${input.originalApplication.description.substring(0, 3000)}...
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.5,
-    });
+    })
 
-    const parsed = this.parseResponseDocument(response.message.content);
-    const generationTime = Date.now();
+    const parsed = this.parseResponseDocument(response.message.content)
+    const generationTime = Date.now()
 
     return {
       ...parsed,
@@ -453,7 +447,7 @@ ${input.originalApplication.description.substring(0, 3000)}...
         amendmentCount: strategy.suggestedAmendments.length,
         generationTime,
       },
-    };
+    }
   }
 
   /**
@@ -467,7 +461,7 @@ ${input.originalApplication.description.substring(0, 3000)}...
   ): Promise<string[]> {
     const systemPrompt = `你是一位专利策略顾问。
 
-根据审查意见分析、答复策略和文档，提供具体的后续步骤建议。请列出 3-5 条建议。`;
+根据审查意见分析、答复策略和文档，提供具体的后续步骤建议。请列出 3-5 条建议。`
 
     const userPrompt = `## 答复策略
 
@@ -480,7 +474,7 @@ ${analysis.keyIssues.map((issue) => `- ${issue.type}: ${issue.description}`).joi
 ## 风险提示
 ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
 
-请提供 3-5 条具体建议（纯文本，每条一行）。`;
+请提供 3-5 条具体建议（纯文本，每条一行）。`
 
     const response = await context.llm.chat({
       messages: [
@@ -488,14 +482,14 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.5,
-    });
+    })
 
     const nextSteps = response.message.content
       .split('\n')
       .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+      .filter((line) => line.length > 0)
 
-    return nextSteps.slice(0, 5);
+    return nextSteps.slice(0, 5)
   }
 
   /**
@@ -506,27 +500,28 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
       const jsonMatch =
         content.match(/```json\s*([\s\S]*?)\s*```/) ||
         content.match(/```\s*([\s\S]*?)\s*```/) ||
-        content.match(/{[\s\S]*}/);
+        content.match(/{[\s\S]*}/)
 
       if (!jsonMatch) {
-        throw new Error('未找到 JSON 格式');
+        throw new Error('未找到 JSON 格式')
       }
 
-      const jsonStr = jsonMatch[1] || jsonMatch[0];
-      const data = JSON.parse(jsonStr);
+      const jsonStr = jsonMatch[1] || jsonMatch[0]
+      const data = JSON.parse(jsonStr)
 
       return {
         summary: data.summary || '',
         keyIssues: Array.isArray(data.keyIssues) ? data.keyIssues : [],
-        overcomeProbability: typeof data.overcomeProbability === 'number' ? data.overcomeProbability : 50,
-      };
+        overcomeProbability:
+          typeof data.overcomeProbability === 'number' ? data.overcomeProbability : 50,
+      }
     } catch (error) {
-      console.warn('[PatentResponderAgent] 分析结果解析失败:', error);
+      console.warn('[PatentResponderAgent] 分析结果解析失败:', error)
       return {
         summary: '',
         keyIssues: [],
         overcomeProbability: 50,
-      };
+      }
     }
   }
 
@@ -535,30 +530,33 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
    */
   private parseStrategy(content: string): ResponseStrategy {
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
 
       if (!jsonMatch) {
-        return this.getDefaultStrategy();
+        return this.getDefaultStrategy()
       }
 
-      const data = JSON.parse(jsonMatch[0]);
+      const data = JSON.parse(jsonMatch[0])
 
-      const validStrategies = ['argue', 'amend', 'abandon', 'appeal'];
+      const validStrategies = ['argue', 'amend', 'abandon', 'appeal']
       const overallStrategy = validStrategies.includes(data.overallStrategy)
         ? data.overallStrategy
-        : 'argue';
+        : 'argue'
 
       return {
         overallStrategy,
-        successProbability: typeof data.successProbability === 'number' ? data.successProbability : 50,
+        successProbability:
+          typeof data.successProbability === 'number' ? data.successProbability : 50,
         keyArguments: Array.isArray(data.keyArguments) ? data.keyArguments : [],
-        suggestedAmendments: Array.isArray(data.suggestedAmendments) ? data.suggestedAmendments : [],
+        suggestedAmendments: Array.isArray(data.suggestedAmendments)
+          ? data.suggestedAmendments
+          : [],
         additionalEvidence: Array.isArray(data.additionalEvidence) ? data.additionalEvidence : [],
         risks: Array.isArray(data.risks) ? data.risks : [],
-      };
+      }
     } catch (error) {
-      console.warn('[PatentResponderAgent] 策略解析失败:', error);
-      return this.getDefaultStrategy();
+      console.warn('[PatentResponderAgent] 策略解析失败:', error)
+      return this.getDefaultStrategy()
     }
   }
 
@@ -570,14 +568,14 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
       const jsonMatch =
         content.match(/```json\s*([\s\S]*?)\s*```/) ||
         content.match(/```\s*([\s\S]*?)\s*```/) ||
-        content.match(/{[\s\S]*}/);
+        content.match(/{[\s\S]*}/)
 
       if (!jsonMatch) {
-        throw new Error('未找到 JSON 格式');
+        throw new Error('未找到 JSON 格式')
       }
 
-      const jsonStr = jsonMatch[1] || jsonMatch[0];
-      const data = JSON.parse(jsonStr);
+      const jsonStr = jsonMatch[1] || jsonMatch[0]
+      const data = JSON.parse(jsonStr)
 
       return {
         documentType: data.documentType || 'cn',
@@ -585,14 +583,14 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
         amendedClaims: data.amendedClaims,
         amendedDescription: data.amendedDescription,
         detailedArguments: Array.isArray(data.detailedArguments) ? data.detailedArguments : [],
-      };
+      }
     } catch (error) {
-      console.warn('[PatentResponderAgent] 答复文档解析失败:', error);
+      console.warn('[PatentResponderAgent] 答复文档解析失败:', error)
       return {
         documentType: 'cn',
         responseLetter: '',
         detailedArguments: [],
-      };
+      }
     }
   }
 
@@ -604,7 +602,7 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
       suggestedAmendments: [],
       additionalEvidence: [],
       risks: [],
-    };
+    }
   }
 
   /**
@@ -619,28 +617,28 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
     input: PatentResponderInput,
     format: 'cn' | 'pct' | 'us'
   ): Promise<{
-    format: string;
-    content: string;
+    format: string
+    content: string
     metadata: {
-      exportDate: Date;
-      applicationNumber: string;
-      patentTitle: string;
-      argumentCount: number;
-      amendmentCount: number;
-      wordCount: number;
-    };
+      exportDate: Date
+      applicationNumber: string
+      patentTitle: string
+      argumentCount: number
+      amendmentCount: number
+      wordCount: number
+    }
   }> {
-    const { responseDocument } = result;
-    const { officeAction } = input;
+    const { responseDocument } = result
+    const { officeAction } = input
 
-    let content = '';
+    let content = ''
 
     if (format === 'cn') {
-      content = this.generateCNFormat(responseDocument, officeAction);
+      content = this.generateCNFormat(responseDocument, officeAction)
     } else if (format === 'pct') {
-      content = this.generatePCTFormat(responseDocument, officeAction);
+      content = this.generatePCTFormat(responseDocument, officeAction)
     } else if (format === 'us') {
-      content = this.generateUSFormat(responseDocument, officeAction);
+      content = this.generateUSFormat(responseDocument, officeAction)
     }
 
     return {
@@ -654,7 +652,7 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
         amendmentCount: responseDocument.metrics.amendmentCount,
         wordCount: responseDocument.metrics.wordCount,
       },
-    };
+    }
   }
 
   /**
@@ -669,48 +667,52 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
     officeAction: OAOfficeAction,
     config: FormatConfig
   ): string {
-    let content = `# ${config.title}\n\n`;
+    let content = `# ${config.title}\n\n`
 
     // 基本信息
-    content += `${config.labels.applicationNo}: ${officeAction.applicationNumber}\n`;
-    content += `${config.labels.title}: ${officeAction.patentTitle}\n`;
+    content += `${config.labels.applicationNo}: ${officeAction.applicationNumber}\n`
+    content += `${config.labels.title}: ${officeAction.patentTitle}\n`
 
     if (config.includeApplicant && config.labels.applicant) {
-      content += `${config.labels.applicant}: [申请人名称]\n`;
+      content += `${config.labels.applicant}: [申请人名称]\n`
     }
-    content += '\n';
+    content += '\n'
 
     // 答复书
-    content += `## ${config.labels.responseLetter}\n\n`;
-    content += document.responseLetter;
+    content += `## ${config.labels.responseLetter}\n\n`
+    content += document.responseLetter
 
     // 修改后的权利要求书
     if (document.amendedClaims) {
-      content += `\n\n## ${config.labels.amendedClaims}\n\n`;
-      content += document.amendedClaims;
+      content += `\n\n## ${config.labels.amendedClaims}\n\n`
+      content += document.amendedClaims
     }
 
     // 修改后的说明书（仅 CN 格式）
-    if (config.includeAmendedDescription && document.amendedDescription && config.labels.amendedDescription) {
-      content += `\n\n## ${config.labels.amendedDescription}\n\n`;
-      content += document.amendedDescription;
+    if (
+      config.includeAmendedDescription &&
+      document.amendedDescription &&
+      config.labels.amendedDescription
+    ) {
+      content += `\n\n## ${config.labels.amendedDescription}\n\n`
+      content += document.amendedDescription
     }
 
     // 详细论点
-    content += `\n\n## ${config.labels.detailedArguments}\n\n`;
+    content += `\n\n## ${config.labels.detailedArguments}\n\n`
     document.detailedArguments.forEach((arg, index) => {
-      content += `### ${index + 1}. ${arg.category}\n\n`;
-      content += `${arg.argument}\n\n`;
+      content += `### ${index + 1}. ${arg.category}\n\n`
+      content += `${arg.argument}\n\n`
       if (arg.evidence.length > 0) {
-        content += `**${config.labels.evidence}**:\n`;
+        content += `**${config.labels.evidence}**:\n`
         arg.evidence.forEach((ev) => {
-          content += `- ${ev}\n`;
-        });
-        content += '\n';
+          content += `- ${ev}\n`
+        })
+        content += '\n'
       }
-    });
+    })
 
-    return content;
+    return content
   }
 
   /**
@@ -730,7 +732,7 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
     },
     includeApplicant: true,
     includeAmendedDescription: true,
-  };
+  }
 
   /**
    * PCT 格式配置
@@ -747,7 +749,7 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
     },
     includeApplicant: false,
     includeAmendedDescription: false,
-  };
+  }
 
   /**
    * US 格式配置
@@ -764,17 +766,17 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
     },
     includeApplicant: false,
     includeAmendedDescription: false,
-  };
+  }
 
   private generateCNFormat(document: ResponseDocument, officeAction: OAOfficeAction): string {
-    return this.generateFormat(document, officeAction, this.CN_FORMAT);
+    return this.generateFormat(document, officeAction, this.CN_FORMAT)
   }
 
   private generatePCTFormat(document: ResponseDocument, officeAction: OAOfficeAction): string {
-    return this.generateFormat(document, officeAction, this.PCT_FORMAT);
+    return this.generateFormat(document, officeAction, this.PCT_FORMAT)
   }
 
   private generateUSFormat(document: ResponseDocument, officeAction: OAOfficeAction): string {
-    return this.generateFormat(document, officeAction, this.US_FORMAT);
+    return this.generateFormat(document, officeAction, this.US_FORMAT)
   }
 }

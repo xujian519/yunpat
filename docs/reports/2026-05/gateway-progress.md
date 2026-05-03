@@ -8,13 +8,13 @@
 
 ## 📊 总体进度
 
-| 指标 | 数值 | 状态 |
-|------|------|------|
-| **文件数量** | 2 个 TS 文件 | ✅ |
-| **代码行数** | ~1,130 行 | ✅ |
-| **完成度** | **35%** | 🟡 进行中 |
-| **测试覆盖** | 0% | ❌ 待开始 |
-| **文档完整性** | 90% | ✅ |
+| 指标           | 数值         | 状态      |
+| -------------- | ------------ | --------- |
+| **文件数量**   | 2 个 TS 文件 | ✅        |
+| **代码行数**   | ~1,130 行    | ✅        |
+| **完成度**     | **35%**      | 🟡 进行中 |
+| **测试覆盖**   | 0%           | ❌ 待开始 |
+| **文档完整性** | 90%          | ✅        |
 
 ---
 
@@ -34,71 +34,71 @@ packages/core/src/gateway/
 
 #### 多模态输入/输出系统
 
-| 功能 | 状态 | 说明 |
-|------|------|------|
-| **InputSourceType 枚举** | ✅ | 文本、语音、图像、视频、文件、API、CLI、WebSocket |
-| **MultimodalInput** | ✅ | 完整的输入数据结构（支持 8 种输入源） |
-| **OutputTargetType** | ✅ | 终端、HTTP、WebSocket、文件、数据库 |
-| **MultimodalOutput** | ✅ | 完整的输出数据结构（流式、附件支持） |
+| 功能                     | 状态 | 说明                                              |
+| ------------------------ | ---- | ------------------------------------------------- |
+| **InputSourceType 枚举** | ✅   | 文本、语音、图像、视频、文件、API、CLI、WebSocket |
+| **MultimodalInput**      | ✅   | 完整的输入数据结构（支持 8 种输入源）             |
+| **OutputTargetType**     | ✅   | 终端、HTTP、WebSocket、文件、数据库               |
+| **MultimodalOutput**     | ✅   | 完整的输出数据结构（流式、附件支持）              |
 
 #### 人机协同审批系统
 
-| 功能 | 状态 | 说明 |
-|------|------|------|
-| **HumanApproval** | ✅ | 审批结果接口 |
-| **ApprovalRequest** | ✅ | 审批请求接口（支持 action/output/plan 类型） |
-| **审批级别** | ✅ | info/warning/critical 三级 |
+| 功能                | 状态 | 说明                                         |
+| ------------------- | ---- | -------------------------------------------- |
+| **HumanApproval**   | ✅   | 审批结果接口                                 |
+| **ApprovalRequest** | ✅   | 审批请求接口（支持 action/output/plan 类型） |
+| **审批级别**        | ✅   | info/warning/critical 三级                   |
 
 #### 安全网关系统
 
-| 功能 | 状态 | 说明 |
-|------|------|------|
-| **身份认证 (AuthResult)** | ✅ | API Key、JWT、OAuth、Basic Auth |
-| **权限控制 (Permission)** | ✅ | 资源级权限（read/write/execute/admin） |
-| **内容过滤 (ContentFilterRule)** | ✅ | 关键词、模式、ML 三种过滤方式 |
-| **审计日志 (AuditLog)** | ✅ | 完整的审计追踪 |
+| 功能                             | 状态 | 说明                                   |
+| -------------------------------- | ---- | -------------------------------------- |
+| **身份认证 (AuthResult)**        | ✅   | API Key、JWT、OAuth、Basic Auth        |
+| **权限控制 (Permission)**        | ✅   | 资源级权限（read/write/execute/admin） |
+| **内容过滤 (ContentFilterRule)** | ✅   | 关键词、模式、ML 三种过滤方式          |
+| **审计日志 (AuditLog)**          | ✅   | 完整的审计追踪                         |
 
 #### BaseGateway 基础实现
 
-| 方法 | 状态 | 说明 |
-|------|------|------|
-| `receiveInput()` | ✅ | 接收多模态输入 |
-| `sendOutput()` | ✅ | 发送输出（支持终端/HTTP/WebSocket） |
-| `requestHumanApproval()` | 🟡 | 简化实现（自动批准） |
-| `authenticate()` | 🟡 | 仅 API Key 认证（TODO: 真实验证） |
-| `authorize()` | ✅ | 权限检查 |
-| `filterContent()` | ✅ | 关键词过滤 |
-| `writeAuditLog()` | ✅ | 审计日志写入 |
+| 方法                     | 状态 | 说明                                |
+| ------------------------ | ---- | ----------------------------------- |
+| `receiveInput()`         | ✅   | 接收多模态输入                      |
+| `sendOutput()`           | ✅   | 发送输出（支持终端/HTTP/WebSocket） |
+| `requestHumanApproval()` | 🟡   | 简化实现（自动批准）                |
+| `authenticate()`         | 🟡   | 仅 API Key 认证（TODO: 真实验证）   |
+| `authorize()`            | ✅   | 权限检查                            |
+| `filterContent()`        | ✅   | 关键词过滤                          |
+| `writeAuditLog()`        | ✅   | 审计日志写入                        |
 
 ### 2. **人机协同审批流程** (`ApprovalFlow.ts`)
 
 #### 核心功能
 
-| 功能 | 状态 | 说明 |
-|------|------|------|
-| **多模式审批** | 🟡 | CLI ✅ / HTTP ⏳ / WebSocket ⏳ |
-| **审批请求生成** | ✅ | 清晰展示、疑点标注 |
-| **反馈收集** | ✅ | 批准/修正/补充/拒绝四种类型 |
-| **反馈学习** | 🟡 | 框架完成（TODO: PromptTemplate 集成） |
-| **统计追踪** | ✅ | 准确率、审批次数统计 |
+| 功能             | 状态 | 说明                                  |
+| ---------------- | ---- | ------------------------------------- |
+| **多模式审批**   | 🟡   | CLI ✅ / HTTP ⏳ / WebSocket ⏳       |
+| **审批请求生成** | ✅   | 清晰展示、疑点标注                    |
+| **反馈收集**     | ✅   | 批准/修正/补充/拒绝四种类型           |
+| **反馈学习**     | 🟡   | 框架完成（TODO: PromptTemplate 集成） |
+| **统计追踪**     | ✅   | 准确率、审批次数统计                  |
 
 #### 展示系统
 
-| 格式 | 状态 | 说明 |
-|------|------|------|
-| **JSON** | ✅ | 原始 JSON 输出 |
-| **表格** | ✅ | 美化的表格展示 |
-| **摘要** | ✅ | 简洁的摘要展示 |
-| **疑点标注** | ✅ | 自动分析空值、异常值 |
+| 格式         | 状态 | 说明                 |
+| ------------ | ---- | -------------------- |
+| **JSON**     | ✅   | 原始 JSON 输出       |
+| **表格**     | ✅   | 美化的表格展示       |
+| **摘要**     | ✅   | 简洁的摘要展示       |
+| **疑点标注** | ✅   | 自动分析空值、异常值 |
 
 #### CLI 交互模式
 
-| 功能 | 状态 | 说明 |
-|------|------|------|
-| 交互式审批 | ✅ | y/n/c/s 四种选项 |
-| 超时控制 | ✅ | 可配置超时时间 |
-| 详细反馈收集 | ✅ | 支持原因、修正、补充 |
-| readline 集成 | ✅ | 完整的 CLI 体验 |
+| 功能          | 状态 | 说明                 |
+| ------------- | ---- | -------------------- |
+| 交互式审批    | ✅   | y/n/c/s 四种选项     |
+| 超时控制      | ✅   | 可配置超时时间       |
+| 详细反馈收集  | ✅   | 支持原因、修正、补充 |
+| readline 集成 | ✅   | 完整的 CLI 体验      |
 
 ---
 
@@ -115,6 +115,7 @@ private async httpApproval(...): Promise<ApprovalResponse> {
 ```
 
 **需要实现**:
+
 - [ ] HTTP API 端点（`POST /approval/:approvalId`）
 - [ ] 长轮询或 Webhook 机制
 - [ ] 超时处理
@@ -131,6 +132,7 @@ private async websocketApproval(...): Promise<ApprovalResponse> {
 ```
 
 **需要实现**:
+
 - [ ] WebSocket 服务器
 - [ ] 实时消息推送
 - [ ] 连接管理
@@ -149,6 +151,7 @@ async authenticate(credentials: Credentials): Promise<AuthResult> {
 ```
 
 **需要实现**:
+
 - [ ] 真实的 API Key 验证
 - [ ] JWT Token 生成与验证
 - [ ] OAuth 2.0 集成
@@ -170,6 +173,7 @@ async learnFromFeedback(feedback: UserFeedback): Promise<void> {
 ```
 
 **需要实现**:
+
 - [ ] 反馈模式分析（ML 或规则）
 - [ ] PromptTemplate 自动更新
 - [ ] 推理策略调整
@@ -180,6 +184,7 @@ async learnFromFeedback(feedback: UserFeedback): Promise<void> {
 **当前状态**: 仅控制台输出
 
 **需要实现**:
+
 - [ ] 数据库存储（PostgreSQL/MongoDB）
 - [ ] 日志查询 API
 - [ ] 日志统计分析
@@ -190,6 +195,7 @@ async learnFromFeedback(feedback: UserFeedback): Promise<void> {
 **当前状态**: 仅接口定义
 
 **需要实现**:
+
 - [ ] 语音识别（ASR）集成
 - [ ] 图像识别（Vision）集成
 - [ ] 视频处理
@@ -200,6 +206,7 @@ async learnFromFeedback(feedback: UserFeedback): Promise<void> {
 **当前状态**: 仅关键词过滤
 
 **需要实现**:
+
 - [ ] 正则表达式过滤
 - [ ] ML 模型过滤（敏感内容检测）
 - [ ] 自定义过滤规则 DSL
@@ -210,6 +217,7 @@ async learnFromFeedback(feedback: UserFeedback): Promise<void> {
 **当前状态**: 0%
 
 **需要实现**:
+
 - [ ] 单元测试（目标 80%+）
 - [ ] 集成测试
 - [ ] E2E 测试
@@ -219,14 +227,14 @@ async learnFromFeedback(feedback: UserFeedback): Promise<void> {
 
 ## 📈 代码质量评估
 
-| 指标 | 评分 | 说明 |
-|------|------|------|
+| 指标         | 评分       | 说明                          |
+| ------------ | ---------- | ----------------------------- |
 | **类型安全** | ⭐⭐⭐⭐⭐ | 100% TypeScript，完整类型定义 |
-| **代码结构** | ⭐⭐⭐⭐ | 清晰的接口设计，职责分离良好 |
-| **文档完整** | ⭐⭐⭐⭐⭐ | 详细的注释和 JSDoc |
-| **可扩展性** | ⭐⭐⭐⭐⭐ | 接口设计优秀，易于扩展 |
-| **实现完整** | ⭐⭐⭐ | 核心框架完成，具体实现待补充 |
-| **测试覆盖** | ⭐ | 无测试 |
+| **代码结构** | ⭐⭐⭐⭐   | 清晰的接口设计，职责分离良好  |
+| **文档完整** | ⭐⭐⭐⭐⭐ | 详细的注释和 JSDoc            |
+| **可扩展性** | ⭐⭐⭐⭐⭐ | 接口设计优秀，易于扩展        |
+| **实现完整** | ⭐⭐⭐     | 核心框架完成，具体实现待补充  |
+| **测试覆盖** | ⭐         | 无测试                        |
 
 **总体评分**: ⭐⭐⭐ (3.5/5)
 
@@ -309,7 +317,7 @@ async learnFromFeedback(feedback: UserFeedback): Promise<void> {
 ### 基础使用
 
 ```typescript
-import { BaseGateway } from '@yunpat/core';
+import { BaseGateway } from '@yunpat/core'
 
 // 创建安全网关
 const gateway = new BaseGateway({
@@ -326,25 +334,24 @@ const gateway = new BaseGateway({
       severity: 'high',
     },
   ],
-});
+})
 
 // 身份认证
 const authResult = await gateway.authenticate({
   type: 'apikey',
   data: { apiKey: 'sk-...' },
-});
+})
 
 // 权限检查
-const authorized = await gateway.authorize(
-  { type: 'write', resource: 'file' },
-  [{ resource: 'file', action: 'write' }]
-);
+const authorized = await gateway.authorize({ type: 'write', resource: 'file' }, [
+  { resource: 'file', action: 'write' },
+])
 ```
 
 ### 审批流程
 
 ```typescript
-import { ApprovalFlow, ApprovalMode } from '@yunpat/core';
+import { ApprovalFlow, ApprovalMode } from '@yunpat/core'
 
 // 创建审批流程
 const approvalFlow = new ApprovalFlow(
@@ -354,19 +361,15 @@ const approvalFlow = new ApprovalFlow(
     enableLearning: true,
   },
   eventBus
-);
+)
 
 // 请求审批
-const response = await approvalFlow.requestApproval(
-  { result: '...' },
-  executionContext,
-  30000
-);
+const response = await approvalFlow.requestApproval({ result: '...' }, executionContext, 30000)
 
 if (response.approved) {
-  console.log('审批通过');
+  console.log('审批通过')
 } else if (response.feedback?.type === 'correct') {
-  console.log('需要修正:', response.feedback.corrections);
+  console.log('需要修正:', response.feedback.corrections)
 }
 ```
 
@@ -374,27 +377,29 @@ if (response.approved) {
 
 ## 📊 统计数据
 
-| 指标 | 数值 |
-|------|------|
-| **总代码行数** | ~1,130 行 |
-| **接口定义** | 20+ 个 |
-| **枚举类型** | 3 个 |
-| **实现类** | 2 个（BaseGateway, ApprovalFlow） |
-| **TODO 标记** | 7 个 |
-| **完成功能** | 15/25 (60%) |
-| **待完成功能** | 10/25 (40%) |
+| 指标           | 数值                              |
+| -------------- | --------------------------------- |
+| **总代码行数** | ~1,130 行                         |
+| **接口定义**   | 20+ 个                            |
+| **枚举类型**   | 3 个                              |
+| **实现类**     | 2 个（BaseGateway, ApprovalFlow） |
+| **TODO 标记**  | 7 个                              |
+| **完成功能**   | 15/25 (60%)                       |
+| **待完成功能** | 10/25 (40%)                       |
 
 ---
 
 ## ✅ 验证清单
 
 ### 架构设计
+
 - [x] 清晰的接口定义
 - [x] 职责分离
 - [x] 可扩展性
 - [x] 类型安全
 
 ### 核心功能
+
 - [x] 多模态输入/输出接口
 - [x] CLI 审批模式
 - [x] 基础认证框架
@@ -404,6 +409,7 @@ if (response.approved) {
 - [x] 反馈收集
 
 ### 高级功能
+
 - [ ] HTTP 审批模式
 - [ ] WebSocket 审批模式
 - [ ] 真实认证验证
@@ -411,6 +417,7 @@ if (response.approved) {
 - [ ] 审计日志持久化
 
 ### 多模态支持
+
 - [x] 接口定义
 - [ ] 语音输入
 - [ ] 图像输入
@@ -418,6 +425,7 @@ if (response.approved) {
 - [ ] 文件解析
 
 ### 质量
+
 - [x] 代码规范
 - [x] 文档完整
 - [ ] 单元测试
@@ -431,18 +439,21 @@ if (response.approved) {
 **交互层当前状态**: 🟡 **框架完整，实现待补充**
 
 **优势**:
+
 - ✅ 架构设计优秀，接口清晰
 - ✅ 类型安全，文档完整
 - ✅ CLI 审批模式完全可用
 - ✅ 安全机制框架完整
 
 **不足**:
+
 - ❌ HTTP/WebSocket 审批模式待实现
 - ❌ 认证系统需要真实验证
 - ❌ 无测试覆盖
 - ❌ 多模态输入处理未实现
 
 **建议**:
+
 1. 优先完成 Phase 1 核心功能（2-3 周）
 2. 添加基础测试覆盖（目标 60%+）
 3. 逐步实现高级功能

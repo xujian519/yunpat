@@ -1,12 +1,12 @@
-import EventEmitter from 'eventemitter3';
-import { v4 as uuidv4 } from 'uuid';
+import EventEmitter from 'eventemitter3'
+import { v4 as uuidv4 } from 'uuid'
 import {
   EventBus as IEventBus,
   AgentEvent,
   EventHandler,
   Subscription,
-} from '../lifecycle/Lifecycle.js';
-import { EventBusMetrics } from './EventBusMetrics.js';
+} from '../lifecycle/Lifecycle.js'
+import { EventBusMetrics } from './EventBusMetrics.js'
 
 /**
  * 事件总线实现
@@ -20,26 +20,26 @@ import { EventBusMetrics } from './EventBusMetrics.js';
  */
 export class EventBus implements IEventBus {
   /** 事件发射器 */
-  private emitter = new EventEmitter();
+  private emitter = new EventEmitter()
 
   /** 订阅存储 */
-  private subscriptions = new Map<string, Set<EventHandler>>();
+  private subscriptions = new Map<string, Set<EventHandler>>()
 
   /** 请求响应存储 */
   private pendingRequests = new Map<
     string,
     {
-      resolve: (value: unknown) => void;
-      reject: (error: Error) => void;
-      timeout: ReturnType<typeof setTimeout>;
+      resolve: (value: unknown) => void
+      reject: (error: Error) => void
+      timeout: ReturnType<typeof setTimeout>
     }
-  >();
+  >()
 
   /** 性能监控 */
-  private metrics = new EventBusMetrics(100); // 100ms 阈值
+  private metrics = new EventBusMetrics(100) // 100ms 阈值
 
   /** 是否启用性能监控 */
-  private enableMetrics = true;
+  private enableMetrics = true
 
   /**
    * 发布事件
@@ -47,25 +47,25 @@ export class EventBus implements IEventBus {
    * @param event 事件
    */
   publish(event: AgentEvent): void {
-    const start = performance.now();
+    const start = performance.now()
 
     // 发送完整事件类型
-    this.emitter.emit(event.type, event);
+    this.emitter.emit(event.type, event)
 
     // 如果有目标，发送目标特定事件
     if (event.target) {
-      const targetEvent = `${event.type}:${event.target}`;
-      this.emitter.emit(targetEvent, event);
+      const targetEvent = `${event.type}:${event.target}`
+      this.emitter.emit(targetEvent, event)
     }
 
     // 发送源事件
-    const sourceEvent = `${event.type}:${event.source}`;
-    this.emitter.emit(sourceEvent, event);
+    const sourceEvent = `${event.type}:${event.source}`
+    this.emitter.emit(sourceEvent, event)
 
     // 记录性能
     if (this.enableMetrics) {
-      const duration = performance.now() - start;
-      this.metrics.recordEmit(event.type, duration);
+      const duration = performance.now() - start
+      this.metrics.recordEmit(event.type, duration)
     }
   }
 
@@ -82,16 +82,16 @@ export class EventBus implements IEventBus {
    * @returns 订阅
    */
   subscribe(pattern: string, handler: EventHandler): Subscription {
-    const id = uuidv4();
+    const id = uuidv4()
 
     // 存储订阅
     if (!this.subscriptions.has(pattern)) {
-      this.subscriptions.set(pattern, new Set());
+      this.subscriptions.set(pattern, new Set())
     }
-    this.subscriptions.get(pattern)!.add(handler);
+    this.subscriptions.get(pattern)!.add(handler)
 
     // 绑定事件监听
-    this.emitter.on(pattern, handler);
+    this.emitter.on(pattern, handler)
 
     // 创建订阅对象
     const subscription: Subscription = {
@@ -99,9 +99,9 @@ export class EventBus implements IEventBus {
       pattern,
       handler,
       unsubscribe: () => this.unsubscribe(subscription),
-    };
+    }
 
-    return subscription;
+    return subscription
   }
 
   /**
@@ -110,19 +110,19 @@ export class EventBus implements IEventBus {
    * @param subscription 订阅
    */
   unsubscribe(subscription: Subscription): void {
-    const { pattern, handler } = subscription;
+    const { pattern, handler } = subscription
 
     // 从存储中移除
-    const handlers = this.subscriptions.get(pattern);
+    const handlers = this.subscriptions.get(pattern)
     if (handlers) {
-      handlers.delete(handler);
+      handlers.delete(handler)
       if (handlers.size === 0) {
-        this.subscriptions.delete(pattern);
+        this.subscriptions.delete(pattern)
       }
     }
 
     // 移除事件监听
-    this.emitter.off(pattern, handler);
+    this.emitter.off(pattern, handler)
   }
 
   /**
@@ -137,21 +137,21 @@ export class EventBus implements IEventBus {
    * @returns 响应
    */
   async request(target: string, message: unknown, timeout = 30000): Promise<unknown> {
-    const requestId = uuidv4();
+    const requestId = uuidv4()
 
     return new Promise((resolve, reject) => {
       // 设置超时
       const timer = setTimeout(() => {
-        this.pendingRequests.delete(requestId);
-        reject(new Error(`Request timeout: ${requestId}`));
-      }, timeout);
+        this.pendingRequests.delete(requestId)
+        reject(new Error(`Request timeout: ${requestId}`))
+      }, timeout)
 
       // 存储请求
       this.pendingRequests.set(requestId, {
         resolve,
         reject,
         timeout: timer,
-      });
+      })
 
       // 发布请求事件
       this.publish({
@@ -163,8 +163,8 @@ export class EventBus implements IEventBus {
           message,
         },
         timestamp: new Date(),
-      });
-    });
+      })
+    })
   }
 
   /**
@@ -174,12 +174,12 @@ export class EventBus implements IEventBus {
    * @param response 响应数据
    */
   respond(requestId: string, response: unknown): void {
-    const pending = this.pendingRequests.get(requestId);
+    const pending = this.pendingRequests.get(requestId)
 
     if (pending) {
-      clearTimeout(pending.timeout);
-      this.pendingRequests.delete(requestId);
-      pending.resolve(response);
+      clearTimeout(pending.timeout)
+      this.pendingRequests.delete(requestId)
+      pending.resolve(response)
     }
   }
 
@@ -192,7 +192,7 @@ export class EventBus implements IEventBus {
     return Array.from(this.subscriptions.entries()).map(([pattern, handlers]) => ({
       pattern,
       handlers: handlers.size,
-    }));
+    }))
   }
 
   /**
@@ -201,7 +201,7 @@ export class EventBus implements IEventBus {
    * @returns 性能指标收集器
    */
   getMetrics(): EventBusMetrics {
-    return this.metrics;
+    return this.metrics
   }
 
   /**
@@ -210,7 +210,7 @@ export class EventBus implements IEventBus {
    * @param enable 是否启用
    */
   setMetricsEnabled(enable: boolean): void {
-    this.enableMetrics = enable;
+    this.enableMetrics = enable
   }
 
   /**
@@ -219,15 +219,15 @@ export class EventBus implements IEventBus {
    * @returns 格式化的性能报告
    */
   generatePerformanceReport(): string {
-    return this.metrics.generateReport();
+    return this.metrics.generateReport()
   }
 
   /**
    * 清空所有订阅
    */
   clear(): void {
-    this.subscriptions.clear();
-    this.emitter.removeAllListeners();
-    this.metrics.clear(); // 同时清除性能指标
+    this.subscriptions.clear()
+    this.emitter.removeAllListeners()
+    this.metrics.clear() // 同时清除性能指标
   }
 }

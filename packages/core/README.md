@@ -31,16 +31,16 @@ pnpm add @yunpat/core
 ### 基础使用
 
 ```typescript
-import { Agent, LLMAdapter, ShortTermMemory } from '@yunpat/core';
+import { Agent, LLMAdapter, ShortTermMemory } from '@yunpat/core'
 
 // 1. 创建 LLM 适配器
 const llm = new LLMAdapter({
   apiKey: process.env.OPENAI_API_KEY,
   model: 'gpt-4',
-});
+})
 
 // 2. 创建记忆存储
-const memory = new ShortTermMemory();
+const memory = new ShortTermMemory()
 
 // 3. 创建智能体
 const agent = new Agent({
@@ -48,14 +48,14 @@ const agent = new Agent({
   llm,
   memory,
   systemPrompt: '你是一个专业的专利撰写专家',
-});
+})
 
 // 4. 运行智能体
 const response = await agent.run({
   input: '请帮我撰写一个关于 AI 算法的专利申请',
-});
+})
 
-console.log(response.output);
+console.log(response.output)
 ```
 
 ---
@@ -97,21 +97,23 @@ console.log(response.output);
 // Plan 阶段：制定计划
 const plan = await agent.plan({
   input: '用户输入',
-  context: { /* 上下文 */ },
-});
+  context: {
+    /* 上下文 */
+  },
+})
 
 // Act 阶段：执行动作
 const result = await agent.act({
   plan,
   input: '用户输入',
-});
+})
 
 // Reflect 阶段：反思和调整
 const reflection = await agent.reflect({
   result,
   plan,
   originalInput: '用户输入',
-});
+})
 ```
 
 ---
@@ -123,7 +125,7 @@ const reflection = await agent.reflect({
 智能体的核心类，提供完整的生命周期管理。
 
 ```typescript
-import { Agent } from '@yunpat/core';
+import { Agent } from '@yunpat/core'
 
 const agent = new Agent({
   name: 'MyAgent',
@@ -134,7 +136,7 @@ const agent = new Agent({
   systemPrompt: '系统提示词',
   maxIterations: 10,
   enableReflection: true,
-});
+})
 ```
 
 ### 2. LLMAdapter（大模型适配器）
@@ -142,28 +144,26 @@ const agent = new Agent({
 支持多种 LLM 提供商，提供统一的接口。
 
 ```typescript
-import { LLMAdapter } from '@yunpat/core';
+import { LLMAdapter } from '@yunpat/core'
 
 // OpenAI
 const openaiLLM = new LLMAdapter({
   apiKey: process.env.OPENAI_API_KEY,
   model: 'gpt-4',
   provider: 'openai',
-});
+})
 
 // DeepSeek
 const deepseekLLM = new LLMAdapter({
   apiKey: process.env.DEEPSEEK_API_KEY,
   model: 'deepseek-chat',
   provider: 'deepseek',
-});
+})
 
 // 调用 LLM
 const response = await llmAdapter.generate({
-  messages: [
-    { role: 'user', content: '你好' },
-  ],
-});
+  messages: [{ role: 'user', content: '你好' }],
+})
 ```
 
 ### 3. Memory（记忆系统）
@@ -171,30 +171,25 @@ const response = await llmAdapter.generate({
 提供分层记忆管理，包括短期记忆、长期记忆和检查点管理。
 
 ```typescript
-import {
-  ShortTermMemory,
-  PostgresVectorStore,
-  MemoryLayer,
-} from '@yunpat/core';
+import { ShortTermMemory, PostgresVectorStore, MemoryLayer } from '@yunpat/core'
 
 // 短期记忆
-const shortTermMemory = new ShortTermMemory();
-await shortTermMemory.set('context', { topic: '专利撰写' });
+const shortTermMemory = new ShortTermMemory()
+await shortTermMemory.set('context', { topic: '专利撰写' })
 
 // 长期记忆（向量存储）
 const longTermMemory = new MemoryLayer({
   databaseUrl: process.env.DATABASE_URL,
   vectorDimension: 1024,
-});
+})
 
-await longTermMemory.initialize();
+await longTermMemory.initialize()
 
 // 搜索相关记忆
-const results = await longTermMemory.searchMemories(
-  queryEmbedding,
-  10,
-  { types: ['patent'], excludeArchived: true }
-);
+const results = await longTermMemory.searchMemories(queryEmbedding, 10, {
+  types: ['patent'],
+  excludeArchived: true,
+})
 ```
 
 ### 4. Gateway（安全网关）
@@ -202,8 +197,8 @@ const results = await longTermMemory.searchMemories(
 提供身份认证、权限控制、内容审核和审计日志。
 
 ```typescript
-import { BaseGateway } from '@yunpat/core';
-import { RuleBasedModerationService } from '@yunpat/core';
+import { BaseGateway } from '@yunpat/core'
+import { RuleBasedModerationService } from '@yunpat/core'
 
 const gateway = new BaseGateway({
   enableAuth: true,
@@ -220,12 +215,12 @@ const gateway = new BaseGateway({
       severity: 'high',
     },
   ],
-});
+})
 
 // 过滤内容
-const filtered = await gateway.filterContent(userInput);
+const filtered = await gateway.filterContent(userInput)
 if (filtered.filtered) {
-  console.log('内容被阻止:', filtered.reason);
+  console.log('内容被阻止:', filtered.reason)
 }
 ```
 
@@ -234,7 +229,7 @@ if (filtered.filtered) {
 丰富的内置工具集，支持自定义工具。
 
 ```typescript
-import { Tool } from '@yunpat/core';
+import { Tool } from '@yunpat/core'
 
 // 创建自定义工具
 const calculatorTool: Tool = {
@@ -251,15 +246,15 @@ const calculatorTool: Tool = {
     required: ['expression'],
   },
   execute: async ({ expression }) => {
-    return eval(expression); // 注意：实际应用中需要更安全的实现
+    return eval(expression) // 注意：实际应用中需要更安全的实现
   },
-};
+}
 
 // 使用工具
 const agent = new Agent({
   tools: [calculatorTool],
   // ...
-});
+})
 ```
 
 ---
@@ -269,73 +264,75 @@ const agent = new Agent({
 ### 任务调度
 
 ```typescript
-import { TaskScheduler } from '@yunpat/core';
+import { TaskScheduler } from '@yunpat/core'
 
-const scheduler = new TaskScheduler();
+const scheduler = new TaskScheduler()
 
 // 添加任务
 scheduler.schedule({
   id: 'task1',
   action: async () => {
-    console.log('执行任务1');
+    console.log('执行任务1')
   },
   dependencies: [], // 无依赖
-});
+})
 
 scheduler.schedule({
   id: 'task2',
   action: async () => {
-    console.log('执行任务2');
+    console.log('执行任务2')
   },
   dependencies: ['task1'], // 依赖 task1
-});
+})
 
 // 执行任务
-await scheduler.run();
+await scheduler.run()
 ```
 
 ### 检查点管理
 
 ```typescript
-import { CheckpointManager, FileSystemCheckpointStore } from '@yunpat/core';
+import { CheckpointManager, FileSystemCheckpointStore } from '@yunpat/core'
 
 const checkpointStore = new FileSystemCheckpointStore({
   basePath: './checkpoints',
-});
+})
 
 const checkpointManager = new CheckpointManager({
   store: checkpointStore,
   maxCheckpoints: 10,
-});
+})
 
 // 保存检查点
 await checkpointManager.save({
   agentId: 'agent-1',
-  state: { /* 智能体状态 */ },
+  state: {
+    /* 智能体状态 */
+  },
   timestamp: new Date(),
-});
+})
 
 // 恢复检查点
-const checkpoint = await checkpointManager.loadLatest('agent-1');
+const checkpoint = await checkpointManager.loadLatest('agent-1')
 ```
 
 ### 事件总线
 
 ```typescript
-import { EventBus } from '@yunpat/core';
+import { EventBus } from '@yunpat/core'
 
-const eventBus = new EventBus();
+const eventBus = new EventBus()
 
 // 订阅事件
 eventBus.subscribe('agent.completed', (event) => {
-  console.log('智能体完成:', event.data);
-});
+  console.log('智能体完成:', event.data)
+})
 
 // 发布事件
 eventBus.publish({
   type: 'agent.completed',
   data: { agentId: 'agent-1', result: '成功' },
-});
+})
 ```
 
 ---
@@ -370,12 +367,12 @@ npm test -- --ui
 
 ### 测试覆盖率
 
-| 模块 | 行覆盖率 | 分支覆盖率 | 函数覆盖率 |
-|------|---------|-----------|-----------|
-| Agent | 93.50% | 97.72% | 83.54% |
-| Gateway | 84.13% | 82.88% | 84.74% |
-| Memory | 65.01% | 50.35% | 60.00% |
-| Tools | 88.50% | 77.94% | 92.85% |
+| 模块    | 行覆盖率 | 分支覆盖率 | 函数覆盖率 |
+| ------- | -------- | ---------- | ---------- |
+| Agent   | 93.50%   | 97.72%     | 83.54%     |
+| Gateway | 84.13%   | 82.88%     | 84.74%     |
+| Memory  | 65.01%   | 50.35%     | 60.00%     |
+| Tools   | 88.50%   | 77.94%     | 92.85%     |
 
 ---
 
@@ -401,22 +398,26 @@ packages/core/
 ### 开发流程
 
 1. **Fork 项目**
+
    ```bash
    git clone https://github.com/your-username/YunPat.git
    cd YunPat/packages/core
    ```
 
 2. **安装依赖**
+
    ```bash
    pnpm install
    ```
 
 3. **运行开发模式**
+
    ```bash
    pnpm dev
    ```
 
 4. **运行测试**
+
    ```bash
    pnpm test
    ```
@@ -478,11 +479,13 @@ packages/core/
 ## 🗺️ 路线图
 
 ### v0.2.0 (进行中)
+
 - [ ] 完善长期记忆向量搜索
 - [ ] 增强多模态支持
 - [ ] 优化性能和内存使用
 
 ### v0.3.0 (计划中)
+
 - [ ] 分布式智能体协作
 - [ ] 高级推理能力
 - [ ] 更多 LLM 提供商支持

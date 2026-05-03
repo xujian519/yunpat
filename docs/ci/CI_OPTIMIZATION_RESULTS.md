@@ -15,11 +15,13 @@
 **问题**: canvas@2.11.2 原生模块编译失败，导致 CI 成功率仅 80%
 
 **解决方案**:
+
 - 添加 `CANVAS_USE_NATIVE: '0'` 环境变量跳过原生模块编译
 - 添加 `PUPPETEET_SKIP_DOWNLOAD: 'true'` 跳过可选依赖
 - 优化依赖安装策略，增加超时和重试机制
 
 **验证结果**:
+
 ```
 ✅ CI (Simplified)  - 成功 (1m20s)
 ✅ CI (Optimized)   - 成功 (1m49s)
@@ -27,10 +29,10 @@
 
 ### 2. 构建时间优化
 
-| Workflow | 优化前 | 优化后 | 改进 |
-|---------|--------|--------|------|
-| CI (Simplified) | ~2m00s | 1m20s | -33% |
-| CI (Optimized) | ~2m00s | 1m49s | -10% |
+| Workflow        | 优化前 | 优化后 | 改进 |
+| --------------- | ------ | ------ | ---- |
+| CI (Simplified) | ~2m00s | 1m20s  | -33% |
+| CI (Optimized)  | ~2m00s | 1m49s  | -10% |
 
 ### 3. 新增监控能力
 
@@ -48,11 +50,11 @@
 
 ### 当前状态（2026-05-01 09:17）
 
-| 指标 | 当前值 | 目标值 | 状态 |
-|------|--------|--------|------|
-| **最新运行** | ✅ 成功 | ✅ 成功 | 🟢 达成 |
-| **构建时间** | 1m20s-1m49s | ≤90s | 🟡 接近 |
-| **成功率（近20次）** | 80% | ≥95% | 🟡 提升中 |
+| 指标                 | 当前值      | 目标值  | 状态      |
+| -------------------- | ----------- | ------- | --------- |
+| **最新运行**         | ✅ 成功     | ✅ 成功 | 🟢 达成   |
+| **构建时间**         | 1m20s-1m49s | ≤90s    | 🟡 接近   |
+| **成功率（近20次）** | 80%         | ≥95%    | 🟡 提升中 |
 
 ### 成功率趋势
 
@@ -74,8 +76,8 @@
 env:
   NODE_VERSION: '24.x'
   PNPM_VERSION: 9
-  CANVAS_USE_NATIVE: '0'        # 跳过原生模块编译
-  PUPPETEET_SKIP_DOWNLOAD: 'true'  # 跳过可选依赖
+  CANVAS_USE_NATIVE: '0' # 跳过原生模块编译
+  PUPPETEET_SKIP_DOWNLOAD: 'true' # 跳过可选依赖
 ```
 
 ### 2. 依赖安装优化
@@ -86,8 +88,8 @@ env:
     pnpm install --no-frozen-lockfile --prefer-offline --frozen-lockfile=false || \
     pnpm install --no-frozen-lockfile
   env:
-    PNPM_INSTALL_TIMEOUT: 600000  # 10 分钟超时
-    HUSKY: 0                       # 跳过后置脚本
+    PNPM_INSTALL_TIMEOUT: 600000 # 10 分钟超时
+    HUSKY: 0 # 跳过后置脚本
 ```
 
 ### 3. 超时配置

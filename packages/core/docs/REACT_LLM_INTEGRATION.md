@@ -39,6 +39,7 @@
 ## 内置工具
 
 ### 1. 计算器 (calculator)
+
 执行基本数学运算（加减乘除）
 
 ```typescript
@@ -53,6 +54,7 @@
 ```
 
 ### 2. 文本处理器 (text_processor)
+
 处理文本：大小写转换、反转、字数统计
 
 ```typescript
@@ -66,6 +68,7 @@
 ```
 
 ### 3. 搜索 (search)
+
 搜索信息并返回相关结果（模拟）
 
 ```typescript
@@ -117,47 +120,40 @@ pnpm --filter @yunpat/core exec vitest run test/reasoning/ReActIntegration.test.
 ### 基础用法
 
 ```typescript
-import { createDeepSeekModel } from '@yunpat/core';
-import { EnhancedToolRegistry } from '@yunpat/core';
-import { EnhancedReActLoop } from './react-real-llm-demo.js';
+import { createDeepSeekModel } from '@yunpat/core'
+import { EnhancedToolRegistry } from '@yunpat/core'
+import { EnhancedReActLoop } from './react-real-llm-demo.js'
 
 // 1. 创建 LLM 适配器
-const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY);
+const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY)
 
 // 2. 创建工具注册表
-const toolRegistry = new EnhancedToolRegistry(eventBus);
+const toolRegistry = new EnhancedToolRegistry(eventBus)
 
 // 3. 注册工具
-toolRegistry.registerBatch([
-  calculatorTool,
-  textProcessorTool,
-  searchTool,
-]);
+toolRegistry.registerBatch([calculatorTool, textProcessorTool, searchTool])
 
 // 4. 创建 ReAct 循环
-const reactLoop = new EnhancedReActLoop(llm, toolRegistry);
+const reactLoop = new EnhancedReActLoop(llm, toolRegistry)
 
 // 5. 执行任务
 for await (const iteration of reactLoop.execute('计算 123 + 456')) {
-  console.log(`[迭代 ${iteration.iteration}]`);
-  console.log(`思考: ${iteration.thought.reasoning}`);
-  console.log(`行动: ${iteration.action?.type}`);
-  console.log(`结果: ${iteration.actionResult?.data}`);
+  console.log(`[迭代 ${iteration.iteration}]`)
+  console.log(`思考: ${iteration.thought.reasoning}`)
+  console.log(`行动: ${iteration.action?.type}`)
+  console.log(`结果: ${iteration.actionResult?.data}`)
 
-  if (iteration.done) break;
+  if (iteration.done) break
 }
 ```
 
 ### 自定义工具
 
 ```typescript
-import { z } from 'zod';
-import type { EnhancedTool } from '@yunpat/core';
+import { z } from 'zod'
+import type { EnhancedTool } from '@yunpat/core'
 
-const myTool: EnhancedTool<
-  { input: string },
-  { output: string }
-> = {
+const myTool: EnhancedTool<{ input: string }, { output: string }> = {
   metadata: {
     name: 'my_tool',
     description: '我的自定义工具',
@@ -170,32 +166,36 @@ const myTool: EnhancedTool<
     // 实现你的逻辑
     return {
       output: `处理结果: ${input}`,
-    };
+    }
   },
-};
+}
 
 // 注册工具
-toolRegistry.register(myTool);
+toolRegistry.register(myTool)
 ```
 
 ## ReAct 循环工作原理
 
 ### 1. Observe（观察）
+
 - 捕获当前状态和上下文
 - 记录上一步行动的结果
 
 ### 2. Think（思考）
+
 - 分析当前情况
 - 查看可用工具列表
 - 规划下一步行动
 - 选择合适的工具和参数
 
 ### 3. Act（行动）
+
 - 调用选定的工具
 - 传递参数并执行
 - 获取执行结果
 
 ### 4. 反思（Reflection）
+
 - 评估行动结果
 - 判断任务是否完成
 - 决定继续或结束
@@ -243,9 +243,7 @@ toolRegistry.register(myTool);
 ReAct 循环可以自动分解复杂任务：
 
 ```typescript
-for await (const iteration of reactLoop.execute(
-  '计算 10 × 5，然后将结果字符串反转'
-)) {
+for await (const iteration of reactLoop.execute('计算 10 × 5，然后将结果字符串反转')) {
   // 会自动执行：
   // 1. 计算器：10 × 5 = 50
   // 2. 文本处理器：反转 "50" -> "05"
@@ -263,9 +261,9 @@ const tools = [
   textProcessorTool,
   searchTool,
   // 添加更多工具...
-];
+]
 
-toolRegistry.registerBatch(tools);
+toolRegistry.registerBatch(tools)
 ```
 
 ### 3. 错误处理
@@ -307,11 +305,7 @@ const searchTool: EnhancedTool<...> = {
 工具调用支持中间件：
 
 ```typescript
-import {
-  LoggingMiddleware,
-  CacheMiddleware,
-  RateLimitMiddleware,
-} from '@yunpat/core';
+import { LoggingMiddleware, CacheMiddleware, RateLimitMiddleware } from '@yunpat/core'
 
 // 自动添加的中间件：
 // - 日志记录

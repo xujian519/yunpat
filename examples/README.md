@@ -31,6 +31,7 @@ pnpm build
 确保宝宸知识库已下载到本地，并设置正确的路径。
 
 知识库应该包含以下结构：
+
 ```
 baochen-knowledge-base/
 ├── Wiki/
@@ -79,6 +80,7 @@ node examples/dist/integration-test.js
 ### 1. 完整集成测试 (`runIntegrationTest`)
 
 测试完整的专利撰写流程，包括：
+
 - ✅ 知识库增强
 - ✅ 提示词模板懒加载
 - ✅ 权利要求生成
@@ -86,6 +88,7 @@ node examples/dist/integration-test.js
 - ✅ 质量评估
 
 **输出**：
+
 - 撰写耗时
 - 权利要求数量
 - 说明书字数
@@ -96,12 +99,14 @@ node examples/dist/integration-test.js
 ### 2. 懒加载策略测试 (`testLazyLoadingStrategy`)
 
 专门测试提示词模板的分步加载策略：
+
 - Stage 1: 预加载创造性分析模板
 - Stage 2: 按需加载权利要求模板
 - Stage 3: 按需加载说明书模板
 - Stage 4: 懒加载所有模板
 
 **输出**：
+
 - 各阶段的模板加载情况
 - 缓存统计信息
 - 加载时间
@@ -109,11 +114,13 @@ node examples/dist/integration-test.js
 ### 3. 知识库增强测试 (`testKnowledgeEnhancement`)
 
 专门测试知识库查询和增强功能：
+
 - 查询"什么是创造性"
 - 查询"什么是充分公开"
 - 知识卡片内容增强
 
 **输出**：
+
 - 知识库查询结果
 - 增强后的分析内容
 
@@ -126,12 +133,14 @@ node examples/dist/integration-test.js
 **技术领域**：日用品/智能家居
 
 **核心创新点**：
+
 1. 磁吸式防水充电接口
 2. 压力传感器保护牙龈
 3. 手机APP数据记录
 4. 超声波震动技术
 
 **技术效果**：
+
 - 便携性提升30%
 - 防水等级IPX7
 - 清洁效率提升50%
@@ -219,6 +228,7 @@ Error: ENOENT: no such file or directory
 ```
 
 **解决方法**：
+
 - 检查 `.env` 文件中的 `KNOWLEDGE_BASE_PATH` 是否正确
 - 确保知识库目录存在且可访问
 
@@ -229,6 +239,7 @@ Error: Invalid API key
 ```
 
 **解决方法**：
+
 - 检查 `.env` 文件中的 `DEEPSEEK_API_KEY` 是否正确
 - 确保账号有足够的额度
 
@@ -239,6 +250,7 @@ Error: Template 01-claims-generation.md not found
 ```
 
 **解决方法**：
+
 - 检查 `prompts/patent-drafting/` 目录是否存在
 - 确保三个模板文件都已创建：
   - `01-claims-generation.md`
@@ -252,6 +264,7 @@ Error: Cannot find module '@yunpat/core'
 ```
 
 **解决方法**：
+
 - 运行 `pnpm install` 安装依赖
 - 运行 `pnpm build` 构建项目
 
@@ -259,14 +272,14 @@ Error: Cannot find module '@yunpat/core'
 
 根据设计目标，预期性能：
 
-| 指标 | 目标值 | 实际值 |
-|------|--------|--------|
-| 撰写耗时 | < 60秒 | 待测试 |
-| 权利要求数 | 3-5项 | 待测试 |
-| 说明书字数 | 2000-5000字 | 待测试 |
-| 质量评分 | > 80分 | 待测试 |
-| 内存占用 | < 500MB | 待测试 |
-| 模板加载时间 | < 100ms/个 | 待测试 |
+| 指标         | 目标值      | 实际值 |
+| ------------ | ----------- | ------ |
+| 撰写耗时     | < 60秒      | 待测试 |
+| 权利要求数   | 3-5项       | 待测试 |
+| 说明书字数   | 2000-5000字 | 待测试 |
+| 质量评分     | > 80分      | 待测试 |
+| 内存占用     | < 500MB     | 待测试 |
+| 模板加载时间 | < 100ms/个  | 待测试 |
 
 ## 下一步
 
@@ -290,5 +303,6 @@ Error: Cannot find module '@yunpat/core'
 ## 联系方式
 
 如有问题，请联系：
+
 - 项目维护者: 徐健 (xujian519@gmail.com)
 - 项目地址: /Users/xujian/projects/YunPat

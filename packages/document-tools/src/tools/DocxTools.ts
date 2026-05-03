@@ -4,19 +4,19 @@
  * 支持DOCX转HTML/Markdown/Text
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
-import { DocumentParseResult, DocumentType, ElementType, OutputFormat } from '../types/document.js';
-import TurndownService from 'turndown';
+import * as fs from 'fs'
+import * as path from 'path'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
+import { DocumentParseResult, DocumentType, ElementType, OutputFormat } from '../types/document.js'
+import TurndownService from 'turndown'
 
 // 动态导入
-let mammoth: any;
+let mammoth: any
 
 async function loadMammoth() {
   if (!mammoth) {
-    mammoth = (await import('mammoth')).default || (await import('mammoth'));
+    mammoth = (await import('mammoth')).default || (await import('mammoth'))
   }
 }
 
@@ -25,14 +25,14 @@ async function loadMammoth() {
  */
 export class DocxExtractTextTool extends EnhancedBaseTool<
   {
-    filePath: string;
+    filePath: string
   },
   {
-    text: string;
+    text: string
     metadata: {
-      filename: string;
-      size: number;
-    };
+      filename: string
+      size: number
+    }
   }
 > {
   readonly metadata = {
@@ -53,18 +53,18 @@ export class DocxExtractTextTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string },
     _context: ToolContext
   ): Promise<{ text: string; metadata: any }> {
-    await loadMammoth();
+    await loadMammoth()
 
-    const buffer = fs.readFileSync(input.filePath);
-    const result = await mammoth.extractRawText({ buffer: buffer });
+    const buffer = fs.readFileSync(input.filePath)
+    const result = await mammoth.extractRawText({ buffer: buffer })
 
-    const stats = fs.statSync(input.filePath);
+    const stats = fs.statSync(input.filePath)
 
     return {
       text: result.value,
@@ -72,7 +72,7 @@ export class DocxExtractTextTool extends EnhancedBaseTool<
         filename: path.basename(input.filePath),
         size: stats.size,
       },
-    };
+    }
   }
 }
 
@@ -81,12 +81,12 @@ export class DocxExtractTextTool extends EnhancedBaseTool<
  */
 export class DocxToHtmlTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    styleMap?: string;
+    filePath: string
+    styleMap?: string
   },
   {
-    html: string;
-    messages: string[];
+    html: string
+    messages: string[]
   }
 > {
   readonly metadata = {
@@ -105,27 +105,27 @@ export class DocxToHtmlTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; styleMap?: string },
     _context: ToolContext
   ): Promise<{ html: string; messages: string[] }> {
-    await loadMammoth();
+    await loadMammoth()
 
-    const buffer = fs.readFileSync(input.filePath);
-    const options: any = {};
+    const buffer = fs.readFileSync(input.filePath)
+    const options: any = {}
 
     if (input.styleMap) {
-      options.styleMap = input.styleMap;
+      options.styleMap = input.styleMap
     }
 
-    const result = await mammoth.convertToHtml({ buffer: buffer }, options);
+    const result = await mammoth.convertToHtml({ buffer: buffer }, options)
 
     return {
       html: result.value,
       messages: result.messages,
-    };
+    }
   }
 }
 
@@ -134,16 +134,16 @@ export class DocxToHtmlTool extends EnhancedBaseTool<
  */
 export class DocxToMarkdownTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    headingStyle?: 'atx' | 'setext';
-    codeBlockStyle?: 'fenced' | 'indented';
+    filePath: string
+    headingStyle?: 'atx' | 'setext'
+    codeBlockStyle?: 'fenced' | 'indented'
   },
   {
-    markdown: string;
+    markdown: string
     metadata: {
-      filename: string;
-      size: number;
-    };
+      filename: string
+      size: number
+    }
   }
 > {
   readonly metadata = {
@@ -170,30 +170,30 @@ export class DocxToMarkdownTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; headingStyle?: string; codeBlockStyle?: string },
     context: ToolContext
   ): Promise<{ markdown: string; metadata: any }> {
     // 先转换为HTML
-    const htmlTool = new DocxToHtmlTool();
+    const htmlTool = new DocxToHtmlTool()
     const { html } = await htmlTool.execute(
       {
         filePath: input.filePath,
       },
       context
-    );
+    )
 
     // 使用Turndown将HTML转换为Markdown
     const turndownService = new TurndownService({
       headingStyle: (input.headingStyle as any) || 'atx',
       codeBlockStyle: (input.codeBlockStyle as any) || 'fenced',
-    });
+    })
 
-    const markdown = turndownService.turndown(html);
+    const markdown = turndownService.turndown(html)
 
-    const stats = fs.statSync(input.filePath);
+    const stats = fs.statSync(input.filePath)
 
     return {
       markdown,
@@ -201,7 +201,7 @@ export class DocxToMarkdownTool extends EnhancedBaseTool<
         filename: path.basename(input.filePath),
         size: stats.size,
       },
-    };
+    }
   }
 }
 
@@ -210,8 +210,8 @@ export class DocxToMarkdownTool extends EnhancedBaseTool<
  */
 export class DocxParseTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    outputFormat?: OutputFormat;
+    filePath: string
+    outputFormat?: OutputFormat
   },
   DocumentParseResult
 > {
@@ -239,23 +239,23 @@ export class DocxParseTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; outputFormat?: OutputFormat },
     context: ToolContext
   ): Promise<DocumentParseResult> {
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 先提取文本
-    const textTool = new DocxExtractTextTool();
-    const { text } = await textTool.execute({ filePath: input.filePath }, context);
+    const textTool = new DocxExtractTextTool()
+    const { text } = await textTool.execute({ filePath: input.filePath }, context)
 
     // 简单的元素提取
-    const lines = text.split('\n').filter((line) => line.trim());
-    const elements = this.extractElements(lines);
+    const lines = text.split('\n').filter((line) => line.trim())
+    const elements = this.extractElements(lines)
 
-    const stats = fs.statSync(input.filePath);
+    const stats = fs.statSync(input.filePath)
 
     return {
       documentType: DocumentType.DOCX,
@@ -266,42 +266,42 @@ export class DocxParseTool extends EnhancedBaseTool<
         size: stats.size,
       },
       parseTime: Date.now() - startTime,
-    };
+    }
   }
 
   /**
    * 从文本行中提取元素
    */
   private extractElements(lines: string[]): any[] {
-    const elements: any[] = [];
+    const elements: any[] = []
 
     for (const line of lines) {
       // 检测标题（全大写或以#开头）
       if (line.match(/^#+\s/) || line.match(/^[A-Z][A-Z\s]{5,}$/)) {
-        const levelMatch = line.match(/^(#+)\s/);
-        const level = levelMatch ? levelMatch[1].length : 1;
+        const levelMatch = line.match(/^(#+)\s/)
+        const level = levelMatch ? levelMatch[1].length : 1
         elements.push({
           type: ElementType.TITLE,
           content: line.replace(/^#+\s/, ''),
           metadata: { level },
-        });
+        })
       }
       // 检测列表项
       else if (line.match(/^\d+\.\s/) || line.match(/^[-*]\s/)) {
         elements.push({
           type: ElementType.LIST,
           content: line.replace(/^[\d\-*]+\.\s/, ''),
-        });
+        })
       }
       // 普通段落
       else {
         elements.push({
           type: ElementType.PARAGRAPH,
           content: line,
-        });
+        })
       }
     }
 
-    return elements;
+    return elements
   }
 }

@@ -10,129 +10,129 @@
  * 4. Token 窗口管理
  */
 
-import { Agent, type LLMAdapter, type ExecutionContext } from '@yunpat/core';
-import type { OfficeActionInput, OfficeActionOutput } from './PatentResponderAgent.js';
+import { Agent, type LLMAdapter, type ExecutionContext } from '@yunpat/core'
+import type { OfficeActionInput, OfficeActionOutput } from './PatentResponderAgent.js'
 
 /**
  * 记忆层配置
  */
 export interface MemoryLayerConfig {
-  bgeApiKey?: string;
-  databaseUrl?: string;
-  vectorDimension?: number;
-  maxTokens?: number;
-  reservedTokens?: number;
-  enableRAG?: boolean;
-  enableTokenWindow?: boolean;
+  bgeApiKey?: string
+  databaseUrl?: string
+  vectorDimension?: number
+  maxTokens?: number
+  reservedTokens?: number
+  enableRAG?: boolean
+  enableTokenWindow?: boolean
 }
 
 /**
  * PatentResponderAgent with Memory Layer
  */
 export class PatentResponderAgentWithMemory extends Agent<OfficeActionInput, OfficeActionOutput> {
-  private bgeClient: any;
-  private vectorStore: any;
-  private tokenWindow: any;
-  private memoryConfig: MemoryLayerConfig;
-  private isInitialized: boolean = false;
-  private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+  private bgeClient: any
+  private vectorStore: any
+  private tokenWindow: any
+  private memoryConfig: MemoryLayerConfig
+  private isInitialized: boolean = false
+  private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = []
 
   constructor(config: {
-    llm: LLMAdapter;
-    memoryConfig?: MemoryLayerConfig;
-    name?: string;
-    description?: string;
+    llm: LLMAdapter
+    memoryConfig?: MemoryLayerConfig
+    name?: string
+    description?: string
   }) {
     super({
       llm: config.llm,
       name: config.name || 'patent-responder-with-memory',
-      description:
-        config.description || '审查意见答复智能体 - 集成记忆层（RAG + Token窗口）',
-    });
+      description: config.description || '审查意见答复智能体 - 集成记忆层（RAG + Token窗口）',
+    })
 
     this.memoryConfig = {
       bgeApiKey: config.memoryConfig?.bgeApiKey ?? 'xj781102@',
-      databaseUrl: config.memoryConfig?.databaseUrl ?? 'postgres://yunpat:yunpat123@localhost:5432/yunpat',
+      databaseUrl:
+        config.memoryConfig?.databaseUrl ?? 'postgres://yunpat:yunpat123@localhost:5432/yunpat',
       vectorDimension: config.memoryConfig?.vectorDimension ?? 1024,
       maxTokens: config.memoryConfig?.maxTokens ?? 4000,
       reservedTokens: config.memoryConfig?.reservedTokens ?? 500,
       enableRAG: config.memoryConfig?.enableRAG ?? true,
       enableTokenWindow: config.memoryConfig?.enableTokenWindow ?? true,
-    };
+    }
 
-    this.bgeClient = null;
-    this.vectorStore = null;
-    this.tokenWindow = null;
+    this.bgeClient = null
+    this.vectorStore = null
+    this.tokenWindow = null
   }
 
   /**
    * 初始化记忆层
    */
   protected async init?(context: ExecutionContext): Promise<void> {
-    if (this.isInitialized) return;
+    if (this.isInitialized) return
 
-    console.log('🔧 初始化 PatentResponderAgent 记忆层...');
+    console.log('🔧 初始化 PatentResponderAgent 记忆层...')
 
     this.bgeClient = createBGEM3Client({
       apiKey: this.memoryConfig.bgeApiKey,
-    });
-    console.log('✅ BGE-M3 客户端已初始化');
+    })
+    console.log('✅ BGE-M3 客户端已初始化')
 
     this.vectorStore = new PostgresVectorStore({
       databaseUrl: this.memoryConfig.databaseUrl,
       vectorDimension: this.memoryConfig.vectorDimension,
-    });
-    await this.vectorStore.initialize();
-    console.log('✅ PostgreSQL 向量存储已初始化');
+    })
+    await this.vectorStore.initialize()
+    console.log('✅ PostgreSQL 向量存储已初始化')
 
     if (this.memoryConfig.enableTokenWindow) {
       this.tokenWindow = createTokenWindowManager({
         maxTokens: this.memoryConfig.maxTokens,
         reservedTokens: this.memoryConfig.reservedTokens,
         enableSummary: true,
-      });
-      console.log('✅ Token 窗口管理器已初始化');
+      })
+      console.log('✅ Token 窗口管理器已初始化')
     }
 
-    this.isInitialized = true;
-    console.log('🎉 记忆层初始化完成！\n');
+    this.isInitialized = true
+    console.log('🎉 记忆层初始化完成！\n')
   }
 
   /**
    * 规划阶段（带 RAG 增强）
    */
   protected async plan(input: OfficeActionInput, context: ExecutionContext): Promise<any> {
-    console.log('\n📝 [审查答复] 步骤1: 规划阶段（带记忆层增强）');
-    console.log(`   申请号: ${input.applicationNumber}`);
-    console.log(`   专利名称: ${input.patentTitle}`);
+    console.log('\n📝 [审查答复] 步骤1: 规划阶段（带记忆层增强）')
+    console.log(`   申请号: ${input.applicationNumber}`)
+    console.log(`   专利名称: ${input.patentTitle}`)
 
     if (!this.isInitialized) {
-      await this.init?.(context);
+      await this.init?.(context)
     }
 
     // 1. RAG 增强检索历史答复案例
-    let ragContext = '';
-    let retrievedCases: any[] = [];
+    let ragContext = ''
+    let retrievedCases: any[] = []
 
     if (this.memoryConfig.enableRAG) {
-      console.log('🔍 执行 RAG 检索（历史答复案例）...');
+      console.log('🔍 执行 RAG 检索（历史答复案例）...')
 
       // 构建查询
       const query = `
         审查意见：${input.officeAction.slice(0, 200)}...
         专利名称：${input.patentTitle}
         申请号：${input.applicationNumber}
-      `.trim();
+      `.trim()
 
       // 向量化查询
-      const queryEmbedding = await this.bgeClient.embed(query);
+      const queryEmbedding = await this.bgeClient.embed(query)
 
       // 检索相关答复案例
       retrievedCases = await this.vectorStore.search(queryEmbedding, 5, {
         types: ['oa-response'],
-      });
+      })
 
-      console.log(`   找到 ${retrievedCases.length} 条历史答复案例`);
+      console.log(`   找到 ${retrievedCases.length} 条历史答复案例`)
 
       // 构建 RAG 上下文
       if (retrievedCases.length > 0) {
@@ -140,8 +140,8 @@ export class PatentResponderAgentWithMemory extends Agent<OfficeActionInput, Off
           return `[历史案例 ${i + 1}] (相似度: ${(case_.similarity * 100).toFixed(2)}%)
 申请号: ${case_.metadata?.applicationNumber || '未知'}
 答复策略: ${case_.metadata?.responseStrategy || '未知'}
-核心论点: ${case_.content.slice(0, 200)}...`;
-        });
+核心论点: ${case_.content.slice(0, 200)}...`
+        })
 
         ragContext = `
 ## 历史答复案例参考
@@ -149,17 +149,17 @@ export class PatentResponderAgentWithMemory extends Agent<OfficeActionInput, Off
 ${contextParts.join('\n\n')}
 
 请参考上述案例的答复策略和论点构建方式。
-`;
+`
       }
     }
 
     // 2. 管理 Token 窗口
-    let compressedHistory: any[] = [];
+    let compressedHistory: any[] = []
     if (this.memoryConfig.enableTokenWindow && this.conversationHistory.length > 0) {
-      console.log('🗜️ 应用 Token 窗口压缩...');
-      const { messages, stats } = await this.tokenWindow.slideWindow(this.conversationHistory);
-      compressedHistory = messages;
-      console.log(`   Token 压缩: ${(stats.compressionRatio * 100).toFixed(2)}%`);
+      console.log('🗜️ 应用 Token 窗口压缩...')
+      const { messages, stats } = await this.tokenWindow.slideWindow(this.conversationHistory)
+      compressedHistory = messages
+      console.log(`   Token 压缩: ${(stats.compressionRatio * 100).toFixed(2)}%`)
     }
 
     // 3. 构建完整提示词
@@ -173,7 +173,7 @@ ${contextParts.join('\n\n')}
 
 ${ragContext}
 
-请分析以下审查意见，并给出答复计划。`;
+请分析以下审查意见，并给出答复计划。`
 
     const userPrompt = `申请号：${input.applicationNumber}
 
@@ -189,7 +189,7 @@ ${input.priorArt.join('\n')}
 ${input.claims.join('\n')}
 
 说明书：
-${input.description.slice(0, 500)}...`;
+${input.description.slice(0, 500)}...`
 
     // 4. 调用 LLM
     const analysis = await context.llm.chat({
@@ -198,28 +198,28 @@ ${input.description.slice(0, 500)}...`;
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-    });
+    })
 
     // 5. 保存到对话历史
     this.conversationHistory.push(
       { role: 'user', content: userPrompt },
       { role: 'assistant', content: analysis.message.content as string }
-    );
+    )
 
     return {
       plan: analysis.message.content,
       retrievedCases,
       ragContextUsed: retrievedCases.length > 0,
-    };
+    }
   }
 
   /**
    * 执行阶段（生成答复 + 自动保存到记忆库）
    */
   protected async act(plan: any, context: ExecutionContext): Promise<OfficeActionOutput> {
-    console.log('\n✍️ [审查答复] 步骤2: 执行阶段（记忆层增强）');
+    console.log('\n✍️ [审查答复] 步骤2: 执行阶段（记忆层增强）')
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 1. 生成答复内容（简化版，实际应该调用 LLM）
     const responseContent = `
@@ -238,11 +238,11 @@ ${input.description.slice(0, 500)}...`;
 
 ## 建议修改的权利要求
 1. 将原权利要求1的特征X修改为特征Y...
-    `.trim();
+    `.trim()
 
     // 2. 自动保存到记忆库
-    console.log('💾 保存答复案例到记忆库...');
-    const responseEmbedding = await this.bgeClient.embed(responseContent);
+    console.log('💾 保存答复案例到记忆库...')
+    const responseEmbedding = await this.bgeClient.embed(responseContent)
 
     await this.vectorStore.upsert({
       type: 'oa-response',
@@ -255,12 +255,12 @@ ${input.description.slice(0, 500)}...`;
         createdAt: new Date().toISOString(),
         agent: 'PatentResponderAgentWithMemory',
       },
-    });
+    })
 
-    console.log('✅ 答复案例已保存到记忆库');
+    console.log('✅ 答复案例已保存到记忆库')
 
     // 3. 计算统计信息
-    const durationMinutes = (Date.now() - startTime) / 1000 / 60;
+    const durationMinutes = (Date.now() - startTime) / 1000 / 60
 
     return {
       responseStrategy: {
@@ -279,35 +279,38 @@ ${input.description.slice(0, 500)}...`;
         documentWordCount: responseContent.length,
         qualityScore: 0.85,
       },
-    };
+    }
   }
 
   /**
    * 语义搜索历史答复案例
    */
-  async searchResponseCases(query: string, topK: number = 5): Promise<
+  async searchResponseCases(
+    query: string,
+    topK: number = 5
+  ): Promise<
     Array<{
-      content: string;
-      similarity: number;
-      metadata: any;
+      content: string
+      similarity: number
+      metadata: any
     }>
   > {
     if (!this.isInitialized) {
-      throw new Error('记忆层未初始化');
+      throw new Error('记忆层未初始化')
     }
 
-    console.log(`🔍 搜索答复案例：${query}`);
+    console.log(`🔍 搜索答复案例：${query}`)
 
-    const queryEmbedding = await this.bgeClient.embed(query);
+    const queryEmbedding = await this.bgeClient.embed(query)
     const results = await this.vectorStore.search(queryEmbedding, topK, {
       types: ['oa-response'],
-    });
+    })
 
     return results.map((result) => ({
       content: result.content,
       similarity: result.similarity,
       metadata: result.metadata,
-    }));
+    }))
   }
 
   /**
@@ -315,11 +318,11 @@ ${input.description.slice(0, 500)}...`;
    */
   async getStats() {
     if (!this.isInitialized) {
-      throw new Error('记忆层未初始化');
+      throw new Error('记忆层未初始化')
     }
 
-    const memoryStats = await this.vectorStore.getStats();
-    const bgeStats = this.bgeClient.getCacheStats();
+    const memoryStats = await this.vectorStore.getStats()
+    const bgeStats = this.bgeClient.getCacheStats()
 
     return {
       vector: {
@@ -332,7 +335,7 @@ ${input.description.slice(0, 500)}...`;
         cacheMisses: bgeStats.misses,
         cacheHitRate: bgeStats.hitRate,
       },
-    };
+    }
   }
 
   /**
@@ -340,12 +343,12 @@ ${input.description.slice(0, 500)}...`;
    */
   async cleanup(): Promise<void> {
     if (this.vectorStore) {
-      await this.vectorStore.close();
+      await this.vectorStore.close()
     }
     if (this.bgeClient) {
-      this.bgeClient.clearCache();
+      this.bgeClient.clearCache()
     }
-    console.log('✅ 记忆层资源已清理');
+    console.log('✅ 记忆层资源已清理')
   }
 }
 
@@ -353,9 +356,9 @@ ${input.description.slice(0, 500)}...`;
  * 创建带记忆的审查答复智能体（工厂函数）
  */
 export async function createPatentResponderAgentWithMemory(config: {
-  llm: LLMAdapter;
-  memoryConfig?: MemoryLayerConfig;
+  llm: LLMAdapter
+  memoryConfig?: MemoryLayerConfig
 }): Promise<PatentResponderAgentWithMemory> {
-  const agent = new PatentResponderAgentWithMemory(config);
-  return agent;
+  const agent = new PatentResponderAgentWithMemory(config)
+  return agent
 }

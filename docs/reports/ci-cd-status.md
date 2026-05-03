@@ -33,6 +33,7 @@
 **问题**: agent包位于`packages/agents/`子目录，但workspace只包含`packages/*`
 
 **解决方案**:
+
 ```json
 // package.json
 "workspaces": [
@@ -48,6 +49,7 @@
 **问题**: `pnpm -r --filter './packages/*' build`不包含agents包
 
 **解决方案**:
+
 ```bash
 # 修改构建命令
 pnpm -r --filter './packages/*' --filter './packages/agents/*' build
@@ -60,10 +62,11 @@ pnpm -r --filter './packages/*' --filter './packages/agents/*' build
 **问题**: CI环境中lockfile缺失导致`ERR_PNPM_NO_LOCKFILE`错误
 
 **解决方案**:
+
 ```yaml
 # .github/workflows/ci-simplified.yml
 - name: 安装依赖
-  run: pnpm install --no-frozen-lockfile  # 改为 --no-frozen-lockfile
+  run: pnpm install --no-frozen-lockfile # 改为 --no-frozen-lockfile
 ```
 
 **影响**: CI可以成功安装依赖
@@ -106,6 +109,7 @@ pnpm -r --filter './packages/*' --filter './packages/agents/*' build
 **文件**: `.github/workflows/ci-simplified.yml`
 
 **包含的jobs**:
+
 1. **TypeScript 测试** (必需)
    - TypeScript类型检查
    - 构建项目
@@ -116,11 +120,13 @@ pnpm -r --filter './packages/*' --filter './packages/agents/*' build
    - Prettier格式检查
 
 **触发条件**:
+
 - push到main/develop分支
 - PR到main/develop分支
 - 手动触发
 
 **环境配置**:
+
 - Node版本: 20.x
 - pnpm版本: 8
 - OS: ubuntu-latest

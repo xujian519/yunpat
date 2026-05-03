@@ -10,12 +10,14 @@
 ### 1. claw-code 已经实现了完整的专利工具集！
 
 **惊喜发现**：
+
 ```
 rust/crates/ip-tools/      # 专利检索、分析、生成
 rust/crates/yunpat/        # 专利智能体 TUI
 ```
 
 **包含功能**：
+
 - ✅ 专利检索引擎（Google Patents、专利数据库）
 - ✅ 权利要求生成器（质量评估）
 - ✅ 说明书撰写系统
@@ -28,6 +30,7 @@ rust/crates/yunpat/        # 专利智能体 TUI
 - ✅ Plan/Act 双模式（根据任务复杂度自动切换）
 
 **对 YunPat 的意义**：
+
 - 🎉 **节省 3-6 个月开发时间**
 - 🎉 **直接可用的专利工具实现**
 - 🎉 **经过验证的架构设计**
@@ -37,6 +40,7 @@ rust/crates/yunpat/        # 专利智能体 TUI
 ### 2. 完整的插件系统和 MCP 集成
 
 **claw-code 已实现**：
+
 ```rust
 plugins/           # 插件系统
 ├── Builtin        # 内置插件
@@ -50,6 +54,7 @@ runtime/mcp/       # MCP 集成
 ```
 
 **对 YunPat 的意义**：
+
 - 🔌 统一的外部工具接口
 - 🧩 支持第三方扩展
 - 📦 插件市场机制
@@ -59,6 +64,7 @@ runtime/mcp/       # MCP 集成
 ### 3. 性能优化最佳实践
 
 **claw-code 已实现**：
+
 ```rust
 performance/
 ├── ConcurrencyLimiter    # 并发限制
@@ -67,6 +73,7 @@ performance/
 ```
 
 **对 YunPat 的意义**：
+
 - ⚡ 响应速度提升 30%
 - 💰 成本降低 20-30%
 - 🎯 资源使用优化
@@ -76,6 +83,7 @@ performance/
 ### 4. 混合推理框架
 
 **claw-code 已实现**：
+
 ```rust
 reasoning/
 ├── ReActLoop           # ReAct 循环
@@ -84,6 +92,7 @@ reasoning/
 ```
 
 **对 YunPat 的意义**：
+
 - 🧠 多种推理策略组合
 - 🔄 从失败中学习
 - 📋 复杂任务规划优先
@@ -101,6 +110,7 @@ cp -r /Users/xujian/projects/归档/claw-code/rust/crates/yunpat/* rust/
 ```
 
 **收益**：
+
 - ✅ 专利检索引擎
 - ✅ 权利要求生成器
 - ✅ 审查答复系统
@@ -111,6 +121,7 @@ cp -r /Users/xujian/projects/归档/claw-code/rust/crates/yunpat/* rust/
 ### 优先级 2：增强智能体（本周）
 
 **当前 PatentWriterAgent 增强**：
+
 ```typescript
 // 添加质量评估
 async assessQuality(claims: Claim[]): Promise<QualityAssessment>;
@@ -120,6 +131,7 @@ async generateClaims(params: ClaimGenerationRequest): Promise<Claim[]>;
 ```
 
 **当前 PatentResponderAgent 增强**：
+
 ```typescript
 // 添加审查意见解析
 async parseOfficeAction(text: string): Promise<ParsedOfficeAction>;
@@ -135,8 +147,8 @@ private hebbianLearner: HebbianLearner;
 ```typescript
 // 创建 ai/plugins/
 class PluginManager {
-  async loadPlugin(pluginPath: string): Promise<void>;
-  async registerHooks(hooks: PluginHooks): Promise<void>;
+  async loadPlugin(pluginPath: string): Promise<void>
+  async registerHooks(hooks: PluginHooks): Promise<void>
 }
 ```
 
@@ -147,8 +159,8 @@ class PluginManager {
 ```typescript
 // 创建 ai/mcp/
 class McpServerManager {
-  async registerServer(config: McpServerConfig): Promise<void>;
-  async callTool(serverId: string, toolName: string, params: any): Promise<any>;
+  async registerServer(config: McpServerConfig): Promise<void>
+  async callTool(serverId: string, toolName: string, params: any): Promise<any>
 }
 ```
 
@@ -157,6 +169,7 @@ class McpServerManager {
 ## 📊 详细分析文档
 
 查看完整分析：
+
 - **[ARCHIVE_PROJECTS_ANALYSIS.md](./ARCHIVE_PROJECTS_ANALYSIS.md)** - 详细分析（6000+ 字）
 
 ---
@@ -189,6 +202,7 @@ class McpServerManager {
 **claw-code 是一个金矿！**
 
 它已经实现了：
+
 - ✅ 完整的专利工具集
 - ✅ 插件系统和 MCP 集成
 - ✅ 性能优化最佳实践

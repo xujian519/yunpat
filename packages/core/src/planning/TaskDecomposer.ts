@@ -14,18 +14,18 @@ import type {
   PlanningExecutionContext,
   DecompositionStats,
   Dependency,
-} from './types.js';
-import { Priority, TaskStatus, TaskType, PlanStatus } from './types.js';
-import { DependencyAnalyzer } from './DependencyAnalyzer.js';
-import { v4 as uuidv4 } from 'uuid';
+} from './types.js'
+import { Priority, TaskStatus, TaskType, PlanStatus } from './types.js'
+import { DependencyAnalyzer } from './DependencyAnalyzer.js'
+import { v4 as uuidv4 } from 'uuid'
 
 /**
  * 任务分解器
  */
 export class TaskDecomposer {
-  private config: TaskDecomposerConfig;
-  private dependencyAnalyzer: DependencyAnalyzer;
-  private domainRules: Map<string, DecompositionRule[]>;
+  private config: TaskDecomposerConfig
+  private dependencyAnalyzer: DependencyAnalyzer
+  private domainRules: Map<string, DecompositionRule[]>
 
   /**
    * 创建任务对象的辅助方法
@@ -48,7 +48,7 @@ export class TaskDecomposer {
       estimatedTokens: tokens,
       estimatedDuration: duration,
       createdAt: new Date(),
-    };
+    }
   }
 
   constructor(config: TaskDecomposerConfig = {}) {
@@ -59,12 +59,12 @@ export class TaskDecomposer {
       enableIntelligentDecomposition: config.enableIntelligentDecomposition ?? false,
       domain: config.domain ?? 'general',
       customRules: config.customRules ?? [],
-    } as TaskDecomposerConfig;
+    } as TaskDecomposerConfig
 
-    this.dependencyAnalyzer = new DependencyAnalyzer();
-    this.domainRules = new Map();
+    this.dependencyAnalyzer = new DependencyAnalyzer()
+    this.domainRules = new Map()
 
-    this.initializeDomainRules();
+    this.initializeDomainRules()
   }
 
   /**
@@ -75,28 +75,28 @@ export class TaskDecomposer {
     context?: Partial<PlanningExecutionContext>,
     options?: DecompositionOptions
   ): Promise<HierarchicalPlan> {
-    const opts = this.mergeOptions(options);
+    const opts = this.mergeOptions(options)
 
-    console.log(`🎯 开始分解目标: ${goal}`);
-    console.log(`   最大深度: ${opts.maxDepth}, 智能分解: ${opts.enableIntelligentDecomposition}`);
+    console.log(`🎯 开始分解目标: ${goal}`)
+    console.log(`   最大深度: ${opts.maxDepth}, 智能分解: ${opts.enableIntelligentDecomposition}`)
 
     // 生成唯一ID
-    const planId = uuidv4();
+    const planId = uuidv4()
 
     // 递归分解
-    const subGoals = await this.decomposeRecursive(goal, 0, opts.maxDepth, context, opts);
+    const subGoals = await this.decomposeRecursive(goal, 0, opts.maxDepth, context, opts)
 
-    console.log(`   分解完成: ${subGoals.length} 个子目标`);
+    console.log(`   分解完成: ${subGoals.length} 个子目标`)
 
     // 分析依赖关系
-    const dependencies = this.dependencyAnalyzer.analyzeDependencies(subGoals);
+    const dependencies = this.dependencyAnalyzer.analyzeDependencies(subGoals)
 
     if (dependencies.hasCycles) {
-      console.warn('   ⚠️ 检测到循环依赖，尝试修复...');
+      console.warn('   ⚠️ 检测到循环依赖，尝试修复...')
     }
 
     // 计算统计信息
-    const stats = this.calculateStats(subGoals, dependencies);
+    const stats = this.calculateStats(subGoals, dependencies)
 
     const plan: HierarchicalPlan = {
       id: planId,
@@ -111,13 +111,13 @@ export class TaskDecomposer {
         decompositionOptions: opts,
         stats,
       },
-    };
+    }
 
     console.log(
       `   总任务数: ${stats.totalTasks}, 预估时长: ${(stats.totalEstimatedDuration / 60).toFixed(1)} 分钟`
-    );
+    )
 
-    return plan;
+    return plan
   }
 
   /**
@@ -134,20 +134,20 @@ export class TaskDecomposer {
     // maxDepth=1 表示不分解，直接创建叶子任务
     // maxDepth=2 表示分解1层
     if (currentDepth >= maxDepth - 1) {
-      return [this.createLeafSubGoal(goal, currentDepth)];
+      return [this.createLeafSubGoal(goal, currentDepth)]
     }
 
     // 检查是否有匹配的分解规则
-    const rule = this.findMatchingRule(goal, options);
+    const rule = this.findMatchingRule(goal, options)
     if (rule) {
-      return this.applyRule(goal, rule, currentDepth, context, options);
+      return this.applyRule(goal, rule, currentDepth, context, options)
     }
 
     // 使用智能分解（LLM）或规则分解
     if (options?.enableIntelligentDecomposition && this.config.llm) {
-      return await this.intelligentDecompose(goal, currentDepth, context, options);
+      return await this.intelligentDecompose(goal, currentDepth, context, options)
     } else {
-      return this.ruleBasedDecompose(goal, currentDepth, options);
+      return this.ruleBasedDecompose(goal, currentDepth, options)
     }
   }
 
@@ -155,31 +155,31 @@ export class TaskDecomposer {
    * 查找匹配的分解规则
    */
   private findMatchingRule(goal: string, options?: DecompositionOptions): DecompositionRule | null {
-    const domain = options?.domain || this.config.domain || 'general';
-    const allRules = [...(this.domainRules.get(domain) || []), ...(this.config.customRules || [])];
+    const domain = options?.domain || this.config.domain || 'general'
+    const allRules = [...(this.domainRules.get(domain) || []), ...(this.config.customRules || [])]
 
     for (const rule of allRules) {
       if (this.matchesRule(goal, rule)) {
-        return rule;
+        return rule
       }
     }
 
-    return null;
+    return null
   }
 
   /**
    * 检查目标是否匹配规则
    */
   private matchesRule(goal: string, rule: DecompositionRule): boolean {
-    const lowerGoal = goal.toLowerCase();
+    const lowerGoal = goal.toLowerCase()
 
     if (rule.matchPattern instanceof RegExp) {
-      return rule.matchPattern.test(lowerGoal);
+      return rule.matchPattern.test(lowerGoal)
     } else if (Array.isArray(rule.matchPattern)) {
-      return rule.matchPattern.some((pattern) => lowerGoal.includes(pattern.toLowerCase()));
+      return rule.matchPattern.some((pattern) => lowerGoal.includes(pattern.toLowerCase()))
     }
 
-    return false;
+    return false
   }
 
   /**
@@ -192,7 +192,7 @@ export class TaskDecomposer {
     _context?: Partial<PlanningExecutionContext>,
     _options?: DecompositionOptions
   ): Promise<SubGoal[]> {
-    const subGoals: SubGoal[] = [];
+    const subGoals: SubGoal[] = []
 
     for (const template of rule.subGoalTemplates) {
       const tasks: PlanningTask[] = template.taskTemplates.map((taskTemplate) => ({
@@ -205,7 +205,7 @@ export class TaskDecomposer {
         estimatedTokens: taskTemplate.estimatedTokens,
         estimatedDuration: taskTemplate.estimatedDuration,
         createdAt: new Date(),
-      }));
+      }))
 
       subGoals.push({
         id: uuidv4(),
@@ -217,10 +217,10 @@ export class TaskDecomposer {
         status: TaskStatus.PENDING,
         estimatedDuration: tasks.reduce((sum, t) => sum + t.estimatedDuration, 0),
         estimatedTokens: tasks.reduce((sum, t) => sum + t.estimatedTokens, 0),
-      });
+      })
     }
 
-    return subGoals;
+    return subGoals
   }
 
   /**
@@ -232,7 +232,7 @@ export class TaskDecomposer {
     _options?: DecompositionOptions
   ): SubGoal[] {
     // 通用分解策略
-    const subGoals: SubGoal[] = [];
+    const subGoals: SubGoal[] = []
 
     // 1. 研究阶段
     subGoals.push({
@@ -268,7 +268,7 @@ export class TaskDecomposer {
       status: TaskStatus.PENDING,
       estimatedDuration: 540,
       estimatedTokens: 3500,
-    });
+    })
 
     // 2. 规划阶段
     subGoals.push({
@@ -293,7 +293,7 @@ export class TaskDecomposer {
       status: TaskStatus.PENDING,
       estimatedDuration: 600,
       estimatedTokens: 3000,
-    });
+    })
 
     // 3. 执行阶段
     subGoals.push({
@@ -318,7 +318,7 @@ export class TaskDecomposer {
       status: TaskStatus.PENDING,
       estimatedDuration: 900,
       estimatedTokens: 5000,
-    });
+    })
 
     // 4. 验证阶段
     subGoals.push({
@@ -354,9 +354,9 @@ export class TaskDecomposer {
       status: TaskStatus.PENDING,
       estimatedDuration: 540,
       estimatedTokens: 3500,
-    });
+    })
 
-    return subGoals;
+    return subGoals
   }
 
   /**
@@ -370,11 +370,11 @@ export class TaskDecomposer {
   ): Promise<SubGoal[]> {
     if (!this.config.llm) {
       // 回退到规则分解
-      return this.ruleBasedDecompose(goal, currentDepth, options);
+      return this.ruleBasedDecompose(goal, currentDepth, options)
     }
 
     try {
-      const prompt = this.buildDecompositionPrompt(goal, currentDepth, options);
+      const prompt = this.buildDecompositionPrompt(goal, currentDepth, options)
       const response = await this.config.llm.chat({
         messages: [
           {
@@ -388,13 +388,13 @@ export class TaskDecomposer {
         ],
         temperature: 0.3,
         maxTokens: 2000,
-      });
+      })
 
-      const content = response.message?.content || '';
-      return this.parseDecompositionResult(content, currentDepth);
+      const content = response.message?.content || ''
+      return this.parseDecompositionResult(content, currentDepth)
     } catch (error) {
-      console.error('智能分解失败，回退到规则分解:', error);
-      return this.ruleBasedDecompose(goal, currentDepth, options);
+      console.error('智能分解失败，回退到规则分解:', error)
+      return this.ruleBasedDecompose(goal, currentDepth, options)
     }
   }
 
@@ -436,7 +436,7 @@ export class TaskDecomposer {
 1. 子目标之间应该有逻辑顺序
 2. 每个任务应该是可执行的
 3. 合理估算时间和token消耗
-4. 任务类型应该是 research, analysis, writing, validation, generation, review 之一`;
+4. 任务类型应该是 research, analysis, writing, validation, generation, review 之一`
   }
 
   /**
@@ -445,15 +445,15 @@ export class TaskDecomposer {
   private parseDecompositionResult(content: string, currentDepth: number): SubGoal[] {
     try {
       // 尝试提取JSON
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
-        throw new Error('无法找到JSON结果');
+        throw new Error('无法找到JSON结果')
       }
 
-      const result = JSON.parse(jsonMatch[0]);
+      const result = JSON.parse(jsonMatch[0])
 
       if (!result.subGoals || !Array.isArray(result.subGoals)) {
-        throw new Error('无效的子目标格式');
+        throw new Error('无效的子目标格式')
       }
 
       return result.subGoals.map((sg: unknown) => ({
@@ -482,11 +482,11 @@ export class TaskDecomposer {
           (sum: number, t: unknown) => sum + ((t as any).estimatedTokens || 2000),
           0
         ),
-      }));
+      }))
     } catch (error) {
-      console.error('解析分解结果失败:', error);
+      console.error('解析分解结果失败:', error)
       // 回退到规则分解
-      return this.ruleBasedDecompose('未知目标', currentDepth);
+      return this.ruleBasedDecompose('未知目标', currentDepth)
     }
   }
 
@@ -494,9 +494,9 @@ export class TaskDecomposer {
    * 解析任务类型
    */
   private parseTaskType(type: string): TaskType {
-    const validTypes = ['research', 'analysis', 'writing', 'validation', 'generation', 'review'];
-    const normalized = type?.toLowerCase() || '';
-    return validTypes.includes(normalized) ? (normalized as TaskType) : TaskType.WRITING;
+    const validTypes = ['research', 'analysis', 'writing', 'validation', 'generation', 'review']
+    const normalized = type?.toLowerCase() || ''
+    return validTypes.includes(normalized) ? (normalized as TaskType) : TaskType.WRITING
   }
 
   /**
@@ -510,25 +510,25 @@ export class TaskDecomposer {
       [TaskType.VALIDATION]: ['validation', 'analysis'],
       [TaskType.GENERATION]: ['generation', 'writing'],
       [TaskType.REVIEW]: ['review', 'knowledge'],
-    };
+    }
 
-    return capabilityMap[taskType] || ['general'];
+    return capabilityMap[taskType] || ['general']
   }
 
   /**
    * 解析优先级
    */
   private parsePriority(priority: string): Priority {
-    const validPriorities = ['critical', 'high', 'medium', 'low'];
-    const normalized = priority?.toLowerCase() || 'medium';
-    return validPriorities.includes(normalized) ? (normalized as Priority) : Priority.MEDIUM;
+    const validPriorities = ['critical', 'high', 'medium', 'low']
+    const normalized = priority?.toLowerCase() || 'medium'
+    return validPriorities.includes(normalized) ? (normalized as Priority) : Priority.MEDIUM
   }
 
   /**
    * 创建叶子子目标（达到最大深度时）
    */
   private createLeafSubGoal(goal: string, _depth: number): SubGoal {
-    const taskId = uuidv4();
+    const taskId = uuidv4()
     return {
       id: uuidv4(),
       title: goal,
@@ -551,7 +551,7 @@ export class TaskDecomposer {
       status: TaskStatus.PENDING,
       estimatedDuration: 600,
       estimatedTokens: 3000,
-    };
+    }
   }
 
   /**
@@ -561,18 +561,18 @@ export class TaskDecomposer {
     subGoals: SubGoal[],
     dependencies: { edges: Dependency[] }
   ): DecompositionStats {
-    const totalGoals = subGoals.length;
-    const totalTasks = subGoals.reduce((sum, g) => sum + g.tasks.length, 0);
-    const totalDependencies = dependencies.edges.length;
-    const totalEstimatedDuration = subGoals.reduce((sum, g) => sum + g.estimatedDuration, 0);
-    const totalEstimatedTokens = subGoals.reduce((sum, g) => sum + g.estimatedTokens, 0);
-    const avgTasksPerGoal = totalGoals > 0 ? totalTasks / totalGoals : 0;
+    const totalGoals = subGoals.length
+    const totalTasks = subGoals.reduce((sum, g) => sum + g.tasks.length, 0)
+    const totalDependencies = dependencies.edges.length
+    const totalEstimatedDuration = subGoals.reduce((sum, g) => sum + g.estimatedDuration, 0)
+    const totalEstimatedTokens = subGoals.reduce((sum, g) => sum + g.estimatedTokens, 0)
+    const avgTasksPerGoal = totalGoals > 0 ? totalTasks / totalGoals : 0
 
     // 计算最大深度（简单估算）
-    const maxDepth = Math.ceil(Math.log2(totalGoals + 1));
+    const maxDepth = Math.ceil(Math.log2(totalGoals + 1))
 
     // 计算关键路径长度（粗略估计）
-    const criticalPathLength = Math.max(...subGoals.map((g) => g.tasks.length));
+    const criticalPathLength = Math.max(...subGoals.map((g) => g.tasks.length))
 
     return {
       totalGoals,
@@ -583,7 +583,7 @@ export class TaskDecomposer {
       avgTasksPerGoal,
       maxDepth,
       criticalPathLength,
-    };
+    }
   }
 
   /**
@@ -599,7 +599,7 @@ export class TaskDecomposer {
         false,
       domain: options?.domain ?? this.config.domain ?? 'general',
       customRules: options?.customRules ?? this.config.customRules ?? [],
-    };
+    }
   }
 
   /**
@@ -693,7 +693,7 @@ export class TaskDecomposer {
           },
         ],
       },
-    ]);
+    ])
 
     // 研究规则
     this.domainRules.set('research', [
@@ -743,7 +743,7 @@ export class TaskDecomposer {
           },
         ],
       },
-    ]);
+    ])
   }
 
   /**
@@ -751,28 +751,28 @@ export class TaskDecomposer {
    */
   addCustomRule(rule: DecompositionRule): void {
     if (!this.config.customRules) {
-      this.config.customRules = [];
+      this.config.customRules = []
     }
-    this.config.customRules.push(rule);
+    this.config.customRules.push(rule)
   }
 
   /**
    * 获取分解器统计信息
    */
   getStats(): {
-    totalRules: number;
-    domainRulesCount: number;
-    customRulesCount: number;
+    totalRules: number
+    domainRulesCount: number
+    customRulesCount: number
   } {
-    let domainRulesCount = 0;
+    let domainRulesCount = 0
     this.domainRules.forEach((rules) => {
-      domainRulesCount += rules.length;
-    });
+      domainRulesCount += rules.length
+    })
 
     return {
       totalRules: domainRulesCount + (this.config.customRules?.length || 0),
       domainRulesCount,
       customRulesCount: this.config.customRules?.length || 0,
-    };
+    }
   }
 }

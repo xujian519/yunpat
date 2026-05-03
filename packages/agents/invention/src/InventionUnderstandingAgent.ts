@@ -1,27 +1,27 @@
-import { Agent, type ExecutionContext } from '@yunpat/core';
+import { Agent, type ExecutionContext } from '@yunpat/core'
 
 export interface InventionUnderstandingInput {
-  title: string;
-  field: string;
-  technicalDisclosure: string;
-  drawings?: string[];
-  applicant?: string;
-  inventors?: string[];
+  title: string
+  field: string
+  technicalDisclosure: string
+  drawings?: string[]
+  applicant?: string
+  inventors?: string[]
 }
 
 export interface InventionUnderstandingOutput {
-  technicalField: string;
-  backgroundArt: string;
-  technicalProblem: string;
-  technicalSolution: string;
-  beneficialEffects: string;
-  keyFeatures: string[];
-  drawingDescriptions: string[];
-  confidence: number;
+  technicalField: string
+  backgroundArt: string
+  technicalProblem: string
+  technicalSolution: string
+  beneficialEffects: string
+  keyFeatures: string[]
+  drawingDescriptions: string[]
+  confidence: number
 }
 
 interface InventionPlan {
-  input: InventionUnderstandingInput;
+  input: InventionUnderstandingInput
 }
 
 export class InventionUnderstandingAgent extends Agent {
@@ -30,29 +30,29 @@ export class InventionUnderstandingAgent extends Agent {
     _context: ExecutionContext
   ): Promise<InventionPlan> {
     if (!input.title?.trim()) {
-      throw new Error('发明名称不能为空');
+      throw new Error('发明名称不能为空')
     }
     if (!input.field?.trim()) {
-      throw new Error('技术领域不能为空');
+      throw new Error('技术领域不能为空')
     }
     if (!input.technicalDisclosure?.trim()) {
-      throw new Error('技术交底书不能为空');
+      throw new Error('技术交底书不能为空')
     }
 
-    console.log('\n🔍 [发明理解] 步骤1: 规划阶段');
-    console.log(`   发明名称: ${input.title}`);
-    console.log(`   技术领域: ${input.field}`);
+    console.log('\n🔍 [发明理解] 步骤1: 规划阶段')
+    console.log(`   发明名称: ${input.title}`)
+    console.log(`   技术领域: ${input.field}`)
 
-    return { input };
+    return { input }
   }
 
   protected async act(
     plan: InventionPlan,
     context: ExecutionContext
   ): Promise<InventionUnderstandingOutput> {
-    console.log('\n🧠 [发明理解] 步骤2: 分析阶段');
+    console.log('\n🧠 [发明理解] 步骤2: 分析阶段')
 
-    const { input } = plan;
+    const { input } = plan
 
     const systemPrompt = `你是一位资深的专利代理人，专精于发明理解和专利申请文件撰写。
 
@@ -65,7 +65,7 @@ export class InventionUnderstandingAgent extends Agent {
 6. 关键特征 - 发明的核心技术特征清单
 7. 附图说明 - 各附图的内容描述
 
-请用中文回答，保持专业术语的准确性。输出必须是严格的 JSON 格式。`;
+请用中文回答，保持专业术语的准确性。输出必须是严格的 JSON 格式。`
 
     const userPrompt = `发明名称：${input.title}
 
@@ -86,19 +86,19 @@ ${input.drawings && input.drawings.length > 0 ? `附图说明：\n${input.drawin
   "keyFeatures": ["特征1", "特征2", "特征3"],
   "drawingDescriptions": ["图1描述", "图2描述"],
   "confidence": 0.95
-}`;
+}`
 
     if (!context.llm) {
-      throw new Error('LLM 未配置，无法执行发明理解');
+      throw new Error('LLM 未配置，无法执行发明理解')
     }
 
-    const result = await this.callLLMWithFallback(context.llm, systemPrompt, userPrompt, input);
+    const result = await this.callLLMWithFallback(context.llm, systemPrompt, userPrompt, input)
 
-    console.log(`\n✅ [发明理解] 分析完成 (置信度: ${result.confidence.toFixed(2)})`);
-    console.log(`   技术领域: ${result.technicalField}`);
-    console.log(`   关键特征: ${result.keyFeatures.length} 个`);
+    console.log(`\n✅ [发明理解] 分析完成 (置信度: ${result.confidence.toFixed(2)})`)
+    console.log(`   技术领域: ${result.technicalField}`)
+    console.log(`   关键特征: ${result.keyFeatures.length} 个`)
 
-    return result;
+    return result
   }
 
   private async callLLMWithFallback(
@@ -107,8 +107,8 @@ ${input.drawings && input.drawings.length > 0 ? `附图说明：\n${input.drawin
     userPrompt: string,
     input: InventionUnderstandingInput
   ): Promise<InventionUnderstandingOutput> {
-    const maxRetries = 2;
-    let lastError: Error | undefined;
+    const maxRetries = 2
+    let lastError: Error | undefined
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -118,42 +118,45 @@ ${input.drawings && input.drawings.length > 0 ? `附图说明：\n${input.drawin
             { role: 'user', content: userPrompt },
           ],
           temperature: 0.3,
-        });
+        })
 
-        const content = response.message.content;
-        const parsed = this.safeParseJSON(content);
+        const content = response.message.content
+        const parsed = this.safeParseJSON(content)
 
         if (parsed) {
-          return this.normalizeOutput(parsed, input);
+          return this.normalizeOutput(parsed, input)
         }
       } catch (e) {
-        lastError = e instanceof Error ? e : new Error(String(e));
-        console.warn(`[InventionUnderstandingAgent] LLM 调用失败 (尝试 ${attempt + 1}/${maxRetries + 1}): ${lastError.message}`);
+        lastError = e instanceof Error ? e : new Error(String(e))
+        console.warn(
+          `[InventionUnderstandingAgent] LLM 调用失败 (尝试 ${attempt + 1}/${maxRetries + 1}): ${lastError.message}`
+        )
       }
     }
 
-    console.error('[InventionUnderstandingAgent] 分析失败，使用回退输出:', lastError);
-    return this.createFallbackOutput(input);
+    console.error('[InventionUnderstandingAgent] 分析失败，使用回退输出:', lastError)
+    return this.createFallbackOutput(input)
   }
 
   private safeParseJSON(content: unknown): Record<string, unknown> | null {
     if (typeof content !== 'string') {
-      return null;
+      return null
     }
 
-    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) ||
-                      content.match(/```\s*([\s\S]*?)\s*```/) ||
-                      content.match(/{[\s\S]*}/);
+    const jsonMatch =
+      content.match(/```json\s*([\s\S]*?)\s*```/) ||
+      content.match(/```\s*([\s\S]*?)\s*```/) ||
+      content.match(/{[\s\S]*}/)
 
-    const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content;
+    const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content
 
     try {
-      const parsed = JSON.parse(jsonStr);
+      const parsed = JSON.parse(jsonStr)
       return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-        ? parsed as Record<string, unknown>
-        : null;
+        ? (parsed as Record<string, unknown>)
+        : null
     } catch {
-      return null;
+      return null
     }
   }
 
@@ -162,21 +165,21 @@ ${input.drawings && input.drawings.length > 0 ? `附图说明：\n${input.drawin
     input: InventionUnderstandingInput
   ): InventionUnderstandingOutput {
     const getString = (key: string): string => {
-      const value = parsed[key];
-      return typeof value === 'string' ? value.trim() : '';
-    };
+      const value = parsed[key]
+      return typeof value === 'string' ? value.trim() : ''
+    }
 
     const getStringArray = (key: string): string[] => {
-      const value = parsed[key];
+      const value = parsed[key]
       return Array.isArray(value)
         ? value.filter((v): v is string => typeof v === 'string').map((s) => s.trim())
-        : [];
-    };
+        : []
+    }
 
     const getNumber = (key: string, fallback: number): number => {
-      const value = parsed[key];
-      return typeof value === 'number' && !isNaN(value) ? value : fallback;
-    };
+      const value = parsed[key]
+      return typeof value === 'number' && !isNaN(value) ? value : fallback
+    }
 
     return {
       technicalField: getString('technicalField') || input.field,
@@ -187,7 +190,7 @@ ${input.drawings && input.drawings.length > 0 ? `附图说明：\n${input.drawin
       keyFeatures: getStringArray('keyFeatures'),
       drawingDescriptions: getStringArray('drawingDescriptions'),
       confidence: getNumber('confidence', 0.8),
-    };
+    }
   }
 
   private createFallbackOutput(input: InventionUnderstandingInput): InventionUnderstandingOutput {
@@ -200,6 +203,6 @@ ${input.drawings && input.drawings.length > 0 ? `附图说明：\n${input.drawin
       keyFeatures: [],
       drawingDescriptions: input.drawings ?? [],
       confidence: 0.5,
-    };
+    }
   }
 }

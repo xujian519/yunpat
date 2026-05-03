@@ -111,6 +111,7 @@ yunpat/
 **职责**：面向用户的具体应用
 
 **包含应用**：
+
 - `patent-writer` - 专利撰写应用
 - `office-action` - 审查答复应用
 - `patent-analyzer` - 专利分析应用
@@ -118,6 +119,7 @@ yunpat/
 - `client-portal` - 客户门户
 
 **技术栈**：
+
 - 前端：React + TypeScript + Vite
 - 后端：Node.js + Express/Fastify
 - 通信：REST API + WebSocket
@@ -129,6 +131,7 @@ yunpat/
 **职责**：业务逻辑和数据处理
 
 **包含服务**：
+
 - `patent-lifecycle` - 专利全生命周期管理
 - `workflow-engine` - 工作流引擎
 - `knowledge-base` - 专利知识库
@@ -136,6 +139,7 @@ yunpat/
 - `user-service` - 用户权限
 
 **技术栈**：
+
 - TypeScript + Node.js
 - gRPC/Protobuf（服务间通信）
 - PostgreSQL + Redis
@@ -147,17 +151,20 @@ yunpat/
 **职责**：专利专用AI智能体
 
 **包含智能体**：
+
 - `PatentWriterAgent` - 专利撰写 ✅
 - `PatentResponderAgent` - 审查答复 ✅
 - `PatentAnalyzerAgent` - 专利分析 ✅
 - `PatentManagerAgent` - 专利管理 ✅
 
 **包含模块**：
+
 - `retrieval` - 专利检索引擎（Rust）
 - `generation` - 专利生成引擎
 - `knowledge` - 专利知识系统
 
 **技术栈**：
+
 - TypeScript（智能体逻辑）
 - Rust（检索引擎、ML推理）
 - Python（完全隔离，容器化）
@@ -169,12 +176,14 @@ yunpat/
 **职责**：通用智能体框架（保持不变）
 
 **包含包**：
+
 - `core` - 核心框架
 - `agents` - 示例智能体
 - `cli` - 命令行工具
 - `grpc-server` - gRPC服务器
 
 **设计原则**：
+
 - 框架笨、智能体专
 - 新增智能体不需要修改框架代码
 - 通用能力与业务逻辑分离
@@ -186,6 +195,7 @@ yunpat/
 **职责**：底层技术支撑
 
 **包含模块**：
+
 - `api` - API网关
 - `database` - 数据库
 - `queue` - 消息队列

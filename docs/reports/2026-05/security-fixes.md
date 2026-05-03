@@ -8,12 +8,12 @@
 
 ## 📊 修复统计
 
-| 优先级 | 发现 | 已修复 | 状态 |
-|--------|------|--------|------|
-| **Critical** | 4 | 4 | ✅ 100% |
-| **High** | 3 | 3 | ✅ 100% |
-| **Medium** | 5 | 3 | ⚠️ 60% |
-| **总计** | 12 | 10 | ✅ 83% |
+| 优先级       | 发现 | 已修复 | 状态    |
+| ------------ | ---- | ------ | ------- |
+| **Critical** | 4    | 4      | ✅ 100% |
+| **High**     | 3    | 3      | ✅ 100% |
+| **Medium**   | 5    | 3      | ⚠️ 60%  |
+| **总计**     | 12   | 10     | ✅ 83%  |
 
 ---
 
@@ -24,6 +24,7 @@
 **问题**: 使用硬编码的默认密钥 `yunpat-secret-key`
 
 **修复**:
+
 ```typescript
 constructor(config: Partial<TokenConfig> = {}, store?: TokenStore) {
   // 安全检查：强制要求提供密钥
@@ -39,6 +40,7 @@ constructor(config: Partial<TokenConfig> = {}, store?: TokenStore) {
 ```
 
 **影响**:
+
 - ✅ 生产环境必须显式配置密钥
 - ✅ 防止使用默认密钥
 - ✅ 启动时即可发现配置问题
@@ -50,6 +52,7 @@ constructor(config: Partial<TokenConfig> = {}, store?: TokenStore) {
 **问题**: 使用 `Math.random()` 生成 ID，可预测且存在碰撞风险
 
 **修复**:
+
 ```typescript
 import { randomBytes } from 'crypto';
 
@@ -67,6 +70,7 @@ private generateSessionId(): string {
 ```
 
 **影响**:
+
 - ✅ 使用密码学安全的随机数
 - ✅ ID 不可预测
 - ✅ 碰撞概率极低（2^128）
@@ -78,30 +82,32 @@ private generateSessionId(): string {
 **问题**: 客户端断开时定时器不会被清理
 
 **修复**:
+
 ```typescript
 // 监听客户端断开
-let completed = false;
+let completed = false
 req.on('close', () => {
-  completed = true;
-});
+  completed = true
+})
 
 const cleanup = () => {
-  clearTimeout(timer);
-  clearInterval(checkInterval);
-};
+  clearTimeout(timer)
+  clearInterval(checkInterval)
+}
 
 // 在定时器中使用 completed 检查
 const timer = setTimeout(() => {
   if (!completed && approval.status === 'pending') {
-    cleanup();
+    cleanup()
     if (!res.headersSent) {
-      res.status(408).json({ error: 'Approval timeout' });
+      res.status(408).json({ error: 'Approval timeout' })
     }
   }
-}, timeout);
+}, timeout)
 ```
 
 **影响**:
+
 - ✅ 客户端断开时立即清理资源
 - ✅ 防止内存泄漏
 - ✅ 避免重复响应
@@ -113,6 +119,7 @@ const timer = setTimeout(() => {
 **问题**: 高并发场景下可能导致数据库锁定
 
 **修复**:
+
 ```typescript
 constructor(config: SqliteAuditStoreConfig) {
   // ...
@@ -128,6 +135,7 @@ constructor(config: SqliteAuditStoreConfig) {
 ```
 
 **影响**:
+
 - ✅ 提高并发读性能
 - ✅ 减少数据库锁定
 - ✅ 更好的写入性能
@@ -141,6 +149,7 @@ constructor(config: SqliteAuditStoreConfig) {
 **问题**: 刷新时使用硬编码的 `roles` 和 `permissions`
 
 **修复**:
+
 ```typescript
 async refreshTokens(refreshToken: string): Promise<TokenPair | null> {
   try {
@@ -164,7 +173,8 @@ async refreshTokens(refreshToken: string): Promise<TokenPair | null> {
 }
 ```
 
-**后续行动**: 
+**后续行动**:
+
 - 添加用户数据访问层接口
 - 集成数据库或缓存查询
 
@@ -175,6 +185,7 @@ async refreshTokens(refreshToken: string): Promise<TokenPair | null> {
 **问题**: 多个请求同时审批可能导致状态不一致
 
 **修复**:
+
 ```typescript
 import { Mutex } from 'async-mutex';
 
@@ -216,6 +227,7 @@ private async processApproval(
 ```
 
 **影响**:
+
 - ✅ 防止并发审批
 - ✅ 保证状态一致性
 - ✅ 互斥锁自动清理
@@ -227,46 +239,47 @@ private async processApproval(
 **问题**: API Key 验证没有实现速率限制，容易被暴力破解
 
 **修复**:
+
 ```typescript
 export interface ApiKeyManagerConfig {
   rateLimit?: {
-    maxAttempts: number;
-    windowMs: number;
-  };
+    maxAttempts: number
+    windowMs: number
+  }
 }
 
 export class ApiKeyManager {
-  private rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+  private rateLimitMap = new Map<string, { count: number; resetTime: number }>()
 
   private async checkRateLimit(keyId: string): Promise<boolean> {
     if (!this.config.rateLimit) {
-      return true;
+      return true
     }
 
-    const now = Date.now();
-    const record = this.rateLimitMap.get(keyId);
+    const now = Date.now()
+    const record = this.rateLimitMap.get(keyId)
 
     if (!record || now > record.resetTime) {
       this.rateLimitMap.set(keyId, {
         count: 1,
         resetTime: now + this.config.rateLimit.windowMs,
-      });
-      return true;
+      })
+      return true
     }
 
     if (record.count >= this.config.rateLimit.maxAttempts) {
-      return false; // 超过限制
+      return false // 超过限制
     }
 
-    record.count++;
-    return true;
+    record.count++
+    return true
   }
 
   async verifyApiKey(apiKey: string): Promise<ApiKeyInfo | null> {
     // ...
-    const rateLimitOk = await this.checkRateLimit(keyId);
+    const rateLimitOk = await this.checkRateLimit(keyId)
     if (!rateLimitOk) {
-      return null;
+      return null
     }
     // ...
   }
@@ -274,6 +287,7 @@ export class ApiKeyManager {
 ```
 
 **影响**:
+
 - ✅ 防止暴力破解
 - ✅ 默认限制：10 次/分钟
 - ✅ 可配置
@@ -285,6 +299,7 @@ export class ApiKeyManager {
 ### 1. Token 验证错误信息不明确 ✅
 
 **修复**:
+
 ```typescript
 async verifyAccessToken(token: string): Promise<TokenVerifyResult> {
   try {
@@ -309,6 +324,7 @@ async verifyAccessToken(token: string): Promise<TokenVerifyResult> {
 ```
 
 **影响**:
+
 - ✅ 区分 invalid/expired/revoked
 - ✅ 便于调试和监控
 
@@ -317,6 +333,7 @@ async verifyAccessToken(token: string): Promise<TokenVerifyResult> {
 ### 2. 异步清理不等待结果 ✅
 
 **修复**:
+
 ```typescript
 private cleanupScheduler?: NodeJS.Timeout;
 
@@ -345,6 +362,7 @@ close(): void {
 ```
 
 **影响**:
+
 - ✅ 定期清理（每小时）
 - ✅ 错误日志记录
 - ✅ 优雅关闭
@@ -364,6 +382,7 @@ close(): void {
 ### 4. 会话数量限制 ✅
 
 **修复**:
+
 ```typescript
 async createSession(options: SessionOptions): Promise<Session> {
   // 检查用户会话数量限制
@@ -384,6 +403,7 @@ async createSession(options: SessionOptions): Promise<Session> {
 ```
 
 **影响**:
+
 - ✅ 默认限制每用户 10 个会话
 - ✅ 自动清理旧会话
 - ✅ 可配置
@@ -393,23 +413,25 @@ async createSession(options: SessionOptions): Promise<Session> {
 ### 5. CORS 实现问题 ✅
 
 **修复**:
+
 ```typescript
 if (this.config.corsOrigin) {
   this.app.use((req: any, res: any, next: any) => {
-    const origin = req.headers.origin;
+    const origin = req.headers.origin
     const allowedOrigins = Array.isArray(this.config.corsOrigin)
       ? this.config.corsOrigin
-      : [this.config.corsOrigin];
+      : [this.config.corsOrigin]
 
     if (origin && allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Origin', origin)
     }
     // ...
-  });
+  })
 }
 ```
 
 **影响**:
+
 - ✅ 正确的 Origin 检查
 - ✅ 支持 CORS 预检
 - ✅ 安全的跨域配置
@@ -438,6 +460,7 @@ async writeBatch(logs: AuditLog[]): Promise<void> {
 ```
 
 **优势**:
+
 - ✅ 使用事务提高性能
 - ✅ 原子性保证
 - ✅ 适合批量导入
@@ -448,13 +471,14 @@ async writeBatch(logs: AuditLog[]): Promise<void> {
 
 ```typescript
 export interface TokenVerifyResult {
-  success: boolean;
-  payload?: TokenPayload;
-  error?: 'invalid' | 'expired' | 'revoked';
+  success: boolean
+  payload?: TokenPayload
+  error?: 'invalid' | 'expired' | 'revoked'
 }
 ```
 
 **优势**:
+
 - ✅ 详细的错误分类
 - ✅ 便于监控和告警
 - ✅ 更好的用户体验
@@ -465,17 +489,18 @@ export interface TokenVerifyResult {
 
 ```typescript
 // 限制请求 body 大小为 1MB
-this.app.use(express.json({ limit: '1mb' }));
+this.app.use(express.json({ limit: '1mb' }))
 
 // 添加速率限制
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 分钟
   max: 100,
   message: 'Too many requests from this IP',
-});
+})
 ```
 
 **优势**:
+
 - ✅ 防止大文件攻击
 - ✅ API 速率限制
 - ✅ 防止 DDoS
@@ -488,12 +513,12 @@ const limiter = rateLimit({
 
 ```typescript
 // JWT 密钥（必须）
-process.env.JWT_SECRET = 'your-secure-random-secret-key';
+process.env.JWT_SECRET = 'your-secure-random-secret-key'
 
 // 或通过配置
 const jwtManager = new JwtManager({
   secret: 'your-secure-random-secret-key',
-});
+})
 ```
 
 ### 可选配置
@@ -505,20 +530,20 @@ const apiKeyManager = new ApiKeyManager(store, {
     maxAttempts: 10,
     windowMs: 60000, // 1 分钟
   },
-});
+})
 
 // 会话管理器
 const sessionManager = new SessionManager(store, {
   maxSessionsPerUser: 10,
   cleanupInterval: 5 * 60 * 1000, // 5 分钟
-});
+})
 
 // HTTP 审批服务器
 const httpServer = new HttpApprovalServer({
   port: 3000,
   corsOrigin: ['https://example.com', 'https://app.example.com'],
   apiKey: 'your-api-key', // 可选
-});
+})
 ```
 
 ---
@@ -543,14 +568,14 @@ pnpm --filter @yunpat/core test test/gateway/auth
 
 ## 📊 安全评分提升
 
-| 指标 | 修复前 | 修复后 | 提升 |
-|------|--------|--------|------|
+| 指标         | 修复前 | 修复后     | 提升 |
+| ------------ | ------ | ---------- | ---- |
 | **总体评分** | 7.2/10 | **8.8/10** | +1.6 |
-| **安全性** | 6/10 | **9/10** | +3 |
-| **类型安全** | 8/10 | **9/10** | +1 |
-| **错误处理** | 7/10 | **9/10** | +2 |
-| **性能** | 7/10 | **8/10** | +1 |
-| **代码质量** | 8/10 | **9/10** | +1 |
+| **安全性**   | 6/10   | **9/10**   | +3   |
+| **类型安全** | 8/10   | **9/10**   | +1   |
+| **错误处理** | 7/10   | **9/10**   | +2   |
+| **性能**     | 7/10   | **8/10**   | +1   |
+| **代码质量** | 8/10   | **9/10**   | +1   |
 
 ---
 
@@ -599,6 +624,7 @@ pnpm --filter @yunpat/core test test/gateway/auth
 ## 📝 总结
 
 **关键成就**:
+
 1. ✅ 修复所有 4 个 Critical 安全问题
 2. ✅ 修复所有 3 个 High 优先级问题
 3. ✅ 修复 3 个 Medium 问题
@@ -606,6 +632,7 @@ pnpm --filter @yunpat/core test test/gateway/auth
 5. ✅ 代码质量评分从 7.2 提升到 8.8
 
 **生产就绪性**:
+
 - **安全性**: ✅ 就绪（9/10）
 - **类型安全**: ✅ 就绪（9/10）
 - **错误处理**: ✅ 就绪（9/10）
@@ -613,7 +640,7 @@ pnpm --filter @yunpat/core test test/gateway/auth
 - **可观测性**: ⚠️ 部分就绪（7/10）
 - **测试覆盖**: ⚠️ 部分就绪（6/10）
 
-**建议**: 
+**建议**:
 可以部署到生产环境，但建议完成剩余的 Medium 问题修复和测试扩展后再大规模推广。
 
 ---

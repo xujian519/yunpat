@@ -6,20 +6,20 @@
  * @module llm/tokenization/BatchProcessorOptimizer
  */
 
-import { TokenCounter, tokenCounter as defaultTokenCounter } from './TokenCounter.js';
+import { TokenCounter, tokenCounter as defaultTokenCounter } from './TokenCounter.js'
 
 /**
  * 批次信息
  */
 export interface BatchInfo {
   /** 批次索引 */
-  index: number;
+  index: number
   /** 批次内容 */
-  items: string[];
+  items: string[]
   /** 批次 Token 总数 */
-  totalTokens: number;
+  totalTokens: number
   /** 批次大小 */
-  size: number;
+  size: number
 }
 
 /**
@@ -27,19 +27,19 @@ export interface BatchInfo {
  */
 export interface BatchOptimizationResult {
   /** 最优批次大小 */
-  optimalBatchSize: number;
+  optimalBatchSize: number
   /** 批次列表 */
-  batches: string[][];
+  batches: string[][]
   /** 总批次数 */
-  totalBatches: number;
+  totalBatches: number
   /** 平均批次大小 */
-  averageBatchSize: number;
+  averageBatchSize: number
   /** 总 Token 数 */
-  totalTokens: number;
+  totalTokens: number
   /** 最大批次 Token 数 */
-  maxBatchTokens: number;
+  maxBatchTokens: number
   /** 最小批次 Token 数 */
-  minBatchTokens: number;
+  minBatchTokens: number
 }
 
 /**
@@ -47,13 +47,13 @@ export interface BatchOptimizationResult {
  */
 export interface BatchOptimizerConfig {
   /** 最大 Token 限制 */
-  maxTokens: number;
+  maxTokens: number
   /** 最大批处理大小 */
-  maxBatchSize: number;
+  maxBatchSize: number
   /** 安全边际（0-1，默认 0.2） */
-  safetyMargin: number;
+  safetyMargin: number
   /** 是否启用动态调整 */
-  enableDynamicAdjustment: boolean;
+  enableDynamicAdjustment: boolean
 }
 
 /**
@@ -64,19 +64,19 @@ const DEFAULT_CONFIG: BatchOptimizerConfig = {
   maxBatchSize: 20,
   safetyMargin: 0.2,
   enableDynamicAdjustment: true,
-};
+}
 
 /**
  * 批处理器优化器
  */
 export class BatchProcessorOptimizer {
-  private tokenCounter: TokenCounter;
-  private config: BatchOptimizerConfig;
-  private history: Array<{ batches: string[][]; model: string; timestamp: number }> = [];
+  private tokenCounter: TokenCounter
+  private config: BatchOptimizerConfig
+  private history: Array<{ batches: string[][]; model: string; timestamp: number }> = []
 
   constructor(config?: Partial<BatchOptimizerConfig>, customTokenCounter?: TokenCounter) {
-    this.tokenCounter = customTokenCounter || defaultTokenCounter;
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.tokenCounter = customTokenCounter || defaultTokenCounter
+    this.config = { ...DEFAULT_CONFIG, ...config }
   }
 
   /**
@@ -88,23 +88,23 @@ export class BatchProcessorOptimizer {
    * @returns 最优批次大小
    */
   calculateOptimalBatchSize(texts: string[], model: string, maxBatchSize?: number): number {
-    const effectiveMaxBatchSize = maxBatchSize ?? this.config.maxBatchSize;
+    const effectiveMaxBatchSize = maxBatchSize ?? this.config.maxBatchSize
 
     // 1. 估算每个文本的 Token 数
-    const tokenCounts = this.tokenCounter.estimateTokensBatch(texts, model);
+    const tokenCounts = this.tokenCounter.estimateTokensBatch(texts, model)
 
     // 2. 找到最大的 Token 数
-    const maxTokensPerText = Math.max(...tokenCounts, 1);
+    const maxTokensPerText = Math.max(...tokenCounts, 1)
 
     // 3. 计算理论上能容纳的最大数量
-    const effectiveMaxTokens = this.config.maxTokens * (1 - this.config.safetyMargin);
-    const theoreticalMax = Math.floor(effectiveMaxTokens / maxTokensPerText);
+    const effectiveMaxTokens = this.config.maxTokens * (1 - this.config.safetyMargin)
+    const theoreticalMax = Math.floor(effectiveMaxTokens / maxTokensPerText)
 
     // 4. 不超过最大批处理大小
-    const optimalBatchSize = Math.min(theoreticalMax, effectiveMaxBatchSize);
+    const optimalBatchSize = Math.min(theoreticalMax, effectiveMaxBatchSize)
 
     // 5. 至少为 1
-    return Math.max(optimalBatchSize, 1);
+    return Math.max(optimalBatchSize, 1)
   }
 
   /**
@@ -120,46 +120,46 @@ export class BatchProcessorOptimizer {
     model: string,
     maxBatchSize?: number
   ): BatchOptimizationResult {
-    const effectiveMaxBatchSize = maxBatchSize ?? this.config.maxBatchSize;
-    const batches: string[][] = [];
-    const currentBatch: string[] = [];
-    let currentTokens = 0;
-    const effectiveMaxTokens = this.config.maxTokens * (1 - this.config.safetyMargin);
+    const effectiveMaxBatchSize = maxBatchSize ?? this.config.maxBatchSize
+    const batches: string[][] = []
+    const currentBatch: string[] = []
+    let currentTokens = 0
+    const effectiveMaxTokens = this.config.maxTokens * (1 - this.config.safetyMargin)
 
     for (const text of texts) {
-      const textTokens = this.tokenCounter.estimateTokens(text, model);
+      const textTokens = this.tokenCounter.estimateTokens(text, model)
 
       // 检查是否超过最大 Token 限制
       if (textTokens > this.config.maxTokens) {
-        throw new Error(`单个文本超过最大 Token 限制: ${textTokens} > ${this.config.maxTokens}`);
+        throw new Error(`单个文本超过最大 Token 限制: ${textTokens} > ${this.config.maxTokens}`)
       }
 
       // 检查是否可以加入当前批次
-      const wouldExceedTokenLimit = currentTokens + textTokens > effectiveMaxTokens;
-      const wouldExceedSizeLimit = currentBatch.length >= effectiveMaxBatchSize;
+      const wouldExceedTokenLimit = currentTokens + textTokens > effectiveMaxTokens
+      const wouldExceedSizeLimit = currentBatch.length >= effectiveMaxBatchSize
 
       if (wouldExceedTokenLimit || wouldExceedSizeLimit) {
         // 开始新批次
         if (currentBatch.length > 0) {
-          batches.push([...currentBatch]);
+          batches.push([...currentBatch])
         }
-        currentBatch.length = 0;
-        currentTokens = 0;
+        currentBatch.length = 0
+        currentTokens = 0
       }
 
-      currentBatch.push(text);
-      currentTokens += textTokens;
+      currentBatch.push(text)
+      currentTokens += textTokens
     }
 
     // 添加最后一个批次
     if (currentBatch.length > 0) {
-      batches.push(currentBatch);
+      batches.push(currentBatch)
     }
 
     // 计算统计信息
     const batchTokenCounts = batches.map((batch) =>
       this.tokenCounter.calculateTotalTokens(batch, model)
-    );
+    )
 
     return {
       optimalBatchSize: effectiveMaxBatchSize,
@@ -169,7 +169,7 @@ export class BatchProcessorOptimizer {
       totalTokens: batchTokenCounts.reduce((sum, count) => sum + count, 0),
       maxBatchTokens: Math.max(...batchTokenCounts, 0),
       minBatchTokens: Math.min(...batchTokenCounts, 0),
-    };
+    }
   }
 
   /**
@@ -181,32 +181,32 @@ export class BatchProcessorOptimizer {
    */
   adjustBatchSize(previousBatches: string[][], model: string): number {
     if (!this.config.enableDynamicAdjustment || previousBatches.length === 0) {
-      return this.config.maxBatchSize;
+      return this.config.maxBatchSize
     }
 
     // 分析历史批次的 Token 使用情况
     const tokenUsages = previousBatches.map((batch) =>
       this.tokenCounter.calculateTotalTokens(batch, model)
-    );
+    )
 
-    const avgUsage = tokenUsages.reduce((a, b) => a + b, 0) / tokenUsages.length;
-    const maxUsage = Math.max(...tokenUsages);
-    const currentBatchSize = previousBatches[0].length;
+    const avgUsage = tokenUsages.reduce((a, b) => a + b, 0) / tokenUsages.length
+    const maxUsage = Math.max(...tokenUsages)
+    const currentBatchSize = previousBatches[0].length
 
     // 如果平均使用率 < 60%，可以增加批次大小
     if (avgUsage < this.config.maxTokens * 0.6) {
-      const increase = Math.min(5, this.config.maxBatchSize - currentBatchSize);
-      return currentBatchSize + increase;
+      const increase = Math.min(5, this.config.maxBatchSize - currentBatchSize)
+      return currentBatchSize + increase
     }
 
     // 如果最大使用率 > 90%，需要减少批次大小
     if (maxUsage > this.config.maxTokens * 0.9) {
-      const decrease = Math.min(5, currentBatchSize - 1);
-      return Math.max(currentBatchSize - decrease, 1);
+      const decrease = Math.min(5, currentBatchSize - 1)
+      return Math.max(currentBatchSize - decrease, 1)
     }
 
     // 保持不变
-    return currentBatchSize;
+    return currentBatchSize
   }
 
   /**
@@ -219,35 +219,35 @@ export class BatchProcessorOptimizer {
    */
   smartPartition(texts: string[], model: string, maxBatchSize?: number): BatchOptimizationResult {
     // 1. 计算最优批次大小
-    const optimalBatchSize = this.calculateOptimalBatchSize(texts, model, maxBatchSize);
+    const optimalBatchSize = this.calculateOptimalBatchSize(texts, model, maxBatchSize)
 
     // 2. 如果有历史记录，尝试动态调整
-    let finalBatchSize = optimalBatchSize;
+    let finalBatchSize = optimalBatchSize
     if (this.history.length > 0 && this.config.enableDynamicAdjustment) {
-      const lastHistory = this.history[this.history.length - 1];
+      const lastHistory = this.history[this.history.length - 1]
       if (lastHistory.model === model) {
-        const adjustedSize = this.adjustBatchSize(lastHistory.batches, model);
+        const adjustedSize = this.adjustBatchSize(lastHistory.batches, model)
         // 使用调整后的大小，但不超过最优大小
-        finalBatchSize = Math.min(adjustedSize, optimalBatchSize);
+        finalBatchSize = Math.min(adjustedSize, optimalBatchSize)
       }
     }
 
     // 3. 使用最终批次大小进行分批
-    const result = this.partitionIntoBatches(texts, model, finalBatchSize);
+    const result = this.partitionIntoBatches(texts, model, finalBatchSize)
 
     // 4. 记录历史
     this.history.push({
       batches: result.batches,
       model,
       timestamp: Date.now(),
-    });
+    })
 
     // 5. 限制历史记录大小
     if (this.history.length > 10) {
-      this.history.shift();
+      this.history.shift()
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -261,24 +261,22 @@ export class BatchProcessorOptimizer {
     batches: string[][],
     model: string
   ): {
-    totalBatches: number;
-    totalItems: number;
-    totalTokens: number;
-    avgTokensPerBatch: number;
-    avgItemsPerBatch: number;
-    maxTokensPerBatch: number;
-    minTokensPerBatch: number;
-    tokenVariance: number;
+    totalBatches: number
+    totalItems: number
+    totalTokens: number
+    avgTokensPerBatch: number
+    avgItemsPerBatch: number
+    maxTokensPerBatch: number
+    minTokensPerBatch: number
+    tokenVariance: number
   } {
-    const tokenCounts = batches.map((batch) =>
-      this.tokenCounter.calculateTotalTokens(batch, model)
-    );
+    const tokenCounts = batches.map((batch) => this.tokenCounter.calculateTotalTokens(batch, model))
 
-    const totalTokens = tokenCounts.reduce((sum, count) => sum + count, 0);
-    const avgTokensPerBatch = totalTokens / tokenCounts.length;
+    const totalTokens = tokenCounts.reduce((sum, count) => sum + count, 0)
+    const avgTokensPerBatch = totalTokens / tokenCounts.length
     const variance =
       tokenCounts.reduce((sum, count) => sum + Math.pow(count - avgTokensPerBatch, 2), 0) /
-      tokenCounts.length;
+      tokenCounts.length
 
     return {
       totalBatches: batches.length,
@@ -289,7 +287,7 @@ export class BatchProcessorOptimizer {
       maxTokensPerBatch: Math.max(...tokenCounts),
       minTokensPerBatch: Math.min(...tokenCounts),
       tokenVariance: variance,
-    };
+    }
   }
 
   /**
@@ -303,30 +301,30 @@ export class BatchProcessorOptimizer {
     batches: string[][],
     model: string
   ): {
-    valid: boolean;
-    errors: string[];
+    valid: boolean
+    errors: string[]
   } {
-    const errors: string[] = [];
+    const errors: string[] = []
 
     for (let i = 0; i < batches.length; i++) {
-      const batch = batches[i];
-      const batchTokens = this.tokenCounter.calculateTotalTokens(batch, model);
+      const batch = batches[i]
+      const batchTokens = this.tokenCounter.calculateTotalTokens(batch, model)
 
       // 检查批次大小
       if (batch.length > this.config.maxBatchSize) {
-        errors.push(`批次 ${i}: 大小 ${batch.length} 超过最大限制 ${this.config.maxBatchSize}`);
+        errors.push(`批次 ${i}: 大小 ${batch.length} 超过最大限制 ${this.config.maxBatchSize}`)
       }
 
       // 检查 Token 限制
       if (batchTokens > this.config.maxTokens) {
-        errors.push(`批次 ${i}: Token 数 ${batchTokens} 超过最大限制 ${this.config.maxTokens}`);
+        errors.push(`批次 ${i}: Token 数 ${batchTokens} 超过最大限制 ${this.config.maxTokens}`)
       }
     }
 
     return {
       valid: errors.length === 0,
       errors,
-    };
+    }
   }
 
   /**
@@ -335,7 +333,7 @@ export class BatchProcessorOptimizer {
    * @param config 新配置
    */
   updateConfig(config: Partial<BatchOptimizerConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config }
   }
 
   /**
@@ -344,14 +342,14 @@ export class BatchProcessorOptimizer {
    * @returns 当前配置
    */
   getConfig(): BatchOptimizerConfig {
-    return { ...this.config };
+    return { ...this.config }
   }
 
   /**
    * 清空历史记录
    */
   clearHistory(): void {
-    this.history = [];
+    this.history = []
   }
 
   /**
@@ -360,7 +358,7 @@ export class BatchProcessorOptimizer {
    * @returns 历史记录
    */
   getHistory(): Array<{ batches: string[][]; model: string; timestamp: number }> {
-    return [...this.history];
+    return [...this.history]
   }
 }
 
@@ -375,10 +373,10 @@ export function createBatchProcessorOptimizer(
   config?: Partial<BatchOptimizerConfig>,
   customTokenCounter?: TokenCounter
 ): BatchProcessorOptimizer {
-  return new BatchProcessorOptimizer(config, customTokenCounter);
+  return new BatchProcessorOptimizer(config, customTokenCounter)
 }
 
 /**
  * 默认批处理器优化器实例
  */
-export const batchProcessorOptimizer = createBatchProcessorOptimizer();
+export const batchProcessorOptimizer = createBatchProcessorOptimizer()

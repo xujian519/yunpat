@@ -17,62 +17,62 @@
  * ```
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync, existsSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
 /**
  * Few-shot 示例
  */
 export interface FewShotExample {
   /** 输入 */
-  input: string;
+  input: string
 
   /** 输出 */
-  output: string;
+  output: string
 
   /** 示例标签（用于选择） */
-  tags?: string[];
+  tags?: string[]
 
   /** 相似度分数（用于排序） */
-  score?: number;
+  score?: number
 }
 
 /**
  * 模板变量
  */
-export type TemplateVariables = Record<string, unknown>;
+export type TemplateVariables = Record<string, unknown>
 
 /**
  * 模板元数据
  */
 export interface TemplateMetadata {
   /** 模板名称 */
-  name: string;
+  name: string
 
   /** 模板版本 */
-  version: string;
+  version: string
 
   /** 模板描述 */
-  description: string;
+  description: string
 
   /** 作者 */
-  author?: string;
+  author?: string
 
   /** 创建时间 */
-  createdAt?: string;
+  createdAt?: string
 
   /** 更新时间 */
-  updatedAt?: string;
+  updatedAt?: string
 
   /** 标签 */
-  tags?: string[];
+  tags?: string[]
 
   /** 所需变量 */
-  requiredVariables?: string[];
+  requiredVariables?: string[]
 
   /** 可选变量 */
-  optionalVariables?: string[];
+  optionalVariables?: string[]
 }
 
 /**
@@ -80,13 +80,13 @@ export interface TemplateMetadata {
  */
 export interface ValidationResult {
   /** 是否有效 */
-  valid: boolean;
+  valid: boolean
 
   /** 错误信息 */
-  errors: string[];
+  errors: string[]
 
   /** 警告信息 */
-  warnings: string[];
+  warnings: string[]
 }
 
 /**
@@ -94,27 +94,27 @@ export interface ValidationResult {
  */
 export interface RenderOptions {
   /** 是否启用变量验证 */
-  validateVariables?: boolean;
+  validateVariables?: boolean
 
   /** Few-shot 示例池 */
-  fewShots?: FewShotExample[];
+  fewShots?: FewShotExample[]
 
   /** 选择的示例数量 */
-  fewShotCount?: number;
+  fewShotCount?: number
 }
 
 /**
  * 提示词模板类
  */
 export class PromptTemplate {
-  private templatePath: string;
-  private templateContent: string;
-  private metadata: TemplateMetadata;
+  private templatePath: string
+  private templateContent: string
+  private metadata: TemplateMetadata
 
   constructor(templatePath: string) {
-    this.templatePath = templatePath;
-    this.templateContent = this.loadTemplate(templatePath);
-    this.metadata = this.parseMetadata(this.templateContent);
+    this.templatePath = templatePath
+    this.templateContent = this.loadTemplate(templatePath)
+    this.metadata = this.parseMetadata(this.templateContent)
   }
 
   /**
@@ -122,13 +122,13 @@ export class PromptTemplate {
    */
   private loadTemplate(templatePath: string): string {
     // 支持相对路径和绝对路径
-    const fullPath = this.resolveTemplatePath(templatePath);
+    const fullPath = this.resolveTemplatePath(templatePath)
 
     if (!existsSync(fullPath)) {
-      throw new Error(`模板文件不存在: ${fullPath}`);
+      throw new Error(`模板文件不存在: ${fullPath}`)
     }
 
-    return readFileSync(fullPath, 'utf-8');
+    return readFileSync(fullPath, 'utf-8')
   }
 
   /**
@@ -137,15 +137,15 @@ export class PromptTemplate {
   private resolveTemplatePath(templatePath: string): string {
     // 如果是绝对路径，直接返回
     if (templatePath.startsWith('/')) {
-      return templatePath;
+      return templatePath
     }
 
     // 如果是相对路径，基于当前文件解析
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    const templatesDir = join(__dirname, 'templates');
+    const __filename = fileURLToPath(import.meta.url)
+    const __dirname = dirname(__filename)
+    const templatesDir = join(__dirname, 'templates')
 
-    return join(templatesDir, templatePath);
+    return join(templatesDir, templatePath)
   }
 
   /**
@@ -156,48 +156,48 @@ export class PromptTemplate {
       name: this.templatePath,
       version: '1.0.0',
       description: '',
-    };
+    }
 
     // 检查是否有 YAML frontmatter
-    const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
-    const match = content.match(frontmatterRegex);
+    const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/
+    const match = content.match(frontmatterRegex)
 
     if (!match) {
       // 没有 frontmatter，提取内容作为模板
-      this.templateContent = content;
-      return defaultMetadata;
+      this.templateContent = content
+      return defaultMetadata
     }
 
     // 解析 YAML frontmatter
-    const frontmatter = match[1];
-    this.templateContent = match[2]; // 剩余内容作为模板
+    const frontmatter = match[1]
+    this.templateContent = match[2] // 剩余内容作为模板
 
     try {
-      const lines = frontmatter.split('\n');
-      const metadata: Record<string, any> = {};
+      const lines = frontmatter.split('\n')
+      const metadata: Record<string, any> = {}
 
       for (const line of lines) {
-        const colonIndex = line.indexOf(':');
+        const colonIndex = line.indexOf(':')
         if (colonIndex > 0) {
-          const key = line.slice(0, colonIndex).trim();
-          const value = line.slice(colonIndex + 1).trim();
+          const key = line.slice(0, colonIndex).trim()
+          const value = line.slice(colonIndex + 1).trim()
 
           // 处理数组类型
           if (key.startsWith('required') || key.startsWith('optional') || key === 'tags') {
-            (metadata as any)[key] = value
+            ;(metadata as any)[key] = value
               .slice(1, -1)
               .split(',')
-              .map((v: string) => v.trim());
+              .map((v: string) => v.trim())
           } else {
-            (metadata as any)[key] = value;
+            ;(metadata as any)[key] = value
           }
         }
       }
 
-      return { ...defaultMetadata, ...metadata };
+      return { ...defaultMetadata, ...metadata }
     } catch (error) {
       // 解析失败，返回默认元数据
-      return defaultMetadata;
+      return defaultMetadata
     }
   }
 
@@ -209,18 +209,18 @@ export class PromptTemplate {
    * @returns 渲染后的提示词
    */
   async render(variables: TemplateVariables, options: RenderOptions = {}): Promise<string> {
-    let content = this.templateContent;
+    let content = this.templateContent
 
     // 1. 验证变量（如果启用）
     if (options.validateVariables !== false) {
-      const validation = this.validateVariables(variables);
+      const validation = this.validateVariables(variables)
       if (!validation.valid) {
-        throw new Error(`变量验证失败:\n${validation.errors.join('\n')}`);
+        throw new Error(`变量验证失败:\n${validation.errors.join('\n')}`)
       }
     }
 
     // 2. 替换变量
-    content = this.replaceVariables(content, variables);
+    content = this.replaceVariables(content, variables)
 
     // 3. 添加 Few-shot 示例（如果提供）
     if (options.fewShots && options.fewShots.length > 0) {
@@ -228,35 +228,35 @@ export class PromptTemplate {
         (variables.task as string) || '',
         options.fewShots,
         options.fewShotCount || 3
-      );
+      )
 
       if (selectedExamples.length > 0) {
-        content = this.addFewShots(content, selectedExamples);
+        content = this.addFewShots(content, selectedExamples)
       }
     }
 
     // 注意：PromptOptimizer已删除（压缩功能对专利平台无意义）
     // 如果需要压缩，请使用外部工具或自定义实现
 
-    return content;
+    return content
   }
 
   /**
    * 替换模板变量
    */
   private replaceVariables(content: string, variables: TemplateVariables): string {
-    let result = content;
+    let result = content
 
     // 替换 {{variable}} 语法
     for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
-      result = result.replace(regex, String(value));
+      const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g')
+      result = result.replace(regex, String(value))
     }
 
     // 替换未定义的变量为空字符串（或保留占位符，根据需求）
-    result = result.replace(/\{\{[^}]+\}\}/g, '');
+    result = result.replace(/\{\{[^}]+\}\}/g, '')
 
-    return result;
+    return result
   }
 
   /**
@@ -269,40 +269,40 @@ export class PromptTemplate {
    */
   selectFewShots(task: string, pool: FewShotExample[], count: number = 3): FewShotExample[] {
     if (pool.length === 0) {
-      return [];
+      return []
     }
 
     // 如果没有任务描述，随机选择
     if (!task) {
-      return pool.slice(0, Math.min(count, pool.length));
+      return pool.slice(0, Math.min(count, pool.length))
     }
 
     // 基于标签匹配
-    const taskTags = task.split(/\s+/);
+    const taskTags = task.split(/\s+/)
     const scored = pool.map((example) => {
-      let score = 0;
+      let score = 0
 
       // 计算标签匹配分数
       if (example.tags) {
         for (const tag of example.tags) {
           if (taskTags.some((t) => t.includes(tag) || tag.includes(t))) {
-            score += 1;
+            score += 1
           }
         }
       }
 
       // 使用预设分数（如果有）
       if (example.score !== undefined) {
-        score += example.score;
+        score += example.score
       }
 
-      return { ...example, score };
-    });
+      return { ...example, score }
+    })
 
     // 按分数排序并选择前 N 个
-    scored.sort((a, b) => (b.score || 0) - (a.score || 0));
+    scored.sort((a, b) => (b.score || 0) - (a.score || 0))
 
-    return scored.slice(0, Math.min(count, scored.length));
+    return scored.slice(0, Math.min(count, scored.length))
   }
 
   /**
@@ -313,23 +313,23 @@ export class PromptTemplate {
       .map(
         (example, index) => `### 示例 ${index + 1}\n输入: ${example.input}\n输出: ${example.output}`
       )
-      .join('\n\n');
+      .join('\n\n')
 
-    return `${content}\n\n## Few-shot 示例\n\n${examplesSection}`;
+    return `${content}\n\n## Few-shot 示例\n\n${examplesSection}`
   }
 
   /**
    * 验证模板变量
    */
   validateVariables(variables: TemplateVariables): ValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    const errors: string[] = []
+    const warnings: string[] = []
 
     // 检查必需变量
     if (this.metadata.requiredVariables) {
       for (const required of this.metadata.requiredVariables) {
         if (!(required in variables)) {
-          errors.push(`缺少必需变量: ${required}`);
+          errors.push(`缺少必需变量: ${required}`)
         }
       }
     }
@@ -338,11 +338,11 @@ export class PromptTemplate {
     const allRequired = [
       ...(this.metadata.requiredVariables || []),
       ...(this.metadata.optionalVariables || []),
-    ];
+    ]
 
     for (const key of Object.keys(variables)) {
       if (!allRequired.includes(key)) {
-        warnings.push(`未使用的变量: ${key}`);
+        warnings.push(`未使用的变量: ${key}`)
       }
     }
 
@@ -350,64 +350,64 @@ export class PromptTemplate {
       valid: errors.length === 0,
       errors,
       warnings,
-    };
+    }
   }
 
   /**
    * 验证提示词
    */
   validate(prompt: string): ValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    const errors: string[] = []
+    const warnings: string[] = []
 
     // 检查是否有未替换的变量
-    const unmatchedVariables = prompt.match(/\{\{[^}]+\}\}/g);
+    const unmatchedVariables = prompt.match(/\{\{[^}]+\}\}/g)
     if (unmatchedVariables) {
-      warnings.push(`存在未替换的变量: ${unmatchedVariables.join(', ')}`);
+      warnings.push(`存在未替换的变量: ${unmatchedVariables.join(', ')}`)
     }
 
     // 检查提示词长度
     if (prompt.length < 10) {
-      errors.push('提示词过短');
+      errors.push('提示词过短')
     }
 
     if (prompt.length > 10000) {
-      warnings.push('提示词过长，可能导致性能问题');
+      warnings.push('提示词过长，可能导致性能问题')
     }
 
     return {
       valid: errors.length === 0,
       errors,
       warnings,
-    };
+    }
   }
 
   /**
    * 获取模板版本
    */
   getVersion(): string {
-    return this.metadata.version;
+    return this.metadata.version
   }
 
   /**
    * 获取模板元数据
    */
   getMetadata(): TemplateMetadata {
-    return { ...this.metadata };
+    return { ...this.metadata }
   }
 
   /**
    * 获取原始模板内容
    */
   getRawContent(): string {
-    return this.templateContent;
+    return this.templateContent
   }
 
   /**
    * 更新模板版本（用于 A/B 测试）
    */
   updateVersion(version: string): void {
-    this.metadata.version = version;
+    this.metadata.version = version
   }
 }
 
@@ -415,20 +415,20 @@ export class PromptTemplate {
  * 模板管理器 - 管理多个模板
  */
 export class TemplateManager {
-  private templates = new Map<string, PromptTemplate>();
+  private templates = new Map<string, PromptTemplate>()
 
   /**
    * 注册模板
    */
   registerTemplate(name: string, template: PromptTemplate): void {
-    this.templates.set(name, template);
+    this.templates.set(name, template)
   }
 
   /**
    * 获取模板
    */
   getTemplate(name: string): PromptTemplate | undefined {
-    return this.templates.get(name);
+    return this.templates.get(name)
   }
 
   /**
@@ -440,14 +440,14 @@ export class TemplateManager {
       'writer-chapter.md',
       'researcher-query.md',
       'validator-check.md',
-    ];
+    ]
 
     for (const templateName of builtinTemplates) {
       try {
-        const template = new PromptTemplate(templateName);
-        this.registerTemplate(templateName, template);
+        const template = new PromptTemplate(templateName)
+        this.registerTemplate(templateName, template)
       } catch (error) {
-        console.warn(`无法加载内置模板: ${templateName}`, error);
+        console.warn(`无法加载内置模板: ${templateName}`, error)
       }
     }
   }
@@ -456,20 +456,20 @@ export class TemplateManager {
    * 列出所有模板
    */
   listTemplates(): string[] {
-    return Array.from(this.templates.keys());
+    return Array.from(this.templates.keys())
   }
 
   /**
    * 获取所有模板的元数据
    */
   getAllMetadata(): Record<string, TemplateMetadata> {
-    const result: Record<string, TemplateMetadata> = {};
+    const result: Record<string, TemplateMetadata> = {}
 
     for (const [name, template] of this.templates.entries()) {
-      result[name] = template.getMetadata();
+      result[name] = template.getMetadata()
     }
 
-    return result;
+    return result
   }
 }
 
@@ -477,12 +477,12 @@ export class TemplateManager {
  * 创建模板实例（工厂函数）
  */
 export function createTemplate(templatePath: string): PromptTemplate {
-  return new PromptTemplate(templatePath);
+  return new PromptTemplate(templatePath)
 }
 
 /**
  * 创建模板管理器（工厂函数）
  */
 export function createTemplateManager(): TemplateManager {
-  return new TemplateManager();
+  return new TemplateManager()
 }

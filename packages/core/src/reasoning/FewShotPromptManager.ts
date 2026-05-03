@@ -4,47 +4,47 @@
  * 管理工具选择的Few-shot示例，提升智能体工具选择准确性
  */
 
-import { EnhancedTool } from '../tools/types.js';
-import { similarityCalculator } from '../tools/SimilarityCalculator.js';
+import { EnhancedTool } from '../tools/types.js'
+import { similarityCalculator } from '../tools/SimilarityCalculator.js'
 
 /**
  * Few-shot示例
  */
 export interface FewShotExample {
-  id: string;
-  scenario: string; // 场景描述
-  userInput: string; // 用户输入
-  reasoning: string; // 推理过程
-  selectedTool: string; // 选择的工具
-  toolParameters: Record<string, unknown>; // 工具参数
-  outcome: string; // 执行结果
-  alternatives?: string[]; // 替代方案
-  lessons?: string; // 经验总结
+  id: string
+  scenario: string // 场景描述
+  userInput: string // 用户输入
+  reasoning: string // 推理过程
+  selectedTool: string // 选择的工具
+  toolParameters: Record<string, unknown> // 工具参数
+  outcome: string // 执行结果
+  alternatives?: string[] // 替代方案
+  lessons?: string // 经验总结
 }
 
 /**
  * Few-shot示例库
  */
 export class FewShotPromptManager {
-  private examples: Map<string, FewShotExample[]> = new Map();
-  private toolExamples: Map<string, FewShotExample[]> = new Map();
+  private examples: Map<string, FewShotExample[]> = new Map()
+  private toolExamples: Map<string, FewShotExample[]> = new Map()
 
   /**
    * 添加示例
    */
   addExample(example: FewShotExample) {
     // 按场景分类
-    const category = this.categorizeExample(example);
+    const category = this.categorizeExample(example)
     if (!this.examples.has(category)) {
-      this.examples.set(category, []);
+      this.examples.set(category, [])
     }
-    this.examples.get(category)!.push(example);
+    this.examples.get(category)!.push(example)
 
     // 按工具分类
     if (!this.toolExamples.has(example.selectedTool)) {
-      this.toolExamples.set(example.selectedTool, []);
+      this.toolExamples.set(example.selectedTool, [])
     }
-    this.toolExamples.get(example.selectedTool)!.push(example);
+    this.toolExamples.get(example.selectedTool)!.push(example)
   }
 
   /**
@@ -55,36 +55,36 @@ export class FewShotPromptManager {
     availableTools: EnhancedTool[],
     maxExamples: number = 5
   ): FewShotExample[] {
-    const relevant: Array<{ example: FewShotExample; score: number }> = [];
+    const relevant: Array<{ example: FewShotExample; score: number }> = []
 
     // 如果用户输入为空，返回所有示例
-    const isEmptyInput = !userInput || userInput.trim() === '';
+    const isEmptyInput = !userInput || userInput.trim() === ''
 
     // 从场景匹配中获取
     for (const [category, examples] of this.examples) {
       if (isEmptyInput || this.isCategoryRelevant(category, userInput)) {
         for (const example of examples) {
-          const score = isEmptyInput ? 1 : this.calculateSimilarity(userInput, example.userInput);
-          relevant.push({ example, score });
+          const score = isEmptyInput ? 1 : this.calculateSimilarity(userInput, example.userInput)
+          relevant.push({ example, score })
         }
       }
     }
 
     // 从工具匹配中获取
-    const toolNames = availableTools.map((t) => t.metadata.name);
+    const toolNames = availableTools.map((t) => t.metadata.name)
     for (const toolName of toolNames) {
-      const examples = this.toolExamples.get(toolName) || [];
+      const examples = this.toolExamples.get(toolName) || []
       for (const example of examples) {
-        const score = this.calculateSimilarity(userInput, example.userInput);
-        relevant.push({ example, score });
+        const score = this.calculateSimilarity(userInput, example.userInput)
+        relevant.push({ example, score })
       }
     }
 
     // 去重并排序
-    const unique = new Map<string, FewShotExample>();
+    const unique = new Map<string, FewShotExample>()
     for (const { example, score } of relevant) {
       if (!unique.has(example.id) || score > 0.5) {
-        unique.set(example.id, example);
+        unique.set(example.id, example)
       }
     }
 
@@ -94,7 +94,7 @@ export class FewShotPromptManager {
           this.calculateSimilarity(userInput, b.userInput) -
           this.calculateSimilarity(userInput, a.userInput)
       )
-      .slice(0, maxExamples);
+      .slice(0, maxExamples)
   }
 
   /**
@@ -104,11 +104,11 @@ export class FewShotPromptManager {
     userInput: string,
     availableTools: EnhancedTool[],
     context?: {
-      conversationHistory?: Array<{ role: string; content: string }>;
-      currentTask?: string;
+      conversationHistory?: Array<{ role: string; content: string }>
+      currentTask?: string
     }
   ): string {
-    const examples = this.getRelevantExamples(userInput, availableTools, 3);
+    const examples = this.getRelevantExamples(userInput, availableTools, 3)
 
     let prompt = `
 # 工具选择指南
@@ -121,11 +121,11 @@ ${this.formatToolsList(availableTools)}
 
 ## 工具选择示例
 
-`;
+`
 
     for (const example of examples) {
-      prompt += this.formatExample(example);
-      prompt += '\n';
+      prompt += this.formatExample(example)
+      prompt += '\n'
     }
 
     prompt += `
@@ -149,9 +149,9 @@ ${context?.conversationHistory ? `对话历史：\n${this.formatConversationHist
 **选择工具**：[工具名称]
 **工具参数**：[参数JSON]
 **执行计划**：[具体步骤]
-`;
+`
 
-    return prompt;
+    return prompt
   }
 
   /**
@@ -160,14 +160,14 @@ ${context?.conversationHistory ? `对话历史：\n${this.formatConversationHist
   private formatToolsList(tools: EnhancedTool[]): string {
     return tools
       .map((tool) => {
-        const metadata = tool.metadata;
+        const metadata = tool.metadata
         return `
 **${metadata.name}**
 - 描述：${metadata.description}
 - 分类：${metadata.category || 'N/A'}
-`;
+`
       })
-      .join('\n');
+      .join('\n')
   }
 
   /**
@@ -193,41 +193,41 @@ ${JSON.stringify(example.toolParameters, null, 2)}
 
 ${example.lessons ? `**经验**: ${example.lessons}` : ''}
 ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` : ''}
-`;
+`
   }
 
   /**
    * 格式化对话历史
    */
   private formatConversationHistory(history: Array<{ role: string; content: string }>): string {
-    return history.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
+    return history.map((msg) => `${msg.role}: ${msg.content}`).join('\n')
   }
 
   /**
    * 分类示例
    */
   private categorizeExample(example: FewShotExample): string {
-    const input = example.userInput.toLowerCase();
+    const input = example.userInput.toLowerCase()
 
-    if (input.includes('pdf') || input.includes('文档')) return 'document';
-    if (input.includes('网页') || input.includes('网站')) return 'web';
-    if (input.includes('图片') || input.includes('ocr')) return 'image';
-    if (input.includes('音频') || input.includes('语音')) return 'audio';
-    if (input.includes('数据') || input.includes('分析')) return 'analysis';
-    if (input.includes('转换') || input.includes('转')) return 'conversion';
+    if (input.includes('pdf') || input.includes('文档')) return 'document'
+    if (input.includes('网页') || input.includes('网站')) return 'web'
+    if (input.includes('图片') || input.includes('ocr')) return 'image'
+    if (input.includes('音频') || input.includes('语音')) return 'audio'
+    if (input.includes('数据') || input.includes('分析')) return 'analysis'
+    if (input.includes('转换') || input.includes('转')) return 'conversion'
 
-    return 'general';
+    return 'general'
   }
 
   /**
    * 判断类别是否相关
    */
   private isCategoryRelevant(category: string, userInput: string): boolean {
-    const input = userInput.toLowerCase();
+    const input = userInput.toLowerCase()
 
     // general 类别总是相关的（兜底）
     if (category === 'general') {
-      return true;
+      return true
     }
 
     const categoryKeywords: Record<string, string[]> = {
@@ -237,17 +237,17 @@ ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` 
       audio: ['音频', '语音', '声音', '转录'],
       analysis: ['分析', '统计', '计算'],
       conversion: ['转换', '转', '格式'],
-    };
+    }
 
-    const keywords = categoryKeywords[category] || [];
-    return keywords.some((kw) => input.includes(kw));
+    const keywords = categoryKeywords[category] || []
+    return keywords.some((kw) => input.includes(kw))
   }
 
   /**
    * 计算相似度（使用优化的计算器）
    */
   private calculateSimilarity(input1: string, input2: string): number {
-    return similarityCalculator.calculateSimilarity(input1, input2, 'jaccard');
+    return similarityCalculator.calculateSimilarity(input1, input2, 'jaccard')
   }
 
   /**
@@ -279,7 +279,7 @@ ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` 
       },
       outcome: '成功将PDF转换为Markdown格式，保留了标题、段落等基本结构',
       lessons: '对于明确的格式转换需求，优先选择专门的转换工具而非通用解析工具',
-    });
+    })
 
     // 网页自动化示例
     this.addExample({
@@ -307,7 +307,7 @@ ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` 
       outcome: '成功打开网页并完成截图',
       alternatives: ['WebSnapshotTool（可同时获取页面结构）'],
       lessons: '多步骤任务需要规划工具使用顺序，确保前一个工具的输出是后一个工具的输入',
-    });
+    })
 
     // 数据分析示例
     this.addExample({
@@ -335,7 +335,7 @@ ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` 
       },
       outcome: '成功提取销售数据并转换为JSON格式，可进一步进行数据分析',
       lessons: '对于数据分析任务，先将数据转换为结构化格式（如JSON）可以提高后续处理效率',
-    });
+    })
 
     // OCR识别示例
     this.addExample({
@@ -363,7 +363,7 @@ ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` 
       },
       outcome: '成功识别图片中的中英文文字',
       lessons: '选择工具时注意工具的适用范围，OCR工具分为图片OCR和PDF OCR',
-    });
+    })
 
     // 音频转写示例
     this.addExample({
@@ -391,7 +391,7 @@ ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` 
       },
       outcome: '成功将语音转换为文字，支持中文识别',
       lessons: '注意区分转写工具和字幕生成工具，根据用户的具体需求选择',
-    });
+    })
 
     // 批量处理示例
     this.addExample({
@@ -418,7 +418,7 @@ ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` 
       },
       outcome: '成功批量转换所有PDF文件',
       lessons: '对于批量处理任务，优先使用专门的批量处理工具，可以提升效率和并发性能',
-    });
+    })
 
     // 错误恢复示例
     this.addExample({
@@ -447,7 +447,7 @@ ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` 
       },
       outcome: '重试后成功访问网站',
       lessons: '工具调用失败时，分析错误原因并调整参数重试，常见问题包括超时、权限、参数错误等',
-    });
+    })
 
     // 工具组合示例
     this.addExample({
@@ -474,34 +474,34 @@ ${example.alternatives ? `**替代方案**: ${example.alternatives.join(', ')}` 
       },
       outcome: '成功从PDF提取表格数据并生成Excel报告',
       lessons: '复杂任务需要组合多个工具，关键是要规划好数据流：每个工具的输出是下一个工具的输入',
-    });
+    })
   }
 
   /**
    * 导出示例为JSON
    */
   exportExamples(): string {
-    const allExamples: FewShotExample[] = [];
+    const allExamples: FewShotExample[] = []
 
     for (const examples of this.examples.values()) {
-      allExamples.push(...examples);
+      allExamples.push(...examples)
     }
 
-    return JSON.stringify(allExamples, null, 2);
+    return JSON.stringify(allExamples, null, 2)
   }
 
   /**
    * 从JSON导入示例
    */
   importExamples(jsonString: string) {
-    const examples: FewShotExample[] = JSON.parse(jsonString);
+    const examples: FewShotExample[] = JSON.parse(jsonString)
 
     for (const example of examples) {
-      this.addExample(example);
+      this.addExample(example)
     }
   }
 }
 
 // 导出单例
-export const fewShotManager = new FewShotPromptManager();
-fewShotManager.initializeDefaultExamples();
+export const fewShotManager = new FewShotPromptManager()
+fewShotManager.initializeDefaultExamples()

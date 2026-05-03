@@ -18,11 +18,11 @@ export {
   type QualityAssessment,
   type QualityIssue,
   type IpcClassification,
-} from './PatentCoreBridge.js';
+} from './PatentCoreBridge.js'
 
 export {
   extractFeaturesFallback,
   parseDisclosureFallback,
   generateClaimsFallback,
   isFallbackResult,
-} from './PatentCoreFallback.js';
+} from './PatentCoreFallback.js'

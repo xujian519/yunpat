@@ -4,12 +4,12 @@
 
 ### 核心组件
 
-| 组件 | 功能 | 状态 |
-|------|------|------|
+| 组件                  | 功能              | 状态    |
+| --------------------- | ----------------- | ------- |
 | **BGEIntegration.ts** | BGE-M3 客户端封装 | ✅ 完成 |
-| **RAGEngine.ts** | RAG 检索增强引擎 | ✅ 完成 |
-| **verify-bge.ts** | BGE-M3 验证脚本 | ✅ 完成 |
-| **rag-example.ts** | RAG 完整示例 | ✅ 完成 |
+| **RAGEngine.ts**      | RAG 检索增强引擎  | ✅ 完成 |
+| **verify-bge.ts**     | BGE-M3 验证脚本   | ✅ 完成 |
+| **rag-example.ts**    | RAG 完整示例      | ✅ 完成 |
 
 ---
 
@@ -23,6 +23,7 @@ tsx verify-bge.ts
 ```
 
 **预期输出**：
+
 ```
 🔍 验证 BGE-M3 服务...
 
@@ -66,6 +67,7 @@ tsx rag-example.ts
 ```
 
 **预期输出**：
+
 ```
 === RAG 检索增强生成示例 ===
 
@@ -110,30 +112,30 @@ tsx rag-example.ts
 ### 基础用法：文本向量化
 
 ```typescript
-import { createBGEM3Client } from '@yunpat/core';
+import { createBGEM3Client } from '@yunpat/core'
 
 // 1. 创建客户端
 const bgeClient = createBGEM3Client({
   apiKey: 'xj781102@',
-});
+})
 
 // 2. 单个文本向量化
-const text = '专利撰写的关键在于权利要求书的撰写';
-const embedding = await bgeClient.embed(text);
+const text = '专利撰写的关键在于权利要求书的撰写'
+const embedding = await bgeClient.embed(text)
 
-console.log(`向量维度: ${embedding.length}`); // 1024
+console.log(`向量维度: ${embedding.length}`) // 1024
 
 // 3. 批量向量化
-const texts = ['文本1', '文本2', '文本3'];
-const embeddings = await bgeClient.embedBatch(texts);
+const texts = ['文本1', '文本2', '文本3']
+const embeddings = await bgeClient.embedBatch(texts)
 
-console.log(`批量处理: ${embeddings.length} 条`); // 3
+console.log(`批量处理: ${embeddings.length} 条`) // 3
 ```
 
 ### 进阶用法：RAG 检索
 
 ```typescript
-import { createRAGEngine } from '@yunpat/core';
+import { createRAGEngine } from '@yunpat/core'
 
 // 1. 初始化 RAG 引擎
 const rag = await createRAGEngine({
@@ -145,7 +147,7 @@ const rag = await createRAGEngine({
     topK: 5,
     threshold: 0.7,
   },
-});
+})
 
 // 2. 添加文档
 await rag.addDocument({
@@ -155,23 +157,23 @@ await rag.addDocument({
     patentId: 'CN123456',
     tags: ['AI', '专利'],
   },
-});
+})
 
 // 3. 语义检索
-const results = await rag.retrieve('如何撰写专利？');
+const results = await rag.retrieve('如何撰写专利？')
 
 for (const doc of results) {
-  console.log(`相似度: ${doc.similarity.toFixed(2)}`);
-  console.log(`内容: ${doc.content}`);
+  console.log(`相似度: ${doc.similarity.toFixed(2)}`)
+  console.log(`内容: ${doc.content}`)
 }
 
 // 4. RAG 增强查询
-const { augmentedQuery } = await rag.augmentQuery('专利的核心是什么？');
+const { augmentedQuery } = await rag.augmentQuery('专利的核心是什么？')
 
-console.log(augmentedQuery);
+console.log(augmentedQuery)
 
 // 5. 调用 LLM
-const response = await callLLM(augmentedQuery);
+const response = await callLLM(augmentedQuery)
 ```
 
 ---
@@ -182,32 +184,34 @@ const response = await callLLM(augmentedQuery);
 
 ```typescript
 // 自动缓存重复文本
-const bgeClient = createBGEM3Client();
+const bgeClient = createBGEM3Client()
 
 // 第一次调用（生成向量）
-await bgeClient.embed('专利撰写');
+await bgeClient.embed('专利撰写')
 
 // 第二次调用（使用缓存）
-await bgeClient.embed('专利撰写'); // 快 10 倍
+await bgeClient.embed('专利撰写') // 快 10 倍
 
 // 查看缓存统计
-const stats = bgeClient.getCacheStats();
-console.log(`命中率: ${(stats.hitRate * 100).toFixed(2)}%`);
+const stats = bgeClient.getCacheStats()
+console.log(`命中率: ${(stats.hitRate * 100).toFixed(2)}%`)
 ```
 
 ### 2. 批量处理
 
 ```typescript
 // 批量处理比单个处理快 5 倍
-const texts = [/* 100 条文本 */];
+const texts = [
+  /* 100 条文本 */
+]
 
 // ❌ 慢：逐个处理
 for (const text of texts) {
-  await bgeClient.embed(text);
+  await bgeClient.embed(text)
 }
 
 // ✅ 快：批量处理
-await bgeClient.embedBatch(texts);
+await bgeClient.embedBatch(texts)
 ```
 
 ### 3. 相似度阈值
@@ -217,9 +221,9 @@ await bgeClient.embedBatch(texts);
 const results = await rag.retrieve('查询文本', {
   topK: 10,
   threshold: 0.7, // 只保留相似度 >0.7 的结果
-});
+})
 
-console.log(`检索到 ${results.length} 条高质量结果`);
+console.log(`检索到 ${results.length} 条高质量结果`)
 ```
 
 ---
@@ -267,12 +271,12 @@ docker-compose logs postgres
 
 ## 📈 性能基准
 
-| 操作 | 延迟 | 吞吐量 |
-|------|------|--------|
-| **单个向量化** | 50-100ms | 10-20 QPS |
-| **批量向量化** | 200-500ms | 100-200 QPS |
-| **向量检索** | <100ms | 1000+ QPS |
-| **RAG 增强查询** | <200ms | 500+ QPS |
+| 操作             | 延迟      | 吞吐量      |
+| ---------------- | --------- | ----------- |
+| **单个向量化**   | 50-100ms  | 10-20 QPS   |
+| **批量向量化**   | 200-500ms | 100-200 QPS |
+| **向量检索**     | <100ms    | 1000+ QPS   |
+| **RAG 增强查询** | <200ms    | 500+ QPS    |
 
 ---
 
@@ -282,18 +286,20 @@ docker-compose logs postgres
 
 ```typescript
 // 高精度场景（如专利检索）
-const threshold = 0.8;
+const threshold = 0.8
 
 // 宽松场景（如推荐系统）
-const threshold = 0.6;
+const threshold = 0.6
 ```
 
 ### 2. 使用批量操作
 
 ```typescript
 // 添加文档时使用批量
-const docs = [/* 100 条文档 */];
-await rag.addDocuments(docs); // 快 5 倍
+const docs = [
+  /* 100 条文档 */
+]
+await rag.addDocuments(docs) // 快 5 倍
 ```
 
 ### 3. 定期清理缓存
@@ -301,7 +307,7 @@ await rag.addDocuments(docs); // 快 5 倍
 ```typescript
 // 缓存过大时清理
 if (stats.cacheSize > 10000) {
-  bgeClient.clearCache();
+  bgeClient.clearCache()
 }
 ```
 
@@ -309,10 +315,10 @@ if (stats.cacheSize > 10000) {
 
 ```typescript
 // 定期检查统计信息
-const stats = await rag.getStats();
+const stats = await rag.getStats()
 
-console.log('向量存储:', stats.vector.totalMemories);
-console.log('缓存命中率:', (stats.bge.cacheHitRate * 100).toFixed(2) + '%');
+console.log('向量存储:', stats.vector.totalMemories)
+console.log('缓存命中率:', (stats.bge.cacheHitRate * 100).toFixed(2) + '%')
 ```
 
 ---

@@ -20,12 +20,12 @@
  * 更多信息: 参见 packages/cli/README.md
  */
 
-console.error('❌ 本 CLI 已被弃用');
-console.error('');
-console.error('请使用新的 CLI 工具:');
-console.error('  npm install -g @yunpat/cli');
-console.error('  yunpat --help');
-console.error('');
-console.error('或直接运行:');
-console.error('  npx yunpat --help');
-process.exit(1);
+console.error('❌ 本 CLI 已被弃用')
+console.error('')
+console.error('请使用新的 CLI 工具:')
+console.error('  npm install -g @yunpat/cli')
+console.error('  yunpat --help')
+console.error('')
+console.error('或直接运行:')
+console.error('  npx yunpat --help')
+process.exit(1)

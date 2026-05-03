@@ -4,12 +4,12 @@
 
 ### 失败时间线
 
-| 运行 ID | Workflow | 时间 | 失败原因 |
-|--------|---------|------|----------|
+| 运行 ID     | Workflow        | 时间                 | 失败原因            |
+| ----------- | --------------- | -------------------- | ------------------- |
 | 25188259794 | CI (Simplified) | 2026-04-30T20:42:16Z | canvas 依赖安装失败 |
-| 25188259780 | CI (Optimized) | 2026-04-30T20:42:28Z | canvas 依赖安装失败 |
+| 25188259780 | CI (Optimized)  | 2026-04-30T20:42:28Z | canvas 依赖安装失败 |
 | 25184642794 | CI (Simplified) | 2026-04-30T19:18:47Z | canvas 依赖安装失败 |
-| 25184642833 | CI (Optimized) | 2026-04-30T19:18:41Z | canvas 依赖安装失败 |
+| 25184642833 | CI (Optimized)  | 2026-04-30T19:18:41Z | canvas 依赖安装失败 |
 
 ## 🔍 根本原因分析
 
@@ -18,6 +18,7 @@
 **失败原因**: `canvas@2.11.2` 原生模块编译失败
 
 **错误信息**:
+
 ```
 Package 'pixman-1', required by 'virtual:world', not found
 gyp ERR! configure error
@@ -45,38 +46,44 @@ node-pre-gyp ERR! build error
 ### 方案 1: 使用纯 JavaScript canvas (推荐) ✅
 
 **优势**:
+
 - 无需系统依赖
 - 跨平台兼容
 - 安装快速稳定
 
 **实施**:
+
 ```yaml
 # 在 workflow 中添加环境变量
 env:
-  CANVAS_USE_NATIVE: "0"
+  CANVAS_USE_NATIVE: '0'
 ```
 
 ### 方案 2: 跳过可选依赖安装
 
 **优势**:
+
 - 简单直接
 - 不影响核心功能
 
 **实施**:
+
 ```yaml
 - name: 安装依赖
   run: pnpm install --no-frozen-lockfile --ignore-scripts
   env:
-  PUPPETEET_SKIP_DOWNLOAD: "true"
+  PUPPETEET_SKIP_DOWNLOAD: 'true'
 ```
 
 ### 方案 3: 使用 Docker 容器 (长期方案)
 
 **优势**:
+
 - 完整的系统依赖
 - 可复现的构建环境
 
 **劣势**:
+
 - 增加维护复杂度
 - 延长构建时间
 
@@ -107,7 +114,8 @@ env:
 ### canvas 替代方案
 
 **当前**: pdfjs-dist + canvas (原生)  
-**替代**: 
+**替代**:
+
 1. pdfjs-dist + canvas-napi (预编译)
 2. pdfjs-dist + @napi-rs/canvas (纯 JS)
 3. pdf-lib (无 canvas 依赖)

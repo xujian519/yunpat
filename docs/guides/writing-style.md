@@ -15,6 +15,7 @@
 ### ✨ 开头方式
 
 **常用开头模式**：
+
 ```
 - 基于{背景}，{主题}...
 - {主题}是{领域}的重要组成部分...
@@ -25,9 +26,10 @@
 ### 🎨 格式习惯
 
 **格式元素使用频率**：
+
 - ✅ **层级标题**：# ## ###（频繁使用）
 - ✅ **加粗强调**：**核心**、**关键**（频繁）
-- ✅ **代码块**：```代码示例```（频繁）
+- ✅ **代码块**：`代码示例`（频繁）
 - ✅ **表格**：| 对比 | 分析 |（频繁）
 - ✅ **列表**：1. 2. 3. 或 ①②③（频繁）
 - ✅ **Emoji**：🎯 ✨ 💡（适度使用）
@@ -36,6 +38,7 @@
 ### 🔗 逻辑结构
 
 **标准论述流程**：
+
 ```
 1. 概述/简介（直接切入主题）
 2. 核心内容/主体（分层论述）
@@ -47,6 +50,7 @@
 ### 📝 句式特征
 
 **常用句式**：
+
 - 总的来说，... / 综上所述，... / 简而言之，...
 - 具体而言，... / 具体来说，...
 - 例如，... / 举个例子，...
@@ -60,51 +64,39 @@
 ### 方式 1：直接使用风格配置
 
 ```typescript
-import { WriterAgent } from '@yunpat/agent-writer';
-import { generateXuJianStylePrompt } from '../../config/writing-style-xujian.js';
+import { WriterAgent } from '@yunpat/agent-writer'
+import { generateXuJianStylePrompt } from '../../config/writing-style-xujian.js'
 
 const writer = new WriterAgent({
   eventBus,
   memory,
   tools,
-  llm
-});
+  llm,
+})
 
 const result = await writer.execute({
   type: 'generate',
   topic: 'Docker 容器化技术的优势',
-  requirements: [
-    generateXuJianStylePrompt('Docker 容器化技术')
-  ]
-});
+  requirements: [generateXuJianStylePrompt('Docker 容器化技术')],
+})
 ```
 
 ### 方式 2：使用便捷函数
 
 ```typescript
-import { writeInXuJianStyle } from '@yunpat/agent-writer';
+import { writeInXuJianStyle } from '@yunpat/agent-writer'
 
-const result = await writeInXujianStyle(
-  '微服务架构设计原则',
-  { eventBus, memory, tools, llm }
-);
+const result = await writeInXujianStyle('微服务架构设计原则', { eventBus, memory, tools, llm })
 ```
 
 ### 方式 3：批量生成
 
 ```typescript
-import { batchWriteInXuJianStyle } from '@yunpat/agent-writer';
+import { batchWriteInXuJianStyle } from '@yunpat/agent-writer'
 
-const topics = [
-  'Docker 容器化技术',
-  'AI 模型部署最佳实践',
-  '专利审查指南'
-];
+const topics = ['Docker 容器化技术', 'AI 模型部署最佳实践', '专利审查指南']
 
-const results = await batchWriteInXuJianStyle(
-  topics,
-  { eventBus, memory, tools, llm }
-);
+const results = await batchWriteInXuJianStyle(topics, { eventBus, memory, tools, llm })
 ```
 
 ---
@@ -172,12 +164,14 @@ Docker 是一个很有用的工具。
 基于容器化的"构建一次，到处运行"理念，Docker 解决了传统部署中的环境不一致问题。具体来说：
 
 ### 传统部署的痛点
+
 - 开发环境：Python 3.8 + Node 16
 - 测试环境：Python 3.9 + Node 18
 - 生产环境：Python 3.7 + Node 14
 - 问题：环境差异导致"在我机器上能跑"问题频发
 
 ### Docker 的解决方案
+
 - 镜像打包：包含应用 + 所有依赖
 - 环境隔离：每个容器独立运行
 - 版本固定：避免"依赖地狱"
@@ -198,7 +192,7 @@ Docker 是一个很有用的工具。
 ### 调整风格配置
 
 ```typescript
-import { xuJianWritingStyle } from '../../config/writing-style-xujian.js';
+import { xuJianWritingStyle } from '../../config/writing-style-xujian.js'
 
 // 自定义风格
 const myCustomStyle = {
@@ -206,47 +200,32 @@ const myCustomStyle = {
   vocabulary: {
     ...xuJianWritingStyle.vocabulary,
     // 添加你的常用词
-    preferredWords: [
-      ...xuJianWritingStyle.vocabulary.preferredWords,
-      '咱们', '说白了', '实际上'
-    ]
+    preferredWords: [...xuJianWritingStyle.vocabulary.preferredWords, '咱们', '说白了', '实际上'],
   },
   organization: {
     ...xuJianWritingStyle.organization,
     // 自定义章节结构
-    sections: [
-      '问题背景',
-      '技术方案',
-      '实施步骤',
-      '风险分析',
-      '预期效果'
-    ]
-  }
-};
+    sections: ['问题背景', '技术方案', '实施步骤', '风险分析', '预期效果'],
+  },
+}
 ```
 
 ### 持续学习优化
 
 ```typescript
 // 1. 收集你的写作样本
-const myDocuments = [
-  '/path/to/doc1.md',
-  '/path/to/doc2.md',
-  '/path/to/doc3.md'
-];
+const myDocuments = ['/path/to/doc1.md', '/path/to/doc2.md', '/path/to/doc3.md']
 
 // 2. 学习风格
-import { learnWritingStyleFromDocuments } from '@yunpat/agent-writer';
-const learnedStyle = await learnWritingStyleFromDocuments(myDocuments);
+import { learnWritingStyleFromDocuments } from '@yunpat/agent-writer'
+const learnedStyle = await learnWritingStyleFromDocuments(myDocuments)
 
 // 3. 使用优化后的风格
 const result = await writer.execute({
   type: 'generate',
   topic: '新主题',
-  requirements: [
-    generateStylePrompt(learnedStyle)
-  ]
-});
+  requirements: [generateStylePrompt(learnedStyle)],
+})
 ```
 
 ---
@@ -255,16 +234,16 @@ const result = await writer.execute({
 
 基于文档分析的统计数据：
 
-| 指标 | 数值/特征 |
-|------|----------|
-| **平均段落长度** | 150 字符 |
-| **平均句长** | 20-40 字 |
+| 指标               | 数值/特征           |
+| ------------------ | ------------------- |
+| **平均段落长度**   | 150 字符            |
+| **平均句长**       | 20-40 字            |
 | **Emoji 使用频率** | 适中（每 3-5 段落） |
-| **表格使用频率** | 高（对比分析必用） |
-| **代码块使用频率** | 高（技术说明必用） |
-| **列表使用频率** | 高（分点论述必用） |
-| **引用来源频率** | 高（权威引用） |
-| **举例说明频率** | 高（案例丰富） |
+| **表格使用频率**   | 高（对比分析必用）  |
+| **代码块使用频率** | 高（技术说明必用）  |
+| **列表使用频率**   | 高（分点论述必用）  |
+| **引用来源频率**   | 高（权威引用）      |
+| **举例说明频率**   | 高（案例丰富）      |
 
 ---
 
@@ -281,11 +260,13 @@ const result = await writer.execute({
 ## 🎯 下一步
 
 1. **测试基础功能**：
+
    ```bash
    pnpm test
    ```
 
 2. **运行示例**：
+
    ```bash
    ts-node examples/usage-style-mimicry.ts
    ```

@@ -3,6 +3,7 @@
 ## 概述
 
 YunPat 的 PostgreSQL 向量存储提供了一个高性能的记忆层，支持：
+
 - 向量相似度搜索（基于 pgvector + HNSW 索引）
 - 图关系存储（实体和关系）
 - 元数据过滤（JSONB）
@@ -29,16 +30,16 @@ cd packages/core
 ### 2. 基本使用
 
 ```typescript
-import { PostgresVectorStore } from './memory/long-term/PostgresVectorStore.js';
+import { PostgresVectorStore } from './memory/long-term/PostgresVectorStore.js'
 
 // 创建向量存储
 const store = new PostgresVectorStore({
   databaseUrl: 'postgres://yunpat:yunpat123@localhost:5432/yunpat',
   vectorDimension: 1024, // BGE-M3 默认维度
   enablePerformanceMonitoring: true,
-});
+})
 
-await store.initialize();
+await store.initialize()
 
 // 插入记忆
 const id = await store.upsert({
@@ -49,31 +50,31 @@ const id = await store.upsert({
     agent: 'writer',
     tags: ['专利', '撰写'],
   },
-});
+})
 
 // 向量搜索
 const results = await store.search(queryEmbedding, 10, {
   types: ['patent'],
   agent: 'writer',
-});
+})
 
 // 查看性能统计
-console.log(store.getPerformanceStats());
+console.log(store.getPerformanceStats())
 
-await store.close();
+await store.close()
 ```
 
 ### 3. 使用 MemoryLayer（推荐）
 
 ```typescript
-import { MemoryLayer } from './memory/long-term/MemoryLayer.js';
+import { MemoryLayer } from './memory/long-term/MemoryLayer.js'
 
 const memoryLayer = new MemoryLayer({
   databaseUrl: 'postgres://yunpat:yunpat123@localhost:5432/yunpat',
   vectorDimension: 1024,
-});
+})
 
-await memoryLayer.initialize();
+await memoryLayer.initialize()
 
 // 添加记忆
 const memoryId = await memoryLayer.addMemory({
@@ -81,28 +82,28 @@ const memoryId = await memoryLayer.addMemory({
   content: '用户消息内容',
   embedding: embeddingVector,
   metadata: { userId: 'user123' },
-});
+})
 
 // 搜索记忆
-const results = await memoryLayer.searchMemories(queryEmbedding, 5);
+const results = await memoryLayer.searchMemories(queryEmbedding, 5)
 
 // 创建图关系
 const entityId = await memoryLayer.createEntity({
   type: 'Person',
   name: '张三',
-});
+})
 
 await memoryLayer.createRelation({
   fromEntityId: entityId,
   toEntityId: anotherEntityId,
   relationType: 'KNOWS',
   weight: 0.9,
-});
+})
 
 // 查找最短路径
-const path = await memoryLayer.findShortestPath(entityId, anotherEntityId);
+const path = await memoryLayer.findShortestPath(entityId, anotherEntityId)
 
-await memoryLayer.close();
+await memoryLayer.close()
 ```
 
 ## 性能优化
@@ -110,6 +111,7 @@ await memoryLayer.close();
 ### HNSW 索引配置
 
 默认配置（已在 schema.sql 中设置）：
+
 - `m = 16`: 每个节点的连接数
 - `ef_construction = 64`: 构建时的候选列表大小
 
@@ -123,9 +125,9 @@ const items = Array.from({ length: 10000 }, (_, i) => ({
   type: 'test',
   content: `内容 ${i}`,
   embedding: generateEmbedding(`内容 ${i}`),
-}));
+}))
 
-await store.upsertBatch(items); // 自动分批，每批 1000 条
+await store.upsertBatch(items) // 自动分批，每批 1000 条
 ```
 
 ### 连接池配置
@@ -133,22 +135,22 @@ await store.upsertBatch(items); // 自动分批，每批 1000 条
 ```typescript
 const store = new PostgresVectorStore({
   databaseUrl: 'postgres://yunpat:yunpat123@localhost:5432/yunpat',
-  poolMax: 20,              // 最大连接数
-  poolIdleTimeout: 20,      // 空闲超时（秒）
-  poolConnectTimeout: 10,   // 连接超时（秒）
-});
+  poolMax: 20, // 最大连接数
+  poolIdleTimeout: 20, // 空闲超时（秒）
+  poolConnectTimeout: 10, // 连接超时（秒）
+})
 ```
 
 ## 性能基准
 
 在我们的测试环境中（MacBook Pro M1，本地 Docker）：
 
-| 操作 | 性能 |
-|------|------|
-| 批量插入 | > 1000 vectors/s |
-| 1K 向量搜索 | < 10ms |
-| 10K 向量搜索 | < 20ms |
-| 100K 向量搜索 | < 50ms |
+| 操作          | 性能             |
+| ------------- | ---------------- |
+| 批量插入      | > 1000 vectors/s |
+| 1K 向量搜索   | < 10ms           |
+| 10K 向量搜索  | < 20ms           |
+| 100K 向量搜索 | < 50ms           |
 
 ## 测试
 
@@ -197,16 +199,19 @@ docker exec yunpat-postgres pg_isready -U yunpat
 ### 性能问题
 
 1. 确保 HNSW 索引已创建：
+
 ```sql
 SELECT indexname FROM pg_indexes WHERE indexname = 'memories_embedding_hnsw_idx';
 ```
 
 2. 检查连接池配置：
+
 ```typescript
-console.log(store.getPerformanceStats());
+console.log(store.getPerformanceStats())
 ```
 
 3. 增加工作内存（在 PostgreSQL 中）：
+
 ```sql
 ALTER SYSTEM SET work_mem = '256MB';
 SELECT pg_reload_conf();

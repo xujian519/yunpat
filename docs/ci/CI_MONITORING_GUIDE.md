@@ -4,12 +4,12 @@
 
 ### 关键性能指标 (KPIs)
 
-| 指标 | 目标值 | 当前值 | 状态 |
-|------|--------|--------|------|
-| **构建成功率** | ≥95% | 100% | ✅ |
-| **平均构建时间** | ≤3分钟 | 1分39秒 | ✅ |
-| **测试通过率** | 100% | 100% | ✅ |
-| **代码质量检查** | 通过 | 通过 | ✅ |
+| 指标             | 目标值 | 当前值  | 状态 |
+| ---------------- | ------ | ------- | ---- |
+| **构建成功率**   | ≥95%   | 100%    | ✅   |
+| **平均构建时间** | ≤3分钟 | 1分39秒 | ✅   |
+| **测试通过率**   | 100%   | 100%    | ✅   |
+| **代码质量检查** | 通过   | 通过    | ✅   |
 
 ---
 
@@ -108,32 +108,32 @@ jobs:
   monitor:
     name: 监控 CI 性能
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
-      
+
       - name: 分析 CI 性能
         run: |
           # 获取最近100次运行
           RUNS=$(gh run list --json databaseId,conclusion,status,durationMs --limit 100)
-          
+
           # 计算成功率
           SUCCESS_COUNT=$(echo "$RUNS" | jq '[.[] | select(.conclusion == "success")] | length')
           TOTAL_COUNT=$(echo "$RUNS" | jq 'length')
           SUCCESS_RATE=$(echo "scale=1; $SUCCESS_COUNT * 100 / $TOTAL_COUNT" | bc)
-          
+
           # 计算平均耗时
           AVG_DURATION=$(echo "$RUNS" | jq '[.[] | select(.durationMs != null)] | .durationMs | add / length')
-          
+
           echo "✅ 成功率: ${SUCCESS_RATE}%"
           echo "⏱️  平均耗时: $(echo "scale=0; $AVG_DURATION / 1000" | bc)秒"
-          
+
           # 检查是否需要告警
           if (( $(echo "$SUCCESS_RATE < 90" | bc -l) )); then
             echo "::warning::成功率低于90%，需要关注"
           fi
-          
+
           if (( $(echo "$AVG_DURATION > 180000" | bc -l) )); then
             echo "::warning::平均构建时间超过3分钟"
           fi
@@ -150,6 +150,7 @@ jobs:
 **当前状态**: 1分39秒 ✅ (优秀)
 
 **优化方向**:
+
 - 使用 pnpm 缓存优化
 - 并行运行独立的 job
 - 使用 GitHub Actions 缓存
@@ -159,6 +160,7 @@ jobs:
 **当前状态**: 100% ✅ (完美)
 
 **维护建议**:
+
 - 定期检查失败的运行
 - 修复 flaky 测试
 - 更新依赖版本
@@ -166,6 +168,7 @@ jobs:
 ### 3. 资源使用优化
 
 **建议**:
+
 - 使用 `ubuntu-latest` (最新版本)
 - 考虑使用 `actions/cache` 优化依赖安装
 - 优化 pnpm 安装参数
@@ -176,15 +179,16 @@ jobs:
 
 ### 告警阈值
 
-| 指标 | 警告阈值 | 严重阈值 |
-|------|----------|----------|
-| **成功率** | <95% | <90% |
-| **构建时间** | >3分钟 | >5分钟 |
-| **失败次数** | 连续2次 | 连续3次 |
+| 指标         | 警告阈值 | 严重阈值 |
+| ------------ | -------- | -------- |
+| **成功率**   | <95%     | <90%     |
+| **构建时间** | >3分钟   | >5分钟   |
+| **失败次数** | 连续2次  | 连续3次  |
 
 ### 告警方式
 
 1. **GitHub Actions Annotations**
+
    ```yaml
    - name: 性能检查
      run: |
@@ -210,16 +214,19 @@ jobs:
 ## 📋 监控检查清单
 
 ### 日常监控 (每日)
+
 - [ ] 检查最新的 CI 运行状态
 - [ ] 查看是否有失败的构建
 - [ ] 检查构建时间趋势
 
 ### 周期监控 (每周)
+
 - [ ] 分析最近7天的构建成功率
 - [ ] 识别性能瓶颈
 - [ ] 检查依赖更新
 
 ### 深度分析 (每月)
+
 - [ ] 生成月度 CI 性能报告
 - [ ] 分析失败原因分布
 - [ ] 优化构建流程
@@ -257,27 +264,32 @@ gh run list --json conclusion,durationMs,updatedAt --limit 50 | \
 ## CI/CD 性能报告 - YYYY年MM月
 
 ### 总体概况
+
 - 统计周期: YYYY-MM-DD 至 YYYY-MM-DD
 - 总运行次数: X次
 - 成功率: XX%
 - 平均构建时间: XX秒
 
 ### 性能趋势
+
 - 构建成功率变化: 📈📉
 - 平均构建时间变化: 📈📉
 
 ### 失败分析
+
 - 主要失败原因:
   - 测试失败: X次
   - 构建失败: X次
   - 超时失败: X次
 
 ### 优化建议
+
 - 1. ...
 - 2. ...
 - 3. ...
 
 ### 下月目标
+
 - 成功率目标: ≥95%
 - 构建时间目标: ≤3分钟
 ```
@@ -289,6 +301,7 @@ gh run list --json conclusion,durationMs,updatedAt --limit 50 | \
 ### 升级内容
 
 ✅ **已更新的 workflow 文件**:
+
 - `.github/workflows/ci-simplified.yml`
 - `.github/workflows/ci-optimized.yml`
 - `.github/workflows/automation.yml`

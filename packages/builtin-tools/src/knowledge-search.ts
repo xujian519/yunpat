@@ -4,33 +4,33 @@
  * 从 YunPat 专利知识库中检索相关卡片和文档
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import * as fs from 'fs'
+import * as path from 'path'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 /**
  * 卡片元数据
  */
 export interface CardMetadata {
   /** 卡片ID（文件名） */
-  id: string;
+  id: string
   /** 卡片标题 */
-  title: string;
+  title: string
   /** 核心概念 */
-  concept: string;
+  concept: string
   /** 质量分数 */
-  quality: number;
+  quality: number
   /** 领域分类 */
-  domain: string;
+  domain: string
   /** 文件路径 */
-  filePath: string;
+  filePath: string
   /** 相关概念 */
-  relatedConcepts: string[];
+  relatedConcepts: string[]
   /** 生成时间 */
-  generatedAt: string;
+  generatedAt: string
   /** 版本 */
-  version: number;
+  version: number
 }
 
 /**
@@ -38,15 +38,15 @@ export interface CardMetadata {
  */
 export interface KnowledgeIndex {
   /** 卡片总数 */
-  totalCards: number;
+  totalCards: number
   /** 卡片列表 */
-  cards: CardMetadata[];
+  cards: CardMetadata[]
   /** 概念索引（概念 -> 卡片ID列表） */
-  conceptIndex: Record<string, string[]>;
+  conceptIndex: Record<string, string[]>
   /** 领域索引（领域 -> 卡片ID列表） */
-  domainIndex: Record<string, string[]>;
+  domainIndex: Record<string, string[]>
   /** 最后更新时间 */
-  lastUpdated: string;
+  lastUpdated: string
 }
 
 /**
@@ -55,14 +55,14 @@ export interface KnowledgeIndex {
 export interface SearchResult {
   /** 匹配的卡片 */
   cards: Array<{
-    metadata: CardMetadata;
-    content?: string;
-    relevanceScore: number;
-  }>;
+    metadata: CardMetadata
+    content?: string
+    relevanceScore: number
+  }>
   /** 相关概念 */
-  relatedConcepts: string[];
+  relatedConcepts: string[]
   /** 检索时间 */
-  searchTime: number;
+  searchTime: number
 }
 
 /**
@@ -70,17 +70,17 @@ export interface SearchResult {
  */
 export class KnowledgeSearchTool extends EnhancedBaseTool<
   {
-    query: string;
-    concepts?: string[];
-    domains?: string[];
-    limit?: number;
-    includeContent?: boolean;
+    query: string
+    concepts?: string[]
+    domains?: string[]
+    limit?: number
+    includeContent?: boolean
   },
   SearchResult
 > {
-  private knowledgeBasePath: string;
-  private indexPath: string;
-  private index: KnowledgeIndex | null = null;
+  private knowledgeBasePath: string
+  private indexPath: string
+  private index: KnowledgeIndex | null = null
 
   readonly metadata = {
     name: 'knowledge_search',
@@ -118,36 +118,36 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   constructor(
     knowledgeBasePath: string = '/Users/xujian/projects/YunPat/knowledge-base',
     indexPath: string = '/Users/xujian/projects/YunPat/knowledge-base/card-index.json'
   ) {
-    super();
-    this.knowledgeBasePath = knowledgeBasePath;
-    this.indexPath = indexPath;
+    super()
+    this.knowledgeBasePath = knowledgeBasePath
+    this.indexPath = indexPath
   }
 
   async execute(
     input: {
-      query: string;
-      concepts?: string[];
-      domains?: string[];
-      limit?: number;
-      includeContent?: boolean;
+      query: string
+      concepts?: string[]
+      domains?: string[]
+      limit?: number
+      includeContent?: boolean
     },
     _context: ToolContext
   ): Promise<SearchResult> {
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 1. 加载或构建索引
     if (!this.index) {
-      await this.loadIndex();
+      await this.loadIndex()
     }
 
     if (!this.index) {
-      throw new Error('知识库索引加载失败');
+      throw new Error('知识库索引加载失败')
     }
 
     // 2. 搜索匹配的卡片
@@ -156,33 +156,33 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
       input.concepts,
       input.domains,
       input.limit || 10
-    );
+    )
 
     // 3. 读取卡片内容（如果需要）
     const results = await Promise.all(
       matchedCards.map(async (cardMeta) => {
         const content =
-          input.includeContent !== false ? await this.loadCardContent(cardMeta.filePath) : '';
+          input.includeContent !== false ? await this.loadCardContent(cardMeta.filePath) : ''
 
         return {
           metadata: cardMeta,
           content: content || '', // 确保不为 undefined
           relevanceScore: this.calculateRelevance(input.query, cardMeta),
-        };
+        }
       })
-    );
+    )
 
     // 4. 查找相关概念
     const relatedConcepts = this.findRelatedConcepts(
       input.query,
       results.map((r) => r.metadata.concept)
-    );
+    )
 
     return {
       cards: results,
       relatedConcepts,
       searchTime: Date.now() - startTime,
-    };
+    }
   }
 
   /**
@@ -191,15 +191,15 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
   private async loadIndex(): Promise<void> {
     try {
       if (fs.existsSync(this.indexPath)) {
-        const indexData = fs.readFileSync(this.indexPath, 'utf-8');
-        this.index = JSON.parse(indexData);
+        const indexData = fs.readFileSync(this.indexPath, 'utf-8')
+        this.index = JSON.parse(indexData)
       } else {
         // 索引不存在，构建新索引
-        await this.buildIndex();
+        await this.buildIndex()
       }
     } catch (error) {
-      console.error('加载索引失败:', error);
-      await this.buildIndex();
+      console.error('加载索引失败:', error)
+      await this.buildIndex()
     }
   }
 
@@ -207,31 +207,31 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
    * 构建索引
    */
   async buildIndex(): Promise<void> {
-    const cardsPath = path.join(this.knowledgeBasePath, 'cards');
-    const files = fs.readdirSync(cardsPath).filter((f) => f.endsWith('.md'));
+    const cardsPath = path.join(this.knowledgeBasePath, 'cards')
+    const files = fs.readdirSync(cardsPath).filter((f) => f.endsWith('.md'))
 
-    const cards: CardMetadata[] = [];
-    const conceptIndex: Record<string, string[]> = {};
-    const domainIndex: Record<string, string[]> = {};
+    const cards: CardMetadata[] = []
+    const conceptIndex: Record<string, string[]> = {}
+    const domainIndex: Record<string, string[]> = {}
 
     for (const file of files) {
-      const filePath = path.join(cardsPath, file);
-      const metadata = await this.parseCardMetadata(filePath);
+      const filePath = path.join(cardsPath, file)
+      const metadata = await this.parseCardMetadata(filePath)
 
       if (metadata) {
-        cards.push(metadata);
+        cards.push(metadata)
 
         // 构建概念索引
         if (!conceptIndex[metadata.concept]) {
-          conceptIndex[metadata.concept] = [];
+          conceptIndex[metadata.concept] = []
         }
-        conceptIndex[metadata.concept].push(metadata.id);
+        conceptIndex[metadata.concept].push(metadata.id)
 
         // 构建领域索引
         if (!domainIndex[metadata.domain]) {
-          domainIndex[metadata.domain] = [];
+          domainIndex[metadata.domain] = []
         }
-        domainIndex[metadata.domain].push(metadata.id);
+        domainIndex[metadata.domain].push(metadata.id)
       }
     }
 
@@ -241,10 +241,10 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
       conceptIndex,
       domainIndex,
       lastUpdated: new Date().toISOString(),
-    };
+    }
 
     // 保存索引
-    fs.writeFileSync(this.indexPath, JSON.stringify(this.index, null, 2), 'utf-8');
+    fs.writeFileSync(this.indexPath, JSON.stringify(this.index, null, 2), 'utf-8')
   }
 
   /**
@@ -252,27 +252,27 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
    */
   private async parseCardMetadata(filePath: string): Promise<CardMetadata | null> {
     try {
-      const content = fs.readFileSync(filePath, 'utf-8');
-      const lines = content.split('\n');
+      const content = fs.readFileSync(filePath, 'utf-8')
+      const lines = content.split('\n')
 
       // 解析 front-matter
-      const metadata: any = {};
+      const metadata: any = {}
 
       for (const line of lines) {
         if (line.startsWith('- ')) {
-          const match = line.match(/^-\s*(\w+):\s*(.+)$/);
+          const match = line.match(/^-\s*(\w+):\s*(.+)$/)
           if (match) {
-            const [, key, value] = match;
-            metadata[key] = value;
+            const [, key, value] = match
+            metadata[key] = value
           }
         } else if (line.trim() === '') {
-          break; // front-matter 结束
+          break // front-matter 结束
         }
       }
 
       // 提取标题（第一个 # 标题）
-      const titleMatch = content.match(/^#\s+(.+)$/m);
-      const title = titleMatch ? titleMatch[1] : path.basename(filePath);
+      const titleMatch = content.match(/^#\s+(.+)$/m)
+      const title = titleMatch ? titleMatch[1] : path.basename(filePath)
 
       return {
         id: path.basename(filePath, '.md'),
@@ -284,10 +284,10 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
         relatedConcepts: [],
         generatedAt: metadata['生成时间'] || new Date().toISOString(),
         version: parseInt(metadata['版本'] || '1'),
-      };
+      }
     } catch (error) {
-      console.error(`解析卡片元数据失败: ${filePath}`, error);
-      return null;
+      console.error(`解析卡片元数据失败: ${filePath}`, error)
+      return null
     }
   }
 
@@ -301,56 +301,56 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
     limit: number = 10
   ): CardMetadata[] {
     if (!this.index) {
-      return [];
+      return []
     }
 
-    let candidates = this.index.cards;
+    let candidates = this.index.cards
 
     // 按概念过滤
     if (concepts && concepts.length > 0) {
-      candidates = candidates.filter((card) => concepts.includes(card.concept));
+      candidates = candidates.filter((card) => concepts.includes(card.concept))
     }
 
     // 按领域过滤
     if (domains && domains.length > 0) {
-      candidates = candidates.filter((card) => domains.includes(card.domain));
+      candidates = candidates.filter((card) => domains.includes(card.domain))
     }
 
     // 按查询词匹配
-    const queryLower = query.toLowerCase();
+    const queryLower = query.toLowerCase()
     const scored = candidates.map((card) => ({
       card,
       score: this.calculateRelevance(query, card),
-    }));
+    }))
 
     // 按相关性排序
-    scored.sort((a, b) => b.score - a.score);
+    scored.sort((a, b) => b.score - a.score)
 
     // 返回前 N 个
-    return scored.slice(0, limit).map((s) => s.card);
+    return scored.slice(0, limit).map((s) => s.card)
   }
 
   /**
    * 计算相关性分数
    */
   private calculateRelevance(query: string, card: CardMetadata): number {
-    let score = 0;
-    const queryLower = query.toLowerCase();
+    let score = 0
+    const queryLower = query.toLowerCase()
 
     // 标题匹配（权重最高）
     if (card.title.toLowerCase().includes(queryLower)) {
-      score += 3.0;
+      score += 3.0
     }
 
     // 概念匹配
     if (card.concept.toLowerCase().includes(queryLower)) {
-      score += 2.0;
+      score += 2.0
     }
 
     // 质量分加权
-    score *= card.quality;
+    score *= card.quality
 
-    return score;
+    return score
   }
 
   /**
@@ -358,25 +358,25 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
    */
   private findRelatedConcepts(_query: string, matchedConcepts: string[]): string[] {
     if (!this.index) {
-      return [];
+      return []
     }
 
-    const related: Set<string> = new Set();
+    const related: Set<string> = new Set()
 
     for (const concept of matchedConcepts) {
       // 查找包含该概念的卡片
-      const cardIds = this.index.conceptIndex[concept] || [];
+      const cardIds = this.index.conceptIndex[concept] || []
 
       // 收集这些卡片的相关概念
       for (const cardId of cardIds) {
-        const card = this.index.cards.find((c) => c.id === cardId);
+        const card = this.index.cards.find((c) => c.id === cardId)
         if (card) {
-          card.relatedConcepts.forEach((rc) => related.add(rc));
+          card.relatedConcepts.forEach((rc) => related.add(rc))
         }
       }
     }
 
-    return Array.from(related).slice(0, 10);
+    return Array.from(related).slice(0, 10)
   }
 
   /**
@@ -384,10 +384,10 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
    */
   private async loadCardContent(filePath: string): Promise<string> {
     try {
-      return fs.readFileSync(filePath, 'utf-8');
+      return fs.readFileSync(filePath, 'utf-8')
     } catch (error) {
-      console.error(`加载卡片内容失败: ${filePath}`, error);
-      return '';
+      console.error(`加载卡片内容失败: ${filePath}`, error)
+      return ''
     }
   }
 }
@@ -397,16 +397,16 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
  */
 export class KnowledgeIndexBuilderTool extends EnhancedBaseTool<
   {
-    forceRebuild?: boolean;
+    forceRebuild?: boolean
   },
   {
-    success: boolean;
-    totalCards: number;
-    buildTime: number;
+    success: boolean
+    totalCards: number
+    buildTime: number
   }
 > {
-  private knowledgeBasePath: string;
-  private indexPath: string;
+  private knowledgeBasePath: string
+  private indexPath: string
 
   readonly metadata = {
     name: 'knowledge_index_builder',
@@ -424,44 +424,44 @@ export class KnowledgeIndexBuilderTool extends EnhancedBaseTool<
     permissions: ['fs:read', 'fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   constructor(
     knowledgeBasePath: string = '/Users/xujian/projects/YunPat/knowledge-base',
     indexPath: string = '/Users/xujian/projects/YunPat/knowledge-base/card-index.json'
   ) {
-    super();
-    this.knowledgeBasePath = knowledgeBasePath;
-    this.indexPath = indexPath;
+    super()
+    this.knowledgeBasePath = knowledgeBasePath
+    this.indexPath = indexPath
   }
 
   async execute(
     input: { forceRebuild?: boolean },
     _context: ToolContext
   ): Promise<{ success: boolean; totalCards: number; buildTime: number }> {
-    const startTime = Date.now();
+    const startTime = Date.now()
 
-    const searchTool = new KnowledgeSearchTool(this.knowledgeBasePath, this.indexPath);
+    const searchTool = new KnowledgeSearchTool(this.knowledgeBasePath, this.indexPath)
 
     if (input.forceRebuild || !fs.existsSync(this.indexPath)) {
       // 直接构建索引
-      await this.buildIndexInternal(searchTool);
+      await this.buildIndexInternal(searchTool)
     } else {
       // 加载现有索引
-      searchTool['loadIndex']();
+      searchTool['loadIndex']()
     }
 
     return {
       success: true,
       totalCards: 0, // TODO: 从索引中获取
       buildTime: Date.now() - startTime,
-    };
+    }
   }
 
   /**
    * 内部索引构建方法
    */
   private async buildIndexInternal(searchTool: KnowledgeSearchTool): Promise<void> {
-    return searchTool['buildIndex']();
+    return searchTool['buildIndex']()
   }
 }

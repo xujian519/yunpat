@@ -5,9 +5,9 @@
  * 使用 LLM 提取核心问题并生成高质量回答
  */
 
-import type { LLMAdapter } from '../lifecycle/Lifecycle.js';
-import type { KnowledgeCard } from './KnowledgeCard.js';
-import { generateCardId } from './KnowledgeCard.js';
+import type { LLMAdapter } from '../lifecycle/Lifecycle.js'
+import type { KnowledgeCard } from './KnowledgeCard.js'
+import { generateCardId } from './KnowledgeCard.js'
 
 const GENERATION_PROMPT = `你是一个专利法知识卡片的生成助手。请根据提供的知识页面内容，生成一张高质量的知识卡片。
 
@@ -44,7 +44,7 @@ const GENERATION_PROMPT = `你是一个专利法知识卡片的生成助手。�
 概念：{concept}
 领域：{domain}
 
-{content}`;
+{content}`
 
 const QUALITY_ASSESS_PROMPT = `请评估以下知识卡片的质量，返回 0-1 的质量分数。
 
@@ -60,26 +60,26 @@ const QUALITY_ASSESS_PROMPT = `请评估以下知识卡片的质量，返回 0-1
 {question}
 
 ## 内容
-{content}`;
+{content}`
 
 export interface CardGeneratorConfig {
   /** LLM 适配器 */
-  llm: LLMAdapter;
+  llm: LLMAdapter
   /** 质量阈值 */
-  qualityThreshold?: number;
+  qualityThreshold?: number
   /** 每个页面最大生成卡片数 */
-  maxCardsPerPage?: number;
+  maxCardsPerPage?: number
 }
 
 export class CardGenerator {
-  private llm: LLMAdapter;
-  private qualityThreshold: number;
-  private maxCardsPerPage: number;
+  private llm: LLMAdapter
+  private qualityThreshold: number
+  private maxCardsPerPage: number
 
   constructor(config: CardGeneratorConfig) {
-    this.llm = config.llm;
-    this.qualityThreshold = config.qualityThreshold ?? 0.7;
-    this.maxCardsPerPage = config.maxCardsPerPage ?? 3;
+    this.llm = config.llm
+    this.qualityThreshold = config.qualityThreshold ?? 0.7
+    this.maxCardsPerPage = config.maxCardsPerPage ?? 3
   }
 
   async generateFromPage(
@@ -89,11 +89,11 @@ export class CardGenerator {
     concept: string,
     domain: string
   ): Promise<KnowledgeCard[]> {
-    const MAX_CONTENT_LEN = 6000;
+    const MAX_CONTENT_LEN = 6000
     const prompt = GENERATION_PROMPT.replace(/\{title\}/g, pageTitle)
       .replace(/\{concept\}/g, concept)
       .replace(/\{domain\}/g, domain)
-      .replace(/\{content\}/g, pageContent.slice(0, MAX_CONTENT_LEN));
+      .replace(/\{content\}/g, pageContent.slice(0, MAX_CONTENT_LEN))
 
     const response = await this.llm.chat({
       messages: [
@@ -105,10 +105,10 @@ export class CardGenerator {
       ],
       temperature: 0.3,
       maxTokens: 2000,
-    });
+    })
 
-    const cards = this.parseGenerationResponse(response.message.content, pagePath, concept, domain);
-    return cards.filter((c) => c.quality >= this.qualityThreshold);
+    const cards = this.parseGenerationResponse(response.message.content, pagePath, concept, domain)
+    return cards.filter((c) => c.quality >= this.qualityThreshold)
   }
 
   async generateFromConcept(
@@ -116,7 +116,7 @@ export class CardGenerator {
     domain: string,
     pages: Array<{ path: string; content: string; title: string }>
   ): Promise<KnowledgeCard[]> {
-    const allCards: KnowledgeCard[] = [];
+    const allCards: KnowledgeCard[] = []
 
     for (const page of pages) {
       try {
@@ -126,23 +126,23 @@ export class CardGenerator {
           page.title,
           concept,
           domain
-        );
-        allCards.push(...cards);
+        )
+        allCards.push(...cards)
       } catch (error) {
-        console.error(`生成卡片失败 (${page.path}): ${error}`);
+        console.error(`生成卡片失败 (${page.path}): ${error}`)
       }
 
-      if (allCards.length >= this.maxCardsPerPage * pages.length) break;
+      if (allCards.length >= this.maxCardsPerPage * pages.length) break
     }
 
-    return this.deduplicate(allCards);
+    return this.deduplicate(allCards)
   }
 
   async assessQuality(card: KnowledgeCard): Promise<{ quality: number; issues: string[] }> {
     const prompt = QUALITY_ASSESS_PROMPT.replace('{question}', card.question).replace(
       '{content}',
       card.content
-    );
+    )
 
     try {
       const response = await this.llm.chat({
@@ -152,15 +152,15 @@ export class CardGenerator {
         ],
         temperature: 0.2,
         maxTokens: 500,
-      });
+      })
 
-      const parsed = this.extractJSON(response.message.content);
+      const parsed = this.extractJSON(response.message.content)
       return {
         quality: (parsed as any).quality ?? 0.5,
         issues: (parsed as any).issues ?? [],
-      };
+      }
     } catch {
-      return { quality: card.quality, issues: [] };
+      return { quality: card.quality, issues: [] }
     }
   }
 
@@ -170,12 +170,12 @@ export class CardGenerator {
     concept: string,
     domain: string
   ): KnowledgeCard[] {
-    const parsed = this.extractJSON(content);
-    const items = Array.isArray(parsed) ? parsed : [parsed];
-    const now = new Date().toISOString();
+    const parsed = this.extractJSON(content)
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+    const now = new Date().toISOString()
 
     return items.map((item: unknown) => {
-      const question = (item as any).question ?? '';
+      const question = (item as any).question ?? ''
       const card: KnowledgeCard = {
         id: generateCardId(question, concept),
         question,
@@ -195,54 +195,54 @@ export class CardGenerator {
           tokenCount: ((item as any).content ?? '').length,
           referenceCount: 0,
         },
-      };
-      return card;
-    });
+      }
+      return card
+    })
   }
 
   private extractJSON(text: string): unknown {
     // 尝试提取 JSON 代码块
-    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
     if (codeBlockMatch) {
       try {
-        return JSON.parse(codeBlockMatch[1].trim());
+        return JSON.parse(codeBlockMatch[1].trim())
       } catch (e) {
-        console.warn('JSON 代码块解析失败:', (e as Error).message);
+        console.warn('JSON 代码块解析失败:', (e as Error).message)
       }
     }
 
     // 尝试直接解析
     try {
-      return JSON.parse(text.trim());
+      return JSON.parse(text.trim())
     } catch {
       // 直接解析失败，尝试提取 JSON 子串
     }
 
     // 尝试找到第一个 { 和最后一个 }
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
+    const start = text.indexOf('{')
+    const end = text.lastIndexOf('}')
     if (start >= 0 && end > start) {
       try {
-        return JSON.parse(text.slice(start, end + 1));
+        return JSON.parse(text.slice(start, end + 1))
       } catch {
         // 提取子串后解析仍失败
       }
     }
 
-    throw new Error(`无法从 LLM 响应中提取 JSON: ${text.slice(0, 200)}`);
+    throw new Error(`无法从 LLM 响应中提取 JSON: ${text.slice(0, 200)}`)
   }
 
   private deduplicate(cards: KnowledgeCard[]): KnowledgeCard[] {
-    const seen = new Map<string, KnowledgeCard>();
+    const seen = new Map<string, KnowledgeCard>()
 
     for (const card of cards) {
-      const key = card.question.toLowerCase().replace(/\s+/g, '');
-      const existing = seen.get(key);
+      const key = card.question.toLowerCase().replace(/\s+/g, '')
+      const existing = seen.get(key)
       if (!existing || card.quality > existing.quality) {
-        seen.set(key, card);
+        seen.set(key, card)
       }
     }
 
-    return Array.from(seen.values());
+    return Array.from(seen.values())
   }
 }

@@ -4,19 +4,19 @@
  * 支持从图片中提取文字（使用Tesseract.js）
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
-import { DocumentType, ElementType } from '../types/document.js';
+import * as fs from 'fs'
+import * as path from 'path'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
+import { DocumentType, ElementType } from '../types/document.js'
 
 // 动态导入
-let Tesseract: any;
+let Tesseract: any
 
 async function loadTesseract() {
   if (!Tesseract) {
-    const module = await import('tesseract.js');
-    Tesseract = module.default || module;
+    const module = await import('tesseract.js')
+    Tesseract = module.default || module
   }
 }
 
@@ -25,24 +25,24 @@ async function loadTesseract() {
  */
 export class ImageOcrTool extends EnhancedBaseTool<
   {
-    imagePath: string;
-    languages?: string[];
-    outputFormat?: 'text' | 'json';
+    imagePath: string
+    languages?: string[]
+    outputFormat?: 'text' | 'json'
   },
   {
-    text: string;
-    confidence: number;
+    text: string
+    confidence: number
     words?: Array<{
-      text: string;
-      confidence: number;
-      bbox: { x0: number; y0: number; x1: number; y1: number };
-    }>;
-    language: string;
+      text: string
+      confidence: number
+      bbox: { x0: number; y0: number; x1: number; y1: number }
+    }>
+    language: string
     metadata: {
-      filename: string;
-      size: number;
-      dimensions?: { width: number; height: number };
-    };
+      filename: string
+      size: number
+      dimensions?: { width: number; height: number }
+    }
   }
 > {
   readonly metadata = {
@@ -87,31 +87,31 @@ export class ImageOcrTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      imagePath: string;
-      languages?: string[];
-      outputFormat?: 'text' | 'json';
+      imagePath: string
+      languages?: string[]
+      outputFormat?: 'text' | 'json'
     },
     _context: ToolContext
   ): Promise<{
-    text: string;
-    confidence: number;
-    words?: any[];
-    language: string;
-    metadata: any;
+    text: string
+    confidence: number
+    words?: any[]
+    language: string
+    metadata: any
   }> {
-    await loadTesseract();
+    await loadTesseract()
 
     // 检查文件是否存在
     if (!fs.existsSync(input.imagePath)) {
-      throw new Error(`图片文件不存在: ${input.imagePath}`);
+      throw new Error(`图片文件不存在: ${input.imagePath}`)
     }
 
-    const stats = fs.statSync(input.imagePath);
-    const filename = path.basename(input.imagePath);
+    const stats = fs.statSync(input.imagePath)
+    const filename = path.basename(input.imagePath)
 
     // 执行OCR
     const result = await Tesseract.recognize(
@@ -125,12 +125,12 @@ export class ImageOcrTool extends EnhancedBaseTool<
           }
         },
       }
-    );
+    )
 
     // 提取文字和置信度
-    const { data } = result;
-    const text = data.text;
-    const confidence = data.confidence;
+    const { data } = result
+    const text = data.text
+    const confidence = data.confidence
 
     // 构建返回结果
     const response: any = {
@@ -141,7 +141,7 @@ export class ImageOcrTool extends EnhancedBaseTool<
         filename,
         size: stats.size,
       },
-    };
+    }
 
     // 如果需要JSON格式，包含单词级别的详细信息
     if (input.outputFormat === 'json' && data.words) {
@@ -154,10 +154,10 @@ export class ImageOcrTool extends EnhancedBaseTool<
           x1: word.bbox.x1,
           y1: word.bbox.y1,
         },
-      }));
+      }))
     }
 
-    return response;
+    return response
   }
 }
 
@@ -166,22 +166,22 @@ export class ImageOcrTool extends EnhancedBaseTool<
  */
 export class BatchImageOcrTool extends EnhancedBaseTool<
   {
-    imagePaths: string[];
-    languages?: string[];
-    outputFormat?: 'text' | 'json';
+    imagePaths: string[]
+    languages?: string[]
+    outputFormat?: 'text' | 'json'
   },
   {
     results: Array<{
-      imagePath: string;
-      text: string;
-      confidence: number;
-    }>;
+      imagePath: string
+      text: string
+      confidence: number
+    }>
     summary: {
-      totalImages: number;
-      successful: number;
-      failed: number;
-      averageConfidence: number;
-    };
+      totalImages: number
+      successful: number
+      failed: number
+      averageConfidence: number
+    }
   }
 > {
   readonly metadata = {
@@ -212,24 +212,24 @@ export class BatchImageOcrTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      imagePaths: string[];
-      languages?: string[];
-      outputFormat?: 'text' | 'json';
+      imagePaths: string[]
+      languages?: string[]
+      outputFormat?: 'text' | 'json'
     },
     context: ToolContext
   ): Promise<{
-    results: any[];
-    summary: any;
+    results: any[]
+    summary: any
   }> {
-    const ocrTool = new ImageOcrTool();
-    const results: any[] = [];
-    let successful = 0;
-    let failed = 0;
-    let totalConfidence = 0;
+    const ocrTool = new ImageOcrTool()
+    const results: any[] = []
+    let successful = 0
+    let failed = 0
+    let totalConfidence = 0
 
     for (const imagePath of input.imagePaths) {
       try {
@@ -240,22 +240,22 @@ export class BatchImageOcrTool extends EnhancedBaseTool<
             outputFormat: input.outputFormat,
           },
           context
-        );
+        )
 
         results.push({
           imagePath,
           text: result.text,
           confidence: result.confidence,
-        });
+        })
 
-        successful++;
-        totalConfidence += result.confidence;
+        successful++
+        totalConfidence += result.confidence
       } catch (error) {
-        failed++;
+        failed++
         results.push({
           imagePath,
           error: error instanceof Error ? error.message : String(error),
-        });
+        })
       }
     }
 
@@ -267,7 +267,7 @@ export class BatchImageOcrTool extends EnhancedBaseTool<
         failed,
         averageConfidence: successful > 0 ? totalConfidence / successful : 0,
       },
-    };
+    }
   }
 }
 
@@ -276,16 +276,16 @@ export class BatchImageOcrTool extends EnhancedBaseTool<
  */
 export class ImageToMarkdownTool extends EnhancedBaseTool<
   {
-    imagePath: string;
-    languages?: string[];
-    includeAlt?: boolean;
+    imagePath: string
+    languages?: string[]
+    includeAlt?: boolean
   },
   {
-    markdown: string;
+    markdown: string
     metadata: {
-      filename: string;
-      confidence: number;
-    };
+      filename: string
+      confidence: number
+    }
   }
 > {
   readonly metadata = {
@@ -308,13 +308,13 @@ export class ImageToMarkdownTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { imagePath: string; languages?: string[]; includeAlt?: boolean },
     context: ToolContext
   ): Promise<{ markdown: string; metadata: any }> {
-    const ocrTool = new ImageOcrTool();
+    const ocrTool = new ImageOcrTool()
     const result = await ocrTool.execute(
       {
         imagePath: input.imagePath,
@@ -322,17 +322,17 @@ export class ImageToMarkdownTool extends EnhancedBaseTool<
         outputFormat: 'text',
       },
       context
-    );
+    )
 
-    const filename = path.basename(input.imagePath);
+    const filename = path.basename(input.imagePath)
 
-    let markdown = '';
+    let markdown = ''
 
     if (input.includeAlt) {
-      markdown += `![${filename}](${input.imagePath})\n\n`;
+      markdown += `![${filename}](${input.imagePath})\n\n`
     }
 
-    markdown += result.text;
+    markdown += result.text
 
     return {
       markdown,
@@ -340,6 +340,6 @@ export class ImageToMarkdownTool extends EnhancedBaseTool<
         filename,
         confidence: result.confidence,
       },
-    };
+    }
   }
 }

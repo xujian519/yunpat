@@ -8,23 +8,23 @@
  * 4. 专利管理流程：全生命周期管理
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import { EventBus, ShortTermMemory, ToolRegistry } from '@yunpat/core';
-import { PatentWriterAgent } from '@yunpat/agent-patent-writer';
-import { PatentAnalyzerAgent } from '@yunpat/agent-patent-analyzer';
-import { PatentResponderAgent } from '@yunpat/agent-patent-responder';
-import { PatentManagerAgent } from '@yunpat/agent-patent-manager';
+import { describe, it, expect, beforeAll } from 'vitest'
+import { EventBus, ShortTermMemory, ToolRegistry } from '@yunpat/core'
+import { PatentWriterAgent } from '@yunpat/agent-patent-writer'
+import { PatentAnalyzerAgent } from '@yunpat/agent-patent-analyzer'
+import { PatentResponderAgent } from '@yunpat/agent-patent-responder'
+import { PatentManagerAgent } from '@yunpat/agent-patent-manager'
 
 describe('端到端测试 - 专利工作流程', () => {
-  let eventBus: EventBus;
-  let memory: ShortTermMemory;
-  let tools: ToolRegistry;
+  let eventBus: EventBus
+  let memory: ShortTermMemory
+  let tools: ToolRegistry
 
   beforeAll(() => {
-    eventBus = new EventBus();
-    memory = new ShortTermMemory();
-    tools = new ToolRegistry(eventBus);
-  });
+    eventBus = new EventBus()
+    memory = new ShortTermMemory()
+    tools = new ToolRegistry(eventBus)
+  })
 
   describe('场景1: 专利撰写流程', () => {
     it('应该完成从交底书到专利申请文件的完整流程', async () => {
@@ -48,12 +48,12 @@ describe('端到端测试 - 专利工作流程', () => {
                   detailedDescription: '具体实施方式...',
                 }),
               },
-            };
+            }
           },
         } as any,
         enableKnowledge: false,
         enableTemplates: false,
-      });
+      })
 
       // 执行撰写
       const writeResult = await writerAgent.execute({
@@ -75,26 +75,26 @@ describe('端到端测试 - 专利工作流程', () => {
 识别准确率提升20%，抗干扰能力显著增强。
         `,
         drawings: ['图1: 系统架构图', '图2: 网络结构图'],
-      });
+      })
 
       // 验证撰写结果
-      expect(writeResult).toBeDefined();
-      expect(writeResult.patentApplication).toBeDefined();
-      expect(writeResult.patentApplication.title).toBe('一种基于深度学习的图像识别方法');
-      expect(writeResult.patentApplication.claims).toBeDefined();
-      expect(writeResult.patentApplication.claims.length).toBeGreaterThan(0);
-      expect(writeResult.metrics).toBeDefined();
-      expect(writeResult.metrics.durationMinutes).toBeGreaterThanOrEqual(0);
+      expect(writeResult).toBeDefined()
+      expect(writeResult.patentApplication).toBeDefined()
+      expect(writeResult.patentApplication.title).toBe('一种基于深度学习的图像识别方法')
+      expect(writeResult.patentApplication.claims).toBeDefined()
+      expect(writeResult.patentApplication.claims.length).toBeGreaterThan(0)
+      expect(writeResult.metrics).toBeDefined()
+      expect(writeResult.metrics.durationMinutes).toBeGreaterThanOrEqual(0)
 
       // 导出为 CN 格式
-      const exportResult = await writerAgent.exportToFormat('cn');
+      const exportResult = await writerAgent.exportToFormat('cn')
 
-      expect(exportResult.format).toBe('cn');
-      expect(exportResult.content).toContain('发明名称');
-      expect(exportResult.content).toContain('摘要');
-      expect(exportResult.content).toContain('权利要求书');
-      expect(exportResult.metadata.title).toBe('一种基于深度学习的图像识别方法');
-    });
+      expect(exportResult.format).toBe('cn')
+      expect(exportResult.content).toContain('发明名称')
+      expect(exportResult.content).toContain('摘要')
+      expect(exportResult.content).toContain('权利要求书')
+      expect(exportResult.metadata.title).toBe('一种基于深度学习的图像识别方法')
+    })
 
     it('应该支持批量处理多个专利', async () => {
       const writerAgent = new PatentWriterAgent({
@@ -119,7 +119,7 @@ describe('端到端测试 - 专利工作流程', () => {
         } as any,
         enableKnowledge: false,
         enableTemplates: false,
-      });
+      })
 
       const disclosures = [
         {
@@ -138,19 +138,19 @@ describe('端到端测试 - 专利工作流程', () => {
           technicalDisclosure: '技术交底2',
           drawings: [],
         },
-      ];
+      ]
 
       const results = await Promise.all(
         disclosures.map((disclosure) => writerAgent.execute(disclosure))
-      );
+      )
 
-      expect(results).toHaveLength(2);
+      expect(results).toHaveLength(2)
       results.forEach((result) => {
-        expect(result.patentApplication).toBeDefined();
-        expect(result.patentApplication.title).toBeDefined();
-      });
-    });
-  });
+        expect(result.patentApplication).toBeDefined()
+        expect(result.patentApplication.title).toBeDefined()
+      })
+    })
+  })
 
   describe('场景2: OA 答复流程', () => {
     it('应该完成从 OA 到答复文档的完整流程', async () => {
@@ -163,8 +163,8 @@ describe('端到端测试 - 专利工作流程', () => {
         llm: {
           chat: async (messages) => {
             // 模拟不同阶段的响应
-            const lastMessage = messages[messages.length - 1];
-            const content = (lastMessage?.content || '').toLowerCase();
+            const lastMessage = messages[messages.length - 1]
+            const content = (lastMessage?.content || '').toLowerCase()
             if (content.includes('分析')) {
               return {
                 message: {
@@ -180,23 +180,20 @@ describe('端到端测试 - 专利工作流程', () => {
                     overcomeProbability: 75,
                   }),
                 },
-              };
+              }
             } else if (content.includes('策略')) {
               return {
                 message: {
                   content: JSON.stringify({
                     overallStrategy: 'argue',
                     successProbability: 75,
-                    keyArguments: [
-                      '对比文件1未公开特征X',
-                      '特征X带来预料不到的技术效果',
-                    ],
+                    keyArguments: ['对比文件1未公开特征X', '特征X带来预料不到的技术效果'],
                     suggestedAmendments: [],
                     additionalEvidence: [],
                     risks: ['成功概率中等'],
                   }),
                 },
-              };
+              }
             } else {
               return {
                 message: {
@@ -213,13 +210,13 @@ describe('端到端测试 - 专利工作流程', () => {
                     ],
                   }),
                 },
-              };
+              }
             }
           },
         } as any,
         enableKnowledge: false,
         enableTemplates: false,
-      });
+      })
 
       // 执行答复
       const responseResult = await responderAgent.execute({
@@ -264,26 +261,26 @@ describe('端到端测试 - 专利工作流程', () => {
         },
         strategyPreference: 'moderate',
         documentType: 'cn',
-      });
+      })
 
       // 验证答复结果
-      expect(responseResult).toBeDefined();
-      expect(responseResult.analysis).toBeDefined();
-      expect(responseResult.analysis.keyIssues).toBeInstanceOf(Array);
-      expect(responseResult.strategy).toBeDefined();
-      expect(responseResult.strategy.overallStrategy).toBe('argue');
-      expect(responseResult.responseDocument).toBeDefined();
-      expect(responseResult.responseDocument.responseLetter).toBeDefined();
-      expect(responseResult.nextSteps).toBeDefined();
+      expect(responseResult).toBeDefined()
+      expect(responseResult.analysis).toBeDefined()
+      expect(responseResult.analysis.keyIssues).toBeInstanceOf(Array)
+      expect(responseResult.strategy).toBeDefined()
+      expect(responseResult.strategy.overallStrategy).toBe('argue')
+      expect(responseResult.responseDocument).toBeDefined()
+      expect(responseResult.responseDocument.responseLetter).toBeDefined()
+      expect(responseResult.nextSteps).toBeDefined()
 
       // 导出答复文档
-      const exportResult = await responderAgent.exportToFormat('cn');
+      const exportResult = await responderAgent.exportToFormat('cn')
 
-      expect(exportResult.format).toBe('cn');
-      expect(exportResult.content).toContain('审查意见答复书');
-      expect(exportResult.metadata.applicationNumber).toBe('CN202310000000.0');
-    });
-  });
+      expect(exportResult.format).toBe('cn')
+      expect(exportResult.content).toContain('审查意见答复书')
+      expect(exportResult.metadata.applicationNumber).toBe('CN202310000000.0')
+    })
+  })
 
   describe('场景3: 专利分析流程', () => {
     it('应该完成从专利到分析报告的完整流程', async () => {
@@ -295,8 +292,8 @@ describe('端到端测试 - 专利工作流程', () => {
         tools,
         llm: {
           chat: async (messages) => {
-            const lastMessage = messages[messages.length - 1];
-            const content = (lastMessage?.content || '').toLowerCase();
+            const lastMessage = messages[messages.length - 1]
+            const content = (lastMessage?.content || '').toLowerCase()
             if (content.includes('技术分析')) {
               return {
                 message: {
@@ -308,7 +305,7 @@ describe('端到端测试 - 专利工作流程', () => {
                     keyFeatures: ['卷积层', '池化层', '全连接层'],
                   }),
                 },
-              };
+              }
             } else if (content.includes('权利要求')) {
               return {
                 message: {
@@ -319,7 +316,7 @@ describe('端到端测试 - 专利工作流程', () => {
                     qualityScore: 85,
                   }),
                 },
-              };
+              }
             } else if (content.includes('创造性')) {
               return {
                 message: {
@@ -329,7 +326,7 @@ describe('端到端测试 - 专利工作流程', () => {
                     reasoning: '技术方案非显而易见',
                   }),
                 },
-              };
+              }
             } else if (content.includes('风险')) {
               return {
                 message: {
@@ -339,7 +336,7 @@ describe('端到端测试 - 专利工作流程', () => {
                     riskFactors: ['可能存在类似专利'],
                   }),
                 },
-              };
+              }
             } else {
               return {
                 message: {
@@ -348,13 +345,13 @@ describe('端到端测试 - 专利工作流程', () => {
                     innovations: ['注意力机制'],
                   }),
                 },
-              };
+              }
             }
           },
         } as any,
         enableKnowledge: false,
         enableTemplates: false,
-      });
+      })
 
       // 执行分析
       const analysisResult = await analyzerAgent.execute({
@@ -368,20 +365,20 @@ describe('端到端测试 - 专利工作流程', () => {
           fullText: '权利要求书\n\n1. 一种图像识别方法...',
         },
         analysisTypes: ['technical', 'claims', 'creativity', 'risk'],
-      });
+      })
 
       // 验证分析结果
-      expect(analysisResult).toBeDefined();
-      expect(analysisResult.basicInfo).toBeDefined();
-      expect(analysisResult.basicInfo.publicationNumber).toBe('CN112345678A');
-      expect(analysisResult.technicalAnalysis).toBeDefined();
-      expect(analysisResult.technicalAnalysis.field).toBeDefined();
-      expect(analysisResult.claimsAnalysis).toBeDefined();
-      expect(analysisResult.creativityAssessment).toBeDefined();
-      expect(analysisResult.riskAssessment).toBeDefined();
-      expect(analysisResult.recommendations).toBeDefined();
-    });
-  });
+      expect(analysisResult).toBeDefined()
+      expect(analysisResult.basicInfo).toBeDefined()
+      expect(analysisResult.basicInfo.publicationNumber).toBe('CN112345678A')
+      expect(analysisResult.technicalAnalysis).toBeDefined()
+      expect(analysisResult.technicalAnalysis.field).toBeDefined()
+      expect(analysisResult.claimsAnalysis).toBeDefined()
+      expect(analysisResult.creativityAssessment).toBeDefined()
+      expect(analysisResult.riskAssessment).toBeDefined()
+      expect(analysisResult.recommendations).toBeDefined()
+    })
+  })
 
   describe('场景4: 专利管理流程', () => {
     it('应该完成完整的专利生命周期管理', async () => {
@@ -411,9 +408,9 @@ describe('端到端测试 - 专利工作流程', () => {
         } as any,
         enableKnowledge: false,
         enableTemplates: false,
-      });
+      })
 
-      const applicationNumber = 'CN202310000000.0';
+      const applicationNumber = 'CN202310000000.0'
 
       // 1. 添加专利
       const addResult = await managerAgent.execute({
@@ -427,10 +424,10 @@ describe('端到端测试 - 专利工作流程', () => {
           filingDate: new Date('2023-01-01'),
           status: 'filed',
         },
-      });
+      })
 
-      expect(addResult.success).toBe(true);
-      expect(addResult.data.applicationNumber).toBe(applicationNumber);
+      expect(addResult.success).toBe(true)
+      expect(addResult.data.applicationNumber).toBe(applicationNumber)
 
       // 2. 添加截止日期
       const deadlineResult = await managerAgent.execute({
@@ -443,9 +440,9 @@ describe('端到端测试 - 专利工作流程', () => {
           priority: 'high',
           completed: false,
         },
-      });
+      })
 
-      expect(deadlineResult.success).toBe(true);
+      expect(deadlineResult.success).toBe(true)
 
       // 3. 添加费用
       const feeResult = await managerAgent.execute({
@@ -458,45 +455,45 @@ describe('端到端测试 - 专利工作流程', () => {
           dueDate: new Date('2024-06-30'),
           status: 'pending',
         },
-      });
+      })
 
-      expect(feeResult.success).toBe(true);
+      expect(feeResult.success).toBe(true)
 
       // 4. 查询专利
       const getResult = await managerAgent.execute({
         operation: 'get_patent',
         applicationNumber,
-      });
+      })
 
-      expect(getResult.success).toBe(true);
-      expect(getResult.data.applicationNumber).toBe(applicationNumber);
+      expect(getResult.success).toBe(true)
+      expect(getResult.data.applicationNumber).toBe(applicationNumber)
 
       // 5. 获取专利组合
       const portfolioResult = await managerAgent.execute({
         operation: 'get_portfolio',
-      });
+      })
 
-      expect(portfolioResult.success).toBe(true);
-      expect(portfolioResult.data.statistics.total).toBe(1);
+      expect(portfolioResult.success).toBe(true)
+      expect(portfolioResult.data.statistics.total).toBe(1)
 
       // 6. 生成报告
       const reportResult = await managerAgent.execute({
         operation: 'generate_report',
-      });
+      })
 
-      expect(reportResult.success).toBe(true);
-      expect(reportResult.data).toBeDefined();
-      expect(typeof reportResult.data).toBe('string');
+      expect(reportResult.success).toBe(true)
+      expect(reportResult.data).toBeDefined()
+      expect(typeof reportResult.data).toBe('string')
 
       // 7. 删除专利
       const removeResult = await managerAgent.execute({
         operation: 'remove_patent',
         applicationNumber,
-      });
+      })
 
-      expect(removeResult.success).toBe(true);
-    });
-  });
+      expect(removeResult.success).toBe(true)
+    })
+  })
 
   describe('场景5: 完整工作流集成', () => {
     it('应该整合多个智能体完成完整的专利流程', async () => {
@@ -523,7 +520,7 @@ describe('端到端测试 - 专利工作流程', () => {
         } as any,
         enableKnowledge: false,
         enableTemplates: false,
-      });
+      })
 
       const writeResult = await writerAgent.execute({
         title: '集成测试专利',
@@ -532,9 +529,9 @@ describe('端到端测试 - 专利工作流程', () => {
         inventors: ['张三'],
         technicalDisclosure: '测试交底书',
         drawings: [],
-      });
+      })
 
-      expect(writeResult.patentApplication).toBeDefined();
+      expect(writeResult.patentApplication).toBeDefined()
 
       // 2. 分析专利
       const analyzerAgent = new PatentAnalyzerAgent({
@@ -558,7 +555,7 @@ describe('端到端测试 - 专利工作流程', () => {
         } as any,
         enableKnowledge: false,
         enableTemplates: false,
-      });
+      })
 
       const analysisResult = await analyzerAgent.execute({
         patent: {
@@ -566,9 +563,9 @@ describe('端到端测试 - 专利工作流程', () => {
           title: '集成测试专利',
           abstract: '测试摘要',
         },
-      });
+      })
 
-      expect(analysisResult.technicalAnalysis).toBeDefined();
+      expect(analysisResult.technicalAnalysis).toBeDefined()
 
       // 3. 管理专利
       const managerAgent = new PatentManagerAgent({
@@ -584,7 +581,7 @@ describe('端到端测试 - 专利工作流程', () => {
         } as any,
         enableKnowledge: false,
         enableTemplates: false,
-      });
+      })
 
       const managerResult = await managerAgent.execute({
         operation: 'add_patent',
@@ -597,14 +594,14 @@ describe('端到端测试 - 专利工作流程', () => {
           filingDate: new Date(),
           status: 'filed',
         },
-      });
+      })
 
-      expect(managerResult.success).toBe(true);
+      expect(managerResult.success).toBe(true)
 
       // 验证整个流程完成
-      expect(writeResult.metrics).toBeDefined();
-      expect(analysisResult.basicInfo).toBeDefined();
-      expect(managerResult.data).toBeDefined();
-    });
-  });
-});
+      expect(writeResult.metrics).toBeDefined()
+      expect(analysisResult.basicInfo).toBeDefined()
+      expect(managerResult.data).toBeDefined()
+    })
+  })
+})

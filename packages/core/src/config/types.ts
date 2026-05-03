@@ -7,32 +7,32 @@
 /**
  * 环境类型
  */
-export type Environment = 'development' | 'test' | 'production';
+export type Environment = 'development' | 'test' | 'production'
 
 /**
  * LLM 提供商配置
  */
 export interface LLMProviderConfig {
   /** 提供商名称 */
-  provider: string;
+  provider: string
 
   /** API 基础 URL */
-  baseURL?: string;
+  baseURL?: string
 
   /** API 密钥（支持环境变量占位符，如 ${DEEPSEEK_API_KEY}） */
-  apiKey?: string;
+  apiKey?: string
 
   /** 模型名称 */
-  model?: string;
+  model?: string
 
   /** 温度 */
-  temperature?: number;
+  temperature?: number
 
   /** 最大 Token 数 */
-  maxTokens?: number;
+  maxTokens?: number
 
   /** 超时时间（毫秒） */
-  timeout?: number;
+  timeout?: number
 }
 
 /**
@@ -40,13 +40,13 @@ export interface LLMProviderConfig {
  */
 export interface LLMConfig {
   /** 主模型配置 */
-  primary: LLMProviderConfig;
+  primary: LLMProviderConfig
 
   /** 备用模型配置 */
-  fallback?: LLMProviderConfig;
+  fallback?: LLMProviderConfig
 
   /** 多模型配置 */
-  models?: Record<string, LLMProviderConfig>;
+  models?: Record<string, LLMProviderConfig>
 }
 
 /**
@@ -54,19 +54,19 @@ export interface LLMConfig {
  */
 export interface MemoryConfig {
   /** 存储类型 */
-  type: 'memory' | 'file' | 'database';
+  type: 'memory' | 'file' | 'database'
 
   /** 存储路径 */
-  path?: string;
+  path?: string
 
   /** 检查点间隔（迭代次数） */
-  checkpointInterval?: number;
+  checkpointInterval?: number
 
   /** 最大检查点数量 */
-  maxCheckpoints?: number;
+  maxCheckpoints?: number
 
   /** 启用时间旅行 */
-  enableTimeTravel?: boolean;
+  enableTimeTravel?: boolean
 }
 
 /**
@@ -74,10 +74,10 @@ export interface MemoryConfig {
  */
 export interface ToolConfig {
   /** 工具名称 */
-  name: string;
+  name: string
 
   /** 工具配置 */
-  config?: Record<string, unknown>;
+  config?: Record<string, unknown>
 }
 
 /**
@@ -85,13 +85,13 @@ export interface ToolConfig {
  */
 export interface GatewayConfig {
   /** 启用人机协同 */
-  enableHumanApproval?: boolean;
+  enableHumanApproval?: boolean
 
   /** 启用安全网关 */
-  enableSecurity?: boolean;
+  enableSecurity?: boolean
 
   /** 内容过滤规则 */
-  contentFilters?: string[];
+  contentFilters?: string[]
 }
 
 /**
@@ -99,13 +99,13 @@ export interface GatewayConfig {
  */
 export interface ReasoningConfig {
   /** 推理策略 */
-  strategy?: 'react' | 'plan-and-solve' | 'tree-of-thoughts';
+  strategy?: 'react' | 'plan-and-solve' | 'tree-of-thoughts'
 
   /** 最大迭代次数 */
-  maxIterations?: number;
+  maxIterations?: number
 
   /** 启用反思 */
-  enableReflection?: boolean;
+  enableReflection?: boolean
 }
 
 /**
@@ -113,28 +113,28 @@ export interface ReasoningConfig {
  */
 export interface YunPatConfig {
   /** 当前环境 */
-  environment?: Environment;
+  environment?: Environment
 
   /** LLM 配置 */
-  llm: LLMConfig;
+  llm: LLMConfig
 
   /** 记忆配置 */
-  memory?: MemoryConfig;
+  memory?: MemoryConfig
 
   /** 工具配置 */
-  tools?: ToolConfig[];
+  tools?: ToolConfig[]
 
   /** 网关配置 */
-  gateway?: GatewayConfig;
+  gateway?: GatewayConfig
 
   /** 推理配置 */
-  reasoning?: ReasoningConfig;
+  reasoning?: ReasoningConfig
 
   /** 日志级别 */
-  logLevel?: 'debug' | 'info' | 'warn' | 'error';
+  logLevel?: 'debug' | 'info' | 'warn' | 'error'
 
   /** 自定义配置 */
-  [key: string]: unknown;
+  [key: string]: unknown
 }
 
 /**
@@ -142,16 +142,16 @@ export interface YunPatConfig {
  */
 export interface ConfigFile {
   /** 默认配置 */
-  default: YunPatConfig;
+  default: YunPatConfig
 
   /** 开发环境配置 */
-  development?: Partial<YunPatConfig>;
+  development?: Partial<YunPatConfig>
 
   /** 测试环境配置 */
-  test?: Partial<YunPatConfig>;
+  test?: Partial<YunPatConfig>
 
   /** 生产环境配置 */
-  production?: Partial<YunPatConfig>;
+  production?: Partial<YunPatConfig>
 }
 
 /**
@@ -159,19 +159,19 @@ export interface ConfigFile {
  */
 export interface ConfigManagerOptions {
   /** 配置文件路径 */
-  configPath?: string;
+  configPath?: string
 
   /** 当前环境 */
-  environment?: Environment;
+  environment?: Environment
 
   /** 启用环境变量替换 */
-  enableEnvVar?: boolean;
+  enableEnvVar?: boolean
 
   /** 严格模式（未知字段会抛出错误） */
-  strict?: boolean;
+  strict?: boolean
 }
 
 /**
  * 解析后的配置（已合并默认值和环境变量）
  */
-export type ResolvedConfig = YunPatConfig;
+export type ResolvedConfig = YunPatConfig

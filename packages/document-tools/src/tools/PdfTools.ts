@@ -4,30 +4,30 @@
  * 支持文本提取和OCR识别
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import * as fs from 'fs'
+import * as path from 'path'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 import {
   DocumentParseResult,
   DocumentType,
   ElementType,
   OutputFormat,
   ParseOptions,
-} from '../types/document.js';
-import { elementsToMarkdown, extractPlainText } from '../utils/converters.js';
+} from '../types/document.js'
+import { elementsToMarkdown, extractPlainText } from '../utils/converters.js'
 
 // 动态导入
-let pdfParse: any;
-let pdfjsLib: any;
+let pdfParse: any
+let pdfjsLib: any
 
 async function loadPdfLibs() {
   if (!pdfParse) {
-    pdfParse = (await import('pdf-parse')).default;
+    pdfParse = (await import('pdf-parse')).default
   }
   if (!pdfjsLib) {
-    const pdfjs = await import('pdfjs-dist');
-    pdfjsLib = pdfjs.default || pdfjs;
+    const pdfjs = await import('pdfjs-dist')
+    pdfjsLib = pdfjs.default || pdfjs
   }
 }
 
@@ -38,15 +38,15 @@ async function loadPdfLibs() {
  */
 export class PdfExtractTextTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    includeMetadata?: boolean;
+    filePath: string
+    includeMetadata?: boolean
   },
   {
-    text: string;
+    text: string
     metadata?: {
-      pages: number;
-      info?: any;
-    };
+      pages: number
+      info?: any
+    }
   }
 > {
   readonly metadata = {
@@ -70,29 +70,29 @@ export class PdfExtractTextTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; includeMetadata?: boolean },
     _context: ToolContext
   ): Promise<{ text: string; metadata?: any }> {
-    await loadPdfLibs();
+    await loadPdfLibs()
 
-    const dataBuffer = fs.readFileSync(input.filePath);
-    const data = await pdfParse(dataBuffer);
+    const dataBuffer = fs.readFileSync(input.filePath)
+    const data = await pdfParse(dataBuffer)
 
     const result: any = {
       text: data.text,
-    };
+    }
 
     if (input.includeMetadata) {
       result.metadata = {
         pages: data.numpages,
         info: data.info,
-      };
+      }
     }
 
-    return result;
+    return result
   }
 }
 
@@ -103,9 +103,9 @@ export class PdfExtractTextTool extends EnhancedBaseTool<
  */
 export class PdfParseTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    outputFormat?: OutputFormat;
-    extractImages?: boolean;
+    filePath: string
+    outputFormat?: OutputFormat
+    extractImages?: boolean
   },
   DocumentParseResult
 > {
@@ -139,23 +139,23 @@ export class PdfParseTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; outputFormat?: OutputFormat; extractImages?: boolean },
     _context: ToolContext
   ): Promise<DocumentParseResult> {
-    const startTime = Date.now();
-    await loadPdfLibs();
+    const startTime = Date.now()
+    await loadPdfLibs()
 
-    const dataBuffer = fs.readFileSync(input.filePath);
-    const data = await pdfParse(dataBuffer);
+    const dataBuffer = fs.readFileSync(input.filePath)
+    const data = await pdfParse(dataBuffer)
 
     // 解析文本内容
-    const lines = data.text.split('\n').filter((line: string) => line.trim());
+    const lines = data.text.split('\n').filter((line: string) => line.trim())
 
     // 简单的元素提取（实际应用中需要更复杂的逻辑）
-    const elements = this.extractElements(lines, data.pages || []);
+    const elements = this.extractElements(lines, data.pages || [])
 
     const result: DocumentParseResult = {
       documentType: DocumentType.PDF,
@@ -169,16 +169,16 @@ export class PdfParseTool extends EnhancedBaseTool<
         title: data.info?.Title,
       },
       parseTime: Date.now() - startTime,
-    };
+    }
 
-    return result;
+    return result
   }
 
   /**
    * 从文本行中提取元素
    */
   private extractElements(lines: string[], pages: any[]): any[] {
-    const elements: any[] = [];
+    const elements: any[] = []
 
     for (const line of lines) {
       // 简单的启发式规则
@@ -188,23 +188,23 @@ export class PdfParseTool extends EnhancedBaseTool<
           type: ElementType.TITLE,
           content: line,
           metadata: { level: 1 },
-        });
+        })
       } else if (line.match(/^\d+\.\s/)) {
         // 可能是列表项
         elements.push({
           type: ElementType.LIST,
           content: line.replace(/^\d+\.\s/, ''),
-        });
+        })
       } else {
         // 普通段落
         elements.push({
           type: ElementType.PARAGRAPH,
           content: line,
-        });
+        })
       }
     }
 
-    return elements;
+    return elements
   }
 }
 
@@ -213,15 +213,15 @@ export class PdfParseTool extends EnhancedBaseTool<
  */
 export class PdfToMarkdownTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    includeHeaderFooter?: boolean;
+    filePath: string
+    includeHeaderFooter?: boolean
   },
   {
-    markdown: string;
+    markdown: string
     metadata: {
-      totalPages: number;
-      parseTime: number;
-    };
+      totalPages: number
+      parseTime: number
+    }
   }
 > {
   readonly metadata = {
@@ -243,28 +243,28 @@ export class PdfToMarkdownTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; includeHeaderFooter?: boolean },
     context: ToolContext
   ): Promise<{ markdown: string; metadata: any }> {
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 先解析PDF
-    const parseTool = new PdfParseTool();
+    const parseTool = new PdfParseTool()
     const result = await parseTool.execute(
       {
         filePath: input.filePath,
         outputFormat: OutputFormat.JSON,
       },
       context
-    );
+    )
 
     // 转换为Markdown
     const markdown = elementsToMarkdown(result.elements, {
       includeHeaderFooter: input.includeHeaderFooter,
-    });
+    })
 
     return {
       markdown,
@@ -272,7 +272,7 @@ export class PdfToMarkdownTool extends EnhancedBaseTool<
         totalPages: result.metadata.totalPages || 0,
         parseTime: Date.now() - startTime,
       },
-    };
+    }
   }
 }
 
@@ -283,14 +283,14 @@ export class PdfToMarkdownTool extends EnhancedBaseTool<
  */
 export class PdfOcrTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    languages?: string[];
-    outputFormat?: OutputFormat;
+    filePath: string
+    languages?: string[]
+    outputFormat?: OutputFormat
   },
   {
-    text: string;
-    confidence: number;
-    language: string;
+    text: string
+    confidence: number
+    language: string
   }
 > {
   readonly metadata = {
@@ -315,32 +315,32 @@ export class PdfOcrTool extends EnhancedBaseTool<
     permissions: ['fs:read', 'exec:marker'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; languages?: string[]; outputFormat?: OutputFormat },
     _context: ToolContext
   ): Promise<{ text: string; confidence: number; language: string }> {
-    const { execSync } = require('child_process');
+    const { execSync } = require('child_process')
 
     try {
       // 检查Marker是否安装
-      execSync('which marker', { stdio: 'ignore' });
+      execSync('which marker', { stdio: 'ignore' })
     } catch (error) {
-      throw new Error('Marker未安装。请先安装: pip install marker-pdf');
+      throw new Error('Marker未安装。请先安装: pip install marker-pdf')
     }
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 调用Marker进行OCR
-    const cmd = `marker "${input.filePath}" --output_format ${input.outputFormat} --languages ${input.languages?.join(',') || 'eng,chi_sim'}`;
+    const cmd = `marker "${input.filePath}" --output_format ${input.outputFormat} --languages ${input.languages?.join(',') || 'eng,chi_sim'}`
 
-    const output = execSync(cmd, { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
+    const output = execSync(cmd, { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 })
 
     return {
       text: output.trim(),
       confidence: 0.95, // Marker通常有很高的置信度
       language: 'auto-detected',
-    };
+    }
   }
 }

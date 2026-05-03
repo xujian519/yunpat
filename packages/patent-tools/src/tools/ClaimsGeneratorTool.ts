@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 import {
   InventionType,
   ClaimType,
@@ -8,14 +8,14 @@ import {
   IndependentClaimParams,
   IndependentClaimParamsSchema,
   ClaimDraftSchema,
-} from '../types/patent.js';
+} from '../types/patent.js'
 import {
   CLAIMS_TEMPLATES,
   DEFAULT_PREAMBLES,
   DEFAULT_TRANSITION_WORDS,
   buildIndependentClaimPrompt,
   buildDependentClaimPrompt,
-} from '../utils/template.js';
+} from '../utils/template.js'
 
 /**
  * 权利要求生成工具
@@ -33,20 +33,20 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<IndependentClaimParams
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   /**
    * 执行权利要求生成
    */
   async execute(input: IndependentClaimParams, context: ToolContext): Promise<ClaimDraft[]> {
-    const { inventionType, coreFeatures, preamble, transitionWord } = input;
+    const { inventionType, coreFeatures, preamble, transitionWord } = input
 
     // 1. 提取必要特征和附加特征
-    const essentialFeatures = coreFeatures.filter((f) => f.isEssential);
-    const additionalFeatures = coreFeatures.filter((f) => !f.isEssential);
+    const essentialFeatures = coreFeatures.filter((f) => f.isEssential)
+    const additionalFeatures = coreFeatures.filter((f) => !f.isEssential)
 
     if (essentialFeatures.length === 0) {
-      throw new Error('至少需要一个必要特征来生成独立权利要求');
+      throw new Error('至少需要一个必要特征来生成独立权利要求')
     }
 
     // 2. 生成独立权利要求
@@ -58,21 +58,21 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<IndependentClaimParams
         transitionWord,
       },
       context
-    );
+    )
 
     // 3. 生成从属权利要求
-    const dependentClaims: ClaimDraft[] = [];
+    const dependentClaims: ClaimDraft[] = []
     for (let i = 0; i < additionalFeatures.length; i++) {
       const dependentClaim = await this.generateDependentClaim(
         independentClaim,
         additionalFeatures[i],
         i + 2, // 权利要求编号从 2 开始
         context
-      );
-      dependentClaims.push(dependentClaim);
+      )
+      dependentClaims.push(dependentClaim)
     }
 
-    return [independentClaim, ...dependentClaims];
+    return [independentClaim, ...dependentClaims]
   }
 
   /**
@@ -82,14 +82,14 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<IndependentClaimParams
     params: IndependentClaimParams,
     context: ToolContext
   ): Promise<ClaimDraft> {
-    const { inventionType, coreFeatures, preamble, transitionWord } = params;
+    const { inventionType, coreFeatures, preamble, transitionWord } = params
 
     // 构建特征列表字符串
-    const featuresStr = coreFeatures.map((f, index) => `${index + 1}. ${f.text}`).join('\n');
+    const featuresStr = coreFeatures.map((f, index) => `${index + 1}. ${f.text}`).join('\n')
 
     // 确保有默认值
-    const finalPreamble = preamble || DEFAULT_PREAMBLES[inventionType];
-    const finalTransitionWord = transitionWord || DEFAULT_TRANSITION_WORDS[inventionType];
+    const finalPreamble = preamble || DEFAULT_PREAMBLES[inventionType]
+    const finalTransitionWord = transitionWord || DEFAULT_TRANSITION_WORDS[inventionType]
 
     // 构建提示词
     const prompt = buildIndependentClaimPrompt({
@@ -97,7 +97,7 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<IndependentClaimParams
       preamble: finalPreamble,
       transitionWord: finalTransitionWord,
       features: featuresStr,
-    });
+    })
 
     // 调用 LLM 生成
     const response = await context.llm.chat({
@@ -114,19 +114,19 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<IndependentClaimParams
         },
       ],
       temperature: 0.7,
-    });
+    })
 
     // 提取生成的权利要求文本
-    let text = response.message.content.trim();
+    let text = response.message.content.trim()
 
     // 清理可能的 markdown 标记
-    text = this.cleanMarkdown(text);
+    text = this.cleanMarkdown(text)
 
     return {
       claimNumber: 1,
       claimType: ClaimType.INDEPENDENT,
       text,
-    };
+    }
   }
 
   /**
@@ -142,7 +142,7 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<IndependentClaimParams
       independentClaim: independentClaim.text,
       claimNumber,
       additionalFeature: feature.text,
-    });
+    })
 
     const response = await context.llm.chat({
       messages: [
@@ -158,17 +158,17 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<IndependentClaimParams
         },
       ],
       temperature: 0.7,
-    });
+    })
 
-    let text = response.message.content.trim();
-    text = this.cleanMarkdown(text);
+    let text = response.message.content.trim()
+    text = this.cleanMarkdown(text)
 
     return {
       claimNumber,
       claimType: ClaimType.DEPENDENT,
       text,
       dependsOn: [independentClaim.claimNumber],
-    };
+    }
   }
 
   /**
@@ -176,13 +176,13 @@ export class ClaimsGeneratorTool extends EnhancedBaseTool<IndependentClaimParams
    */
   private cleanMarkdown(text: string): string {
     // 移除可能的代码块标记
-    text = text.replace(/^```\w*\n?/gm, '');
-    text = text.replace(/\n?```$/gm, '');
+    text = text.replace(/^```\w*\n?/gm, '')
+    text = text.replace(/\n?```$/gm, '')
 
     // 移除可能的引用标记
-    text = text.replace(/^>\s?/gm, '');
+    text = text.replace(/^>\s?/gm, '')
 
-    return text.trim();
+    return text.trim()
   }
 }
 
@@ -217,7 +217,7 @@ export class FeatureExtractorTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { description: string },
@@ -252,7 +252,7 @@ ${input.description}
 }
 \`\`\`
 
-请只返回JSON，不要包含其他说明文字。`;
+请只返回JSON，不要包含其他说明文字。`
 
     const response = await context.llm.chat({
       messages: [
@@ -266,22 +266,22 @@ ${input.description}
         },
       ],
       temperature: 0.5,
-    });
+    })
 
-    let content = response.message.content.trim();
-    content = this.cleanMarkdown(content);
+    let content = response.message.content.trim()
+    content = this.cleanMarkdown(content)
 
     try {
-      const parsed = JSON.parse(content);
-      return parsed;
+      const parsed = JSON.parse(content)
+      return parsed
     } catch (error) {
-      throw new Error(`Failed to parse extracted features: ${error}. Raw content: ${content}`);
+      throw new Error(`Failed to parse extracted features: ${error}. Raw content: ${content}`)
     }
   }
 
   private cleanMarkdown(text: string): string {
-    text = text.replace(/^```\w*\n?/gm, '');
-    text = text.replace(/\n?```$/gm, '');
-    return text.trim();
+    text = text.replace(/^```\w*\n?/gm, '')
+    text = text.replace(/\n?```$/gm, '')
+    return text.trim()
   }
 }

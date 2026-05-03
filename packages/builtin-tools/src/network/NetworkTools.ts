@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 /**
  * Web Fetch 工具
@@ -8,17 +8,17 @@ import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
  */
 export class WebFetchTool extends EnhancedBaseTool<
   {
-    url: string;
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-    headers?: Record<string, string>;
-    body?: string;
-    timeout?: number;
+    url: string
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+    headers?: Record<string, string>
+    body?: string
+    timeout?: number
   },
   {
-    status: number;
-    statusText: string;
-    headers: Record<string, string>;
-    body: string;
+    status: number
+    statusText: string
+    headers: Record<string, string>
+    body: string
   }
 > {
   readonly metadata = {
@@ -46,28 +46,28 @@ export class WebFetchTool extends EnhancedBaseTool<
     permissions: ['http:request'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      url: string;
-      method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-      headers?: Record<string, string>;
-      body?: string;
-      timeout?: number;
+      url: string
+      method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+      headers?: Record<string, string>
+      body?: string
+      timeout?: number
     },
     _context: ToolContext
   ): Promise<{
-    status: number;
-    statusText: string;
-    headers: Record<string, string>;
-    body: string;
+    status: number
+    statusText: string
+    headers: Record<string, string>
+    body: string
   }> {
-    const { url, method = 'GET', headers = {}, body, timeout = 30000 } = input;
+    const { url, method = 'GET', headers = {}, body, timeout = 30000 } = input
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeout)
 
       const response = await fetch(url, {
         method,
@@ -77,31 +77,31 @@ export class WebFetchTool extends EnhancedBaseTool<
         },
         body,
         signal: controller.signal,
-      });
+      })
 
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId)
 
-      const responseHeaders: Record<string, string> = {};
+      const responseHeaders: Record<string, string> = {}
       response.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
-      });
+        responseHeaders[key] = value
+      })
 
-      const responseBody = await response.text();
+      const responseBody = await response.text()
 
       return {
         status: response.status,
         statusText: response.statusText,
         headers: responseHeaders,
         body: responseBody,
-      };
+      }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`Request timeout after ${timeout}ms`);
+        throw new Error(`Request timeout after ${timeout}ms`)
       }
 
       throw new Error(
         `HTTP request failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 }
@@ -113,16 +113,16 @@ export class WebFetchTool extends EnhancedBaseTool<
  */
 export class WebSearchTool extends EnhancedBaseTool<
   {
-    query: string;
-    numResults?: number;
-    lang?: string;
+    query: string
+    numResults?: number
+    lang?: string
   },
   {
     results: Array<{
-      title: string;
-      url: string;
-      snippet: string;
-    }>;
+      title: string
+      url: string
+      snippet: string
+    }>
   }
 > {
   readonly metadata = {
@@ -147,41 +147,41 @@ export class WebSearchTool extends EnhancedBaseTool<
     permissions: ['http:request'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { query: string; numResults?: number; lang?: string },
     _context: ToolContext
   ): Promise<{
     results: Array<{
-      title: string;
-      url: string;
-      snippet: string;
-    }>;
+      title: string
+      url: string
+      snippet: string
+    }>
   }> {
-    const { query, numResults = 10, lang = 'zh-CN' } = input;
+    const { query, numResults = 10, lang = 'zh-CN' } = input
 
     try {
       // 使用 DuckDuckGo Instant Answer API（无需 API Key）
       const searchUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(
         query
-      )}&format=json&no_html=1&skip_disambig=0`;
+      )}&format=json&no_html=1&skip_disambig=0`
 
-      const response = await fetch(searchUrl);
-      const data = (await response.json()) as any;
+      const response = await fetch(searchUrl)
+      const data = (await response.json()) as any
 
       // DuckDuckGo API 返回格式有限，这里做简单处理
       const results: Array<{
-        title: string;
-        url: string;
-        snippet: string;
-      }> = [];
+        title: string
+        url: string
+        snippet: string
+      }> = []
 
       // 如果有 RelatedTopics，转换为结果格式
       if (data.RelatedTopics && Array.isArray(data.RelatedTopics)) {
         for (const topic of data.RelatedTopics) {
           if (results.length >= numResults) {
-            break;
+            break
           }
 
           if (topic.Text && topic.FirstURL) {
@@ -189,7 +189,7 @@ export class WebSearchTool extends EnhancedBaseTool<
               title: topic.Text.substring(0, 100),
               url: topic.FirstURL,
               snippet: topic.Text,
-            });
+            })
           }
         }
       }
@@ -200,14 +200,14 @@ export class WebSearchTool extends EnhancedBaseTool<
           title: 'Search performed',
           url: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
           snippet: `No direct results from API. Click to search on Google.`,
-        });
+        })
       }
 
-      return { results };
+      return { results }
     } catch (error) {
       throw new Error(
         `Web search failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 }

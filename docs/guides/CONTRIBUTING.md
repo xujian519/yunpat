@@ -76,6 +76,7 @@ git commit -m "feat: 添加新功能"
 ```
 
 **提交信息格式**：
+
 - `feat:` - 新功能
 - `fix:` - 修复 bug
 - `docs:` - 文档更新
@@ -115,7 +116,7 @@ git push origin feature/your-feature-name
 5. 编写测试用例
 
 ```typescript
-import { Agent } from '@yunpat/core';
+import { Agent } from '@yunpat/core'
 
 export class MyAgent extends Agent<Input, Output> {
   constructor(config: any) {
@@ -123,17 +124,17 @@ export class MyAgent extends Agent<Input, Output> {
       ...config,
       name: 'my-agent',
       description: '我的智能体描述',
-    });
+    })
   }
 
   protected async plan(input: Input, context: any): Promise<Plan> {
     // 规划逻辑
-    return plan;
+    return plan
   }
 
   protected async act(plan: Plan, context: any): Promise<Output> {
     // 执行逻辑
-    return result;
+    return result
   }
 }
 ```
@@ -152,11 +153,11 @@ export class MyAgent extends Agent<Input, Output> {
 ```typescript
 // 监听事件
 this.on('agent:completed', async (event) => {
-  console.log('智能体完成:', event.data);
-});
+  console.log('智能体完成:', event.data)
+})
 
 // 发送消息
-await this.send('target-agent', { data: 'message' });
+await this.send('target-agent', { data: 'message' })
 ```
 
 ### 测试要求
@@ -303,6 +304,7 @@ yunpat-agent-framework/
 ```
 
 示例：
+
 ```
 feat: 添加专利分析智能体
 fix: 修复知识库查询性能问题
@@ -316,19 +318,23 @@ refactor: 优化事件总线实现
 
 ```markdown
 ## 变更类型
+
 - [ ] Bug 修复
 - [ ] 新功能
 - [ ] 破坏性变更
 - [ ] 文档更新
 
 ## 变更内容
+
 - 变更1
 - 变更2
 
 ## 相关 Issue
+
 关闭 #issue_number
 
 ## 测试计划
+
 - [ ] 单元测试
 - [ ] 集成测试
 - [ ] 手动测试

@@ -4,10 +4,10 @@
  * 定义层次化规划、任务分解、依赖分析的核心类型
  */
 
-import type { LLMAdapter } from '../lifecycle/Lifecycle.js';
+import type { LLMAdapter } from '../lifecycle/Lifecycle.js'
 
 // 重新导出 LLMAdapter
-export type { LLMAdapter };
+export type { LLMAdapter }
 
 /**
  * 优先级枚举
@@ -48,33 +48,33 @@ export enum TaskType {
  */
 export interface PlanningTask {
   /** 任务唯一标识 */
-  id: string;
+  id: string
   /** 任务标题 */
-  title: string;
+  title: string
   /** 任务描述 */
-  description: string;
+  description: string
   /** 任务类型 */
-  type: TaskType;
+  type: TaskType
   /** 任务状态 */
-  status: TaskStatus;
+  status: TaskStatus
   /** 需要的工具或能力 */
-  requiredCapabilities: string[];
+  requiredCapabilities: string[]
   /** 预估 Token 消耗 */
-  estimatedTokens: number;
+  estimatedTokens: number
   /** 预估执行时间（秒） */
-  estimatedDuration: number;
+  estimatedDuration: number
   /** 任务参数 */
-  params?: Record<string, unknown>;
+  params?: Record<string, unknown>
   /** 任务执行结果 */
-  result?: unknown;
+  result?: unknown
   /** 错误信息（如果失败） */
-  error?: string;
+  error?: string
   /** 创建时间 */
-  createdAt: Date;
+  createdAt: Date
   /** 开始时间 */
-  startedAt?: Date;
+  startedAt?: Date
   /** 完成时间 */
-  completedAt?: Date;
+  completedAt?: Date
 }
 
 /**
@@ -82,27 +82,27 @@ export interface PlanningTask {
  */
 export interface SubGoal {
   /** 子目标唯一标识 */
-  id: string;
+  id: string
   /** 子目标标题 */
-  title: string;
+  title: string
   /** 子目标描述 */
-  description: string;
+  description: string
   /** 包含的任务列表 */
-  tasks: PlanningTask[];
+  tasks: PlanningTask[]
   /** 依赖的其他子目标ID */
-  dependencies: string[];
+  dependencies: string[]
   /** 优先级 */
-  priority: Priority;
+  priority: Priority
   /** 子目标状态（根据任务状态计算） */
-  status: TaskStatus;
+  status: TaskStatus
   /** 预估执行时间（秒） */
-  estimatedDuration: number;
+  estimatedDuration: number
   /** 预估 Token 消耗 */
-  estimatedTokens: number;
+  estimatedTokens: number
   /** 实际执行时间（秒） */
-  actualDuration?: number;
+  actualDuration?: number
   /** 实际 Token 消耗 */
-  actualTokens?: number;
+  actualTokens?: number
 }
 
 /**
@@ -110,15 +110,15 @@ export interface SubGoal {
  */
 export interface Dependency {
   /** 源节点ID（被依赖的） */
-  from: string;
+  from: string
   /** 目标节点ID（依赖他人的） */
-  to: string;
+  to: string
   /** 依赖类型 */
-  type: DependencyType;
+  type: DependencyType
   /** 依赖强度（0-1） */
-  strength: number;
+  strength: number
   /** 依赖描述 */
-  description?: string;
+  description?: string
 }
 
 /**
@@ -135,13 +135,13 @@ export enum DependencyType {
  */
 export interface DependencyGraph {
   /** 所有节点（子目标） */
-  nodes: Map<string, SubGoal>;
+  nodes: Map<string, SubGoal>
   /** 所有依赖边 */
-  edges: Dependency[];
+  edges: Dependency[]
   /** 是否有循环依赖 */
-  hasCycles: boolean;
+  hasCycles: boolean
   /** 拓扑排序结果（如果无循环） */
-  topologicalOrder?: string[];
+  topologicalOrder?: string[]
 }
 
 /**
@@ -149,31 +149,31 @@ export interface DependencyGraph {
  */
 export interface HierarchicalPlan {
   /** 计划唯一标识 */
-  id: string;
+  id: string
   /** 总目标描述 */
-  goal: string;
+  goal: string
   /** 子目标列表 */
-  subGoals: SubGoal[];
+  subGoals: SubGoal[]
   /** 依赖图 */
-  dependencies: DependencyGraph;
+  dependencies: DependencyGraph
   /** 预估总时长（秒） */
-  estimatedDuration: number;
+  estimatedDuration: number
   /** 预估总 Token 消耗 */
-  estimatedTokens: number;
+  estimatedTokens: number
   /** 实际总时长（秒） */
-  actualDuration?: number;
+  actualDuration?: number
   /** 实际 Token 消耗 */
-  actualTokens?: number;
+  actualTokens?: number
   /** 计划状态 */
-  status: PlanStatus;
+  status: PlanStatus
   /** 创建时间 */
-  createdAt: Date;
+  createdAt: Date
   /** 开始时间 */
-  startedAt?: Date;
+  startedAt?: Date
   /** 完成时间 */
-  completedAt?: Date;
+  completedAt?: Date
   /** 元数据 */
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown>
 }
 
 /**
@@ -193,17 +193,17 @@ export enum PlanStatus {
  */
 export interface PlanningExecutionContext {
   /** 执行ID */
-  executionId: string;
+  executionId: string
   /** 输入数据 */
-  input: Record<string, unknown>;
+  input: Record<string, unknown>
   /** 上下文变量 */
-  variables: Map<string, unknown>;
+  variables: Map<string, unknown>
   /** 已完成的任务结果 */
-  completedTasks: Map<string, PlanningTask>;
+  completedTasks: Map<string, PlanningTask>
   /** 当前执行的子目标ID */
-  currentGoalId?: string;
+  currentGoalId?: string
   /** 当前执行的任务ID */
-  currentTaskId?: string;
+  currentTaskId?: string
 }
 
 /**
@@ -211,15 +211,15 @@ export interface PlanningExecutionContext {
  */
 export interface DecompositionOptions {
   /** 最大分解深度 */
-  maxDepth?: number;
+  maxDepth?: number
   /** 每个子目标的最大任务数 */
-  maxTasksPerGoal?: number;
+  maxTasksPerGoal?: number
   /** 是否启用智能分解（使用LLM） */
-  enableIntelligentDecomposition?: boolean;
+  enableIntelligentDecomposition?: boolean
   /** 分解领域（用于选择分解规则） */
-  domain?: 'patent' | 'general' | 'research' | 'writing';
+  domain?: 'patent' | 'general' | 'research' | 'writing'
   /** 自定义分解规则 */
-  customRules?: DecompositionRule[];
+  customRules?: DecompositionRule[]
 }
 
 /**
@@ -227,15 +227,15 @@ export interface DecompositionOptions {
  */
 export interface DecompositionRule {
   /** 规则名称 */
-  name: string;
+  name: string
   /** 规则描述 */
-  description: string;
+  description: string
   /** 匹配条件（目标描述包含的关键词） */
-  matchPattern: RegExp | string[];
+  matchPattern: RegExp | string[]
   /** 分解策略 */
-  strategy: 'sequential' | 'parallel' | 'hierarchical';
+  strategy: 'sequential' | 'parallel' | 'hierarchical'
   /** 默认子目标模板 */
-  subGoalTemplates: SubGoalTemplate[];
+  subGoalTemplates: SubGoalTemplate[]
 }
 
 /**
@@ -243,13 +243,13 @@ export interface DecompositionRule {
  */
 export interface SubGoalTemplate {
   /** 模板标题 */
-  title: string;
+  title: string
   /** 模板描述 */
-  description: string;
+  description: string
   /** 默认任务模板 */
-  taskTemplates: TaskTemplate[];
+  taskTemplates: TaskTemplate[]
   /** 默认优先级 */
-  priority: Priority;
+  priority: Priority
 }
 
 /**
@@ -257,17 +257,17 @@ export interface SubGoalTemplate {
  */
 export interface TaskTemplate {
   /** 任务标题 */
-  title: string;
+  title: string
   /** 任务描述 */
-  description: string;
+  description: string
   /** 任务类型 */
-  type: TaskType;
+  type: TaskType
   /** 需要的能力 */
-  requiredCapabilities: string[];
+  requiredCapabilities: string[]
   /** 预估 Token 数 */
-  estimatedTokens: number;
+  estimatedTokens: number
   /** 预估时长（秒） */
-  estimatedDuration: number;
+  estimatedDuration: number
 }
 
 /**
@@ -275,15 +275,15 @@ export interface TaskTemplate {
  */
 export interface ScheduleResult {
   /** 调度后的任务执行顺序（子目标ID列表） */
-  executionOrder: string[];
+  executionOrder: string[]
   /** 可并行的任务组 */
-  parallelGroups: string[][];
+  parallelGroups: string[][]
   /** 关键路径（影响总时长的任务序列） */
-  criticalPath: string[];
+  criticalPath: string[]
   /** 预估完成时间（秒） */
-  estimatedCompletionTime: number;
+  estimatedCompletionTime: number
   /** 资源利用率（0-1） */
-  resourceUtilization: number;
+  resourceUtilization: number
 }
 
 /**
@@ -291,13 +291,13 @@ export interface ScheduleResult {
  */
 export interface DeviationReport {
   /** 是否有严重偏离 */
-  isSevere: boolean;
+  isSevere: boolean
   /** 偏离程度（0-1，1表示完全偏离） */
-  deviationDegree: number;
+  deviationDegree: number
   /** 偏离详情 */
-  details: DeviationDetail[];
+  details: DeviationDetail[]
   /** 建议的修正措施 */
-  suggestions: string[];
+  suggestions: string[]
 }
 
 /**
@@ -305,15 +305,15 @@ export interface DeviationReport {
  */
 export interface DeviationDetail {
   /** 偏离类型 */
-  type: 'time' | 'quality' | 'resource' | 'outcome';
+  type: 'time' | 'quality' | 'resource' | 'outcome'
   /** 预期值 */
-  expected: number | string;
+  expected: number | string
   /** 实际值 */
-  actual: number | string;
+  actual: number | string
   /** 偏离程度 */
-  degree: number;
+  degree: number
   /** 描述 */
-  description: string;
+  description: string
 }
 
 /**
@@ -321,15 +321,15 @@ export interface DeviationDetail {
  */
 export interface ReplanningContext {
   /** 当前计划 */
-  currentPlan: HierarchicalPlan;
+  currentPlan: HierarchicalPlan
   /** 执行状态 */
-  executionState: Map<string, unknown>;
+  executionState: Map<string, unknown>
   /** 失败的任务 */
-  failedTasks: PlanningTask[];
+  failedTasks: PlanningTask[]
   /** 偏离报告 */
-  deviationReport?: DeviationReport;
+  deviationReport?: DeviationReport
   /** 可用资源 */
-  availableResources: string[];
+  availableResources: string[]
 }
 
 /**
@@ -337,11 +337,11 @@ export interface ReplanningContext {
  */
 export interface PlanAdjustment {
   /** 调整类型 */
-  type: 'retry' | 'skip' | 'reorder' | 'decompose' | 'abort';
+  type: 'retry' | 'skip' | 'reorder' | 'decompose' | 'abort'
   /** 任务修改列表 */
-  modifications: TaskModification[];
+  modifications: TaskModification[]
   /** 调整原因 */
-  reason: string;
+  reason: string
 }
 
 /**
@@ -349,13 +349,13 @@ export interface PlanAdjustment {
  */
 export interface TaskModification {
   /** 修改类型 */
-  type: 'add' | 'remove' | 'modify' | 'reorder';
+  type: 'add' | 'remove' | 'modify' | 'reorder'
   /** 任务ID */
-  taskId?: string;
+  taskId?: string
   /** 任务数据（新增或修改时使用） */
-  task?: PlanningTask;
+  task?: PlanningTask
   /** 新位置（重排序时使用） */
-  newPosition?: number;
+  newPosition?: number
 }
 
 /**
@@ -363,17 +363,17 @@ export interface TaskModification {
  */
 export interface TaskDecomposerConfig {
   /** LLM 实例（用于智能分解） */
-  llm?: LLMAdapter;
+  llm?: LLMAdapter
   /** 最大分解深度（默认3） */
-  maxDepth?: number;
+  maxDepth?: number
   /** 每个子目标的最大任务数（默认10） */
-  maxTasksPerGoal?: number;
+  maxTasksPerGoal?: number
   /** 是否启用智能分解（默认false） */
-  enableIntelligentDecomposition?: boolean;
+  enableIntelligentDecomposition?: boolean
   /** 分解领域（默认general） */
-  domain?: 'patent' | 'general' | 'research' | 'writing';
+  domain?: 'patent' | 'general' | 'research' | 'writing'
   /** 自定义分解规则 */
-  customRules?: DecompositionRule[];
+  customRules?: DecompositionRule[]
 }
 
 /**
@@ -381,13 +381,13 @@ export interface TaskDecomposerConfig {
  */
 export interface DependencyAnalyzerConfig {
   /** 是否检测循环依赖（默认true） */
-  detectCycles?: boolean;
+  detectCycles?: boolean
   /** 是否自动修复循环依赖（默认false） */
-  autoFixCycles?: boolean;
+  autoFixCycles?: boolean
   /** 默认依赖类型（默认STRONG） */
-  defaultDependencyType?: DependencyType;
+  defaultDependencyType?: DependencyType
   /** 最小依赖强度（默认0.3） */
-  minDependencyStrength?: number;
+  minDependencyStrength?: number
 }
 
 /**
@@ -395,13 +395,13 @@ export interface DependencyAnalyzerConfig {
  */
 export interface TaskSchedulerConfig {
   /** 调度策略 */
-  strategy?: 'topological' | 'priority' | 'critical_path' | 'parallel';
+  strategy?: 'topological' | 'priority' | 'critical_path' | 'parallel'
   /** 最大并行任务数（默认3） */
-  maxParallelTasks?: number;
+  maxParallelTasks?: number
   /** 是否考虑资源约束（默认true） */
-  considerResourceConstraints?: boolean;
+  considerResourceConstraints?: boolean
   /** 可用资源列表 */
-  availableResources?: string[];
+  availableResources?: string[]
 }
 
 /**
@@ -409,19 +409,19 @@ export interface TaskSchedulerConfig {
  */
 export interface DecompositionStats {
   /** 总子目标数 */
-  totalGoals: number;
+  totalGoals: number
   /** 总任务数 */
-  totalTasks: number;
+  totalTasks: number
   /** 总依赖数 */
-  totalDependencies: number;
+  totalDependencies: number
   /** 预估总时长（秒） */
-  totalEstimatedDuration: number;
+  totalEstimatedDuration: number
   /** 预估总 Token 数 */
-  totalEstimatedTokens: number;
+  totalEstimatedTokens: number
   /** 平均每子目标的任务数 */
-  avgTasksPerGoal: number;
+  avgTasksPerGoal: number
   /** 最大深度 */
-  maxDepth: number;
+  maxDepth: number
   /** 关键路径长度（任务数） */
-  criticalPathLength: number;
+  criticalPathLength: number
 }

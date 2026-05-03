@@ -14,6 +14,7 @@
 **文件**: `packages/core/src/memory/FileSystemCheckpointStore.ts`
 
 **问题**:
+
 ```typescript
 constructor(config?: FileSystemCheckpointStoreConfig) {
   this.rootDir = config?.rootDir ?? 'data/checkpoints';
@@ -32,6 +33,7 @@ private async initialize(): Promise<void> {
 **风险**: 如果在`initialize()`完成前调用`save()`，会导致"目录不存在"错误。
 
 **修复方案**:
+
 ```typescript
 // 方案1: 同步初始化
 private initialize(): void {
@@ -67,46 +69,49 @@ async save(checkpoint: Checkpoint): Promise<void> {
 **文件**: `packages/core/src/memory/CheckpointManager.ts`
 
 **问题**:
+
 ```typescript
 memorySnapshot: JSON.parse(JSON.stringify(memory)), // ❌ 无法处理Date/Map/Set/循环引用
 ```
 
 **风险**:
+
 - Date对象变成字符串
 - Map/Set丢失
 - 循环引用导致错误
 - Function/undefined丢失
 
 **修复方案**:
+
 ```typescript
 // 使用结构化克隆库
-import { default as structuredClone } from '@ungap/structured-clone';
+import { default as structuredClone } from '@ungap/structured-clone'
 
 // 或者自定义深度克隆
 function deepClone<T>(obj: T): T {
   // 处理Date
   if (obj instanceof Date) {
-    return new Date(obj.getTime()) as T;
+    return new Date(obj.getTime()) as T
   }
   // 处理Map
   if (obj instanceof Map) {
-    return new Map(obj) as T;
+    return new Map(obj) as T
   }
   // 处理Set
   if (obj instanceof Set) {
-    return new Set(obj) as T;
+    return new Set(obj) as T
   }
   // 处理普通对象
   if (obj !== null && typeof obj === 'object') {
-    const cloned = {} as T;
+    const cloned = {} as T
     for (const key in obj) {
       if (obj.hasOwnProperty(key)) {
-        (cloned as any)[key] = deepClone((obj as any)[key]);
+        ;(cloned as any)[key] = deepClone((obj as any)[key])
       }
     }
-    return cloned;
+    return cloned
   }
-  return obj;
+  return obj
 }
 ```
 
@@ -119,9 +124,10 @@ function deepClone<T>(obj: T): T {
 **文件**: `patents/core/PatentCoreBridge.ts`
 
 **问题**:
+
 ```typescript
 try {
-  unlinkSync(join(tmpDir)); // ❌ 删除非空目录会失败
+  unlinkSync(join(tmpDir)) // ❌ 删除非空目录会失败
 } catch {
   /* ignore */
 }
@@ -130,11 +136,12 @@ try {
 **风险**: 临时文件会累积，占用磁盘空间。
 
 **修复方案**:
+
 ```typescript
 try {
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  fs.rmSync(tmpDir, { recursive: true, force: true })
 } catch (error) {
-  console.warn(`[PatentCoreBridge] 清理临时文件失败: ${error}`);
+  console.warn(`[PatentCoreBridge] 清理临时文件失败: ${error}`)
 }
 ```
 
@@ -147,26 +154,28 @@ try {
 **文件**: `packages/core/src/memory/FileSystemCheckpointStore.ts`
 
 **问题**:
+
 ```typescript
-const executionDir = path.join(this.rootDir, checkpoint.executionId);
+const executionDir = path.join(this.rootDir, checkpoint.executionId)
 // ❌ executionId未验证，可能包含"../"
 ```
 
 **风险**: 攻击者可以构造executionId为`"../../etc/passwd"`，写入任意位置。
 
 **修复方案**:
+
 ```typescript
-import { normalize, join } from 'path';
+import { normalize, join } from 'path'
 
 function sanitizeExecutionId(executionId: string): string {
   // 移除危险字符
-  const sanitized = executionId.replace(/[^a-zA-Z0-9-_]/g, '_');
+  const sanitized = executionId.replace(/[^a-zA-Z0-9-_]/g, '_')
   // 限制长度
-  return sanitized.substring(0, 100);
+  return sanitized.substring(0, 100)
 }
 
-const safeExecutionId = sanitizeExecutionId(checkpoint.executionId);
-const executionDir = path.join(this.rootDir, safeExecutionId);
+const safeExecutionId = sanitizeExecutionId(checkpoint.executionId)
+const executionDir = path.join(this.rootDir, safeExecutionId)
 ```
 
 **优先级**: 🔴 P0 - 必须修复
@@ -178,26 +187,29 @@ const executionDir = path.join(this.rootDir, safeExecutionId);
 **文件**: `packages/core/src/planning/WorkflowEngine.ts`
 
 **问题**:
+
 ```typescript
 tools: agent['tools'], // ❌ 访问私有属性
 llm: agent['llm'],
 ```
 
-**风险**: 
+**风险**:
+
 - 违反封装原则
 - 重构时可能破坏
 - TypeScript编译可能报错
 
 **修复方案**:
+
 ```typescript
 // 方案1: 在Agent基类添加getter
 export abstract class Agent<TInput = any, TOutput = any> {
   protected getTools(): ToolRegistry {
-    return this.tools;
+    return this.tools
   }
-  
+
   protected getLlm(): LLMAdapter {
-    return this.llm;
+    return this.llm
   }
 }
 
@@ -206,7 +218,7 @@ const context: ExecutionContext = {
   // ...
   tools: agent['tools'], // 在createContext时设置
   llm: agent['llm'],
-};
+}
 ```
 
 **优先级**: 🔴 P0 - 必须修复
@@ -219,26 +231,23 @@ const context: ExecutionContext = {
 
 **文件**: `packages/core/src/memory/FileSystemCheckpointStore.ts`
 
-**问题**: 
+**问题**:
+
 - `fs.readFile` 无超时
 - 大文件可能长时间阻塞
 
 **建议**:
-```typescript
-import { promises as fs } from 'fs';
-import { setTimeout } from 'util/promises';
 
-async function readFileWithTimeout(
-  path: string, 
-  timeout: number = 5000
-): Promise<string> {
-  const timeoutPromise = setTimeout(timeout, 
-    Promise.reject(new Error('Read timeout'))
-  );
-  
-  const readPromise = fs.readFile(path, 'utf-8');
-  
-  return Promise.race([readPromise, timeoutPromise]) as Promise<string>;
+```typescript
+import { promises as fs } from 'fs'
+import { setTimeout } from 'util/promises'
+
+async function readFileWithTimeout(path: string, timeout: number = 5000): Promise<string> {
+  const timeoutPromise = setTimeout(timeout, Promise.reject(new Error('Read timeout')))
+
+  const readPromise = fs.readFile(path, 'utf-8')
+
+  return Promise.race([readPromise, timeoutPromise]) as Promise<string>
 }
 ```
 
@@ -248,24 +257,26 @@ async function readFileWithTimeout(
 
 **文件**: `packages/core/src/planning/WorkflowEngine.ts`
 
-**问题**: 
+**问题**:
+
 - workflow.steps 可以为空
 - agentName 可以为空字符串
 
 **建议**:
+
 ```typescript
 function validateWorkflow(workflow: WorkflowDefinition): void {
   if (!workflow.id || workflow.id.trim().length === 0) {
-    throw new Error('Workflow ID不能为空');
+    throw new Error('Workflow ID不能为空')
   }
-  
+
   if (!workflow.steps || workflow.steps.length === 0) {
-    throw new Error('Workflow必须包含至少一个步骤');
+    throw new Error('Workflow必须包含至少一个步骤')
   }
-  
+
   for (const step of workflow.steps) {
     if (!step.agentName || step.agentName.trim().length === 0) {
-      throw new Error(`步骤 ${step.id} 的agentName不能为空`);
+      throw new Error(`步骤 ${step.id} 的agentName不能为空`)
     }
   }
 }
@@ -277,16 +288,18 @@ function validateWorkflow(workflow: WorkflowDefinition): void {
 
 **文件**: `packages/core/src/agent/Agent.ts`
 
-**问题**: 
+**问题**:
+
 - `this.activeWorkflows` 只添加不删除
 - 长时间运行会累积
 
 **建议**:
+
 ```typescript
 // 在execute完成后清理
 finally {
   this.activeWorkflows.delete(executionId);
-  
+
   // 定期清理已完成的执行
   if (this.activeWorkflows.size > 100) {
     this.cleanupOldExecutions();
@@ -300,14 +313,16 @@ finally {
 
 **文件**: 多个文件
 
-**问题**: 
+**问题**:
+
 - 只记录了错误消息，缺少上下文
 - 难以调试
 
 **建议**:
+
 ```typescript
 // ❌ 不好
-console.error(`[检查点存储] 保存失败: ${error}`);
+console.error(`[检查点存储] 保存失败: ${error}`)
 
 // ✅ 好
 console.error({
@@ -317,7 +332,7 @@ console.error({
   error: error.message,
   stack: error.stack,
   timestamp: new Date().toISOString(),
-});
+})
 ```
 
 ---
@@ -327,10 +342,11 @@ console.error({
 ### 3.1 使用JSDoc增强文档
 
 **建议**:
-```typescript
+
+````typescript
 /**
  * 保存检查点到文件系统
- * 
+ *
  * @param checkpoint - 要保存的检查点
  * @throws {Error} 当文件写入失败时
  * @example
@@ -343,13 +359,14 @@ console.error({
  * ```
  */
 async save(checkpoint: Checkpoint): Promise<void>;
-```
+````
 
 ---
 
 ### 3.2 使用枚举代替字符串字面量
 
 **建议**:
+
 ```typescript
 // ❌ 不好
 requiresApproval?: boolean;
@@ -373,33 +390,34 @@ approvalStages?: LifecycleStage[];
 ### 3.3 添加性能监控
 
 **建议**:
+
 ```typescript
 class FileSystemCheckpointStore {
   private saveMetrics = {
     total: 0,
     failed: 0,
     totalTime: 0,
-  };
-  
+  }
+
   async save(checkpoint: Checkpoint): Promise<void> {
-    const startTime = Date.now();
+    const startTime = Date.now()
     try {
       // ... 保存逻辑
-      this.saveMetrics.total++;
+      this.saveMetrics.total++
     } catch (error) {
-      this.saveMetrics.failed++;
-      throw error;
+      this.saveMetrics.failed++
+      throw error
     } finally {
-      this.saveMetrics.totalTime += Date.now() - startTime;
+      this.saveMetrics.totalTime += Date.now() - startTime
     }
   }
-  
+
   getMetrics() {
     return {
       ...this.saveMetrics,
       avgTime: this.saveMetrics.totalTime / this.saveMetrics.total,
       failureRate: this.saveMetrics.failed / this.saveMetrics.total,
-    };
+    }
   }
 }
 ```
@@ -409,19 +427,20 @@ class FileSystemCheckpointStore {
 ### 3.4 使用readonly保护不可变数据
 
 **建议**:
+
 ```typescript
 // ❌ 不好
 export interface Checkpoint {
-  id: string;
-  agentName: string;
-  timestamp: Date; // 可能被修改
+  id: string
+  agentName: string
+  timestamp: Date // 可能被修改
 }
 
 // ✅ 好
 export interface Checkpoint {
-  readonly id: string;
-  readonly agentName: string;
-  readonly timestamp: Date;
+  readonly id: string
+  readonly agentName: string
+  readonly timestamp: Date
 }
 ```
 
@@ -432,6 +451,7 @@ export interface Checkpoint {
 ### 4.1 缺少的测试场景
 
 **FileSystemCheckpointStore**:
+
 - ✅ 基本保存/加载/删除
 - ❌ 并发保存冲突
 - ❌ 磁盘满错误处理
@@ -439,18 +459,21 @@ export interface Checkpoint {
 - ❌ 大文件处理
 
 **CheckpointManager**:
+
 - ✅ 内存存储
 - ❌ 外部存储集成
 - ❌ 大对象深拷贝
 - ❌ 循环引用处理
 
 **WorkflowEngine**:
+
 - ✅ 顺序执行
 - ❌ 并行执行（未实现）
 - ❌ 工作流暂停/恢复（未实现）
 - ❌ 复杂依赖关系
 
 **PatentCoreFallback**:
+
 - ✅ 基本功能
 - ❌ 边界输入（空字符串、特殊字符）
 - ❌ 大文本处理
@@ -465,40 +488,42 @@ export interface Checkpoint {
 **风险等级**: 🔴 高危
 
 **攻击场景**:
+
 ```typescript
 // 攻击者构造恶意executionId
-const maliciousId = '../../../etc/passwd';
+const maliciousId = '../../../etc/passwd'
 await store.save({
   executionId: maliciousId,
   // ...
-});
+})
 
 // 结果: 文件被写入/etc/passwd
 ```
 
 **修复建议**:
+
 ```typescript
-import { resolve, normalize } from 'path';
+import { resolve, normalize } from 'path'
 
 function safeJoin(rootDir: string, executionId: string): string {
   // 1. 规范化路径
-  const sanitized = normalize(executionId).replace(/\.\./g, '');
-  
+  const sanitized = normalize(executionId).replace(/\.\./g, '')
+
   // 2. 移除危险字符
-  const safeId = sanitized.replace(/[^a-zA-Z0-9-_]/g, '_');
-  
+  const safeId = sanitized.replace(/[^a-zA-Z0-9-_]/g, '_')
+
   // 3. 限制长度
-  const limitedId = safeId.substring(0, 100);
-  
+  const limitedId = safeId.substring(0, 100)
+
   // 4. 解析为绝对路径
-  const fullPath = resolve(rootDir, limitedId);
-  
+  const fullPath = resolve(rootDir, limitedId)
+
   // 5. 验证仍在rootDir内
   if (!fullPath.startsWith(resolve(rootDir))) {
-    throw new Error(`非法路径: ${executionId}`);
+    throw new Error(`非法路径: ${executionId}`)
   }
-  
-  return fullPath;
+
+  return fullPath
 }
 ```
 
@@ -509,25 +534,27 @@ function safeJoin(rootDir: string, executionId: string): string {
 **风险等级**: 🟡 中危
 
 **问题**:
+
 - 临时文件权限可能过于开放
 - 文件内容可能包含敏感信息
 
 **修复建议**:
+
 ```typescript
-import { constants } from 'fs';
+import { constants } from 'fs'
 
 async function createSecureTempFile(content: string): Promise<string> {
-  const tmpDir = mkdtempSync(join(tmpdir(), 'patent-cli-'));
-  
+  const tmpDir = mkdtempSync(join(tmpdir(), 'patent-cli-'))
+
   // 设置严格的文件权限
-  await fs.chmod(tmpDir, 0o700); // 仅用户可读写执行
-  
-  const tmpFile = join(tmpDir, 'input.json');
-  await fs.writeFile(tmpFile, content, { 
-    mode: 0o600 // 仅用户可读写
-  });
-  
-  return tmpFile;
+  await fs.chmod(tmpDir, 0o700) // 仅用户可读写执行
+
+  const tmpFile = join(tmpDir, 'input.json')
+  await fs.writeFile(tmpFile, content, {
+    mode: 0o600, // 仅用户可读写
+  })
+
+  return tmpFile
 }
 ```
 
@@ -538,11 +565,13 @@ async function createSecureTempFile(content: string): Promise<string> {
 ### 6.1 潜在性能瓶颈
 
 **1. JSON序列化/反序列化**
+
 - 位置: CheckpointManager, FileSystemCheckpointStore
 - 问题: 每次保存/加载都序列化整个对象
 - 影响: 大对象时性能差
 
 **优化建议**:
+
 ```typescript
 // 使用增量保存
 interface IncrementalCheckpoint {
@@ -560,16 +589,18 @@ async save(checkpoint: Checkpoint): Promise<void> {
 ```
 
 **2. 同步文件操作**
+
 - 位置: PatentCoreBridge
 - 问题: 使用`*Sync`函数阻塞事件循环
 
 **优化建议**:
+
 ```typescript
 // ❌ 不好
-unlinkSync(tmpFile);
+unlinkSync(tmpFile)
 
 // ✅ 好
-await fs.unlink(tmpFile);
+await fs.unlink(tmpFile)
 ```
 
 ---
@@ -578,31 +609,31 @@ await fs.unlink(tmpFile);
 
 ### P0 - 必须修复（预计2-3小时）
 
-| 问题 | 文件 | 预计时间 | 依赖 |
-|------|------|----------|------|
-| 异步初始化 | FileSystemCheckpointStore | 30分钟 | 无 |
-| 深拷贝 | CheckpointManager | 45分钟 | 无 |
-| 临时文件清理 | PatentCoreBridge | 15分钟 | 无 |
-| 路径遍历 | FileSystemCheckpointStore | 30分钟 | 无 |
-| 私有属性访问 | WorkflowEngine | 30分钟 | Agent.ts |
+| 问题         | 文件                      | 预计时间 | 依赖     |
+| ------------ | ------------------------- | -------- | -------- |
+| 异步初始化   | FileSystemCheckpointStore | 30分钟   | 无       |
+| 深拷贝       | CheckpointManager         | 45分钟   | 无       |
+| 临时文件清理 | PatentCoreBridge          | 15分钟   | 无       |
+| 路径遍历     | FileSystemCheckpointStore | 30分钟   | 无       |
+| 私有属性访问 | WorkflowEngine            | 30分钟   | Agent.ts |
 
 ### P1 - 建议修复（预计4-6小时）
 
-| 问题 | 预计时间 | 优先级 |
-|------|----------|--------|
-| 超时处理 | 1小时 | 中 |
-| 输入验证 | 1小时 | 高 |
-| 内存泄漏 | 30分钟 | 中 |
-| 错误日志 | 30分钟 | 低 |
+| 问题     | 预计时间 | 优先级 |
+| -------- | -------- | ------ |
+| 超时处理 | 1小时    | 中     |
+| 输入验证 | 1小时    | 高     |
+| 内存泄漏 | 30分钟   | 中     |
+| 错误日志 | 30分钟   | 低     |
 
 ### P2 - 可选优化（预计8-10小时）
 
-| 优化项 | 预计时间 | 优先级 |
-|--------|----------|--------|
-| JSDoc文档 | 3小时 | 低 |
-| 枚举替换 | 2小时 | 低 |
-| 性能监控 | 2小时 | 低 |
-| readonly保护 | 1小时 | 低 |
+| 优化项       | 预计时间 | 优先级 |
+| ------------ | -------- | ------ |
+| JSDoc文档    | 3小时    | 低     |
+| 枚举替换     | 2小时    | 低     |
+| 性能监控     | 2小时    | 低     |
+| readonly保护 | 1小时    | 低     |
 
 ---
 
@@ -611,11 +642,13 @@ await fs.unlink(tmpFile);
 ### 8.1 短期（进入Phase 1前）
 
 **必须完成**:
+
 1. ✅ 修复所有P0问题（2-3小时）
 2. ✅ 添加路径验证测试
 3. ✅ 添加并发测试
 
 **建议完成**:
+
 1. ✅ 修复P1高优先级问题（输入验证）
 2. ✅ 完善错误日志
 
@@ -635,16 +668,16 @@ await fs.unlink(tmpFile);
 
 ## 九、代码质量评分详情
 
-| 维度 | 评分 | 说明 |
-|------|------|------|
+| 维度         | 评分 | 说明                                  |
+| ------------ | ---- | ------------------------------------- |
 | **类型安全** | 7/10 | 使用TypeScript但存在any和私有属性访问 |
-| **错误处理** | 6/10 | 有错误处理但不完整，缺少超时处理 |
-| **性能** | 7/10 | 基本合理但存在同步操作和大对象拷贝 |
-| **安全** | 5/10 | 存在路径遍历风险，权限控制不足 |
-| **代码规范** | 8/10 | 代码清晰，但缺少JSDoc |
-| **测试覆盖** | 7/10 | 主流程覆盖好，边界条件不足 |
-| **可维护性** | 8/10 | 模块化好，依赖清晰 |
-| **文档** | 6/10 | 有注释但不完整 |
+| **错误处理** | 6/10 | 有错误处理但不完整，缺少超时处理      |
+| **性能**     | 7/10 | 基本合理但存在同步操作和大对象拷贝    |
+| **安全**     | 5/10 | 存在路径遍历风险，权限控制不足        |
+| **代码规范** | 8/10 | 代码清晰，但缺少JSDoc                 |
+| **测试覆盖** | 7/10 | 主流程覆盖好，边界条件不足            |
+| **可维护性** | 8/10 | 模块化好，依赖清晰                    |
+| **文档**     | 6/10 | 有注释但不完整                        |
 
 **总分**: 7.0/10 - **良好，需要改进**
 

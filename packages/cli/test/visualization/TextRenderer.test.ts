@@ -2,16 +2,16 @@
  * TextRenderer 单元测试
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { TextRenderer } from '../../src/visualization/TextRenderer.js';
-import { Priority, TaskStatus, PlanStatus } from '@yunpat/core';
+import { describe, it, expect, beforeEach } from 'vitest'
+import { TextRenderer } from '../../src/visualization/TextRenderer.js'
+import { Priority, TaskStatus, PlanStatus } from '@yunpat/core'
 
 describe('TextRenderer', () => {
-  let renderer: TextRenderer;
+  let renderer: TextRenderer
 
   beforeEach(() => {
-    renderer = new TextRenderer();
-  });
+    renderer = new TextRenderer()
+  })
 
   /**
    * 辅助函数：创建测试计划
@@ -114,175 +114,175 @@ describe('TextRenderer', () => {
       estimatedTokens: 9000,
       status: PlanStatus.READY,
       createdAt: new Date(),
-    };
+    }
   }
 
   describe('render', () => {
     it('应该渲染为文本格式', () => {
-      const plan = createTestPlan();
-      const result = renderer.render(plan, { format: 'text' });
+      const plan = createTestPlan()
+      const result = renderer.render(plan, { format: 'text' })
 
-      expect(result.content).toBeDefined();
-      expect(result.content.length).toBeGreaterThan(0);
-      expect(result.metadata.format).toBe('text');
-      expect(result.metadata.nodeCount).toBe(3);
-      expect(result.metadata.edgeCount).toBe(2);
-    });
+      expect(result.content).toBeDefined()
+      expect(result.content.length).toBeGreaterThan(0)
+      expect(result.metadata.format).toBe('text')
+      expect(result.metadata.nodeCount).toBe(3)
+      expect(result.metadata.edgeCount).toBe(2)
+    })
 
     it('应该渲染为树状格式', () => {
-      const plan = createTestPlan();
-      const result = renderer.render(plan, { format: 'tree' });
+      const plan = createTestPlan()
+      const result = renderer.render(plan, { format: 'tree' })
 
-      expect(result.content).toContain('📊 任务依赖树');
-      expect(result.metadata.format).toBe('tree');
-    });
+      expect(result.content).toContain('📊 任务依赖树')
+      expect(result.metadata.format).toBe('tree')
+    })
 
     it('应该渲染为图格式', () => {
-      const plan = createTestPlan();
-      const result = renderer.render(plan, { format: 'graph' });
+      const plan = createTestPlan()
+      const result = renderer.render(plan, { format: 'graph' })
 
-      expect(result.content).toContain('📊 任务依赖图');
-      expect(result.metadata.format).toBe('graph');
-    });
+      expect(result.content).toContain('📊 任务依赖图')
+      expect(result.metadata.format).toBe('graph')
+    })
 
     it('应该显示进度信息', () => {
-      const plan = createTestPlan();
+      const plan = createTestPlan()
       const result = renderer.render(plan, {
         format: 'text',
         showProgress: true,
-      });
+      })
 
-      expect(result.content).toContain('⏳️ 进度:');
-      expect(result.content).toContain('1/3');
-    });
+      expect(result.content).toContain('⏳️ 进度:')
+      expect(result.content).toContain('1/3')
+    })
 
     it('应该显示统计信息', () => {
-      const plan = createTestPlan();
+      const plan = createTestPlan()
       const result = renderer.render(plan, {
         format: 'text',
         showMetrics: true,
-      });
+      })
 
-      expect(result.content).toContain('📊 统计信息:');
-      expect(result.content).toContain('总任务数: 3');
-      expect(result.content).toContain('依赖关系数: 2');
-    });
+      expect(result.content).toContain('📊 统计信息:')
+      expect(result.content).toContain('总任务数: 3')
+      expect(result.content).toContain('依赖关系数: 2')
+    })
 
     it('应该包含详细信息', () => {
-      const plan = createTestPlan();
+      const plan = createTestPlan()
       const result = renderer.render(plan, {
         format: 'text',
         includeDetails: true,
-      });
+      })
 
-      expect(result.content).toContain('描述:');
-      expect(result.content).toContain('任务:');
-      expect(result.content).toContain('预估:');
-    });
-  });
+      expect(result.content).toContain('描述:')
+      expect(result.content).toContain('任务:')
+      expect(result.content).toContain('预估:')
+    })
+  })
 
   describe('renderTree', () => {
     it('应该正确渲染树状结构', () => {
-      const plan = createTestPlan();
-      const result = renderer.render(plan, { format: 'tree' });
+      const plan = createTestPlan()
+      const result = renderer.render(plan, { format: 'tree' })
 
-      expect(result.content).toContain('技术方案理解');
-      expect(result.content).toContain('权利要求生成');
-      expect(result.content).toContain('说明书撰写');
-    });
+      expect(result.content).toContain('技术方案理解')
+      expect(result.content).toContain('权利要求生成')
+      expect(result.content).toContain('说明书撰写')
+    })
 
     it('应该显示状态图标', () => {
-      const plan = createTestPlan();
-      const result = renderer.render(plan, { format: 'tree' });
+      const plan = createTestPlan()
+      const result = renderer.render(plan, { format: 'tree' })
 
-      expect(result.content).toContain('✅'); // completed
-      expect(result.content).toContain('⏳'); // in_progress
-      expect(result.content).toContain('⏸️'); // pending
-    });
+      expect(result.content).toContain('✅') // completed
+      expect(result.content).toContain('⏳') // in_progress
+      expect(result.content).toContain('⏸️') // pending
+    })
 
     it('应该限制深度', () => {
-      const plan = createTestPlan();
+      const plan = createTestPlan()
       const result = renderer.render(plan, {
         format: 'tree',
         maxDepth: 1,
-      });
+      })
 
       // 深度为1时，只显示根节点
-      const lines = result.content.split('\n');
-      const rootCount = lines.filter((line) => line.includes('└─')).length;
-      expect(rootCount).toBeGreaterThan(0);
-    });
-  });
+      const lines = result.content.split('\n')
+      const rootCount = lines.filter((line) => line.includes('└─')).length
+      expect(rootCount).toBeGreaterThan(0)
+    })
+  })
 
   describe('renderGraph', () => {
     it('应该正确渲染图结构', () => {
-      const plan = createTestPlan();
-      const result = renderer.render(plan, { format: 'graph' });
+      const plan = createTestPlan()
+      const result = renderer.render(plan, { format: 'graph' })
 
-      expect(result.content).toContain('技术方案理解');
-      expect(result.content).toContain('权利要求生成');
-      expect(result.content).toContain('说明书撰写');
-    });
+      expect(result.content).toContain('技术方案理解')
+      expect(result.content).toContain('权利要求生成')
+      expect(result.content).toContain('说明书撰写')
+    })
 
     it('应该显示依赖关系', () => {
-      const plan = createTestPlan();
-      const result = renderer.render(plan, { format: 'graph' });
+      const plan = createTestPlan()
+      const result = renderer.render(plan, { format: 'graph' })
 
-      expect(result.content).toContain('← 依赖:');
-    });
-  });
+      expect(result.content).toContain('← 依赖:')
+    })
+  })
 
   describe('exportToDOT', () => {
     it('应该生成有效的DOT格式', () => {
-      const plan = createTestPlan();
-      const dot = renderer.exportToDOT(plan);
+      const plan = createTestPlan()
+      const dot = renderer.exportToDOT(plan)
 
-      expect(dot).toContain('digraph TaskDependencies');
-      expect(dot).toContain('rankdir=TB;');
-      expect(dot).toContain('goal1');
-      expect(dot).toContain('goal2');
-      expect(dot).toContain('goal3');
-      expect(dot).toContain('->');
-    });
+      expect(dot).toContain('digraph TaskDependencies')
+      expect(dot).toContain('rankdir=TB;')
+      expect(dot).toContain('goal1')
+      expect(dot).toContain('goal2')
+      expect(dot).toContain('goal3')
+      expect(dot).toContain('->')
+    })
 
     it('应该包含节点样式', () => {
-      const plan = createTestPlan();
-      const dot = renderer.exportToDOT(plan);
+      const plan = createTestPlan()
+      const dot = renderer.exportToDOT(plan)
 
-      expect(dot).toContain('fillcolor');
-      expect(dot).toContain('color');
-      expect(dot).toContain('penwidth');
-    });
+      expect(dot).toContain('fillcolor')
+      expect(dot).toContain('color')
+      expect(dot).toContain('penwidth')
+    })
 
     it('应该包含边样式', () => {
-      const plan = createTestPlan();
-      const dot = renderer.exportToDOT(plan);
+      const plan = createTestPlan()
+      const dot = renderer.exportToDOT(plan)
 
-      expect(dot).toContain('style=');
-      expect(dot).toContain('penwidth=');
-    });
-  });
+      expect(dot).toContain('style=')
+      expect(dot).toContain('penwidth=')
+    })
+  })
 
   describe('exportToMermaid', () => {
     it('应该生成有效的Mermaid格式', () => {
-      const plan = createTestPlan();
-      const mermaid = renderer.exportToMermaid(plan);
+      const plan = createTestPlan()
+      const mermaid = renderer.exportToMermaid(plan)
 
-      expect(mermaid).toContain('graph TD');
-      expect(mermaid).toContain('goal1');
-      expect(mermaid).toContain('goal2');
-      expect(mermaid).toContain('goal3');
-      expect(mermaid).toContain('-->');
-    });
+      expect(mermaid).toContain('graph TD')
+      expect(mermaid).toContain('goal1')
+      expect(mermaid).toContain('goal2')
+      expect(mermaid).toContain('goal3')
+      expect(mermaid).toContain('-->')
+    })
 
     it('应该包含状态图标', () => {
-      const plan = createTestPlan();
-      const mermaid = renderer.exportToMermaid(plan);
+      const plan = createTestPlan()
+      const mermaid = renderer.exportToMermaid(plan)
 
-      expect(mermaid).toContain('✅');
-      expect(mermaid).toContain('⏳');
-    });
-  });
+      expect(mermaid).toContain('✅')
+      expect(mermaid).toContain('⏳')
+    })
+  })
 
   describe('样式管理', () => {
     it('应该设置节点样式', () => {
@@ -294,52 +294,52 @@ describe('TextRenderer', () => {
         borderWidth: 3,
         fontSize: 14,
         fontColor: '#333333',
-      };
+      }
 
-      renderer.setNodeStyle('custom', customStyle);
+      renderer.setNodeStyle('custom', customStyle)
       // 样式已设置，后续渲染会使用
-      expect(true).toBe(true);
-    });
+      expect(true).toBe(true)
+    })
 
     it('应该设置边样式', () => {
       const customStyle = {
         color: '#ff0000',
         style: 'dotted' as const,
         thickness: 3,
-      };
+      }
 
-      renderer.setEdgeStyle('custom', customStyle);
+      renderer.setEdgeStyle('custom', customStyle)
       // 样式已设置，后续渲染会使用
-      expect(true).toBe(true);
-    });
-  });
+      expect(true).toBe(true)
+    })
+  })
 
   describe('进度计算', () => {
     it('应该正确计算进度', () => {
-      const plan = createTestPlan();
+      const plan = createTestPlan()
       const result = renderer.render(plan, {
         format: 'text',
         showProgress: true,
-      });
+      })
 
-      expect(result.content).toContain('1/3');
-      expect(result.content).toContain('33.3%');
-    });
-  });
+      expect(result.content).toContain('1/3')
+      expect(result.content).toContain('33.3%')
+    })
+  })
 
   describe('统计计算', () => {
     it('应该正确计算统计信息', () => {
-      const plan = createTestPlan();
+      const plan = createTestPlan()
       const result = renderer.render(plan, {
         format: 'text',
         showMetrics: true,
-      });
+      })
 
-      expect(result.content).toContain('总任务数: 3');
-      expect(result.content).toContain('依赖关系数: 2');
-      expect(result.content).toContain('关键路径长度: 3');
-    });
-  });
+      expect(result.content).toContain('总任务数: 3')
+      expect(result.content).toContain('依赖关系数: 2')
+      expect(result.content).toContain('关键路径长度: 3')
+    })
+  })
 
   describe('边界情况', () => {
     it('应该处理空计划', () => {
@@ -357,51 +357,51 @@ describe('TextRenderer', () => {
         estimatedTokens: 0,
         status: PlanStatus.READY,
         createdAt: new Date(),
-      };
+      }
 
-      const result = renderer.render(plan, { format: 'text' });
+      const result = renderer.render(plan, { format: 'text' })
 
-      expect(result.content).toBeDefined();
-      expect(result.metadata.nodeCount).toBe(0);
-    });
+      expect(result.content).toBeDefined()
+      expect(result.metadata.nodeCount).toBe(0)
+    })
 
     it('应该处理无依赖关系的计划', () => {
-      const plan = createTestPlan();
-      plan.dependencies.edges = [];
+      const plan = createTestPlan()
+      plan.dependencies.edges = []
 
-      const result = renderer.render(plan, { format: 'text' });
+      const result = renderer.render(plan, { format: 'text' })
 
-      expect(result.content).toContain('(无依赖关系)');
-    });
+      expect(result.content).toContain('(无依赖关系)')
+    })
 
     it('应该处理所有任务完成的计划', () => {
-      const plan = createTestPlan();
+      const plan = createTestPlan()
       plan.subGoals.forEach((goal) => {
-        goal.status = TaskStatus.COMPLETED;
-      });
+        goal.status = TaskStatus.COMPLETED
+      })
 
       const result = renderer.render(plan, {
         format: 'text',
         showProgress: true,
-      });
+      })
 
-      expect(result.content).toContain('3/3');
-      expect(result.content).toContain('100.0%');
-    });
-  });
+      expect(result.content).toContain('3/3')
+      expect(result.content).toContain('100.0%')
+    })
+  })
 
   describe('渲染性能', () => {
     it('应该在合理时间内完成渲染', () => {
-      const plan = createTestPlan();
-      const startTime = Date.now();
+      const plan = createTestPlan()
+      const startTime = Date.now()
 
-      const result = renderer.render(plan, { format: 'text' });
+      const result = renderer.render(plan, { format: 'text' })
 
-      const endTime = Date.now();
-      const renderTime = endTime - startTime;
+      const endTime = Date.now()
+      const renderTime = endTime - startTime
 
-      expect(result.metadata.renderTime).toBeLessThan(1000);
-      expect(renderTime).toBeLessThan(1000);
-    });
-  });
-});
+      expect(result.metadata.renderTime).toBeLessThan(1000)
+      expect(renderTime).toBeLessThan(1000)
+    })
+  })
+})

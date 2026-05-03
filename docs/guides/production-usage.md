@@ -10,22 +10,22 @@
 
 ### ✅ 完整的TDD验证
 
-| 阶段 | 状态 | 通过率 | 耗时 |
-|------|------|--------|------|
-| **Red阶段** | ✅ | 76.7% (23/30) | 1小时 |
-| **Green阶段** | ✅ | 91.9% (114/124) | 1小时 |
-| **Refactor阶段** | ✅ | 88.5% (139/157) | 2小时 |
-| **总计** | ✅ | **88.5%** | **4小时** |
+| 阶段             | 状态 | 通过率          | 耗时      |
+| ---------------- | ---- | --------------- | --------- |
+| **Red阶段**      | ✅   | 76.7% (23/30)   | 1小时     |
+| **Green阶段**    | ✅   | 91.9% (114/124) | 1小时     |
+| **Refactor阶段** | ✅   | 88.5% (139/157) | 2小时     |
+| **总计**         | ✅   | **88.5%**       | **4小时** |
 
 ### ✅ 性能验证
 
-| 性能指标 | 目标 | 实际 | 状态 |
-|----------|------|------|------|
-| 工具选择准确率 | >85% | 100% | ✅ 超越预期 |
-| 首次选择成功率 | >75% | 100% | ✅ 超越预期 |
-| 提示生成时间 | <100ms | <50ms | ✅ 超越预期 |
-| 批量处理效率 | <1s | <900ms | ✅ 超越预期 |
-| 内存使用 | <100MB | <80MB | ✅ 超越预期 |
+| 性能指标       | 目标   | 实际   | 状态        |
+| -------------- | ------ | ------ | ----------- |
+| 工具选择准确率 | >85%   | 100%   | ✅ 超越预期 |
+| 首次选择成功率 | >75%   | 100%   | ✅ 超越预期 |
+| 提示生成时间   | <100ms | <50ms  | ✅ 超越预期 |
+| 批量处理效率   | <1s    | <900ms | ✅ 超越预期 |
+| 内存使用       | <100MB | <80MB  | ✅ 超越预期 |
 
 ---
 
@@ -36,6 +36,7 @@
 **功能**：自动为工具生成详细的元数据
 
 **包含信息**：
+
 - 详细描述
 - 使用示例
 - 常见用例
@@ -46,14 +47,15 @@
 - 相关工具
 
 **使用方式**：
+
 ```typescript
-import { ToolDescriptionEnhancer } from '@yunpat/core';
+import { ToolDescriptionEnhancer } from '@yunpat/core'
 
-const enhancer = new ToolDescriptionEnhancer();
-const enhanced = enhancer.enhanceMetadata(tool);
+const enhancer = new ToolDescriptionEnhancer()
+const enhanced = enhancer.enhanceMetadata(tool)
 
-console.log(enhanced.detailedDescription);
-console.log(enhanced.commonUseCases);
+console.log(enhanced.detailedDescription)
+console.log(enhanced.commonUseCases)
 ```
 
 ### 2. Few-shot示例管理 (FewShotPromptManager)
@@ -61,6 +63,7 @@ console.log(enhanced.commonUseCases);
 **功能**：管理工具选择的示例库
 
 **预置示例**（7个）：
+
 1. PDF转Markdown
 2. 网页数据抓取
 3. Excel数据分析
@@ -70,21 +73,15 @@ console.log(enhanced.commonUseCases);
 7. 错误恢复重试
 
 **使用方式**：
+
 ```typescript
-import { fewShotManager } from '@yunpat/core';
+import { fewShotManager } from '@yunpat/core'
 
 // 获取相关示例
-const examples = fewShotManager.getRelevantExamples(
-  userInput,
-  availableTools,
-  3
-);
+const examples = fewShotManager.getRelevantExamples(userInput, availableTools, 3)
 
 // 生成Few-shot提示
-const prompt = fewShotManager.generateFewShotPrompt(
-  userInput,
-  availableTools
-);
+const prompt = fewShotManager.generateFewShotPrompt(userInput, availableTools)
 ```
 
 ### 3. 工具使用追踪 (ToolUsageTracker)
@@ -92,6 +89,7 @@ const prompt = fewShotManager.generateFewShotPrompt(
 **功能**：追踪和分析工具使用情况
 
 **追踪信息**：
+
 - 工具调用次数
 - 成功率
 - 平均/最小/最大执行时间
@@ -99,8 +97,9 @@ const prompt = fewShotManager.generateFewShotPrompt(
 - 最佳用例分析
 
 **使用方式**：
+
 ```typescript
-import { toolUsageTracker } from '@yunpat/core';
+import { toolUsageTracker } from '@yunpat/core'
 
 // 记录使用
 toolUsageTracker.recordUsage({
@@ -112,16 +111,16 @@ toolUsageTracker.recordUsage({
     executionTime: 1500,
     output: { markdown: '#' },
   },
-});
+})
 
 // 获取性能统计
-const stats = toolUsageTracker.getPerformanceStats('PdfToMarkdownTool');
+const stats = toolUsageTracker.getPerformanceStats('PdfToMarkdownTool')
 
 // 获取推荐
-const recommendations = toolUsageTracker.getRecommendations(
-  '转换PDF',
-  ['PdfToMarkdownTool', 'PdfParseTool']
-);
+const recommendations = toolUsageTracker.getRecommendations('转换PDF', [
+  'PdfToMarkdownTool',
+  'PdfParseTool',
+])
 ```
 
 ### 4. 工具选择优化器 (ToolSelectionOptimizer)
@@ -129,6 +128,7 @@ const recommendations = toolUsageTracker.getRecommendations(
 **功能**：整合三大系统的统一优化器
 
 **使用方式**：
+
 ```typescript
 import { toolSelectionOptimizer } from '@yunpat/core';
 
@@ -166,18 +166,20 @@ const accuracy = toolSelectionOptimizer.analyzeSelectionAccuracy();
 **用户需求**：将PDF文件转换为Markdown格式
 
 **传统方式**：
+
 ```typescript
 // 手动选择工具
-const tool = 'PdfToMarkdownTool'; // 硬编码
+const tool = 'PdfToMarkdownTool' // 硬编码
 ```
 
 **优化方式**：
+
 ```typescript
 // 使用优化器
 const prompt = toolSelectionOptimizer.optimizeToolSelectionPrompt(
   '帮我把这个PDF文件转换成Markdown格式',
   availableTools
-);
+)
 
 // LLM分析并选择工具
 // → 自动选择PdfToMarkdownTool
@@ -190,6 +192,7 @@ const prompt = toolSelectionOptimizer.optimizeToolSelectionPrompt(
 **用户需求**：批量处理多种格式文档
 
 **优化方式**：
+
 ```typescript
 const documents = [
   { type: 'pdf', path: 'doc1.pdf' },
@@ -217,6 +220,7 @@ const report = toolSelectionOptimizer.getPerformanceReport();
 ### 场景3：性能监控和优化
 
 **持续优化流程**：
+
 ```typescript
 // 1. 记录所有工具使用
 toolSelectionOptimizer.recordToolUsage(...);
@@ -240,7 +244,7 @@ console.log(`改进建议: ${accuracy.improprovements}`);
 ### 步骤1：导入优化器
 
 ```typescript
-import { toolSelectionOptimizer } from '@yunpat/core';
+import { toolSelectionOptimizer } from '@yunpat/core'
 ```
 
 ### 步骤2：在plan阶段使用
@@ -255,13 +259,11 @@ class MyAgent extends Agent {
         conversationHistory: context.conversationHistory,
         currentTask: context.currentTask,
       }
-    );
+    )
 
-    const response = await context.llm.chat([
-      { role: 'user', content: prompt }
-    ]);
+    const response = await context.llm.chat([{ role: 'user', content: prompt }])
 
-    return this.parseToolSelection(response.content);
+    return this.parseToolSelection(response.content)
   }
 }
 ```
@@ -326,23 +328,23 @@ protected async reflect(result: any, context: any): Promise<any> {
 
 ### 实测性能数据
 
-| 操作 | 平均时间 | 最大时间 | 状态 |
-|------|----------|----------|------|
-| 提示生成(10工具) | 45ms | 80ms | ✅ |
-| 提示生成(100工具) | 280ms | 450ms | ✅ |
-| 工具选择 | <10ms | <20ms | ✅ |
-| 批量记录(1000次) | 800ms | 1.2s | ✅ |
-| 性能报告生成 | 50ms | 100ms | ✅ |
-| 准确性分析 | 30ms | 60ms | ✅ |
+| 操作              | 平均时间 | 最大时间 | 状态 |
+| ----------------- | -------- | -------- | ---- |
+| 提示生成(10工具)  | 45ms     | 80ms     | ✅   |
+| 提示生成(100工具) | 280ms    | 450ms    | ✅   |
+| 工具选择          | <10ms    | <20ms    | ✅   |
+| 批量记录(1000次)  | 800ms    | 1.2s     | ✅   |
+| 性能报告生成      | 50ms     | 100ms    | ✅   |
+| 准确性分析        | 30ms     | 60ms     | ✅   |
 
 ### 资源使用
 
-| 资源 | 使用量 | 状态 |
-|------|--------|------|
-| 内存占用 | <80MB (10000次记录) | ✅ |
-| 缓存大小 | <10MB | ✅ |
-| CPU使用 | 低 | ✅ |
-| 磁盘I/O | 按需 | ✅ |
+| 资源     | 使用量              | 状态 |
+| -------- | ------------------- | ---- |
+| 内存占用 | <80MB (10000次记录) | ✅   |
+| 缓存大小 | <10MB               | ✅   |
+| CPU使用  | 低                  | ✅   |
+| 磁盘I/O  | 按需                | ✅   |
 
 ---
 
@@ -351,16 +353,19 @@ protected async reflect(result: any, context: any): Promise<any> {
 ### 1. 选择合适的集成方式
 
 **基础集成**（推荐新手）：
+
 - 在plan阶段使用优化器
 - 在act阶段记录使用
 - 最小化集成，快速上手
 
 **高级集成**（推荐进阶）：
+
 - 添加错误恢复
 - 使用替代工具
 - 智能重试机制
 
 **生产集成**（推荐专业）：
+
 - 完整生命周期钩子
 - 详细的日志记录
 - 性能监控和告警
@@ -379,7 +384,7 @@ console.log(report);
 ### 3. 持续优化Few-shot示例
 
 ```typescript
-import { fewShotManager } from '@yunpat/core';
+import { fewShotManager } from '@yunpat/core'
 
 // 根据实际情况添加新示例
 fewShotManager.addExample({
@@ -391,12 +396,13 @@ fewShotManager.addExample({
   toolParameters: {},
   outcome: '成功',
   lessons: '经验总结',
-});
+})
 ```
 
 ### 4. 监控关键指标
 
 **关键指标**：
+
 - 工具选择准确率（目标：>85%）
 - 首次选择成功率（目标：>75%）
 - 平均执行时间（目标：<100ms）
@@ -411,6 +417,7 @@ fewShotManager.addExample({
 **症状**：频繁选择错误的工具
 
 **解决方案**：
+
 1. 检查工具描述是否清晰
 2. 添加更多Few-shot示例
 3. 收集更多使用数据
@@ -421,6 +428,7 @@ fewShotManager.addExample({
 **症状**：性能报告为空
 
 **解决方案**：
+
 1. 确保调用了`recordToolUsage`
 2. 检查数据是否持久化
 3. 验证sessionId和userId配置
@@ -430,6 +438,7 @@ fewShotManager.addExample({
 **症状**：内存持续增长
 
 **解决方案**：
+
 1. 启用自动清理（设置retentionDays）
 2. 定期清理旧数据
 3. 限制缓存大小
@@ -439,11 +448,13 @@ fewShotManager.addExample({
 ## 📚 相关文档
 
 ### 核心文档
+
 - 📄 集成指南：`docs/AGENT_INTEGRATION_GUIDE.md`
 - 📄 TDD完整报告：`docs/TDD_COMPLETE_REPORT.md`
 - 📄 使用示例：`examples/production-usage-demo-simple.ts`
 
 ### 代码文件
+
 - 🔧 核心代码：`packages/core/src/tools/`
 - 🧪 测试代码：`packages/core/test/tools-selection/`
 - ⚙️ CI配置：`.github/workflows/ci.yml`
@@ -455,17 +466,20 @@ fewShotManager.addExample({
 ### ✅ 生产就绪确认
 
 **功能验证**：
+
 - ✅ 157个测试用例
 - ✅ 88.5%的通过率
 - ✅ 性能测试全部通过
 - ✅ 实际场景演示成功
 
 **性能验证**：
+
 - ✅ 工具选择准确率100%
 - ✅ 首次选择成功率100%
 - ✅ 所有性能指标超越预期
 
 **质量验证**：
+
 - ✅ 完整的TDD流程
 - ✅ CI/CD集成完成
 - ✅ 代码质量优秀
@@ -473,20 +487,22 @@ fewShotManager.addExample({
 ### 🚀 立即开始使用
 
 **3行代码即可集成**：
+
 ```typescript
-import { toolSelectionOptimizer } from '@yunpat/core';
+import { toolSelectionOptimizer } from '@yunpat/core'
 
 // 1. 生成优化提示
-const prompt = toolSelectionOptimizer.optimizeToolSelectionPrompt(userInput, availableTools);
+const prompt = toolSelectionOptimizer.optimizeToolSelectionPrompt(userInput, availableTools)
 
 // 2. 记录使用
-toolSelectionOptimizer.recordToolUsage(toolName, userInput, params, result);
+toolSelectionOptimizer.recordToolUsage(toolName, userInput, params, result)
 
 // 3. 查看报告
-const report = toolSelectionOptimizer.getPerformanceReport();
+const report = toolSelectionOptimizer.getPerformanceReport()
 ```
 
 **预期效果**：
+
 - ✅ 工具选择准确率提升25%
 - ✅ 首次选择成功率提升25%
 - ✅ 完整的性能追踪
@@ -497,6 +513,7 @@ const report = toolSelectionOptimizer.getPerformanceReport();
 **系统已完全就绪，可以立即投入生产使用！** 🎊
 
 **下一步**：
+
 1. 在智能体中集成优化器
 2. 运行实际任务并收集数据
 3. 查看性能报告持续优化

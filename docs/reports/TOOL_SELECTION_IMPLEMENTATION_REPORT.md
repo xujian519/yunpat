@@ -12,6 +12,7 @@
 **文件**: `/Users/xujian/projects/YunPat/packages/core/src/tools/ToolDescriptionEnhancer.ts`
 
 **实现功能**：
+
 - ✅ ToolDescriptionEnhancer类 - 自动增强工具元数据
 - ✅ 为工具生成详细描述
 - ✅ 自动生成使用示例
@@ -25,6 +26,7 @@
 - ✅ 生成工具文档
 
 **核心方法**：
+
 ```typescript
 // 增强单个工具
 enhanceMetadata(tool: BaseTool): EnhancedToolMetadata
@@ -37,6 +39,7 @@ generateDocumentation(enhancedMetadata: Map): string
 ```
 
 **示例输出**：
+
 ```
 ## PdfToMarkdownTool
 
@@ -61,6 +64,7 @@ generateDocumentation(enhancedMetadata: Map): string
 **文件**: `/Users/xujian/projects/YunPat/packages/core/src/reasoning/FewShotPromptManager.ts`
 
 **实现功能**：
+
 - ✅ FewShotPromptManager类 - 管理Few-shot示例
 - ✅ 预置7个典型示例：
   1. PDF转Markdown
@@ -77,6 +81,7 @@ generateDocumentation(enhancedMetadata: Map): string
 - ✅ 导入/导出示例库
 
 **核心方法**：
+
 ```typescript
 // 添加示例
 addExample(example: FewShotExample)
@@ -89,6 +94,7 @@ generateFewShotPrompt(userInput, availableTools, context)
 ```
 
 **示例输出**：
+
 ```
 ### 示例：PDF转Markdown
 
@@ -121,6 +127,7 @@ generateFewShotPrompt(userInput, availableTools, context)
 **文件**: `/Users/xujian/projects/YunPat/packages/core/src/tools/ToolUsageTracker.ts`
 
 **实现功能**：
+
 - ✅ ToolUsageTracker类 - 追踪所有工具调用
 - ✅ 记录工具使用历史：
   - 输入信息
@@ -142,6 +149,7 @@ generateFewShotPrompt(userInput, availableTools, context)
 - ✅ 自动清理旧记录
 
 **核心方法**：
+
 ```typescript
 // 记录工具调用
 recordUsage(record: ToolUsageRecord): string
@@ -160,6 +168,7 @@ analyzeSelectionAccuracy(): { accuracy: number; improvements: string[] }
 ```
 
 **统计示例**：
+
 ```typescript
 {
   toolName: "PdfToMarkdownTool",
@@ -188,12 +197,14 @@ analyzeSelectionAccuracy(): { accuracy: number; improvements: string[] }
 ### 文件: `/Users/xujian/projects/YunPat/packages/core/src/tools/ToolSelectionOptimizer.ts`
 
 **功能**：
+
 - ✅ 整合三大系统
 - ✅ 统一的优化接口
 - ✅ 智能提示生成
 - ✅ 性能分析报告
 
 **核心方法**：
+
 ```typescript
 // 优化工具选择提示
 optimizeToolSelectionPrompt(userInput, availableTools, context): string
@@ -215,6 +226,7 @@ analyzeSelectionAccuracy()
 **文件**: `/Users/xujian/projects/YunPat/examples/tool-selection-optimization.ts`
 
 **包含7个完整示例**：
+
 1. ✅ 基础使用 - 生成优化提示
 2. ✅ 记录工具使用
 3. ✅ 获取工具推荐
@@ -229,12 +241,12 @@ analyzeSelectionAccuracy()
 
 ### 预期提升
 
-| 指标 | 实施前 | 实施后 | 提升 |
-|------|--------|--------|------|
-| **工具选择准确率** | ~60% | ~85% | ⬆️ +25% |
-| **首次选择成功率** | ~50% | ~75% | ⬆️ +25% |
-| **平均执行时间** | 未知 | 可追踪 | ✅ |
-| **错误重试率** | 未知 | 可分析 | ✅ |
+| 指标               | 实施前 | 实施后 | 提升    |
+| ------------------ | ------ | ------ | ------- |
+| **工具选择准确率** | ~60%   | ~85%   | ⬆️ +25% |
+| **首次选择成功率** | ~50%   | ~75%   | ⬆️ +25% |
+| **平均执行时间**   | 未知   | 可追踪 | ✅      |
+| **错误重试率**     | 未知   | 可分析 | ✅      |
 
 ### 关键改进
 
@@ -249,6 +261,7 @@ analyzeSelectionAccuracy()
 ## 📝 下一步建议
 
 ### 立即可做（✅ 已完成）
+
 - ✅ 创建三大系统代码
 - ✅ 提供完整的使用示例
 - ✅ 集成到core包
@@ -258,16 +271,19 @@ analyzeSelectionAccuracy()
 - ✅ 在智能体中集成使用
 
 ### 短期实施（1-2天）
+
 - ✅ 在现有智能体中集成优化器
 - ✅ 运行测试脚本验证功能
 - ✅ 查看性能报告了解现状
 
 ### 中期实施（1周）
+
 - 🔄 为更多工具添加增强描述
 - 🔄 收集实际使用数据
 - 🔄 分析和调整Few-shot示例
 
 ### 长期优化（持续）
+
 - 🔄 基于数据训练工具选择模型
 - 🔄 自动生成和更新示例
 - 🔄 A/B测试不同选择策略
@@ -284,6 +300,7 @@ analyzeSelectionAccuracy()
 4. ✅ **智能体集成方案** - 3种集成方式 + 完整文档
 
 **文件位置**：
+
 - 核心代码：`packages/core/src/tools/`
 - 智能体集成示例：`examples/agent-tool-selection-integration.ts`
 - 测试脚本：`examples/test-tool-selection-optimization.ts`
@@ -291,44 +308,41 @@ analyzeSelectionAccuracy()
 - 完整报告：`docs/TOOL_SELECTION_COMPLETE_REPORT.md`
 
 **使用方式**：
+
 ```typescript
-import { toolSelectionOptimizer } from '@yunpat/core';
+import { toolSelectionOptimizer } from '@yunpat/core'
 
 class MyAgent extends Agent {
   protected async plan(input: any, context: any): Promise<any> {
     const prompt = toolSelectionOptimizer.optimizeToolSelectionPrompt(
       input.userInput,
       this.getAvailableTools(context)
-    );
+    )
 
-    const response = await context.llm.chat([
-      { role: 'user', content: prompt }
-    ]);
+    const response = await context.llm.chat([{ role: 'user', content: prompt }])
 
-    return this.parseToolSelection(response.content);
+    return this.parseToolSelection(response.content)
   }
 
   protected async act(plan: any, context: any): Promise<any> {
-    const startTime = Date.now();
+    const startTime = Date.now()
     try {
-      const result = await context.tools.get(plan.toolName).execute(plan.parameters);
+      const result = await context.tools.get(plan.toolName).execute(plan.parameters)
 
-      toolSelectionOptimizer.recordToolUsage(
-        plan.toolName,
-        context.userInput,
-        plan.parameters,
-        { success: true, executionTime: Date.now() - startTime, output: result }
-      );
+      toolSelectionOptimizer.recordToolUsage(plan.toolName, context.userInput, plan.parameters, {
+        success: true,
+        executionTime: Date.now() - startTime,
+        output: result,
+      })
 
-      return result;
+      return result
     } catch (error) {
-      toolSelectionOptimizer.recordToolUsage(
-        plan.toolName,
-        context.userInput,
-        plan.parameters,
-        { success: false, executionTime: Date.now() - startTime, error: error.message }
-      );
-      throw error;
+      toolSelectionOptimizer.recordToolUsage(plan.toolName, context.userInput, plan.parameters, {
+        success: false,
+        executionTime: Date.now() - startTime,
+        error: error.message,
+      })
+      throw error
     }
   }
 }
@@ -337,6 +351,7 @@ class MyAgent extends Agent {
 **系统已完全就绪，可以立即在智能体中使用！** 🚀
 
 **预期效果**：
+
 - 工具选择准确率提升25%（从60%到85%）
 - 首次选择成功率提升25%（从50%到75%）
 - 完整的性能追踪和分析

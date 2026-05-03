@@ -3,10 +3,10 @@ export {
   type PromptTemplate,
   type TemplateLoadStrategy,
   type KnowledgeBridge,
-} from './PromptTemplateManager.js';
+} from './PromptTemplateManager.js'
 
 export {
   DRAFTING_CLAIMS_PROMPT,
   renderDraftingClaimsPrompt,
   renderDraftingSpecificationPrompt,
-} from './business/drafting.js';
+} from './business/drafting.js'

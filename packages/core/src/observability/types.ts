@@ -38,76 +38,76 @@ export enum EventStatus {
 
 // 遥测事件
 export interface TelemetryEvent {
-  id: string;
-  type: TelemetryEventType;
-  timestamp: number;
-  agentName?: string;
-  stage?: string;
-  duration?: number;
-  status: EventStatus;
-  metadata?: Record<string, unknown>;
-  error?: Error;
+  id: string
+  type: TelemetryEventType
+  timestamp: number
+  agentName?: string
+  stage?: string
+  duration?: number
+  status: EventStatus
+  metadata?: Record<string, unknown>
+  error?: Error
 }
 
 // 遥测报告
 export interface TelemetryReport {
   period: {
-    start: number;
-    end: number;
-  };
+    start: number
+    end: number
+  }
   summary: {
-    totalEvents: number;
-    successEvents: number;
-    failedEvents: number;
-    successRate: number;
-    avgDuration: number;
-  };
-  byAgent: Map<string, AgentMetrics>;
-  byStage: Map<string, StageMetrics>;
-  topErrors: ErrorMetric[];
-  alerts: Alert[];
+    totalEvents: number
+    successEvents: number
+    failedEvents: number
+    successRate: number
+    avgDuration: number
+  }
+  byAgent: Map<string, AgentMetrics>
+  byStage: Map<string, StageMetrics>
+  topErrors: ErrorMetric[]
+  alerts: Alert[]
 }
 
 // 智能体指标
 export interface AgentMetrics {
-  agentName: string;
-  totalExecutions: number;
-  successCount: number;
-  failureCount: number;
-  successRate: number;
-  avgDuration: number;
-  minDuration: number;
-  maxDuration: number;
+  agentName: string
+  totalExecutions: number
+  successCount: number
+  failureCount: number
+  successRate: number
+  avgDuration: number
+  minDuration: number
+  maxDuration: number
 }
 
 // 阶段指标
 export interface StageMetrics {
-  stage: string;
-  totalExecutions: number;
-  successCount: number;
-  failureCount: number;
-  successRate: number;
-  avgDuration: number;
+  stage: string
+  totalExecutions: number
+  successCount: number
+  failureCount: number
+  successRate: number
+  avgDuration: number
 }
 
 // 错误指标
 export interface ErrorMetric {
-  error: string;
-  count: number;
-  lastOccurrence: number;
-  affectedAgents: string[];
+  error: string
+  count: number
+  lastOccurrence: number
+  affectedAgents: string[]
 }
 
 // 告警
 export interface Alert {
-  id: string;
-  type: AlertType;
-  severity: AlertSeverity;
-  message: string;
-  timestamp: number;
-  event: TelemetryEvent;
-  threshold?: number;
-  actualValue?: number;
+  id: string
+  type: AlertType
+  severity: AlertSeverity
+  message: string
+  timestamp: number
+  event: TelemetryEvent
+  threshold?: number
+  actualValue?: number
 }
 
 // 告警类型
@@ -128,16 +128,16 @@ export enum AlertSeverity {
 
 // 告警配置
 export interface AlertConfig {
-  slowExecutionThreshold?: number; // 毫秒
-  highFailureRateThreshold?: number; // 百分比
-  errorSpikeThreshold?: number; // 错误数量
-  enableAlerts?: boolean;
+  slowExecutionThreshold?: number // 毫秒
+  highFailureRateThreshold?: number // 百分比
+  errorSpikeThreshold?: number // 错误数量
+  enableAlerts?: boolean
 }
 
 // 指标聚合器配置
 export interface TelemetryConfig {
-  maxEvents?: number;
-  maxErrors?: number;
-  retentionPeriod?: number; // 毫秒
-  alertConfig?: AlertConfig;
+  maxEvents?: number
+  maxErrors?: number
+  retentionPeriod?: number // 毫秒
+  alertConfig?: AlertConfig
 }

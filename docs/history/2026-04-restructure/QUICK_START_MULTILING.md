@@ -179,7 +179,7 @@ from protos import agent_pb2, agent_pb2_grpc
 def call_agent():
     channel = grpc.insecure_channel('localhost:50051')
     stub = agent_pb2_grpc.AgentServiceStub(channel)
-    
+
     request = agent_pb2.ExecuteAgentRequest(
         agent_name='writer',
         agent_id='writer-001',
@@ -189,7 +189,7 @@ def call_agent():
             max_iterations=10,
         ),
     )
-    
+
     response = stub.ExecuteAgent(request)
     print(f"Agent 结果: {response.output}")
 ```

@@ -5,7 +5,7 @@
  **状态**: ✅ 阶段 1 完成，阶段 2 启动
  */
 
-import { AgentServer } from './services/AgentServer.js';
+import { AgentServer } from './services/AgentServer.js'
 
 /**
  * 阶段 1 完成情况
@@ -63,7 +63,7 @@ export const STAGE1_SUMMARY = {
     'Python Tools Container',
     'Complete documentation',
   ],
-};
+}
 
 export const STAGE2_PLAN = {
   duration: '8-10 weeks',
@@ -74,8 +74,8 @@ export const STAGE2_PLAN = {
     'Integration & Testing (2 weeks)',
   ],
   milestones: ['Week 6: HNSW PoC', 'Week 8: Scheduler complete', 'Week 10: ML tools ready'],
-};
+}
 
-console.log('✅ 阶段 1 完成，阶段 2 启动！');
-console.log('📊 阶段 1 总结:', STAGE1_SUMMARY);
-console.log('🚀 阶段 2 计划:', STAGE2_PLAN);
+console.log('✅ 阶段 1 完成，阶段 2 启动！')
+console.log('📊 阶段 1 总结:', STAGE1_SUMMARY)
+console.log('🚀 阶段 2 计划:', STAGE2_PLAN)

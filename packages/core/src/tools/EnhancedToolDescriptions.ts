@@ -10,13 +10,13 @@
 export const EnhancedToolDescriptions: Record<
   string,
   {
-    detailedDescription: string;
-    commonUseCases: string[];
-    capabilities: string[];
-    dataTypes?: string[];
-    limitations?: string[];
-    prerequisites?: string[];
-    relatedTools?: string[];
+    detailedDescription: string
+    commonUseCases: string[]
+    capabilities: string[]
+    dataTypes?: string[]
+    limitations?: string[]
+    prerequisites?: string[]
+    relatedTools?: string[]
   }
 > = {
   // ========== PDF工具 ==========
@@ -244,22 +244,22 @@ export const EnhancedToolDescriptions: Record<
       'AudioTranscriptionTool',
     ],
   },
-};
+}
 
 /**
  * 为工具添加增强描述
  */
 export function addEnhancedDescriptions() {
-  const descriptions = EnhancedToolDescriptions;
+  const descriptions = EnhancedToolDescriptions
 
   // 返回增强的描述库
-  return descriptions;
+  return descriptions
 }
 
 /**
  * 获取工具的增强描述
  */
 export function getEnhancedDescription(toolName: string): unknown {
-  const descriptions = EnhancedToolDescriptions;
-  return descriptions[toolName] || null;
+  const descriptions = EnhancedToolDescriptions
+  return descriptions[toolName] || null
 }

@@ -8,12 +8,14 @@
 ## 📊 清理前后对比
 
 ### 清理前
+
 - 根目录文件/目录总数：**59 个**
 - 配置文件数量：**39 个**
 - Markdown 文档：**20+ 个**
 - 问题：根目录混乱，难以理解项目结构
 
 ### 清理后
+
 - 根目录文件/目录总数：**22 个** ✅
 - 配置文件数量：**5 个** ✅
 - Markdown 文档：**3 个** ✅
@@ -24,6 +26,7 @@
 ## ✅ 完成的工作
 
 ### 1. 创建历史文档归档
+
 ```bash
 mkdir -p docs/history/2026-04-restructure
 ```
@@ -31,14 +34,15 @@ mkdir -p docs/history/2026-04-restructure
 ### 2. 移动历史文档（20+ 个文件）
 
 移动到 `docs/history/2026-04-restructure/`：
-- FINAL_*.md（3个）- 临时总结文档
-- IMPLEMENTATION_*.md - 实施记录
-- P1_*.md - 性能优化报告
-- PERFORMANCE_*.md - 性能报告
-- COST_*.md - 成本优化文档
-- MULTILING_*.md - 多语言文档
-- ADR_*.md - 架构决策记录
-- QUICK_START_*.md - 快速开始文档
+
+- FINAL\_\*.md（3个）- 临时总结文档
+- IMPLEMENTATION\_\*.md - 实施记录
+- P1\_\*.md - 性能优化报告
+- PERFORMANCE\_\*.md - 性能报告
+- COST\_\*.md - 成本优化文档
+- MULTILING\_\*.md - 多语言文档
+- ADR\_\*.md - 架构决策记录
+- QUICK*START*\*.md - 快速开始文档
 - ARCHITECTURE.md - 旧架构文档
 - PROJECT_SUMMARY.md - 项目总结
 - STRUCTURE.md - 结构文档
@@ -49,17 +53,20 @@ mkdir -p docs/history/2026-04-restructure
 - VERIFY.md - 验证文档
 
 ### 3. 移动测试脚本
+
 ```bash
 mkdir -p scripts/test
 mv test-*.mjs test-*.ts scripts/test/
 ```
 
 ### 4. 移动示例文档
+
 ```bash
 mv BatchProcessor.README.md examples/
 ```
 
 ### 5. 移动重构文档到 docs/
+
 - RESTRUCTURE_EXECUTION_PLAN.md
 - RESTRUCTURE_PATENT_PLATFORM.md
 - RESTRUCTURE_STATUS.md
@@ -69,7 +76,9 @@ mv BatchProcessor.README.md examples/
 ### 6. 创建新的核心文档
 
 #### ✅ docs/README.md
+
 文档中心索引，提供：
+
 - 快速开始导航
 - 架构文档链接
 - 业务文档导航
@@ -77,7 +86,9 @@ mv BatchProcessor.README.md examples/
 - 历史文档归档
 
 #### ✅ CONTRIBUTING.md
+
 贡献指南，包含：
+
 - 如何报告问题
 - 如何提交代码
 - 开发规范
@@ -85,7 +96,9 @@ mv BatchProcessor.README.md examples/
 - PR 检查清单
 
 #### ✅ .env.example
+
 环境变量配置示例，包含：
+
 - LLM API 配置
 - 数据库配置
 - 服务端口配置
@@ -94,6 +107,7 @@ mv BatchProcessor.README.md examples/
 - 功能开关
 
 #### ✅ LICENSE
+
 MIT 开源许可证
 
 ---
@@ -133,20 +147,22 @@ yunpat/
 
 ### 根目录文件统计
 
-| 类别 | 清理前 | 清理后 | 改善 |
-|------|--------|--------|------|
-| 总文件数 | 59 | 22 | ↓ 63% |
-| 配置文件 | 39 | 5 | ↓ 87% |
-| 文档文件 | 20+ | 3 | ↓ 85% |
+| 类别     | 清理前 | 清理后 | 改善  |
+| -------- | ------ | ------ | ----- |
+| 总文件数 | 59     | 22     | ↓ 63% |
+| 配置文件 | 39     | 5      | ↓ 87% |
+| 文档文件 | 20+    | 3      | ↓ 85% |
 
 ### 文档组织
 
 **清理前**：
+
 - ❌ 文档散落根目录
 - ❌ 历史文档未归档
 - ❌ 缺乏文档索引
 
 **清理后**：
+
 - ✅ 文档集中在 `docs/`
 - ✅ 历史文档已归档到 `docs/history/`
 - ✅ 提供完整的文档索引（`docs/README.md`）
@@ -154,6 +170,7 @@ yunpat/
 ### 项目可理解性
 
 **新人视角**：
+
 - ✅ 根目录简洁，一目了然
 - ✅ 核心文档清晰（README.md、CONTRIBUTING.md、LICENSE）
 - ✅ 文档分类明确
@@ -212,12 +229,14 @@ yunpat/
 ## 🎉 总结
 
 **清理成功！** 项目根目录现在：
+
 - ✅ 简洁清晰
 - ✅ 易于理解
 - ✅ 符合开源项目规范
 - ✅ 支持长期发展
 
 **下一步**：
+
 - 继续完善 AI 能力层
 - 初始化应用项目
 - 开发服务层

@@ -1,6 +1,7 @@
 # 文件处置规则 (File Management Rules)
 
 ## 规则目的
+
 保持项目根目录整洁，建立清晰的文档分类体系，确保项目长期可维护性。
 
 ## 📁 根目录文件规范
@@ -8,6 +9,7 @@
 ### ✅ 允许保留在根目录的文件
 
 **必需的核心文件：**
+
 - `README.md` - 项目说明和快速开始
 - `CHANGELOG.md` - 版本更新记录
 - `CONTRIBUTING.md` - 贡献指南
@@ -15,6 +17,7 @@
 - `LICENSE` - 开源协议
 
 **配置文件：**
+
 - `.env` / `.env.example` - 环境变量
 - `.gitignore` - Git 忽略规则
 - `.eslintrc.json` / `.prettierrc` - 代码规范
@@ -72,11 +75,13 @@ docs/
 ### 1. 报告类文件（reports/）
 
 **特征：**
+
 - 文件名包含 `SUMMARY`, `REPORT`, `PROGRESS`
 - 描述已完成的工作或阶段性成果
 - 有明确的时间戳
 
 **命名规范：**
+
 ```
 YYYY-MM-DD-{topic}-{type}.md
 
@@ -87,6 +92,7 @@ YYYY-MM-DD-{topic}-{type}.md
 ```
 
 **归档规则：**
+
 - 6个月内的报告保留在 `docs/reports/YYYY-MM/`
 - 超过6个月的移至 `docs/reports/archive/`
 
@@ -95,11 +101,13 @@ YYYY-MM-DD-{topic}-{type}.md
 ### 2. 计划类文件（plans/）
 
 **特征：**
+
 - 文件名包含 `PLAN`, `ROADMAP`, `STRATEGY`
 - 描述未来的工作计划或重构方案
 - 有明确的目标和时间线
 
 **命名规范：**
+
 ```
 {category}-{topic}-{type}.md
 
@@ -110,6 +118,7 @@ YYYY-MM-DD-{topic}-{type}.md
 ```
 
 **子目录分类：**
+
 - `plans/refactor/` - 重构相关计划
 - `plans/optimization/` - 性能优化计划
 - `plans/migration/` - 迁移计划
@@ -120,11 +129,13 @@ YYYY-MM-DD-{topic}-{type}.md
 ### 3. 指南类文件（guides/）
 
 **特征：**
+
 - 教程、操作指南、最佳实践
 - 帮助开发者快速上手或解决特定问题
 - 相对稳定，不经常变更
 
 **命名规范：**
+
 ```
 {topic}.md 或 {topic}-guide.md
 
@@ -140,11 +151,13 @@ YYYY-MM-DD-{topic}-{type}.md
 ### 4. 架构类文件（architecture/）
 
 **特征：**
+
 - 系统设计、架构决策
 - 技术选型说明
 - ADR（Architecture Decision Records）
 
 **命名规范：**
+
 ```
 {topic}-{type}.md 或 ADR_{number}_{topic}.md
 
@@ -159,11 +172,13 @@ YYYY-MM-DD-{topic}-{type}.md
 ### 5. 归档类文件（archive/ 或 history/）
 
 **特征：**
+
 - 已完成的历史项目
 - 过时的分析文档
 - 不再活跃的工作总结
 
 **归档规则：**
+
 - `history/` 按时间组织（如 `history/2026-04-restructure/`）
 - `archive/` 存放不再参考的旧文档
 
@@ -197,11 +212,13 @@ YYYY-MM-DD-{topic}-{type}.md
 ### 定期维护
 
 **每月任务：**
+
 1. 将 `docs/reports/` 中超过6个月的报告移至 `archive/`
 2. 检查 `docs/plans/` 中的计划，将已完成的移至 `history/`
 3. 更新 `docs/README.md` 导航
 
 **每季度任务：**
+
 1. 审查所有文档的准确性
 2. 删除或归档过时内容
 3. 合并重复文档

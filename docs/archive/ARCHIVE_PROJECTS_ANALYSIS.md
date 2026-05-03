@@ -13,6 +13,7 @@
 **定位**: 基于 Claude Code 泄露源码修复的本地可运行版本
 **技术栈**: TypeScript + Bun
 **核心特性**:
+
 - 完整的 Ink TUI 交互界面
 - 支持 MCP 服务器、插件、Skills
 - 支持自定义 API 端点和模型
@@ -27,6 +28,7 @@
 **定位**: AI 编码助手（类似 Cursor/Copilot CLI）的 Rust 移植版本
 **技术栈**: Rust (主要) + Python (次要)
 **核心特性**:
+
 - 完整的多 Agent 系统
 - 专利工具集（ip-tools、yunpat）
 - 插件系统和 MCP 集成
@@ -43,11 +45,13 @@
 #### ✅ claw-code 的模块化架构
 
 **当前 YunPat 问题**:
+
 - `packages/` 和 `ai/` 职责不清晰
 - 缺少统一的 runtime 层
 - 智能体通信机制不够完善
 
 **claw-code 的解决方案**:
+
 ```rust
 rust/crates/
 ├── runtime/          # 核心编排器：会话、Agent、MCP、压缩、权限
@@ -60,6 +64,7 @@ rust/crates/
 ```
 
 **启示**：
+
 1. **统一的 Runtime 层**：`ConversationRuntime` 作为核心编排器
 2. **清晰的职责分离**：api/tools/commands/plugins 各司其职
 3. **Provider 抽象**：支持多种 LLM 提供商
@@ -97,6 +102,7 @@ rust/crates/yunpat/src/
 ```
 
 **对 YunPat 的启示**：
+
 1. **可以复用的专利工具实现**：直接移植或参考
 2. **赫布学习引擎**：成功任务路径会被强化
 3. **Plan/Act 双模式**：根据任务复杂度自动切换
@@ -126,23 +132,25 @@ pub struct PluginHooks {
 ```
 
 **对 YunPat 的启示**：
+
 1. **三种插件类型**：内置/打包/外部
 2. **Hook 链机制**：Pre/Post 拦截器
 3. **插件市场**：支持第三方插件
 
 **建议实现**：
+
 ```typescript
 // YunPat 插件系统
 interface Plugin {
-  id: string;
-  name: string;
-  version: string;
-  kind: 'builtin' | 'bundled' | 'external';
+  id: string
+  name: string
+  version: string
+  kind: 'builtin' | 'bundled' | 'external'
   hooks: {
-    preAgentExecution?: (agent: Agent, input: any) => Promise<any>;
-    postAgentExecution?: (agent: Agent, output: any) => Promise<any>;
-    onToolUse?: (tool: Tool, params: any) => Promise<any>;
-  };
+    preAgentExecution?: (agent: Agent, input: any) => Promise<any>
+    postAgentExecution?: (agent: Agent, output: any) => Promise<any>
+    onToolUse?: (tool: Tool, params: any) => Promise<any>
+  }
 }
 ```
 
@@ -163,19 +171,21 @@ pub struct McpServerManager {
 ```
 
 **对 YunPat 的启示**：
+
 1. **统一的外部工具接口**：通过 MCP 集成专利数据库
 2. **多种传输方式**：STDIO/WebSocket/代理
 3. **工具发现机制**：自动发现和注册 MCP 工具
 
 **建议实现**：
+
 ```typescript
 // YunPat MCP 集成
 class McpServerManager {
-  private servers: Map<string, McpClient>;
+  private servers: Map<string, McpClient>
 
-  async registerServer(config: McpServerConfig): Promise<void>;
-  async listTools(serverId: string): Promise<Tool[]>;
-  async callTool(serverId: string, toolName: string, params: any): Promise<any>;
+  async registerServer(config: McpServerConfig): Promise<void>
+  async listTools(serverId: string): Promise<Tool[]>
+  async callTool(serverId: string, toolName: string, params: any): Promise<any>
 }
 ```
 
@@ -195,15 +205,18 @@ pub mod reasoning {
 ```
 
 **对 YunPat 的启示**：
+
 1. **多种推理策略**：根据任务类型选择
 2. **反思机制**：从失败中学习
 3. **规划优先**：复杂任务先规划
 
 **当前 YunPat 已有**：
+
 - ✅ ReAct 循环（`packages/core/src/reasoning/ReActLoop.ts`）
 - ✅ Plan-and-Solve 策略
 
 **可以增强**：
+
 - ❌ Reflexion 策略（自我反思）
 - ❌ Tree of Thoughts（思维树）
 - ❌ Multi-Agent 协作（智能体团队）
@@ -236,36 +249,39 @@ pub struct QualityAssessment {
 ```
 
 **对 YunPat 的启示**：
+
 1. **结构化输入**：技术特征、发明类型
 2. **质量评估**：自动评分和问题检测
 3. **参数化生成**：支持不同权利要求类型
 
 **当前 YunPat PatentWriterAgent**：
+
 - ✅ 基本功能完整
 - ⚠️ 缺少质量评估
 - ⚠️ 缺少参数化生成
 
 **优化建议**：
+
 ```typescript
 // 增强版 PatentWriterAgent
 interface ClaimGenerationRequest {
-  inventionType: 'product' | 'method' | 'use';
-  technicalFeatures: TechnicalFeature[];
-  claimType: 'independent' | 'dependent';
+  inventionType: 'product' | 'method' | 'use'
+  technicalFeatures: TechnicalFeature[]
+  claimType: 'independent' | 'dependent'
   params: {
-    breadth: 'narrow' | 'medium' | 'wide';
-    language: 'cn' | 'en' | 'pct';
-  };
+    breadth: 'narrow' | 'medium' | 'wide'
+    language: 'cn' | 'en' | 'pct'
+  }
 }
 
 interface QualityAssessment {
-  overallScore: number; // 0-100
+  overallScore: number // 0-100
   dimensions: {
-    clarity: number;
-    support: number;
-    breadth: number;
-  };
-  issues: QualityIssue[];
+    clarity: number
+    support: number
+    breadth: number
+  }
+  issues: QualityIssue[]
 }
 ```
 
@@ -294,27 +310,30 @@ pub struct HebbianLearner {
 ```
 
 **对 YunPat 的启示**：
+
 1. **自动解析审查意见**：结构化提取驳回理由
 2. **策略生成器**：自动制定答复策略
 3. **赫布学习**：从成功案例中学习
 
 **当前 YunPat PatentResponderAgent**：
+
 - ✅ 基本答复功能
 - ⚠️ 缺少审查意见解析
 - ⚠️ 缺少学习机制
 
 **优化建议**：
+
 ```typescript
 // 增强版 PatentResponderAgent
 class PatentResponderAgent extends Agent {
   // 新增：解析审查意见
-  private async parseOfficeAction(text: string): Promise<ParsedOfficeAction>;
+  private async parseOfficeAction(text: string): Promise<ParsedOfficeAction>
 
   // 新增：赫布学习
-  private hebbianLearner: HebbianLearner;
+  private hebbianLearner: HebbianLearner
 
   // 新增：从成功案例学习
-  async learnFromSuccess(response: SuccessfulResponse): Promise<void>;
+  async learnFromSuccess(response: SuccessfulResponse): Promise<void>
 }
 ```
 
@@ -341,11 +360,13 @@ pub struct TechnicalEffectAnalyzer {
 ```
 
 **对 YunPat 的启示**：
+
 1. **特征提取**：自动识别技术特征
 2. **现有技术分析**：对比文件分析
 3. **技术效果量化**：量化技术效果
 
 **当前 YunPat PatentAnalyzerAgent**：
+
 - ✅ 基本分析功能
 - ⚠️ 缺少特征提取
 - ⚠️ 缺少效果量化
@@ -371,11 +392,13 @@ Python (次要):
 ```
 
 **对 YunPat 的启示**：
+
 1. **Rust 用于性能关键**：检索引擎、ML 推理
 2. **Python 用于原型和脚本**：数据处理、测试
 3. **TypeScript 用于应用层**：用户界面、API
 
 **当前 YunPat 多语言架构**：
+
 ```
 TypeScript (70%)  # 应用层、业务逻辑层
 Rust (30%)        # 检索引擎、ML 推理
@@ -383,6 +406,7 @@ Python (隔离)     # ML 模型、数据分析
 ```
 
 **优化建议**：
+
 1. **保持当前分工**：基本合理
 2. **增加 Rust 使用**：将检索引擎移到 Rust
 3. **Python 完全隔离**：容器化部署
@@ -394,45 +418,54 @@ Python (隔离)     # ML 模型、数据分析
 #### ✅ 架构文档
 
 **claw-code 的文档**：
+
 - `ARCHITECTURE_DIAGRAMS.md` - 完整的架构图
 - `architecture-upgrade-plan.md` - 升级计划
 - `IMPLEMENTATION_PHASES.md` - 实现阶段
 - `next_steps_roadmap.md` - 路线图
 
 **对 YunPat 的启示**：
+
 1. **可视化架构**：使用 Mermaid 图表
 2. **分阶段实施**：明确的里程碑
 3. **清晰的路线图**：下一步计划
 
 **当前 YunPat 文档**：
+
 - ✅ `RESTRUCTURE_PATENT_PLATFORM.md` - 架构设计
 - ✅ `RESTRUCTURE_EXECUTION_PLAN.md` - 执行计划
 - ⚠️ 缺少可视化图表
 - ⚠️ 缺少详细的实施阶段
 
 **优化建议**：
+
 ```markdown
 # 增强版 YunPat 架构文档
 
 ## 架构图
+
 \`\`\`mermaid
 graph TB
-    ...
+...
 \`\`\`
 
 ## 实施阶段
+
 ### Phase 1: 核心智能体（已完成）
+
 - [x] PatentWriterAgent
 - [x] PatentResponderAgent
 - [x] PatentAnalyzerAgent
 - [x] PatentManagerAgent
 
 ### Phase 2: AI 能力层（进行中）
+
 - [ ] 检索引擎
 - [ ] 生成引擎
 - [ ] 知识系统
 
 ## 路线图
+
 - 2026-05: MVP 发布
 - 2026-06: 种子用户试用
 - 2026-07: 功能完善
@@ -443,6 +476,7 @@ graph TB
 #### ✅ AGENTS.md 指导文件
 
 **claw-code 的 AGENTS.md**：
+
 - 项目概览
 - 仓库结构
 - 技术栈
@@ -450,37 +484,44 @@ graph TB
 - 架构说明
 
 **对 YunPat 的启示**：
+
 1. **为 AI Agent 准备专门的指导文件**
 2. **清晰的仓库结构说明**
 3. **详细的验证命令**
 
 **当前 YunPat**：
+
 - ✅ `CLAUDE.md` - Claude Code 指南
 - ✅ `CONTRIBUTING.md` - 贡献指南
 - ⚠️ 缺少专门的 AGENTS.md
 
 **优化建议**：
 创建 `AGENTS.md`：
+
 ```markdown
 # AGENTS.md
 
 ## 项目概览
+
 YunPat 是知识产权全生命周期智能体平台...
 
 ## 仓库结构
+
 \`\`\`
 yunpat/
-├── ai/agents/    # 智能体实现
-├── services/     # 业务服务
+├── ai/agents/ # 智能体实现
+├── services/ # 业务服务
 └── packages/core/# 核心框架
 \`\`\`
 
 ## 技术栈
+
 - TypeScript (70%)
 - Rust (30%)
 - Python (隔离)
 
 ## 验证命令
+
 \`\`\`bash
 pnpm build
 pnpm test
@@ -509,15 +550,18 @@ pub struct LlmResponseCache {
 ```
 
 **对 YunPat 的启示**：
+
 1. **并发限制**：避免过载
 2. **响应缓存**：减少重复调用
 3. **任务调度器**：优化资源使用
 
 **当前 YunPat**：
+
 - ⚠️ 缺少性能优化
 - ⚠️ 缺少缓存机制
 
 **优化建议**：
+
 ```typescript
 // YunPat 性能优化
 class ConcurrencyLimiter {
@@ -529,10 +573,10 @@ class ConcurrencyLimiter {
 }
 
 class LlmResponseCache {
-  private cache = new Map<string, { response: any; expires: number }>();
+  private cache = new Map<string, { response: any; expires: number }>()
 
-  async get(key: string): Promise<any | null>;
-  async set(key: string, response: any, ttl: number): Promise<void>;
+  async get(key: string): Promise<any | null>
+  async set(key: string, response: any, ttl: number): Promise<void>
 }
 ```
 
@@ -553,6 +597,7 @@ cp -r /Users/xujian/projects/归档/claw-code/rust/crates/yunpat/* rust/
 ```
 
 **收益**：
+
 - ✅ 直接可用的专利检索、分析、生成工具
 - ✅ 节省 3-6 个月开发时间
 - ✅ 经过验证的架构
@@ -562,6 +607,7 @@ cp -r /Users/xujian/projects/归档/claw-code/rust/crates/yunpat/* rust/
 #### 2. 增强智能体功能
 
 **当前 PatentWriterAgent 增强**：
+
 ```typescript
 // 添加质量评估
 async assessQuality(claims: Claim[]): Promise<QualityAssessment>;
@@ -571,6 +617,7 @@ async generateClaims(params: ClaimGenerationRequest): Promise<Claim[]>;
 ```
 
 **当前 PatentResponderAgent 增强**：
+
 ```typescript
 // 添加审查意见解析
 async parseOfficeAction(text: string): Promise<ParsedOfficeAction>;
@@ -604,22 +651,20 @@ class PluginManager {
 ```typescript
 // 创建 MCP 管理器
 class McpServerManager {
-  async registerServer(config: McpServerConfig): Promise<void>;
-  async listTools(serverId: string): Promise<Tool[]>;
-  async callTool(serverId: string, toolName: string, params: any): Promise<any>;
+  async registerServer(config: McpServerConfig): Promise<void>
+  async listTools(serverId: string): Promise<Tool[]>
+  async callTool(serverId: string, toolName: string, params: any): Promise<any>
 }
 
 // 集成到智能体
 class PatentWriterAgent extends Agent {
-  private mcpManager: McpServerManager;
+  private mcpManager: McpServerManager
 
   protected async act(plan: Plan, context: ExecutionContext): Promise<Result> {
     // 通过 MCP 调用专利数据库工具
-    const priorArt = await this.mcpManager.callTool(
-      'patent-db',
-      'search',
-      { query: this.extractKeywords(plan) }
-    );
+    const priorArt = await this.mcpManager.callTool('patent-db', 'search', {
+      query: this.extractKeywords(plan),
+    })
   }
 }
 ```
@@ -633,13 +678,13 @@ class PatentWriterAgent extends Agent {
 ```typescript
 // 创建 ai/runtime/
 class ConversationRuntime {
-  private apiClient: ApiClient;
-  private toolExecutor: ToolExecutor;
-  private permissionManager: PermissionManager;
-  private sessionManager: SessionManager;
+  private apiClient: ApiClient
+  private toolExecutor: ToolExecutor
+  private permissionManager: PermissionManager
+  private sessionManager: SessionManager
 
-  async executeTurn(input: string): Promise<TurnSummary>;
-  async compactSession(): Promise<CompactionResult>;
+  async executeTurn(input: string): Promise<TurnSummary>
+  async compactSession(): Promise<CompactionResult>
 }
 ```
 
@@ -650,7 +695,7 @@ class ConversationRuntime {
 ```typescript
 // 创建 ai/reasoning/
 class HybridReasoningEngine {
-  private strategies: Map<string, ReasoningStrategy>;
+  private strategies: Map<string, ReasoningStrategy>
 
   async selectStrategy(task: Task): ReasoningStrategy {
     // 根据任务复杂度选择策略
@@ -668,14 +713,20 @@ class HybridReasoningEngine {
 
 ```typescript
 // 创建 ai/performance/
-export class ConcurrencyLimiter { /* ... */ }
-export class LlmResponseCache { /* ... */ }
-export class TaskScheduler { /* ... */ }
+export class ConcurrencyLimiter {
+  /* ... */
+}
+export class LlmResponseCache {
+  /* ... */
+}
+export class TaskScheduler {
+  /* ... */
+}
 
 // 集成到智能体
 class PatentWriterAgent extends Agent {
-  private cache: LlmResponseCache;
-  private limiter: ConcurrencyLimiter;
+  private cache: LlmResponseCache
+  private limiter: ConcurrencyLimiter
 }
 ```
 
@@ -697,9 +748,9 @@ class PatentWriterAgent extends Agent {
 ```typescript
 // 创建 ai/lsp/
 class LspManager {
-  async startServer(serverConfig: LspServerConfig): Promise<void>;
-  async getDiagnostics(filePath: string): Promise<FileDiagnostics>;
-  async getSymbols(filePath: string): Promise<SymbolLocation[]>;
+  async startServer(serverConfig: LspServerConfig): Promise<void>
+  async getDiagnostics(filePath: string): Promise<FileDiagnostics>
+  async getSymbols(filePath: string): Promise<SymbolLocation[]>
 }
 ```
 
@@ -710,10 +761,10 @@ class LspManager {
 ```typescript
 // 创建 ai/learning/
 class HebbianLearner {
-  private connections: Map<string, HebbianConnection>;
+  private connections: Map<string, HebbianConnection>
 
-  async reinforce(path: TaskPath, outcome: TaskResult): Promise<void>;
-  async predictSuccess(task: Task): Promise<number>;
+  async reinforce(path: TaskPath, outcome: TaskResult): Promise<void>
+  async predictSuccess(task: Task): Promise<number>
 }
 ```
 
@@ -723,22 +774,22 @@ class HebbianLearner {
 
 ### 直接收益
 
-| 优化项 | 收益 | 工作量 | 优先级 |
-|--------|------|--------|--------|
-| 移植专利工具 | 节省 3-6 个月 | 2 周 | ⭐⭐⭐⭐⭐ |
-| 增强智能体 | 功能提升 50% | 1 周 | ⭐⭐⭐⭐ |
-| 实现插件系统 | 可扩展性提升 | 2 周 | ⭐⭐⭐⭐ |
-| 集成 MCP | 工具集成简化 | 1 周 | ⭐⭐⭐⭐ |
+| 优化项       | 收益          | 工作量 | 优先级     |
+| ------------ | ------------- | ------ | ---------- |
+| 移植专利工具 | 节省 3-6 个月 | 2 周   | ⭐⭐⭐⭐⭐ |
+| 增强智能体   | 功能提升 50%  | 1 周   | ⭐⭐⭐⭐   |
+| 实现插件系统 | 可扩展性提升  | 2 周   | ⭐⭐⭐⭐   |
+| 集成 MCP     | 工具集成简化  | 1 周   | ⭐⭐⭐⭐   |
 
 ### 长期收益
 
-| 优化项 | 收益 | 工作量 | 优先级 |
-|--------|------|--------|--------|
-| Runtime 层 | 架构清晰 | 3 周 | ⭐⭐⭐⭐⭐ |
-| 混合推理 | 智能体能力提升 | 2 周 | ⭐⭐⭐⭐ |
-| 性能优化 | 响应速度提升 30% | 2 周 | ⭐⭐⭐ |
-| TUI 界面 | 用户体验提升 | 4 周 | ⭐⭐⭐ |
-| 学习引擎 | 自适应能力 | 3 周 | ⭐⭐⭐ |
+| 优化项     | 收益             | 工作量 | 优先级     |
+| ---------- | ---------------- | ------ | ---------- |
+| Runtime 层 | 架构清晰         | 3 周   | ⭐⭐⭐⭐⭐ |
+| 混合推理   | 智能体能力提升   | 2 周   | ⭐⭐⭐⭐   |
+| 性能优化   | 响应速度提升 30% | 2 周   | ⭐⭐⭐     |
+| TUI 界面   | 用户体验提升     | 4 周   | ⭐⭐⭐     |
+| 学习引擎   | 自适应能力       | 3 周   | ⭐⭐⭐     |
 
 ---
 
@@ -757,20 +808,14 @@ class HebbianLearner {
 ### 建议优先级
 
 **立即执行**（本周）：
+
 1. 移植专利工具实现
 2. 增强智能体功能
 3. 创建 AGENTS.md
 
-**短期执行**（1 个月）：
-4. 实现插件系统
-5. 集成 MCP
-6. 性能优化
+**短期执行**（1 个月）：4. 实现插件系统 5. 集成 MCP 6. 性能优化
 
-**中期执行**（3-6 个月）：
-7. 实现 Runtime 层
-8. 混合推理框架
-9. TUI 界面
-10. 学习引擎
+**中期执行**（3-6 个月）：7. 实现 Runtime 层 8. 混合推理框架 9. TUI 界面 10. 学习引擎
 
 ---
 

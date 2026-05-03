@@ -35,5 +35,5 @@ const clonedCheckpoint = deepClone(checkpoint);
 
 console.log('\n检查点克隆:');
 console.log('原始tags:', checkpoint.tags);
-console.log '克隆tags:', clonedCheckpoint.tags);
+console.log('克隆tags:'), clonedCheckpoint.tags);
 console.log('tags includes init:', clonedCheckpoint.tags.includes('init'));

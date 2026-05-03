@@ -8,5 +8,5 @@
  * - 可选的工具增强能力
  */
 
-export { WriterAgent, createWriterAgent, createEnhancedWriterAgent } from './WriterAgent.js';
-export type { WritingTask, WritingPlan, WritingResult, WriterAgentConfig } from './WriterAgent.js';
+export { WriterAgent, createWriterAgent, createEnhancedWriterAgent } from './WriterAgent.js'
+export type { WritingTask, WritingPlan, WritingResult, WriterAgentConfig } from './WriterAgent.js'

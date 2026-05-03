@@ -10,23 +10,23 @@ import type {
   ExternalFactCheckOptions,
   ExternalFactCheckResult,
   ExternalSource,
-} from '../ExternalFactChecker.js';
-import { FactCheckError } from '../ExternalFactChecker.js';
+} from '../ExternalFactChecker.js'
+import { FactCheckError } from '../ExternalFactChecker.js'
 
 /**
  * Google Fact Check API 配置
  */
 export interface GoogleFactCheckAPIConfig {
   /** API 密钥 */
-  apiKey?: string;
+  apiKey?: string
   /** API 基础 URL */
-  baseURL?: string;
+  baseURL?: string
   /** 默认语言代码 */
-  defaultLanguage?: string;
+  defaultLanguage?: string
   /** 默认页面大小 */
-  defaultPageSize?: number;
+  defaultPageSize?: number
   /** 请求超时（毫秒） */
-  timeout?: number;
+  timeout?: number
 }
 
 /**
@@ -34,13 +34,13 @@ export interface GoogleFactCheckAPIConfig {
  */
 export interface GoogleFactCheckMetadata {
   /** 下一页令牌 */
-  nextPageToken?: string;
+  nextPageToken?: string
   /** 总结果数 */
-  totalResults?: number;
+  totalResults?: number
   /** 搜索查询 */
-  query?: string;
+  query?: string
   /** 语言代码 */
-  languageCode?: string;
+  languageCode?: string
 }
 
 /**
@@ -48,13 +48,13 @@ export interface GoogleFactCheckMetadata {
  */
 export interface ClaimDetail {
   /** 声明文本 */
-  text: string;
+  text: string
   /** 声明者 */
-  claimant?: string[];
+  claimant?: string[]
   /** 声明日期 */
-  claimDate?: string;
+  claimDate?: string
   /** 评审列表 */
-  reviews: ClaimReview[];
+  reviews: ClaimReview[]
 }
 
 /**
@@ -63,21 +63,21 @@ export interface ClaimDetail {
  * 提供与 Google Fact Check Tools API 的完整集成
  */
 export class GoogleFactCheckAPI {
-  private apiKey: string;
-  private baseURL: string;
-  private defaultLanguage: string;
-  private defaultPageSize: number;
-  private timeout: number;
+  private apiKey: string
+  private baseURL: string
+  private defaultLanguage: string
+  private defaultPageSize: number
+  private timeout: number
 
   constructor(config?: GoogleFactCheckAPIConfig) {
-    this.apiKey = config?.apiKey || process.env.GOOGLE_FACT_CHECK_API_KEY || '';
-    this.baseURL = config?.baseURL || 'https://factchecktools.googleapis.com/v1alpha1';
-    this.defaultLanguage = config?.defaultLanguage || 'zh-CN';
-    this.defaultPageSize = config?.defaultPageSize || 10;
-    this.timeout = config?.timeout || 10000;
+    this.apiKey = config?.apiKey || process.env.GOOGLE_FACT_CHECK_API_KEY || ''
+    this.baseURL = config?.baseURL || 'https://factchecktools.googleapis.com/v1alpha1'
+    this.defaultLanguage = config?.defaultLanguage || 'zh-CN'
+    this.defaultPageSize = config?.defaultPageSize || 10
+    this.timeout = config?.timeout || 10000
 
     if (!this.apiKey) {
-      console.warn('Google Fact Check API Key 未配置');
+      console.warn('Google Fact Check API Key 未配置')
     }
   }
 
@@ -92,14 +92,14 @@ export class GoogleFactCheckAPI {
     query: string,
     options?: ExternalFactCheckOptions & {
       /** 页面令牌（用于分页） */
-      pageToken?: string;
+      pageToken?: string
     }
   ): Promise<{
-    claims: ClaimDetail[];
-    metadata: GoogleFactCheckMetadata;
+    claims: ClaimDetail[]
+    metadata: GoogleFactCheckMetadata
   }> {
     if (!this.apiKey) {
-      throw new FactCheckError('API Key 未配置', undefined, 'GoogleFactCheckAPI');
+      throw new FactCheckError('API Key 未配置', undefined, 'GoogleFactCheckAPI')
     }
 
     try {
@@ -108,59 +108,59 @@ export class GoogleFactCheckAPI {
         query: query.trim(),
         languageCodes: options?.language || this.defaultLanguage,
         pageSize: String(options?.pageSize || this.defaultPageSize),
-      });
+      })
 
       if (options?.maxAgeDays) {
-        params.append('maxAgeDays', String(options.maxAgeDays));
+        params.append('maxAgeDays', String(options.maxAgeDays))
       }
 
       if (options?.pageToken) {
-        params.append('pageToken', options.pageToken);
+        params.append('pageToken', options.pageToken)
       }
 
-      const url = `${this.baseURL}/claims:search?${params}`;
+      const url = `${this.baseURL}/claims:search?${params}`
       const response = await fetch(url, {
         signal: AbortSignal.timeout(options?.timeout || this.timeout),
-      });
+      })
 
       if (!response.ok) {
-        let errorMessage = `API 请求失败: ${response.status}`;
+        let errorMessage = `API 请求失败: ${response.status}`
         try {
-          const errorData = await response.json();
-          errorMessage += ` - ${errorData.error?.message || response.statusText}`;
+          const errorData = await response.json()
+          errorMessage += ` - ${errorData.error?.message || response.statusText}`
         } catch {
-          errorMessage += ` - ${response.statusText}`;
+          errorMessage += ` - ${response.statusText}`
         }
-        throw new FactCheckError(errorMessage, response.status, 'GoogleFactCheckAPI');
+        throw new FactCheckError(errorMessage, response.status, 'GoogleFactCheckAPI')
       }
 
-      const data: GoogleFactCheckResponse = await response.json();
+      const data: GoogleFactCheckResponse = await response.json()
 
       const claims: ClaimDetail[] = (data.claims || []).map((claim) => ({
         text: claim.text,
         claimant: claim.claimant,
         claimDate: claim.claimDate,
         reviews: claim.claimReview || [],
-      }));
+      }))
 
       const metadata: GoogleFactCheckMetadata = {
         nextPageToken: data.nextPageToken,
         totalResults: claims.length,
         query,
         languageCode: options?.language || this.defaultLanguage,
-      };
+      }
 
-      return { claims, metadata };
+      return { claims, metadata }
     } catch (error) {
       if (error instanceof FactCheckError) {
-        throw error;
+        throw error
       }
 
       throw new FactCheckError(
         `搜索声明失败: ${error instanceof Error ? error.message : String(error)}`,
         undefined,
         'GoogleFactCheckAPI'
-      );
+      )
     }
   }
 
@@ -175,7 +175,7 @@ export class GoogleFactCheckAPI {
     claim: string,
     options?: ExternalFactCheckOptions
   ): Promise<ExternalFactCheckResult> {
-    const { claims } = await this.searchClaims(claim, options);
+    const { claims } = await this.searchClaims(claim, options)
 
     if (claims.length === 0) {
       return {
@@ -185,11 +185,11 @@ export class GoogleFactCheckAPI {
         sources: [],
         source: 'google_factcheck',
         timestamp: new Date(),
-      };
+      }
     }
 
     // 找到最匹配的声明
-    const bestMatch = this.findBestMatch(claim, claims);
+    const bestMatch = this.findBestMatch(claim, claims)
 
     if (bestMatch.reviews.length === 0) {
       return {
@@ -199,11 +199,11 @@ export class GoogleFactCheckAPI {
         sources: [],
         source: 'google_factcheck',
         timestamp: new Date(),
-      };
+      }
     }
 
     // 聚合评审结果
-    return this.aggregateReviews(claim, bestMatch.reviews);
+    return this.aggregateReviews(claim, bestMatch.reviews)
   }
 
   /**
@@ -217,14 +217,14 @@ export class GoogleFactCheckAPI {
     claims: string[],
     options?: ExternalFactCheckOptions
   ): Promise<ExternalFactCheckResult[]> {
-    const results: ExternalFactCheckResult[] = [];
+    const results: ExternalFactCheckResult[] = []
 
     for (const claim of claims) {
       try {
-        const result = await this.verifyClaim(claim, options);
-        results.push(result);
+        const result = await this.verifyClaim(claim, options)
+        results.push(result)
       } catch (error) {
-        console.error(`验证声明失败: "${claim}"`, error);
+        console.error(`验证声明失败: "${claim}"`, error)
         results.push({
           claim,
           isValid: 'UNKNOWN',
@@ -232,14 +232,14 @@ export class GoogleFactCheckAPI {
           sources: [],
           source: 'google_factcheck',
           timestamp: new Date(),
-        });
+        })
       }
 
       // 速率限制
-      await this.delay(1000);
+      await this.delay(1000)
     }
 
-    return results;
+    return results
   }
 
   /**
@@ -251,22 +251,22 @@ export class GoogleFactCheckAPI {
    */
   private findBestMatch(query: string, claims: ClaimDetail[]): ClaimDetail {
     if (claims.length === 1) {
-      return claims[0];
+      return claims[0]
     }
 
     // 简单的相似度计算
-    let bestMatch = claims[0];
-    let bestScore = this.calculateSimilarity(query, claims[0].text);
+    let bestMatch = claims[0]
+    let bestScore = this.calculateSimilarity(query, claims[0].text)
 
     for (let i = 1; i < claims.length; i++) {
-      const score = this.calculateSimilarity(query, claims[i].text);
+      const score = this.calculateSimilarity(query, claims[i].text)
       if (score > bestScore) {
-        bestScore = score;
-        bestMatch = claims[i];
+        bestScore = score
+        bestMatch = claims[i]
       }
     }
 
-    return bestMatch;
+    return bestMatch
   }
 
   /**
@@ -277,21 +277,21 @@ export class GoogleFactCheckAPI {
    * @returns 相似度分数 (0-1)
    */
   private calculateSimilarity(text1: string, text2: string): number {
-    const normalize = (text: string) => text.toLowerCase().trim().replace(/\s+/g, ' ');
+    const normalize = (text: string) => text.toLowerCase().trim().replace(/\s+/g, ' ')
 
-    const norm1 = normalize(text1);
-    const norm2 = normalize(text2);
+    const norm1 = normalize(text1)
+    const norm2 = normalize(text2)
 
-    if (norm1 === norm2) return 1;
+    if (norm1 === norm2) return 1
 
     // 简单的 Jaccard 相似度
-    const words1 = new Set(norm1.split(' '));
-    const words2 = new Set(norm2.split(' '));
+    const words1 = new Set(norm1.split(' '))
+    const words2 = new Set(norm2.split(' '))
 
-    const intersection = new Set([...words1].filter((x) => words2.has(x)));
-    const union = new Set([...words1, ...words2]);
+    const intersection = new Set([...words1].filter((x) => words2.has(x)))
+    const union = new Set([...words1, ...words2])
 
-    return intersection.size / union.size;
+    return intersection.size / union.size
   }
 
   /**
@@ -303,13 +303,13 @@ export class GoogleFactCheckAPI {
    */
   private aggregateReviews(claim: string, reviews: ClaimReview[]): ExternalFactCheckResult {
     // 按评级分组
-    const ratingGroups = this.groupByRating(reviews);
+    const ratingGroups = this.groupByRating(reviews)
 
     // 找到最多的评级
-    const dominantRating = this.findDominantRating(ratingGroups);
+    const dominantRating = this.findDominantRating(ratingGroups)
 
     // 计算置信度
-    const confidence = this.calculateConfidence(reviews, ratingGroups);
+    const confidence = this.calculateConfidence(reviews, ratingGroups)
 
     return {
       claim,
@@ -325,7 +325,7 @@ export class GoogleFactCheckAPI {
       ),
       source: 'google_factcheck',
       timestamp: new Date(),
-    };
+    }
   }
 
   /**
@@ -335,17 +335,17 @@ export class GoogleFactCheckAPI {
    * @returns 评级分组
    */
   private groupByRating(reviews: ClaimReview[]): Map<string, ClaimReview[]> {
-    const groups = new Map<string, ClaimReview[]>();
+    const groups = new Map<string, ClaimReview[]>()
 
     for (const review of reviews) {
-      const rating = this.normalizeRating(review.textualRating || '');
+      const rating = this.normalizeRating(review.textualRating || '')
       if (!groups.has(rating)) {
-        groups.set(rating, []);
+        groups.set(rating, [])
       }
-      groups.get(rating)!.push(review);
+      groups.get(rating)!.push(review)
     }
 
-    return groups;
+    return groups
   }
 
   /**
@@ -355,7 +355,7 @@ export class GoogleFactCheckAPI {
    * @returns 归一化后的评级
    */
   private normalizeRating(rating: string): string {
-    const lower = rating.toLowerCase();
+    const lower = rating.toLowerCase()
 
     if (
       lower.includes('true') ||
@@ -364,7 +364,7 @@ export class GoogleFactCheckAPI {
       rating.includes('准确') ||
       rating.includes('正确')
     ) {
-      return 'TRUE';
+      return 'TRUE'
     }
 
     if (
@@ -374,7 +374,7 @@ export class GoogleFactCheckAPI {
       rating.includes('错误') ||
       rating.includes('虚假')
     ) {
-      return 'FALSE';
+      return 'FALSE'
     }
 
     if (
@@ -383,10 +383,10 @@ export class GoogleFactCheckAPI {
       rating.includes('部分') ||
       rating.includes('混合')
     ) {
-      return 'MIXED';
+      return 'MIXED'
     }
 
-    return 'UNKNOWN';
+    return 'UNKNOWN'
   }
 
   /**
@@ -396,17 +396,17 @@ export class GoogleFactCheckAPI {
    * @returns 主导评级
    */
   private findDominantRating(ratingGroups: Map<string, ClaimReview[]>): string {
-    let maxCount = 0;
-    let dominantRating = 'UNKNOWN';
+    let maxCount = 0
+    let dominantRating = 'UNKNOWN'
 
     for (const [rating, reviews] of ratingGroups.entries()) {
       if (reviews.length > maxCount) {
-        maxCount = reviews.length;
-        dominantRating = rating;
+        maxCount = reviews.length
+        dominantRating = rating
       }
     }
 
-    return dominantRating;
+    return dominantRating
   }
 
   /**
@@ -420,18 +420,18 @@ export class GoogleFactCheckAPI {
     reviews: ClaimReview[],
     ratingGroups: Map<string, ClaimReview[]>
   ): number {
-    if (reviews.length === 0) return 0;
+    if (reviews.length === 0) return 0
 
-    const maxGroupSize = Math.max(...Array.from(ratingGroups.values()).map((g) => g.length));
-    const agreementRatio = maxGroupSize / reviews.length;
+    const maxGroupSize = Math.max(...Array.from(ratingGroups.values()).map((g) => g.length))
+    const agreementRatio = maxGroupSize / reviews.length
 
     // 基础置信度基于一致性
-    const baseConfidence = agreementRatio;
+    const baseConfidence = agreementRatio
 
     // 根据评审数量增加置信度
-    const sourceBoost = Math.min(reviews.length * 0.05, 0.2);
+    const sourceBoost = Math.min(reviews.length * 0.05, 0.2)
 
-    return Math.min(baseConfidence + sourceBoost, 1);
+    return Math.min(baseConfidence + sourceBoost, 1)
   }
 
   /**
@@ -443,13 +443,13 @@ export class GoogleFactCheckAPI {
   private parseRating(rating: string): 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN' {
     switch (rating) {
       case 'TRUE':
-        return 'TRUE';
+        return 'TRUE'
       case 'FALSE':
-        return 'FALSE';
+        return 'FALSE'
       case 'MIXED':
-        return 'MIXED';
+        return 'MIXED'
       default:
-        return 'UNKNOWN';
+        return 'UNKNOWN'
     }
   }
 
@@ -459,7 +459,7 @@ export class GoogleFactCheckAPI {
    * @param ms 延迟毫秒数
    */
   private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   /**
@@ -468,11 +468,11 @@ export class GoogleFactCheckAPI {
    * @returns 配置信息
    */
   getConfig(): {
-    isConfigured: boolean;
-    baseURL: string;
-    defaultLanguage: string;
-    defaultPageSize: number;
-    timeout: number;
+    isConfigured: boolean
+    baseURL: string
+    defaultLanguage: string
+    defaultPageSize: number
+    timeout: number
   } {
     return {
       isConfigured: !!this.apiKey,
@@ -480,7 +480,7 @@ export class GoogleFactCheckAPI {
       defaultLanguage: this.defaultLanguage,
       defaultPageSize: this.defaultPageSize,
       timeout: this.timeout,
-    };
+    }
   }
 }
 
@@ -491,5 +491,5 @@ export class GoogleFactCheckAPI {
  * @returns API 客户端实例
  */
 export function createGoogleFactCheckAPI(config?: GoogleFactCheckAPIConfig): GoogleFactCheckAPI {
-  return new GoogleFactCheckAPI(config);
+  return new GoogleFactCheckAPI(config)
 }

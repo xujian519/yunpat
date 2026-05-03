@@ -8,50 +8,50 @@
  * 4. 客户门户
  */
 
-import { Agent } from '@yunpat/core';
+import { Agent } from '@yunpat/core'
 
 /**
  * 专利管理输入
  */
 export interface PatentManagementInput {
   /** 管理类型 */
-  managementType: 'deadline' | 'workflow' | 'cost' | 'portfolio';
+  managementType: 'deadline' | 'workflow' | 'cost' | 'portfolio'
 
   /** 目标专利列表 */
-  targetPatents?: string[];
+  targetPatents?: string[]
 
   /** 管理操作 */
   operation?: {
     /** 查询 */
-    query?: Record<string, any>;
+    query?: Record<string, any>
 
     /** 更新 */
-    update?: Record<string, any>;
+    update?: Record<string, any>
 
     /** 提醒 */
     reminder?: {
-      type: 'deadline' | 'fee' | 'document';
-      days: number;
-    };
-  };
+      type: 'deadline' | 'fee' | 'document'
+      days: number
+    }
+  }
 
   /** 筛选条件 */
   filters?: {
     /** 状态筛选 */
-    status?: string[];
+    status?: string[]
 
     /** 时间范围 */
     timeRange?: {
-      start: string;
-      end: string;
-    };
+      start: string
+      end: string
+    }
 
     /** 客户筛选 */
-    clients?: string[];
+    clients?: string[]
 
     /** 代理人筛选 */
-    attorneys?: string[];
-  };
+    attorneys?: string[]
+  }
 }
 
 /**
@@ -59,7 +59,7 @@ export interface PatentManagementInput {
  */
 export interface PatentManagementOutput {
   /** 管理类型 */
-  managementType: string;
+  managementType: string
 
   /** 管理结果 */
   results: {
@@ -67,146 +67,146 @@ export interface PatentManagementOutput {
     deadlineManagement?: {
       /** 即将到期的期限 */
       upcomingDeadlines: Array<{
-        patentNumber: string;
-        deadlineType: string;
-        deadlineDate: string;
-        daysRemaining: number;
-        priority: 'high' | 'medium' | 'low';
-        actionRequired: string;
-      }>;
+        patentNumber: string
+        deadlineType: string
+        deadlineDate: string
+        daysRemaining: number
+        priority: 'high' | 'medium' | 'low'
+        actionRequired: string
+      }>
 
       /** 逾期期限 */
       overdueDeadlines: Array<{
-        patentNumber: string;
-        deadlineType: string;
-        overdueDays: number;
-        impact: string;
-      }>;
+        patentNumber: string
+        deadlineType: string
+        overdueDays: number
+        impact: string
+      }>
 
       /** 期限统计 */
       statistics: {
-        total: number;
-        urgent: number;
-        overdue: number;
-      };
-    };
+        total: number
+        urgent: number
+        overdue: number
+      }
+    }
 
     /** 流程管理结果 */
     workflowManagement?: {
       /** 待处理任务 */
       pendingTasks: Array<{
-        taskId: string;
-        patentNumber: string;
-        taskType: string;
-        assignee: string;
-        dueDate: string;
-        status: string;
-      }>;
+        taskId: string
+        patentNumber: string
+        taskType: string
+        assignee: string
+        dueDate: string
+        status: string
+      }>
 
       /** 流程进度 */
       workflowProgress: Array<{
-        patentNumber: string;
-        currentStage: string;
-        progress: number;
-        nextSteps: string[];
-      }>;
+        patentNumber: string
+        currentStage: string
+        progress: number
+        nextSteps: string[]
+      }>
 
       /** 工作流统计 */
       statistics: {
-        totalTasks: number;
-        completedTasks: number;
-        overdueTasks: number;
-        completionRate: number;
-      };
-    };
+        totalTasks: number
+        completedTasks: number
+        overdueTasks: number
+        completionRate: number
+      }
+    }
 
     /** 费用管理结果 */
     costManagement?: {
       /** 费用明细 */
       costDetails: Array<{
-        patentNumber: string;
-        feeType: string;
-        amount: number;
-        dueDate: string;
-        status: 'pending' | 'paid' | 'overdue';
-      }>;
+        patentNumber: string
+        feeType: string
+        amount: number
+        dueDate: string
+        status: 'pending' | 'paid' | 'overdue'
+      }>
 
       /** 费用统计 */
       statistics: {
-        totalCost: number;
-        paidCost: number;
-        pendingCost: number;
-        overdueCost: number;
-      };
+        totalCost: number
+        paidCost: number
+        pendingCost: number
+        overdueCost: number
+      }
 
       /** 费用预测 */
       forecast: {
-        nextMonth: number;
-        nextQuarter: number;
-        nextYear: number;
-      };
-    };
+        nextMonth: number
+        nextQuarter: number
+        nextYear: number
+      }
+    }
 
     /** 专利组合管理结果 */
     portfolioManagement?: {
       /** 专利组合概览 */
       overview: {
-        totalPatents: number;
-        activePatents: number;
-        pendingApplications: number;
-        grantedPatents: number;
-        expiredPatents: number;
-      };
+        totalPatents: number
+        activePatents: number
+        pendingApplications: number
+        grantedPatents: number
+        expiredPatents: number
+      }
 
       /** 价值分布 */
       valueDistribution: {
-        highValue: number;
-        mediumValue: number;
-        lowValue: number;
-      };
+        highValue: number
+        mediumValue: number
+        lowValue: number
+      }
 
       /** 地域分布 */
       geographicDistribution: Array<{
-        country: string;
-        count: number;
-        percentage: number;
-      }>;
+        country: string
+        count: number
+        percentage: number
+      }>
 
       /** 技术领域分布 */
       technologyDistribution: Array<{
-        field: string;
-        count: number;
-        percentage: number;
-      }>;
+        field: string
+        count: number
+        percentage: number
+      }>
 
       /** 风险提示 */
       riskAlerts: Array<{
-        patentNumber: string;
-        riskType: string;
-        riskLevel: 'high' | 'medium' | 'low';
-        description: string;
-        recommendation: string;
-      }>;
-    };
-  };
+        patentNumber: string
+        riskType: string
+        riskLevel: 'high' | 'medium' | 'low'
+        description: string
+        recommendation: string
+      }>
+    }
+  }
 
   /** 管理指标 */
   metrics: {
     /** 处理的专利数量 */
-    processedPatents: number;
+    processedPatents: number
 
     /** 识别的问题数量 */
-    issuesIdentified: number;
+    issuesIdentified: number
 
     /** 生成的提醒数量 */
-    remindersGenerated: number;
+    remindersGenerated: number
 
     /** 操作耗时（分钟） */
-    durationMinutes: number;
-  };
+    durationMinutes: number
+  }
 
   /** 建议操作 */
-  recommendedActions: string[];
+  recommendedActions: string[]
 }
 
 /**
@@ -218,15 +218,15 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
       ...config,
       name: 'patent-manager',
       description: '专利管理智能体 - 专业的专利全生命周期管理助手',
-    });
+    })
   }
 
   /**
    * 规划阶段：制定管理策略
    */
   protected async plan(input: PatentManagementInput, context: any): Promise<any> {
-    console.log(`\n📋 [专利管理] 开始制定管理策略`);
-    console.log(`   管理类型: ${input.managementType}`);
+    console.log(`\n📋 [专利管理] 开始制定管理策略`)
+    console.log(`   管理类型: ${input.managementType}`)
 
     // 使用 LLM 制定管理策略
     const strategy = await context.llm.chat({
@@ -251,42 +251,42 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
         },
       ],
       temperature: 0.3,
-    });
+    })
 
     return {
       strategy: strategy.message.content,
       dataScope: this.defineDataScope(input),
       alertRules: this.defineAlertRules(input),
-    };
+    }
   }
 
   /**
    * 执行阶段：执行管理操作
    */
   protected async act(plan: any, context: any): Promise<PatentManagementOutput> {
-    console.log(`\n⚙️ [专利管理] 开始执行管理操作`);
+    console.log(`\n⚙️ [专利管理] 开始执行管理操作`)
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
-    let results: any = {};
+    let results: any = {}
 
     // 根据管理类型执行不同的管理操作
     switch (context.input.managementType) {
       case 'deadline':
-        results = await this.manageDeadlines(plan, context);
-        break;
+        results = await this.manageDeadlines(plan, context)
+        break
       case 'workflow':
-        results = await this.manageWorkflows(plan, context);
-        break;
+        results = await this.manageWorkflows(plan, context)
+        break
       case 'cost':
-        results = await this.manageCosts(plan, context);
-        break;
+        results = await this.manageCosts(plan, context)
+        break
       case 'portfolio':
-        results = await this.managePortfolio(plan, context);
-        break;
+        results = await this.managePortfolio(plan, context)
+        break
     }
 
-    const duration = (Date.now() - startTime) / 1000 / 60;
+    const duration = (Date.now() - startTime) / 1000 / 60
 
     return {
       managementType: context.input.managementType,
@@ -298,14 +298,14 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
         durationMinutes: Math.round(duration),
       },
       recommendedActions: await this.generateRecommendedActions(results, context),
-    };
+    }
   }
 
   /**
    * 反思阶段：效果评估
    */
   protected async reflect(output: PatentManagementOutput, context: any): Promise<any> {
-    console.log(`\n🤔 [专利管理] 效果评估`);
+    console.log(`\n🤔 [专利管理] 效果评估`)
 
     const assessment = await context.llm.chat({
       messages: [
@@ -331,18 +331,18 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
         },
       ],
       temperature: 0.3,
-    });
+    })
 
     return {
       effectivenessAssessment: assessment.message.content,
-    };
+    }
   }
 
   /**
    * 期限管理
    */
   private async manageDeadlines(plan: any, context: any): Promise<any> {
-    console.log(`   ⏰ 执行期限管理...`);
+    console.log(`   ⏰ 执行期限管理...`)
 
     try {
       const response = await context.llm.chat({
@@ -376,12 +376,12 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
           },
         ],
         temperature: 0.3,
-      });
+      })
 
-      const content = response.message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content;
-      const data = JSON.parse(jsonStr);
+      const content = response.message.content
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      const jsonStr = jsonMatch ? jsonMatch[0] : content
+      const data = JSON.parse(jsonStr)
 
       return {
         deadlineManagement: {
@@ -389,9 +389,9 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
           overdueDeadlines: data.overdueDeadlines || [],
           statistics: data.statistics || { total: 0, urgent: 0, overdue: 0 },
         },
-      };
+      }
     } catch (error) {
-      console.warn(`   ⚠️ 期限管理LLM解析失败，返回默认数据`, error);
+      console.warn(`   ⚠️ 期限管理LLM解析失败，返回默认数据`, error)
 
       return {
         deadlineManagement: {
@@ -415,7 +415,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
           ],
           statistics: { total: 5, urgent: 2, overdue: 1 },
         },
-      };
+      }
     }
   }
 
@@ -423,7 +423,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
    * 流程管理
    */
   private async manageWorkflows(plan: any, context: any): Promise<any> {
-    console.log(`   🔄 执行流程管理...`);
+    console.log(`   🔄 执行流程管理...`)
 
     try {
       const response = await context.llm.chat({
@@ -457,12 +457,12 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
           },
         ],
         temperature: 0.3,
-      });
+      })
 
-      const content = response.message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content;
-      const data = JSON.parse(jsonStr);
+      const content = response.message.content
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      const jsonStr = jsonMatch ? jsonMatch[0] : content
+      const data = JSON.parse(jsonStr)
 
       return {
         workflowManagement: {
@@ -475,9 +475,9 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
             completionRate: 0,
           },
         },
-      };
+      }
     } catch (error) {
-      console.warn(`   ⚠️ 流程管理LLM解析失败，返回默认数据`, error);
+      console.warn(`   ⚠️ 流程管理LLM解析失败，返回默认数据`, error)
 
       return {
         workflowManagement: {
@@ -501,7 +501,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
           ],
           statistics: { totalTasks: 10, completedTasks: 5, overdueTasks: 1, completionRate: 0.5 },
         },
-      };
+      }
     }
   }
 
@@ -509,7 +509,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
    * 费用管理
    */
   private async manageCosts(plan: any, context: any): Promise<any> {
-    console.log(`   💰 执行费用管理...`);
+    console.log(`   💰 执行费用管理...`)
 
     try {
       const response = await context.llm.chat({
@@ -541,12 +541,12 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
           },
         ],
         temperature: 0.3,
-      });
+      })
 
-      const content = response.message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content;
-      const data = JSON.parse(jsonStr);
+      const content = response.message.content
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      const jsonStr = jsonMatch ? jsonMatch[0] : content
+      const data = JSON.parse(jsonStr)
 
       return {
         costManagement: {
@@ -559,9 +559,9 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
           },
           forecast: data.forecast || { nextMonth: 0, nextQuarter: 0, nextYear: 0 },
         },
-      };
+      }
     } catch (error) {
-      console.warn(`   ⚠️ 费用管理LLM解析失败，返回默认数据`, error);
+      console.warn(`   ⚠️ 费用管理LLM解析失败，返回默认数据`, error)
 
       return {
         costManagement: {
@@ -584,7 +584,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
           statistics: { totalCost: 15000, paidCost: 8000, pendingCost: 5000, overdueCost: 2000 },
           forecast: { nextMonth: 3000, nextQuarter: 9000, nextYear: 36000 },
         },
-      };
+      }
     }
   }
 
@@ -592,7 +592,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
    * 专利组合管理
    */
   private async managePortfolio(plan: any, context: any): Promise<any> {
-    console.log(`   📊 执行专利组合管理...`);
+    console.log(`   📊 执行专利组合管理...`)
 
     const portfolioAnalysis = await context.llm.chat({
       messages: [
@@ -614,7 +614,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
         },
       ],
       temperature: 0.4,
-    });
+    })
 
     return {
       portfolioManagement: {
@@ -660,7 +660,7 @@ export class PatentManagerAgent extends Agent<PatentManagementInput, PatentManag
           },
         ],
       },
-    };
+    }
   }
 
   /**
@@ -688,14 +688,14 @@ ${JSON.stringify(results, null, 2).substring(0, 1000)}...
         },
       ],
       temperature: 0.5,
-    });
+    })
 
     return [
       '【高优先级】立即处理 CN123456789A 的实质审查请求（剩余17天）',
       '【中优先级】准备 US9876543B2 的年费缴纳（剩余34天）',
       '【高优先级】处理 EP3456789A1 的逾期异议问题（已逾期5天）',
       '【低优先级】优化工作流程，提高任务完成率',
-    ];
+    ]
   }
 
   /**
@@ -706,7 +706,7 @@ ${JSON.stringify(results, null, 2).substring(0, 1000)}...
       patents: input.targetPatents || [],
       timeRange: input.filters?.timeRange || {},
       filters: input.filters || {},
-    };
+    }
   }
 
   /**
@@ -724,54 +724,54 @@ ${JSON.stringify(results, null, 2).substring(0, 1000)}...
       workflow: {
         overdueAlert: true, // 启用逾期预警
       },
-    };
+    }
 
-    return rules;
+    return rules
   }
 
   /**
    * 统计问题数量
    */
   private countIssues(results: any): number {
-    let count = 0;
+    let count = 0
 
     if (results.deadlineManagement?.overdueDeadlines) {
-      count += results.deadlineManagement.overdueDeadlines.length;
+      count += results.deadlineManagement.overdueDeadlines.length
     }
 
     if (results.workflowManagement?.statistics?.overdueTasks) {
-      count += results.workflowManagement.statistics.overdueTasks;
+      count += results.workflowManagement.statistics.overdueTasks
     }
 
     if (results.costManagement?.statistics?.overdueCost) {
-      count += results.costManagement.statistics.overdueCost > 0 ? 1 : 0;
+      count += results.costManagement.statistics.overdueCost > 0 ? 1 : 0
     }
 
     if (results.portfolioManagement?.riskAlerts) {
-      count += results.portfolioManagement.riskAlerts.length;
+      count += results.portfolioManagement.riskAlerts.length
     }
 
-    return count;
+    return count
   }
 
   /**
    * 统计提醒数量
    */
   private countReminders(results: any): number {
-    let count = 0;
+    let count = 0
 
     if (results.deadlineManagement?.upcomingDeadlines) {
-      count += results.deadlineManagement.upcomingDeadlines.length;
+      count += results.deadlineManagement.upcomingDeadlines.length
     }
 
     if (results.workflowManagement?.pendingTasks) {
-      count += results.workflowManagement.pendingTasks.length;
+      count += results.workflowManagement.pendingTasks.length
     }
 
     if (results.costManagement?.costDetails) {
-      count += results.costManagement.costDetails.filter((c: any) => c.status === 'pending').length;
+      count += results.costManagement.costDetails.filter((c: any) => c.status === 'pending').length
     }
 
-    return count;
+    return count
   }
 }

@@ -13,6 +13,7 @@
 ### 1. 主配置文件更新（.env.example）
 
 #### LLM API 配置优化
+
 - ✅ 更新 DeepSeek 模型列表（v4-flash, v4-pro, chat, coder）
 - ✅ 添加通义千问模型说明（turbo, plus, max）
 - ✅ 新增智谱 GLM 配置（已集成，支持 glm-4-flash/plus/4.7/air）
@@ -20,6 +21,7 @@
 - ✅ 添加 API Key 获取链接
 
 #### 新增项目状态说明
+
 - ✅ 添加总体进度说明（~40%）
 - ✅ 列出各模块完成度
 - ✅ 提供推荐配置（最小可用）
@@ -27,6 +29,7 @@
 - ✅ 说明可选配置用途
 
 #### 知识库配置优化
+
 - ✅ 更新知识库路径说明（项目内副本 vs iCloud 原路径）
 - ✅ 添加提示词模板目录配置
 - ✅ 说明专利智能体依赖关系
@@ -34,6 +37,7 @@
 ### 2. 快速开始模板（.env.quickstart.example）
 
 **新建文件**，包含最小可用配置：
+
 - 必需配置：DEEPSEEK_API_KEY、KNOWLEDGE_BASE_PATH、PROMPT_TEMPLATES_DIR
 - 可选配置：DASHSCOPE_API_KEY、GLM_API_KEY
 - 快速验证命令
@@ -42,6 +46,7 @@
 ### 3. 环境变量验证脚本（verify-env.sh）
 
 **新建脚本**，功能包括：
+
 - ✅ 检查 .env 文件是否存在
 - ✅ 验证必需配置（DEEPSEEK_API_KEY、路径等）
 - ✅ 检查可选配置（DASHSCOPE、GLM、数据库等）
@@ -60,20 +65,20 @@
 
 ### ✅ 已配置（必需）
 
-| 配置项 | 状态 | 说明 |
-|--------|------|------|
-| DEEPSEEK_API_KEY | ✅ 已配置 | 主要 LLM API |
-| KNOWLEDGE_BASE_PATH | ✅ 已配置 | 4384 个文件 |
-| PROMPT_TEMPLATES_DIR | ✅ 已修正 | 路径已更新 |
+| 配置项               | 状态      | 说明         |
+| -------------------- | --------- | ------------ |
+| DEEPSEEK_API_KEY     | ✅ 已配置 | 主要 LLM API |
+| KNOWLEDGE_BASE_PATH  | ✅ 已配置 | 4384 个文件  |
+| PROMPT_TEMPLATES_DIR | ✅ 已修正 | 路径已更新   |
 
 ### ⚠️ 未配置（可选）
 
-| 配置项 | 状态 | 优先级 |
-|--------|------|--------|
+| 配置项            | 状态      | 优先级             |
+| ----------------- | --------- | ------------------ |
 | DASHSCOPE_API_KEY | ⚠️ 未配置 | 中（分析任务备用） |
-| GLM_API_KEY | ⚠️ 未配置 | 低（编程任务专用） |
-| DATABASE_URL | ⚠️ 未配置 | 低（持久化存储） |
-| REDIS_URL | ⚠️ 未配置 | 低（缓存和会话） |
+| GLM_API_KEY       | ⚠️ 未配置 | 低（编程任务专用） |
+| DATABASE_URL      | ⚠️ 未配置 | 低（持久化存储）   |
+| REDIS_URL         | ⚠️ 未配置 | 低（缓存和会话）   |
 
 ## 验证结果
 
@@ -102,11 +107,13 @@
 ### 新开发者快速开始
 
 1. **复制快速开始模板**
+
    ```bash
    cp .env.quickstart.example .env
    ```
 
 2. **编辑 .env 文件**
+
    ```bash
    # 设置 DeepSeek API Key
    DEEPSEEK_API_KEY=sk-your-actual-api-key-here
@@ -119,6 +126,7 @@
    ```
 
 3. **验证配置**
+
    ```bash
    ./verify-env.sh
    ```
@@ -137,6 +145,7 @@
 ### 完整配置参考
 
 查看所有可用配置选项：
+
 ```bash
 cat .env.example
 ```
@@ -207,6 +216,7 @@ cat .env.example
 ## 总结
 
 ✅ **环境变量配置已完全更新**
+
 - 所有配置文件准确反映项目当前状态
 - 提供快速开始模板和验证脚本
 - 配置路径已修正

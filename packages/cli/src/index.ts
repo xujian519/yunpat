@@ -1,13 +1,24 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
-import chalk from 'chalk';
-import { createAgentFramework, runAgent, listAgents, draftPatent, searchPatents, generateClaims, analyzePatent, generateSpecification, checkPatent, fullPatentWorkflow } from './commands.js';
+import { Command } from 'commander'
+import chalk from 'chalk'
+import {
+  createAgentFramework,
+  runAgent,
+  listAgents,
+  draftPatent,
+  searchPatents,
+  generateClaims,
+  analyzePatent,
+  generateSpecification,
+  checkPatent,
+  fullPatentWorkflow,
+} from './commands.js'
 
-const program = new Command();
+const program = new Command()
 
 // CLI 信息
-program.name('yunpat').description('YunPat 智能体框架 CLI').version('0.1.0');
+program.name('yunpat').description('YunPat 智能体框架 CLI').version('0.1.0')
 
 // 初始化框架
 program
@@ -15,7 +26,7 @@ program
   .description('初始化智能体框架')
   .option('-m, --model <model>', 'LLM 模型名称', 'gpt-4')
   .option('-k, --api-key <key>', 'API 密钥')
-  .action(createAgentFramework);
+  .action(createAgentFramework)
 
 // 运行智能体
 program
@@ -25,10 +36,10 @@ program
   .option('-t, --task <task>', '任务描述')
   .option('-i, --input <file>', '输入文件 (JSON)')
   .option('-o, --output <file>', '输出文件')
-  .action(runAgent);
+  .action(runAgent)
 
 // 列出智能体
-program.command('list').description('列出所有可用智能体').action(listAgents);
+program.command('list').description('列出所有可用智能体').action(listAgents)
 
 // 交互式对话
 program
@@ -36,9 +47,9 @@ program
   .description('启动交互式对话')
   .argument('<agent>', '智能体名称')
   .action(async (agent: string) => {
-    console.log(chalk.blue(`启动 ${agent} 智能体...`));
-    console.log(chalk.gray('交互式对话功能即将推出'));
-  });
+    console.log(chalk.blue(`启动 ${agent} 智能体...`))
+    console.log(chalk.gray('交互式对话功能即将推出'))
+  })
 
 // 专利撰写
 program
@@ -49,20 +60,18 @@ program
   .requiredOption('--disclosure <file>', '技术交底书文件路径')
   .option('-o, --output <file>', '输出报告文件路径')
   .action(async (options) => {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    let disclosure: string;
+    let disclosure: string
     try {
-      const resolvedPath = path.resolve(options.disclosure);
-      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+      const resolvedPath = path.resolve(options.disclosure)
+      disclosure = await fs.readFile(resolvedPath, 'utf-8')
     } catch (err) {
       console.error(
-        chalk.red(
-          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-      process.exit(1);
+        chalk.red(`读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`)
+      )
+      process.exit(1)
     }
 
     await draftPatent({
@@ -70,8 +79,8 @@ program
       field: options.field,
       disclosure,
       output: options.output,
-    });
-  });
+    })
+  })
 
 program
   .command('search')
@@ -81,20 +90,18 @@ program
   .requiredOption('--disclosure <file>', '技术交底书文件路径')
   .option('-o, --output <file>', '输出检索报告文件路径 (JSON)')
   .action(async (options) => {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    let disclosure: string;
+    let disclosure: string
     try {
-      const resolvedPath = path.resolve(options.disclosure);
-      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+      const resolvedPath = path.resolve(options.disclosure)
+      disclosure = await fs.readFile(resolvedPath, 'utf-8')
     } catch (err) {
       console.error(
-        chalk.red(
-          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-      process.exit(1);
+        chalk.red(`读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`)
+      )
+      process.exit(1)
     }
 
     await searchPatents({
@@ -102,8 +109,8 @@ program
       field: options.field,
       disclosure,
       output: options.output,
-    });
-  });
+    })
+  })
 
 program
   .command('claims')
@@ -113,20 +120,18 @@ program
   .requiredOption('--disclosure <file>', '技术交底书文件路径')
   .option('-o, --output <file>', '输出权利要求报告文件路径 (JSON)')
   .action(async (options) => {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    let disclosure: string;
+    let disclosure: string
     try {
-      const resolvedPath = path.resolve(options.disclosure);
-      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+      const resolvedPath = path.resolve(options.disclosure)
+      disclosure = await fs.readFile(resolvedPath, 'utf-8')
     } catch (err) {
       console.error(
-        chalk.red(
-          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-      process.exit(1);
+        chalk.red(`读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`)
+      )
+      process.exit(1)
     }
 
     await generateClaims({
@@ -134,8 +139,8 @@ program
       field: options.field,
       disclosure,
       output: options.output,
-    });
-  });
+    })
+  })
 
 program
   .command('analyze')
@@ -145,20 +150,18 @@ program
   .requiredOption('--disclosure <file>', '技术交底书文件路径')
   .option('-o, --output <file>', '输出分析报告文件路径 (JSON)')
   .action(async (options) => {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    let disclosure: string;
+    let disclosure: string
     try {
-      const resolvedPath = path.resolve(options.disclosure);
-      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+      const resolvedPath = path.resolve(options.disclosure)
+      disclosure = await fs.readFile(resolvedPath, 'utf-8')
     } catch (err) {
       console.error(
-        chalk.red(
-          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-      process.exit(1);
+        chalk.red(`读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`)
+      )
+      process.exit(1)
     }
 
     await analyzePatent({
@@ -166,8 +169,8 @@ program
       field: options.field,
       disclosure,
       output: options.output,
-    });
-  });
+    })
+  })
 
 program
   .command('spec')
@@ -177,20 +180,18 @@ program
   .requiredOption('--disclosure <file>', '技术交底书文件路径')
   .option('-o, --output <file>', '输出说明书报告文件路径 (JSON)')
   .action(async (options) => {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    let disclosure: string;
+    let disclosure: string
     try {
-      const resolvedPath = path.resolve(options.disclosure);
-      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+      const resolvedPath = path.resolve(options.disclosure)
+      disclosure = await fs.readFile(resolvedPath, 'utf-8')
     } catch (err) {
       console.error(
-        chalk.red(
-          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-      process.exit(1);
+        chalk.red(`读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`)
+      )
+      process.exit(1)
     }
 
     await generateSpecification({
@@ -198,8 +199,8 @@ program
       field: options.field,
       disclosure,
       output: options.output,
-    });
-  });
+    })
+  })
 
 program
   .command('check')
@@ -209,20 +210,18 @@ program
   .requiredOption('--disclosure <file>', '技术交底书文件路径')
   .option('-o, --output <file>', '输出质量检查报告文件路径 (JSON)')
   .action(async (options) => {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    let disclosure: string;
+    let disclosure: string
     try {
-      const resolvedPath = path.resolve(options.disclosure);
-      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+      const resolvedPath = path.resolve(options.disclosure)
+      disclosure = await fs.readFile(resolvedPath, 'utf-8')
     } catch (err) {
       console.error(
-        chalk.red(
-          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-      process.exit(1);
+        chalk.red(`读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`)
+      )
+      process.exit(1)
     }
 
     await checkPatent({
@@ -230,8 +229,8 @@ program
       field: options.field,
       disclosure,
       output: options.output,
-    });
-  });
+    })
+  })
 
 program
   .command('full')
@@ -241,20 +240,18 @@ program
   .requiredOption('--disclosure <file>', '技术交底书文件路径')
   .option('-o, --output <file>', '输出完整专利文件路径 (JSON)')
   .action(async (options) => {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    let disclosure: string;
+    let disclosure: string
     try {
-      const resolvedPath = path.resolve(options.disclosure);
-      disclosure = await fs.readFile(resolvedPath, 'utf-8');
+      const resolvedPath = path.resolve(options.disclosure)
+      disclosure = await fs.readFile(resolvedPath, 'utf-8')
     } catch (err) {
       console.error(
-        chalk.red(
-          `读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-      process.exit(1);
+        chalk.red(`读取技术交底书失败: ${err instanceof Error ? err.message : String(err)}`)
+      )
+      process.exit(1)
     }
 
     await fullPatentWorkflow({
@@ -262,15 +259,15 @@ program
       field: options.field,
       disclosure,
       output: options.output,
-    });
-  });
+    })
+  })
 
 program
   .command('logs')
   .description('查看执行日志')
   .option('-n, --lines <number>', '显示行数', '50')
   .action(() => {
-    console.log(chalk.gray('日志功能即将推出'));
-  });
+    console.log(chalk.gray('日志功能即将推出'))
+  })
 
-program.parse();
+program.parse()

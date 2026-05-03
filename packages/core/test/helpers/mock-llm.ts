@@ -5,13 +5,13 @@
  * 支持自定义响应、错误注入、流式输出模拟
  */
 
-import { vi } from 'vitest';
+import { vi } from 'vitest'
 import type {
   LLMAdapter,
   ChatParams,
   ChatResponse,
   ChatChunk,
-} from '../../src/lifecycle/Lifecycle.js';
+} from '../../src/lifecycle/Lifecycle.js'
 
 /**
  * 创建 Mock LLM 适配器
@@ -33,12 +33,12 @@ export function createMockLLMAdapter(overrides?: Partial<LLMAdapter>): LLMAdapte
       },
     }),
     chatStream: vi.fn().mockImplementation(async function* (_params: ChatParams) {
-      yield { delta: 'mock', done: false };
-      yield { delta: '', done: true };
+      yield { delta: 'mock', done: false }
+      yield { delta: '', done: true }
     }),
     embed: vi.fn().mockResolvedValue([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]),
     ...overrides,
-  };
+  }
 }
 
 /**
@@ -48,8 +48,8 @@ export function createMockLLMAdapter(overrides?: Partial<LLMAdapter>): LLMAdapte
  * @returns Mock 的 EmbeddingAdapter
  */
 export function createMockEmbeddingAdapter(dimension: number = 1536): {
-  embed: ReturnType<typeof vi.fn>;
-  embedBatch: ReturnType<typeof vi.fn>;
+  embed: ReturnType<typeof vi.fn>
+  embedBatch: ReturnType<typeof vi.fn>
 } {
   return {
     embed: vi.fn().mockResolvedValue(new Array(dimension).fill(0.1)),
@@ -58,7 +58,7 @@ export function createMockEmbeddingAdapter(dimension: number = 1536): {
         .fill(null)
         .map(() => new Array(dimension).fill(0.1))
     ),
-  };
+  }
 }
 
 /**
@@ -70,20 +70,20 @@ export function createMockEmbeddingAdapter(dimension: number = 1536): {
  * @returns Mock 的 LLMAdapter
  */
 export function createMockLLMWithResponses(responses: ChatResponse[]): LLMAdapter {
-  let callCount = 0;
+  let callCount = 0
 
   return {
     chat: vi.fn().mockImplementation(async () => {
-      const response = responses[callCount % responses.length];
-      callCount++;
-      return response;
+      const response = responses[callCount % responses.length]
+      callCount++
+      return response
     }),
     chatStream: vi.fn().mockImplementation(async function* () {
-      yield { delta: 'mock', done: false };
-      yield { delta: '', done: true };
+      yield { delta: 'mock', done: false }
+      yield { delta: '', done: true }
     }),
     embed: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
-  };
+  }
 }
 
 /**
@@ -98,10 +98,10 @@ export function createMockLLMWithError(error: Error): LLMAdapter {
   return {
     chat: vi.fn().mockRejectedValue(error),
     chatStream: vi.fn().mockImplementation(async function* () {
-      throw error;
+      throw error
     }),
     embed: vi.fn().mockRejectedValue(error),
-  };
+  }
 }
 
 /**
@@ -111,7 +111,7 @@ export function createMockLLMWithError(error: Error): LLMAdapter {
  * @returns Mock 的 LLMAdapter
  */
 export function createMockLLMWithToolCalls(toolCalls: unknown[]): LLMAdapter {
-  let callCount = 0;
+  let callCount = 0
 
   return {
     chat: vi.fn().mockImplementation(async () => ({
@@ -127,11 +127,11 @@ export function createMockLLMWithToolCalls(toolCalls: unknown[]): LLMAdapter {
       },
     })),
     chatStream: vi.fn().mockImplementation(async function* () {
-      yield { delta: 'mock', done: false };
-      yield { delta: '', done: true };
+      yield { delta: 'mock', done: false }
+      yield { delta: '', done: true }
     }),
     embed: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
-  };
+  }
 }
 
 /**
@@ -155,11 +155,11 @@ export function createMockLLMWithStream(chunks: ChatChunk[]): LLMAdapter {
     }),
     chatStream: vi.fn().mockImplementation(async function* () {
       for (const chunk of chunks) {
-        yield chunk;
+        yield chunk
       }
     }),
     embed: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
-  };
+  }
 }
 
 /**
@@ -217,7 +217,7 @@ export const mockLLMResponses = {
       totalTokens: 30,
     },
   },
-} as const;
+} as const
 
 /**
  * 预设的错误场景
@@ -234,4 +234,4 @@ export const mockLLMErrors = {
 
   /** 速率限制 */
   rateLimitError: new Error('Rate limit exceeded: Too many requests'),
-} as const;
+} as const

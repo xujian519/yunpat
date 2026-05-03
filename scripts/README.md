@@ -5,19 +5,23 @@
 ## 📋 可用脚本
 
 ### 1. check-file-placement.sh
+
 检查根目录是否有违规的文档文件。
 
 **使用方法：**
+
 ```bash
 ./scripts/check-file-placement.sh
 ```
 
 **功能：**
+
 - 检查根目录的 markdown 文件是否符合文件处置规则
 - 报告违规文件及其建议位置
 - 可用于 CI/CD 流程中
 
 **何时运行：**
+
 - 提交代码前
 - 合并 PR 时
 - 定期维护时
@@ -25,9 +29,11 @@
 ---
 
 ### 2. new-doc-template.sh
+
 创建符合文件处置规则的新文档。
 
 **使用方法：**
+
 ```bash
 # 创建工作报告
 ./scripts/new-doc-template.sh report work-summary "今日工作总结"
@@ -43,11 +49,13 @@
 ```
 
 **功能：**
+
 - 根据文档类型自动选择正确的目录
 - 生成包含标准元数据的模板
 - 自动添加创建日期和文档类型
 
 **何时运行：**
+
 - 需要创建新文档时
 
 ---
@@ -55,15 +63,18 @@
 ## 🔄 定期维护任务
 
 ### 每周任务
+
 - [ ] 运行 `check-file-placement.sh` 检查文件组织
 - [ ] 将新创建的文档添加到 `docs/README.md` 索引
 
 ### 每月任务
+
 - [ ] 将 `docs/reports/` 中超过6个月的报告移至 `docs/reports/archive/`
 - [ ] 检查 `docs/plans/` 中的计划，将已完成的移至 `docs/history/`
 - [ ] 更新文档索引
 
 ### 每季度任务
+
 - [ ] 审查所有文档的准确性
 - [ ] 删除或归档过时内容
 - [ ] 合并重复文档
@@ -80,6 +91,7 @@
    - 添加 `.sh` 扩展名
 
 2. **脚本结构**
+
    ```bash
    #!/bin/bash
    set -e  # 遇到错误时退出
@@ -89,6 +101,7 @@
    ```
 
 3. **添加执行权限**
+
    ```bash
    chmod +x scripts/your-script.sh
    ```

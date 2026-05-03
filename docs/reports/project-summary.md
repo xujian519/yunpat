@@ -21,14 +21,14 @@
 
 ### 性能指标
 
-| 指标 | 目标 | 实际 | 状态 |
-|------|------|------|------|
-| 测试通过率 | 95%+ | 98.5% | ✅ 超额完成 |
-| 代码覆盖率 | 80%+ | ~85% | ✅ 达标 |
-| 幻觉检测准确率 | 85%+ | TBD | ⏸️ 待验证 |
-| 任务分解成功率 | 90%+ | 100% | ✅ 达标 |
-| 合规检查准确率 | 95%+ | 100% | ✅ 达标 |
-| 重规划成功率 | 90%+ | 100% | ✅ 达标 |
+| 指标           | 目标 | 实际  | 状态        |
+| -------------- | ---- | ----- | ----------- |
+| 测试通过率     | 95%+ | 98.5% | ✅ 超额完成 |
+| 代码覆盖率     | 80%+ | ~85%  | ✅ 达标     |
+| 幻觉检测准确率 | 85%+ | TBD   | ⏸️ 待验证   |
+| 任务分解成功率 | 90%+ | 100%  | ✅ 达标     |
+| 合规检查准确率 | 95%+ | 100%  | ✅ 达标     |
+| 重规划成功率   | 90%+ | 100%  | ✅ 达标     |
 
 ---
 
@@ -39,22 +39,26 @@
 **完成度**: 98.5% (585/594 测试通过)
 
 **核心组件**:
+
 - ✅ `FactChecker`: 事实验证器
 - ✅ `LogicalConsistencyChecker`: 逻辑一致性检查器
 - ✅ `SourceAttributionValidator`: 源归属验证器
 - ✅ `HallucinationDetector`: 主检测器
 
 **功能特性**:
+
 - 事实验证：验证技术事实、法律判例、统计数据
 - 逻辑一致性检查：检测矛盾、逻辑断层
 - 源归属验证：确保所有声明都有可信来源
 - 幻觉评分：综合评估幻觉程度（0-1分）
 
 **已知问题**:
+
 - ⚠️ 9个测试失败（主要是SourceAttributionValidator）
 - ⚠️ 需要更丰富的知识库支持
 
 **文件清单**:
+
 ```
 packages/core/src/validation/
 ├── HallucinationDetector.ts        # 450行
@@ -69,22 +73,26 @@ packages/core/src/validation/
 **完成度**: 100% (81/81 测试通过)
 
 **核心组件**:
+
 - ✅ `TaskDecomposer`: 任务分解器
 - ✅ `DependencyAnalyzer`: 依赖分析器
 - ✅ `TaskScheduler`: 任务调度器
 
 **功能特性**:
+
 - 层次化分解：主目标 → 子目标 → 任务
 - 依赖分析：识别任务间依赖关系
 - 资源估算：评估每个任务的时间和Token需求
 - 优先级排序：基于依赖关系和重要性排序
 
 **性能表现**:
+
 - 简单任务分解：< 5秒
 - 复杂任务分解：< 10秒
 - 分解准确率：100%
 
 **文件清单**:
+
 ```
 packages/core/src/planning/
 ├── TaskDecomposer.ts              # 380行
@@ -98,18 +106,21 @@ packages/core/src/planning/
 **完成度**: 100% (30/30 测试通过)
 
 **核心组件**:
+
 - ✅ `ConstitutionalAI`: 主类
 - ✅ `ComplianceChecker`: 合规检查器
 - ✅ `AutoCorrector`: 自动纠正器
 - ✅ `PatentPrinciples`: 专利原则集（8个原则）
 
 **功能特性**:
+
 - 原则集定义：专利领域的合规原则
 - 合规检查：检测输出是否违反原则
 - 自动纠正：对违规内容进行修正
 - 原则冲突解决：处理多个原则的冲突
 
 **专利原则集**:
+
 1. 清楚性原则 (clarity)
 2. 简要性原则 (brevity)
 3. 支持性原则 (support)
@@ -120,9 +131,11 @@ packages/core/src/planning/
 8. 确定性原则 (definiteness)
 
 **Bug修复**:
+
 - ✅ 修复纠正逻辑错误（correctedText → correctedContent）
 
 **文件清单**:
+
 ```
 packages/core/src/constitutional/
 ├── ConstitutionalAI.ts            # 280行
@@ -137,18 +150,21 @@ packages/core/src/constitutional/
 **完成度**: 100% (19/19 测试通过)
 
 **核心组件**:
+
 - ✅ `DynamicReplanner`: 动态重规划器
 - ✅ `DeviationDetector`: 偏离检测器
 - ✅ `RecoveryStrategySelector`: 恢复策略选择器
 - ✅ `IncrementalPlanner`: 增量规划器
 
 **功能特性**:
+
 - 偏离检测：监控计划执行与预期的偏离
 - 失败恢复：任务失败时的恢复策略
 - 增量调整：局部调整计划而非完全重规划
 - 重规划触发：自动判断何时需要重规划
 
 **恢复策略**:
+
 1. 重试 (retry)
 2. 跳过 (skip)
 3. 重排序 (reorder)
@@ -157,12 +173,14 @@ packages/core/src/constitutional/
 6. 中止 (abort)
 
 **检测优先级**:
+
 1. 失败检测 (failure) - 最高优先级
 2. 质量下降检测 (quality_drop)
 3. 超时检测 (timeout)
 4. 偏离检测 (deviation) - 最低优先级
 
 **文件清单**:
+
 ```
 packages/core/src/replanning/
 ├── DynamicReplanner.ts            # 390行
@@ -177,23 +195,27 @@ packages/core/src/replanning/
 **完成度**: 100% (功能完整实现)
 
 **核心组件**:
+
 - ✅ `TextRenderer`: 文本渲染器
 - ✅ `TUIRenderer`: TUI渲染器
 - ✅ `DependencyVisualizer`: 主类
 
 **功能特性**:
+
 - 文本可视化：在CLI中显示依赖关系
 - 交互式界面：TUI中可浏览和操作依赖图
 - 实时更新：任务状态变化时更新显示
 - 导出功能：导出为图片或DOT格式
 
 **渲染格式**:
+
 - text: 标准文本格式
 - tree: 树状结构
 - graph: 图形结构（ASCII艺术）
 - tui: 交互式终端界面
 
 **导出格式**:
+
 - DOT: Graphviz DOT格式
 - PNG: PNG图片（需Graphviz）
 - SVG: SVG矢量图（需Graphviz）
@@ -201,6 +223,7 @@ packages/core/src/replanning/
 - MERMAID: Mermaid图表格式
 
 **文件清单**:
+
 ```
 packages/cli/src/visualization/
 ├── TextRenderer.ts                # 625行
@@ -224,24 +247,26 @@ packages/cli/src/visualization/
 
 ### 各模块统计
 
-| 模块 | 测试数 | 通过 | 失败 | 通过率 |
-|------|--------|------|------|--------|
-| EventBus | 53 | 53 | 0 | 100% |
-| TaskDecomposer | 81 | 81 | 0 | 100% |
-| ConstitutionalAI | 30 | 30 | 0 | 100% |
-| DynamicReplanner | 19 | 19 | 0 | 100% |
-| 幻觉检测系统 | 28 | 19 | 9 | 67.9% |
-| 其他模块 | 383 | 383 | 0 | 100% |
+| 模块             | 测试数 | 通过 | 失败 | 通过率 |
+| ---------------- | ------ | ---- | ---- | ------ |
+| EventBus         | 53     | 53   | 0    | 100%   |
+| TaskDecomposer   | 81     | 81   | 0    | 100%   |
+| ConstitutionalAI | 30     | 30   | 0    | 100%   |
+| DynamicReplanner | 19     | 19   | 0    | 100%   |
+| 幻觉检测系统     | 28     | 19   | 9    | 67.9%  |
+| 其他模块         | 383    | 383  | 0    | 100%   |
 
 ### 失败测试分析
 
 **失败的9个测试**:
+
 - `LogicalConsistencyChecker.test.ts`: 1个
 - `HallucinationDetector.test.ts`: 3个
 - `SourceAttributionValidator.test.ts`: 4个
 - `hallucination-detection.integration.test.ts`: 1个
 
 **失败原因**:
+
 - SourceAttributionValidator没有检测到缺失的引用
 - 返回的`suggestedSources`属性未定义
 - 可能是验证逻辑或测试数据的问题
@@ -261,16 +286,16 @@ packages/cli/src/visualization/
 
 ### 性能基准
 
-| 操作 | 目标 | 实际 | 状态 |
-|------|------|------|------|
-| 幻觉检测（小文档） | < 2秒 | < 2秒 | ✅ |
-| 幻觉检测（大文档） | < 15秒 | < 15秒 | ✅ |
-| 任务分解（简单） | < 5秒 | < 5秒 | ✅ |
-| 任务分解（复杂） | < 10秒 | < 10秒 | ✅ |
-| 合规检查 | < 3秒 | < 3秒 | ✅ |
-| 自动纠正 | < 5秒 | < 5秒 | ✅ |
-| 重规划 | < 5秒 | < 5秒 | ✅ |
-| 文本渲染 | < 1秒 | < 1秒 | ✅ |
+| 操作               | 目标   | 实际   | 状态 |
+| ------------------ | ------ | ------ | ---- |
+| 幻觉检测（小文档） | < 2秒  | < 2秒  | ✅   |
+| 幻觉检测（大文档） | < 15秒 | < 15秒 | ✅   |
+| 任务分解（简单）   | < 5秒  | < 5秒  | ✅   |
+| 任务分解（复杂）   | < 10秒 | < 10秒 | ✅   |
+| 合规检查           | < 3秒  | < 3秒  | ✅   |
+| 自动纠正           | < 5秒  | < 5秒  | ✅   |
+| 重规划             | < 5秒  | < 5秒  | ✅   |
+| 文本渲染           | < 1秒  | < 1秒  | ✅   |
 
 ---
 
@@ -297,6 +322,7 @@ packages/cli/src/visualization/
 ### 1. 五层架构设计
 
 清晰的分层架构，职责分明：
+
 - **Gateway**: 交互层 - 多模态输入、HITL、安全网关
 - **Reasoning**: 推理层 - ReAct循环、PlanAndSolve、思维树
 - **LLM**: 核心引擎 - DeepSeek/通义千问/Ollama
@@ -306,6 +332,7 @@ packages/cli/src/visualization/
 ### 2. 模块化设计
 
 每个模块独立可测试、可扩展：
+
 - 插件化原则集
 - 可配置的纠正策略
 - 灵活的导出格式
@@ -314,6 +341,7 @@ packages/cli/src/visualization/
 ### 3. 类型安全
 
 100% TypeScript严格模式：
+
 - 完整的类型定义
 - 严格的类型检查
 - 良好的IDE支持
@@ -321,6 +349,7 @@ packages/cli/src/visualization/
 ### 4. 测试驱动
 
 98.5%的测试通过率：
+
 - 单元测试覆盖所有模块
 - 集成测试验证端到端流程
 - 性能测试确保响应时间

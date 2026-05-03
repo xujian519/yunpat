@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 /**
  * 专利类型
@@ -49,84 +49,84 @@ export enum ObjectionType {
   UNITY = 'unity', // 缺乏单一性
 }
 
-export { PatentRecord } from '../tools/PatentSearchTool.js';
+export { PatentRecord } from '../tools/PatentSearchTool.js'
 
 /**
  * 权利要求草稿
  */
 export interface ClaimDraft {
-  claimNumber: number;
-  claimType: ClaimType;
-  text: string;
-  dependsOn?: number[]; // 从属权利要求依赖的权利要求编号
+  claimNumber: number
+  claimType: ClaimType
+  text: string
+  dependsOn?: number[] // 从属权利要求依赖的权利要求编号
 }
 
 /**
  * 技术特征
  */
 export interface TechnicalFeature {
-  text: string;
-  isEssential: boolean; // 是否为必要特征
-  category?: string; // 特征分类（结构/方法/参数等）
+  text: string
+  isEssential: boolean // 是否为必要特征
+  category?: string // 特征分类（结构/方法/参数等）
 }
 
 /**
  * 独立权利要求生成参数
  */
 export interface IndependentClaimParams {
-  inventionType: InventionType;
-  coreFeatures: TechnicalFeature[];
-  preamble?: string; // 前序部分
-  transitionWord?: string; // 过渡词（"其特征在于"、"包括"等）
+  inventionType: InventionType
+  coreFeatures: TechnicalFeature[]
+  preamble?: string // 前序部分
+  transitionWord?: string // 过渡词（"其特征在于"、"包括"等）
 }
 
 /**
  * 审查意见
  */
 export interface Objection {
-  type: ObjectionType;
-  description: string;
-  severity: 'high' | 'medium' | 'low';
-  citedReferences?: string[];
+  type: ObjectionType
+  description: string
+  severity: 'high' | 'medium' | 'low'
+  citedReferences?: string[]
 }
 
 /**
  * 审查意见通知书
  */
 export interface OfficeAction {
-  applicationNumber: string;
-  filingDate: Date;
-  officeActionDate: Date;
-  examiner?: string;
-  objections: Objection[];
-  citedReferences: CitedReference[];
+  applicationNumber: string
+  filingDate: Date
+  officeActionDate: Date
+  examiner?: string
+  objections: Objection[]
+  citedReferences: CitedReference[]
 }
 
 /**
  * 引用文献
  */
 export interface CitedReference {
-  documentNumber: string;
-  relevance: 'high' | 'medium' | 'low';
-  relevantPassages: string[];
+  documentNumber: string
+  relevance: 'high' | 'medium' | 'low'
+  relevantPassages: string[]
 }
 
 /**
  * 质量评估结果
  */
 export interface QualityAssessment {
-  totalScore: number; // 总分（0-10）
+  totalScore: number // 总分（0-10）
   dimensions: {
-    completeness: number; // 完整性
-    clarity: number; // 清晰性
-    accuracy: number; // 准确性
-    sufficiency: number; // 充分性
-    consistency: number; // 一致性
-    compliance: number; // 规范性
-    support: number; // 支持性
-  };
-  qualityLevel: 'high' | 'medium' | 'low';
-  suggestions: string[];
+    completeness: number // 完整性
+    clarity: number // 清晰性
+    accuracy: number // 准确性
+    sufficiency: number // 充分性
+    consistency: number // 一致性
+    compliance: number // 规范性
+    support: number // 支持性
+  }
+  qualityLevel: 'high' | 'medium' | 'low'
+  suggestions: string[]
 }
 
 /**
@@ -143,10 +143,10 @@ export enum ResponseStrategy {
  * 答复方案
  */
 export interface ResponsePlan {
-  strategy: ResponseStrategy;
-  amendments: string[]; // 修改建议
-  arguments: string[]; // 答复理由
-  estimatedSuccessRate: number; // 预估成功率
+  strategy: ResponseStrategy
+  amendments: string[] // 修改建议
+  arguments: string[] // 答复理由
+  estimatedSuccessRate: number // 预估成功率
 }
 
 // Zod Schemas
@@ -158,7 +158,7 @@ export const TechnicalFeatureSchema = z.object({
   text: z.string().describe('技术特征描述'),
   isEssential: z.boolean().describe('是否为必要特征'),
   category: z.string().optional().describe('特征分类'),
-});
+})
 
 /**
  * 独立权利要求生成参数 Schema
@@ -168,7 +168,7 @@ export const IndependentClaimParamsSchema = z.object({
   coreFeatures: z.array(TechnicalFeatureSchema).describe('核心技术特征列表'),
   preamble: z.string().optional().describe('前序部分'),
   transitionWord: z.string().optional().describe('过渡词'),
-});
+})
 
 /**
  * 权利要求草稿 Schema
@@ -178,7 +178,7 @@ export const ClaimDraftSchema = z.object({
   claimType: z.nativeEnum(ClaimType).describe('权利要求类型'),
   text: z.string().describe('权利要求文本'),
   dependsOn: z.array(z.number()).optional().describe('依赖的权利要求编号'),
-});
+})
 
 /**
  * 审查意见 Schema
@@ -188,7 +188,7 @@ export const ObjectionSchema = z.object({
   description: z.string().describe('审查意见描述'),
   severity: z.enum(['high', 'medium', 'low']).describe('严重程度'),
   citedReferences: z.array(z.string()).optional().describe('引用文献'),
-});
+})
 
 /**
  * 审查意见通知书 Schema
@@ -208,4 +208,4 @@ export const OfficeActionSchema = z.object({
       })
     )
     .describe('引用文献列表'),
-});
+})

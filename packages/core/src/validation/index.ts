@@ -11,7 +11,7 @@ export {
   Inconsistency,
   CorrectionStrategy,
   ResultValidatorConfig,
-} from './ResultValidator.js';
+} from './ResultValidator.js'
 
 // 幻觉检测系统 - 类型定义
 export {
@@ -32,16 +32,16 @@ export {
   FactCheckerConfig,
   LogicalConsistencyCheckerConfig,
   SourceAttributionValidatorConfig,
-} from './hallucination-types.js';
+} from './hallucination-types.js'
 
 // 幻觉检测系统 - 检测器类
-export { FactChecker } from './FactChecker.js';
+export { FactChecker } from './FactChecker.js'
 
-export { LogicalConsistencyChecker } from './LogicalConsistencyChecker.js';
+export { LogicalConsistencyChecker } from './LogicalConsistencyChecker.js'
 
-export { SourceAttributionValidator } from './SourceAttributionValidator.js';
+export { SourceAttributionValidator } from './SourceAttributionValidator.js'
 
-export { HallucinationDetector } from './HallucinationDetector.js';
+export { HallucinationDetector } from './HallucinationDetector.js'
 
 // 外部事实验证系统
 export {
@@ -57,7 +57,7 @@ export {
   type ExternalSource,
   type GoogleFactCheckResponse,
   type ClaimReview,
-} from './ExternalFactChecker.js';
+} from './ExternalFactChecker.js'
 
 // 外部事实验证提供者
 export {
@@ -66,4 +66,4 @@ export {
   type GoogleFactCheckAPIConfig,
   type GoogleFactCheckMetadata,
   type ClaimDetail,
-} from './providers/index.js';
+} from './providers/index.js'

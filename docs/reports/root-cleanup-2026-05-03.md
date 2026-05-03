@@ -11,6 +11,7 @@
 ## 清理前状态
 
 根目录包含以下文件（18个）：
+
 - 配置文件：package.json, tsconfig.json, esbuild.config.mjs 等
 - 文档文件：README.md, CLAUDE.md, AGENTS.md, CONTRIBUTING.md, CHANGELOG.md
 - 测试文件：test-deepclone.ts, test-glm.ts, test-glm.sh
@@ -23,43 +24,43 @@
 
 ### 1. 文档文件移动 → docs/guides/
 
-| 源文件 | 目标文件 | 说明 |
-|--------|---------|------|
-| CLAUDE.md | docs/guides/CLAUDE.md | Claude Code 协作指南 |
-| AGENTS.md | docs/guides/AGENTS.md | AI 编程助手指南 |
-| CONTRIBUTING.md | docs/guides/CONTRIBUTING.md | 贡献指南 |
+| 源文件          | 目标文件                    | 说明                 |
+| --------------- | --------------------------- | -------------------- |
+| CLAUDE.md       | docs/guides/CLAUDE.md       | Claude Code 协作指南 |
+| AGENTS.md       | docs/guides/AGENTS.md       | AI 编程助手指南      |
+| CONTRIBUTING.md | docs/guides/CONTRIBUTING.md | 贡献指南             |
 
 ### 2. 测试文件移动 → test/
 
-| 源文件 | 目标文件 | 说明 |
-|--------|---------|------|
-| test-deepclone.ts | test/test-deepclone.ts | 深拷贝测试 |
-| test-glm.ts | test/test-glm.ts | GLM 测试 |
-| test-glm.sh | test/test-glm.sh | GLM 测试脚本 |
+| 源文件            | 目标文件               | 说明         |
+| ----------------- | ---------------------- | ------------ |
+| test-deepclone.ts | test/test-deepclone.ts | 深拷贝测试   |
+| test-glm.ts       | test/test-glm.ts       | GLM 测试     |
+| test-glm.sh       | test/test-glm.sh       | GLM 测试脚本 |
 
 ### 3. 脚本文件移动 → scripts/
 
-| 源文件 | 目标文件 | 说明 |
-|--------|---------|------|
-| verify-env.sh | scripts/verify-env.sh | 环境验证脚本 |
+| 源文件              | 目标文件                    | 说明             |
+| ------------------- | --------------------------- | ---------------- |
+| verify-env.sh       | scripts/verify-env.sh       | 环境验证脚本     |
 | verify-glm-setup.sh | scripts/verify-glm-setup.sh | GLM 设置验证脚本 |
 
 ### 4. 环境配置移动 → config/
 
-| 源文件 | 目标文件 | 说明 |
-|--------|---------|------|
-| .env | config/.env | 环境变量（本地，不在 git 中） |
-| .env.test | config/.env.test | 测试环境变量（本地，不在 git 中） |
-| .env.glm.example | config/.env.glm.example | GLM 环境示例 |
-| .env.quickstart.example | config/.env.quickstart.example | 快速开始环境示例 |
+| 源文件                  | 目标文件                       | 说明                              |
+| ----------------------- | ------------------------------ | --------------------------------- |
+| .env                    | config/.env                    | 环境变量（本地，不在 git 中）     |
+| .env.test               | config/.env.test               | 测试环境变量（本地，不在 git 中） |
+| .env.glm.example        | config/.env.glm.example        | GLM 环境示例                      |
+| .env.quickstart.example | config/.env.quickstart.example | 快速开始环境示例                  |
 
 ### 5. 清理重复和构建产物
 
-| 文件 | 操作 | 说明 |
-|------|------|------|
-| .prettierrc | 删除 | 与 .prettierrc.json 重复，保留 JSON 格式 |
-| .tsbuildinfo | 删除 | TypeScript 构建产物 |
-| .prettierignore | 移动到 config/ | Prettier 忽略配置 |
+| 文件            | 操作           | 说明                                     |
+| --------------- | -------------- | ---------------------------------------- |
+| .prettierrc     | 删除           | 与 .prettierrc.json 重复，保留 JSON 格式 |
+| .tsbuildinfo    | 删除           | TypeScript 构建产物                      |
+| .prettierignore | 移动到 config/ | Prettier 忽略配置                        |
 
 ### 6. 更新 .gitignore
 
@@ -192,6 +193,7 @@ D .env.test               # 移动到 config/
 ### 1. README.md
 
 更新文档链接：
+
 - `CLAUDE.md` → `docs/guides/CLAUDE.md`
 - `AGENTS.md` → `docs/guides/AGENTS.md`
 - `CONTRIBUTING.md` → `docs/guides/CONTRIBUTING.md`
@@ -203,6 +205,7 @@ D .env.test               # 移动到 config/
 ### 3. CI/CD 配置
 
 更新 GitHub Actions 和其他 CI/CD 配置中的脚本路径：
+
 - `verify-env.sh` → `scripts/verify-env.sh`
 - `verify-glm-setup.sh` → `scripts/verify-glm-setup.sh`
 

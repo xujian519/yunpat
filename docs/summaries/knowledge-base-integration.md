@@ -15,6 +15,7 @@
 **文件**: `ai/knowledge/ObsidianKnowledgeBridge.ts`
 
 **核心功能**:
+
 - ✅ 查询知识卡片（`queryCard`）
 - ✅ 根据概念查询相关页面（`queryByConcept`）
 - ✅ 读取Wiki页面内容（`readWikiPage`）
@@ -22,20 +23,21 @@
 - ✅ 内置缓存机制（提高查询效率）
 
 **接口设计**:
+
 ```typescript
 export interface WikiCard {
-  question: string;
-  quality: number;
-  content: string;
-  relatedPages: string[];
-  timestamp: string;
+  question: string
+  quality: number
+  content: string
+  relatedPages: string[]
+  timestamp: string
 }
 
 export interface WikiPage {
-  path: string;
-  title: string;
-  content: string;
-  links: string[];
+  path: string
+  title: string
+  content: string
+  links: string[]
 }
 ```
 
@@ -44,6 +46,7 @@ export interface WikiPage {
 **文件**: `test/knowledge/ObsidianKnowledgeBridge.test.ts`
 
 **测试覆盖**:
+
 - ✅ 知识卡片查询测试（"什么是创造性"）
 - ✅ Wiki页面查询测试（"充分公开"概念）
 - ✅ 缓存功能测试
@@ -63,6 +66,7 @@ export interface WikiPage {
 **规模**: **388行**完整的结构化提示词
 
 **知识来源**:
+
 - [[专利实务/撰写/撰写-审查要点-权利要求书撰写-示例与常见问题]]
 - [[专利实务/撰写/审查-权利要求-必要技术特征]]
 - [[复审无效/权利要求/权利要求-清楚支持-B23机床]]
@@ -114,6 +118,7 @@ export interface WikiPage {
 **文件**: `ai/prompts/PromptTemplateManager.ts`
 
 **核心功能**:
+
 - ✅ 加载提示词模板（`loadTemplate`）
 - ✅ 渲染提示词（替换变量）
 - ✅ 从知识库提炼提示词（`extractFromKnowledge`）
@@ -125,32 +130,32 @@ export interface WikiPage {
 
 ### 代码统计
 
-| 类型 | 文件数 | 代码行数 | 说明 |
-|------|--------|---------|------|
-| **核心实现** | 2 | ~400行 | ObsidianKnowledgeBridge + PromptTemplateManager |
-| **测试代码** | 1 | ~150行 | 知识库桥接测试 |
-| **提示词模板** | 1 | 388行 | 权利要求生成模板 |
-| **示例代码** | 1 | ~150行 | ClaimsGenerator使用示例 |
-| **总计** | 5 | ~1088行 | - |
+| 类型           | 文件数 | 代码行数 | 说明                                            |
+| -------------- | ------ | -------- | ----------------------------------------------- |
+| **核心实现**   | 2      | ~400行   | ObsidianKnowledgeBridge + PromptTemplateManager |
+| **测试代码**   | 1      | ~150行   | 知识库桥接测试                                  |
+| **提示词模板** | 1      | 388行    | 权利要求生成模板                                |
+| **示例代码**   | 1      | ~150行   | ClaimsGenerator使用示例                         |
+| **总计**       | 5      | ~1088行  | -                                               |
 
 ### 测试统计
 
-| 指标 | 结果 |
-|------|------|
-| **测试文件** | 1个 |
-| **测试用例** | 24个 |
-| **测试通过率** | 100% (24/24) |
-| **测试执行时间** | ~2秒 |
+| 指标             | 结果         |
+| ---------------- | ------------ |
+| **测试文件**     | 1个          |
+| **测试用例**     | 24个         |
+| **测试通过率**   | 100% (24/24) |
+| **测试执行时间** | ~2秒         |
 
 ### 知识库统计
 
-| 指标 | 数量 |
-|------|------|
-| **知识库总文件** | 2082个markdown文件 |
-| **Wiki目录** | 1139个文件 |
-| **复审无效案例** | 194个文件 |
-| **核心概念索引** | 100个概念 |
-| **已提炼知识来源** | 4个核心来源 |
+| 指标               | 数量               |
+| ------------------ | ------------------ |
+| **知识库总文件**   | 2082个markdown文件 |
+| **Wiki目录**       | 1139个文件         |
+| **复审无效案例**   | 194个文件          |
+| **核心概念索引**   | 100个概念          |
+| **已提炼知识来源** | 4个核心来源        |
 
 ---
 
@@ -175,6 +180,7 @@ private templates: Map<string, PromptTemplate> = new Map();
 ```
 
 **优势**:
+
 - 减少文件I/O操作
 - 提高查询速度
 - 降低系统资源占用
@@ -183,11 +189,11 @@ private templates: Map<string, PromptTemplate> = new Map();
 
 ```typescript
 try {
-  const content = await readFile(cardPath, 'utf-8');
-  return this.parseCard(content);
+  const content = await readFile(cardPath, 'utf-8')
+  return this.parseCard(content)
 } catch (error) {
-  console.error(`查询知识卡片失败: ${error}`);
-  return null;  // 优雅降级
+  console.error(`查询知识卡片失败: ${error}`)
+  return null // 优雅降级
 }
 ```
 
@@ -195,18 +201,18 @@ try {
 
 ```typescript
 export interface WikiCard {
-  question: string;
-  quality: number;
-  content: string;
-  relatedPages: string[];
-  timestamp: string;
+  question: string
+  quality: number
+  content: string
+  relatedPages: string[]
+  timestamp: string
 }
 
 export interface WikiPage {
-  path: string;
-  title: string;
-  content: string;
-  links: string[];
+  path: string
+  title: string
+  content: string
+  links: string[]
 }
 ```
 
@@ -222,27 +228,27 @@ export interface WikiPage {
 // ai/agents/writer/PatentWriterAgent.ts
 
 export class PatentWriterAgent extends Agent<DisclosureInput, PatentDraft> {
-  private knowledge: ObsidianKnowledgeBridge;
-  private promptManager: PromptTemplateManager;
+  private knowledge: ObsidianKnowledgeBridge
+  private promptManager: PromptTemplateManager
 
   protected async plan(input: DisclosureInput, context: ExecutionContext) {
     // 1. 基础理解
-    const baseUnderstanding = await this.understandInvention(input.disclosure);
+    const baseUnderstanding = await this.understandInvention(input.disclosure)
 
     // 2. 知识库增强
-    const enhancedUnderstanding = await this.enhanceWithKnowledge(baseUnderstanding);
+    const enhancedUnderstanding = await this.enhanceWithKnowledge(baseUnderstanding)
 
-    return enhancedUnderstanding;
+    return enhancedUnderstanding
   }
 
   protected async act(plan: InventionUnderstanding, context: ExecutionContext) {
     // 3. 使用提示词模板生成权利要求
-    const template = await this.promptManager.loadTemplate('01-claims-generation');
-    const prompt = this.promptManager.render('01-claims-generation', plan);
+    const template = await this.promptManager.loadTemplate('01-claims-generation')
+    const prompt = this.promptManager.render('01-claims-generation', plan)
 
-    const claims = await this.llm.chat({ messages: [{ role: 'user', content: prompt }] });
+    const claims = await this.llm.chat({ messages: [{ role: 'user', content: prompt }] })
 
-    return this.parseClaims(claims);
+    return this.parseClaims(claims)
   }
 }
 ```
@@ -253,20 +259,20 @@ export class PatentWriterAgent extends Agent<DisclosureInput, PatentDraft> {
 // test/integration/ruiry-tech-patent-drafting.test.ts
 
 describe('睿羿科技专利撰写集成测试', () => {
-  const agent = new PatentWriterAgent();
-  const disclosure = loadFixture('ruiry-tech/01_disclosure.md');
+  const agent = new PatentWriterAgent()
+  const disclosure = loadFixture('ruiry-tech/01_disclosure.md')
 
   it('应该使用知识库增强发明理解', async () => {
-    const result = await agent.execute(disclosure);
+    const result = await agent.execute(disclosure)
 
     // 验证使用了知识库
-    expect(result.knowledgeUsed).toContain('创造性-技术启示的判断');
+    expect(result.knowledgeUsed).toContain('创造性-技术启示的判断')
 
     // 验证权利要求质量
-    expect(result.claims.independentClaims.length).toBeGreaterThanOrEqual(1);
-    expect(result.quality.score).toBeGreaterThanOrEqual(7.5);
-  });
-});
+    expect(result.claims.independentClaims.length).toBeGreaterThanOrEqual(1)
+    expect(result.quality.score).toBeGreaterThanOrEqual(7.5)
+  })
+})
 ```
 
 ---
@@ -303,6 +309,7 @@ describe('睿羿科技专利撰写集成测试', () => {
 4. **安全保障**: 环境变量配置、.gitignore、安全指南
 
 **核心价值**:
+
 - ✅ 将1000+个专利法律知识卡片转化为可用的提示词
 - ✅ 基于真实复审无效案例（194个）提炼审查标准
 - ✅ 为专利撰写提供了权威的知识支撑

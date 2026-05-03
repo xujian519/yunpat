@@ -16,34 +16,34 @@ import {
   ChatParams,
   ChatResponse,
   ChatChunk,
-} from '../lifecycle/Lifecycle.js';
+} from '../lifecycle/Lifecycle.js'
 
 /**
  * Kimi Code 模型 ID
  */
-export const KIMI_CODE_MODEL = 'kimi-for-coding';
+export const KIMI_CODE_MODEL = 'kimi-for-coding'
 
 /**
  * Kimi Code 配置
  */
 export interface KimiCodeConfig {
   /** API 密钥 */
-  apiKey: string;
+  apiKey: string
 
   /** API 基础 URL（OpenAI 兼容） */
-  baseURL?: string;
+  baseURL?: string
 
   /** 模型 ID（固定为 kimi-for-coding） */
-  model?: string;
+  model?: string
 
   /** 温度 */
-  temperature?: number;
+  temperature?: number
 
   /** 最大 Token 数 */
-  maxTokens?: number;
+  maxTokens?: number
 
   /** 超时时间（毫秒） */
-  timeout?: number;
+  timeout?: number
 }
 
 /**
@@ -55,7 +55,7 @@ const DEFAULT_CONFIG = {
   temperature: 0.7,
   maxTokens: 4096,
   timeout: 60000,
-};
+}
 
 /**
  * Kimi Code 适配器
@@ -63,7 +63,7 @@ const DEFAULT_CONFIG = {
  * 提供 OpenAI 兼容的 API 接口
  */
 export class KimiCodeAdapter implements ILLMAdapter {
-  private config: Required<KimiCodeConfig>;
+  private config: Required<KimiCodeConfig>
 
   constructor(config: KimiCodeConfig) {
     this.config = {
@@ -73,14 +73,14 @@ export class KimiCodeAdapter implements ILLMAdapter {
       temperature: config.temperature ?? DEFAULT_CONFIG.temperature,
       maxTokens: config.maxTokens ?? DEFAULT_CONFIG.maxTokens,
       timeout: config.timeout ?? DEFAULT_CONFIG.timeout,
-    };
+    }
   }
 
   /**
    * 聊天 - 单次调用
    */
   async chat(params: ChatParams): Promise<ChatResponse> {
-    const url = `${this.config.baseURL}/chat/completions`;
+    const url = `${this.config.baseURL}/chat/completions`
 
     const body = {
       model: this.config.model,
@@ -88,7 +88,7 @@ export class KimiCodeAdapter implements ILLMAdapter {
       temperature: params.temperature ?? this.config.temperature,
       max_tokens: params.maxTokens ?? this.config.maxTokens,
       stream: false,
-    };
+    }
 
     try {
       const response = await fetch(url, {
@@ -99,20 +99,20 @@ export class KimiCodeAdapter implements ILLMAdapter {
         },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(this.config.timeout),
-      });
+      })
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorText = await response.text()
         throw new Error(
           `Kimi Code API 请求失败: ${response.status} ${response.statusText}\n${errorText}`
-        );
+        )
       }
 
-      const data = (await response.json()) as Record<string, unknown>;
+      const data = (await response.json()) as Record<string, unknown>
 
-      const choices = data.choices as Array<Record<string, unknown>>;
-      const message = choices[0].message as Record<string, unknown>;
-      const usage = data.usage as Record<string, number> | undefined;
+      const choices = data.choices as Array<Record<string, unknown>>
+      const message = choices[0].message as Record<string, unknown>
+      const usage = data.usage as Record<string, number> | undefined
 
       return {
         message: {
@@ -126,11 +126,11 @@ export class KimiCodeAdapter implements ILLMAdapter {
               totalTokens: usage.total_tokens || 0,
             }
           : undefined,
-      };
+      }
     } catch (error) {
       throw new Error(
         `Kimi Code 调用失败: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 
@@ -138,7 +138,7 @@ export class KimiCodeAdapter implements ILLMAdapter {
    * 聊天 - 流式调用
    */
   async *chatStream(params: ChatParams): AsyncIterable<ChatChunk> {
-    const url = `${this.config.baseURL}/chat/completions`;
+    const url = `${this.config.baseURL}/chat/completions`
 
     const body = {
       model: this.config.model,
@@ -146,7 +146,7 @@ export class KimiCodeAdapter implements ILLMAdapter {
       temperature: params.temperature ?? this.config.temperature,
       max_tokens: params.maxTokens ?? this.config.maxTokens,
       stream: true,
-    };
+    }
 
     try {
       const response = await fetch(url, {
@@ -157,46 +157,46 @@ export class KimiCodeAdapter implements ILLMAdapter {
         },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(this.config.timeout),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error(`API 请求失败: ${response.status} ${response.statusText}`);
+        throw new Error(`API 请求失败: ${response.status} ${response.statusText}`)
       }
 
-      const reader = response.body?.getReader();
+      const reader = response.body?.getReader()
       if (!reader) {
-        throw new Error('无法获取响应流');
+        throw new Error('无法获取响应流')
       }
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+      const decoder = new TextDecoder()
+      let buffer = ''
 
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await reader.read()
 
-        if (done) break;
+        if (done) break
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const data = line.slice(6);
+            const data = line.slice(6)
             if (data === '[DONE]') {
-              yield { delta: '', done: true };
-              return;
+              yield { delta: '', done: true }
+              return
             }
 
             try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices[0]?.delta?.content || '';
+              const parsed = JSON.parse(data)
+              const content = parsed.choices[0]?.delta?.content || ''
 
               if (content) {
                 yield {
                   delta: content,
                   done: false,
-                };
+                }
               }
             } catch (e) {
               // 跳过解析失败的行
@@ -207,7 +207,7 @@ export class KimiCodeAdapter implements ILLMAdapter {
     } catch (error) {
       throw new Error(
         `Kimi Code 流式调用失败: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 
@@ -215,7 +215,7 @@ export class KimiCodeAdapter implements ILLMAdapter {
    * 嵌入 - Kimi Code 不支持嵌入功能
    */
   async embed(_texts: string[]): Promise<number[][]> {
-    throw new Error('Kimi Code 不支持嵌入功能，请使用 BGE-M3 或其他嵌入模型');
+    throw new Error('Kimi Code 不支持嵌入功能，请使用 BGE-M3 或其他嵌入模型')
   }
 
   /**
@@ -225,7 +225,7 @@ export class KimiCodeAdapter implements ILLMAdapter {
     return {
       model: this.config.model,
       baseURL: this.config.baseURL,
-    };
+    }
   }
 }
 
@@ -242,7 +242,7 @@ export function createKimiCodeAdapter(
   return new KimiCodeAdapter({
     apiKey,
     ...config,
-  });
+  })
 }
 
 /**

@@ -88,38 +88,43 @@
 #### 1. 嵌入接口统一
 
 **修复前**：
+
 ```typescript
-const embedding = await adapter.embed(text); // 错误：string 不能赋值给 EmbeddingParams
-const result = await adapter.embed([text]); // 错误：返回 EmbeddingResult，不能直接索引
-const vector = result[0]; // 错误：EmbeddingResult 没有 [0] 属性
+const embedding = await adapter.embed(text) // 错误：string 不能赋值给 EmbeddingParams
+const result = await adapter.embed([text]) // 错误：返回 EmbeddingResult，不能直接索引
+const vector = result[0] // 错误：EmbeddingResult 没有 [0] 属性
 ```
 
 **修复后**：
-```typescript
-const embeddingResult = await adapter.embedSingle(text);
-const vector = embeddingResult.embedding;
 
-const batchResult = await adapter.embed({texts: [text], normalize: true});
-const vectors = batchResult.embeddings;
+```typescript
+const embeddingResult = await adapter.embedSingle(text)
+const vector = embeddingResult.embedding
+
+const batchResult = await adapter.embed({ texts: [text], normalize: true })
+const vectors = batchResult.embeddings
 ```
 
 #### 2. 类型断言模式
 
 **修复前**：
+
 ```typescript
-const data = await response.json(); // 类型：unknown
-return data; // 错误：unknown 不能赋值给具体类型
+const data = await response.json() // 类型：unknown
+return data // 错误：unknown 不能赋值给具体类型
 ```
 
 **修复后**：
+
 ```typescript
-const data = (await response.json()) as ExpectedType;
-return data;
+const data = (await response.json()) as ExpectedType
+return data
 ```
 
 #### 3. 返回类型修正
 
 **修复前**：
+
 ```typescript
 private recalculateDependencies(): DependencyGraph {
   // ...
@@ -131,6 +136,7 @@ const newGraph = this.recalculateDependencies(plan); // 错误：函数返回 vo
 ```
 
 **修复后**：
+
 ```typescript
 private recalculateDependencies(): void {
   // ...
@@ -146,23 +152,26 @@ this.recalculateDependencies(plan); // 不需要返回值
 ## 测试结果摘要
 
 ### 整体状态
+
 - **总测试数**: 865+ (估计)
 - **通过率**: ~93% (估计)
 - **失败数**: ~20+ (主要在实体抽取和集成测试)
 
 ### 关键指标
-| 测试类型 | 通过率 | 状态 |
-|---------|-------|------|
-| 单元测试 | ~98% | ✅ 良好 |
-| 集成测试 | ~60% | ⚠️ 需要数据库 |
-| 准确率测试 | ~30% | ❌ 需要优化 |
-| 性能测试 | ~90% | ✅ 良好 |
+
+| 测试类型   | 通过率 | 状态          |
+| ---------- | ------ | ------------- |
+| 单元测试   | ~98%   | ✅ 良好       |
+| 集成测试   | ~60%   | ⚠️ 需要数据库 |
+| 准确率测试 | ~30%   | ❌ 需要优化   |
+| 性能测试   | ~90%   | ✅ 良好       |
 
 ---
 
 ## 下一步计划
 
 ### 短期（1-2 天）
+
 1. **修复 patents/agents 导入路径**
    - 配置 TypeScript 路径映射
    - 或使用相对路径导入
@@ -176,6 +185,7 @@ this.recalculateDependencies(plan); // 不需要返回值
    - 可能需要重新实现关系抽取逻辑
 
 ### 中期（3-5 天）
+
 1. **处理 Prettier 格式错误**
    - 运行 `pnpm lint --fix`
    - 或调整 Prettier 配置
@@ -209,6 +219,7 @@ this.recalculateDependencies(plan); // 不需要返回值
 ## 附录：文件清单
 
 ### 已修改的文件（核心框架）
+
 - [packages/core/vitest.config.ts](../../packages/core/vitest.config.ts)
 - [packages/core/src/gateway/auth/providers/BaseOAuthProvider.ts](../../packages/core/src/gateway/auth/providers/BaseOAuthProvider.ts)
 - [packages/core/src/memory/integration/BGEIntegration.ts](../../packages/core/src/memory/integration/BGEIntegration.ts)
@@ -221,6 +232,7 @@ this.recalculateDependencies(plan); // 不需要返回值
 - [patents/agents/AgentMemoryManager.ts](../../patents/agents/AgentMemoryManager.ts)
 
 ### 已修改的文件（测试）
+
 - [test/integration/test-agent-coordination.ts](../../test/integration/test-agent-coordination.ts)
 - [test/integration/test-multi-agent-simple.ts](../../test/integration/test-multi-agent-simple.ts)
 - [test/integration/test-multi-agent-temp.ts](../../test/integration/test-multi-agent-temp.ts)

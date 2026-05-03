@@ -8,8 +8,8 @@
  * 4. 支持增量更新和版本管理
  */
 
-import { z } from 'zod';
-import { createHash } from 'crypto';
+import { z } from 'zod'
+import { createHash } from 'crypto'
 
 // Zod schema 用于验证
 export const KnowledgeCardSchema = z.object({
@@ -32,63 +32,63 @@ export const KnowledgeCardSchema = z.object({
     tokenCount: z.number().int().default(0),
     referenceCount: z.number().int().default(0),
   }),
-});
+})
 
-export type KnowledgeCard = z.infer<typeof KnowledgeCardSchema>;
+export type KnowledgeCard = z.infer<typeof KnowledgeCardSchema>
 
 export interface CardSearchOptions {
-  mode?: 'keyword' | 'semantic' | 'hybrid';
-  limit?: number;
-  minQuality?: number;
-  domain?: string;
-  concept?: string;
-  tags?: string[];
-  minSimilarity?: number;
-  includeRelated?: boolean;
-  maxDepth?: number;
+  mode?: 'keyword' | 'semantic' | 'hybrid'
+  limit?: number
+  minQuality?: number
+  domain?: string
+  concept?: string
+  tags?: string[]
+  minSimilarity?: number
+  includeRelated?: boolean
+  maxDepth?: number
 }
 
 export interface CardSearchResult {
-  card: KnowledgeCard;
-  score: number;
+  card: KnowledgeCard
+  score: number
   matchReason: {
-    keywordScore: number;
-    semanticScore: number;
-    tagMatches: string[];
-  };
+    keywordScore: number
+    semanticScore: number
+    tagMatches: string[]
+  }
 }
 
 export interface PipelineConfig {
-  concepts: string[];
-  maxCardsPerConcept: number;
-  qualityThreshold: number;
-  concurrency: number;
-  batchSize: number;
-  onProgress?: (progress: PipelineProgress) => void;
+  concepts: string[]
+  maxCardsPerConcept: number
+  qualityThreshold: number
+  concurrency: number
+  batchSize: number
+  onProgress?: (progress: PipelineProgress) => void
 }
 
 export interface PipelineProgress {
-  phase: 'generating' | 'embedding' | 'storing';
-  current: number;
-  total: number;
-  concept?: string;
+  phase: 'generating' | 'embedding' | 'storing'
+  current: number
+  total: number
+  concept?: string
 }
 
 export interface PipelineResult {
-  totalGenerated: number;
-  totalStored: number;
-  avgQuality: number;
-  byDomain: Record<string, number>;
-  errors: string[];
-  duration: number;
+  totalGenerated: number
+  totalStored: number
+  avgQuality: number
+  byDomain: Record<string, number>
+  errors: string[]
+  duration: number
 }
 
 export function generateCardId(question: string, concept: string): string {
-  const sanitize = (s: string) => s.replace(/[:/\\*?"<>|（）()]/g, '').replace(/\s+/g, '-');
-  const normalized = `${concept}-${sanitize(question)}`.toLowerCase().slice(0, 80);
-  const hash = createHash('sha256').update(normalized).digest('hex').slice(0, 11);
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  return `${date}-${normalized.slice(0, 40)}-${hash}`;
+  const sanitize = (s: string) => s.replace(/[:/\\*?"<>|（）()]/g, '').replace(/\s+/g, '-')
+  const normalized = `${concept}-${sanitize(question)}`.toLowerCase().slice(0, 80)
+  const hash = createHash('sha256').update(normalized).digest('hex').slice(0, 11)
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+  return `${date}-${normalized.slice(0, 40)}-${hash}`
 }
 
 export function cardToMarkdown(card: KnowledgeCard): string {
@@ -109,69 +109,69 @@ export function cardToMarkdown(card: KnowledgeCard): string {
     '## 相关页面',
     '',
     ...card.sourcePages.map((p) => `- [[${p}]]`),
-  ];
+  ]
 
   if (card.relatedCards.length > 0) {
-    lines.push('', '## 关联卡片', '', ...card.relatedCards.map((id) => `- ${id}`));
+    lines.push('', '## 关联卡片', '', ...card.relatedCards.map((id) => `- ${id}`))
   }
 
-  return lines.join('\n');
+  return lines.join('\n')
 }
 
 export function markdownToCard(content: string, id: string): KnowledgeCard {
-  const lines = content.split('\n');
+  const lines = content.split('\n')
 
   // 查找元数据行（更健壮的解析）
-  let question = '';
-  let quality = 0.5;
-  let timestamp = new Date().toISOString();
-  let concept = '';
-  let domain = '';
-  let version = 1;
+  let question = ''
+  let quality = 0.5
+  let timestamp = new Date().toISOString()
+  let concept = ''
+  let domain = ''
+  let version = 1
 
   for (const line of lines) {
-    if (line.startsWith('- 来源问题:')) question = line.replace(/^- 来源问题:\s*/, '');
+    if (line.startsWith('- 来源问题:')) question = line.replace(/^- 来源问题:\s*/, '')
     else if (line.startsWith('- 质量分:'))
-      quality = parseFloat(line.replace(/^- 质量分:\s*/, '')) || 0.5;
-    else if (line.startsWith('- 生成时间:')) timestamp = line.replace(/^- 生成时间:\s*/, '');
-    else if (line.startsWith('- 概念:')) concept = line.replace(/^- 概念:\s*/, '');
-    else if (line.startsWith('- 领域:')) domain = line.replace(/^- 领域:\s*/, '');
+      quality = parseFloat(line.replace(/^- 质量分:\s*/, '')) || 0.5
+    else if (line.startsWith('- 生成时间:')) timestamp = line.replace(/^- 生成时间:\s*/, '')
+    else if (line.startsWith('- 概念:')) concept = line.replace(/^- 概念:\s*/, '')
+    else if (line.startsWith('- 领域:')) domain = line.replace(/^- 领域:\s*/, '')
     else if (line.startsWith('- 版本:'))
-      version = parseInt(line.replace(/^- 版本:\s*/, ''), 10) || 1;
+      version = parseInt(line.replace(/^- 版本:\s*/, ''), 10) || 1
   }
 
-  const cardContentStart = lines.findIndex((l) => l === '## 卡片内容');
-  const relatedPagesStart = lines.findIndex((l) => l === '## 相关页面');
-  const relatedCardsStart = lines.findIndex((l) => l === '## 关联卡片');
+  const cardContentStart = lines.findIndex((l) => l === '## 卡片内容')
+  const relatedPagesStart = lines.findIndex((l) => l === '## 相关页面')
+  const relatedCardsStart = lines.findIndex((l) => l === '## 关联卡片')
 
-  const contentEnd = relatedPagesStart > 0 ? relatedPagesStart : lines.length;
+  const contentEnd = relatedPagesStart > 0 ? relatedPagesStart : lines.length
   const cardContent = lines
     .slice(cardContentStart + 2, contentEnd)
     .join('\n')
-    .trim();
+    .trim()
 
-  const sourcePages: string[] = [];
-  const relatedCards: string[] = [];
-  const wikilinkRegex = /\[\[([^\]]+)\]\]/;
+  const sourcePages: string[] = []
+  const relatedCards: string[] = []
+  const wikilinkRegex = /\[\[([^\]]+)\]\]/
 
   if (relatedPagesStart > 0) {
-    const pagesEnd = relatedCardsStart > 0 ? relatedCardsStart : lines.length;
+    const pagesEnd = relatedCardsStart > 0 ? relatedCardsStart : lines.length
     for (let i = relatedPagesStart + 2; i < pagesEnd; i++) {
-      const match = lines[i]?.match(wikilinkRegex);
-      if (match) sourcePages.push(match[1]);
+      const match = lines[i]?.match(wikilinkRegex)
+      if (match) sourcePages.push(match[1])
     }
   }
 
   if (relatedCardsStart > 0) {
     for (let i = relatedCardsStart + 2; i < lines.length; i++) {
-      const trimmed = lines[i]?.replace(/^- /, '').trim();
-      if (trimmed) relatedCards.push(trimmed);
+      const trimmed = lines[i]?.replace(/^- /, '').trim()
+      if (trimmed) relatedCards.push(trimmed)
     }
   }
 
   const tags = (content.match(/\[\[([^\]]+)\]\]/g) ?? [])
     .map((l) => l.replace(/[\[\]]/g, ''))
-    .filter((t) => !sourcePages.includes(t));
+    .filter((t) => !sourcePages.includes(t))
 
   return {
     id,
@@ -192,5 +192,5 @@ export function markdownToCard(content: string, id: string): KnowledgeCard {
       tokenCount: cardContent.length,
       referenceCount: 0,
     },
-  };
+  }
 }

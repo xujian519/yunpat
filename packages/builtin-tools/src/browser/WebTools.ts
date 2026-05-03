@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 /**
  * 创建一个value为必需的输出schema
@@ -9,24 +9,24 @@ const createEvaluateOutputSchema = () =>
     type: z.string(),
     value: z.any(),
   }) as z.ZodObject<{
-    type: z.ZodString;
-    value: z.ZodAny;
-  }>;
+    type: z.ZodString
+    value: z.ZodAny
+  }>
 
 /**
  * Kimi WebBridge API 响应基础类型
  */
 interface WebBridgeResponse {
-  success: boolean;
-  [key: string]: any;
+  success: boolean
+  [key: string]: any
 }
 
 /**
  * WebBridge Daemon 配置
  */
-const WEBBRIDGE_HOST = '127.0.0.1';
-const WEBBRIDGE_PORT = 10086;
-const WEBBRIDGE_URL = `http://${WEBBRIDGE_HOST}:${WEBBRIDGE_PORT}/command`;
+const WEBBRIDGE_HOST = '127.0.0.1'
+const WEBBRIDGE_PORT = 10086
+const WEBBRIDGE_URL = `http://${WEBBRIDGE_HOST}:${WEBBRIDGE_PORT}/command`
 
 /**
  * 发送命令到 WebBridge Daemon
@@ -36,10 +36,10 @@ async function sendWebBridgeCommand(
   args: Record<string, any>,
   session?: string
 ): Promise<WebBridgeResponse> {
-  const body: any = { action, args };
+  const body: any = { action, args }
 
   if (session) {
-    body.session = session;
+    body.session = session
   }
 
   const response = await fetch(WEBBRIDGE_URL, {
@@ -48,13 +48,13 @@ async function sendWebBridgeCommand(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
-  });
+  })
 
   if (!response.ok) {
-    throw new Error(`WebBridge HTTP ${response.status}: ${response.statusText}`);
+    throw new Error(`WebBridge HTTP ${response.status}: ${response.statusText}`)
   }
 
-  return (await response.json()) as WebBridgeResponse;
+  return (await response.json()) as WebBridgeResponse
 }
 
 /**
@@ -64,14 +64,14 @@ async function sendWebBridgeCommand(
  */
 export class WebNavigateTool extends EnhancedBaseTool<
   {
-    url: string;
-    newTab?: boolean;
-    session?: string;
+    url: string
+    newTab?: boolean
+    session?: string
   },
   {
-    success: boolean;
-    url: string;
-    tabId?: string;
+    success: boolean
+    url: string
+    tabId?: string
   }
 > {
   readonly metadata = {
@@ -92,15 +92,15 @@ export class WebNavigateTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { url: string; newTab?: boolean; session?: string },
     _context: ToolContext
   ): Promise<{
-    success: boolean;
-    url: string;
-    tabId?: string;
+    success: boolean
+    url: string
+    tabId?: string
   }> {
     try {
       const result = await sendWebBridgeCommand(
@@ -110,17 +110,17 @@ export class WebNavigateTool extends EnhancedBaseTool<
           newTab: input.newTab ?? true,
         },
         input.session
-      );
+      )
 
       return {
         success: result.success,
         url: input.url,
         tabId: result.tabId,
-      };
+      }
     } catch (error) {
       throw new Error(
         `Navigation failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 }
@@ -132,14 +132,14 @@ export class WebNavigateTool extends EnhancedBaseTool<
  */
 export class WebFindTabTool extends EnhancedBaseTool<
   {
-    url: string;
-    active?: boolean;
-    session?: string;
+    url: string
+    active?: boolean
+    session?: string
   },
   {
-    success: boolean;
-    url: string;
-    tabId?: string;
+    success: boolean
+    url: string
+    tabId?: string
   }
 > {
   readonly metadata = {
@@ -160,15 +160,15 @@ export class WebFindTabTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { url: string; active?: boolean; session?: string },
     _context: ToolContext
   ): Promise<{
-    success: boolean;
-    url: string;
-    tabId?: string;
+    success: boolean
+    url: string
+    tabId?: string
   }> {
     try {
       const result = await sendWebBridgeCommand(
@@ -178,15 +178,15 @@ export class WebFindTabTool extends EnhancedBaseTool<
           active: input.active ?? false,
         },
         input.session
-      );
+      )
 
       return {
         success: result.success,
         url: input.url,
         tabId: result.tabId,
-      };
+      }
     } catch (error) {
-      throw new Error(`Find tab failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Find tab failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }
@@ -198,17 +198,17 @@ export class WebFindTabTool extends EnhancedBaseTool<
  */
 export class WebSnapshotTool extends EnhancedBaseTool<
   {
-    session?: string;
+    session?: string
   },
   {
-    url: string;
-    title: string;
+    url: string
+    title: string
     tree: Array<{
-      name: string;
-      role: string;
-      tag: string;
-      ref: string;
-    }>;
+      name: string
+      role: string
+      tag: string
+      ref: string
+    }>
   }
 > {
   readonly metadata = {
@@ -234,31 +234,31 @@ export class WebSnapshotTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { session?: string },
     _context: ToolContext
   ): Promise<{
-    url: string;
-    title: string;
+    url: string
+    title: string
     tree: Array<{
-      name: string;
-      role: string;
-      tag: string;
-      ref: string;
-    }>;
+      name: string
+      role: string
+      tag: string
+      ref: string
+    }>
   }> {
     try {
-      const result = await sendWebBridgeCommand('snapshot', {}, input.session);
+      const result = await sendWebBridgeCommand('snapshot', {}, input.session)
 
       return {
         url: result.url || '',
         title: result.title || '',
         tree: result.tree || [],
-      };
+      }
     } catch (error) {
-      throw new Error(`Snapshot failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Snapshot failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }
@@ -270,13 +270,13 @@ export class WebSnapshotTool extends EnhancedBaseTool<
  */
 export class WebClickTool extends EnhancedBaseTool<
   {
-    selector: string;
-    session?: string;
+    selector: string
+    session?: string
   },
   {
-    success: boolean;
-    tag?: string;
-    text?: string;
+    success: boolean
+    tag?: string
+    text?: string
   }
 > {
   readonly metadata = {
@@ -296,15 +296,15 @@ export class WebClickTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { selector: string; session?: string },
     _context: ToolContext
   ): Promise<{
-    success: boolean;
-    tag?: string;
-    text?: string;
+    success: boolean
+    tag?: string
+    text?: string
   }> {
     try {
       const result = await sendWebBridgeCommand(
@@ -313,15 +313,15 @@ export class WebClickTool extends EnhancedBaseTool<
           selector: input.selector,
         },
         input.session
-      );
+      )
 
       return {
         success: result.success,
         tag: result.tag,
         text: result.text,
-      };
+      }
     } catch (error) {
-      throw new Error(`Click failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Click failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }
@@ -333,13 +333,13 @@ export class WebClickTool extends EnhancedBaseTool<
  */
 export class WebFillTool extends EnhancedBaseTool<
   {
-    selector: string;
-    value: string;
-    session?: string;
+    selector: string
+    value: string
+    session?: string
   },
   {
-    success: boolean;
-    tag?: string;
+    success: boolean
+    tag?: string
   }
 > {
   readonly metadata = {
@@ -359,14 +359,14 @@ export class WebFillTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { selector: string; value: string; session?: string },
     _context: ToolContext
   ): Promise<{
-    success: boolean;
-    tag?: string;
+    success: boolean
+    tag?: string
   }> {
     try {
       const result = await sendWebBridgeCommand(
@@ -376,14 +376,14 @@ export class WebFillTool extends EnhancedBaseTool<
           value: input.value,
         },
         input.session
-      );
+      )
 
       return {
         success: result.success,
         tag: result.tag,
-      };
+      }
     } catch (error) {
-      throw new Error(`Fill failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Fill failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }
@@ -395,12 +395,12 @@ export class WebFillTool extends EnhancedBaseTool<
  */
 export class WebEvaluateTool extends EnhancedBaseTool<
   {
-    code: string;
-    session?: string;
+    code: string
+    session?: string
   },
   {
-    type: string;
-    value?: any;
+    type: string
+    value?: any
   }
 > {
   readonly metadata = {
@@ -416,14 +416,14 @@ export class WebEvaluateTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { code: string; session?: string },
     _context: ToolContext
   ): Promise<{
-    type: string;
-    value: any;
+    type: string
+    value: any
   }> {
     try {
       const result = await sendWebBridgeCommand(
@@ -432,14 +432,14 @@ export class WebEvaluateTool extends EnhancedBaseTool<
           code: input.code,
         },
         input.session
-      );
+      )
 
       return {
         type: result.type || 'unknown',
         value: result.value,
-      };
+      }
     } catch (error) {
-      throw new Error(`Evaluate failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Evaluate failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }
@@ -451,12 +451,12 @@ export class WebEvaluateTool extends EnhancedBaseTool<
  */
 export class WebScreenshotTool extends EnhancedBaseTool<
   {
-    format?: 'png' | 'jpeg';
-    quality?: number;
-    session?: string;
+    format?: 'png' | 'jpeg'
+    quality?: number
+    session?: string
   },
   {
-    filePath: string;
+    filePath: string
   }
 > {
   readonly metadata = {
@@ -481,48 +481,48 @@ export class WebScreenshotTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      format?: 'png' | 'jpeg';
-      quality?: number;
-      session?: string;
+      format?: 'png' | 'jpeg'
+      quality?: number
+      session?: string
     },
     _context: ToolContext
   ): Promise<{ filePath: string }> {
     try {
       // 使用截图辅助脚本
-      const scriptPath = process.env.HOME + '/.claude/skills/kimi-webbridge/scripts/screenshot.sh';
+      const scriptPath = process.env.HOME + '/.claude/skills/kimi-webbridge/scripts/screenshot.sh'
 
-      let command = `bash "${scriptPath}"`;
+      let command = `bash "${scriptPath}"`
 
       if (input.format && input.format !== 'png') {
-        command += ` -f ${input.format}`;
+        command += ` -f ${input.format}`
       }
 
       if (input.quality !== undefined) {
-        command += ` -q ${input.quality}`;
+        command += ` -q ${input.quality}`
       }
 
       if (input.session) {
-        command += ` -s ${input.session}`;
+        command += ` -s ${input.session}`
       }
 
       // 执行截图脚本
-      const result = await this.executeBashCommand(command);
+      const result = await this.executeBashCommand(command)
 
       // 解析输出获取文件路径
-      const match = result.match(/Screenshot saved to: (.+)/);
+      const match = result.match(/Screenshot saved to: (.+)/)
       if (match) {
-        return { filePath: match[1].trim() };
+        return { filePath: match[1].trim() }
       }
 
-      throw new Error('Failed to parse screenshot result');
+      throw new Error('Failed to parse screenshot result')
     } catch (error) {
       throw new Error(
         `Screenshot failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 
@@ -532,17 +532,17 @@ export class WebScreenshotTool extends EnhancedBaseTool<
   private async executeBashCommand(command: string): Promise<string> {
     // 这里需要使用 Bash 工具，但由于我们可能在浏览器自动化上下文中，
     // 我们使用 Node.js 的 child_process
-    const { exec } = require('child_process');
+    const { exec } = require('child_process')
 
     return new Promise((resolve, reject) => {
       exec(command, (error: Error | null, stdout: string, stderr: string) => {
         if (error) {
-          reject(error);
+          reject(error)
         } else {
-          resolve(stdout.trim());
+          resolve(stdout.trim())
         }
-      });
-    });
+      })
+    })
   }
 }
 
@@ -553,11 +553,11 @@ export class WebScreenshotTool extends EnhancedBaseTool<
  */
 export class WebWaitTool extends EnhancedBaseTool<
   {
-    duration: number;
-    session?: string;
+    duration: number
+    session?: string
   },
   {
-    success: boolean;
+    success: boolean
   }
 > {
   readonly metadata = {
@@ -575,16 +575,16 @@ export class WebWaitTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { duration: number; session?: string },
     _context: ToolContext
   ): Promise<{ success: boolean }> {
-    await new Promise((resolve) => setTimeout(resolve, input.duration));
+    await new Promise((resolve) => setTimeout(resolve, input.duration))
 
     // 简单返回成功，实际的等待效果由后续操作验证
-    return { success: true };
+    return { success: true }
   }
 }
 
@@ -595,11 +595,11 @@ export class WebWaitTool extends EnhancedBaseTool<
  */
 export class WebExtractTextTool extends EnhancedBaseTool<
   {
-    selector?: string;
-    session?: string;
+    selector?: string
+    session?: string
   },
   {
-    text: string;
+    text: string
   }
 > {
   readonly metadata = {
@@ -617,7 +617,7 @@ export class WebExtractTextTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { selector?: string; session?: string },
@@ -625,9 +625,9 @@ export class WebExtractTextTool extends EnhancedBaseTool<
   ): Promise<{ text: string }> {
     try {
       // 先获取快照
-      const snapshotResult = await sendWebBridgeCommand('snapshot', {}, input.session);
+      const snapshotResult = await sendWebBridgeCommand('snapshot', {}, input.session)
 
-      let text = '';
+      let text = ''
 
       if (input.selector) {
         // 如果指定了选择器，使用 evaluate 提取特定元素
@@ -640,23 +640,23 @@ export class WebExtractTextTool extends EnhancedBaseTool<
             `,
           },
           input.session
-        );
+        )
 
-        text = evaluateResult.value || '';
+        text = evaluateResult.value || ''
       } else {
         // 提取所有文本内容
-        const tree = snapshotResult.tree || [];
+        const tree = snapshotResult.tree || []
         text = tree
           .filter((item: any) => item.role === 'text' || item.tag === 'p' || item.tag === 'span')
           .map((item: any) => item.name)
-          .join('\n');
+          .join('\n')
       }
 
-      return { text: text.trim() };
+      return { text: text.trim() }
     } catch (error) {
       throw new Error(
         `Extract text failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 }
@@ -668,12 +668,12 @@ export class WebExtractTextTool extends EnhancedBaseTool<
  */
 export class WebScrollTool extends EnhancedBaseTool<
   {
-    direction?: 'up' | 'down' | 'top' | 'bottom';
-    amount?: number;
-    session?: string;
+    direction?: 'up' | 'down' | 'top' | 'bottom'
+    amount?: number
+    session?: string
   },
   {
-    success: boolean;
+    success: boolean
   }
 > {
   readonly metadata = {
@@ -696,14 +696,14 @@ export class WebScrollTool extends EnhancedBaseTool<
     permissions: [],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { direction?: 'up' | 'down' | 'top' | 'bottom'; amount?: number; session?: string },
     _context: ToolContext
   ): Promise<{ success: boolean }> {
     try {
-      const scrollCode = this.getScrollCode(input.direction || 'down', input.amount || 300);
+      const scrollCode = this.getScrollCode(input.direction || 'down', input.amount || 300)
 
       await sendWebBridgeCommand(
         'evaluate',
@@ -711,11 +711,11 @@ export class WebScrollTool extends EnhancedBaseTool<
           code: scrollCode,
         },
         input.session
-      );
+      )
 
-      return { success: true };
+      return { success: true }
     } catch (error) {
-      throw new Error(`Scroll failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Scroll failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -725,15 +725,15 @@ export class WebScrollTool extends EnhancedBaseTool<
   private getScrollCode(direction: string, amount: number): string {
     switch (direction) {
       case 'up':
-        return `window.scrollBy(0, -${amount});`;
+        return `window.scrollBy(0, -${amount});`
       case 'down':
-        return `window.scrollBy(0, ${amount});`;
+        return `window.scrollBy(0, ${amount});`
       case 'top':
-        return `window.scrollTo(0, 0);`;
+        return `window.scrollTo(0, 0);`
       case 'bottom':
-        return `window.scrollTo(0, document.body.scrollHeight);`;
+        return `window.scrollTo(0, document.body.scrollHeight);`
       default:
-        return `window.scrollBy(0, ${amount});`;
+        return `window.scrollBy(0, ${amount});`
     }
   }
 }

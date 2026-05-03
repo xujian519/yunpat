@@ -12,20 +12,20 @@ jobs:
     name: 性能监控
     runs-on: [self-hosted, macos-arm64]
     timeout-minutes: 15
-    
+
     steps:
       - name: 📊 收集性能指标
         run: |
           echo "📊 收集性能指标..."
-          
+
           # CI 统计
           ./scripts/monitoring.sh | tee /tmp/monitoring-report.txt
-          
+
           # Runner 资源
           ./scripts/monitor-resources.sh | tee -a /tmp/monitoring-report.txt
-          
+
           echo "✅ 性能指标收集完成"
-          
+
       - name: 📢 发送监控报告
         if: always()
         run: |
@@ -33,7 +33,7 @@ jobs:
           # 这里可以配置发送到监控系统
           cat /tmp/monitoring-report.txt
           # rm /tmp/monitoring-report.txt
-          
+
       - name: 🧹 清理
         if: always()
         run: rm -rf ~/actions-runner/_work/_temp/*
@@ -45,15 +45,15 @@ jobs:
     timeout-minutes: 5
     # 只在主分支的 push 事件后运行
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
       - name: 📢 发送部署通知
         run: |
           echo "📢 发送部署通知..."
-          
+
           # 获取 CI 结果
           conclusion="${{ job.status }}"
-          
+
           case "$conclusion" in
             "success")
               emoji="✅"
@@ -68,15 +68,15 @@ jobs:
               message="部署未完成"
               ;;
           esac
-          
+
           echo "$emoji $message"
           echo "提交: ${{ github.sha }}"
           echo "作者: ${{ github.actor }}"
           echo "分支: ${{ github.ref_name }}"
-          
+
           # 这里可以配置实际的通知发送
           # 例如: 发送到 Slack, Discord, Email 等
-          
+
       - name: 🧹 清理
         if: always()
         run: rm -rf ~/actions-runner/_work/_temp/*
@@ -86,29 +86,29 @@ jobs:
     name: 系统健康检查
     runs-on: [self-hosted, macos-arm64]
     timeout-minutes: 10
-    
+
     steps:
       - name: 🔍 全面健康检查
         run: |
           echo "🔍 系统健康检查..."
-          
+
           # 1. Runner 状态
           echo "Runner 状态:"
           gh api repos/xujian519/yunpat/actions/runners | jq -r '.runners[] | "\(.name): \(.status)"'
-          
+
           # 2. 最近的 CI 运行
           echo ""
           echo "最近 5 次运行:"
           gh run list --repo xujian519/yunpat --limit 5 --json conclusion,displayTitle | \
               jq -r '.[] | "\(.conclusion // "进行中") - \(.displayTitle)"'
-          
+
           # 3. 磁盘空间
           echo ""
           echo "磁盘空间:"
           df -h . | tail -1
-          
+
           echo "✅ 健康检查完成"
-          
+
       - name: 🧹 清理
         if: always()
         run: rm -rf ~/actions-runner/_work/_temp/*

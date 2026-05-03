@@ -5,26 +5,26 @@
  * 作为编排层，协调 Rust 核心引擎和 Python 工具
  */
 
-import * as grpc from '@grpc/grpc-js';
-import * as protoLoader from '@grpc/proto-loader';
-import { v4 as uuidv4 } from 'uuid';
-import type { ServerUnaryCall, requestCallback } from '@grpc/grpc-js';
+import * as grpc from '@grpc/grpc-js'
+import * as protoLoader from '@grpc/proto-loader'
+import { v4 as uuidv4 } from 'uuid'
+import type { ServerUnaryCall, requestCallback } from '@grpc/grpc-js'
 
 interface AgentServerConfig {
-  vectorServiceUrl: string;
-  schedulerServiceUrl: string;
-  pythonToolsUrl: string;
+  vectorServiceUrl: string
+  schedulerServiceUrl: string
+  pythonToolsUrl: string
 }
 
 export class AgentServer {
-  private server: grpc.Server;
-  private config: AgentServerConfig;
-  private agentState: Map<string, any>;
+  private server: grpc.Server
+  private config: AgentServerConfig
+  private agentState: Map<string, any>
 
   constructor(config: AgentServerConfig) {
-    this.config = config;
-    this.server = new grpc.Server();
-    this.agentState = new Map();
+    this.config = config
+    this.server = new grpc.Server()
+    this.agentState = new Map()
   }
 
   /**
@@ -32,8 +32,8 @@ export class AgentServer {
    */
   start(port: number): void {
     // 加载 Protobuf 定义
-    const protoDefinition = this.loadProtoDefinition();
-    const agentProto = (grpc.loadPackageDefinition(protoDefinition) as any).yunpat.agent;
+    const protoDefinition = this.loadProtoDefinition()
+    const agentProto = (grpc.loadPackageDefinition(protoDefinition) as any).yunpat.agent
 
     // 添加 AgentService
     this.server.addService(agentProto.AgentService.service, {
@@ -42,7 +42,7 @@ export class AgentServer {
       getAgentStatus: this.getAgentStatus.bind(this),
       cancelAgent: this.cancelAgent.bind(this),
       listAgents: this.listAgents.bind(this),
-    });
+    })
 
     // 绑定端口
     this.server.bindAsync(
@@ -50,12 +50,12 @@ export class AgentServer {
       grpc.ServerCredentials.createInsecure(),
       (error, port) => {
         if (error) {
-          console.error('❌ Failed to start server:', error);
-          throw error;
+          console.error('❌ Failed to start server:', error)
+          throw error
         }
-        console.log(`✅ Server bound to port ${port}`);
+        console.log(`✅ Server bound to port ${port}`)
       }
-    );
+    )
   }
 
   /**
@@ -65,24 +65,24 @@ export class AgentServer {
     call: ServerUnaryCall<any, any>,
     callback: requestCallback<any>
   ): Promise<void> {
-    const request = call.request;
-    const agentId = request.agent_id || uuidv4();
+    const request = call.request
+    const agentId = request.agent_id || uuidv4()
 
-    console.log(`\n📝 [${agentId}] ExecuteAgent:`, request.agent_name);
-    console.log(`   Input:`, request.input);
+    console.log(`\n📝 [${agentId}] ExecuteAgent:`, request.agent_name)
+    console.log(`   Input:`, request.input)
 
     try {
       // 模拟 Agent 执行
-      const result = await this.runAgent(request);
+      const result = await this.runAgent(request)
 
       callback(null, {
         status: 'SUCCESS',
         output: result.output,
         metrics: result.metrics,
         error_message: '',
-      });
+      })
     } catch (error: any) {
-      console.error(`❌ [${agentId}] Execution failed:`, error.message);
+      console.error(`❌ [${agentId}] Execution failed:`, error.message)
 
       const serviceError: grpc.ServiceError = {
         code: grpc.status.INTERNAL,
@@ -90,9 +90,9 @@ export class AgentServer {
         metadata: new grpc.Metadata(),
         name: 'InternalError',
         message: error.message,
-      };
+      }
 
-      callback(serviceError);
+      callback(serviceError)
     }
   }
 
@@ -100,17 +100,17 @@ export class AgentServer {
    * 流式执行 Agent（实时反馈）
    */
   private async streamExecuteAgent(call: any): Promise<void> {
-    const request = call.request;
-    const agentId = request.agent_id || uuidv4();
+    const request = call.request
+    const agentId = request.agent_id || uuidv4()
 
-    console.log(`\n📝 [${agentId}] StreamExecuteAgent:`, request.agent_name);
+    console.log(`\n📝 [${agentId}] StreamExecuteAgent:`, request.agent_name)
 
     try {
       // 模拟流式执行
-      const stages = ['plan', 'act', 'reflect', 'complete'];
+      const stages = ['plan', 'act', 'reflect', 'complete']
 
       for (const [index, stage] of stages.entries()) {
-        const progress = Math.floor(((index + 1) / stages.length) * 100);
+        const progress = Math.floor(((index + 1) / stages.length) * 100)
 
         call.write({
           stage,
@@ -118,18 +118,18 @@ export class AgentServer {
           message: `Executing ${stage} stage...`,
           data: {},
           timestamp: Date.now(),
-        });
+        })
 
         // 模拟处理时间
-        await this.sleep(500);
+        await this.sleep(500)
       }
 
-      call.end();
+      call.end()
     } catch (error: any) {
       call.emit('error', {
         code: grpc.status.INTERNAL,
         details: error.message,
-      });
+      })
     }
   }
 
@@ -140,21 +140,21 @@ export class AgentServer {
     call: ServerUnaryCall<any, any>,
     callback: requestCallback<any>
   ): Promise<void> {
-    const request = call.request;
-    const agentId = request.agent_id;
+    const request = call.request
+    const agentId = request.agent_id
 
     const state = this.agentState.get(agentId) || {
       status: 'not_found',
       uptime_ms: 0,
       metrics: {},
-    };
+    }
 
     callback(null, {
       agent_id: agentId,
       status: state.status,
       uptime_ms: state.uptime_ms,
       metrics: state.metrics,
-    });
+    })
   }
 
   /**
@@ -164,15 +164,15 @@ export class AgentServer {
     call: ServerUnaryCall<any, any>,
     callback: requestCallback<any>
   ): Promise<void> {
-    const request = call.request;
+    const request = call.request
 
     // 取消逻辑
-    this.agentState.delete(request.agent_id);
+    this.agentState.delete(request.agent_id)
 
     callback(null, {
       success: true,
       message: `Agent ${request.agent_id} cancelled`,
-    });
+    })
   }
 
   /**
@@ -206,19 +206,19 @@ export class AgentServer {
         page_size: 10,
         total_pages: 1,
       },
-    });
+    })
   }
 
   /**
    * 运行 Agent（内部方法）
    */
   private async runAgent(request: any): Promise<any> {
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 模拟 Agent 执行
-    await this.sleep(1000);
+    await this.sleep(1000)
 
-    const duration = Date.now() - startTime;
+    const duration = Date.now() - startTime
 
     return {
       output: {
@@ -233,7 +233,7 @@ export class AgentServer {
         cache_hits: 0,
         cache_misses: 0,
       },
-    };
+    }
   }
 
   /**
@@ -242,18 +242,18 @@ export class AgentServer {
   shutdown(): void {
     this.server.tryShutdown((error) => {
       if (error) {
-        console.error('❌ Failed to shutdown server:', error);
+        console.error('❌ Failed to shutdown server:', error)
       } else {
-        console.log('✅ Server shutdown successfully');
+        console.log('✅ Server shutdown successfully')
       }
-    });
+    })
   }
 
   /**
    * 加载 Protobuf 定义
    */
   private loadProtoDefinition(): any {
-    const PROTO_PATH = process.cwd() + '/../../protos/agent.proto';
+    const PROTO_PATH = process.cwd() + '/../../protos/agent.proto'
 
     return protoLoader.loadSync(PROTO_PATH, {
       keepCase: true,
@@ -261,13 +261,13 @@ export class AgentServer {
       enums: String,
       defaults: true,
       oneofs: true,
-    });
+    })
   }
 
   /**
    * 延迟函数
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }

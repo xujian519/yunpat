@@ -12,6 +12,7 @@
 **文件**: `rust/crates/patent-tools/src/llm.rs`
 
 **功能**:
+
 - ✅ 支持 DeepSeek API
 - ✅ 支持通义千问 API
 - ✅ 支持 OpenAI 兼容 API
@@ -21,6 +22,7 @@
 **代码量**: 200+ 行
 
 **集成到**:
+
 - ✅ `generation.rs` - 权利要求生成器
 - ✅ `analysis.rs` - 专利分析工具
 - ✅ `patent-agent/src/agent.rs` - 智能体实现
@@ -32,6 +34,7 @@
 **文件**: `cli/patent-cli/index.js`
 
 **子命令**:
+
 - ✅ `search` - 搜索专利
 - ✅ `generate` - 生成权利要求
 - ✅ `assess` - 评估质量
@@ -39,12 +42,14 @@
 - ✅ `interactive` - 交互式模式
 
 **特性**:
+
 - ✅ 彩色输出（chalk）
 - ✅ 进度提示（ora）
 - ✅ 交互式输入（inquirer）
 - ✅ 错误处理
 
 **使用方式**:
+
 ```bash
 cd cli/patent-cli
 npm install
@@ -73,6 +78,7 @@ patent-cli interactive
 **文件**: `ai/mcp/McpServer.ts`
 
 **功能**:
+
 - ✅ MCP 服务器框架
 - ✅ 工具注册系统
 - ✅ 工具调用接口
@@ -80,25 +86,27 @@ patent-cli interactive
 - ✅ 错误处理
 
 **已注册工具**:
+
 - ✅ `search_patents` - 搜索专利
 - ✅ `generate_claims` - 生成权利要求
 - ✅ `assess_quality` - 评估质量
 - ✅ `parse_office_action` - 解析审查意见
 
 **使用方式**:
-```typescript
-import { createPatentMcpServer } from '@yunpat/mcp';
 
-const server = createPatentMcpServer();
-await server.start();
+```typescript
+import { createPatentMcpServer } from '@yunpat/mcp'
+
+const server = createPatentMcpServer()
+await server.start()
 
 // 调用工具
 const result = await server.callTool('search_patents', {
   keywords: ['深度学习'],
-  limit: 5
-});
+  limit: 5,
+})
 
-await server.stop();
+await server.stop()
 ```
 
 ---
@@ -107,25 +115,25 @@ await server.stop();
 
 ### 代码量
 
-| 任务 | 文件数 | 代码行数 | 状态 |
-|------|--------|---------|------|
-| LLM 客户端 | 1 | 200+ | ✅ |
-| CLI 工具 | 1 | 300+ | ✅ |
-| MCP 服务器 | 1 | 400+ | ✅ |
-| 集成层 | 2 | 500+ | ✅ |
-| **总计** | **5** | **1400+** | **✅** |
+| 任务       | 文件数 | 代码行数  | 状态   |
+| ---------- | ------ | --------- | ------ |
+| LLM 客户端 | 1      | 200+      | ✅     |
+| CLI 工具   | 1      | 300+      | ✅     |
+| MCP 服务器 | 1      | 400+      | ✅     |
+| 集成层     | 2      | 500+      | ✅     |
+| **总计**   | **5**  | **1400+** | **✅** |
 
 ### 功能覆盖
 
-| 功能 | 实现方式 | 状态 |
-|------|---------|------|
-| LLM 调用 | Rust (llm.rs) | ✅ |
-| 专利搜索 | CLI + MCP | ✅ |
-| 权利要求生成 | CLI + MCP | ✅ |
-| 质量评估 | CLI + MCP | ✅ |
-| 审查意见解析 | CLI + MCP | ✅ |
-| 交互式操作 | CLI | ✅ |
-| 工具调用 | MCP | ✅ |
+| 功能         | 实现方式      | 状态 |
+| ------------ | ------------- | ---- |
+| LLM 调用     | Rust (llm.rs) | ✅   |
+| 专利搜索     | CLI + MCP     | ✅   |
+| 权利要求生成 | CLI + MCP     | ✅   |
+| 质量评估     | CLI + MCP     | ✅   |
+| 审查意见解析 | CLI + MCP     | ✅   |
+| 交互式操作   | CLI           | ✅   |
+| 工具调用     | MCP           | ✅   |
 
 ---
 
@@ -152,17 +160,17 @@ patent-cli interactive
 ### 2. MCP 服务器（TypeScript）
 
 ```typescript
-import { createPatentMcpServer } from '@yunpat/mcp';
+import { createPatentMcpServer } from '@yunpat/mcp'
 
-const server = createPatentMcpServer();
-await server.start();
+const server = createPatentMcpServer()
+await server.start()
 
 const result = await server.callTool('search_patents', {
   keywords: ['深度学习'],
-  limit: 5
-});
+  limit: 5,
+})
 
-await server.stop();
+await server.stop()
 ```
 
 ### 3. Rust 核心工具（编译后）
@@ -202,16 +210,16 @@ patent-cli search -k 深度学习 图像识别
 ### MCP 使用示例
 
 ```typescript
-import { createPatentMcpServer } from '@yunpat/mcp';
+import { createPatentMcpServer } from '@yunpat/mcp'
 
-const server = createPatentMcpServer();
-await server.start();
+const server = createPatentMcpServer()
+await server.start()
 
 // 调用搜索工具
 const result = await server.callTool('search_patents', {
   keywords: ['深度学习', '图像识别'],
-  limit: 5
-});
+  limit: 5,
+})
 
 // 结果:
 // {
@@ -221,7 +229,7 @@ const result = await server.callTool('search_patents', {
 //   }
 // }
 
-await server.stop();
+await server.stop()
 ```
 
 ---
@@ -255,11 +263,13 @@ await server.stop();
 ## 📚 相关文档
 
 **详细文档**:
+
 - `docs/RUST_TOOLS_PROGRESS.md` - Rust 工具进度
 - `docs/ARCHIVE_PROJECTS_ANALYSIS.md` - 归档项目分析
 - `docs/RUST_INTEGRATION_SUMMARY.md` - Rust 集成总结
 
 **代码示例**:
+
 - `examples/mcp-usage.ts` - MCP 使用示例
 - `examples/patent-agents-usage.ts` - 智能体使用示例
 - `cli/patent-cli/index.js` - CLI 工具
@@ -285,6 +295,7 @@ await server.stop();
 ### 下一步
 
 **建议优先级**:
+
 1. 测试 CLI 工具（5 分钟）
 2. 测试 MCP 服务器（5 分钟）
 3. 完善错误处理（10 分钟）

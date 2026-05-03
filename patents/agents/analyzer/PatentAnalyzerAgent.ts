@@ -8,43 +8,43 @@
  * 4. 专利地图绘制
  */
 
-import { Agent } from '@yunpat/core';
-import * as PatentCore from '../../core/PatentCoreBridge.js';
-import { renderAnalysisPrompt } from '../../prompts/capability/analysis.js';
+import { Agent } from '@yunpat/core'
+import * as PatentCore from '../../core/PatentCoreBridge.js'
+import { renderAnalysisPrompt } from '../../prompts/capability/analysis.js'
 
 /**
  * 专利分析输入
  */
 export interface PatentAnalysisInput {
   /** 分析类型 */
-  analysisType: 'value' | 'trend' | 'competitor' | 'landscape';
+  analysisType: 'value' | 'trend' | 'competitor' | 'landscape'
 
   /** 目标专利列表（申请号或专利号） */
-  targetPatents?: string[];
+  targetPatents?: string[]
 
   /** 技术领域 */
-  technicalField?: string;
+  technicalField?: string
 
   /** 时间范围（用于趋势分析） */
   timeRange?: {
-    start: string;
-    end: string;
-  };
+    start: string
+    end: string
+  }
 
   /** 竞争对手列表（用于竞品分析） */
-  competitors?: string[];
+  competitors?: string[]
 
   /** 分析参数 */
   parameters?: {
     /** 地区范围 */
-    regions?: string[];
+    regions?: string[]
 
     /** 专利类型 */
-    patentTypes?: ('invention' | 'utility' | 'design')[];
+    patentTypes?: ('invention' | 'utility' | 'design')[]
 
     /** 关键词 */
-    keywords?: string[];
-  };
+    keywords?: string[]
+  }
 }
 
 /**
@@ -52,7 +52,7 @@ export interface PatentAnalysisInput {
  */
 export interface PatentAnalysisOutput {
   /** 分析类型 */
-  analysisType: string;
+  analysisType: string
 
   /** 分析结果 */
   results: {
@@ -60,87 +60,87 @@ export interface PatentAnalysisOutput {
     valueAssessment?: {
       /** 高价值专利列表 */
       highValuePatents: Array<{
-        patentNumber: string;
-        score: number;
-        reasons: string[];
-      }>;
+        patentNumber: string
+        score: number
+        reasons: string[]
+      }>
 
       /** 价值分布图 */
       valueDistribution: {
-        high: number;
-        medium: number;
-        low: number;
-      };
-    };
+        high: number
+        medium: number
+        low: number
+      }
+    }
 
     /** 技术趋势分析 */
     trendAnalysis?: {
       /** 技术发展阶段 */
-      stage: 'emerging' | 'growing' | 'mature' | 'declining';
+      stage: 'emerging' | 'growing' | 'mature' | 'declining'
 
       /** 关键技术趋势 */
       keyTrends: Array<{
-        technology: string;
-        growth: number;
-        description: string;
-      }>;
+        technology: string
+        growth: number
+        description: string
+      }>
 
       /** 主要参与者 */
-      keyPlayers: string[];
-    };
+      keyPlayers: string[]
+    }
 
     /** 竞品分析 */
     competitorAnalysis?: {
       /** 竞争对手排名 */
       rankings: Array<{
-        company: string;
-        patentCount: number;
-        marketShare: number;
-        strength: string[];
-      }>;
+        company: string
+        patentCount: number
+        marketShare: number
+        strength: string[]
+      }>
 
       /** 竞争态势 */
       competitionLandscape: {
-        intense: boolean;
-        growthRate: number;
-        barriers: string[];
-      };
-    };
+        intense: boolean
+        growthRate: number
+        barriers: string[]
+      }
+    }
 
     /** 专利地图 */
     patentLandscape?: {
       /** 技术聚类 */
       clusters: Array<{
-        name: string;
-        patentCount: number;
-        keyPatents: string[];
-      }>;
+        name: string
+        patentCount: number
+        keyPatents: string[]
+      }>
 
       /** 空白领域 */
-      whiteSpaces: string[];
+      whiteSpaces: string[]
 
       /** 热点领域 */
-      hotspots: string[];
-    };
-  };
+      hotspots: string[]
+    }
+  }
 
   /** 分析指标 */
   metrics: {
     /** 分析的专利总数 */
-    totalPatents: number;
+    totalPatents: number
 
     /** 数据覆盖率 */
-    coverage: number;
+    coverage: number
 
     /** 可信度评分 */
-    confidence: number;
+    confidence: number
 
     /** 分析耗时（分钟） */
-    durationMinutes: number;
-  };
+    durationMinutes: number
+  }
 
   /** 建议 */
-  recommendations: string[];
+  recommendations: string[]
 }
 
 /**
@@ -152,36 +152,36 @@ export class PatentAnalyzerAgent extends Agent<PatentAnalysisInput, PatentAnalys
       ...config,
       name: 'patent-analyzer',
       description: '专利分析智能体 - 专业的专利价值分析和竞争情报助手',
-    });
+    })
   }
 
   /**
    * 规划阶段：制定分析策略
    */
   protected async plan(input: PatentAnalysisInput, context: any): Promise<any> {
-    console.log(`\n📊 [专利分析] 开始制定分析策略`);
-    console.log(`   分析类型: ${input.analysisType}`);
-    console.log(`   技术领域: ${input.technicalField || '未指定'}`);
+    console.log(`\n📊 [专利分析] 开始制定分析策略`)
+    console.log(`   分析类型: ${input.analysisType}`)
+    console.log(`   技术领域: ${input.technicalField || '未指定'}`)
 
     // patent-core IPC 分类
-    let ipcClassification: any = null;
+    let ipcClassification: any = null
     try {
       const classifyText = [input.technicalField, input.parameters?.keywords]
         .filter(Boolean)
-        .join(' ');
+        .join(' ')
       if (classifyText) {
-        ipcClassification = await PatentCore.classifyIpc(classifyText);
+        ipcClassification = await PatentCore.classifyIpc(classifyText)
         console.log(
           `[PatentAnalyzerAgent] IPC 分类: ${ipcClassification.classifications.map((c: any) => `${c.section}(${c.description})`).join(', ')}`
-        );
+        )
       }
     } catch (e) {
-      console.warn('[PatentAnalyzerAgent] patent-core IPC 分类失败:', (e as Error).message);
+      console.warn('[PatentAnalyzerAgent] patent-core IPC 分类失败:', (e as Error).message)
     }
 
     const ipcContext = ipcClassification
       ? `\n\n## patent-core IPC 分类\n${ipcClassification.classifications.map((c: any) => `- ${c.section}部: ${c.description}`).join('\n')}`
-      : '';
+      : ''
 
     // 使用 LLM 制定分析策略
     const strategy = await context.llm.chat({
@@ -207,43 +207,43 @@ ${ipcContext}`,
         },
       ],
       temperature: 0.3,
-    });
+    })
 
     return {
       strategy: strategy.message.content,
       dataSources: this.identifyDataSources(input),
       analysisMethods: this.selectAnalysisMethods(input),
       ipcClassification,
-    };
+    }
   }
 
   /**
    * 执行阶段：执行分析
    */
   protected async act(plan: any, context: any): Promise<PatentAnalysisOutput> {
-    console.log(`\n🔍 [专利分析] 开始执行分析`);
+    console.log(`\n🔍 [专利分析] 开始执行分析`)
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
-    let results: any = {};
+    let results: any = {}
 
     // 根据分析类型执行不同的分析
     switch (context.input.analysisType) {
       case 'value':
-        results = await this.analyzeValue(plan, context);
-        break;
+        results = await this.analyzeValue(plan, context)
+        break
       case 'trend':
-        results = await this.analyzeTrend(plan, context);
-        break;
+        results = await this.analyzeTrend(plan, context)
+        break
       case 'competitor':
-        results = await this.analyzeCompetitor(plan, context);
-        break;
+        results = await this.analyzeCompetitor(plan, context)
+        break
       case 'landscape':
-        results = await this.analyzeLandscape(plan, context);
-        break;
+        results = await this.analyzeLandscape(plan, context)
+        break
     }
 
-    const duration = (Date.now() - startTime) / 1000 / 60;
+    const duration = (Date.now() - startTime) / 1000 / 60
 
     return {
       analysisType: context.input.analysisType,
@@ -255,21 +255,21 @@ ${ipcContext}`,
         durationMinutes: Math.round(duration),
       },
       recommendations: await this.generateRecommendations(results, context),
-    };
+    }
   }
 
   /**
    * 反思阶段：质量评估
    */
   protected async reflect(output: PatentAnalysisOutput, context: any): Promise<any> {
-    console.log(`\n🤔 [专利分析] 质量评估`);
+    console.log(`\n🤔 [专利分析] 质量评估`)
 
     // patent-core IPC 验证
-    let ipcVerification: any = null;
+    let ipcVerification: any = null
     try {
-      const keywords = context.input?.parameters?.keywords || context.input?.technicalField;
+      const keywords = context.input?.parameters?.keywords || context.input?.technicalField
       if (keywords) {
-        ipcVerification = await PatentCore.classifyIpc(keywords);
+        ipcVerification = await PatentCore.classifyIpc(keywords)
       }
     } catch {
       // IPC 验证失败不影响主流程
@@ -277,7 +277,7 @@ ${ipcContext}`,
 
     const ipcInfo = ipcVerification
       ? `\n\n## IPC 分类验证\n${ipcVerification.classifications.map((c: any) => `- ${c.section}: ${c.description}`).join('\n')}`
-      : '';
+      : ''
 
     const assessment = await context.llm.chat({
       messages: [
@@ -301,12 +301,12 @@ ${ipcContext}`,
         },
       ],
       temperature: 0.3,
-    });
+    })
 
     return {
       qualityAssessment: assessment.message.content,
       ipcVerification,
-    };
+    }
   }
 
   /**
@@ -318,9 +318,9 @@ ${ipcContext}`,
    * - 分析引用数据、法律状态、市场数据
    */
   private async analyzeValue(plan: any, context: any): Promise<any> {
-    console.log(`   💰 执行专利价值分析...`);
+    console.log(`   💰 执行专利价值分析...`)
 
-    const input: PatentAnalysisInput = context.input;
+    const input: PatentAnalysisInput = context.input
 
     try {
       const response = await context.llm.chat({
@@ -355,21 +355,21 @@ ${ipcContext}`,
           },
         ],
         temperature: 0.3,
-      });
+      })
 
-      const content = response.message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content;
-      const parsed = JSON.parse(jsonStr);
+      const content = response.message.content
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      const jsonStr = jsonMatch ? jsonMatch[0] : content
+      const parsed = JSON.parse(jsonStr)
 
       return {
         valueAssessment: {
           highValuePatents: Array.isArray(parsed.highValuePatents) ? parsed.highValuePatents : [],
           valueDistribution: parsed.valueDistribution || { high: 0, medium: 0, low: 0 },
         },
-      };
+      }
     } catch (error) {
-      console.warn(`   ⚠️ 专利价值分析解析失败，返回默认数据:`, error);
+      console.warn(`   ⚠️ 专利价值分析解析失败，返回默认数据:`, error)
       return {
         valueAssessment: {
           highValuePatents: input.targetPatents?.slice(0, 3).map((p: string) => ({
@@ -379,7 +379,7 @@ ${ipcContext}`,
           })) || [{ patentNumber: '示例专利', score: 75, reasons: ['技术领先', '市场潜力大'] }],
           valueDistribution: { high: 1, medium: 1, low: 1 },
         },
-      };
+      }
     }
   }
 
@@ -392,9 +392,9 @@ ${ipcContext}`,
    * - 识别新兴技术和衰退技术
    */
   private async analyzeTrend(plan: any, context: any): Promise<any> {
-    console.log(`   📈 执行技术趋势分析...`);
+    console.log(`   📈 执行技术趋势分析...`)
 
-    const input: PatentAnalysisInput = context.input;
+    const input: PatentAnalysisInput = context.input
 
     try {
       const response = await context.llm.chat({
@@ -428,12 +428,12 @@ ${ipcContext}`,
           },
         ],
         temperature: 0.3,
-      });
+      })
 
-      const content = response.message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content;
-      const parsed = JSON.parse(jsonStr);
+      const content = response.message.content
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      const jsonStr = jsonMatch ? jsonMatch[0] : content
+      const parsed = JSON.parse(jsonStr)
 
       return {
         trendAnalysis: {
@@ -443,9 +443,9 @@ ${ipcContext}`,
           keyTrends: Array.isArray(parsed.keyTrends) ? parsed.keyTrends : [],
           keyPlayers: Array.isArray(parsed.keyPlayers) ? parsed.keyPlayers : [],
         },
-      };
+      }
     } catch (error) {
-      console.warn(`   ⚠️ 技术趋势分析解析失败，返回默认数据:`, error);
+      console.warn(`   ⚠️ 技术趋势分析解析失败，返回默认数据:`, error)
       return {
         trendAnalysis: {
           stage: 'growing',
@@ -460,7 +460,7 @@ ${ipcContext}`,
             ? input.competitors
             : ['主要参与者A', '主要参与者B'],
         },
-      };
+      }
     }
   }
 
@@ -473,9 +473,9 @@ ${ipcContext}`,
    * - 分析专利布局和技术优势
    */
   private async analyzeCompetitor(plan: any, context: any): Promise<any> {
-    console.log(`   🏢 执行竞品分析...`);
+    console.log(`   🏢 执行竞品分析...`)
 
-    const input: PatentAnalysisInput = context.input;
+    const input: PatentAnalysisInput = context.input
 
     try {
       const response = await context.llm.chat({
@@ -508,12 +508,12 @@ ${ipcContext}`,
           },
         ],
         temperature: 0.3,
-      });
+      })
 
-      const content = response.message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content;
-      const parsed = JSON.parse(jsonStr);
+      const content = response.message.content
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      const jsonStr = jsonMatch ? jsonMatch[0] : content
+      const parsed = JSON.parse(jsonStr)
 
       return {
         competitorAnalysis: {
@@ -524,9 +524,9 @@ ${ipcContext}`,
             barriers: [],
           },
         },
-      };
+      }
     } catch (error) {
-      console.warn(`   ⚠️ 竞品分析解析失败，返回默认数据:`, error);
+      console.warn(`   ⚠️ 竞品分析解析失败，返回默认数据:`, error)
       return {
         competitorAnalysis: {
           rankings: input.competitors?.map((c: string) => ({
@@ -548,7 +548,7 @@ ${ipcContext}`,
             barriers: ['技术壁垒', '资金门槛'],
           },
         },
-      };
+      }
     }
   }
 
@@ -562,9 +562,9 @@ ${ipcContext}`,
    * - 生成可视化专利地图
    */
   private async analyzeLandscape(plan: any, context: any): Promise<any> {
-    console.log(`   🗺️ 执行专利地图分析...`);
+    console.log(`   🗺️ 执行专利地图分析...`)
 
-    const input: PatentAnalysisInput = context.input;
+    const input: PatentAnalysisInput = context.input
 
     try {
       const response = await context.llm.chat({
@@ -599,12 +599,12 @@ ${ipcContext}`,
           },
         ],
         temperature: 0.3,
-      });
+      })
 
-      const content = response.message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content;
-      const parsed = JSON.parse(jsonStr);
+      const content = response.message.content
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      const jsonStr = jsonMatch ? jsonMatch[0] : content
+      const parsed = JSON.parse(jsonStr)
 
       return {
         patentLandscape: {
@@ -612,9 +612,9 @@ ${ipcContext}`,
           whiteSpaces: Array.isArray(parsed.whiteSpaces) ? parsed.whiteSpaces : [],
           hotspots: Array.isArray(parsed.hotspots) ? parsed.hotspots : [],
         },
-      };
+      }
     } catch (error) {
-      console.warn(`   ⚠️ 专利地图分析解析失败，返回默认数据:`, error);
+      console.warn(`   ⚠️ 专利地图分析解析失败，返回默认数据:`, error)
       return {
         patentLandscape: {
           clusters: [
@@ -627,7 +627,7 @@ ${ipcContext}`,
           whiteSpaces: ['交叉技术领域', '新兴应用场景'],
           hotspots: ['核心技术优化', '工艺改进方向'],
         },
-      };
+      }
     }
   }
 
@@ -656,55 +656,55 @@ ${JSON.stringify(results, null, 2).substring(0, 1000)}...
         },
       ],
       temperature: 0.5,
-    });
+    })
 
     return [
       '加强核心技术专利布局',
       '关注技术空白领域的机会',
       '建立专利预警机制',
       '增加研发投入以保持竞争优势',
-    ];
+    ]
   }
 
   /**
    * 识别数据源
    */
   private identifyDataSources(input: PatentAnalysisInput): string[] {
-    const sources = ['中国专利数据库', '美国专利商标局'];
+    const sources = ['中国专利数据库', '美国专利商标局']
 
     if (input.parameters?.regions?.includes('EP')) {
-      sources.push('欧洲专利局');
+      sources.push('欧洲专利局')
     }
 
     if (input.parameters?.regions?.includes('WO')) {
-      sources.push('PCT数据库');
+      sources.push('PCT数据库')
     }
 
-    return sources;
+    return sources
   }
 
   /**
    * 选择分析方法
    */
   private selectAnalysisMethods(input: PatentAnalysisInput): string[] {
-    const methods = ['定量分析', '定性分析'];
+    const methods = ['定量分析', '定性分析']
 
     switch (input.analysisType) {
       case 'value':
-        methods.push('价值评估模型', '法律状态分析');
-        break;
+        methods.push('价值评估模型', '法律状态分析')
+        break
       case 'trend':
-        methods.push('时间序列分析', '增长率计算');
-        break;
+        methods.push('时间序列分析', '增长率计算')
+        break
       case 'competitor':
-        methods.push('对比分析', '市场份额计算');
-        break;
+        methods.push('对比分析', '市场份额计算')
+        break
       case 'landscape':
-        methods.push('聚类分析', '文本挖掘');
-        break;
+        methods.push('聚类分析', '文本挖掘')
+        break
     }
 
-    return methods;
+    return methods
   }
 
   /**
@@ -712,21 +712,21 @@ ${JSON.stringify(results, null, 2).substring(0, 1000)}...
    */
   private estimatePatentCount(input: PatentAnalysisInput): number {
     if (input.targetPatents) {
-      return input.targetPatents.length;
+      return input.targetPatents.length
     }
 
     // 基于分析类型和参数估算
     switch (input.analysisType) {
       case 'value':
-        return 100;
+        return 100
       case 'trend':
-        return 5000;
+        return 5000
       case 'competitor':
-        return 1000;
+        return 1000
       case 'landscape':
-        return 10000;
+        return 10000
       default:
-        return 1000;
+        return 1000
     }
   }
 }

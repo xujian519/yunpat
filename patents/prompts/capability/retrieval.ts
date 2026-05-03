@@ -22,12 +22,12 @@ export const CAP_RETRIEVAL_PROMPT = `
 
 ### 步骤3: 结果排序
 对检索结果按相关性排序，优先返回高相关度文档。
-`;
+`
 
 export function renderRetrievalPrompt(params: {
-  query: string;
-  searchType?: string;
-  topK?: number;
+  query: string
+  searchType?: string
+  topK?: number
 }): string {
   return `${CAP_RETRIEVAL_PROMPT}
 
@@ -37,5 +37,5 @@ ${params.query}
 ## 检索参数
 - 类型：${params.searchType || '混合检索'}
 - 返回数量：${params.topK || 5}
-`;
+`
 }

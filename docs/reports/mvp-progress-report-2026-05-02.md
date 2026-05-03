@@ -24,27 +24,22 @@
 1. **FileSystemCheckpointStore: 异步初始化竞态条件** ✅
    - 从 async 改为 sync 初始化
    - 使用 `mkdirSync` 防止竞态条件
-   
 2. **CheckpointManager: 深拷贝不完整** ✅
    - 实现完整的 `deepClone` 函数
    - 支持 Date/Map/Set/循环引用
-   
 3. **PatentCoreBridge: 临时文件清理失败** ✅
    - 使用 `rmSync({ recursive: true, force: true })`
-   
 4. **路径遍历风险** ✅
    - 添加 `sanitizeExecutionId()` 函数
-   
 5. **WorkflowEngine: 私有属性访问** ✅
    - 在 Agent 基类添加 `getTools()` 和 `getLlm()` 方法
-   
 6. **Agent 检查点覆盖问题** ✅
    - 添加序列号机制防止覆盖
 
 ### P1 改进建议（4项）
 
 1. **错误处理增强** ✅
-2. **日志记录改进** ✅  
+2. **日志记录改进** ✅
 3. **类型定义完善** ✅
 4. **性能优化** ✅
 
@@ -59,9 +54,11 @@
 ### 任务 1.1: CheckpointManager 文件系统持久化 ✅
 
 **文件**:
+
 - `packages/core/src/memory/FileSystemCheckpointStore.ts` (新增)
 
 **功能**:
+
 - ✅ JSON 文件序列化到 `data/checkpoints/{executionId}/`
 - ✅ 检查点包含：memorySnapshot、contextSnapshot、stateSnapshot
 - ✅ `listResumableExecutions()` 接口
@@ -70,30 +67,35 @@
 ### 任务 1.2: Agent 基类集成 ApprovalFlow/CheckpointManager ✅
 
 **文件**:
+
 - `packages/core/src/agent/Agent.ts` (修改)
 
 **新增配置**:
+
 ```typescript
 export interface AgentConfig {
-  approvalFlow?: ApprovalFlow;
-  checkpointManager?: CheckpointManager;
-  approvalStages?: LifecycleStage[];
-  enableCheckpoints?: boolean;
+  approvalFlow?: ApprovalFlow
+  checkpointManager?: CheckpointManager
+  approvalStages?: LifecycleStage[]
+  enableCheckpoints?: boolean
 }
 ```
 
 **执行流程**:
+
 ```
-before → init → [检查点] → plan → [检查点] → [审批] → 
+before → init → [检查点] → plan → [检查点] → [审批] →
 act → [检查点] → [审批] → reflect → [检查点] → after
 ```
 
 ### 任务 1.3: WorkflowEngine 轻量封装 ✅
 
 **文件**:
+
 - `packages/core/src/planning/WorkflowEngine.ts` (新增)
 
 **功能**:
+
 - ✅ 基于 TaskScheduler 封装
 - ✅ 输入验证
 - ✅ 内存泄漏防护
@@ -102,9 +104,11 @@ act → [检查点] → [审批] → reflect → [检查点] → after
 ### 任务 1.4: PatentCoreBridge 降级策略 ✅
 
 **文件**:
+
 - `patents/core/PatentCoreBridge.ts` (修复)
 
 **改进**:
+
 - ✅ 临时文件清理修复
 - ✅ 错误处理增强
 - ✅ TypeScript fallback 完整
@@ -136,17 +140,20 @@ act → [检查点] → [审批] → reflect → [检查点] → after
 ## 🎯 关键成果
 
 ### 代码质量
+
 - ✅ 909+ 测试通过（98.5% 通过率）
 - ✅ P0 严重问题全部修复
 - ✅ P1 改进建议全部实现
 
 ### 框架能力
+
 - ✅ 检查点持久化（文件系统）
 - ✅ 人机审批集成
 - ✅ Agent 生命周期增强
 - ✅ 工作流编排基础
 
 ### CI/CD
+
 - ✅ Git 网络问题诊断和修复
 - ✅ Runner 资源优化配置
 - ✅ Rust 重试机制
@@ -155,14 +162,14 @@ act → [检查点] → [审批] → reflect → [检查点] → after
 
 ## 📈 进度对比
 
-| 阶段 | 预计时间 | 实际时间 | 状态 |
-|------|---------|---------|------|
-| Phase 0 | - | 1 天 | ✅ 完成 |
-| Phase 1 | 1.5-2 周 | 3 天 | ✅ 完成 |
-| Phase 2 | 1.5-2 周 | - | ⏳ 未开始 |
-| Phase 3 | 1.5-2 周 | - | 📅 计划中 |
-| Phase 4 | 2-3 周 | - | 📅 计划中 |
-| Phase 5 | 1 周 | - | 📅 计划中 |
+| 阶段    | 预计时间 | 实际时间 | 状态      |
+| ------- | -------- | -------- | --------- |
+| Phase 0 | -        | 1 天     | ✅ 完成   |
+| Phase 1 | 1.5-2 周 | 3 天     | ✅ 完成   |
+| Phase 2 | 1.5-2 周 | -        | ⏳ 未开始 |
+| Phase 3 | 1.5-2 周 | -        | 📅 计划中 |
+| Phase 4 | 2-3 周   | -        | 📅 计划中 |
+| Phase 5 | 1 周     | -        | 📅 计划中 |
 
 **总进度**: ~15% (2/13 阶段完成)
 

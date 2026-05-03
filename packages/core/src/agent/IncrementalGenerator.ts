@@ -1,4 +1,4 @@
-import { LLMAdapter } from '../lifecycle/Lifecycle.js';
+import { LLMAdapter } from '../lifecycle/Lifecycle.js'
 
 /**
  * 内容差异
@@ -7,26 +7,26 @@ export interface ContentDiff {
   /** 差异列表 */
   changes: Array<{
     /** 变更类型 */
-    type: 'modify' | 'add' | 'delete' | 'expand' | 'compress';
+    type: 'modify' | 'add' | 'delete' | 'expand' | 'compress'
 
     /** 章节/段落标识 */
-    section?: string;
+    section?: string
 
     /** 新要求（用于 modify） */
-    newRequirement?: string;
+    newRequirement?: string
 
     /** 原始内容 */
-    originalContent?: string;
+    originalContent?: string
 
     /** 变更原因 */
-    reason?: string;
-  }>;
+    reason?: string
+  }>
 
   /** 差异摘要 */
-  summary: string;
+  summary: string
 
   /** 预估节省比例（0-1） */
-  estimatedSavings: number;
+  estimatedSavings: number
 }
 
 /**
@@ -53,7 +53,7 @@ export class IncrementalGenerator {
    * @returns 内容差异
    */
   async diff(originalContent: string, newRequirements: string): Promise<ContentDiff> {
-    const prompt = this.buildDiffPrompt(originalContent, newRequirements);
+    const prompt = this.buildDiffPrompt(originalContent, newRequirements)
 
     const response = await this.llm.chat({
       messages: [
@@ -67,10 +67,10 @@ export class IncrementalGenerator {
         },
       ],
       temperature: 0.3, // 低温度保证稳定性
-    });
+    })
 
     // 解析差异
-    return this.parseDiff(response.message.content, originalContent);
+    return this.parseDiff(response.message.content, originalContent)
   }
 
   /**
@@ -81,7 +81,7 @@ export class IncrementalGenerator {
    * @returns 更新后的内容
    */
   async update(originalContent: string, diff: ContentDiff): Promise<string> {
-    let updatedContent = originalContent;
+    let updatedContent = originalContent
 
     // 处理每个变更
     for (const change of diff.changes) {
@@ -92,39 +92,39 @@ export class IncrementalGenerator {
               updatedContent,
               change.section,
               change.newRequirement
-            );
+            )
           }
-          break;
+          break
 
         case 'add':
           if (change.section) {
-            updatedContent = await this.addSection(updatedContent, change.section);
+            updatedContent = await this.addSection(updatedContent, change.section)
           }
-          break;
+          break
 
         case 'delete':
           if (change.section) {
-            updatedContent = await this.deleteSection(updatedContent, change.section);
+            updatedContent = await this.deleteSection(updatedContent, change.section)
           }
-          break;
+          break
 
         case 'expand':
           updatedContent = await this.expand(
             updatedContent,
             change.originalContent || updatedContent
-          );
-          break;
+          )
+          break
 
         case 'compress':
           updatedContent = await this.compress(
             updatedContent,
             change.originalContent || updatedContent
-          );
-          break;
+          )
+          break
       }
     }
 
-    return updatedContent;
+    return updatedContent
   }
 
   /**
@@ -135,8 +135,8 @@ export class IncrementalGenerator {
    * @returns 扩展后的内容
    */
   async expand(content: string, referenceContent?: string): Promise<string> {
-    const baseLength = (referenceContent || content).length;
-    const targetLength = Math.floor(baseLength * 1.5); // 扩展 50%
+    const baseLength = (referenceContent || content).length
+    const targetLength = Math.floor(baseLength * 1.5) // 扩展 50%
 
     const prompt = `请扩展以下内容，使其更详细和丰富，目标长度：约 ${Math.round(targetLength)} 字。
 
@@ -151,7 +151,7 @@ export class IncrementalGenerator {
 ${content}
 \`\`\`
 
-**扩展后的内容**：`;
+**扩展后的内容**：`
 
     const response = await this.llm.chat({
       messages: [
@@ -165,9 +165,9 @@ ${content}
         },
       ],
       temperature: 0.7,
-    });
+    })
 
-    return response.message.content;
+    return response.message.content
   }
 
   /**
@@ -178,8 +178,8 @@ ${content}
    * @returns 压缩后的内容
    */
   async compress(content: string, referenceContent?: string): Promise<string> {
-    const baseLength = (referenceContent || content).length;
-    const targetLength = Math.floor(baseLength * 0.7); // 压缩 30%
+    const baseLength = (referenceContent || content).length
+    const targetLength = Math.floor(baseLength * 0.7) // 压缩 30%
 
     const prompt = `请压缩以下内容，使其更简洁，目标长度：约 ${Math.round(targetLength)} 字。
 
@@ -194,7 +194,7 @@ ${content}
 ${content}
 \`\`\`
 
-**压缩后的内容**：`;
+**压缩后的内容**：`
 
     const response = await this.llm.chat({
       messages: [
@@ -208,9 +208,9 @@ ${content}
         },
       ],
       temperature: 0.5,
-    });
+    })
 
-    return response.message.content;
+    return response.message.content
   }
 
   /**
@@ -222,11 +222,11 @@ ${content}
     newRequirement: string
   ): Promise<string> {
     // 提取该章节的内容
-    const sectionContent = this.extractSection(content, section);
+    const sectionContent = this.extractSection(content, section)
 
     if (!sectionContent) {
       // 章节不存在，可能需要添加
-      return content;
+      return content
     }
 
     // 使用 LLM 修改章节
@@ -241,7 +241,7 @@ ${content}
 ${sectionContent}
 \`\`\`
 
-**修改后的内容**：`;
+**修改后的内容**：`
 
     const response = await this.llm.chat({
       messages: [
@@ -255,10 +255,10 @@ ${sectionContent}
         },
       ],
       temperature: 0.6,
-    });
+    })
 
     // 替换章节内容
-    return this.replaceSection(content, section, response.message.content);
+    return this.replaceSection(content, section, response.message.content)
   }
 
   /**
@@ -274,7 +274,7 @@ ${sectionContent}
 ${content.slice(-500)}
 \`\`\`
 
-**新章节内容**（保持与文档风格一致）：`;
+**新章节内容**（保持与文档风格一致）：`
 
     const response = await this.llm.chat({
       messages: [
@@ -288,10 +288,10 @@ ${content.slice(-500)}
         },
       ],
       temperature: 0.7,
-    });
+    })
 
     // 添加新章节
-    return `${content}\n\n## ${section}\n\n${response.message.content}`;
+    return `${content}\n\n## ${section}\n\n${response.message.content}`
   }
 
   /**
@@ -302,8 +302,8 @@ ${content.slice(-500)}
     const sectionRegex = new RegExp(
       `##?\\s*${section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*?(?=##?\\s|$)`,
       'gs'
-    );
-    return content.replace(sectionRegex, '').trim();
+    )
+    return content.replace(sectionRegex, '').trim()
   }
 
   /**
@@ -314,9 +314,9 @@ ${content.slice(-500)}
     const sectionRegex = new RegExp(
       `##?\\s*${section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*?(?=##?\\s|$)`,
       'gs'
-    );
-    const match = content.match(sectionRegex);
-    return match ? match[0] : null;
+    )
+    const match = content.match(sectionRegex)
+    return match ? match[0] : null
   }
 
   /**
@@ -327,8 +327,8 @@ ${content.slice(-500)}
     const sectionRegex = new RegExp(
       `(##?\\s*${section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\n\n).*?(?=##?\\s|$)`,
       'gs'
-    );
-    return content.replace(sectionRegex, `$1${newContent}\n\n`);
+    )
+    return content.replace(sectionRegex, `$1${newContent}\n\n`)
   }
 
   /**
@@ -368,7 +368,7 @@ ${newRequirements}
 - \`expand\`: 扩展内容长度
 - \`compress\`: 压缩内容长度
 
-**estimatedSavings**：预估的 token 节省比例（0-1）`;
+**estimatedSavings**：预估的 token 节省比例（0-1）`
   }
 
   /**
@@ -377,26 +377,26 @@ ${newRequirements}
   private parseDiff(response: string, originalContent: string): ContentDiff {
     try {
       // 尝试提取 JSON
-      let jsonMatch = response.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+      let jsonMatch = response.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/)
       if (!jsonMatch) {
-        jsonMatch = response.match(/\{[\s\S]*\}/);
+        jsonMatch = response.match(/\{[\s\S]*\}/)
       }
 
       if (!jsonMatch) {
-        throw new Error('无法提取差异分析 JSON');
+        throw new Error('无法提取差异分析 JSON')
       }
 
-      const parsed = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[1] || jsonMatch[0])
 
       // 验证并返回
       return {
         changes: parsed.changes || [],
         summary: parsed.summary || '',
         estimatedSavings: parsed.estimatedSavings || 0.5,
-      };
+      }
     } catch (error) {
       // 解析失败，返回默认差异
-      console.error('差异解析失败，使用默认策略', error);
+      console.error('差异解析失败，使用默认策略', error)
       return {
         changes: [
           {
@@ -407,7 +407,7 @@ ${newRequirements}
         ],
         summary: '差异分析失败，将完整重新生成',
         estimatedSavings: 0,
-      };
+      }
     }
   }
 }

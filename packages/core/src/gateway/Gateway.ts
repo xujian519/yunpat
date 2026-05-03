@@ -15,13 +15,13 @@ import {
   type ApiKeyInfo,
   type AuthorizationUrlResult,
   type OAuthCallbackResult,
-} from './auth/index.js';
+} from './auth/index.js'
 import {
   ContentModerationService,
   RuleBasedModerationService,
   OpenAIModerationService,
   type ModerationResult,
-} from './ContentModerationService.js';
+} from './ContentModerationService.js'
 
 /**
  * 输入源类型
@@ -57,48 +57,48 @@ export enum InputSourceType {
  */
 export interface MultimodalInput {
   /** 输入源类型 */
-  sourceType: InputSourceType;
+  sourceType: InputSourceType
 
   /** 主内容（文本） */
-  text?: string;
+  text?: string
 
   /** 语音数据 */
   audio?: {
-    data: ArrayBuffer;
-    format: 'mp3' | 'wav' | 'ogg';
-    duration?: number;
-  };
+    data: ArrayBuffer
+    format: 'mp3' | 'wav' | 'ogg'
+    duration?: number
+  }
 
   /** 图像数据 */
   image?: {
-    data: ArrayBuffer;
-    format: 'png' | 'jpg' | 'webp';
-    width?: number;
-    height?: number;
-  };
+    data: ArrayBuffer
+    format: 'png' | 'jpg' | 'webp'
+    width?: number
+    height?: number
+  }
 
   /** 视频数据 */
   video?: {
-    data: ArrayBuffer;
-    format: 'mp4' | 'webm';
-    duration?: number;
-  };
+    data: ArrayBuffer
+    format: 'mp4' | 'webm'
+    duration?: number
+  }
 
   /** 文件数据 */
   file?: {
-    name: string;
-    data: ArrayBuffer;
-    mimeType: string;
-    size: number;
-  };
+    name: string
+    data: ArrayBuffer
+    mimeType: string
+    size: number
+  }
 
   /** 元数据 */
   metadata?: {
-    timestamp: Date;
-    userId?: string;
-    sessionId?: string;
-    tags?: string[];
-  };
+    timestamp: Date
+    userId?: string
+    sessionId?: string
+    tags?: string[]
+  }
 }
 
 /**
@@ -125,28 +125,28 @@ export enum OutputTargetType {
  */
 export interface MultimodalOutput {
   /** 输出目标类型 */
-  targetType: OutputTargetType;
+  targetType: OutputTargetType
 
   /** 文本内容 */
-  text?: string;
+  text?: string
 
   /** 是否流式输出 */
-  stream?: boolean;
+  stream?: boolean
 
   /** 附加数据 */
   attachments?: Array<{
-    type: 'image' | 'file' | 'audio';
-    data: ArrayBuffer;
-    metadata?: Record<string, unknown>;
-  }>;
+    type: 'image' | 'file' | 'audio'
+    data: ArrayBuffer
+    metadata?: Record<string, unknown>
+  }>
 
   /** 元数据 */
   metadata?: {
-    timestamp: Date;
-    contentType: string;
-    tokens?: number;
-    cost?: number;
-  };
+    timestamp: Date
+    contentType: string
+    tokens?: number
+    cost?: number
+  }
 }
 
 /**
@@ -154,19 +154,19 @@ export interface MultimodalOutput {
  */
 export interface HumanApproval {
   /** 是否批准 */
-  approved: boolean;
+  approved: boolean
 
   /** 审批意见 */
-  feedback?: string;
+  feedback?: string
 
   /** 修改建议 */
-  suggestions?: string[];
+  suggestions?: string[]
 
   /** 审批时间 */
-  timestamp: Date;
+  timestamp: Date
 
   /** 审批人 */
-  userId: string;
+  userId: string
 }
 
 /**
@@ -174,29 +174,29 @@ export interface HumanApproval {
  */
 export interface ApprovalRequest {
   /** 请求 ID */
-  requestId: string;
+  requestId: string
 
   /** 智能体名称 */
-  agentName: string;
+  agentName: string
 
   /** 需要审批的内容 */
   content: {
-    type: 'action' | 'output' | 'plan';
-    data: unknown;
-  };
+    type: 'action' | 'output' | 'plan'
+    data: unknown
+  }
 
   /** 上下文信息 */
   context: {
-    goal: string;
-    reasoning: string;
-    alternatives?: string[];
-  };
+    goal: string
+    reasoning: string
+    alternatives?: string[]
+  }
 
   /** 超时时间（毫秒） */
-  timeout?: number;
+  timeout?: number
 
   /** 审批级别 */
-  level: 'info' | 'warning' | 'critical';
+  level: 'info' | 'warning' | 'critical'
 }
 
 /**
@@ -204,25 +204,25 @@ export interface ApprovalRequest {
  */
 export interface AuthResult {
   /** 是否认证成功 */
-  success: boolean;
+  success: boolean
 
   /** 用户 ID */
-  userId?: string;
+  userId?: string
 
   /** 用户角色 */
-  roles?: string[];
+  roles?: string[]
 
   /** 权限列表 */
-  permissions?: string[];
+  permissions?: string[]
 
   /** Token */
-  token?: string;
+  token?: string
 
   /** 过期时间 */
-  expiresAt?: Date;
+  expiresAt?: Date
 
   /** 错误信息 */
-  error?: string;
+  error?: string
 }
 
 /**
@@ -230,23 +230,23 @@ export interface AuthResult {
  */
 export interface Credentials {
   /** 认证类型 */
-  type: 'apikey' | 'jwt' | 'oauth' | 'basic';
+  type: 'apikey' | 'jwt' | 'oauth' | 'basic'
 
   /** 凭证数据 */
   data: {
-    apiKey?: string;
-    token?: string;
-    username?: string;
-    password?: string;
+    apiKey?: string
+    token?: string
+    username?: string
+    password?: string
     /** OAuth 提供商 */
-    provider?: 'google' | 'github';
+    provider?: 'google' | 'github'
     /** OAuth 授权码 */
-    code?: string;
+    code?: string
     /** OAuth State */
-    state?: string;
+    state?: string
     /** OAuth 重定向 URI */
-    redirectUri?: string;
-  };
+    redirectUri?: string
+  }
 }
 
 /**
@@ -254,13 +254,13 @@ export interface Credentials {
  */
 export interface Permission {
   /** 资源 */
-  resource: string;
+  resource: string
 
   /** 操作 */
-  action: 'read' | 'write' | 'execute' | 'admin' | '*';
+  action: 'read' | 'write' | 'execute' | 'admin' | '*'
 
   /** 作用域 */
-  scope?: string[];
+  scope?: string[]
 }
 
 /**
@@ -268,13 +268,13 @@ export interface Permission {
  */
 export interface Action {
   /** 动作类型 */
-  type: string;
+  type: string
 
   /** 目标资源 */
-  resource?: string;
+  resource?: string
 
   /** 操作 */
-  action?: 'read' | 'write' | 'execute' | 'admin' | '*';
+  action?: 'read' | 'write' | 'execute' | 'admin' | '*'
 }
 
 /**
@@ -282,37 +282,37 @@ export interface Action {
  */
 export interface SecurityGatewayConfig {
   /** 是否启用认证 */
-  enableAuth: boolean;
+  enableAuth: boolean
 
   /** 是否启用权限控制 */
-  enableAuthorization: boolean;
+  enableAuthorization: boolean
 
   /** 是否启用内容过滤 */
-  enableContentFilter: boolean;
+  enableContentFilter: boolean
 
   /** 是否启用审计日志 */
-  enableAudit: boolean;
+  enableAudit: boolean
 
   /** 内容过滤规则 */
-  contentFilterRules?: ContentFilterRule[];
+  contentFilterRules?: ContentFilterRule[]
 
   /** ML 内容审核服务（可选） */
-  mlModerationService?: ContentModerationService;
+  mlModerationService?: ContentModerationService
 
   /** 审计日志存储 */
-  auditLogStore?: AuditLogStore;
+  auditLogStore?: AuditLogStore
 
   /** API Key 管理器（可选） */
-  apiKeyManager?: ApiKeyManager;
+  apiKeyManager?: ApiKeyManager
 
   /** JWT 管理器（可选） */
-  jwtManager?: JwtManager;
+  jwtManager?: JwtManager
 
   /** 会话管理器（可选） */
-  sessionManager?: SessionManager;
+  sessionManager?: SessionManager
 
   /** OAuth 管理器（可选） */
-  oauthManager?: OAuthManager;
+  oauthManager?: OAuthManager
 }
 
 /**
@@ -320,26 +320,26 @@ export interface SecurityGatewayConfig {
  */
 export interface ContentFilterRule {
   /** 规则名称 */
-  name: string;
+  name: string
 
   /** 规则类型 */
-  type: 'keyword' | 'pattern' | 'ml';
+  type: 'keyword' | 'pattern' | 'ml'
 
   /** 规则内容
    * - keyword: 字符串
    * - pattern: 正则表达式字符串或 RegExp 对象
    * - ml: 模型名称或配置
    */
-  content: string | RegExp;
+  content: string | RegExp
 
   /** 正则表达式标志（仅当 type 为 'pattern' 且 content 为字符串时使用） */
-  flags?: 'i' | 'g' | 'm' | 's' | string;
+  flags?: 'i' | 'g' | 'm' | 's' | string
 
   /** 动作 */
-  action: 'block' | 'flag' | 'sanitize';
+  action: 'block' | 'flag' | 'sanitize'
 
   /** 严重程度 */
-  severity: 'low' | 'medium' | 'high';
+  severity: 'low' | 'medium' | 'high'
 }
 
 /**
@@ -347,28 +347,28 @@ export interface ContentFilterRule {
  */
 export interface AuditLog {
   /** 时间戳 */
-  timestamp: Date;
+  timestamp: Date
 
   /** 用户 ID */
-  userId?: string;
+  userId?: string
 
   /** 智能体名称 */
-  agentName?: string;
+  agentName?: string
 
   /** 动作 */
-  action: string;
+  action: string
 
   /** 资源 */
-  resource?: string;
+  resource?: string
 
   /** 结果 */
-  result: 'success' | 'failure' | 'blocked';
+  result: 'success' | 'failure' | 'blocked'
 
   /** 详情 */
-  details?: Record<string, unknown>;
+  details?: Record<string, unknown>
 
   /** IP 地址 */
-  ipAddress?: string;
+  ipAddress?: string
 }
 
 /**
@@ -376,13 +376,13 @@ export interface AuditLog {
  */
 export interface AuditLogStore {
   /** 写入日志 */
-  write(log: AuditLog): Promise<void>;
+  write(log: AuditLog): Promise<void>
 
   /** 查询日志 */
-  query(filter: AuditLogFilter): Promise<AuditLog[]>;
+  query(filter: AuditLogFilter): Promise<AuditLog[]>
 
   /** 统计 */
-  stats(metrics: AuditMetrics): Promise<Record<string, number>>;
+  stats(metrics: AuditMetrics): Promise<Record<string, number>>
 }
 
 /**
@@ -391,21 +391,21 @@ export interface AuditLogStore {
 export interface AuditLogFilter {
   /** 时间范围 */
   timeRange?: {
-    start: Date;
-    end: Date;
-  };
+    start: Date
+    end: Date
+  }
 
   /** 用户 ID */
-  userId?: string;
+  userId?: string
 
   /** 智能体名称 */
-  agentName?: string;
+  agentName?: string
 
   /** 动作 */
-  action?: string;
+  action?: string
 
   /** 结果 */
-  result?: 'success' | 'failure' | 'blocked';
+  result?: 'success' | 'failure' | 'blocked'
 }
 
 /**
@@ -413,16 +413,16 @@ export interface AuditLogFilter {
  */
 export interface AuditMetrics {
   /** 按动作统计 */
-  byAction?: boolean;
+  byAction?: boolean
 
   /** 按用户统计 */
-  byUser?: boolean;
+  byUser?: boolean
 
   /** 按智能体统计 */
-  byAgent?: boolean;
+  byAgent?: boolean
 
   /** 按结果统计 */
-  byResult?: boolean;
+  byResult?: boolean
 }
 
 /**
@@ -432,22 +432,22 @@ export interface Gateway {
   /**
    * 接收输入
    */
-  receiveInput(source: InputSourceType): Promise<MultimodalInput>;
+  receiveInput(source: InputSourceType): Promise<MultimodalInput>
 
   /**
    * 发送输出
    */
-  sendOutput(output: MultimodalOutput, target: OutputTargetType): Promise<void>;
+  sendOutput(output: MultimodalOutput, target: OutputTargetType): Promise<void>
 
   /**
    * 请求人工审批
    */
-  requestHumanApproval(request: ApprovalRequest): Promise<HumanApproval>;
+  requestHumanApproval(request: ApprovalRequest): Promise<HumanApproval>
 
   /**
    * 身份认证
    */
-  authenticate(credentials: Credentials): Promise<AuthResult>;
+  authenticate(credentials: Credentials): Promise<AuthResult>
 
   /**
    * 权限检查
@@ -455,39 +455,39 @@ export interface Gateway {
   authorize(
     action: Action,
     permissions: Permission[]
-  ): Promise<{ authorized: boolean; reason?: string }>;
+  ): Promise<{ authorized: boolean; reason?: string }>
 
   /**
    * 内容过滤
    */
-  filterContent(content: string): Promise<{ filtered: boolean; reason?: string }>;
+  filterContent(content: string): Promise<{ filtered: boolean; reason?: string }>
 
   /**
    * 写入审计日志
    */
-  writeAuditLog(log: AuditLog): Promise<void>;
+  writeAuditLog(log: AuditLog): Promise<void>
 }
 
 /**
  * 基础 Gateway 实现
  */
 export class BaseGateway implements Gateway {
-  private config: SecurityGatewayConfig;
-  private auditStore?: AuditLogStore;
-  private apiKeyManager?: ApiKeyManager;
-  private jwtManager?: JwtManager;
-  private sessionManager?: SessionManager;
-  private oauthManager?: OAuthManager;
-  private mlModerationService?: ContentModerationService;
+  private config: SecurityGatewayConfig
+  private auditStore?: AuditLogStore
+  private apiKeyManager?: ApiKeyManager
+  private jwtManager?: JwtManager
+  private sessionManager?: SessionManager
+  private oauthManager?: OAuthManager
+  private mlModerationService?: ContentModerationService
 
   constructor(config: SecurityGatewayConfig) {
-    this.config = config;
-    this.auditStore = config.auditLogStore;
-    this.apiKeyManager = config.apiKeyManager;
-    this.jwtManager = config.jwtManager;
-    this.sessionManager = config.sessionManager;
-    this.oauthManager = config.oauthManager;
-    this.mlModerationService = config.mlModerationService;
+    this.config = config
+    this.auditStore = config.auditLogStore
+    this.apiKeyManager = config.apiKeyManager
+    this.jwtManager = config.jwtManager
+    this.sessionManager = config.sessionManager
+    this.oauthManager = config.oauthManager
+    this.mlModerationService = config.mlModerationService
   }
 
   async receiveInput(source: InputSourceType): Promise<MultimodalInput> {
@@ -498,12 +498,12 @@ export class BaseGateway implements Gateway {
       metadata: {
         timestamp: new Date(),
       },
-    };
+    }
   }
 
   async sendOutput(output: MultimodalOutput, target: OutputTargetType): Promise<void> {
     if (target === OutputTargetType.TERMINAL && output.text) {
-      console.log(output.text);
+      console.log(output.text)
     }
 
     // 写入审计日志
@@ -516,21 +516,21 @@ export class BaseGateway implements Gateway {
           targetType: target,
           contentLength: output.text?.length || 0,
         },
-      });
+      })
     }
   }
 
   async requestHumanApproval(request: ApprovalRequest): Promise<HumanApproval> {
     // 默认实现：自动批准
     // 实际应用中应该实现审批流程（WebSocket、邮件、Slack 等）
-    console.log(`[审批请求] ${request.agentName}: ${request.content.type}`);
-    console.log(`[上下文] ${request.context.goal}`);
+    console.log(`[审批请求] ${request.agentName}: ${request.content.type}`)
+    console.log(`[上下文] ${request.context.goal}`)
 
     return {
       approved: true,
       timestamp: new Date(),
       userId: 'system',
-    };
+    }
   }
 
   async authenticate(credentials: Credentials): Promise<AuthResult> {
@@ -540,7 +540,7 @@ export class BaseGateway implements Gateway {
         userId: 'anonymous',
         roles: ['guest'],
         permissions: ['read'],
-      };
+      }
     }
 
     try {
@@ -551,51 +551,51 @@ export class BaseGateway implements Gateway {
             return {
               success: false,
               error: 'API Key 管理器未配置',
-            };
+            }
           }
 
-          const apiKey = credentials.data.apiKey;
+          const apiKey = credentials.data.apiKey
 
           if (!apiKey) {
             return {
               success: false,
               error: '缺少 API Key',
-            };
+            }
           }
 
-          const keyInfo = await this.apiKeyManager.verifyApiKey(apiKey);
+          const keyInfo = await this.apiKeyManager.verifyApiKey(apiKey)
 
           if (!keyInfo) {
             return {
               success: false,
               error: '无效的 API Key',
-            };
+            }
           }
 
           // 创建会话
-          let sessionId: string | undefined;
+          let sessionId: string | undefined
           if (this.sessionManager) {
             const session = await this.sessionManager.createSession({
               userId: keyInfo.userId,
               roles: keyInfo.roles,
               permissions: keyInfo.permissions,
               ttl: 3600, // 1 小时
-            });
-            sessionId = session.sessionId;
+            })
+            sessionId = session.sessionId
           }
 
           // 生成 JWT Token（如果配置了）
-          let token: string | undefined;
-          let expiresAt: Date | undefined;
+          let token: string | undefined
+          let expiresAt: Date | undefined
 
           if (this.jwtManager) {
             const tokenPair = await this.jwtManager.generateTokenPair(
               keyInfo.userId,
               keyInfo.roles,
               keyInfo.permissions
-            );
-            token = tokenPair.accessToken;
-            expiresAt = new Date(tokenPair.expiresAt * 1000);
+            )
+            token = tokenPair.accessToken
+            expiresAt = new Date(tokenPair.expiresAt * 1000)
           }
 
           return {
@@ -605,7 +605,7 @@ export class BaseGateway implements Gateway {
             permissions: keyInfo.permissions,
             token,
             expiresAt,
-          };
+          }
         }
 
         case 'jwt': {
@@ -614,25 +614,25 @@ export class BaseGateway implements Gateway {
             return {
               success: false,
               error: 'JWT 管理器未配置',
-            };
+            }
           }
 
-          const token = credentials.data.token;
+          const token = credentials.data.token
 
           if (!token) {
             return {
               success: false,
               error: '缺少 Token',
-            };
+            }
           }
 
-          const result = await this.jwtManager.verifyAccessToken(token);
+          const result = await this.jwtManager.verifyAccessToken(token)
 
           if (!result.success || !result.payload) {
             return {
               success: false,
               error: `无效的 Token: ${result.error || 'unknown'}`,
-            };
+            }
           }
 
           return {
@@ -642,7 +642,7 @@ export class BaseGateway implements Gateway {
             permissions: result.payload.permissions,
             token,
             expiresAt: new Date(result.payload.exp * 1000),
-          };
+          }
         }
 
         case 'oauth': {
@@ -651,19 +651,19 @@ export class BaseGateway implements Gateway {
             return {
               success: false,
               error: 'OAuth 管理器未配置',
-            };
+            }
           }
 
-          const provider = credentials.data.provider;
-          const code = credentials.data.code;
-          const state = credentials.data.state;
-          const redirectUri = credentials.data.redirectUri;
+          const provider = credentials.data.provider
+          const code = credentials.data.code
+          const state = credentials.data.state
+          const redirectUri = credentials.data.redirectUri
 
           if (!provider || !code || !state || !redirectUri) {
             return {
               success: false,
               error: '缺少 OAuth 参数',
-            };
+            }
           }
 
           try {
@@ -672,32 +672,32 @@ export class BaseGateway implements Gateway {
               code,
               state,
               redirectUri
-            );
+            )
 
             // 创建会话
-            let sessionId: string | undefined;
+            let sessionId: string | undefined
             if (this.sessionManager) {
               const session = await this.sessionManager.createSession({
                 userId: result.userInfo.id,
                 roles: ['user'],
                 permissions: ['read', 'write'],
                 ttl: 3600, // 1 小时
-              });
-              sessionId = session.sessionId;
+              })
+              sessionId = session.sessionId
             }
 
             // 生成 JWT Token（如果配置了）
-            let token: string | undefined;
-            let expiresAt: Date | undefined;
+            let token: string | undefined
+            let expiresAt: Date | undefined
 
             if (this.jwtManager) {
               const tokenPair = await this.jwtManager.generateTokenPair(
                 result.userInfo.id,
                 ['user'],
                 ['read', 'write']
-              );
-              token = tokenPair.accessToken;
-              expiresAt = new Date(tokenPair.expiresAt * 1000);
+              )
+              token = tokenPair.accessToken
+              expiresAt = new Date(tokenPair.expiresAt * 1000)
             }
 
             return {
@@ -707,12 +707,12 @@ export class BaseGateway implements Gateway {
               permissions: ['read', 'write'],
               token,
               expiresAt,
-            };
+            }
           } catch (error) {
             return {
               success: false,
               error: error instanceof Error ? error.message : String(error),
-            };
+            }
           }
         }
 
@@ -721,19 +721,19 @@ export class BaseGateway implements Gateway {
           return {
             success: false,
             error: 'Basic 认证暂未实现',
-          };
+          }
 
         default:
           return {
             success: false,
             error: '不支持的认证类型',
-          };
+          }
       }
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
-      };
+      }
     }
   }
 
@@ -742,107 +742,109 @@ export class BaseGateway implements Gateway {
     permissions: Permission[]
   ): Promise<{ authorized: boolean; reason?: string }> {
     if (!this.config.enableAuthorization) {
-      return { authorized: true };
+      return { authorized: true }
     }
 
     // 检查通配符权限
-    const hasWildcardPermission = permissions.some((p) => p.resource === '*' && p.action === '*');
+    const hasWildcardPermission = permissions.some((p) => p.resource === '*' && p.action === '*')
     if (hasWildcardPermission) {
-      return { authorized: true };
+      return { authorized: true }
     }
 
     // 检查资源级权限
     // 1. 先找完全匹配的权限（resource 和 action 都匹配）
     const exactPermission = permissions.find(
       (p) => p.resource === action.resource && (p.action === action.type || p.action === '*')
-    );
+    )
 
     if (exactPermission) {
-      return { authorized: true };
+      return { authorized: true }
     }
 
     // 2. 找通配符资源权限
     const wildcardResourcePermission = permissions.find(
       (p) => p.resource === '*' && (p.action === action.type || p.action === '*')
-    );
+    )
 
     if (wildcardResourcePermission) {
-      return { authorized: true };
+      return { authorized: true }
     }
 
     // 3. 没有找到匹配的权限
     return {
       authorized: false,
       reason: `Missing permission: ${action.resource}:${action.type}`,
-    };
+    }
   }
 
   async filterContent(content: string): Promise<{
-    filtered: boolean;
-    reason?: string;
-    matchedRule?: string;
+    filtered: boolean
+    reason?: string
+    matchedRule?: string
   }> {
     if (!this.config.enableContentFilter || !this.config.contentFilterRules) {
-      return { filtered: false };
+      return { filtered: false }
     }
 
     for (const rule of this.config.contentFilterRules) {
-      let matched = false;
+      let matched = false
 
       switch (rule.type) {
         case 'keyword':
           matched =
             typeof rule.content === 'string' &&
-            content.toLowerCase().includes(rule.content.toLowerCase());
-          break;
+            content.toLowerCase().includes(rule.content.toLowerCase())
+          break
 
         case 'pattern':
           // 支持字符串形式的正则表达式和 RegExp 对象
           if (rule.content instanceof RegExp) {
-            matched = rule.content.test(content);
+            matched = rule.content.test(content)
           } else if (typeof rule.content === 'string') {
             try {
               // 从字符串创建正则表达式，支持可选的标志
-              const pattern = new RegExp(rule.content, rule.flags || '');
-              matched = pattern.test(content);
+              const pattern = new RegExp(rule.content, rule.flags || '')
+              matched = pattern.test(content)
             } catch (error) {
-              console.error(`[Gateway] 无效的正则表达式: ${rule.content}`, error);
-              matched = false;
+              console.error(`[Gateway] 无效的正则表达式: ${rule.content}`, error)
+              matched = false
             }
           }
-          break;
+          break
 
         case 'ml':
           // 使用 ML 内容审核服务进行内容检测
           if (this.mlModerationService) {
             try {
-              const result: ModerationResult = await this.mlModerationService.moderate(content);
-              matched = result.isUnsafe;
+              const result: ModerationResult = await this.mlModerationService.moderate(content)
+              matched = result.isUnsafe
 
               // 记录审核结果
               if (matched && result.reason) {
-                console.warn(`[Gateway] ML 内容审核触发: ${result.reason} (分数: ${result.score.toFixed(2)})`);
+                console.warn(
+                  `[Gateway] ML 内容审核触发: ${result.reason} (分数: ${result.score.toFixed(2)})`
+                )
               }
             } catch (error) {
-              console.error('[Gateway] ML 内容审核失败:', error);
-              matched = false; // 失败时不阻止
+              console.error('[Gateway] ML 内容审核失败:', error)
+              matched = false // 失败时不阻止
             }
           } else {
             // 未配置 ML 服务，使用默认规则引擎
-            const defaultService = new RuleBasedModerationService();
+            const defaultService = new RuleBasedModerationService()
             try {
-              const result: ModerationResult = await defaultService.moderate(content);
-              matched = result.isUnsafe;
+              const result: ModerationResult = await defaultService.moderate(content)
+              matched = result.isUnsafe
 
               if (matched && result.reason) {
-                console.warn(`[Gateway] 默认规则引擎触发: ${result.reason}`);
+                console.warn(`[Gateway] 默认规则引擎触发: ${result.reason}`)
               }
             } catch (error) {
-              console.error('[Gateway] 规则引擎失败:', error);
-              matched = false;
+              console.error('[Gateway] 规则引擎失败:', error)
+              matched = false
             }
           }
-          break;
+          break
       }
 
       if (matched) {
@@ -850,19 +852,19 @@ export class BaseGateway implements Gateway {
           filtered: rule.action === 'block',
           reason: `触发规则: ${rule.name}`,
           matchedRule: rule.name,
-        };
+        }
       }
     }
 
-    return { filtered: false };
+    return { filtered: false }
   }
 
   async writeAuditLog(log: AuditLog): Promise<void> {
     if (this.auditStore) {
-      await this.auditStore.write(log);
+      await this.auditStore.write(log)
     } else {
       // 默认实现：输出到控制台
-      console.log('[审计日志]', JSON.stringify(log));
+      console.log('[审计日志]', JSON.stringify(log))
     }
   }
 
@@ -880,10 +882,10 @@ export class BaseGateway implements Gateway {
     scope?: string[]
   ): Promise<AuthorizationUrlResult> {
     if (!this.oauthManager) {
-      throw new Error('OAuth 管理器未配置');
+      throw new Error('OAuth 管理器未配置')
     }
 
-    return await this.oauthManager.generateAuthorizationUrl(provider, redirectUri, scope);
+    return await this.oauthManager.generateAuthorizationUrl(provider, redirectUri, scope)
   }
 
   /**
@@ -902,10 +904,10 @@ export class BaseGateway implements Gateway {
     redirectUri: string
   ): Promise<OAuthCallbackResult> {
     if (!this.oauthManager) {
-      throw new Error('OAuth 管理器未配置');
+      throw new Error('OAuth 管理器未配置')
     }
 
-    return await this.oauthManager.handleCallback(provider, code, state, redirectUri);
+    return await this.oauthManager.handleCallback(provider, code, state, redirectUri)
   }
 
   /**
@@ -917,10 +919,10 @@ export class BaseGateway implements Gateway {
    */
   async refreshOAuthToken(provider: 'google' | 'github', refreshToken: string) {
     if (!this.oauthManager) {
-      throw new Error('OAuth 管理器未配置');
+      throw new Error('OAuth 管理器未配置')
     }
 
-    return await this.oauthManager.refreshToken(provider, refreshToken);
+    return await this.oauthManager.refreshToken(provider, refreshToken)
   }
 
   /**
@@ -932,10 +934,10 @@ export class BaseGateway implements Gateway {
    */
   async verifyOAuthToken(provider: 'google' | 'github', accessToken: string): Promise<boolean> {
     if (!this.oauthManager) {
-      throw new Error('OAuth 管理器未配置');
+      throw new Error('OAuth 管理器未配置')
     }
 
-    return await this.oauthManager.verifyToken(provider, accessToken);
+    return await this.oauthManager.verifyToken(provider, accessToken)
   }
 
   /**
@@ -947,9 +949,9 @@ export class BaseGateway implements Gateway {
    */
   async getOAuthUserInfo(provider: 'google' | 'github', accessToken: string) {
     if (!this.oauthManager) {
-      throw new Error('OAuth 管理器未配置');
+      throw new Error('OAuth 管理器未配置')
     }
 
-    return await this.oauthManager.getUserInfo(provider, accessToken);
+    return await this.oauthManager.getUserInfo(provider, accessToken)
   }
 }

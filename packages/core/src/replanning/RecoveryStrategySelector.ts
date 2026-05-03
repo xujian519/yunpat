@@ -9,18 +9,18 @@ import type {
   RecoveryStrategyType,
   DeviationReport,
   ReplanningContext,
-} from './types.js';
-import { RecoveryStrategyType as Strategy } from './types.js';
+} from './types.js'
+import { RecoveryStrategyType as Strategy } from './types.js'
 
 /**
  * 恢复策略选择器
  */
 export class RecoveryStrategySelector {
-  private strategies: Map<RecoveryStrategyType, RecoveryStrategy>;
+  private strategies: Map<RecoveryStrategyType, RecoveryStrategy>
 
   constructor() {
-    this.strategies = new Map();
-    this.initializeDefaultStrategies();
+    this.strategies = new Map()
+    this.initializeDefaultStrategies()
   }
 
   /**
@@ -35,9 +35,9 @@ export class RecoveryStrategySelector {
       estimatedCost: 0.2,
       estimatedSuccess: 0.7,
       action: async (context) => {
-        const failedGoal = context.currentState.failedGoals.values().next().value;
+        const failedGoal = context.currentState.failedGoals.values().next().value
         if (!failedGoal) {
-          throw new Error('没有失败的任务可以重试');
+          throw new Error('没有失败的任务可以重试')
         }
 
         return {
@@ -53,9 +53,9 @@ export class RecoveryStrategySelector {
           ],
           estimatedImprovement: 0.3,
           reasoning: `重试失败的任务: ${failedGoal}`,
-        };
+        }
       },
-    });
+    })
 
     // 跳过策略
     this.strategies.set(Strategy.SKIP, {
@@ -65,9 +65,9 @@ export class RecoveryStrategySelector {
       estimatedCost: 0.1,
       estimatedSuccess: 0.9,
       action: async (context) => {
-        const currentGoal = context.currentState.currentGoal;
+        const currentGoal = context.currentState.currentGoal
         if (!currentGoal) {
-          throw new Error('没有当前任务可以跳过');
+          throw new Error('没有当前任务可以跳过')
         }
 
         return {
@@ -83,9 +83,9 @@ export class RecoveryStrategySelector {
           ],
           estimatedImprovement: 0.5,
           reasoning: `跳过被阻塞的任务: ${currentGoal}`,
-        };
+        }
       },
-    });
+    })
 
     // 重排序策略
     this.strategies.set(Strategy.REORDER, {
@@ -96,10 +96,10 @@ export class RecoveryStrategySelector {
       estimatedSuccess: 0.8,
       action: async (context) => {
         // 找出可以提前执行的任务
-        const modifications = [];
+        const modifications = []
         const pendingGoals = context.originalPlan.subGoals
           .filter((g) => !context.currentState.completedGoals.has(g.id))
-          .sort((a, b) => (b.priority as unknown as number) - (a.priority as unknown as number)); // 按优先级降序
+          .sort((a, b) => (b.priority as unknown as number) - (a.priority as unknown as number)) // 按优先级降序
 
         for (let i = 0; i < pendingGoals.length; i++) {
           modifications.push({
@@ -108,7 +108,7 @@ export class RecoveryStrategySelector {
             changes: {
               newPriority: 10 - i, // 重新分配优先级
             },
-          });
+          })
         }
 
         return {
@@ -116,9 +116,9 @@ export class RecoveryStrategySelector {
           modifications,
           estimatedImprovement: 0.6,
           reasoning: '按优先级重新排序任务以优化进度',
-        };
+        }
       },
-    });
+    })
 
     // 分解策略
     this.strategies.set(Strategy.DECOMPOSE, {
@@ -128,9 +128,9 @@ export class RecoveryStrategySelector {
       estimatedCost: 0.7,
       estimatedSuccess: 0.85,
       action: async (context) => {
-        const currentGoal = context.currentState.currentGoal;
+        const currentGoal = context.currentState.currentGoal
         if (!currentGoal) {
-          throw new Error('没有当前任务可以分解');
+          throw new Error('没有当前任务可以分解')
         }
 
         // 这里简化处理，实际应该调用TaskDecomposer
@@ -154,9 +154,9 @@ export class RecoveryStrategySelector {
           ],
           estimatedImprovement: 0.7,
           reasoning: `分解复杂任务: ${currentGoal}`,
-        };
+        }
       },
-    });
+    })
 
     // 适应策略
     this.strategies.set(Strategy.ADAPT, {
@@ -166,13 +166,13 @@ export class RecoveryStrategySelector {
       estimatedCost: 0.3,
       estimatedSuccess: 0.75,
       action: async (context) => {
-        const modifications = [];
+        const modifications = []
 
         // 调整资源分配
         for (const goal of context.originalPlan.subGoals) {
           if (!context.currentState.completedGoals.has(goal.id)) {
-            const currentEstimate = goal.estimatedTokens;
-            const newEstimate = Math.floor(currentEstimate * 0.8); // 减少20%
+            const currentEstimate = goal.estimatedTokens
+            const newEstimate = Math.floor(currentEstimate * 0.8) // 减少20%
 
             modifications.push({
               type: 'modify' as const,
@@ -182,7 +182,7 @@ export class RecoveryStrategySelector {
                   tokens: newEstimate,
                 },
               },
-            });
+            })
           }
         }
 
@@ -191,9 +191,9 @@ export class RecoveryStrategySelector {
           modifications,
           estimatedImprovement: 0.4,
           reasoning: '调整资源分配以适应限制',
-        };
+        }
       },
-    });
+    })
 
     // 中止策略
     this.strategies.set(Strategy.ABORT, {
@@ -208,9 +208,9 @@ export class RecoveryStrategySelector {
           modifications: [],
           estimatedImprovement: 0,
           reasoning: '中止计划，需要人工干预来解决严重问题',
-        };
+        }
       },
-    });
+    })
   }
 
   /**
@@ -224,42 +224,42 @@ export class RecoveryStrategySelector {
     // 如果有首选策略，优先使用
     if (preferredStrategies && preferredStrategies.length > 0) {
       for (const strategyName of preferredStrategies) {
-        const strategy = this.strategies.get(strategyName);
+        const strategy = this.strategies.get(strategyName)
         if (strategy && this.isStrategyApplicable(strategy, deviationReport)) {
-          return strategy;
+          return strategy
         }
       }
     }
 
     // 根据偏离类型和严重程度选择策略
-    const candidateStrategies = this.getCandidateStrategies(deviationReport);
+    const candidateStrategies = this.getCandidateStrategies(deviationReport)
 
     // 评分并选择最佳策略
     const scoredStrategies = await this.scoreStrategies(
       candidateStrategies,
       deviationReport,
       context
-    );
+    )
 
     // 按分数降序排序
-    scoredStrategies.sort((a, b) => b.score - a.score);
+    scoredStrategies.sort((a, b) => b.score - a.score)
 
-    return scoredStrategies[0].strategy;
+    return scoredStrategies[0].strategy
   }
 
   /**
    * 获取候选策略
    */
   private getCandidateStrategies(deviationReport: DeviationReport): RecoveryStrategy[] {
-    const candidates: RecoveryStrategy[] = [];
+    const candidates: RecoveryStrategy[] = []
 
     for (const strategy of this.strategies.values()) {
       if (this.isStrategyApplicable(strategy, deviationReport)) {
-        candidates.push(strategy);
+        candidates.push(strategy)
       }
     }
 
-    return candidates;
+    return candidates
   }
 
   /**
@@ -271,7 +271,7 @@ export class RecoveryStrategySelector {
   ): boolean {
     // 如果没有偏离，所有策略都不适用
     if (!deviationReport.hasDeviation) {
-      return false;
+      return false
     }
 
     // 检查策略的适用场景
@@ -279,19 +279,19 @@ export class RecoveryStrategySelector {
       for (const scenario of strategy.applicableScenarios) {
         // 简化的场景匹配逻辑
         if (this.scenarioMatches(deviation, scenario)) {
-          return true;
+          return true
         }
       }
     }
 
-    return false;
+    return false
   }
 
   /**
    * 场景匹配
    */
   private scenarioMatches(deviation: unknown, scenario: string): boolean {
-    const deviationType = (deviation as any).type;
+    const deviationType = (deviation as any).type
 
     // 映射偏离类型到场景
     const scenarioMap: Record<string, string[]> = {
@@ -299,14 +299,14 @@ export class RecoveryStrategySelector {
       quality_deviation: ['quality_issue', 'quality_drop', 'low_quality'],
       resource_deviation: ['resource_shortage', 'over_budget'],
       dependency_deviation: ['dependency_bottleneck', 'blocked_task'],
-    };
+    }
 
-    const applicableScenarios = scenarioMap[deviationType] || [];
+    const applicableScenarios = scenarioMap[deviationType] || []
 
     return (
       applicableScenarios.includes(scenario) ||
       (deviation as any).description.toLowerCase().includes(scenario.replace('_', ' '))
-    );
+    )
   }
 
   /**
@@ -317,14 +317,14 @@ export class RecoveryStrategySelector {
     deviationReport: DeviationReport,
     context: ReplanningContext
   ): Promise<{ strategy: RecoveryStrategy; score: number }[]> {
-    const scored = [];
+    const scored = []
 
     for (const strategy of strategies) {
-      const score = await this.calculateStrategyScore(strategy, deviationReport, context);
-      scored.push({ strategy, score });
+      const score = await this.calculateStrategyScore(strategy, deviationReport, context)
+      scored.push({ strategy, score })
     }
 
-    return scored;
+    return scored
   }
 
   /**
@@ -335,24 +335,24 @@ export class RecoveryStrategySelector {
     deviationReport: DeviationReport,
     context: ReplanningContext
   ): Promise<number> {
-    let score = 0;
+    let score = 0
 
     // 1. 成功概率权重 (40%)
-    score += strategy.estimatedSuccess * 0.4;
+    score += strategy.estimatedSuccess * 0.4
 
     // 2. 成本权重 (30% - 成本越低分数越高)
-    score += (1 - strategy.estimatedCost) * 0.3;
+    score += (1 - strategy.estimatedCost) * 0.3
 
     // 3. 偏离严重程度匹配 (20%)
-    const maxSeverity = this.getMaxSeverity(deviationReport);
-    const severityMatch = this.calculateSeverityMatch(strategy, maxSeverity);
-    score += severityMatch * 0.2;
+    const maxSeverity = this.getMaxSeverity(deviationReport)
+    const severityMatch = this.calculateSeverityMatch(strategy, maxSeverity)
+    score += severityMatch * 0.2
 
     // 4. 历史成功率 (10%)
-    const historicalScore = this.getHistoricalSuccess(strategy.name, context.history);
-    score += historicalScore * 0.1;
+    const historicalScore = this.getHistoricalSuccess(strategy.name, context.history)
+    score += historicalScore * 0.1
 
-    return score;
+    return score
   }
 
   /**
@@ -360,15 +360,15 @@ export class RecoveryStrategySelector {
    */
   private getMaxSeverity(deviationReport: DeviationReport): string {
     if (deviationReport.deviations.length === 0) {
-      return 'minor';
+      return 'minor'
     }
 
-    const severityOrder = { minor: 1, moderate: 2, severe: 3 };
+    const severityOrder = { minor: 1, moderate: 2, severe: 3 }
     const maxDeviation = deviationReport.deviations.reduce((max, d) =>
       severityOrder[d.severity] > severityOrder[max.severity] ? d : max
-    );
+    )
 
-    return maxDeviation.severity;
+    return maxDeviation.severity
   }
 
   /**
@@ -401,9 +401,9 @@ export class RecoveryStrategySelector {
         adapt: 0.8,
         abort: 0.9,
       },
-    };
+    }
 
-    return matchMatrix[maxSeverity]?.[strategy.name] || 0.5;
+    return matchMatrix[maxSeverity]?.[strategy.name] || 0.5
   }
 
   /**
@@ -411,37 +411,37 @@ export class RecoveryStrategySelector {
    */
   private getHistoricalSuccess(strategyName: RecoveryStrategyType, history: any[]): number {
     if (history.length === 0) {
-      return 0.5; // 无历史数据时返回中性分数
+      return 0.5 // 无历史数据时返回中性分数
     }
 
-    const strategyHistory = history.filter((h) => h.adjustment.type === strategyName);
+    const strategyHistory = history.filter((h) => h.adjustment.type === strategyName)
 
     if (strategyHistory.length === 0) {
-      return 0.5;
+      return 0.5
     }
 
-    const successCount = strategyHistory.filter((h) => h.result === 'success').length;
-    return successCount / strategyHistory.length;
+    const successCount = strategyHistory.filter((h) => h.result === 'success').length
+    return successCount / strategyHistory.length
   }
 
   /**
    * 添加自定义策略
    */
   addStrategy(strategy: RecoveryStrategy): void {
-    this.strategies.set(strategy.name, strategy);
+    this.strategies.set(strategy.name, strategy)
   }
 
   /**
    * 移除策略
    */
   removeStrategy(strategyName: RecoveryStrategyType): void {
-    this.strategies.delete(strategyName);
+    this.strategies.delete(strategyName)
   }
 
   /**
    * 获取所有策略
    */
   getAllStrategies(): RecoveryStrategy[] {
-    return Array.from(this.strategies.values());
+    return Array.from(this.strategies.values())
   }
 }

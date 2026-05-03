@@ -4,4 +4,4 @@ export {
   type ClaimsSet,
   type IndependentClaim,
   type DependentClaim,
-} from './ClaimsGenerationAgent.js';
+} from './ClaimsGenerationAgent.js'

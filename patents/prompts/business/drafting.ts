@@ -14,14 +14,14 @@ export const DRAFTING_CLAIMS_PROMPT = `
 - 独立权利要求：前序部分 + 转折词"其特征在于" + 特征部分
 - 从属权利要求：引用部分 + 进一步限定
 - 编号连续，从1开始
-`;
+`
 
 export function renderDraftingClaimsPrompt(params: {
-  inventionTitle: string;
-  technicalField: string;
-  technicalFeatures: string;
-  technicalProblem: string;
-  technicalSolution: string;
+  inventionTitle: string
+  technicalField: string
+  technicalFeatures: string
+  technicalProblem: string
+  technicalSolution: string
 }): string {
   return `${DRAFTING_CLAIMS_PROMPT}
 
@@ -35,7 +35,7 @@ export function renderDraftingClaimsPrompt(params: {
 ${params.technicalFeatures}
 
 请撰写完整的权利要求书（含1项独立权利要求和3-5项从属权利要求）。
-`;
+`
 }
 
 export const DRAFTING_SPECIFICATION_PROMPT = `
@@ -52,13 +52,13 @@ export const DRAFTING_SPECIFICATION_PROMPT = `
 - 充分公开：确保所属技术领域的技术人员能够实现
 - 支持权利要求：说明书应支持权利要求的保护范围
 - 实施例详尽：提供至少2个具体实施方式
-`;
+`
 
 export function renderDraftingSpecificationPrompt(params: {
-  inventionTitle: string;
-  claims: string;
-  technicalFeatures: string;
-  backgroundArt?: string;
+  inventionTitle: string
+  claims: string
+  technicalFeatures: string
+  backgroundArt?: string
 }): string {
   return `${DRAFTING_SPECIFICATION_PROMPT}
 
@@ -74,5 +74,5 @@ ${params.technicalFeatures}
 ${params.backgroundArt ? `## 现有技术\n${params.backgroundArt}` : ''}
 
 请撰写完整的专利说明书。
-`;
+`
 }

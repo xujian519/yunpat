@@ -17,15 +17,15 @@ export type {
   AppliedCorrection,
   ConstitutionalAIConfig,
   ConflictResolution,
-} from './types.js';
+} from './types.js'
 
 // 枚举（既是类型又是值）
-export { PrincipleCategory, ViolationSeverity, CorrectionStrategy } from './types.js';
+export { PrincipleCategory, ViolationSeverity, CorrectionStrategy } from './types.js'
 
 // 原则集
-export { PATENT_PRINCIPLES } from './PatentPrinciples.js';
+export { PATENT_PRINCIPLES } from './PatentPrinciples.js'
 
 // 主类
-export { ConstitutionalAI } from './ConstitutionalAI.js';
-export { ComplianceChecker } from './ComplianceChecker.js';
-export { AutoCorrector } from './AutoCorrector.js';
+export { ConstitutionalAI } from './ConstitutionalAI.js'
+export { ComplianceChecker } from './ComplianceChecker.js'
+export { AutoCorrector } from './AutoCorrector.js'

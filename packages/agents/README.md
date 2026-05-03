@@ -9,6 +9,7 @@
 专业的专利申请文件撰写智能体，支持从技术交底书自动生成完整的专利申请文件。
 
 **功能特性**:
+
 - 📝 自动生成权利要求书、说明书、摘要
 - 🎨 支持 CN、PCT、US 三种格式导出
 - 🔍 集成知识库和提示词模板
@@ -16,8 +17,9 @@
 - 📊 提供撰写 metrics（权利要求数、字数、质量评分）
 
 **快速开始**:
+
 ```typescript
-import { PatentWriterAgent } from '@yunpat/agent-patent-writer';
+import { PatentWriterAgent } from '@yunpat/agent-patent-writer'
 
 const agent = new PatentWriterAgent({
   name: 'patent-writer',
@@ -28,7 +30,7 @@ const agent = new PatentWriterAgent({
   llm: openaiLLM,
   enableKnowledge: true,
   enableTemplates: true,
-});
+})
 
 const result = await agent.execute({
   title: '一种基于深度学习的图像识别方法',
@@ -48,13 +50,13 @@ const result = await agent.execute({
 识别准确率提升20%。
   `,
   drawings: ['图1: 系统架构图'],
-});
+})
 
-console.log(result.patentApplication);
+console.log(result.patentApplication)
 
 // 导出为 CN 格式
-const exportResult = await agent.exportToFormat('cn');
-console.log(exportResult.content);
+const exportResult = await agent.exportToFormat('cn')
+console.log(exportResult.content)
 ```
 
 ### 2. PatentAnalyzerAgent - 专利分析智能体
@@ -62,6 +64,7 @@ console.log(exportResult.content);
 专业的专利文献分析智能体，提供多维度专利分析报告。
 
 **功能特性**:
+
 - 🔬 技术方案深度分析（技术领域、问题、方案、效果、关键特征）
 - ⚖️ 权利要求分析（独立/从属权利要求、保护范围、质量评分）
 - 🔍 现有技术对比（相似度分析、创新点识别）
@@ -69,8 +72,9 @@ console.log(exportResult.content);
 - ⚠️ 专利性风险评估（无效风险、侵权风险、风险因素）
 
 **快速开始**:
+
 ```typescript
-import { PatentAnalyzerAgent } from '@yunpat/agent-patent-analyzer';
+import { PatentAnalyzerAgent } from '@yunpat/agent-patent-analyzer'
 
 const agent = new PatentAnalyzerAgent({
   name: 'patent-analyzer',
@@ -79,7 +83,7 @@ const agent = new PatentAnalyzerAgent({
   memory,
   tools,
   llm: openaiLLM,
-});
+})
 
 const result = await agent.execute({
   patent: {
@@ -91,11 +95,11 @@ const result = await agent.execute({
     fullText: '权利要求书\n\n1. 一种方法...',
   },
   analysisTypes: ['technical', 'claims', 'creativity', 'risk'],
-});
+})
 
-console.log(result.technicalAnalysis);
-console.log(result.creativityAssessment);
-console.log(result.recommendations);
+console.log(result.technicalAnalysis)
+console.log(result.creativityAssessment)
+console.log(result.recommendations)
 ```
 
 ### 3. PatentResponderAgent - OA答复智能体
@@ -103,6 +107,7 @@ console.log(result.recommendations);
 专业的审查意见答复智能体，提供智能化的答复策略和文档生成。
 
 **功能特性**:
+
 - 📋 审查意见智能分析（关键问题识别、严重程度评估）
 - 🎯 答复策略生成（argue/amend/abandon/appeal）
 - 📈 成功概率评估
@@ -110,8 +115,9 @@ console.log(result.recommendations);
 - 📄 多格式导出（CN/PCT/US）
 
 **快速开始**:
+
 ```typescript
-import { PatentResponderAgent } from '@yunpat/agent-patent-responder';
+import { PatentResponderAgent } from '@yunpat/agent-patent-responder'
 
 const agent = new PatentResponderAgent({
   name: 'patent-responder',
@@ -120,7 +126,7 @@ const agent = new PatentResponderAgent({
   memory,
   tools,
   llm: openaiLLM,
-});
+})
 
 const result = await agent.execute({
   officeAction: {
@@ -145,14 +151,14 @@ const result = await agent.execute({
   },
   strategyPreference: 'moderate',
   documentType: 'cn',
-});
+})
 
-console.log(result.strategy);
-console.log(result.responseDocument.responseLetter);
+console.log(result.strategy)
+console.log(result.responseDocument.responseLetter)
 
 // 导出答复文档
-const exportResult = await agent.exportToFormat('cn');
-console.log(exportResult.content);
+const exportResult = await agent.exportToFormat('cn')
+console.log(exportResult.content)
 ```
 
 ### 4. PatentManagerAgent - 专利管理智能体
@@ -160,6 +166,7 @@ console.log(exportResult.content);
 专利全生命周期管理智能体，提供专利申请、期限、费用等管理功能。
 
 **功能特性**:
+
 - 📝 专利申请管理（增删改查）
 - ⏰ 截止日期管理（添加、查询、提醒）
 - 💰 费用管理（添加、查询、状态跟踪）
@@ -167,8 +174,9 @@ console.log(exportResult.content);
 - 📄 管理报告生成
 
 **快速开始**:
+
 ```typescript
-import { PatentManagerAgent } from '@yunpat/agent-patent-manager';
+import { PatentManagerAgent } from '@yunpat/agent-patent-manager'
 
 const agent = new PatentManagerAgent({
   name: 'patent-manager',
@@ -177,7 +185,7 @@ const agent = new PatentManagerAgent({
   memory,
   tools,
   llm: openaiLLM,
-});
+})
 
 // 添加专利
 await agent.execute({
@@ -191,7 +199,7 @@ await agent.execute({
     filingDate: new Date('2023-01-01'),
     status: 'filed',
   },
-});
+})
 
 // 添加截止日期
 await agent.execute({
@@ -204,21 +212,21 @@ await agent.execute({
     priority: 'high',
     completed: false,
   },
-});
+})
 
 // 获取专利组合概览
 const portfolio = await agent.execute({
   operation: 'get_portfolio',
-});
+})
 
-console.log(portfolio.data.statistics);
-console.log(portfolio.data.riskAlerts);
+console.log(portfolio.data.statistics)
+console.log(portfolio.data.riskAlerts)
 
 // 生成管理报告
 const report = await agent.execute({
   operation: 'generate_report',
-});
-console.log(report.data);
+})
+console.log(report.data)
 ```
 
 ## 🧪 测试
@@ -238,14 +246,14 @@ cd packages/agents/test && npx vitest run
 
 ## 📊 测试覆盖
 
-| 智能体 | 测试数量 | 通过率 |
-|--------|---------|--------|
-| PatentWriterAgent | 12 | 100% |
-| PatentAnalyzerAgent | 16 | 100% |
-| PatentResponderAgent | 18 | 100% |
-| PatentManagerAgent | 21 | 100% |
-| 集成测试 | 6 | 100% |
-| **总计** | **73** | **100%** |
+| 智能体               | 测试数量 | 通过率   |
+| -------------------- | -------- | -------- |
+| PatentWriterAgent    | 12       | 100%     |
+| PatentAnalyzerAgent  | 16       | 100%     |
+| PatentResponderAgent | 18       | 100%     |
+| PatentManagerAgent   | 21       | 100%     |
+| 集成测试             | 6        | 100%     |
+| **总计**             | **73**   | **100%** |
 
 ## 🔧 配置
 
@@ -254,37 +262,37 @@ cd packages/agents/test && npx vitest run
 所有智能体都需要配置 LLM 服务：
 
 ```typescript
-import { OpenAI } from '@yunpat/llm';
+import { OpenAI } from '@yunpat/llm'
 
 const llm = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   model: 'gpt-4',
   temperature: 0.3,
-});
+})
 ```
 
 ### 事件总线配置
 
 ```typescript
-import { EventBus } from '@yunpat/core';
+import { EventBus } from '@yunpat/core'
 
-const eventBus = new EventBus();
+const eventBus = new EventBus()
 ```
 
 ### 内存配置
 
 ```typescript
-import { ShortTermMemory } from '@yunpat/core';
+import { ShortTermMemory } from '@yunpat/core'
 
-const memory = new ShortTermMemory();
+const memory = new ShortTermMemory()
 ```
 
 ### 工具注册表配置
 
 ```typescript
-import { ToolRegistry } from '@yunpat/core';
+import { ToolRegistry } from '@yunpat/core'
 
-const tools = new ToolRegistry(eventBus);
+const tools = new ToolRegistry(eventBus)
 ```
 
 ## 💡 最佳实践
@@ -293,7 +301,7 @@ const tools = new ToolRegistry(eventBus);
 
 ```typescript
 try {
-  const result = await agent.execute(input);
+  const result = await agent.execute(input)
   // 处理结果
 } catch (error) {
   if (error.message.includes('不能为空')) {
@@ -322,12 +330,12 @@ try {
 ```typescript
 // 验证必要字段
 if (result.patentApplication?.claims?.length === 0) {
-  throw new Error('权利要求未生成');
+  throw new Error('权利要求未生成')
 }
 
 // 检查质量评分
 if (result.metrics?.qualityScore < 70) {
-  console.warn('质量评分较低，建议人工审核');
+  console.warn('质量评分较低，建议人工审核')
 }
 ```
 

@@ -23,14 +23,14 @@
 
 ### 阶段 1：稳定性优化 ✅
 
-| 优化项 | 效果 | 状态 |
-|--------|------|------|
-| **ResilientLLMAdapter** | 60% → 99.5%+ 可用性 | ✅ |
-| **ConfigManager** | API Key 隔离 | ✅ |
-| **Writer Agent 修复** | 70% → 95%+ 成功率 | ✅ |
-| **TransactionManager** | 状态一致性保证 | ✅ |
-| **TelemetryCollector** | 完全可追踪 | ✅ |
-| **集成测试** | 39/44 通过 (89%) | ✅ |
+| 优化项                  | 效果                | 状态 |
+| ----------------------- | ------------------- | ---- |
+| **ResilientLLMAdapter** | 60% → 99.5%+ 可用性 | ✅   |
+| **ConfigManager**       | API Key 隔离        | ✅   |
+| **Writer Agent 修复**   | 70% → 95%+ 成功率   | ✅   |
+| **TransactionManager**  | 状态一致性保证      | ✅   |
+| **TelemetryCollector**  | 完全可追踪          | ✅   |
+| **集成测试**            | 39/44 通过 (89%)    | ✅   |
 
 **成果**: 框架稳定性达到 **企业级标准（99.5%+ 可用性）**
 
@@ -38,11 +38,11 @@
 
 ### 阶段 2：经济性优化（P0）✅
 
-| 优化项 | 效果 | 状态 |
-|--------|------|------|
-| **PromptOptimizer** | 8.7% Token 节省 | ✅ |
-| **TaskRouter** | 33.3% 本地化 | ✅ |
-| **并行执行** | 80% 时间节省 | ✅ |
+| 优化项              | 效果            | 状态 |
+| ------------------- | --------------- | ---- |
+| **PromptOptimizer** | 8.7% Token 节省 | ✅   |
+| **TaskRouter**      | 33.3% 本地化    | ✅   |
+| **并行执行**        | 80% 时间节省    | ✅   |
 
 **成果**: 成本降低 **30%**，速度提升 **80%**
 
@@ -50,11 +50,11 @@
 
 ### 阶段 3：经济性优化（P1）✅
 
-| 优化项 | 效果 | 状态 |
-|--------|------|------|
-| **SemanticCache** | 33.3% 命中率 | ✅ |
-| **IncrementalGenerator** | 30-70% 场景节省 | ✅ |
-| **BatchProcessor** | 70% API 节省 | ✅ |
+| 优化项                   | 效果            | 状态 |
+| ------------------------ | --------------- | ---- |
+| **SemanticCache**        | 33.3% 命中率    | ✅   |
+| **IncrementalGenerator** | 30-70% 场景节省 | ✅   |
+| **BatchProcessor**       | 70% API 节省    | ✅   |
 
 **成果**: 累计成本降低 **68.5%**
 
@@ -80,14 +80,14 @@
 
 ### 性能指标
 
-| 指标 | 原始 | P0 后 | P1 后 | 累计提升 |
-|------|------|-------|-------|---------|
-| **可用性** | 60% | 99.5%+ | 99.5%+ | **+65%** |
-| **API 成本** | 100% | 70% | 31.5% | **-68.5%** |
-| **执行时间** | 20秒 | 4秒 | 4秒 | **-80%** |
-| **缓存命中率** | 0% | 0% | 33.3% | **+33.3%** |
-| **批处理率** | 0% | 0% | 50% | **+50%** |
-| **本地化率** | 0% | 67% | 67% | **+67%** |
+| 指标           | 原始 | P0 后  | P1 后  | 累计提升   |
+| -------------- | ---- | ------ | ------ | ---------- |
+| **可用性**     | 60%  | 99.5%+ | 99.5%+ | **+65%**   |
+| **API 成本**   | 100% | 70%    | 31.5%  | **-68.5%** |
+| **执行时间**   | 20秒 | 4秒    | 4秒    | **-80%**   |
+| **缓存命中率** | 0%   | 0%     | 33.3%  | **+33.3%** |
+| **批处理率**   | 0%   | 0%     | 50%    | **+50%**   |
+| **本地化率**   | 0%   | 67%    | 67%    | **+67%**   |
 
 ---
 
@@ -177,23 +177,23 @@ packages/core/src/
 
 ### 稳定性 SLA
 
-| 指标 | 目标 | 实际 | 状态 |
-|------|------|------|------|
-| **可用性** | > 99.5% | 99.5%+ | ✅ |
-| **P50 延迟** | < 5秒 | ~4秒 | ✅ |
-| **P99 延迟** | < 30秒 | ~20秒 | ✅ |
-| **成功率** | > 95% | 99.5%+ | ✅ |
-| **MTTR** | < 15分钟 | <30秒 | ✅ |
-| **数据丢失** | 0% | 0% | ✅ |
+| 指标         | 目标     | 实际   | 状态 |
+| ------------ | -------- | ------ | ---- |
+| **可用性**   | > 99.5%  | 99.5%+ | ✅   |
+| **P50 延迟** | < 5秒    | ~4秒   | ✅   |
+| **P99 延迟** | < 30秒   | ~20秒  | ✅   |
+| **成功率**   | > 95%    | 99.5%+ | ✅   |
+| **MTTR**     | < 15分钟 | <30秒  | ✅   |
+| **数据丢失** | 0%       | 0%     | ✅   |
 
 ### 经济性 SLA
 
-| 指标 | 目标 | 实际 | 状态 |
-|------|------|------|------|
-| **成本节省** | > 50% | 68.5% | ✅ |
-| **缓存命中** | > 20% | 33.3% | ✅ |
-| **批处理率** | > 40% | 50% | ✅ |
-| **本地化率** | > 50% | 67% | ✅ |
+| 指标         | 目标  | 实际  | 状态 |
+| ------------ | ----- | ----- | ---- |
+| **成本节省** | > 50% | 68.5% | ✅   |
+| **缓存命中** | > 20% | 33.3% | ✅   |
+| **批处理率** | > 40% | 50%   | ✅   |
+| **本地化率** | > 50% | 67%   | ✅   |
 
 ---
 
@@ -218,33 +218,30 @@ import {
   SemanticCache,
   IncrementalGenerator,
   BatchProcessor,
-} from '@yunpat/core';
+} from '@yunpat/core'
 
 // 1. 加载配置
-const config = new ConfigManager().load();
+const config = new ConfigManager().load()
 
 // 2. 创建优化后的 LLM（包含所有优化）
-const llm = createCostAwareAdapter(
-  config.llm.primary.apiKey,
-  config.llm.fallback.baseURL
-);
+const llm = createCostAwareAdapter(config.llm.primary.apiKey, config.llm.fallback.baseURL)
 
 // 3. 创建可观测性
-const telemetry = new TelemetryCollector();
+const telemetry = new TelemetryCollector()
 
 // 4. 创建缓存
 const cache = new SemanticCache({
   similarityThreshold: 0.85,
   ttl: 3600000,
-});
+})
 
 // 5. 创建增量生成器
-const incremental = new IncrementalGenerator({ llm });
+const incremental = new IncrementalGenerator({ llm })
 
 // 6. 创建批处理器
 const batch = new BatchProcessor({
   maxBatchSize: 5,
-});
+})
 
 // 7. 创建智能体（全功能）
 const agent = new WriterAgent({
@@ -252,17 +249,17 @@ const agent = new WriterAgent({
   memory,
   tools,
   llm,
-  cache,          // P1: 语义缓存
-  incremental,    // P1: 增量生成
-  batch,          // P1: 批处理
-});
+  cache, // P1: 语义缓存
+  incremental, // P1: 增量生成
+  batch, // P1: 批处理
+})
 
 // 8. 执行任务（自动应用所有优化）
 const result = await agent.execute({
   type: 'generate',
   topic: 'TypeScript 全栈开发指南',
   format: 'markdown',
-});
+})
 
 // 自动优化流程：
 // → 查找缓存（命中则返回）
@@ -279,11 +276,11 @@ const result = await agent.execute({
 
 ### 投入回报
 
-| 项目 | 投入 | 产出 | ROI |
-|------|------|------|-----|
-| **稳定性优化** | 6人×2小时 | 可用性 +65% | ⭐⭐⭐⭐⭐ |
+| 项目            | 投入      | 产出                 | ROI        |
+| --------------- | --------- | -------------------- | ---------- |
+| **稳定性优化**  | 6人×2小时 | 可用性 +65%          | ⭐⭐⭐⭐⭐ |
 | **P0 成本优化** | 3人×2小时 | 成本 -30%, 速度 +80% | ⭐⭐⭐⭐⭐ |
-| **P1 成本优化** | 3人×2小时 | 成本 -68.5% | ⭐⭐⭐⭐⭐ |
+| **P1 成本优化** | 3人×2小时 | 成本 -68.5%          | ⭐⭐⭐⭐⭐ |
 
 ### 月度价值
 
@@ -329,25 +326,25 @@ const telemetry = new TelemetryCollector({
     highFailureRateThreshold: 0.5,
     enableAlerts: true,
   },
-});
+})
 
 // 订阅告警
 eventBus.subscribe('alert', (alert) => {
-  console.warn(`⚠️  ${alert.type}: ${alert.message}`);
+  console.warn(`⚠️  ${alert.type}: ${alert.message}`)
   // 发送到监控系统
-});
+})
 ```
 
 ### 3. 成本追踪
 
 ```typescript
 // 查看成本统计
-const llmStats = taskRouter.getStats();
-console.log(`本地化率: ${llmStats.localRate}`);
-console.log(`节省成本: ¥${llmStats.savedCost.toFixed(2)}`);
+const llmStats = taskRouter.getStats()
+console.log(`本地化率: ${llmStats.localRate}`)
+console.log(`节省成本: ¥${llmStats.savedCost.toFixed(2)}`)
 
-const cacheStats = cache.getStats();
-console.log(`缓存命中: ${cacheStats.hitRate}`);
+const cacheStats = cache.getStats()
+console.log(`缓存命中: ${cacheStats.hitRate}`)
 ```
 
 ---
@@ -423,6 +420,7 @@ console.log(`缓存命中: ${cacheStats.hitRate}`);
 ## 🏆 最终评价
 
 **框架已达到**：
+
 - ✅ **企业级稳定性**（99.5%+ 可用性）
 - ✅ **卓越经济性**（成本降低 68.5%）
 - ✅ **优异性能**（速度提升 80%）
@@ -444,6 +442,7 @@ console.log(`缓存命中: ${cacheStats.hitRate}`);
 感谢以下团队成员的卓越贡献：
 
 **稳定性优化团队**（6人）：
+
 - llm-engineer ✅
 - config-specialist ✅
 - agent-fixer ✅
@@ -452,11 +451,13 @@ console.log(`缓存命中: ${cacheStats.hitRate}`);
 - qa-engineer ✅
 
 **P0 成本优化团队**（3人）：
+
 - prompt-optimizer ✅
 - task-router ✅
 - parallel-executor ✅
 
 **P1 成本优化团队**（3人）：
+
 - semantic-cache ✅
 - incremental-generator ✅
 - batch-processor ✅

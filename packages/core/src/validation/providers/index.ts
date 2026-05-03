@@ -10,4 +10,4 @@ export {
   type GoogleFactCheckAPIConfig,
   type GoogleFactCheckMetadata,
   type ClaimDetail,
-} from './GoogleFactCheckAPI.js';
+} from './GoogleFactCheckAPI.js'

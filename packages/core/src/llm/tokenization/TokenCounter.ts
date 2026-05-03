@@ -17,7 +17,7 @@ export interface ITokenCounter {
    * @param model 模型名称
    * @returns Token 数量
    */
-  estimateTokens(text: string, model: string): number;
+  estimateTokens(text: string, model: string): number
 
   /**
    * 批量估算 Token
@@ -26,7 +26,7 @@ export interface ITokenCounter {
    * @param model 模型名称
    * @returns Token 数量数组
    */
-  estimateTokensBatch(texts: string[], model: string): number[];
+  estimateTokensBatch(texts: string[], model: string): number[]
 
   /**
    * 计算总 Token 数
@@ -35,7 +35,7 @@ export interface ITokenCounter {
    * @param model 模型名称
    * @returns 总 Token 数量
    */
-  calculateTotalTokens(texts: string[], model: string): number;
+  calculateTotalTokens(texts: string[], model: string): number
 }
 
 /**
@@ -67,23 +67,23 @@ export class TokenCounter implements ITokenCounter {
    */
   estimateTokens(text: string, model: string): number {
     if (!text || text.length === 0) {
-      return 0;
+      return 0
     }
 
-    const modelType = this.detectModelType(model);
+    const modelType = this.detectModelType(model)
 
     switch (modelType) {
       case ModelType.GPT:
-        return this.countGPTTokens(text);
+        return this.countGPTTokens(text)
       case ModelType.CLAUDE:
-        return this.countClaudeTokens(text);
+        return this.countClaudeTokens(text)
       case ModelType.DEEPSEEK:
-        return this.countDeepSeekTokens(text);
+        return this.countDeepSeekTokens(text)
       case ModelType.QWEN:
-        return this.countQwenTokens(text);
+        return this.countQwenTokens(text)
       default:
         // 默认：字符数 / 4（粗略估算）
-        return this.defaultTokenCount(text);
+        return this.defaultTokenCount(text)
     }
   }
 
@@ -95,7 +95,7 @@ export class TokenCounter implements ITokenCounter {
    * @returns Token 数量数组
    */
   estimateTokensBatch(texts: string[], model: string): number[] {
-    return texts.map((text) => this.estimateTokens(text, model));
+    return texts.map((text) => this.estimateTokens(text, model))
   }
 
   /**
@@ -106,8 +106,8 @@ export class TokenCounter implements ITokenCounter {
    * @returns 总 Token 数量
    */
   calculateTotalTokens(texts: string[], model: string): number {
-    const tokenCounts = this.estimateTokensBatch(texts, model);
-    return tokenCounts.reduce((sum, count) => sum + count, 0);
+    const tokenCounts = this.estimateTokensBatch(texts, model)
+    return tokenCounts.reduce((sum, count) => sum + count, 0)
   }
 
   /**
@@ -117,22 +117,22 @@ export class TokenCounter implements ITokenCounter {
    * @returns 模型类型
    */
   private detectModelType(model: string): ModelType {
-    const lowerModel = model.toLowerCase();
+    const lowerModel = model.toLowerCase()
 
     if (lowerModel.includes('gpt')) {
-      return ModelType.GPT;
+      return ModelType.GPT
     }
     if (lowerModel.includes('claude')) {
-      return ModelType.CLAUDE;
+      return ModelType.CLAUDE
     }
     if (lowerModel.includes('deepseek')) {
-      return ModelType.DEEPSEEK;
+      return ModelType.DEEPSEEK
     }
     if (lowerModel.includes('qwen') || lowerModel.includes('dashscope')) {
-      return ModelType.QWEN;
+      return ModelType.QWEN
     }
 
-    return ModelType.UNKNOWN;
+    return ModelType.UNKNOWN
   }
 
   /**
@@ -146,11 +146,11 @@ export class TokenCounter implements ITokenCounter {
    */
   private countGPTTokens(text: string): number {
     // 统计中文字符
-    const chineseChars = (text.match(/[一-龥]/g) || []).length;
-    const otherChars = text.length - chineseChars;
+    const chineseChars = (text.match(/[一-龥]/g) || []).length
+    const otherChars = text.length - chineseChars
 
     // GPT Token 估算：中文 2.5 字符/token，其他 4 字符/token
-    return Math.ceil(chineseChars / 2.5 + otherChars / 4);
+    return Math.ceil(chineseChars / 2.5 + otherChars / 4)
   }
 
   /**
@@ -164,7 +164,7 @@ export class TokenCounter implements ITokenCounter {
    */
   private countClaudeTokens(text: string): number {
     // Claude Token 估算与 GPT 类似
-    return this.countGPTTokens(text);
+    return this.countGPTTokens(text)
   }
 
   /**
@@ -178,12 +178,12 @@ export class TokenCounter implements ITokenCounter {
    */
   private countDeepSeekTokens(text: string): number {
     // 统计中文字符
-    const chineseChars = (text.match(/[一-龥]/g) || []).length;
-    const otherChars = text.length - chineseChars;
+    const chineseChars = (text.match(/[一-龥]/g) || []).length
+    const otherChars = text.length - chineseChars
 
     // DeepSeek 对中文优化更好：中文 3 字符/token（比 GPT 的 2.5 更高效）
     // 其他保持 4 字符/token
-    return Math.ceil(chineseChars / 3 + otherChars / 4);
+    return Math.ceil(chineseChars / 3 + otherChars / 4)
   }
 
   /**
@@ -196,12 +196,12 @@ export class TokenCounter implements ITokenCounter {
    */
   private countQwenTokens(text: string): number {
     // 统计中文字符
-    const chineseChars = (text.match(/[一-龥]/g) || []).length;
-    const otherChars = text.length - chineseChars;
+    const chineseChars = (text.match(/[一-龥]/g) || []).length
+    const otherChars = text.length - chineseChars
 
     // Qwen 对中文支持很好：中文 3 字符/token（比 GPT 的 2.5 更高效）
     // 其他保持 4 字符/token
-    return Math.ceil(chineseChars / 3 + otherChars / 4);
+    return Math.ceil(chineseChars / 3 + otherChars / 4)
   }
 
   /**
@@ -214,7 +214,7 @@ export class TokenCounter implements ITokenCounter {
    */
   private defaultTokenCount(text: string): number {
     // 默认：字符数 / 4（粗略估算）
-    return Math.ceil(text.length / 4);
+    return Math.ceil(text.length / 4)
   }
 
   /**
@@ -226,8 +226,8 @@ export class TokenCounter implements ITokenCounter {
    * @returns 使用率（0-1）
    */
   calculateTokenUsageRate(text: string, model: string, maxTokens: number): number {
-    const tokens = this.estimateTokens(text, model);
-    return Math.min(tokens / maxTokens, 1);
+    const tokens = this.estimateTokens(text, model)
+    return Math.min(tokens / maxTokens, 1)
   }
 
   /**
@@ -239,8 +239,8 @@ export class TokenCounter implements ITokenCounter {
    * @returns 是否超过限制
    */
   exceedsTokenLimit(text: string, model: string, maxTokens: number): boolean {
-    const tokens = this.estimateTokens(text, model);
-    return tokens > maxTokens;
+    const tokens = this.estimateTokens(text, model)
+    return tokens > maxTokens
   }
 
   /**
@@ -258,17 +258,17 @@ export class TokenCounter implements ITokenCounter {
     maxTokens: number,
     safetyMargin: number = 0.1
   ): string {
-    const targetTokens = maxTokens * (1 - safetyMargin);
-    const currentTokens = this.estimateTokens(text, model);
+    const targetTokens = maxTokens * (1 - safetyMargin)
+    const currentTokens = this.estimateTokens(text, model)
 
     if (currentTokens <= targetTokens) {
-      return text;
+      return text
     }
 
     // 按比例截断
-    const ratio = targetTokens / currentTokens;
-    const targetLength = Math.floor(text.length * ratio);
-    return text.substring(0, targetLength);
+    const ratio = targetTokens / currentTokens
+    const targetLength = Math.floor(text.length * ratio)
+    return text.substring(0, targetLength)
   }
 }
 
@@ -279,10 +279,10 @@ export class TokenCounter implements ITokenCounter {
  * @returns Token 计数器实例
  */
 export function createTokenCounter(): TokenCounter {
-  return new TokenCounter();
+  return new TokenCounter()
 }
 
 /**
  * 默认 Token 计数器实例
  */
-export const tokenCounter = createTokenCounter();
+export const tokenCounter = createTokenCounter()

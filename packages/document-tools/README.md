@@ -14,9 +14,9 @@ YunPat 专利智能体框架的文档处理工具包，支持 PDF、DOCX、Excel
 - ✅ 本地部署，数据安全
 
 ```typescript
-import { OfficialDocParserTool, OfficialDocType } from '@yunpat/document-tools';
+import { OfficialDocParserTool, OfficialDocType } from '@yunpat/document-tools'
 
-const parser = new OfficialDocParserTool();
+const parser = new OfficialDocParserTool()
 
 const result = await parser.execute(
   {
@@ -26,9 +26,9 @@ const result = await parser.execute(
     ocrEndpoint: 'http://localhost:8009',
   },
   context
-);
+)
 
-console.log(result.fields);
+console.log(result.fields)
 // {
 //   applicationNumber: '202310123456.7',
 //   inventionTitle: '一种智能控制系统',
@@ -114,43 +114,52 @@ curl http://localhost:8009/health
 ### 审查意见通知书解析
 
 ```typescript
-const result = await parser.execute({
-  filePath: '/path/to/审查意见通知书.pdf',
-  docType: OfficialDocType.REVIEW_OPINION,
-  useOcr: true,
-}, context);
+const result = await parser.execute(
+  {
+    filePath: '/path/to/审查意见通知书.pdf',
+    docType: OfficialDocType.REVIEW_OPINION,
+    useOcr: true,
+  },
+  context
+)
 
-console.log('申请号:', result.fields.applicationNumber);
-console.log('发明名称:', result.fields.inventionTitle);
-console.log('审查意见:', result.fields.reviewSummary);
-console.log('答复期限:', result.fields.responseDeadline);
+console.log('申请号:', result.fields.applicationNumber)
+console.log('发明名称:', result.fields.inventionTitle)
+console.log('审查意见:', result.fields.reviewSummary)
+console.log('答复期限:', result.fields.responseDeadline)
 ```
 
 ### 驳回决定解析
 
 ```typescript
-const result = await parser.execute({
-  filePath: '/path/to/驳回决定.pdf',
-  docType: OfficialDocType.REJECTION_DECISION,
-  useOcr: true,
-}, context);
+const result = await parser.execute(
+  {
+    filePath: '/path/to/驳回决定.pdf',
+    docType: OfficialDocType.REJECTION_DECISION,
+    useOcr: true,
+  },
+  context
+)
 
-console.log('驳回理由:', result.fields.rejectionReason);
-console.log('法律条款:', result.fields.legalArticles);
+console.log('驳回理由:', result.fields.rejectionReason)
+console.log('法律条款:', result.fields.legalArticles)
 ```
 
 ### 缴费通知书解析
 
 ```typescript
-const result = await parser.execute({
-  filePath: '/path/to/缴费通知书.pdf',
-  docType: OfficialDocType.PAYMENT_NOTICE,
-  useOcr: true,
-}, context);
+const result = await parser.execute(
+  {
+    filePath: '/path/to/缴费通知书.pdf',
+    docType: OfficialDocType.PAYMENT_NOTICE,
+    useOcr: true,
+  },
+  context
+)
 
-console.log('费用类型:', result.fields.feeType);
-console.log('缴费金额:', result.fields.feeAmount);
-console.log('截止日期:', result.fields.paymentDeadline);
+console.log('费用类型:', result.fields.feeType)
+console.log('缴费金额:', result.fields.feeAmount)
+console.log('截止日期:', result.fields.paymentDeadline)
 ```
 
 ## 🎨 与专利智能体集成
@@ -158,14 +167,14 @@ console.log('截止日期:', result.fields.paymentDeadline);
 ### 在专利撰写智能体中使用
 
 ```typescript
-import { WriterAgent } from './WriterAgent.js';
-import { OfficialDocParserTool } from '@yunpat/document-tools';
+import { WriterAgent } from './WriterAgent.js'
+import { OfficialDocParserTool } from '@yunpat/document-tools'
 
 class PatentWriterAgent extends WriterAgent {
   protected before(input: any, context: any): Promise<void> {
     // 注册官文解析工具
-    const parser = new OfficialDocParserTool();
-    context.tools.register(parser);
+    const parser = new OfficialDocParserTool()
+    context.tools.register(parser)
   }
 }
 ```
@@ -173,32 +182,35 @@ class PatentWriterAgent extends WriterAgent {
 ### 在审查答复智能体中使用
 
 ```typescript
-import { ResponderAgent } from './ResponderAgent.js';
+import { ResponderAgent } from './ResponderAgent.js'
 
 class PatentResponderAgent extends ResponderAgent {
   protected async plan(input: any, context: any): Promise<Plan> {
     // 1. 解析审查意见通知书
-    const parser = new OfficialDocParserTool();
-    const docResult = await parser.execute({
-      filePath: input.reviewOpinionPath,
-      docType: OfficialDocType.REVIEW_OPINION,
-      useOcr: true,
-    }, context);
+    const parser = new OfficialDocParserTool()
+    const docResult = await parser.execute(
+      {
+        filePath: input.reviewOpinionPath,
+        docType: OfficialDocType.REVIEW_OPINION,
+        useOcr: true,
+      },
+      context
+    )
 
     // 2. 基于解析结果制定答复策略
-    return this.createResponsePlan(docResult.fields);
+    return this.createResponsePlan(docResult.fields)
   }
 }
 ```
 
 ## 📊 支持的文件类型
 
-| 类型 | 格式 | Docling | GLM-OCR |
-|------|------|---------|---------|
-| PDF | `.pdf` | ✅ | ✅ |
-| 图片 | `.png`, `.jpg`, `.jpeg`, `.webp` | ✅ | ✅ |
-| 扫描件 | 图片格式 | ✅ | ✅ |
-| DOCX | `.docx` | ✅ | 需转PDF |
+| 类型   | 格式                             | Docling | GLM-OCR |
+| ------ | -------------------------------- | ------- | ------- |
+| PDF    | `.pdf`                           | ✅      | ✅      |
+| 图片   | `.png`, `.jpg`, `.jpeg`, `.webp` | ✅      | ✅      |
+| 扫描件 | 图片格式                         | ✅      | ✅      |
+| DOCX   | `.docx`                          | ✅      | 需转PDF |
 
 ## 🔍 性能优化
 
@@ -219,10 +231,10 @@ converter = DocumentConverter(
 
 ```typescript
 // 批量处理多个官文
-const files = ['doc1.pdf', 'doc2.pdf', 'doc3.pdf'];
+const files = ['doc1.pdf', 'doc2.pdf', 'doc3.pdf']
 const results = await Promise.all(
-  files.map(file => parser.execute({ filePath: file, useOcr: true }, context))
-);
+  files.map((file) => parser.execute({ filePath: file, useOcr: true }, context))
+)
 ```
 
 ## 🚨 故障排查
@@ -263,17 +275,17 @@ class OfficialDocParserTool extends EnhancedBaseTool {
     name: 'official_doc_parse',
     description: '解析专利官文（审查意见通知书、驳回决定等），提取结构化字段',
     category: ToolCategory.DOCUMENT,
-  };
+  }
 
   async execute(
     input: {
-      filePath: string;
-      docType?: OfficialDocType;
-      useOcr?: boolean;
-      ocrEndpoint?: string;
+      filePath: string
+      docType?: OfficialDocType
+      useOcr?: boolean
+      ocrEndpoint?: string
     },
     context: ToolContext
-  ): Promise<OfficialDocParseResult>;
+  ): Promise<OfficialDocParseResult>
 }
 ```
 
@@ -281,18 +293,18 @@ class OfficialDocParserTool extends EnhancedBaseTool {
 
 ```typescript
 interface OfficialDocFields {
-  applicationNumber?: string;        // 申请号
-  inventionTitle?: string;            // 发明名称
-  reviewSummary?: string;             // 审查意见摘要
-  responseDeadline?: string;          // 答复期限
-  examiner?: string;                  // 审查员
-  referenceDocuments?: string[];      // 引用文献
-  rejectionReason?: string;           // 驳回理由
-  legalArticles?: string[];           // 法律条款
-  decisionDate?: string;              // 决定日期
-  feeType?: string;                   // 费用类型
-  feeAmount?: number;                 // 缴费金额
-  paymentDeadline?: string;           // 缴费截止日期
+  applicationNumber?: string // 申请号
+  inventionTitle?: string // 发明名称
+  reviewSummary?: string // 审查意见摘要
+  responseDeadline?: string // 答复期限
+  examiner?: string // 审查员
+  referenceDocuments?: string[] // 引用文献
+  rejectionReason?: string // 驳回理由
+  legalArticles?: string[] // 法律条款
+  decisionDate?: string // 决定日期
+  feeType?: string // 费用类型
+  feeAmount?: number // 缴费金额
+  paymentDeadline?: string // 缴费截止日期
 }
 ```
 

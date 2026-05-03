@@ -8,15 +8,15 @@
 
 ### ✅ 已完成项目
 
-| 任务 | 状态 | 说明 |
-|------|------|------|
-| 安装配置 PostgreSQL + pgvector | ✅ 完成 | 添加 drizzle-orm、postgres 依赖 |
-| 创建数据库表结构 | ✅ 完成 | schema.sql 包含向量表、图表、索引 |
-| 实现 PostgresVectorStore 类 | ✅ 完成 | CRUD、搜索、性能监控 |
-| 实现 PostgresGraphStore 类 | ✅ 完成 | 实体、关系、路径查找 |
-| 优化性能 | ✅ 完成 | HNSW 索引、批量操作、连接池 |
-| 编写集成测试和性能测试 | ✅ 完成 | 完整的测试覆盖 |
-| 集成到 MemoryLayer | ✅ 完成 | 统一的记忆管理 API |
+| 任务                           | 状态    | 说明                              |
+| ------------------------------ | ------- | --------------------------------- |
+| 安装配置 PostgreSQL + pgvector | ✅ 完成 | 添加 drizzle-orm、postgres 依赖   |
+| 创建数据库表结构               | ✅ 完成 | schema.sql 包含向量表、图表、索引 |
+| 实现 PostgresVectorStore 类    | ✅ 完成 | CRUD、搜索、性能监控              |
+| 实现 PostgresGraphStore 类     | ✅ 完成 | 实体、关系、路径查找              |
+| 优化性能                       | ✅ 完成 | HNSW 索引、批量操作、连接池       |
+| 编写集成测试和性能测试         | ✅ 完成 | 完整的测试覆盖                    |
+| 集成到 MemoryLayer             | ✅ 完成 | 统一的记忆管理 API                |
 
 ## 📁 新增/修改文件
 
@@ -93,10 +93,10 @@ await Promise.all(batch.map(async (item) => { ... }));
 const store = new PostgresVectorStore({
   databaseUrl: '...',
   enablePerformanceMonitoring: true,
-});
+})
 
 // 获取性能统计
-const stats = store.getPerformanceStats();
+const stats = store.getPerformanceStats()
 // { search: { avg: 12.5, min: 8, max: 25, count: 100 } }
 ```
 
@@ -104,60 +104,61 @@ const stats = store.getPerformanceStats();
 
 ```typescript
 this.client = postgres(config.databaseUrl, {
-  max: 20,              // 增加连接池大小
+  max: 20, // 增加连接池大小
   idle_timeout: 20,
   connect_timeout: 10,
   max_lifetime: 60 * 30, // 30 分钟
-});
+})
 ```
 
 ## 📊 性能指标
 
 ### 测试环境
+
 - MacBook Pro M1
 - Docker PostgreSQL 16 + pgvector
 - 本地网络
 
 ### 测试结果
 
-| 操作 | 目标 | 实际 | 状态 |
-|------|------|------|------|
-| 批量插入 | > 1000 vectors/s | ~1200 vectors/s | ✅ |
-| 1K 向量搜索 | < 100ms | ~15ms | ✅ |
-| 10K 向量搜索 | < 50ms | ~35ms | ✅ |
-| 100K 向量搜索 | < 50ms | ~48ms | ✅ |
+| 操作          | 目标             | 实际            | 状态 |
+| ------------- | ---------------- | --------------- | ---- |
+| 批量插入      | > 1000 vectors/s | ~1200 vectors/s | ✅   |
+| 1K 向量搜索   | < 100ms          | ~15ms           | ✅   |
+| 10K 向量搜索  | < 50ms           | ~35ms           | ✅   |
+| 100K 向量搜索 | < 50ms           | ~48ms           | ✅   |
 
 ## 🔧 使用示例
 
 ### 基本使用
 
 ```typescript
-import { MemoryLayer } from '@yunpat/core';
+import { MemoryLayer } from '@yunpat/core'
 
 const memoryLayer = new MemoryLayer({
   databaseUrl: 'postgres://yunpat:yunpat123@localhost:5432/yunpat',
   vectorDimension: 1024,
-});
+})
 
-await memoryLayer.initialize();
+await memoryLayer.initialize()
 
 // 添加记忆
 const id = await memoryLayer.addMemory({
   type: 'conversation',
   content: '用户消息',
   embedding: embeddingVector,
-});
+})
 
 // 搜索记忆
-const results = await memoryLayer.searchMemories(queryEmbedding, 10);
+const results = await memoryLayer.searchMemories(queryEmbedding, 10)
 
 // 创建图关系
 const entityId = await memoryLayer.createEntity({
   type: 'Person',
   name: '张三',
-});
+})
 
-await memoryLayer.close();
+await memoryLayer.close()
 ```
 
 ## 🧪 测试覆盖
@@ -189,14 +190,14 @@ pnpm --filter @yunpat/core test postgres-store.integration
 ### 3. 在代码中使用
 
 ```typescript
-import { MemoryLayer } from '@yunpat/core';
+import { MemoryLayer } from '@yunpat/core'
 
 const memoryLayer = new MemoryLayer({
   databaseUrl: process.env.DATABASE_URL,
   vectorDimension: 1024,
-});
+})
 
-await memoryLayer.initialize();
+await memoryLayer.initialize()
 ```
 
 ## 📝 注意事项
@@ -236,6 +237,7 @@ await memoryLayer.initialize();
 PostgreSQL 向量存储集成已完成，所有核心功能均已实现并经过测试。系统性能达到预期目标，文档完整，可以投入使用。
 
 **核心优势**:
+
 - 高性能向量搜索（HNSW 索引）
 - 灵活的元数据过滤
 - 完整的图关系支持

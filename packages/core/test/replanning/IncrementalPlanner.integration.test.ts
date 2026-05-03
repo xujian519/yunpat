@@ -2,17 +2,17 @@
  * 增量规划器集成测试
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { IncrementalPlanner } from '../../src/replanning/IncrementalPlanner.js';
-import { Priority, TaskStatus, TaskType, DependencyType } from '../../src/planning/types.js';
-import type { SubGoal, HierarchicalPlan } from '../../src/planning/types.js';
+import { describe, it, expect, beforeEach } from 'vitest'
+import { IncrementalPlanner } from '../../src/replanning/IncrementalPlanner.js'
+import { Priority, TaskStatus, TaskType, DependencyType } from '../../src/planning/types.js'
+import type { SubGoal, HierarchicalPlan } from '../../src/planning/types.js'
 
 describe('IncrementalPlanner Integration Tests', () => {
-  let planner: IncrementalPlanner;
-  let mockPlan: HierarchicalPlan;
+  let planner: IncrementalPlanner
+  let mockPlan: HierarchicalPlan
 
   beforeEach(() => {
-    planner = new IncrementalPlanner();
+    planner = new IncrementalPlanner()
 
     // 创建一个复杂的模拟计划
     mockPlan = {
@@ -144,12 +144,12 @@ describe('IncrementalPlanner Integration Tests', () => {
       estimatedTokens: 22000,
       status: 'draft' as any,
       createdAt: new Date(),
-    };
+    }
 
     // 填充依赖图的节点
     mockPlan.subGoals.forEach((goal) => {
-      mockPlan.dependencies.nodes.set(goal.id, goal);
-    });
+      mockPlan.dependencies.nodes.set(goal.id, goal)
+    })
 
     // 填充依赖边
     mockPlan.subGoals.forEach((goal) => {
@@ -160,10 +160,10 @@ describe('IncrementalPlanner Integration Tests', () => {
           type: DependencyType.STRONG,
           strength: 1.0,
           description: '显式依赖',
-        });
-      });
-    });
-  });
+        })
+      })
+    })
+  })
 
   describe('端到端增量规划测试', () => {
     it('应该成功执行完整的增量规划流程', async () => {
@@ -190,21 +190,21 @@ describe('IncrementalPlanner Integration Tests', () => {
         status: TaskStatus.PENDING,
         estimatedDuration: 200,
         estimatedTokens: 3000,
-      };
+      }
 
-      const result = await planner.addTask(mockPlan, newTask);
+      const result = await planner.addTask(mockPlan, newTask)
 
       // 验证添加成功
-      expect(result.addedTask.taskId).toBe('validation');
+      expect(result.addedTask.taskId).toBe('validation')
       // validation 任务没有依赖，时长只有200，不会成为关键路径的一部分
       // 原有关键路径时长为1450，远大于validation的时长
-      expect(result.newCriticalPath.tasks).not.toContain('validation');
+      expect(result.newCriticalPath.tasks).not.toContain('validation')
 
       // 验证影响评估
-      expect(result.impact.affectedTasks.length).toBeGreaterThan(0);
+      expect(result.impact.affectedTasks.length).toBeGreaterThan(0)
       // 由于validation不在关键路径上，项目时长不会增加
-      expect(result.impact.newProjectDuration).toBeLessThanOrEqual(mockPlan.estimatedDuration + 200);
-    });
+      expect(result.impact.newProjectDuration).toBeLessThanOrEqual(mockPlan.estimatedDuration + 200)
+    })
 
     it('应该处理多任务添加场景', async () => {
       const tasksToAdd: SubGoal[] = [
@@ -254,21 +254,21 @@ describe('IncrementalPlanner Integration Tests', () => {
           estimatedDuration: 120,
           estimatedTokens: 1500,
         },
-      ];
+      ]
 
       // 添加第一个任务
-      const result1 = await planner.addTask(mockPlan, tasksToAdd[0]);
-      expect(result1.addedTask.taskId).toBe('task-1');
+      const result1 = await planner.addTask(mockPlan, tasksToAdd[0])
+      expect(result1.addedTask.taskId).toBe('task-1')
 
       // 添加第二个任务（注意：addTask不会修改原计划，所以两次添加是独立的）
-      const result2 = await planner.addTask(mockPlan, tasksToAdd[1]);
-      expect(result2.addedTask.taskId).toBe('task-2');
+      const result2 = await planner.addTask(mockPlan, tasksToAdd[1])
+      expect(result2.addedTask.taskId).toBe('task-2')
 
       // 验证两个任务都被正确添加（各自独立）
-      expect(result1.impact.affectedTasks).toContain('task-1');
-      expect(result2.impact.affectedTasks).toContain('task-2');
-    });
-  });
+      expect(result1.impact.affectedTasks).toContain('task-1')
+      expect(result2.impact.affectedTasks).toContain('task-2')
+    })
+  })
 
   describe('复杂依赖关系测试', () => {
     it('应该正确处理复杂的依赖链', async () => {
@@ -342,23 +342,23 @@ describe('IncrementalPlanner Integration Tests', () => {
           estimatedDuration: 150,
           estimatedTokens: 1500,
         },
-      ];
+      ]
 
       // 添加第一个任务
-      await planner.addTask(mockPlan, chainTasks[0]);
+      await planner.addTask(mockPlan, chainTasks[0])
 
       // 添加第二个任务，依赖第一个
-      await planner.addTask(mockPlan, chainTasks[1], ['chain-1']);
+      await planner.addTask(mockPlan, chainTasks[1], ['chain-1'])
 
       // 添加第三个任务，依赖第二个
-      const result = await planner.addTask(mockPlan, chainTasks[2], ['chain-2']);
+      const result = await planner.addTask(mockPlan, chainTasks[2], ['chain-2'])
 
       // 验证依赖链被正确处理
       // 由于原有计划的关键路径时长为1450，而依赖链总时长只有370，
       // 所以依赖链不会成为关键路径的一部分
-      expect(result.addedTask.taskId).toBe('chain-3');
-      expect(result.affectedTasks).toContain('chain-3');
-    });
+      expect(result.addedTask.taskId).toBe('chain-3')
+      expect(result.affectedTasks).toContain('chain-3')
+    })
 
     it.skip('应该检测并拒绝循环依赖', async () => {
       const task1: SubGoal = {
@@ -383,7 +383,7 @@ describe('IncrementalPlanner Integration Tests', () => {
         status: TaskStatus.PENDING,
         estimatedDuration: 100,
         estimatedTokens: 1000,
-      };
+      }
 
       const task2: SubGoal = {
         id: 'cycle-2',
@@ -407,20 +407,20 @@ describe('IncrementalPlanner Integration Tests', () => {
         status: TaskStatus.PENDING,
         estimatedDuration: 100,
         estimatedTokens: 1000,
-      };
+      }
 
       // 添加第一个任务
-      await planner.addTask(mockPlan, task1);
+      await planner.addTask(mockPlan, task1)
 
       // 添加第二个任务，依赖第一个
-      await planner.addTask(mockPlan, task2, ['cycle-1']);
+      await planner.addTask(mockPlan, task2, ['cycle-1'])
 
       // 尝试添加循环依赖（task1 依赖 task2）
       // 这需要在计划中手动添加循环依赖边
-      const cyclicPlan = { ...mockPlan };
+      const cyclicPlan = { ...mockPlan }
       // 添加节点到依赖图
-      cyclicPlan.dependencies.nodes.set('cycle-1', task1);
-      cyclicPlan.dependencies.nodes.set('cycle-2', task2);
+      cyclicPlan.dependencies.nodes.set('cycle-1', task1)
+      cyclicPlan.dependencies.nodes.set('cycle-2', task2)
       // 添加双向依赖边（形成循环）
       cyclicPlan.dependencies.edges.push({
         from: 'cycle-1',
@@ -428,20 +428,20 @@ describe('IncrementalPlanner Integration Tests', () => {
         type: DependencyType.STRONG,
         strength: 1.0,
         description: 'cycle-1 -> cycle-2',
-      });
+      })
       cyclicPlan.dependencies.edges.push({
         from: 'cycle-2',
         to: 'cycle-1',
         type: DependencyType.STRONG,
         strength: 1.0,
         description: 'cycle-2 -> cycle-1',
-      });
+      })
 
       expect(() => {
-        planner['recalculateDependencies'](cyclicPlan);
-      }).toThrow('检测到循环依赖');
-    });
-  });
+        planner['recalculateDependencies'](cyclicPlan)
+      }).toThrow('检测到循环依赖')
+    })
+  })
 
   describe('关键路径变更测试', () => {
     it('应该正确识别关键路径的变更', async () => {
@@ -468,13 +468,13 @@ describe('IncrementalPlanner Integration Tests', () => {
         status: TaskStatus.PENDING,
         estimatedDuration: 50,
         estimatedTokens: 500,
-      };
+      }
 
-      const result = await planner.addTask(mockPlan, shortTask);
+      const result = await planner.addTask(mockPlan, shortTask)
 
       // 短任务不应该在关键路径上
-      expect(result.newCriticalPath.tasks).not.toContain('short-task');
-    });
+      expect(result.newCriticalPath.tasks).not.toContain('short-task')
+    })
 
     it.skip('应该正确更新关键路径时长', async () => {
       // 创建一个依赖于 review 的长任务
@@ -500,38 +500,44 @@ describe('IncrementalPlanner Integration Tests', () => {
         status: TaskStatus.PENDING,
         estimatedDuration: 500,
         estimatedTokens: 10000,
-      };
+      }
 
       // 调试：检查 mockPlan 中是否有 review 任务
-      console.log('mockPlan.subGoals 数量:', mockPlan.subGoals.length);
-      console.log('mockPlan.subGoals IDs:', mockPlan.subGoals.map(g => g.id));
-      console.log('review 任务是否存在:', mockPlan.subGoals.some(g => g.id === 'review'));
+      console.log('mockPlan.subGoals 数量:', mockPlan.subGoals.length)
+      console.log(
+        'mockPlan.subGoals IDs:',
+        mockPlan.subGoals.map((g) => g.id)
+      )
+      console.log(
+        'review 任务是否存在:',
+        mockPlan.subGoals.some((g) => g.id === 'review')
+      )
 
-      const result = await planner.addTask(mockPlan, longTask);
+      const result = await planner.addTask(mockPlan, longTask)
 
       // 新的关键路径时长应该增加
       // longTask 依赖于 review（关键路径的最后一个任务），所以应该成为关键路径的一部分
       // 原关键路径时长 = 1450，longTask 时长 = 500，新时长应该 = 1950
-      console.log('原计划时长:', mockPlan.estimatedDuration);
-      console.log('新关键路径时长:', result.newCriticalPath.duration);
-      console.log('新关键路径任务:', result.newCriticalPath.tasks);
-      console.log('延迟:', result.impact.delay);
-      console.log('long-task 是否在关键路径中:', result.newCriticalPath.tasks.includes('long-task'));
+      console.log('原计划时长:', mockPlan.estimatedDuration)
+      console.log('新关键路径时长:', result.newCriticalPath.duration)
+      console.log('新关键路径任务:', result.newCriticalPath.tasks)
+      console.log('延迟:', result.impact.delay)
+      console.log('long-task 是否在关键路径中:', result.newCriticalPath.tasks.includes('long-task'))
 
       // 检查问题：如果 long-task 不在关键路径中，说明有问题
       if (!result.newCriticalPath.tasks.includes('long-task')) {
-        console.log('警告：long-task 不在关键路径中！');
+        console.log('警告：long-task 不在关键路径中！')
       }
 
-      expect(result.newCriticalPath.duration).toBeGreaterThan(mockPlan.estimatedDuration);
-      expect(result.impact.delay).toBeGreaterThan(0);
-    });
-  });
+      expect(result.newCriticalPath.duration).toBeGreaterThan(mockPlan.estimatedDuration)
+      expect(result.impact.delay).toBeGreaterThan(0)
+    })
+  })
 
   describe('大规模计划测试', () => {
     it('应该能处理包含100+任务的计划', async () => {
-      const largePlan = { ...mockPlan };
-      largePlan.subGoals = [];
+      const largePlan = { ...mockPlan }
+      largePlan.subGoals = []
 
       // 创建100个任务
       for (let i = 0; i < 100; i++) {
@@ -557,15 +563,15 @@ describe('IncrementalPlanner Integration Tests', () => {
           status: TaskStatus.PENDING,
           estimatedDuration: 60,
           estimatedTokens: 1000,
-        };
+        }
 
-        largePlan.subGoals.push(task);
+        largePlan.subGoals.push(task)
       }
 
       // 填充依赖图
       largePlan.subGoals.forEach((goal) => {
-        largePlan.dependencies.nodes.set(goal.id, goal);
-      });
+        largePlan.dependencies.nodes.set(goal.id, goal)
+      })
 
       largePlan.subGoals.forEach((goal) => {
         goal.dependencies.forEach((depId) => {
@@ -575,19 +581,19 @@ describe('IncrementalPlanner Integration Tests', () => {
             type: DependencyType.STRONG,
             strength: 1.0,
             description: '显式依赖',
-          });
-        });
-      });
+          })
+        })
+      })
 
       // 测试依赖重计算性能
-      const startTime = Date.now();
-      const newGraph = planner['recalculateDependencies'](largePlan);
-      const endTime = Date.now();
+      const startTime = Date.now()
+      const newGraph = planner['recalculateDependencies'](largePlan)
+      const endTime = Date.now()
 
-      expect(newGraph.nodes.size).toBe(100);
-      expect(endTime - startTime).toBeLessThan(1000); // 应该在1秒内完成
-    });
-  });
+      expect(newGraph.nodes.size).toBe(100)
+      expect(endTime - startTime).toBeLessThan(1000) // 应该在1秒内完成
+    })
+  })
 
   describe('边界条件测试', () => {
     it('应该能处理空计划', () => {
@@ -605,13 +611,13 @@ describe('IncrementalPlanner Integration Tests', () => {
         estimatedTokens: 0,
         status: 'draft' as any,
         createdAt: new Date(),
-      };
+      }
 
-      const criticalPath = planner['recalculateCriticalPath'](emptyPlan);
+      const criticalPath = planner['recalculateCriticalPath'](emptyPlan)
 
-      expect(criticalPath.tasks).toEqual([]);
-      expect(criticalPath.duration).toBe(0);
-    });
+      expect(criticalPath.tasks).toEqual([])
+      expect(criticalPath.duration).toBe(0)
+    })
 
     it('应该能处理单任务计划', () => {
       const singleTaskPlan: HierarchicalPlan = {
@@ -667,12 +673,12 @@ describe('IncrementalPlanner Integration Tests', () => {
         estimatedTokens: 1000,
         status: 'draft' as any,
         createdAt: new Date(),
-      };
+      }
 
-      const criticalPath = planner['recalculateCriticalPath'](singleTaskPlan);
+      const criticalPath = planner['recalculateCriticalPath'](singleTaskPlan)
 
-      expect(criticalPath.tasks).toContain('single-task');
-      expect(criticalPath.duration).toBe(60);
-    });
-  });
-});
+      expect(criticalPath.tasks).toContain('single-task')
+      expect(criticalPath.duration).toBe(60)
+    })
+  })
+})

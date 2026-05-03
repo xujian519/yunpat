@@ -12,11 +12,13 @@
 **到**：知识产权全生命周期智能体平台
 
 **目标客户**：
+
 - 小型专利代理所
 - 律师事务所 IP 团队
 - 企业 IP 管理部门
 
 **核心价值**：
+
 - 提升撰写效率 3-5 倍
 - 提高授权率 20-30%
 - 降低人力成本 40-60%
@@ -116,12 +118,14 @@ yunpat/
 ### 1. 专利撰写智能体 (PatentWriter)
 
 **功能**：
+
 - ✅ 技术方案理解（权利要求设计）
 - ✅ 说明书生成（背景技术、发明内容、附图说明）
 - ✅ 权利要求书撰写（独立权利要求、从属权利要求）
 - ✅ 申请文件生成（请求书、摘要、附图）
 
 **核心能力**：
+
 ```typescript
 class PatentWriter extends Agent {
   // 技术方案分析
@@ -148,6 +152,7 @@ class PatentWriter extends Agent {
 ```
 
 **输入**：
+
 ```json
 {
   "invention": {
@@ -163,6 +168,7 @@ class PatentWriter extends Agent {
 ```
 
 **输出**：
+
 ```json
 {
   "patentApplication": {
@@ -191,12 +197,14 @@ class PatentWriter extends Agent {
 ### 2. 审查答复智能体 (OfficeActionResponder)
 
 **功能**：
+
 - ✅ 审查意见分析（理解审查员观点）
 - ✅ 对比文件检索（最接近现有技术）
 - ✅ 答复策略制定（修改/争辩/放弃）
 - ✅ 答复书生成（法律论证）
 
 **核心能力**：
+
 ```typescript
 class OfficeActionResponder extends Agent {
   // 分析审查意见
@@ -227,6 +235,7 @@ class OfficeActionResponder extends Agent {
 ### 3. 专利分析智能体 (PatentAnalyzer)
 
 **功能**：
+
 - ✅ 专利价值评估
 - ✅ 技术趋势分析
 - ✅ 竞品监控
@@ -234,6 +243,7 @@ class OfficeActionResponder extends Agent {
 - ✅ 专利地图绘制
 
 **核心能力**：
+
 - 专利检索（全文、语义）
 - 数据挖掘（专利大数据）
 - 可视化（专利地图、技术树）
@@ -244,6 +254,7 @@ class OfficeActionResponder extends Agent {
 ### 4. 专利管理智能体 (PatentManager)
 
 **功能**：
+
 - ✅ 期限管理（优先权、年费、审查期限）
 - ✅ 流程管理（提交、审查、授权）
 - ✅ 费用管理（申请费、年费、代理费）
@@ -258,12 +269,14 @@ class OfficeActionResponder extends Agent {
 **目标**：验证核心价值假设
 
 **范围**：
+
 - ✅ 专利撰写智能体（核心）
 - ✅ 专利检索引擎
 - ✅ 简单客户门户
 - ✅ 基础工作流管理
 
 **成功指标**：
+
 - 撰写效率提升 3 倍
 - 用户满意度 > 4.0/5.0
 - 获取 5-10 家代理所试用
@@ -273,6 +286,7 @@ class OfficeActionResponder extends Agent {
 ### 阶段 2：功能完善（3-4 个月）
 
 **范围**：
+
 - ✅ 审查答复智能体
 - ✅ 专利分析智能体
 - ✅ 专利管理智能体
@@ -280,6 +294,7 @@ class OfficeActionResponder extends Agent {
 - ✅ 移动端支持
 
 **成功指标**：
+
 - 功能覆盖率 > 80%
 - 用户留存率 > 60%
 - MRR 达到 10 万/月
@@ -289,6 +304,7 @@ class OfficeActionResponder extends Agent {
 ### 阶段 3：规模化（6-12 个月）
 
 **范围**：
+
 - ✅ 商标智能体
 - ✅ 版权智能体
 - ✅ 商业秘密保护
@@ -296,6 +312,7 @@ class OfficeActionResponder extends Agent {
 - ✅ API 平台
 
 **成功指标**：
+
 - 客户数 > 100 家
 - ARR 达到 100 万/年
 - 市场份额 > 5%
@@ -307,11 +324,13 @@ class OfficeActionResponder extends Agent {
 ### SaaS 订阅制
 
 **定价**：
+
 - **基础版**：5,000 元/月（5 用户，100 件专利/年）
 - **专业版**：20,000 元/月（20 用户，500 件专利/年）
 - **企业版**：50,000 元/月（50 用户，2000 件专利/年）
 
 **增值服务**：
+
 - 培训服务：5,000 元/次
 - 定制开发：按需报价
 - 数据服务：按次收费
@@ -327,11 +346,13 @@ class OfficeActionResponder extends Agent {
 - **企业 IP 部门**：~10,000 家
 
 **目标市场**：
+
 - 小型专利代理所（5-50 人）：~2,000 家
 - 愿意付费率：20%
 - **潜在客户**：400 家
 
 **市场机会**：
+
 - 年收入潜力：2.4 亿/年（400 家 × 60 万/年）
 
 ---
@@ -340,21 +361,21 @@ class OfficeActionResponder extends Agent {
 
 ### vs 传统软件
 
-| 传统软件 | YunPat |
-|---------|--------|
-| 需要培训 | 开箱即用 |
+| 传统软件 | YunPat       |
+| -------- | ------------ |
+| 需要培训 | 开箱即用     |
 | 功能单一 | 智能化全流程 |
-| 更新慢 | 持续迭代 |
-| 价格高 | 订阅制可负担 |
+| 更新慢   | 持续迭代     |
+| 价格高   | 订阅制可负担 |
 
 ### vs 通用 AI 工具
 
-| 通用 AI | YunPat |
-|---------|--------|
-| 不懂专利法 | 专业专利知识 |
+| 通用 AI    | YunPat         |
+| ---------- | -------------- |
+| 不懂专利法 | 专业专利知识   |
 | 无流程支持 | 全生命周期管理 |
-| 无行业数据 | 专利知识库 |
-| 无客户门户 | 一站式平台 |
+| 无行业数据 | 专利知识库     |
+| 无客户门户 | 一站式平台     |
 
 ---
 

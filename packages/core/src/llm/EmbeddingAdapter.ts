@@ -13,24 +13,24 @@ import {
   EmbeddingCapabilities,
   EmbeddingError,
   EmbeddingErrorCode,
-} from './EmbeddingProvider.js';
+} from './EmbeddingProvider.js'
 
 /**
  * OpenAI 兼容嵌入配置
  */
 export interface OpenAIEmbeddingConfig {
   /** API 基础 URL */
-  baseURL: string;
+  baseURL: string
   /** 模型名称 */
-  model?: string;
+  model?: string
   /** API 密钥（可选） */
-  apiKey?: string;
+  apiKey?: string
   /** 超时时间（毫秒） */
-  timeout?: number;
+  timeout?: number
   /** 单次请求最大文本数 */
-  batchSize?: number;
+  batchSize?: number
   /** 是否自动归一化 */
-  normalize?: boolean;
+  normalize?: boolean
 }
 
 /**
@@ -38,14 +38,14 @@ export interface OpenAIEmbeddingConfig {
  */
 interface OpenAIEmbeddingResponse {
   data: Array<{
-    embedding: number[];
-    index: number;
-  }>;
-  model: string;
+    embedding: number[]
+    index: number
+  }>
+  model: string
   usage?: {
-    prompt_tokens: number;
-    total_tokens: number;
-  };
+    prompt_tokens: number
+    total_tokens: number
+  }
 }
 
 /**
@@ -56,7 +56,7 @@ const DEFAULT_CONFIG = {
   timeout: 30000,
   batchSize: 32,
   normalize: true,
-};
+}
 
 /**
  * OpenAI 兼容嵌入适配器
@@ -67,12 +67,12 @@ export class EmbeddingAdapter extends BaseEmbeddingProvider {
   private config: Required<
     Pick<OpenAIEmbeddingConfig, 'baseURL' | 'model' | 'timeout' | 'batchSize' | 'normalize'>
   > & {
-    apiKey?: string;
-  };
-  private capabilities: EmbeddingCapabilities;
+    apiKey?: string
+  }
+  private capabilities: EmbeddingCapabilities
 
   constructor(config: OpenAIEmbeddingConfig) {
-    super();
+    super()
 
     this.config = {
       baseURL: config.baseURL,
@@ -81,7 +81,7 @@ export class EmbeddingAdapter extends BaseEmbeddingProvider {
       batchSize: config.batchSize ?? DEFAULT_CONFIG.batchSize,
       normalize: config.normalize ?? DEFAULT_CONFIG.normalize,
       apiKey: config.apiKey,
-    };
+    }
 
     // 设置默认能力（BGE-M3: 1024 维）
     this.capabilities = {
@@ -89,49 +89,49 @@ export class EmbeddingAdapter extends BaseEmbeddingProvider {
       maxTokens: 8192,
       maxBatchSize: this.config.batchSize,
       supportsNormalization: true,
-    };
+    }
   }
 
   /**
    * 批量嵌入
    */
   async embed(params: EmbeddingParams): Promise<EmbeddingResult> {
-    const { texts, normalize = this.config.normalize } = params;
+    const { texts, normalize = this.config.normalize } = params
 
     // 验证输入
-    this.validateInput(texts);
+    this.validateInput(texts)
 
     if (texts.length === 0) {
       return {
         embeddings: [],
         dimension: this.capabilities.dimension,
         model: this.config.model,
-      };
+      }
     }
 
     try {
       // 分批处理
       const embeddings = await this.processBatch(texts, this.config.batchSize, async (batch) => {
-        return await this.embedBatch(batch);
-      });
+        return await this.embedBatch(batch)
+      })
 
       // 归一化处理
-      const finalEmbeddings = normalize ? embeddings.map((emb) => this.normalize(emb)) : embeddings;
+      const finalEmbeddings = normalize ? embeddings.map((emb) => this.normalize(emb)) : embeddings
 
       return {
         embeddings: finalEmbeddings,
         dimension: this.capabilities.dimension,
         model: this.config.model,
-      };
+      }
     } catch (error) {
       if (error instanceof EmbeddingError) {
-        throw error;
+        throw error
       }
       throw new EmbeddingError(
         `嵌入失败: ${error instanceof Error ? error.message : String(error)}`,
         EmbeddingErrorCode.API_ERROR,
         this.config.model
-      );
+      )
     }
   }
 
@@ -142,40 +142,40 @@ export class EmbeddingAdapter extends BaseEmbeddingProvider {
     text: string,
     normalize = this.config.normalize
   ): Promise<SingleEmbeddingResult> {
-    const result = await this.embed({ texts: [text], normalize });
+    const result = await this.embed({ texts: [text], normalize })
 
     return {
       embedding: result.embeddings[0],
       model: result.model,
-    };
+    }
   }
 
   /**
    * 获取能力元数据
    */
   getCapabilities(): EmbeddingCapabilities {
-    return { ...this.capabilities };
+    return { ...this.capabilities }
   }
 
   /**
    * 获取模型名称
    */
   getModel(): string {
-    return this.config.model;
+    return this.config.model
   }
 
   /**
    * 调用 API 嵌入一批文本
    */
   private async embedBatch(texts: string[]): Promise<number[][]> {
-    const url = `${this.config.baseURL}/embeddings`;
+    const url = `${this.config.baseURL}/embeddings`
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-    };
+    }
 
     if (this.config.apiKey) {
-      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+      headers['Authorization'] = `Bearer ${this.config.apiKey}`
     }
 
     try {
@@ -187,18 +187,18 @@ export class EmbeddingAdapter extends BaseEmbeddingProvider {
           input: texts,
         }),
         signal: AbortSignal.timeout(this.config.timeout),
-      });
+      })
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
+        const errorText = await response.text().catch(() => '')
         throw new EmbeddingError(
           `API 请求失败: ${response.status} ${errorText}`,
           EmbeddingErrorCode.API_ERROR,
           this.config.model
-        );
+        )
       }
 
-      const data = (await response.json()) as OpenAIEmbeddingResponse;
+      const data = (await response.json()) as OpenAIEmbeddingResponse
 
       // 验证响应格式
       if (!data.data || !Array.isArray(data.data)) {
@@ -206,23 +206,23 @@ export class EmbeddingAdapter extends BaseEmbeddingProvider {
           'API 返回格式异常: 缺少 data 字段',
           EmbeddingErrorCode.API_ERROR,
           this.config.model
-        );
+        )
       }
 
       // 按 index 排序确保顺序正确
-      const sorted = data.data.sort((a, b) => a.index - b.index);
+      const sorted = data.data.sort((a, b) => a.index - b.index)
 
       // 验证向量维度
       const embeddings = sorted.map((item) => {
-        const embedding = item.embedding;
-        this.validateDimension(embedding, this.capabilities.dimension);
-        return embedding;
-      });
+        const embedding = item.embedding
+        this.validateDimension(embedding, this.capabilities.dimension)
+        return embedding
+      })
 
-      return embeddings;
+      return embeddings
     } catch (error) {
       if (error instanceof EmbeddingError) {
-        throw error;
+        throw error
       }
 
       // 网络错误或其他异常
@@ -230,7 +230,7 @@ export class EmbeddingAdapter extends BaseEmbeddingProvider {
         `网络请求失败: ${error instanceof Error ? error.message : String(error)}`,
         EmbeddingErrorCode.API_ERROR,
         this.config.model
-      );
+      )
     }
   }
 
@@ -243,7 +243,7 @@ export class EmbeddingAdapter extends BaseEmbeddingProvider {
     this.capabilities = {
       ...this.capabilities,
       ...capabilities,
-    };
+    }
   }
 }
 
@@ -260,7 +260,7 @@ export function createBGEEmbedding(
     baseURL,
     model: 'bge-m3-mlx-8bit',
     apiKey,
-  });
+  })
 
   // BGE-M3: 1024 维
   adapter.setCapabilities({
@@ -268,9 +268,9 @@ export function createBGEEmbedding(
     maxTokens: 8192,
     maxBatchSize: 32,
     supportsNormalization: true,
-  });
+  })
 
-  return adapter;
+  return adapter
 }
 
 /**
@@ -286,7 +286,7 @@ export function createM3EEmbedding(
     baseURL,
     model: 'm3e-base',
     apiKey,
-  });
+  })
 
   // M3E-base: 768 维
   adapter.setCapabilities({
@@ -294,7 +294,7 @@ export function createM3EEmbedding(
     maxTokens: 512,
     maxBatchSize: 32,
     supportsNormalization: true,
-  });
+  })
 
-  return adapter;
+  return adapter
 }

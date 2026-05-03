@@ -5,8 +5,8 @@
  * 支持：向量存储、元数据过滤、图关系
  */
 
-import { boolean, jsonb, pgTable, serial, text, timestamp, index } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { boolean, jsonb, pgTable, serial, text, timestamp, index } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 /**
  * 记忆表（核心向量存储）
@@ -34,12 +34,12 @@ export const memories = pgTable(
 
     /** 元数据（JSONB，支持灵活查询） */
     metadata: jsonb('metadata').$type<{
-      agent?: string;
-      userId?: string;
-      tags?: string[];
-      createdAt?: string;
-      source?: string;
-      [key: string]: any;
+      agent?: string
+      userId?: string
+      tags?: string[]
+      createdAt?: string
+      source?: string
+      [key: string]: any
     }>(),
 
     /** 是否归档（冷数据） */
@@ -64,7 +64,7 @@ export const memories = pgTable(
     // 复合索引（类型 + 创建时间）
     typeCreatedAtIdx: index('memories_type_created_at_idx').on(table.type, table.createdAt),
   })
-);
+)
 
 /**
  * 图关系表（实体与关系）
@@ -84,15 +84,15 @@ export const graphEntities = pgTable('graph_entities', {
 
   /** 实体属性（JSONB） */
   properties: jsonb('properties').$type<{
-    description?: string;
-    aliases?: string[];
-    confidence?: number;
-    [key: string]: any;
+    description?: string
+    aliases?: string[]
+    confidence?: number
+    [key: string]: any
   }>(),
 
   /** 创建时间 */
   createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+})
 
 export const graphRelations = pgTable('graph_relations', {
   /** 主键 ID */
@@ -116,14 +116,14 @@ export const graphRelations = pgTable('graph_relations', {
 
   /** 关系属性（JSONB） */
   properties: jsonb('properties').$type<{
-    evidence?: string;
-    confidence?: number;
-    [key: string]: any;
+    evidence?: string
+    confidence?: number
+    [key: string]: any
   }>(),
 
   /** 创建时间 */
   createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+})
 
 /**
  * 用户画像表
@@ -139,30 +139,30 @@ export const userProfiles = pgTable('user_profiles', {
 
   /** 用户偏好（JSONB） */
   preferences: jsonb('preferences').$type<{
-    topics?: string[];
-    agents?: string[];
-    language?: string;
-    [key: string]: any;
+    topics?: string[]
+    agents?: string[]
+    language?: string
+    [key: string]: any
   }>(),
 
   /** 行为特征（JSONB） */
   behaviors: jsonb('behaviors').$type<{
-    lastActiveAt?: string;
-    averageSessionDuration?: number;
-    mostUsedAgents?: string[];
-    [key: string]: any;
+    lastActiveAt?: string
+    averageSessionDuration?: number
+    mostUsedAgents?: string[]
+    [key: string]: any
   }>(),
 
   /** 更新时间 */
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-});
+})
 
 // 导出类型
-export type Memory = typeof memories.$inferSelect;
-export type NewMemory = typeof memories.$inferInsert;
-export type GraphEntity = typeof graphEntities.$inferSelect;
-export type NewGraphEntity = typeof graphEntities.$inferInsert;
-export type GraphRelation = typeof graphRelations.$inferSelect;
-export type NewGraphRelation = typeof graphRelations.$inferInsert;
-export type UserProfile = typeof userProfiles.$inferSelect;
-export type NewUserProfile = typeof userProfiles.$inferInsert;
+export type Memory = typeof memories.$inferSelect
+export type NewMemory = typeof memories.$inferInsert
+export type GraphEntity = typeof graphEntities.$inferSelect
+export type NewGraphEntity = typeof graphEntities.$inferInsert
+export type GraphRelation = typeof graphRelations.$inferSelect
+export type NewGraphRelation = typeof graphRelations.$inferInsert
+export type UserProfile = typeof userProfiles.$inferSelect
+export type NewUserProfile = typeof userProfiles.$inferInsert

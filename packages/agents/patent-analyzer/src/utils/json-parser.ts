@@ -14,20 +14,16 @@ export class JSONParser {
    * @param transform - 可选的数据转换函数
    * @returns 解析后的数据或默认值
    */
-  static parse<T>(
-    content: string,
-    defaultValue: T,
-    transform?: (data: any) => T
-  ): T {
+  static parse<T>(content: string, defaultValue: T, transform?: (data: any) => T): T {
     try {
-      const jsonStr = this.extractJSON(content);
-      if (!jsonStr) return defaultValue;
+      const jsonStr = this.extractJSON(content)
+      if (!jsonStr) return defaultValue
 
-      const data = JSON.parse(jsonStr);
-      return transform ? transform(data) : (data as T);
+      const data = JSON.parse(jsonStr)
+      return transform ? transform(data) : (data as T)
     } catch (error) {
-      console.warn('[JSONParser] 解析失败:', error);
-      return defaultValue;
+      console.warn('[JSONParser] 解析失败:', error)
+      return defaultValue
     }
   }
 
@@ -40,16 +36,12 @@ export class JSONParser {
    * - 直接的 JSON 对象
    */
   private static extractJSON(content: string): string | null {
-    const patterns = [
-      /```json\s*([\s\S]*?)\s*```/,
-      /```\s*([\s\S]*?)\s*```/,
-      /{[\s\S]*}/,
-    ];
+    const patterns = [/```json\s*([\s\S]*?)\s*```/, /```\s*([\s\S]*?)\s*```/, /{[\s\S]*}/]
 
     for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) return match[1] || match[0];
+      const match = content.match(pattern)
+      if (match) return match[1] || match[0]
     }
-    return null;
+    return null
   }
 }

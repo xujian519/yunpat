@@ -9,23 +9,26 @@
 ### 1. 环境变量配置
 
 **✅ 正确做法**：
+
 ```typescript
 // 使用环境变量
-const knowledgeBasePath = process.env.KNOWLEDGE_BASE_PATH;
+const knowledgeBasePath = process.env.KNOWLEDGE_BASE_PATH
 if (!knowledgeBasePath) {
-  throw new Error('请设置环境变量 KNOWLEDGE_BASE_PATH');
+  throw new Error('请设置环境变量 KNOWLEDGE_BASE_PATH')
 }
 ```
 
 **❌ 错误做法**：
+
 ```typescript
 // 硬编码路径（会暴露个人信息）
-const knowledgeBasePath = '/Users/xujian/Library/Mobile Documents/...';
+const knowledgeBasePath = '/Users/xujian/Library/Mobile Documents/...'
 ```
 
 ### 2. 配置文件管理
 
 **项目根目录应包含**：
+
 ```
 .env.example          # 配置示例（可提交到Git）
 .env                  # 实际配置（不提交，在.gitignore中）
@@ -33,6 +36,7 @@ const knowledgeBasePath = '/Users/xujian/Library/Mobile Documents/...';
 ```
 
 **`.env.example` 内容**：
+
 ```bash
 # 知识库路径
 KNOWLEDGE_BASE_PATH=/path/to/your/knowledge-base
@@ -44,14 +48,18 @@ DEEPSEEK_API_KEY=your-api-key-here
 ### 3. 文档中的路径处理
 
 **✅ 文档中使用占位符**：
+
 ```markdown
 # 配置知识库路径
+
 KNOWLEDGE_BASE_PATH=/path/to/your/knowledge-base
 ```
 
 **❌ 避免真实路径**：
+
 ```markdown
 # 不要在文档中使用真实路径
+
 # KNOWLEDGE_BASE_PATH=/Users/xujian/Library/Mobile Documents/...
 ```
 
@@ -89,12 +97,13 @@ KNOWLEDGE_BASE_PATH=/path/to/your/knowledge-base
 **风险**：暴露用户名、目录结构
 
 **解决方案**：
+
 ```typescript
 // ❌ 错误
-const path = '/Users/xujian/projects/YunPat';
+const path = '/Users/xujian/projects/YunPat'
 
 // ✅ 正确
-const path = process.env.YUNPAT_ROOT || '.';
+const path = process.env.YUNPAT_ROOT || '.'
 ```
 
 ### 问题2: API密钥泄露
@@ -102,14 +111,15 @@ const path = process.env.YUNPAT_ROOT || '.';
 **风险**：密钥被盗用，产生费用
 
 **解决方案**：
+
 ```typescript
 // ❌ 错误
-const apiKey = 'sk-abc123...';
+const apiKey = 'sk-abc123...'
 
 // ✅ 正确
-const apiKey = process.env.DEEPSEEK_API_KEY;
+const apiKey = process.env.DEEPSEEK_API_KEY
 if (!apiKey) {
-  throw new Error('DEEPSEEK_API_KEY not set');
+  throw new Error('DEEPSEEK_API_KEY not set')
 }
 ```
 
@@ -118,6 +128,7 @@ if (!apiKey) {
 **风险**：暴露邮箱、手机号等
 
 **解决方案**：
+
 - 使用占位符：`your-email@example.com`
 - 使用示例数据：`John Doe` 而非真实姓名
 

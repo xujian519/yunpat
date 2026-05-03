@@ -1,23 +1,23 @@
-import { Agent, AgentConfig, ExecutionContext } from '@yunpat/core';
+import { Agent, AgentConfig, ExecutionContext } from '@yunpat/core'
 
 /**
  * 研究查询
  */
 export interface ResearchQuery {
   /** 研究问题 */
-  question: string;
+  question: string
 
   /** 研究深度 */
-  depth?: 'quick' | 'standard' | 'comprehensive';
+  depth?: 'quick' | 'standard' | 'comprehensive'
 
   /** 数据源 */
-  sources?: Array<'web' | 'academic' | 'database'>;
+  sources?: Array<'web' | 'academic' | 'database'>
 
   /** 时间范围 */
-  timeRange?: 'day' | 'week' | 'month' | 'year' | 'all';
+  timeRange?: 'day' | 'week' | 'month' | 'year' | 'all'
 
   /** 最大结果数 */
-  maxResults?: number;
+  maxResults?: number
 }
 
 /**
@@ -27,32 +27,32 @@ export interface ResearchPlan {
   /** 搜索策略 */
   searchStrategy: {
     /** 关键词 */
-    keywords: string[];
+    keywords: string[]
 
     /** 搜索查询 */
-    queries: string[];
+    queries: string[]
 
     /** 数据源优先级 */
-    sourcePriority: string[];
-  };
+    sourcePriority: string[]
+  }
 
   /** 信息提取策略 */
   extractionStrategy: {
     /** 需要提取的信息类型 */
-    infoTypes: string[];
+    infoTypes: string[]
 
     /** 数据点 */
-    dataPoints: string[];
-  };
+    dataPoints: string[]
+  }
 
   /** 分析策略 */
   analysisStrategy: {
     /** 对比维度 */
-    dimensions: string[];
+    dimensions: string[]
 
     /** 评估标准 */
-    criteria: string[];
-  };
+    criteria: string[]
+  }
 }
 
 /**
@@ -60,22 +60,22 @@ export interface ResearchPlan {
  */
 export interface SearchResult {
   /** URL */
-  url: string;
+  url: string
 
   /** 标题 */
-  title: string;
+  title: string
 
   /** 摘要 */
-  summary: string;
+  summary: string
 
   /** 相关性分数 */
-  relevanceScore: number;
+  relevanceScore: number
 
   /** 来源类型 */
-  sourceType: 'web' | 'academic' | 'database';
+  sourceType: 'web' | 'academic' | 'database'
 
   /** 时间戳 */
-  timestamp: Date;
+  timestamp: Date
 }
 
 /**
@@ -83,46 +83,46 @@ export interface SearchResult {
  */
 export interface ResearchResult {
   /** 核心发现 */
-  keyFindings: string[];
+  keyFindings: string[]
 
   /** 数据汇总 */
   dataSummary: {
-    totalResults: number;
-    credibleSources: number;
+    totalResults: number
+    credibleSources: number
     dateRange: {
-      earliest: Date;
-      latest: Date;
-    };
-  };
+      earliest: Date
+      latest: Date
+    }
+  }
 
   /** 详细分析 */
   analysis: {
     /** 趋势分析 */
-    trends: string[];
+    trends: string[]
 
     /** 对比分析 */
     comparisons: Array<{
-      dimension: string;
-      findings: string[];
-    }>;
+      dimension: string
+      findings: string[]
+    }>
 
     /** 知识图谱 */
     knowledgeGraph: Array<{
-      entity: string;
-      relations: Array<{ target: string; type: string }>;
-    }>;
-  };
+      entity: string
+      relations: Array<{ target: string; type: string }>
+    }>
+  }
 
   /** 原始搜索结果 */
-  searchResults: SearchResult[];
+  searchResults: SearchResult[]
 
   /** 元数据 */
   metadata: {
-    query: string;
-    completedAt: Date;
-    duration: number;
-    sourcesAnalyzed: number;
-  };
+    query: string
+    completedAt: Date
+    duration: number
+    sourcesAnalyzed: number
+  }
 }
 
 /**
@@ -136,7 +136,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
       ...config,
       name: 'researcher',
       description: '研究分析师 - 信息搜集、数据整理、报告生成',
-    });
+    })
   }
 
   /**
@@ -144,7 +144,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
    */
   protected async plan(query: ResearchQuery, context: ExecutionContext): Promise<ResearchPlan> {
     // 使用 LLM 生成搜索策略
-    const strategyPrompt = this.buildStrategyPrompt(query);
+    const strategyPrompt = this.buildStrategyPrompt(query)
     const response = await context.llm.chat({
       messages: [
         {
@@ -157,31 +157,31 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
         },
       ],
       temperature: 0.5,
-    });
+    })
 
     // 解析策略
-    const strategy = this.parseStrategy(response.message.content);
+    const strategy = this.parseStrategy(response.message.content)
 
-    return strategy;
+    return strategy
   }
 
   /**
    * 执行阶段 - 搜索和分析信息
    */
   protected async act(plan: ResearchPlan, context: ExecutionContext): Promise<ResearchResult> {
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 1. 执行搜索（模拟）
-    const searchResults = await this.performSearch(plan, context);
+    const searchResults = await this.performSearch(plan, context)
 
     // 2. 提取信息
-    const extractedInfo = await this.extractInformation(searchResults, context);
+    const extractedInfo = await this.extractInformation(searchResults, context)
 
     // 3. 分析数据
-    const analysis = await this.analyzeData(extractedInfo, plan, context);
+    const analysis = await this.analyzeData(extractedInfo, plan, context)
 
     // 4. 生成核心发现
-    const keyFindings = await this.generateKeyFindings(analysis, context);
+    const keyFindings = await this.generateKeyFindings(analysis, context)
 
     return {
       keyFindings,
@@ -201,7 +201,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
         duration: Date.now() - startTime,
         sourcesAnalyzed: searchResults.length,
       },
-    };
+    }
   }
 
   /**
@@ -216,35 +216,35 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
       result.keyFindings.length >= 3, // 至少 3 个核心发现
       result.dataSummary.totalResults >= 5, // 至少 5 个结果
       result.analysis.trends.length > 0, // 有趋势分析
-    ];
+    ]
 
-    const passed = qualityChecks.every((check) => check);
+    const passed = qualityChecks.every((check) => check)
 
     if (!passed) {
       return {
         shouldContinue: false,
         feedback: '研究质量未达到标准，但已生成基本结果',
-      };
+      }
     }
 
     return {
       shouldContinue: false,
       feedback: '研究完成',
-    };
+    }
   }
 
   /**
    * 构建策略生成提示
    */
   private buildStrategyPrompt(query: ResearchQuery): string {
-    let prompt = `请为以下研究问题制定搜索和分析策略：\n\n问题：${query.question}\n\n`;
+    let prompt = `请为以下研究问题制定搜索和分析策略：\n\n问题：${query.question}\n\n`
 
     if (query.depth) {
-      prompt += `研究深度：${query.depth}\n`;
+      prompt += `研究深度：${query.depth}\n`
     }
 
     if (query.sources && query.sources.length > 0) {
-      prompt += `数据源：${query.sources.join(', ')}\n`;
+      prompt += `数据源：${query.sources.join(', ')}\n`
     }
 
     prompt += `\n请提供：
@@ -253,9 +253,9 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
 3. 需要提取的信息类型
 4. 分析维度
 
-以结构化格式返回。`;
+以结构化格式返回。`
 
-    return prompt;
+    return prompt
   }
 
   /**
@@ -277,7 +277,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
         dimensions: ['performance', 'ease of use', 'scalability'],
         criteria: ['speed', 'accuracy', 'cost'],
       },
-    };
+    }
   }
 
   /**
@@ -290,7 +290,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
     // 在实际实现中，这里会调用真实的搜索工具
     // 现在返回模拟数据
 
-    const results: SearchResult[] = [];
+    const results: SearchResult[] = []
 
     for (const query of plan.searchStrategy.queries) {
       // 模拟搜索结果
@@ -301,10 +301,10 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
         relevanceScore: 0.8,
         sourceType: 'web',
         timestamp: new Date(),
-      });
+      })
     }
 
-    return results;
+    return results
   }
 
   /**
@@ -317,7 +317,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
     // 使用 LLM 提取关键信息
     const extractPrompt = `从以下搜索结果中提取关键信息：\n\n${results
       .map((r) => `- ${r.title}: ${r.summary}`)
-      .join('\n')}`;
+      .join('\n')}`
 
     const response = await context.llm.chat({
       messages: [
@@ -331,11 +331,11 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
         },
       ],
       temperature: 0.3,
-    });
+    })
 
     return {
       extracted: response.message.content,
-    };
+    }
   }
 
   /**
@@ -347,7 +347,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
     context: ExecutionContext
   ): Promise<ResearchResult['analysis']> {
     // 使用 LLM 进行分析
-    const analysisPrompt = `基于以下信息进行分析：\n\n${JSON.stringify(info)}\n\n`;
+    const analysisPrompt = `基于以下信息进行分析：\n\n${JSON.stringify(info)}\n\n`
     const response = await context.llm.chat({
       messages: [
         {
@@ -360,7 +360,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
         },
       ],
       temperature: 0.5,
-    });
+    })
 
     return {
       trends: ['Trend 1', 'Trend 2'],
@@ -379,7 +379,7 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
           ],
         },
       ],
-    };
+    }
   }
 
   /**
@@ -393,6 +393,6 @@ export class ResearcherAgent extends Agent<ResearchQuery, ResearchResult> {
       '核心发现 1：多智能体协作是当前趋势',
       '核心发现 2：LangChain 和 AutoGen 是主流框架',
       '核心发现 3：事件总线架构提供更好的解耦',
-    ];
+    ]
   }
 }

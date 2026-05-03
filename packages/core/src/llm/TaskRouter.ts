@@ -13,10 +13,10 @@ import {
   ChatParams,
   ChatResponse,
   ChatChunk,
-} from '../lifecycle/Lifecycle.js';
+} from '../lifecycle/Lifecycle.js'
 
-import { NativeLLMAdapter } from './NativeLLMAdapter.js';
-import { OMLXAdapter } from './OMXLAdapter.js';
+import { NativeLLMAdapter } from './NativeLLMAdapter.js'
+import { OMLXAdapter } from './OMXLAdapter.js'
 
 /**
  * 任务复杂度
@@ -37,13 +37,13 @@ export enum TaskComplexity {
  */
 export interface Task {
   /** 任务消息 */
-  messages: ChatParams['messages'];
+  messages: ChatParams['messages']
 
   /** 任务描述(可选,用于复杂度评估) */
-  description?: string;
+  description?: string
 
   /** 预期输出长度(可选) */
-  expectedOutputLength?: number;
+  expectedOutputLength?: number
 }
 
 /**
@@ -51,16 +51,16 @@ export interface Task {
  */
 export interface RoutingDecision {
   /** 任务复杂度 */
-  complexity: TaskComplexity;
+  complexity: TaskComplexity
 
   /** 选择的模型适配器 */
-  adapter: ILLMAdapter;
+  adapter: ILLMAdapter
 
   /** 选择原因 */
-  reason: string;
+  reason: string
 
   /** 预估成本(元) */
-  estimatedCost: number;
+  estimatedCost: number
 }
 
 /**
@@ -68,22 +68,22 @@ export interface RoutingDecision {
  */
 export interface TaskRouterConfig {
   /** DeepSeek API Key */
-  deepSeekApiKey: string;
+  deepSeekApiKey: string
 
   /** OMLX Base URL */
-  omlxBaseURL?: string;
+  omlxBaseURL?: string
 
   /** OMLX API Key(可选) */
-  omlxApiKey?: string;
+  omlxApiKey?: string
 
   /** OMLX 模型名称 */
-  omlxModelName?: string;
+  omlxModelName?: string
 
   /** DeepSeek 模型名称 */
-  deepSeekModelName?: string;
+  deepSeekModelName?: string
 
   /** 强制使用特定模式(测试用) */
-  forceMode?: 'local' | 'cloud' | 'auto';
+  forceMode?: 'local' | 'cloud' | 'auto'
 }
 
 /**
@@ -92,15 +92,15 @@ export interface TaskRouterConfig {
 const PRICING = {
   deepseek: 0.001, // DeepSeek: ¥0.001/1k tokens
   omlx: 0, // OMLX 本地: 免费
-};
+}
 
 /**
  * 任务复杂度评估器
  */
 export class TaskRouter {
-  private localAdapter: OMLXAdapter;
-  private cloudAdapter: NativeLLMAdapter;
-  private forceMode: TaskRouterConfig['forceMode'];
+  private localAdapter: OMLXAdapter
+  private cloudAdapter: NativeLLMAdapter
+  private forceMode: TaskRouterConfig['forceMode']
 
   constructor(config: TaskRouterConfig) {
     // 初始化本地 OMLX 适配器
@@ -108,16 +108,16 @@ export class TaskRouter {
       baseURL: config.omlxBaseURL || 'http://localhost:8009/v1',
       apiKey: config.omlxApiKey,
       modelName: config.omlxModelName || 'gemma-4-e2b-it-4bit',
-    });
+    })
 
     // 初始化云端 DeepSeek 适配器
     this.cloudAdapter = new NativeLLMAdapter({
       name: config.deepSeekModelName || 'deepseek-chat',
       apiKey: config.deepSeekApiKey,
       baseURL: 'https://api.deepseek.com/v1',
-    });
+    })
 
-    this.forceMode = config.forceMode;
+    this.forceMode = config.forceMode
   }
 
   /**
@@ -132,22 +132,22 @@ export class TaskRouter {
   evaluateComplexity(task: Task): TaskComplexity {
     // 强制模式
     if (this.forceMode === 'local') {
-      return TaskComplexity.SIMPLE;
+      return TaskComplexity.SIMPLE
     }
     if (this.forceMode === 'cloud') {
-      return TaskComplexity.COMPLEX;
+      return TaskComplexity.COMPLEX
     }
 
     // 计算输入文本总长度
-    const inputLength = task.messages.reduce((sum, msg) => sum + (msg.content?.length || 0), 0);
+    const inputLength = task.messages.reduce((sum, msg) => sum + (msg.content?.length || 0), 0)
 
     // 提取任务描述和最后一条用户消息
-    const taskDesc = (task.description || '').toLowerCase();
+    const taskDesc = (task.description || '').toLowerCase()
     const lastUserMessage =
       task.messages
         .filter((m) => m.role === 'user')
         .pop()
-        ?.content.toLowerCase() || '';
+        ?.content.toLowerCase() || ''
 
     // 复杂任务关键词
     const complexKeywords = [
@@ -181,7 +181,7 @@ export class TaskRouter {
       'detailed',
       'comprehensive',
       'research',
-    ];
+    ]
 
     // 简单任务关键词
     const simpleKeywords = [
@@ -207,15 +207,15 @@ export class TaskRouter {
       'summarize',
       'brief',
       'extract',
-    ];
+    ]
 
     // 检查关键词匹配
     const hasComplexKeyword = complexKeywords.some(
       (kw) => taskDesc.includes(kw) || lastUserMessage.includes(kw)
-    );
+    )
     const hasSimpleKeyword = simpleKeywords.some(
       (kw) => taskDesc.includes(kw) || lastUserMessage.includes(kw)
-    );
+    )
 
     // 评估逻辑
     if (
@@ -223,43 +223,43 @@ export class TaskRouter {
       inputLength > 2000 ||
       (task.expectedOutputLength && task.expectedOutputLength > 1000)
     ) {
-      return TaskComplexity.COMPLEX;
+      return TaskComplexity.COMPLEX
     }
 
     if (hasSimpleKeyword || inputLength < 500) {
-      return TaskComplexity.SIMPLE;
+      return TaskComplexity.SIMPLE
     }
 
     // 默认为中等复杂度
-    return TaskComplexity.MEDIUM;
+    return TaskComplexity.MEDIUM
   }
 
   /**
    * 路由任务到合适的模型
    */
   route(task: Task): RoutingDecision {
-    const complexity = this.evaluateComplexity(task);
+    const complexity = this.evaluateComplexity(task)
 
-    let adapter: ILLMAdapter;
-    let reason: string;
-    let estimatedCost: number;
+    let adapter: ILLMAdapter
+    let reason: string
+    let estimatedCost: number
 
     switch (complexity) {
       case TaskComplexity.SIMPLE:
       case TaskComplexity.MEDIUM:
-        adapter = this.localAdapter;
-        reason = `本地模型处理 ${complexity === TaskComplexity.SIMPLE ? '简单' : '中等'}任务(免费)`;
-        estimatedCost = 0;
-        break;
+        adapter = this.localAdapter
+        reason = `本地模型处理 ${complexity === TaskComplexity.SIMPLE ? '简单' : '中等'}任务(免费)`
+        estimatedCost = 0
+        break
 
       case TaskComplexity.COMPLEX:
-        adapter = this.cloudAdapter;
-        reason = '云端模型处理复杂任务(高质量)';
+        adapter = this.cloudAdapter
+        reason = '云端模型处理复杂任务(高质量)'
         // 估算成本: 输入 + 输出 tokens
-        const inputTokens = this.estimateTokens(task.messages);
-        const outputTokens = task.expectedOutputLength ?? 500;
-        estimatedCost = ((inputTokens + outputTokens) / 1000) * PRICING.deepseek;
-        break;
+        const inputTokens = this.estimateTokens(task.messages)
+        const outputTokens = task.expectedOutputLength ?? 500
+        estimatedCost = ((inputTokens + outputTokens) / 1000) * PRICING.deepseek
+        break
     }
 
     return {
@@ -267,7 +267,7 @@ export class TaskRouter {
       adapter,
       reason,
       estimatedCost,
-    };
+    }
   }
 
   /**
@@ -276,22 +276,22 @@ export class TaskRouter {
    * 粗略估算: 1 token ≈ 3-4 个字符(中文)或 4-5 个字符(英文)
    */
   estimateTokens(messages: ChatParams['messages']): number {
-    const totalChars = messages.reduce((sum, msg) => sum + (msg.content?.length || 0), 0);
-    return Math.ceil(totalChars / 3.5); // 平均值
+    const totalChars = messages.reduce((sum, msg) => sum + (msg.content?.length || 0), 0)
+    return Math.ceil(totalChars / 3.5) // 平均值
   }
 
   /**
    * 获取本地适配器
    */
   getLocalAdapter(): OMLXAdapter {
-    return this.localAdapter;
+    return this.localAdapter
   }
 
   /**
    * 获取云端适配器
    */
   getCloudAdapter(): NativeLLMAdapter {
-    return this.cloudAdapter;
+    return this.cloudAdapter
   }
 }
 
@@ -301,17 +301,17 @@ export class TaskRouter {
  * 自动路由任务到合适的模型,对用户透明
  */
 export class CostAwareLLMAdapter implements ILLMAdapter {
-  private router: TaskRouter;
+  private router: TaskRouter
   private stats = {
     totalRequests: 0,
     localRequests: 0,
     cloudRequests: 0,
     totalCost: 0,
     savedCost: 0,
-  };
+  }
 
   constructor(config: TaskRouterConfig) {
-    this.router = new TaskRouter(config);
+    this.router = new TaskRouter(config)
   }
 
   /**
@@ -320,25 +320,25 @@ export class CostAwareLLMAdapter implements ILLMAdapter {
   async chat(params: ChatParams): Promise<ChatResponse> {
     const task: Task = {
       messages: params.messages,
-    };
+    }
 
-    const decision = this.router.route(task);
+    const decision = this.router.route(task)
 
     // 更新统计
-    this.stats.totalRequests++;
+    this.stats.totalRequests++
     if (decision.complexity === TaskComplexity.COMPLEX) {
-      this.stats.cloudRequests++;
-      this.stats.totalCost += decision.estimatedCost;
+      this.stats.cloudRequests++
+      this.stats.totalCost += decision.estimatedCost
     } else {
-      this.stats.localRequests++;
+      this.stats.localRequests++
       // 假设云端成本为节省的成本
       const cloudCost =
-        ((this.router['estimateTokens'](task.messages) + 500) / 1000) * PRICING.deepseek;
-      this.stats.savedCost += cloudCost;
+        ((this.router['estimateTokens'](task.messages) + 500) / 1000) * PRICING.deepseek
+      this.stats.savedCost += cloudCost
     }
 
     // 执行调用
-    return decision.adapter.chat(params);
+    return decision.adapter.chat(params)
   }
 
   /**
@@ -347,30 +347,30 @@ export class CostAwareLLMAdapter implements ILLMAdapter {
   async *chatStream(params: ChatParams): AsyncIterable<ChatChunk> {
     const task: Task = {
       messages: params.messages,
-    };
-
-    const decision = this.router.route(task);
-
-    // 更新统计
-    this.stats.totalRequests++;
-    if (decision.complexity === TaskComplexity.COMPLEX) {
-      this.stats.cloudRequests++;
-      this.stats.totalCost += decision.estimatedCost;
-    } else {
-      this.stats.localRequests++;
-      const cloudCost =
-        ((this.router['estimateTokens'](task.messages) + 500) / 1000) * PRICING.deepseek;
-      this.stats.savedCost += cloudCost;
     }
 
-    yield* decision.adapter.chatStream(params);
+    const decision = this.router.route(task)
+
+    // 更新统计
+    this.stats.totalRequests++
+    if (decision.complexity === TaskComplexity.COMPLEX) {
+      this.stats.cloudRequests++
+      this.stats.totalCost += decision.estimatedCost
+    } else {
+      this.stats.localRequests++
+      const cloudCost =
+        ((this.router['estimateTokens'](task.messages) + 500) / 1000) * PRICING.deepseek
+      this.stats.savedCost += cloudCost
+    }
+
+    yield* decision.adapter.chatStream(params)
   }
 
   /**
    * 嵌入 - 默认使用云端模型
    */
   async embed(texts: string[]): Promise<number[][]> {
-    return this.router.getCloudAdapter().embed(texts);
+    return this.router.getCloudAdapter().embed(texts)
   }
 
   /**
@@ -387,7 +387,7 @@ export class CostAwareLLMAdapter implements ILLMAdapter {
         this.stats.totalRequests > 0
           ? ((this.stats.cloudRequests / this.stats.totalRequests) * 100).toFixed(1) + '%'
           : '0%',
-    };
+    }
   }
 
   /**
@@ -400,14 +400,14 @@ export class CostAwareLLMAdapter implements ILLMAdapter {
       cloudRequests: 0,
       totalCost: 0,
       savedCost: 0,
-    };
+    }
   }
 
   /**
    * 获取底层路由器
    */
   getRouter(): TaskRouter {
-    return this.router;
+    return this.router
   }
 }
 
@@ -425,5 +425,5 @@ export function createCostAwareAdapter(
   return new CostAwareLLMAdapter({
     deepSeekApiKey,
     omlxBaseURL,
-  });
+  })
 }

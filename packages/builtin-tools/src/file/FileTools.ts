@@ -1,7 +1,7 @@
-import { z } from 'zod';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import { z } from 'zod'
+import { promises as fs } from 'fs'
+import path from 'path'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 /**
  * 文件读取工具
@@ -29,23 +29,23 @@ export class FileReadTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; encoding?: BufferEncoding | 'utf-8' | 'utf-16le' | 'latin1' },
     _context: ToolContext
   ): Promise<{ content: string }> {
-    const { filePath, encoding = 'utf-8' } = input;
+    const { filePath, encoding = 'utf-8' } = input
 
     try {
-      const content = await fs.readFile(filePath, encoding);
-      return { content };
+      const content = await fs.readFile(filePath, encoding)
+      return { content }
     } catch (error) {
       throw new Error(
         `Failed to read file '${filePath}': ${
           error instanceof Error ? error.message : String(error)
         }`
-      );
+      )
     }
   }
 }
@@ -78,13 +78,13 @@ export class FileWriteTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async before(input: { filePath: string; content: string }, _context: ToolContext): Promise<void> {
     // 确保目录存在
-    const dir = path.dirname(input.filePath);
+    const dir = path.dirname(input.filePath)
     try {
-      await fs.mkdir(dir, { recursive: true });
+      await fs.mkdir(dir, { recursive: true })
     } catch (error) {
       // 忽略目录已存在的错误
       if (
@@ -93,7 +93,7 @@ export class FileWriteTool extends EnhancedBaseTool<
           (error.message.includes('EEXIST') || error.message.includes('already exists'))
         )
       ) {
-        throw error;
+        throw error
       }
     }
   }
@@ -102,18 +102,18 @@ export class FileWriteTool extends EnhancedBaseTool<
     input: { filePath: string; content: string; encoding?: BufferEncoding },
     _context: ToolContext
   ): Promise<{ success: boolean; bytesWritten: number }> {
-    const { filePath, content, encoding = 'utf-8' } = input;
+    const { filePath, content, encoding = 'utf-8' } = input
 
     try {
-      const buffer = Buffer.from(content, encoding);
-      await fs.writeFile(filePath, buffer);
-      return { success: true, bytesWritten: buffer.length };
+      const buffer = Buffer.from(content, encoding)
+      await fs.writeFile(filePath, buffer)
+      return { success: true, bytesWritten: buffer.length }
     } catch (error) {
       throw new Error(
         `Failed to write file '${filePath}': ${
           error instanceof Error ? error.message : String(error)
         }`
-      );
+      )
     }
   }
 }
@@ -146,24 +146,24 @@ export class FileAppendTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; content: string; encoding?: BufferEncoding },
     _context: ToolContext
   ): Promise<{ success: boolean; bytesWritten: number }> {
-    const { filePath, content, encoding = 'utf-8' } = input;
+    const { filePath, content, encoding = 'utf-8' } = input
 
     try {
-      const buffer = Buffer.from(content, encoding);
-      await fs.appendFile(filePath, buffer);
-      return { success: true, bytesWritten: buffer.length };
+      const buffer = Buffer.from(content, encoding)
+      await fs.appendFile(filePath, buffer)
+      return { success: true, bytesWritten: buffer.length }
     } catch (error) {
       throw new Error(
         `Failed to append file '${filePath}': ${
           error instanceof Error ? error.message : String(error)
         }`
-      );
+      )
     }
   }
 }
@@ -186,20 +186,20 @@ export class FileDeleteTool extends EnhancedBaseTool<{ filePath: string }, { suc
     permissions: ['fs:delete'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(input: { filePath: string }, _context: ToolContext): Promise<{ success: boolean }> {
-    const { filePath } = input;
+    const { filePath } = input
 
     try {
-      await fs.unlink(filePath);
-      return { success: true };
+      await fs.unlink(filePath)
+      return { success: true }
     } catch (error) {
       throw new Error(
         `Failed to delete file '${filePath}': ${
           error instanceof Error ? error.message : String(error)
         }`
-      );
+      )
     }
   }
 }
@@ -209,9 +209,9 @@ export class FileDeleteTool extends EnhancedBaseTool<{ filePath: string }, { suc
  */
 export class DirectoryListTool extends EnhancedBaseTool<
   {
-    dirPath: string;
-    recursive?: boolean;
-    includeHidden?: boolean;
+    dirPath: string
+    recursive?: boolean
+    includeHidden?: boolean
   },
   { entries: Array<{ name: string; path: string; type: 'file' | 'directory' }> }
 > {
@@ -237,60 +237,60 @@ export class DirectoryListTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      dirPath: string;
-      recursive?: boolean;
-      includeHidden?: boolean;
+      dirPath: string
+      recursive?: boolean
+      includeHidden?: boolean
     },
     _context: ToolContext
   ): Promise<{
-    entries: Array<{ name: string; path: string; type: 'file' | 'directory' }>;
+    entries: Array<{ name: string; path: string; type: 'file' | 'directory' }>
   }> {
-    const { dirPath, recursive = false, includeHidden = false } = input;
+    const { dirPath, recursive = false, includeHidden = false } = input
 
     try {
       const entries: Array<{
-        name: string;
-        path: string;
-        type: 'file' | 'directory';
-      }> = [];
+        name: string
+        path: string
+        type: 'file' | 'directory'
+      }> = []
 
       const walkDir = async (currentPath: string) => {
-        const items = await fs.readdir(currentPath, { withFileTypes: true });
+        const items = await fs.readdir(currentPath, { withFileTypes: true })
 
         for (const item of items) {
           // 跳过隐藏文件
           if (!includeHidden && item.name.startsWith('.')) {
-            continue;
+            continue
           }
 
-          const fullPath = path.join(currentPath, item.name);
-          const type = item.isDirectory() ? 'directory' : 'file';
+          const fullPath = path.join(currentPath, item.name)
+          const type = item.isDirectory() ? 'directory' : 'file'
 
           entries.push({
             name: item.name,
             path: fullPath,
             type,
-          });
+          })
 
           // 递归处理子目录
           if (recursive && item.isDirectory()) {
-            await walkDir(fullPath);
+            await walkDir(fullPath)
           }
         }
-      };
+      }
 
-      await walkDir(dirPath);
-      return { entries };
+      await walkDir(dirPath)
+      return { entries }
     } catch (error) {
       throw new Error(
         `Failed to list directory '${dirPath}': ${
           error instanceof Error ? error.message : String(error)
         }`
-      );
+      )
     }
   }
 }

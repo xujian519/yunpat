@@ -9,22 +9,22 @@
  */
 export interface GoogleFactCheckResponse {
   claims?: Array<{
-    text: string;
-    claimant?: string[];
-    claimDate?: string;
+    text: string
+    claimant?: string[]
+    claimDate?: string
     claimReview?: Array<{
       publisher?: {
-        name: string;
-        site: string;
-      };
-      textualRating?: string;
-      url: string;
-      title?: string;
-      reviewDate?: string;
-      languageCode?: string;
-    }>;
-  }>;
-  nextPageToken?: string;
+        name: string
+        site: string
+      }
+      textualRating?: string
+      url: string
+      title?: string
+      reviewDate?: string
+      languageCode?: string
+    }>
+  }>
+  nextPageToken?: string
 }
 
 /**
@@ -32,14 +32,14 @@ export interface GoogleFactCheckResponse {
  */
 export interface ClaimReview {
   publisher?: {
-    name: string;
-    site: string;
-  };
-  textualRating?: string;
-  url: string;
-  title?: string;
-  reviewDate?: string;
-  languageCode?: string;
+    name: string
+    site: string
+  }
+  textualRating?: string
+  url: string
+  title?: string
+  reviewDate?: string
+  languageCode?: string
 }
 
 /**
@@ -47,13 +47,13 @@ export interface ClaimReview {
  */
 export interface ExternalFactCheckOptions {
   /** 语言代码 */
-  language?: string;
+  language?: string
   /** 最大时间范围（天） */
-  maxAgeDays?: number;
+  maxAgeDays?: number
   /** 页面大小 */
-  pageSize?: number;
+  pageSize?: number
   /** 请求超时（毫秒） */
-  timeout?: number;
+  timeout?: number
 }
 
 /**
@@ -61,17 +61,17 @@ export interface ExternalFactCheckOptions {
  */
 export interface AggregatedFactCheck {
   /** 原始声明 */
-  claim: string;
+  claim: string
   /** 加权置信度 */
-  confidence: number;
+  confidence: number
   /** 验证来源列表 */
-  sources: string[];
+  sources: string[]
   /** 共识状态 */
-  consensus: 'CONSENSUS_TRUE' | 'CONSENSUS_FALSE' | 'CONSENSUS_MIXED' | 'NO_CONSENSUS';
+  consensus: 'CONSENSUS_TRUE' | 'CONSENSUS_FALSE' | 'CONSENSUS_MIXED' | 'NO_CONSENSUS'
   /** 各来源结果 */
-  results: ExternalFactCheckResult[];
+  results: ExternalFactCheckResult[]
   /** 时间戳 */
-  timestamp: Date;
+  timestamp: Date
 }
 
 /**
@@ -79,27 +79,27 @@ export interface AggregatedFactCheck {
  */
 export interface ExternalFactCheckResult {
   /** 原始声明 */
-  claim: string;
+  claim: string
   /** 验证状态 */
-  isValid: 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN';
+  isValid: 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN'
   /** 置信度 */
-  confidence: number;
+  confidence: number
   /** 来源列表 */
-  sources: ExternalSource[];
+  sources: ExternalSource[]
   /** 验证源 */
-  source: 'google_factcheck' | 'snopes' | 'knowledge_base' | 'llm';
+  source: 'google_factcheck' | 'snopes' | 'knowledge_base' | 'llm'
   /** 时间戳 */
-  timestamp: Date;
+  timestamp: Date
 }
 
 /**
  * 外部来源
  */
 export interface ExternalSource {
-  name: string;
-  url: string;
-  rating: string;
-  date?: string;
+  name: string
+  url: string
+  rating: string
+  date?: string
 }
 
 /**
@@ -111,8 +111,8 @@ export class FactCheckError extends Error {
     public code?: number,
     public source?: string
   ) {
-    super(message);
-    this.name = 'FactCheckError';
+    super(message)
+    this.name = 'FactCheckError'
   }
 }
 
@@ -121,25 +121,25 @@ export class FactCheckError extends Error {
  */
 export interface ExternalFactCheckerConfig {
   /** API 密钥 */
-  apiKey?: string;
+  apiKey?: string
   /** 基础 URL */
-  baseURL?: string;
+  baseURL?: string
   /** 默认超时（毫秒） */
-  defaultTimeout?: number;
+  defaultTimeout?: number
   /** 是否启用缓存 */
-  enableCache?: boolean;
+  enableCache?: boolean
   /** 缓存 TTL（毫秒） */
-  cacheTTL?: number;
+  cacheTTL?: number
   /** 速率限制（请求/秒） */
-  rateLimit?: number;
+  rateLimit?: number
 }
 
 /**
  * 缓存条目
  */
 interface CacheEntry {
-  result: ExternalFactCheckResult;
-  timestamp: number;
+  result: ExternalFactCheckResult
+  timestamp: number
 }
 
 /**
@@ -148,26 +148,26 @@ interface CacheEntry {
  * 提供与外部事实验证 API 的集成能力
  */
 export class ExternalFactChecker {
-  private apiKey: string;
-  private baseURL: string;
-  private defaultTimeout: number;
-  private enableCache: boolean;
-  private cacheTTL: number;
-  private rateLimit: number;
-  private cache: Map<string, CacheEntry>;
-  private lastRequestTime: number = 0;
+  private apiKey: string
+  private baseURL: string
+  private defaultTimeout: number
+  private enableCache: boolean
+  private cacheTTL: number
+  private rateLimit: number
+  private cache: Map<string, CacheEntry>
+  private lastRequestTime: number = 0
 
   constructor(config?: ExternalFactCheckerConfig) {
-    this.apiKey = config?.apiKey || process.env.GOOGLE_FACT_CHECK_API_KEY || '';
-    this.baseURL = config?.baseURL || 'https://factchecktools.googleapis.com/v1alpha1';
-    this.defaultTimeout = config?.defaultTimeout || 10000;
-    this.enableCache = config?.enableCache ?? true;
-    this.cacheTTL = config?.cacheTTL || 86400000; // 24小时
-    this.rateLimit = config?.rateLimit || 1; // 每秒1个请求
-    this.cache = new Map();
+    this.apiKey = config?.apiKey || process.env.GOOGLE_FACT_CHECK_API_KEY || ''
+    this.baseURL = config?.baseURL || 'https://factchecktools.googleapis.com/v1alpha1'
+    this.defaultTimeout = config?.defaultTimeout || 10000
+    this.enableCache = config?.enableCache ?? true
+    this.cacheTTL = config?.cacheTTL || 86400000 // 24小时
+    this.rateLimit = config?.rateLimit || 1 // 每秒1个请求
+    this.cache = new Map()
 
     if (!this.apiKey) {
-      console.warn('Google Fact Check API Key 未设置，外部验证功能将不可用');
+      console.warn('Google Fact Check API Key 未设置，外部验证功能将不可用')
     }
   }
 
@@ -187,64 +187,64 @@ export class ExternalFactChecker {
         'API Key 未配置，无法使用外部验证功能',
         undefined,
         'ExternalFactChecker'
-      );
+      )
     }
 
     // 检查缓存
     if (this.enableCache) {
-      const cached = this.getFromCache(claim);
+      const cached = this.getFromCache(claim)
       if (cached) {
-        return cached;
+        return cached
       }
     }
 
     // 应用速率限制
-    await this.applyRateLimit();
+    await this.applyRateLimit()
 
     try {
-      const url = `${this.baseURL}/claims:search`;
+      const url = `${this.baseURL}/claims:search`
       const params = new URLSearchParams({
         key: this.apiKey,
         query: claim,
         languageCodes: options?.language || 'zh-CN',
         pageSize: String(options?.pageSize || 10),
-      });
+      })
 
       if (options?.maxAgeDays) {
-        params.append('maxAgeDays', String(options.maxAgeDays));
+        params.append('maxAgeDays', String(options.maxAgeDays))
       }
 
       const response = await fetch(`${url}?${params}`, {
         signal: AbortSignal.timeout(options?.timeout || this.defaultTimeout),
-      });
+      })
 
       if (!response.ok) {
         throw new FactCheckError(
           `API 请求失败: ${response.status} ${response.statusText}`,
           response.status,
           'Google Fact Check API'
-        );
+        )
       }
 
-      const data = (await response.json()) as GoogleFactCheckResponse;
-      const result = this.parseResponse(data, claim, 'google_factcheck');
+      const data = (await response.json()) as GoogleFactCheckResponse
+      const result = this.parseResponse(data, claim, 'google_factcheck')
 
       // 写入缓存
       if (this.enableCache) {
-        this.setToCache(claim, result);
+        this.setToCache(claim, result)
       }
 
-      return result;
+      return result
     } catch (error) {
       if (error instanceof FactCheckError) {
-        throw error;
+        throw error
       }
 
       throw new FactCheckError(
         `验证请求失败: ${error instanceof Error ? error.message : String(error)}`,
         undefined,
         'ExternalFactChecker'
-      );
+      )
     }
   }
 
@@ -259,14 +259,14 @@ export class ExternalFactChecker {
     claims: string[],
     options?: ExternalFactCheckOptions
   ): Promise<ExternalFactCheckResult[]> {
-    const results: ExternalFactCheckResult[] = [];
+    const results: ExternalFactCheckResult[] = []
 
     for (const claim of claims) {
       try {
-        const result = await this.verifyClaim(claim, options);
-        results.push(result);
+        const result = await this.verifyClaim(claim, options)
+        results.push(result)
       } catch (error) {
-        console.error(`验证声明失败: "${claim}"`, error);
+        console.error(`验证声明失败: "${claim}"`, error)
         // 返回未知结果
         results.push({
           claim,
@@ -275,11 +275,11 @@ export class ExternalFactChecker {
           sources: [],
           source: 'google_factcheck',
           timestamp: new Date(),
-        });
+        })
       }
     }
 
-    return results;
+    return results
   }
 
   /**
@@ -303,11 +303,11 @@ export class ExternalFactChecker {
         sources: [],
         source,
         timestamp: new Date(),
-      };
+      }
     }
 
-    const bestMatch = data.claims[0];
-    const reviews = bestMatch.claimReview || [];
+    const bestMatch = data.claims[0]
+    const reviews = bestMatch.claimReview || []
 
     if (reviews.length === 0) {
       return {
@@ -317,10 +317,10 @@ export class ExternalFactChecker {
         sources: [],
         source,
         timestamp: new Date(),
-      };
+      }
     }
 
-    const topReview = reviews[0];
+    const topReview = reviews[0]
 
     return {
       claim,
@@ -336,7 +336,7 @@ export class ExternalFactChecker {
       ),
       source,
       timestamp: new Date(),
-    };
+    }
   }
 
   /**
@@ -346,7 +346,7 @@ export class ExternalFactChecker {
    * @returns 验证状态
    */
   private parseRating(rating: string): 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN' {
-    const lower = rating.toLowerCase();
+    const lower = rating.toLowerCase()
 
     // 虚假性相关关键词（先检查，因为有些词包含其他词的子串）
     if (
@@ -358,7 +358,7 @@ export class ExternalFactChecker {
       rating.includes('虚假') ||
       rating.includes('不实')
     ) {
-      return 'FALSE';
+      return 'FALSE'
     }
 
     // 混合/部分真实（先检查，避免"部分真实"被"真实"匹配）
@@ -371,7 +371,7 @@ export class ExternalFactChecker {
       rating.includes('混合') ||
       rating.includes('半真')
     ) {
-      return 'MIXED';
+      return 'MIXED'
     }
 
     // 真实性相关关键词
@@ -383,10 +383,10 @@ export class ExternalFactChecker {
       rating.includes('正确') ||
       rating.includes('真实')
     ) {
-      return 'TRUE';
+      return 'TRUE'
     }
 
-    return 'UNKNOWN';
+    return 'UNKNOWN'
   }
 
   /**
@@ -396,31 +396,31 @@ export class ExternalFactChecker {
    * @returns 置信度分数
    */
   private calculateConfidence(reviews: ClaimReview[]): number {
-    if (reviews.length === 0) return 0;
+    if (reviews.length === 0) return 0
 
     // 基于评审数量和一致性计算置信度
-    const topRating = reviews[0].textualRating || '';
-    const agreementCount = reviews.filter((r) => r.textualRating === topRating).length;
+    const topRating = reviews[0].textualRating || ''
+    const agreementCount = reviews.filter((r) => r.textualRating === topRating).length
 
-    const baseConfidence = agreementCount / reviews.length;
-    const sourceBoost = Math.min(reviews.length * 0.1, 0.3); // 最多增加 0.3
+    const baseConfidence = agreementCount / reviews.length
+    const sourceBoost = Math.min(reviews.length * 0.1, 0.3) // 最多增加 0.3
 
-    return Math.min(baseConfidence + sourceBoost, 1);
+    return Math.min(baseConfidence + sourceBoost, 1)
   }
 
   /**
    * 应用速率限制
    */
   private async applyRateLimit(): Promise<void> {
-    const now = Date.now();
-    const timeSinceLastRequest = now - this.lastRequestTime;
-    const minInterval = 1000 / this.rateLimit;
+    const now = Date.now()
+    const timeSinceLastRequest = now - this.lastRequestTime
+    const minInterval = 1000 / this.rateLimit
 
     if (timeSinceLastRequest < minInterval) {
-      await new Promise((resolve) => setTimeout(resolve, minInterval - timeSinceLastRequest));
+      await new Promise((resolve) => setTimeout(resolve, minInterval - timeSinceLastRequest))
     }
 
-    this.lastRequestTime = Date.now();
+    this.lastRequestTime = Date.now()
   }
 
   /**
@@ -431,13 +431,13 @@ export class ExternalFactChecker {
    */
   private generateCacheKey(claim: string): string {
     // 简单的哈希函数
-    let hash = 0;
+    let hash = 0
     for (let i = 0; i < claim.length; i++) {
-      const char = claim.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // 转换为32位整数
+      const char = claim.charCodeAt(i)
+      hash = (hash << 5) - hash + char
+      hash = hash & hash // 转换为32位整数
     }
-    return `factcheck:${Math.abs(hash)}`;
+    return `factcheck:${Math.abs(hash)}`
   }
 
   /**
@@ -447,18 +447,18 @@ export class ExternalFactChecker {
    * @returns 缓存结果或 undefined
    */
   private getFromCache(claim: string): ExternalFactCheckResult | undefined {
-    const key = this.generateCacheKey(claim);
-    const entry = this.cache.get(key);
+    const key = this.generateCacheKey(claim)
+    const entry = this.cache.get(key)
 
-    if (!entry) return undefined;
+    if (!entry) return undefined
 
-    const now = Date.now();
+    const now = Date.now()
     if (now - entry.timestamp > this.cacheTTL) {
-      this.cache.delete(key);
-      return undefined;
+      this.cache.delete(key)
+      return undefined
     }
 
-    return entry.result;
+    return entry.result
   }
 
   /**
@@ -468,18 +468,18 @@ export class ExternalFactChecker {
    * @param result 验证结果
    */
   private setToCache(claim: string, result: ExternalFactCheckResult): void {
-    const key = this.generateCacheKey(claim);
+    const key = this.generateCacheKey(claim)
     this.cache.set(key, {
       result,
       timestamp: Date.now(),
-    });
+    })
   }
 
   /**
    * 清除缓存
    */
   clearCache(): void {
-    this.cache.clear();
+    this.cache.clear()
   }
 
   /**
@@ -491,7 +491,7 @@ export class ExternalFactChecker {
     return {
       size: this.cache.size,
       keys: Array.from(this.cache.keys()),
-    };
+    }
   }
 }
 
@@ -503,7 +503,7 @@ const SOURCE_WEIGHTS: Record<string, number> = {
   knowledge_base: 0.8,
   llm: 0.6,
   snopes: 0.85,
-};
+}
 
 /**
  * 获取验证源权重
@@ -512,7 +512,7 @@ const SOURCE_WEIGHTS: Record<string, number> = {
  * @returns 权重值
  */
 export function getSourceWeight(source: string): number {
-  return SOURCE_WEIGHTS[source] || 0.5;
+  return SOURCE_WEIGHTS[source] || 0.5
 }
 
 /**
@@ -525,32 +525,32 @@ export function calculateConsensus(
   results: ExternalFactCheckResult[]
 ): 'CONSENSUS_TRUE' | 'CONSENSUS_FALSE' | 'CONSENSUS_MIXED' | 'NO_CONSENSUS' {
   if (results.length === 0) {
-    return 'NO_CONSENSUS';
+    return 'NO_CONSENSUS'
   }
 
-  const trueCount = results.filter((r) => r.isValid === 'TRUE').length;
-  const falseCount = results.filter((r) => r.isValid === 'FALSE').length;
-  const mixedCount = results.filter((r) => r.isValid === 'MIXED').length;
-  const unknownCount = results.filter((r) => r.isValid === 'UNKNOWN').length;
+  const trueCount = results.filter((r) => r.isValid === 'TRUE').length
+  const falseCount = results.filter((r) => r.isValid === 'FALSE').length
+  const mixedCount = results.filter((r) => r.isValid === 'MIXED').length
+  const unknownCount = results.filter((r) => r.isValid === 'UNKNOWN').length
 
-  const total = results.length;
-  const threshold = 0.6; // 60% 以上形成共识
+  const total = results.length
+  const threshold = 0.6 // 60% 以上形成共识
 
   if (trueCount / total >= threshold) {
-    return 'CONSENSUS_TRUE';
+    return 'CONSENSUS_TRUE'
   }
   if (falseCount / total >= threshold) {
-    return 'CONSENSUS_FALSE';
+    return 'CONSENSUS_FALSE'
   }
   if (mixedCount / total >= threshold) {
-    return 'CONSENSUS_MIXED';
+    return 'CONSENSUS_MIXED'
   }
   if (unknownCount / total >= threshold) {
-    return 'NO_CONSENSUS';
+    return 'NO_CONSENSUS'
   }
 
   // 没有明显共识
-  return 'NO_CONSENSUS';
+  return 'NO_CONSENSUS'
 }
 
 /**
@@ -561,23 +561,23 @@ export function calculateConsensus(
  */
 export function aggregateResults(results: ExternalFactCheckResult[]): AggregatedFactCheck {
   if (results.length === 0) {
-    throw new FactCheckError('无法聚合空的结果列表');
+    throw new FactCheckError('无法聚合空的结果列表')
   }
 
-  const claim = results[0].claim;
+  const claim = results[0].claim
 
   // 计算加权置信度
   const weightedScore =
     results.reduce((acc, result) => {
-      const weight = getSourceWeight(result.source);
-      return acc + result.confidence * weight;
-    }, 0) / results.length;
+      const weight = getSourceWeight(result.source)
+      return acc + result.confidence * weight
+    }, 0) / results.length
 
   // 聚合来源
-  const sources = results.map((r) => r.source);
+  const sources = results.map((r) => r.source)
 
   // 计算共识
-  const consensus = calculateConsensus(results);
+  const consensus = calculateConsensus(results)
 
   return {
     claim,
@@ -586,5 +586,5 @@ export function aggregateResults(results: ExternalFactCheckResult[]): Aggregated
     consensus,
     results,
     timestamp: new Date(),
-  };
+  }
 }

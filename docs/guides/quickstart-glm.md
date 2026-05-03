@@ -13,10 +13,10 @@ export GLM_API_KEY=your_api_key_here
 ## 5 分钟示例
 
 ```typescript
-import { createZhipuModel, NativeModel } from '@yunpat/core';
+import { createZhipuModel, NativeModel } from '@yunpat/core'
 
 // 创建模型
-const glm = createZhipuModel(process.env.GLM_API_KEY!, NativeModel.GLM_4_FLASH);
+const glm = createZhipuModel(process.env.GLM_API_KEY!, NativeModel.GLM_4_FLASH)
 
 // 代码生成
 const response = await glm.chat({
@@ -27,9 +27,9 @@ const response = await glm.chat({
     },
   ],
   temperature: 0.2,
-});
+})
 
-console.log(response.content);
+console.log(response.content)
 ```
 
 ## 支持的模型

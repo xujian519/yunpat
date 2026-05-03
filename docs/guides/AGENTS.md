@@ -51,16 +51,16 @@ packages:
 
 #### 主要包清单
 
-| 包名 | 路径 | 说明 |
-|---|---|---|
-| `@yunpat/core` | `packages/core` | 核心框架：Agent 基类、EventBus、LLM 适配器、记忆、推理、工具注册表、知识库、可观测性 |
-| `@yunpat/agent-writer` | `packages/agents/writer` | 通用技术写作助手智能体 |
-| `@yunpat/agent-researcher` | `packages/agents/researcher` | 通用研究分析师智能体 |
-| `@yunpat/patent-tools` | `packages/patent-tools` | 专利专用工具：权利要求生成、质量评估、审查答复等 |
-| `@yunpat/builtin-tools` | `packages/builtin-tools` | 内置基础工具：文件读写、搜索、网络请求、浏览器操作 |
-| `@yunpat/document-tools` | `packages/document-tools` | 文档解析工具：PDF、DOCX、Excel、OCR、音频转录 |
-| `@yunpat/cli` | `packages/cli` | 命令行工具，bin 名为 `yunpat` |
-| `@yunpat/grpc-server` | `packages/grpc-server` | TypeScript gRPC 服务器，基于 `ts-proto` 生成代码 |
+| 包名                       | 路径                         | 说明                                                                                 |
+| -------------------------- | ---------------------------- | ------------------------------------------------------------------------------------ |
+| `@yunpat/core`             | `packages/core`              | 核心框架：Agent 基类、EventBus、LLM 适配器、记忆、推理、工具注册表、知识库、可观测性 |
+| `@yunpat/agent-writer`     | `packages/agents/writer`     | 通用技术写作助手智能体                                                               |
+| `@yunpat/agent-researcher` | `packages/agents/researcher` | 通用研究分析师智能体                                                                 |
+| `@yunpat/patent-tools`     | `packages/patent-tools`      | 专利专用工具：权利要求生成、质量评估、审查答复等                                     |
+| `@yunpat/builtin-tools`    | `packages/builtin-tools`     | 内置基础工具：文件读写、搜索、网络请求、浏览器操作                                   |
+| `@yunpat/document-tools`   | `packages/document-tools`    | 文档解析工具：PDF、DOCX、Excel、OCR、音频转录                                        |
+| `@yunpat/cli`              | `packages/cli`               | 命令行工具，bin 名为 `yunpat`                                                        |
+| `@yunpat/grpc-server`      | `packages/grpc-server`       | TypeScript gRPC 服务器，基于 `ts-proto` 生成代码                                     |
 
 #### 专利业务代码（独立于 packages）
 
@@ -246,6 +246,7 @@ cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 ```
 
 该钩子会执行：
+
 1. `pnpm --filter @yunpat/core build`（类型检查）
 2. `pnpm --filter @yunpat/core exec vitest run`（快速测试）
 
@@ -382,23 +383,23 @@ cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 ## 快速导航
 
-| 目标 | 位置 |
-|---|---|
-| 核心框架入口 | `packages/core/src/index.ts` |
-| Agent 基类 | `packages/core/src/agent/Agent.ts` |
-| EventBus | `packages/core/src/eventbus/EventBus.ts` |
-| LLM 适配器 | `packages/core/src/llm/NativeLLMAdapter.ts` |
-| 最成熟的智能体 | `patents/agents/writer/PatentWriterAgent.ts` |
-| 提示词模板管理器 | `patents/prompts/PromptTemplateManager.ts` |
-| 知识库桥接 | `patents/knowledge/ObsidianKnowledgeBridge.ts` |
-| 内置工具集 | `packages/builtin-tools/src/index.ts` |
-| 文档解析工具 | `packages/document-tools/src/index.ts` |
-| gRPC 原型定义 | `protos/*.proto` |
-| CI 配置 | `.github/workflows/ci.yml` |
-| 构建脚本 | `esbuild.config.mjs` |
-| 文件管理规则 | `docs/FILE_MANAGEMENT_RULES.md` |
-| 安全指南 | `docs/SECURITY_GUIDELINES.md` |
-| 开发指南 | `docs/guides/development.md` |
+| 目标             | 位置                                           |
+| ---------------- | ---------------------------------------------- |
+| 核心框架入口     | `packages/core/src/index.ts`                   |
+| Agent 基类       | `packages/core/src/agent/Agent.ts`             |
+| EventBus         | `packages/core/src/eventbus/EventBus.ts`       |
+| LLM 适配器       | `packages/core/src/llm/NativeLLMAdapter.ts`    |
+| 最成熟的智能体   | `patents/agents/writer/PatentWriterAgent.ts`   |
+| 提示词模板管理器 | `patents/prompts/PromptTemplateManager.ts`     |
+| 知识库桥接       | `patents/knowledge/ObsidianKnowledgeBridge.ts` |
+| 内置工具集       | `packages/builtin-tools/src/index.ts`          |
+| 文档解析工具     | `packages/document-tools/src/index.ts`         |
+| gRPC 原型定义    | `protos/*.proto`                               |
+| CI 配置          | `.github/workflows/ci.yml`                     |
+| 构建脚本         | `esbuild.config.mjs`                           |
+| 文件管理规则     | `docs/FILE_MANAGEMENT_RULES.md`                |
+| 安全指南         | `docs/SECURITY_GUIDELINES.md`                  |
+| 开发指南         | `docs/guides/development.md`                   |
 
 ---
 

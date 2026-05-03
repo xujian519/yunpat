@@ -12,7 +12,7 @@
  * @module reasoning/TreeOfThoughtsStrategy
  */
 
-import { LLMAdapter } from '../lifecycle/Lifecycle.js';
+import { LLMAdapter } from '../lifecycle/Lifecycle.js'
 
 // ========== 类型定义 ==========
 
@@ -21,31 +21,31 @@ import { LLMAdapter } from '../lifecycle/Lifecycle.js';
  */
 export interface ThoughtNode {
   /** 思路内容 */
-  thought: string;
+  thought: string
 
   /** 评分 (0-10) */
-  score: number;
+  score: number
 
   /** 深度 */
-  depth: number;
+  depth: number
 
   /** 父节点 */
-  parent?: ThoughtNode;
+  parent?: ThoughtNode
 
   /** 子节点 */
-  children?: ThoughtNode[];
+  children?: ThoughtNode[]
 
   /** 评估详情 */
   evaluation?: {
     /** 可行性 */
-    feasibility: number;
+    feasibility: number
     /** 创新性 */
-    innovation: number;
+    innovation: number
     /** 完整性 */
-    completeness: number;
+    completeness: number
     /** 清晰度 */
-    clarity: number;
-  };
+    clarity: number
+  }
 }
 
 /**
@@ -53,18 +53,18 @@ export interface ThoughtNode {
  */
 export interface ThoughtOption {
   /** 思路内容 */
-  thought: string;
+  thought: string
 
   /** 初始评分 */
-  score: number;
+  score: number
 
   /** 评估详情（可选） */
   evaluation?: {
-    feasibility: number;
-    innovation: number;
-    completeness: number;
-    clarity: number;
-  };
+    feasibility: number
+    innovation: number
+    completeness: number
+    clarity: number
+  }
 }
 
 /**
@@ -72,16 +72,16 @@ export interface ThoughtOption {
  */
 export interface ToTConfig {
   /** 最大深度 */
-  maxDepth: number;
+  maxDepth: number
 
   /** 分支因子（每个节点的子节点数） */
-  branchFactor: number;
+  branchFactor: number
 
   /** 温度参数（高温度鼓励多样性） */
-  temperature: number;
+  temperature: number
 
   /** 是否启用详细日志 */
-  verbose: boolean;
+  verbose: boolean
 }
 
 // ========== 主类实现 ==========
@@ -92,18 +92,18 @@ export interface ToTConfig {
  * 思维树，探索多个可能的思考路径
  */
 export class TreeOfThoughtsStrategy {
-  private llm: LLMAdapter;
-  private config: ToTConfig;
+  private llm: LLMAdapter
+  private config: ToTConfig
 
   constructor(llm: LLMAdapter, config?: Partial<ToTConfig>) {
-    this.llm = llm;
+    this.llm = llm
     this.config = {
       maxDepth: 3,
       branchFactor: 3,
       temperature: 0.8,
       verbose: false,
       ...config,
-    };
+    }
   }
 
   /**
@@ -122,7 +122,7 @@ export class TreeOfThoughtsStrategy {
 
 问题：${problem}
 
-请生成 ${branchFactor} 个思路：`;
+请生成 ${branchFactor} 个思路：`
 
     const response = await this.llm.chat({
       messages: [
@@ -136,19 +136,19 @@ export class TreeOfThoughtsStrategy {
         },
       ],
       temperature: this.config.temperature,
-    });
+    })
 
     // 解析多个思路
-    const thoughts = this.parseThoughts(response.message.content);
+    const thoughts = this.parseThoughts(response.message.content)
 
     if (this.config.verbose) {
-      console.log(`\n🌳 [ToT] 生成了 ${thoughts.length} 个思路`);
+      console.log(`\n🌳 [ToT] 生成了 ${thoughts.length} 个思路`)
       thoughts.forEach((t, i) => {
-        console.log(`  ${i + 1}. ${t.thought.substring(0, 60)}...`);
-      });
+        console.log(`  ${i + 1}. ${t.thought.substring(0, 60)}...`)
+      })
     }
 
-    return thoughts.slice(0, branchFactor);
+    return thoughts.slice(0, branchFactor)
   }
 
   /**
@@ -174,7 +174,7 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
 **请按以下格式返回**：
 1. 可行性: X分, 创新性: X分, 完整性: X分, 清晰度: X分, 总分: XX分
 2. 可行性: X分, 创新性: X分, 完整性: X分, 清晰度: X分, 总分: XX分
-...`;
+...`
 
     const response = await this.llm.chat({
       messages: [
@@ -188,20 +188,20 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
         },
       ],
       temperature: 0.3,
-    });
+    })
 
     // 解析评估结果
-    const evaluated = this.parseEvaluations(response.message.content, thoughts);
+    const evaluated = this.parseEvaluations(response.message.content, thoughts)
 
     if (this.config.verbose) {
-      console.log(`\n📊 [ToT] 评估了 ${evaluated.length} 个思路`);
+      console.log(`\n📊 [ToT] 评估了 ${evaluated.length} 个思路`)
       evaluated.forEach((t, i) => {
-        const eval_ = t.evaluation as { total: number };
-        console.log(`  ${i + 1}. 评分: ${eval_?.total || t.score}/10`);
-      });
+        const eval_ = t.evaluation as { total: number }
+        console.log(`  ${i + 1}. 评分: ${eval_?.total || t.score}/10`)
+      })
     }
 
-    return evaluated;
+    return evaluated
   }
 
   /**
@@ -213,9 +213,9 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
     branchFactor: number = this.config.branchFactor
   ): Promise<ThoughtNode> {
     if (this.config.verbose) {
-      console.log(`\n🌳 [ToT] 开始最佳优先搜索`);
-      console.log(`  问题: ${problem}`);
-      console.log(`  最大深度: ${maxDepth}, 分支因子: ${branchFactor}`);
+      console.log(`\n🌳 [ToT] 开始最佳优先搜索`)
+      console.log(`  问题: ${problem}`)
+      console.log(`  最大深度: ${maxDepth}, 分支因子: ${branchFactor}`)
     }
 
     // 根节点
@@ -223,25 +223,25 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
       thought: problem,
       score: 0,
       depth: 0,
-    };
+    }
 
     // 优先队列（按分数排序）
-    const queue: ThoughtNode[] = [root];
-    let bestNode = root;
+    const queue: ThoughtNode[] = [root]
+    let bestNode = root
 
     while (queue.length > 0) {
       // 取出最佳节点
-      const current = queue.shift()!;
+      const current = queue.shift()!
       if (current.depth >= maxDepth) {
-        continue;
+        continue
       }
 
       // 生成子节点
-      const thoughts = await this.generateThoughts(current.thought, branchFactor);
-      const evaluated = await this.evaluateThoughts(current.thought, thoughts);
+      const thoughts = await this.generateThoughts(current.thought, branchFactor)
+      const evaluated = await this.evaluateThoughts(current.thought, thoughts)
 
       // 创建子节点
-      const children: ThoughtNode[] = [];
+      const children: ThoughtNode[] = []
       for (const t of evaluated) {
         const node: ThoughtNode = {
           thought: t.thought,
@@ -251,82 +251,82 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
           evaluation: t.evaluation as
             | { feasibility: number; innovation: number; completeness: number; clarity: number }
             | undefined,
-        };
-        children.push(node);
+        }
+        children.push(node)
 
         // 更新最佳节点
         if (node.score > bestNode.score) {
-          bestNode = node;
+          bestNode = node
         }
       }
 
-      current.children = children;
+      current.children = children
 
       // 添加到队列（按分数排序）
-      queue.push(...children);
-      queue.sort((a, b) => b.score - a.score);
+      queue.push(...children)
+      queue.sort((a, b) => b.score - a.score)
     }
 
     if (this.config.verbose) {
-      console.log(`\n✅ [ToT] 搜索完成，最佳节点评分: ${bestNode.score}/10`);
-      console.log(`  最佳思路: ${bestNode.thought.substring(0, 80)}...`);
+      console.log(`\n✅ [ToT] 搜索完成，最佳节点评分: ${bestNode.score}/10`)
+      console.log(`  最佳思路: ${bestNode.thought.substring(0, 80)}...`)
     }
 
-    return bestNode;
+    return bestNode
   }
 
   /**
    * 获取最佳思路的完整路径
    */
   getBestPath(node: ThoughtNode): string[] {
-    const path: string[] = [];
-    let current: ThoughtNode | undefined = node;
+    const path: string[] = []
+    let current: ThoughtNode | undefined = node
 
     while (current) {
-      path.unshift(current.thought);
-      current = current.parent;
+      path.unshift(current.thought)
+      current = current.parent
     }
 
-    return path;
+    return path
   }
 
   /**
    * 解析思路列表
    */
   private parseThoughts(content: string): Array<{ thought: string; score: number }> {
-    const thoughts: Array<{ thought: string; score: number }> = [];
+    const thoughts: Array<{ thought: string; score: number }> = []
 
     // 尝试多种格式
     const patterns = [
       /^\d+[\.\)]\s*(.+)$/gm, // "1. 思路" 或 "1) 思路"
       /^[-•]\s*(.+)$/gm, // "- 思路" 或 "• 思路"
-    ];
+    ]
 
     for (const pattern of patterns) {
-      const matches = Array.from(content.matchAll(pattern));
+      const matches = Array.from(content.matchAll(pattern))
       if (matches && matches.length > 0) {
         for (const match of matches) {
-          const cleaned = match[1]?.trim();
+          const cleaned = match[1]?.trim()
           if (cleaned && !thoughts.find((t) => t.thought === cleaned)) {
-            thoughts.push({ thought: cleaned, score: 5.0 }); // 默认中等分数
+            thoughts.push({ thought: cleaned, score: 5.0 }) // 默认中等分数
           }
         }
-        if (thoughts.length > 0) break;
+        if (thoughts.length > 0) break
       }
     }
 
     // 如果没有匹配到，按段落分割
     if (thoughts.length === 0) {
-      const paragraphs = content.split(/\n\n+/).filter((p) => p.trim());
+      const paragraphs = content.split(/\n\n+/).filter((p) => p.trim())
       for (const para of paragraphs) {
-        const cleaned = para.trim();
+        const cleaned = para.trim()
         if (cleaned && !thoughts.find((t) => t.thought === cleaned)) {
-          thoughts.push({ thought: cleaned, score: 5.0 });
+          thoughts.push({ thought: cleaned, score: 5.0 })
         }
       }
     }
 
-    return thoughts;
+    return thoughts
   }
 
   /**
@@ -336,17 +336,17 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
     content: string,
     originalThoughts: Array<{ thought: string; score: number }>
   ): Array<{ thought: string; score: number; evaluation?: unknown }> {
-    const results: Array<{ thought: string; score: number; evaluation?: unknown }> = [];
+    const results: Array<{ thought: string; score: number; evaluation?: unknown }> = []
 
     // 按行解析
-    const lines = content.split('\n').filter((line) => line.trim());
+    const lines = content.split('\n').filter((line) => line.trim())
 
     for (let i = 0; i < Math.min(lines.length, originalThoughts.length); i++) {
-      const line = lines[i];
-      const thought = originalThoughts[i].thought;
+      const line = lines[i]
+      const thought = originalThoughts[i].thought
 
       // 解析分数
-      const scores = this.parseScores(line);
+      const scores = this.parseScores(line)
 
       results.push({
         thought,
@@ -357,21 +357,21 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
           completeness: scores.completeness || 5.0,
           clarity: scores.clarity || 5.0,
         },
-      });
+      })
     }
 
-    return results;
+    return results
   }
 
   /**
    * 解析单个评估分数
    */
   private parseScores(line: string): {
-    feasibility: number;
-    innovation: number;
-    completeness: number;
-    clarity: number;
-    total: number;
+    feasibility: number
+    innovation: number
+    completeness: number
+    clarity: number
+    total: number
   } {
     const scores = {
       feasibility: 5.0,
@@ -379,11 +379,11 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
       completeness: 5.0,
       clarity: 5.0,
       total: 5.0,
-    };
+    }
 
     // 尝试匹配 "可行性: X分, 创新性: X分, 完整性: X分, 清晰度: X分" 格式
-    const pattern = /可行性[:：]\s*(\d+(?:\.\d+)?)\s*分/;
-    const match = line.match(pattern);
+    const pattern = /可行性[:：]\s*(\d+(?:\.\d+)?)\s*分/
+    const match = line.match(pattern)
 
     if (match) {
       // 使用更精确的匹配
@@ -393,38 +393,38 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
         completeness: /完整性[:：]\s*(\d+(?:\.\d+)?)/,
         clarity: /清晰度[:：]\s*(\d+(?:\.\d+)?)/,
         total: /总分[:：]\s*(\d+(?:\.\d+)?)/,
-      };
+      }
 
       for (const [key, regex] of Object.entries(patterns)) {
-        const m = line.match(regex);
+        const m = line.match(regex)
         if (m) {
-          (scores as any)[key] = parseFloat(m[1]);
+          ;(scores as any)[key] = parseFloat(m[1])
         }
       }
 
       // 计算总分（如果没有明确给出）
       if (scores.total === 5.0) {
-        const sum = scores.feasibility + scores.innovation + scores.completeness + scores.clarity;
+        const sum = scores.feasibility + scores.innovation + scores.completeness + scores.clarity
         if (sum > 20) {
           // 如果不是默认值
-          scores.total = sum / 4;
+          scores.total = sum / 4
         }
       }
     } else {
       // 降级方案：提取所有数字
-      const numberPattern = /(\d+(?:\.\d+)?)/g;
-      const numbers = line.match(numberPattern);
+      const numberPattern = /(\d+(?:\.\d+)?)/g
+      const numbers = line.match(numberPattern)
 
       if (numbers && numbers.length >= 4) {
-        const nums = numbers.map((n) => parseFloat(n));
-        scores.feasibility = nums[0];
-        scores.innovation = nums[1];
-        scores.completeness = nums[2];
-        scores.clarity = nums[3];
-        scores.total = nums[4] || (nums[0] + nums[1] + nums[2] + nums[3]) / 4;
+        const nums = numbers.map((n) => parseFloat(n))
+        scores.feasibility = nums[0]
+        scores.innovation = nums[1]
+        scores.completeness = nums[2]
+        scores.clarity = nums[3]
+        scores.total = nums[4] || (nums[0] + nums[1] + nums[2] + nums[3]) / 4
       }
     }
 
-    return scores;
+    return scores
   }
 }

@@ -9,110 +9,110 @@
  * 5. 专利性风险评估
  */
 
-import { Agent, type ExecutionContext } from '@yunpat/core';
-import { JSONParser } from './utils/index.js';
+import { Agent, type ExecutionContext } from '@yunpat/core'
+import { JSONParser } from './utils/index.js'
 
 export interface PatentAnalyzerInput {
   /** 专利文献信息 */
   patent: {
     /** 公开号 */
-    publicationNumber: string;
+    publicationNumber: string
     /** 标题 */
-    title: string;
+    title: string
     /** 摘要 */
-    abstract: string;
+    abstract: string
     /** 申请人 */
-    applicant?: string;
+    applicant?: string
     /** 发明人 */
-    inventors?: string[];
+    inventors?: string[]
     /** 公开日 */
-    publicationDate?: string;
+    publicationDate?: string
     /** 全文（可选） */
-    fullText?: string;
-  };
+    fullText?: string
+  }
   /** 分析类型 */
-  analysisTypes?: ('technical' | 'claims' | 'priorArt' | 'creativity' | 'risk')[];
+  analysisTypes?: ('technical' | 'claims' | 'priorArt' | 'creativity' | 'risk')[]
   /** 对比专利（可选） */
   comparisonPatents?: Array<{
-    publicationNumber: string;
-    title: string;
-    abstract: string;
-  }>;
+    publicationNumber: string
+    title: string
+    abstract: string
+  }>
 }
 
 export interface PatentAnalysisOutput {
   /** 基本信息 */
   basicInfo: {
-    publicationNumber: string;
-    title: string;
-    applicant?: string;
-    publicationDate?: string;
-  };
+    publicationNumber: string
+    title: string
+    applicant?: string
+    publicationDate?: string
+  }
   /** 技术分析 */
   technicalAnalysis?: {
     /** 技术领域 */
-    field: string;
+    field: string
     /** 技术问题 */
-    problems: string[];
+    problems: string[]
     /** 技术方案 */
-    solution: string;
+    solution: string
     /** 技术效果 */
-    effects: string[];
+    effects: string[]
     /** 关键技术特征 */
-    keyFeatures: string[];
-  };
+    keyFeatures: string[]
+  }
   /** 权利要求分析 */
   claimsAnalysis?: {
     /** 独立权利要求数量 */
-    independentCount: number;
+    independentCount: number
     /** 从属权利要求数量 */
-    dependentCount: number;
+    dependentCount: number
     /** 保护范围分析 */
     protectionScope: {
-      breadth: 'narrow' | 'medium' | 'broad';
-      clarity: 'clear' | 'ambiguous';
-      risk: 'low' | 'medium' | 'high';
-    };
+      breadth: 'narrow' | 'medium' | 'broad'
+      clarity: 'clear' | 'ambiguous'
+      risk: 'low' | 'medium' | 'high'
+    }
     /** 权利要求质量评估 */
-    qualityScore: number;
-  };
+    qualityScore: number
+  }
   /** 现有技术对比 */
   priorArtAnalysis?: {
     /** 最接近的现有技术 */
     closestPriorArt: Array<{
-      publicationNumber: string;
-      title: string;
-      similarity: number;
-      differences: string[];
-    }>;
+      publicationNumber: string
+      title: string
+      similarity: number
+      differences: string[]
+    }>
     /** 创新点 */
-    innovations: string[];
-  };
+    innovations: string[]
+  }
   /** 创造性评估 */
   creativityAssessment?: {
     /** 创造性等级 */
-    level: 'inventive' | 'obvious' | 'lacksInventiveness';
+    level: 'inventive' | 'obvious' | 'lacksInventiveness'
     /** 创造性评分 */
-    score: number;
+    score: number
     /** 评估理由 */
-    reasoning: string;
-  };
+    reasoning: string
+  }
   /** 专利性风险评估 */
   riskAssessment?: {
     /** 无效风险 */
-    invalidityRisk: 'low' | 'medium' | 'high';
+    invalidityRisk: 'low' | 'medium' | 'high'
     /** 侵权风险 */
-    infringementRisk: 'low' | 'medium' | 'high';
+    infringementRisk: 'low' | 'medium' | 'high'
     /** 风险因素 */
-    riskFactors: string[];
-  };
+    riskFactors: string[]
+  }
   /** 综合建议 */
-  recommendations: string[];
+  recommendations: string[]
 }
 
 interface AnalysisPlan {
-  input: PatentAnalyzerInput;
-  analysisTypes: PatentAnalyzerInput['analysisTypes'];
+  input: PatentAnalyzerInput
+  analysisTypes: PatentAnalyzerInput['analysisTypes']
 }
 
 export class PatentAnalyzerAgent extends Agent {
@@ -121,38 +121,44 @@ export class PatentAnalyzerAgent extends Agent {
     _context: ExecutionContext
   ): Promise<AnalysisPlan> {
     if (!input.patent?.publicationNumber?.trim()) {
-      throw new Error('专利公开号不能为空');
+      throw new Error('专利公开号不能为空')
     }
     if (!input.patent?.title?.trim()) {
-      throw new Error('专利标题不能为空');
+      throw new Error('专利标题不能为空')
     }
     if (!input.patent?.abstract?.trim()) {
-      throw new Error('专利摘要不能为空');
+      throw new Error('专利摘要不能为空')
     }
 
-    console.log('[PatentAnalyzer] 步骤1: 规划阶段');
-    console.log(`   专利: ${input.patent.publicationNumber} - ${input.patent.title}`);
-    console.log(`   分析类型: ${input.analysisTypes?.join(', ') || '全面分析'}`);
+    console.log('[PatentAnalyzer] 步骤1: 规划阶段')
+    console.log(`   专利: ${input.patent.publicationNumber} - ${input.patent.title}`)
+    console.log(`   分析类型: ${input.analysisTypes?.join(', ') || '全面分析'}`)
 
     return {
       input,
-      analysisTypes: input.analysisTypes || ['technical', 'claims', 'priorArt', 'creativity', 'risk'],
-    };
+      analysisTypes: input.analysisTypes || [
+        'technical',
+        'claims',
+        'priorArt',
+        'creativity',
+        'risk',
+      ],
+    }
   }
 
   protected async act(
     plan: AnalysisPlan,
     context: ExecutionContext
   ): Promise<PatentAnalysisOutput> {
-    console.log('[PatentAnalyzer] 步骤2: 分析阶段');
+    console.log('[PatentAnalyzer] 步骤2: 分析阶段')
 
-    const { input, analysisTypes } = plan;
+    const { input, analysisTypes } = plan
 
     if (!context.llm) {
-      throw new Error('LLM 未配置，无法执行专利分析');
+      throw new Error('LLM 未配置，无法执行专利分析')
     }
 
-    const startTime = Date.now();
+    const startTime = Date.now()
     const output: PatentAnalysisOutput = {
       basicInfo: {
         publicationNumber: input.patent.publicationNumber,
@@ -161,46 +167,46 @@ export class PatentAnalyzerAgent extends Agent {
         publicationDate: input.patent.publicationDate,
       },
       recommendations: [],
-    };
+    }
 
     // 技术分析
     if (analysisTypes?.includes('technical')) {
-      console.log('   1️⃣ 技术分析...');
-      output.technicalAnalysis = await this.analyzeTechnical(input, context);
+      console.log('   1️⃣ 技术分析...')
+      output.technicalAnalysis = await this.analyzeTechnical(input, context)
     }
 
     // 权利要求分析
     if (analysisTypes?.includes('claims')) {
-      console.log('   2️⃣ 权利要求分析...');
-      output.claimsAnalysis = await this.analyzeClaims(input, context);
+      console.log('   2️⃣ 权利要求分析...')
+      output.claimsAnalysis = await this.analyzeClaims(input, context)
     }
 
     // 现有技术对比
     if (analysisTypes?.includes('priorArt')) {
-      console.log('   3️⃣ 现有技术对比...');
-      output.priorArtAnalysis = await this.analyzePriorArt(input, context);
+      console.log('   3️⃣ 现有技术对比...')
+      output.priorArtAnalysis = await this.analyzePriorArt(input, context)
     }
 
     // 创造性评估
     if (analysisTypes?.includes('creativity')) {
-      console.log('   4️⃣ 创造性评估...');
-      output.creativityAssessment = await this.assessCreativity(input, context);
+      console.log('   4️⃣ 创造性评估...')
+      output.creativityAssessment = await this.assessCreativity(input, context)
     }
 
     // 风险评估
     if (analysisTypes?.includes('risk')) {
-      console.log('   5️⃣ 风险评估...');
-      output.riskAssessment = await this.assessRisks(input, context);
+      console.log('   5️⃣ 风险评估...')
+      output.riskAssessment = await this.assessRisks(input, context)
     }
 
     // 综合建议
-    console.log('   6️⃣ 生成建议...');
-    output.recommendations = await this.generateRecommendations(output, context);
+    console.log('   6️⃣ 生成建议...')
+    output.recommendations = await this.generateRecommendations(output, context)
 
-    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`[PatentAnalyzer] 完成 (耗时 ${duration}s)`);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+    console.log(`[PatentAnalyzer] 完成 (耗时 ${duration}s)`)
 
-    return output;
+    return output
   }
 
   /**
@@ -219,7 +225,7 @@ export class PatentAnalyzerAgent extends Agent {
 4. 识别技术效果
 5. 提取关键技术特征
 
-输出严格的 JSON 格式。`;
+输出严格的 JSON 格式。`
 
     const userPrompt = `## 专利信息
 
@@ -241,7 +247,7 @@ ${input.patent.fullText ? `## 全文\n${input.patent.fullText.substring(0, 5000)
   "solution": "技术方案详细描述",
   "effects": ["技术效果1", "技术效果2"],
   "keyFeatures": ["技术特征1", "技术特征2"]
-}`;
+}`
 
     const response = await context.llm.chat({
       messages: [
@@ -249,9 +255,9 @@ ${input.patent.fullText ? `## 全文\n${input.patent.fullText.substring(0, 5000)
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-    });
+    })
 
-    return this.parseTechnicalAnalysis(response.message.content);
+    return this.parseTechnicalAnalysis(response.message.content)
   }
 
   /**
@@ -272,7 +278,7 @@ ${input.patent.fullText ? `## 全文\n${input.patent.fullText.substring(0, 5000)
           risk: 'medium',
         },
         qualityScore: 70,
-      };
+      }
     }
 
     const systemPrompt = `你是一位专利权利要求分析专家。
@@ -283,7 +289,7 @@ ${input.patent.fullText ? `## 全文\n${input.patent.fullText.substring(0, 5000)
 3. 保护范围的清晰程度
 4. 专利性风险
 
-输出 JSON 格式。`;
+输出 JSON 格式。`
 
     const userPrompt = `## 专利全文
 
@@ -300,7 +306,7 @@ ${input.patent.fullText.substring(0, 3000)}
     "risk": "low|medium|high"
   },
   "qualityScore": 0-100的质量评分
-}`;
+}`
 
     const response = await context.llm.chat({
       messages: [
@@ -308,9 +314,9 @@ ${input.patent.fullText.substring(0, 3000)}
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-    });
+    })
 
-    return this.parseClaimsAnalysis(response.message.content);
+    return this.parseClaimsAnalysis(response.message.content)
   }
 
   /**
@@ -324,12 +330,12 @@ ${input.patent.fullText.substring(0, 3000)}
       return {
         closestPriorArt: [],
         innovations: [],
-      };
+      }
     }
 
     const systemPrompt = `你是一位专利现有技术对比专家。
 
-请分析目标专利与对比专利的相似性和区别。`;
+请分析目标专利与对比专利的相似性和区别。`
 
     let userPrompt = `## 目标专利
 
@@ -338,12 +344,16 @@ ${input.patent.abstract}
 
 ## 对比专利
 
-${input.comparisonPatents.map((p, i) => `
+${input.comparisonPatents
+  .map(
+    (p, i) => `
 ### 专利 ${i + 1}
 公开号: ${p.publicationNumber}
 标题: ${p.title}
 摘要: ${p.abstract}
-`).join('\n')}
+`
+  )
+  .join('\n')}
 
 请输出：
 
@@ -357,7 +367,7 @@ ${input.comparisonPatents.map((p, i) => `
     }
   ],
   "innovations": ["创新点1", "创新点2"]
-}`;
+}`
 
     const response = await context.llm.chat({
       messages: [
@@ -365,9 +375,9 @@ ${input.comparisonPatents.map((p, i) => `
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-    });
+    })
 
-    return this.parsePriorArtAnalysis(response.message.content);
+    return this.parsePriorArtAnalysis(response.message.content)
   }
 
   /**
@@ -389,7 +399,7 @@ ${input.comparisonPatents.map((p, i) => `
 - 60-79：有创造性
 - 40-59：创造性一般
 - 20-39：创造性低
-- 0-19：无创造性`;
+- 0-19：无创造性`
 
     const userPrompt = `## 专利信息
 
@@ -404,7 +414,7 @@ ${input.patent.fullText ? input.patent.fullText.substring(0, 2000) : ''}
   "level": "inventive|obvious|lacksInventiveness",
   "score": 0-100的评分,
   "reasoning": "评估理由"
-}`;
+}`
 
     const response = await context.llm.chat({
       messages: [
@@ -412,9 +422,9 @@ ${input.patent.fullText ? input.patent.fullText.substring(0, 2000) : ''}
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-    });
+    })
 
-    return this.parseCreativityAssessment(response.message.content);
+    return this.parseCreativityAssessment(response.message.content)
   }
 
   /**
@@ -430,7 +440,7 @@ ${input.patent.fullText ? input.patent.fullText.substring(0, 2000) : ''}
 1. 无效风险 - 被无效宣告的可能性
 2. 侵权风险 - 侵犯他人专利权的可能性
 
-风险评估：low/medium/high`;
+风险评估：low/medium/high`
 
     const userPrompt = `## 专利信息
 
@@ -445,7 +455,7 @@ ${input.patent.fullText ? input.patent.fullText.substring(0, 2000) : ''}
   "invalidityRisk": "low|medium|high",
   "infringementRisk": "low|medium|high",
   "riskFactors": ["风险因素1", "风险因素2"]
-}`;
+}`
 
     const response = await context.llm.chat({
       messages: [
@@ -453,9 +463,9 @@ ${input.patent.fullText ? input.patent.fullText.substring(0, 2000) : ''}
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-    });
+    })
 
-    return this.parseRiskAssessment(response.message.content);
+    return this.parseRiskAssessment(response.message.content)
   }
 
   /**
@@ -467,15 +477,15 @@ ${input.patent.fullText ? input.patent.fullText.substring(0, 2000) : ''}
   ): Promise<string[]> {
     const systemPrompt = `你是一位专利策略顾问。
 
-根据专利分析结果，提供具体的建议和改进措施。请列出 3-5 条建议。`;
+根据专利分析结果，提供具体的建议和改进措施。请列出 3-5 条建议。`
 
-    const summary = this.generateAnalysisSummary(output);
+    const summary = this.generateAnalysisSummary(output)
 
     const userPrompt = `## 专利分析摘要
 
 ${summary}
 
-请提供 3-5 条具体建议（纯文本，每条一行）。`;
+请提供 3-5 条具体建议（纯文本，每条一行）。`
 
     const response = await context.llm.chat({
       messages: [
@@ -483,42 +493,46 @@ ${summary}
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.5,
-    });
+    })
 
     const recommendations = response.message.content
       .split('\n')
       .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+      .filter((line) => line.length > 0)
 
-    return recommendations.slice(0, 5);
+    return recommendations.slice(0, 5)
   }
 
   /**
    * 生成分析摘要
    */
   private generateAnalysisSummary(output: PatentAnalysisOutput): string {
-    const parts: string[] = [];
+    const parts: string[] = []
 
     if (output.technicalAnalysis) {
-      parts.push(`技术领域: ${output.technicalAnalysis.field}`);
-      parts.push(`关键特征: ${output.technicalAnalysis.keyFeatures.length} 个`);
+      parts.push(`技术领域: ${output.technicalAnalysis.field}`)
+      parts.push(`关键特征: ${output.technicalAnalysis.keyFeatures.length} 个`)
     }
 
     if (output.claimsAnalysis) {
-      parts.push(`权利要求: ${output.claimsAnalysis.independentCount} 独立 + ${output.claimsAnalysis.dependentCount} 从属`);
-      parts.push(`质量评分: ${output.claimsAnalysis.qualityScore}/100`);
+      parts.push(
+        `权利要求: ${output.claimsAnalysis.independentCount} 独立 + ${output.claimsAnalysis.dependentCount} 从属`
+      )
+      parts.push(`质量评分: ${output.claimsAnalysis.qualityScore}/100`)
     }
 
     if (output.creativityAssessment) {
-      parts.push(`创造性: ${output.creativityAssessment.level} (${output.creativityAssessment.score}/100)`);
+      parts.push(
+        `创造性: ${output.creativityAssessment.level} (${output.creativityAssessment.score}/100)`
+      )
     }
 
     if (output.riskAssessment) {
-      parts.push(`无效风险: ${output.riskAssessment.invalidityRisk}`);
-      parts.push(`侵权风险: ${output.riskAssessment.infringementRisk}`);
+      parts.push(`无效风险: ${output.riskAssessment.invalidityRisk}`)
+      parts.push(`侵权风险: ${output.riskAssessment.infringementRisk}`)
     }
 
-    return parts.join('\n');
+    return parts.join('\n')
   }
 
   /**
@@ -526,16 +540,17 @@ ${summary}
    */
   private parseTechnicalAnalysis(content: string): PatentAnalysisOutput['technicalAnalysis'] {
     try {
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) ||
-                      content.match(/```\s*([\s\S]*?)\s*```/) ||
-                      content.match(/{[\s\S]*}/);
+      const jsonMatch =
+        content.match(/```json\s*([\s\S]*?)\s*```/) ||
+        content.match(/```\s*([\s\S]*?)\s*```/) ||
+        content.match(/{[\s\S]*}/)
 
       if (!jsonMatch) {
-        throw new Error('未找到 JSON 格式');
+        throw new Error('未找到 JSON 格式')
       }
 
-      const jsonStr = jsonMatch[1] || jsonMatch[0];
-      const data = JSON.parse(jsonStr);
+      const jsonStr = jsonMatch[1] || jsonMatch[0]
+      const data = JSON.parse(jsonStr)
 
       return {
         field: data.field || '',
@@ -543,16 +558,16 @@ ${summary}
         solution: data.solution || '',
         effects: Array.isArray(data.effects) ? data.effects : [],
         keyFeatures: Array.isArray(data.keyFeatures) ? data.keyFeatures : [],
-      };
+      }
     } catch (error) {
-      console.warn('[PatentAnalyzerAgent] 技术分析解析失败:', error);
+      console.warn('[PatentAnalyzerAgent] 技术分析解析失败:', error)
       return {
         field: '',
         problems: [],
         solution: '',
         effects: [],
         keyFeatures: [],
-      };
+      }
     }
   }
 
@@ -561,13 +576,13 @@ ${summary}
    */
   private parseClaimsAnalysis(content: string): PatentAnalysisOutput['claimsAnalysis'] {
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
 
       if (!jsonMatch) {
-        return this.getDefaultClaimsAnalysis();
+        return this.getDefaultClaimsAnalysis()
       }
 
-      const data = JSON.parse(jsonMatch[0]);
+      const data = JSON.parse(jsonMatch[0])
 
       return {
         independentCount: data.independentCount || 0,
@@ -578,10 +593,10 @@ ${summary}
           risk: data.protectionScope?.risk || 'medium',
         },
         qualityScore: data.qualityScore || 70,
-      };
+      }
     } catch (error) {
-      console.warn('[PatentAnalyzerAgent] 权利要求分析解析失败:', error);
-      return this.getDefaultClaimsAnalysis();
+      console.warn('[PatentAnalyzerAgent] 权利要求分析解析失败:', error)
+      return this.getDefaultClaimsAnalysis()
     }
   }
 
@@ -590,27 +605,27 @@ ${summary}
    */
   private parsePriorArtAnalysis(content: string): PatentAnalysisOutput['priorArtAnalysis'] {
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
 
       if (!jsonMatch) {
         return {
           closestPriorArt: [],
           innovations: [],
-        };
+        }
       }
 
-      const data = JSON.parse(jsonMatch[0]);
+      const data = JSON.parse(jsonMatch[0])
 
       return {
         closestPriorArt: Array.isArray(data.closestPriorArt) ? data.closestPriorArt : [],
         innovations: Array.isArray(data.innovations) ? data.innovations : [],
-      };
+      }
     } catch (error) {
-      console.warn('[PatentAnalyzerAgent] 现有技术对比解析失败:', error);
+      console.warn('[PatentAnalyzerAgent] 现有技术对比解析失败:', error)
       return {
         closestPriorArt: [],
         innovations: [],
-      };
+      }
     }
   }
 
@@ -619,26 +634,26 @@ ${summary}
    */
   private parseCreativityAssessment(content: string): PatentAnalysisOutput['creativityAssessment'] {
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
 
       if (!jsonMatch) {
-        return this.getDefaultCreativityAssessment();
+        return this.getDefaultCreativityAssessment()
       }
 
-      const data = JSON.parse(jsonMatch[0]);
+      const data = JSON.parse(jsonMatch[0])
 
       // 验证创造性等级
-      const validLevels = ['inventive', 'obvious', 'lacksInventiveness'];
-      const level = validLevels.includes(data.level) ? data.level : 'obvious';
+      const validLevels = ['inventive', 'obvious', 'lacksInventiveness']
+      const level = validLevels.includes(data.level) ? data.level : 'obvious'
 
       return {
         level,
         score: typeof data.score === 'number' ? data.score : 50,
         reasoning: data.reasoning || '未提供详细理由',
-      };
+      }
     } catch (error) {
-      console.warn('[PatentAnalyzerAgent] 创造性评估解析失败:', error);
-      return this.getDefaultCreativityAssessment();
+      console.warn('[PatentAnalyzerAgent] 创造性评估解析失败:', error)
+      return this.getDefaultCreativityAssessment()
     }
   }
 
@@ -647,27 +662,31 @@ ${summary}
    */
   private parseRiskAssessment(content: string): PatentAnalysisOutput['riskAssessment'] {
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
 
       if (!jsonMatch) {
-        return this.getDefaultRiskAssessment();
+        return this.getDefaultRiskAssessment()
       }
 
-      const data = JSON.parse(jsonMatch[0]);
+      const data = JSON.parse(jsonMatch[0])
 
       // 验证风险等级
-      const validRisks = ['low', 'medium', 'high'];
-      const invalidityRisk = validRisks.includes(data.invalidityRisk) ? data.invalidityRisk : 'medium';
-      const infringementRisk = validRisks.includes(data.infringementRisk) ? data.infringRisk : 'medium';
+      const validRisks = ['low', 'medium', 'high']
+      const invalidityRisk = validRisks.includes(data.invalidityRisk)
+        ? data.invalidityRisk
+        : 'medium'
+      const infringementRisk = validRisks.includes(data.infringementRisk)
+        ? data.infringRisk
+        : 'medium'
 
       return {
         invalidityRisk,
         infringementRisk,
         riskFactors: Array.isArray(data.riskFactors) ? data.riskFactors : [],
-      };
+      }
     } catch (error) {
-      console.warn('[PatentAnalyzerAgent] 风险评估解析失败:', error);
-      return this.getDefaultRiskAssessment();
+      console.warn('[PatentAnalyzerAgent] 风险评估解析失败:', error)
+      return this.getDefaultRiskAssessment()
     }
   }
 
@@ -681,7 +700,7 @@ ${summary}
         risk: 'medium',
       },
       qualityScore: 70,
-    };
+    }
   }
 
   private getDefaultCreativityAssessment(): PatentAnalysisOutput['creativityAssessment'] {
@@ -689,7 +708,7 @@ ${summary}
       level: 'obvious',
       score: 50,
       reasoning: '无法确定创造性水平',
-    };
+    }
   }
 
   private getDefaultRiskAssessment(): PatentAnalysisOutput['riskAssessment'] {
@@ -697,6 +716,6 @@ ${summary}
       invalidityRisk: 'medium',
       infringementRisk: 'medium',
       riskFactors: ['未进行详细分析'],
-    };
+    }
   }
 }

@@ -7,5 +7,5 @@
  * - 报告生成
  */
 
-export { ResearcherAgent } from './ResearcherAgent.js';
-export type { ResearchQuery, ResearchPlan, ResearchResult } from './ResearcherAgent.js';
+export { ResearcherAgent } from './ResearcherAgent.js'
+export type { ResearchQuery, ResearchPlan, ResearchResult } from './ResearcherAgent.js'

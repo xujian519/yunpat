@@ -1,4 +1,4 @@
-export { PatentManagerAgent } from './PatentManagerAgent.js';
+export { PatentManagerAgent } from './PatentManagerAgent.js'
 export type {
   PatentApplication,
   PatentStatus,
@@ -9,4 +9,4 @@ export type {
   PatentManagerInput,
   PatentManagerOutput,
   ManagerOperation,
-} from './PatentManagerAgent.js';
+} from './PatentManagerAgent.js'

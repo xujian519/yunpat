@@ -8,13 +8,13 @@
 
 ## 📊 测试结果总览
 
-| 组件 | 测试数 | 通过 | 失败 | 跳过 | 状态 |
-|------|--------|------|------|------|------|
-| ToolDescriptionEnhancer | 12 | 10 | 2 | 0 | 🟡 部分通过 |
-| FewShotPromptManager | 18 | 13 | 5 | 0 | 🟡 部分通过 |
-| ToolUsageTracker | - | - | - | - | 🔴 运行时错误 |
-| ToolSelectionOptimizer | - | - | - | - | ⚪ 未运行 |
-| **总计** | **30** | **23** | **7** | **0** | **🟡 76.7%通过** |
+| 组件                    | 测试数 | 通过   | 失败  | 跳过  | 状态             |
+| ----------------------- | ------ | ------ | ----- | ----- | ---------------- |
+| ToolDescriptionEnhancer | 12     | 10     | 2     | 0     | 🟡 部分通过      |
+| FewShotPromptManager    | 18     | 13     | 5     | 0     | 🟡 部分通过      |
+| ToolUsageTracker        | -      | -      | -     | -     | 🔴 运行时错误    |
+| ToolSelectionOptimizer  | -      | -      | -     | -     | ⚪ 未运行        |
+| **总计**                | **30** | **23** | **7** | **0** | **🟡 76.7%通过** |
 
 ---
 
@@ -25,19 +25,22 @@
 **通过**: 10/12 (83.3%)
 
 **失败的测试**:
+
 - ❌ `应该生成数据类型`
 - ❌ `应该根据工具类型生成不同的示例`
 
 **问题分析**:
+
 ```typescript
 // 测试期望：
-expect(enhanced.dataTypes).toContain('application/pdf');
+expect(enhanced.dataTypes).toContain('application/pdf')
 
 // 实际情况：
 // generateDataTypes() 方法可能没有正确处理PDF工具的类型
 ```
 
 **修复建议**:
+
 1. 检查 `generateDataTypes()` 方法的实现
 2. 确保工具名称匹配逻辑正确
 3. 添加更多工具类型的映射
@@ -49,6 +52,7 @@ expect(enhanced.dataTypes).toContain('application/pdf');
 **通过**: 13/18 (72.2%)
 
 **失败的测试**:
+
 - ❌ `应该能够添加示例`
 - ❌ `应该支持添加多个示例`
 - ❌ `应该格式化示例`
@@ -56,22 +60,25 @@ expect(enhanced.dataTypes).toContain('application/pdf');
 - ❌ `应该能够从JSON导入示例`
 
 **问题分析**:
+
 ```typescript
 // 核心问题：示例没有被正确存储或检索
 
 // 添加示例后无法检索
-manager.addExample(example);
-const examples = manager.getRelevantExamples('测试输入', [], 10);
-expect(examples).toContainEqual(expect.objectContaining({ id: 'test-001' }));
+manager.addExample(example)
+const examples = manager.getRelevantExamples('测试输入', [], 10)
+expect(examples).toContainEqual(expect.objectContaining({ id: 'test-001' }))
 // ❌ 失败：找不到添加的示例
 ```
 
 **根本原因**:
+
 1. `examples` Map 的key可能生成有问题
 2. `categorizeExample()` 方法可能返回了意外的分类
 3. 相似度计算逻辑可能不匹配
 
 **修复建议**:
+
 1. 检查 `categorizeExample()` 的分类逻辑
 2. 验证 `calculateSimilarity()` 的相似度计算
 3. 确保示例被正确添加到Map中
@@ -83,6 +90,7 @@ expect(examples).toContainEqual(expect.objectContaining({ id: 'test-001' }));
 **状态**: 🔴 运行时错误
 
 **错误信息**:
+
 ```
 TypeError: The "path" argument must be of type string. Received an instance of Object
 at Proxy.dirname (node:path:1384:5)
@@ -90,17 +98,20 @@ at ToolUsageTracker.saveRecords
 ```
 
 **问题分析**:
+
 ```typescript
 // ToolUsageTracker.ts:480
 at ToolUsageTracker.saveRecords (/Users/xujian/projects/YunPat/packages/core/src/tools/ToolUsageTracker.ts:480:24)
 ```
 
 **根本原因**:
+
 - `saveRecords()` 方法中使用了错误的参数类型
 - `dirname()` 期望字符串，但收到了对象
 - 可能是配置对象处理有误
 
 **修复建议**:
+
 1. 检查 `saveRecords()` 方法的参数处理
 2. 确保 `dataDirectory` 配置正确传递
 3. 添加类型检查以防止此类错误
@@ -118,14 +129,17 @@ at ToolUsageTracker.saveRecords (/Users/xujian/projects/YunPat/packages/core/src
 ## 🎯 TDD 流程验证
 
 ✅ **第一步：编写测试（红色）** - 完成
+
 - 4个测试文件，30个测试用例
 - 覆盖所有核心功能
 
 🔄 **第二步：修复代码（绿色）** - 进行中
+
 - 需要修复7个失败的测试
 - 需要修复运行时错误
 
 ⏳ **第三步：重构优化** - 待开始
+
 - 测试通过后的代码重构
 - 性能优化
 
@@ -166,6 +180,7 @@ at ToolUsageTracker.saveRecords (/Users/xujian/projects/YunPat/packages/core/src
 **估算覆盖率**: ~60-70%
 
 **覆盖的组件**:
+
 - ✅ ToolDescriptionEnhancer: 高覆盖率
 - ✅ FewShotPromptManager: 中等覆盖率
 - ⚠️ ToolUsageTracker: 低覆盖率（运行时错误）
@@ -176,6 +191,7 @@ at ToolUsageTracker.saveRecords (/Users/xujian/projects/YunPat/packages/core/src
 **目标**: > 80%
 
 **需要补充的测试**:
+
 1. 边界条件测试
 2. 错误处理测试
 3. 性能测试
@@ -188,17 +204,20 @@ at ToolUsageTracker.saveRecords (/Users/xujian/projects/YunPat/packages/core/src
 ### 优点
 
 ✅ **测试结构清晰**
+
 - 使用 `describe` 分组
 - 测试命名规范
 - beforeEach/afterEach 正确使用
 
 ✅ **测试覆盖全面**
+
 - 正常流程
 - 边界条件
 - 错误处理
 - 集成场景
 
 ✅ **遵循TDD原则**
+
 - 先写测试
 - 测试驱动开发
 - 持续重构
@@ -206,14 +225,17 @@ at ToolUsageTracker.saveRecords (/Users/xujian/projects/YunPat/packages/core/src
 ### 改进空间
 
 🔄 **测试独立性**
+
 - 部分测试依赖全局状态
 - 需要更好的mock和隔离
 
 🔄 **错误信息**
+
 - 失败的错误信息可以更详细
 - 需要更好的断言消息
 
 🔄 **性能测试**
+
 - 缺少性能基准测试
 - 需要压力测试
 
@@ -256,28 +278,34 @@ at ToolUsageTracker.saveRecords (/Users/xujian/projects/YunPat/packages/core/src
 ### 成功经验
 
 ✅ **测试先行发现问题**
+
 - 在编写代码前就发现了设计问题
 - 测试用例帮助理清需求
 
 ✅ **快速反馈循环**
+
 - 测试运行快速
 - 问题定位准确
 
 ✅ **文档作用**
+
 - 测试即文档
 - 展示了预期的使用方式
 
 ### 改进方向
 
 🔄 **测试粒度**
+
 - 部分测试过于复杂
 - 需要拆分更小的单元
 
 🔄 **Mock策略**
+
 - 需要更好的mock隔离
 - 减少测试间的依赖
 
 🔄 **测试数据**
+
 - 需要更多样化的测试数据
 - 覆盖更多边界情况
 
@@ -288,16 +316,19 @@ at ToolUsageTracker.saveRecords (/Users/xujian/projects/YunPat/packages/core/src
 **当前状态**: 🟡 测试已编写，部分通过
 
 **完成度**:
+
 - ✅ 测试编写: 100%
 - 🔄 测试通过: 76.7%
 - ⏳ 修复优化: 进行中
 
 **预期效果**:
+
 - 修复后测试通过率: 100%
 - 预期覆盖率: >80%
 - 代码质量: 显著提升
 
 **符合TDD原则**: ✅ 是
+
 - 先写测试 ✅
 - 测试驱动开发 ✅
 - 持续重构 ⏳

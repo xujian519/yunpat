@@ -12,14 +12,14 @@
 
 ### 核心成果
 
-| 改进项 | 状态 | 稳定性提升 | 实施时间 |
-|--------|------|-----------|---------|
-| **LLM 调用增强** | ✅ | ⭐⭐⭐⭐⭐ | 45分钟 |
-| **配置外部化** | ✅ | ⭐⭐⭐ | 30分钟 |
-| **Writer Agent 修复** | ✅ | ⭐⭐⭐⭐ | 35分钟 |
-| **Memory 事务** | ✅ | ⭐⭐⭐⭐ | 40分钟 |
-| **可观测性** | ✅ | ⭐⭐⭐⭐ | 35分钟 |
-| **集成测试** | ✅ | ⭐⭐⭐ | 30分钟 |
+| 改进项                | 状态 | 稳定性提升 | 实施时间 |
+| --------------------- | ---- | ---------- | -------- |
+| **LLM 调用增强**      | ✅   | ⭐⭐⭐⭐⭐ | 45分钟   |
+| **配置外部化**        | ✅   | ⭐⭐⭐     | 30分钟   |
+| **Writer Agent 修复** | ✅   | ⭐⭐⭐⭐   | 35分钟   |
+| **Memory 事务**       | ✅   | ⭐⭐⭐⭐   | 40分钟   |
+| **可观测性**          | ✅   | ⭐⭐⭐⭐   | 35分钟   |
+| **集成测试**          | ✅   | ⭐⭐⭐     | 30分钟   |
 
 ---
 
@@ -30,6 +30,7 @@
 **文件**: `packages/core/src/llm/ResilientLLMAdapter.ts`
 
 **功能**:
+
 - ✅ 自动重试（最多3次，指数退避）
 - ✅ 多模型降级（DeepSeek → OMLX → 简化响应）
 - ✅ 超时保护（默认30秒）
@@ -37,6 +38,7 @@
 - ✅ 详细日志输出
 
 **测试结果**:
+
 ```
 ✅ 调用成功 - 551ms, 1次尝试（主模型）
 ✅ 降级成功 - 主模型失败 → OMLX 正常响应
@@ -52,6 +54,7 @@
 **文件**: `packages/core/src/config/ConfigManager.ts`
 
 **功能**:
+
 - ✅ YAML 配置文件读取（~/.yunpat/config.yaml）
 - ✅ 环境变量替换（${DEEPSEEK_API_KEY}）
 - ✅ 多环境配置（dev/test/prod）
@@ -59,6 +62,7 @@
 - ✅ API Key 敏感信息隔离
 
 **配置文件示例**:
+
 ```yaml
 llm:
   primary:
@@ -79,6 +83,7 @@ llm:
 **文件**: `packages/agents/writer/src/WriterAgent.ts`
 
 **改进**:
+
 - ✅ 安装并使用 `zod` 进行运行时类型验证
 - ✅ 创建 `OutlineSchema` 验证大纲格式
 - ✅ 实现**重试机制**（最多2次，带提示增强）
@@ -89,6 +94,7 @@ llm:
 - ✅ 增强 `buildOutlinePrompt()` 提示词
 
 **测试结果**:
+
 ```
 ✅ 生成成功 - 5章节，103字，18.8秒
 ✅ 大纲解析 - 无重复，结构正确
@@ -104,20 +110,22 @@ llm:
 **文件**: `packages/core/src/memory/TransactionManager.ts`
 
 **功能**:
+
 - ✅ 事务上下文管理
 - ✅ 自动创建快照
 - ✅ 失败自动回滚
 - ✅ 与 Agent 生命周期集成
 
 **核心接口**:
+
 ```typescript
 await transactionManager.transaction(agentName, async (tx) => {
-  await agent.before?.(input, tx.context);
-  const plan = await agent.plan(input, tx.context);
-  const result = await agent.act(plan, tx.context);
-  return result;
+  await agent.before?.(input, tx.context)
+  const plan = await agent.plan(input, tx.context)
+  const result = await agent.act(plan, tx.context)
+  return result
   // 如果抛异常，自动回滚到 tx.snapshot
-});
+})
 ```
 
 **一致性提升**: **消除状态不一致风险**
@@ -129,6 +137,7 @@ await transactionManager.transaction(agentName, async (tx) => {
 **文件**: `packages/core/src/observability/TelemetryCollector.ts`
 
 **功能**:
+
 - ✅ 事件记录（agent、stage、duration、status）
 - ✅ 实时告警（慢执行、失败率、错误激增）
 - ✅ 指标聚合（成功率、平均延迟）
@@ -136,6 +145,7 @@ await transactionManager.transaction(agentName, async (tx) => {
 - ✅ 可读报告输出
 
 **测试结果**:
+
 ```
 总事件数: 2
 成功率: 100.0%
@@ -152,6 +162,7 @@ await transactionManager.transaction(agentName, async (tx) => {
 **目录**: `packages/core/test/stability/`
 
 **测试文件**:
+
 - `llm-resilience.test.ts` - LLM 故障注入测试
 - `memory-transaction.test.ts` - Memory 回滚测试
 - `concurrent-agents.test.ts` - 并发 Agent 测试
@@ -168,12 +179,12 @@ await transactionManager.transaction(agentName, async (tx) => {
 
 **测试结果**: **4/4 通过 (100%)**
 
-| 测试项 | 结果 | 关键指标 |
-|--------|------|---------|
-| **ResilientLLMAdapter** | ✅ | 551ms, 1次尝试 |
-| **ConfigManager** | ✅ | 环境加载正确 |
-| **TelemetryCollector** | ✅ | 2事件, 100%成功 |
-| **Writer Agent** | ✅ | 18.8秒, 5章节, 103字 |
+| 测试项                  | 结果 | 关键指标             |
+| ----------------------- | ---- | -------------------- |
+| **ResilientLLMAdapter** | ✅   | 551ms, 1次尝试       |
+| **ConfigManager**       | ✅   | 环境加载正确         |
+| **TelemetryCollector**  | ✅   | 2事件, 100%成功      |
+| **Writer Agent**        | ✅   | 18.8秒, 5章节, 103字 |
 
 **完整流程验证**: ✅ DeepSeek API → Writer Agent → 文档生成
 
@@ -183,13 +194,13 @@ await transactionManager.transaction(agentName, async (tx) => {
 
 ### 改进前 vs 改进后
 
-| 指标 | 改进前 | 改进后 | 提升 |
-|------|--------|--------|------|
-| **LLM 调用成功率** | ~60% | 99.5%+ | +65% |
-| **大纲解析成功率** | ~70% | 95%+ | +35% |
-| **平均故障恢复时间** | >5分钟 | <30秒 | -90% |
-| **可观测性覆盖** | 0% | 100% | +100% |
-| **配置安全性** | 低 | 高 | 消除硬编码 |
+| 指标                 | 改进前 | 改进后 | 提升       |
+| -------------------- | ------ | ------ | ---------- |
+| **LLM 调用成功率**   | ~60%   | 99.5%+ | +65%       |
+| **大纲解析成功率**   | ~70%   | 95%+   | +35%       |
+| **平均故障恢复时间** | >5分钟 | <30秒  | -90%       |
+| **可观测性覆盖**     | 0%     | 100%   | +100%      |
+| **配置安全性**       | 低     | 高     | 消除硬编码 |
 
 ---
 
@@ -197,14 +208,14 @@ await transactionManager.transaction(agentName, async (tx) => {
 
 ### 当前状态
 
-| 指标 | 目标 | 当前 | 状态 |
-|------|------|------|------|
-| **可用性** | > 99.5% | 99.5%+ | ✅ |
-| **P50 延迟** | < 5秒 | ~3秒 | ✅ |
-| **P99 延迟** | < 30秒 | ~20秒 | ✅ |
-| **成功率** | > 95% | 99.5%+ | ✅ |
-| **MTTR** | < 15分钟 | <30秒 | ✅ |
-| **数据丢失率** | 0% | 0% | ✅ |
+| 指标           | 目标     | 当前   | 状态 |
+| -------------- | -------- | ------ | ---- |
+| **可用性**     | > 99.5%  | 99.5%+ | ✅   |
+| **P50 延迟**   | < 5秒    | ~3秒   | ✅   |
+| **P99 延迟**   | < 30秒   | ~20秒  | ✅   |
+| **成功率**     | > 95%    | 99.5%+ | ✅   |
+| **MTTR**       | < 15分钟 | <30秒  | ✅   |
+| **数据丢失率** | 0%       | 0%     | ✅   |
 
 ---
 

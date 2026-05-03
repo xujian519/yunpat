@@ -7,12 +7,14 @@
 ## 🔴 问题确认
 
 ### 症状
+
 - **Runner 状态**: online 但显示为 busy
 - **进行中的工作流**: 0 个
 - **排队任务**: 3 个 (等待超过 10 分钟)
 - **结论**: Runner 进程卡住，但 GitHub 认为它正在运行任务
 
 ### 诊断结果
+
 ```json
 {
   "runner_name": "m4-air-runner",
@@ -28,10 +30,12 @@
 ### 方案 1: SSH 到 Runner 机器手动重启 (推荐)
 
 #### 步骤 1: 定位 Runner 机器
+
 Runner 名称: `m4-air-runner`
 可能的 hostname: `m4-air.local`, `m4-air-runner.local`, 或其他配置的主机名
 
 #### 步骤 2: SSH 连接
+
 ```bash
 # 尝试常见的 hostname
 ssh user@m4-air.local
@@ -43,18 +47,21 @@ dns-sd -B _ssh._tcp local
 ```
 
 #### 步骤 3: 运行诊断脚本
+
 ```bash
 cd /path/to/YunPat
 ./scripts/diagnose-runner.sh
 ```
 
 这将提供：
+
 - Runner 进程状态
 - CPU/内存使用情况
 - 网络连接状态
 - 日志文件分析
 
 #### 步骤 4: 停止并重启 Runner
+
 ```bash
 # 进入 Runner 目录 (通常是 ~/actions-runner)
 cd ~/actions-runner
@@ -76,6 +83,7 @@ rm -rf _work/_temp/*
 ```
 
 #### 步骤 5: 验证修复
+
 ```bash
 # 在本地机器上检查 Runner 状态
 gh api repos/xujian519/yunpat/actions/runners --jq '.runners[0] | {name: .name, busy: .busy, status: .status}'
@@ -86,6 +94,7 @@ gh api repos/xujian519/yunpat/actions/runners --jq '.runners[0] | {name: .name, 
 ### 方案 2: 强制重新注册 Runner (如果方案 1 失败)
 
 #### 步骤 1: 在 Runner 机器上卸载
+
 ```bash
 cd ~/actions-runner
 
@@ -100,6 +109,7 @@ cd ~/actions-runner
 ```
 
 #### 步骤 2: 重新配置 Runner
+
 ```bash
 # 获取新的 token
 gh api repos/xujian519/yunpat/actions/runners/registration-token --jq '.token'
@@ -115,6 +125,7 @@ gh api repos/xujian519/yunpat/actions/runners/registration-token --jq '.token'
 ### 方案 3: 等待超时 (不推荐)
 
 如果 Runner 进程最终会自动清理，预计等待时间：
+
 - **超时时间**: 通常 6-24 小时
 - **风险**: CI/CD 完全不可用
 - **建议**: 仅作为最后手段
@@ -122,6 +133,7 @@ gh api repos/xujian519/yunpat/actions/runners/registration-token --jq '.token'
 ## 📊 预防措施
 
 ### 短期预防
+
 1. **添加 Runner 健康检查**
    - 定期检查 Runner 状态
    - 自动重启卡住的 Runner
@@ -135,6 +147,7 @@ gh api repos/xujian519/yunpat/actions/runners/registration-token --jq '.token'
    - 设置告警通知
 
 ### 长期预防
+
 1. **Runner 资源管理**
    - 增加 Runner 数量
    - 设置资源限制
@@ -150,6 +163,7 @@ gh api repos/xujian519/yunpat/actions/runners/registration-token --jq '.token'
 ## 🔍 根本原因分析
 
 ### 可能的原因
+
 1. **Deploy 工作流卡住**
    - 之前取消的 Deploy 任务未正确清理
    - 脚本执行超时但进程未终止
@@ -163,6 +177,7 @@ gh api repos/xujian519/yunpat/actions/runners/registration-token --jq '.token'
    - 资源泄漏导致无法响应
 
 ### 调查方向
+
 1. **检查 Runner 日志**
    - `~/actions-runner/_diag/Runner_*.log`
    - 查找错误和异常
@@ -178,17 +193,20 @@ gh api repos/xujian519/yunpat/actions/runners/registration-token --jq '.token'
 ## 📝 后续行动
 
 ### 立即行动 (今天)
+
 - [ ] SSH 到 Runner 机器
 - [ ] 运行诊断脚本
 - [ ] 重启 Runner 服务
 - [ ] 验证 CI 恢复正常
 
 ### 短期行动 (本周)
+
 - [ ] 添加自动监控脚本
 - [ ] 配置告警通知
 - [ ] 优化工作流超时设置
 
 ### 长期行动 (本月)
+
 - [ ] 增加 Runner 数量
 - [ ] 实现自动恢复机制
 - [ ] 完善监控和文档
@@ -196,6 +214,7 @@ gh api repos/xujian519/yunpat/actions/runners/registration-token --jq '.token'
 ## 📞 联系信息
 
 如果问题持续或需要帮助：
+
 - **Runner 机器**: m4-air (需要访问凭证)
 - **GitHub 仓库**: xujian519/yunpat
 - **诊断脚本**: `./scripts/diagnose-runner.sh`

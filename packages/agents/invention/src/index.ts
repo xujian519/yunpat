@@ -2,6 +2,6 @@ export {
   InventionUnderstandingAgent,
   type InventionUnderstandingInput,
   type InventionUnderstandingOutput,
-} from './InventionUnderstandingAgent.js';
+} from './InventionUnderstandingAgent.js'
 
-export { HumanReadableRenderer } from './HumanReadableRenderer.js';
+export { HumanReadableRenderer } from './HumanReadableRenderer.js'

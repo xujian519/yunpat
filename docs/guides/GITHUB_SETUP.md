@@ -1,6 +1,7 @@
 # GitHub 远程仓库设置和 CI/CD 完整指南
 
 ## 目录
+
 1. [GitHub 仓库创建](#github-仓库创建)
 2. [Secrets 配置](#secrets-配置)
 3. [CI/CD 工作流说明](#cicd-工作流说明)
@@ -37,11 +38,13 @@ git push -u origin main
 在 GitHub 仓库中配置以下 Secrets：
 
 ### 路径
+
 `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
 
 ### 必需的 Secrets
 
 #### 1. NPM Token（用于发布 npm 包）
+
 ```bash
 # 在本地创建 npm token
 npm login
@@ -52,6 +55,7 @@ npm login
 **值**: 你的 npm 访问令牌（自动化令牌）
 
 #### 2. Docker Hub 凭证（用于发布 Docker 镜像）
+
 ```bash
 # Docker Hub 用户名
 docker login
@@ -64,6 +68,7 @@ docker login
 **值**: 你的 Docker Hub 密码或访问令牌
 
 #### 3. Rust Crates.io Token（用于发布 Rust crate）
+
 ```bash
 # 在本地创建 crates.io token
 cargo login
@@ -75,10 +80,12 @@ cargo login
 ### 可选的 Secrets
 
 #### 1. Codecov Token（用于上传覆盖率报告）
+
 **Secret 名称**: `CODECOV_TOKEN`
 **值**: 从 [Codecov](https://codecov.io) 获取的仓库令牌
 
 #### 2. Slack Webhook（用于通知）
+
 **Secret 名称**: `SLACK_WEBHOOK_URL`
 **值**: Slack 传入 Webhook URL
 
@@ -87,6 +94,7 @@ cargo login
 ### 1. CI 工作流 ([`.github/workflows/ci.yml`](.github/workflows/ci.yml))
 
 **触发条件**：
+
 - Push 到 `main` 或 `develop` 分支
 - 创建 Pull Request 到 `main` 或 `develop` 分支
 - 手动触发
@@ -94,34 +102,41 @@ cargo login
 **包含的 Job**：
 
 #### 代码质量检查
+
 - ESLint 代码规范检查
 - TypeScript 类型检查
 - Prettier 代码格式检查
 
 #### TypeScript 测试
+
 - 多 Node.js 版本测试（18.x, 20.x）
 - 单元测试执行
 - 覆盖率报告生成和上传
 
 #### Rust 工具测试
+
 - Rust 代码格式检查（`cargo fmt`）
 - Rust 静态分析（`cargo clippy`）
 - Rust 单元测试
 - Rust 文档生成
 
 #### Python 工具测试
+
 - Python 单元测试
 - 覆盖率报告
 
 #### Docker 构建测试
+
 - Docker 镜像构建
 - 容器运行测试
 
 #### 安全检查
+
 - npm 审计（依赖漏洞检查）
 - 安全漏洞扫描
 
 #### 构建产物
+
 - TypeScript 代码构建
 - Rust 项目构建
 - 构建产物打包和上传
@@ -129,51 +144,62 @@ cargo login
 ### 2. Release 工作流 ([`.github/workflows/release.yml`](.github/workflows/release.yml))
 
 **触发条件**：
+
 - 推送以 `v` 开头的标签（如 `v0.2.0`）
 - 手动触发
 
 **包含的 Job**：
 
 #### 创建 GitHub Release
+
 - 自动生成 Changelog
 - 创建 GitHub Release 页面
 
 #### 发布到 npm
+
 - 发布所有包到 npm registry
-- 支持 @yunpat/* scope
+- 支持 @yunpat/\* scope
 
 #### 发布 Docker 镜像
+
 - 构建并推送 Docker 镜像到 Docker Hub
 - 支持多标签版本管理
 
 #### 发布 Rust Crate
+
 - 发布 Rust crate 到 crates.io
 
 #### 发布文档
+
 - 生成 API 文档
 - 部署到 GitHub Pages
 
 ### 3. Automation 工作流 ([`.github/workflows/automation.yml`](.github/workflows/automation.yml))
 
 **触发条件**：
+
 - 每周一上午 10 点（北京时间）自动运行
 - 手动触发
 
 **包含的 Job**：
 
 #### 依赖安全检查
+
 - 检查依赖中的安全漏洞
 - 生成安全报告
 
 #### 代码质量检查
+
 - 检查过期依赖
 - 运行代码检查
 
 #### 清理旧的 Issue
+
 - 自动标记 30 天无活动的 Issue
 - 关闭 14 天后仍无响应的 Issue
 
 #### 生成项目统计
+
 - 代码行数统计
 - 提交历史统计
 - 项目规模分析
@@ -289,6 +315,7 @@ MAJOR.MINOR.PATCH
 项目已配置完整的 CI 监控体系：
 
 **实时监控**:
+
 ```bash
 # 查看当前 CI 性能
 ./scripts/ci-monitor.sh
@@ -301,6 +328,7 @@ MAJOR.MINOR.PATCH
 ```
 
 **性能报告**:
+
 ```bash
 # 生成详细性能报告
 ./scripts/ci-performance-report.sh
@@ -313,6 +341,7 @@ MAJOR.MINOR.PATCH
 ```
 
 **快速检查**:
+
 ```bash
 # 查看最近运行
 gh run list --limit 10
@@ -325,6 +354,7 @@ gh run view <run-id>
 ```
 
 **性能基准**:
+
 - ✅ 成功率目标: ≥95%（当前: 90%）
 - ✅ 构建时间目标: ≤90秒（当前: 1m20s-1m54s）
 - ✅ 稳定性: 连续成功（最近 8 次 100%）
@@ -349,6 +379,7 @@ gh run view <run-id>
    - ✅ 构建时间降低 ~25%
 
 详见:
+
 - [CI 失败调查报告](../../CI_FAILURE_INVESTIGATION.md)
 - [CI 优化方案](../../CI_OPTIMIZATION_PLAN.md)
 - [CI 优化结果](../../CI_OPTIMIZATION_RESULTS.md)
@@ -358,6 +389,7 @@ gh run view <run-id>
 ### 常见问题
 
 #### 1. CI 构建失败
+
 ```bash
 # 本地运行相同的命令
 pnpm install
@@ -366,6 +398,7 @@ pnpm test
 ```
 
 #### 2. Canvas 依赖安装失败（已解决）
+
 ```
 错误信息:
 Package 'pixman-1', required by 'virtual:world', not found
@@ -375,15 +408,17 @@ canvas@2.11.2 原生模块编译失败
 **解决方案**: ✅ 已在 CI 配置中修复
 
 如果遇到此问题，检查 `.github/workflows/*.yml` 文件是否包含：
+
 ```yaml
 env:
-  CANVAS_USE_NATIVE: '0'        # 跳过原生模块编译
-  PUPPETEET_SKIP_DOWNLOAD: 'true'  # 跳过可选依赖
+  CANVAS_USE_NATIVE: '0' # 跳过原生模块编译
+  PUPPETEET_SKIP_DOWNLOAD: 'true' # 跳过可选依赖
 ```
 
 详细说明: [CI 失败调查报告](../../CI_FAILURE_INVESTIGATION.md)
 
 #### 3. Node.js 版本警告（已解决）
+
 ```
 警告: Node.js 20 actions are deprecated
 ```
@@ -391,18 +426,21 @@ env:
 **解决方案**: ✅ 已升级到 Node.js 24
 
 确保所有工作流文件使用：
+
 ```yaml
 env:
   NODE_VERSION: '24.x'
 ```
 
 如仍有警告，可在 workflow 中添加：
+
 ```yaml
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 ```
 
 #### 4. Docker 构建失败
+
 ```bash
 # 本地构建 Docker 镜像
 docker build -t test .
@@ -410,16 +448,19 @@ docker run test
 ```
 
 #### 5. 发布失败
+
 - 检查 Secrets 是否正确配置
 - 确认版本号是否已存在
 - 检查 package.json 配置
 
 #### 6. 权限问题
+
 - 确认 GitHub Actions 有足够的权限
 - 检查仓库设置 → Actions → General → Workflow permissions
 - 确保选择 "Read and write permissions"
 
 #### 7. CI 成功率低
+
 ```bash
 # 运行监控脚本分析原因
 ./scripts/ci-monitor.sh
@@ -430,6 +471,7 @@ gh run view <failed-run-id> --log
 ```
 
 **常见原因**:
+
 - 依赖安装失败 → 检查网络和依赖版本
 - 测试超时 → 增加超时时间配置
 - 内存不足 → 优化测试或增加资源
@@ -471,6 +513,7 @@ environments:
 ## 参考资源
 
 ### 官方文档
+
 - [GitHub Actions 文档](https://docs.github.com/en/actions)
 - [GitHub Actions 入门](https://docs.github.com/en/actions/learn-github-actions/introduction-to-github-actions)
 - [Semantic Versioning](https://semver.org/)
@@ -478,6 +521,7 @@ environments:
 - [Docker Build Push Action](https://github.com/docker/build-push-action)
 
 ### 项目 CI/CD 文档
+
 - [CI 监控指南](../../CI_MONITORING_GUIDE.md) - 完整的 CI 监控和性能分析指南
 - [CI 失败调查报告](../../CI_FAILURE_INVESTIGATION.md) - 常见 CI 问题及解决方案
 - [CI 优化方案](../../CI_OPTIMIZATION_PLAN.md) - CI/CD 性能优化方案
@@ -485,6 +529,7 @@ environments:
 - [CI 实时监控报告](../../CI_MONITORING_REPORT_20260501.md) - 最新监控报告
 
 ### GitHub 快速参考
+
 - [GitHub 设置清单](GITHUB_CHECKLIST.md) - 快速设置检查清单
 - [GitHub 总结](GITHUB_SUMMARY.md) - GitHub 集成总结
 
@@ -495,6 +540,7 @@ environments:
 **版本**: v1.1.0
 
 **更新内容**:
+
 - ✅ 添加 CI 监控和性能分析章节
 - ✅ 更新故障排查，添加 canvas 依赖问题解决方案
 - ✅ 添加 CI 优化成果说明

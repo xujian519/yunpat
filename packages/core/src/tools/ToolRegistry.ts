@@ -1,5 +1,5 @@
-import { ToolRegistry as IToolRegistry, Tool } from '../lifecycle/Lifecycle.js';
-import { EventBus } from '../eventbus/EventBus.js';
+import { ToolRegistry as IToolRegistry, Tool } from '../lifecycle/Lifecycle.js'
+import { EventBus } from '../eventbus/EventBus.js'
 
 /**
  * 工具注册表实现
@@ -8,13 +8,13 @@ import { EventBus } from '../eventbus/EventBus.js';
  */
 export class ToolRegistry implements IToolRegistry {
   /** 工具存储 */
-  private tools = new Map<string, Tool>();
+  private tools = new Map<string, Tool>()
 
   /** 事件总线 */
-  private eventBus: EventBus;
+  private eventBus: EventBus
 
   constructor(eventBus: EventBus) {
-    this.eventBus = eventBus;
+    this.eventBus = eventBus
   }
 
   /**
@@ -24,10 +24,10 @@ export class ToolRegistry implements IToolRegistry {
    */
   register(tool: Tool): void {
     if (this.tools.has(tool.name)) {
-      throw new Error(`Tool already registered: ${tool.name}`);
+      throw new Error(`Tool already registered: ${tool.name}`)
     }
 
-    this.tools.set(tool.name, tool);
+    this.tools.set(tool.name, tool)
 
     // 发布工具注册事件
     this.eventBus.publish({
@@ -38,7 +38,7 @@ export class ToolRegistry implements IToolRegistry {
         description: tool.description,
       },
       timestamp: new Date(),
-    });
+    })
   }
 
   /**
@@ -48,10 +48,10 @@ export class ToolRegistry implements IToolRegistry {
    */
   unregister(name: string): void {
     if (!this.tools.has(name)) {
-      throw new Error(`Tool not found: ${name}`);
+      throw new Error(`Tool not found: ${name}`)
     }
 
-    this.tools.delete(name);
+    this.tools.delete(name)
 
     // 发布工具注销事件
     this.eventBus.publish({
@@ -59,7 +59,7 @@ export class ToolRegistry implements IToolRegistry {
       source: 'ToolRegistry',
       data: { toolName: name },
       timestamp: new Date(),
-    });
+    })
   }
 
   /**
@@ -69,7 +69,7 @@ export class ToolRegistry implements IToolRegistry {
    * @returns 工具或 undefined
    */
   get(name: string): Tool | undefined {
-    return this.tools.get(name);
+    return this.tools.get(name)
   }
 
   /**
@@ -80,10 +80,10 @@ export class ToolRegistry implements IToolRegistry {
    * @returns 输出结果
    */
   async call(name: string, input: unknown): Promise<unknown> {
-    const tool = this.tools.get(name);
+    const tool = this.tools.get(name)
 
     if (!tool) {
-      throw new Error(`Tool not found: ${name}`);
+      throw new Error(`Tool not found: ${name}`)
     }
 
     // 发布工具调用事件
@@ -95,11 +95,11 @@ export class ToolRegistry implements IToolRegistry {
         input,
       },
       timestamp: new Date(),
-    });
+    })
 
     try {
       // 执行工具
-      const result = await tool.execute(input);
+      const result = await tool.execute(input)
 
       // 发布工具成功事件
       this.eventBus.publish({
@@ -110,9 +110,9 @@ export class ToolRegistry implements IToolRegistry {
           result,
         },
         timestamp: new Date(),
-      });
+      })
 
-      return result;
+      return result
     } catch (error) {
       // 发布工具错误事件
       this.eventBus.publish({
@@ -123,9 +123,9 @@ export class ToolRegistry implements IToolRegistry {
           error: error instanceof Error ? error.message : String(error),
         },
         timestamp: new Date(),
-      });
+      })
 
-      throw error;
+      throw error
     }
   }
 
@@ -135,7 +135,7 @@ export class ToolRegistry implements IToolRegistry {
    * @returns 工具列表
    */
   list(): Tool[] {
-    return Array.from(this.tools.values());
+    return Array.from(this.tools.values())
   }
 
   /**
@@ -145,7 +145,7 @@ export class ToolRegistry implements IToolRegistry {
    * @returns 是否存在
    */
   has(name: string): boolean {
-    return this.tools.has(name);
+    return this.tools.has(name)
   }
 
   /**
@@ -154,14 +154,14 @@ export class ToolRegistry implements IToolRegistry {
    * @returns 工具数量
    */
   size(): number {
-    return this.tools.size;
+    return this.tools.size
   }
 
   /**
    * 清空所有工具
    */
   clear(): void {
-    this.tools.clear();
+    this.tools.clear()
   }
 }
 
@@ -171,11 +171,11 @@ export class ToolRegistry implements IToolRegistry {
  * 提供工具的默认实现
  */
 export abstract class BaseTool implements Tool {
-  abstract readonly name: string;
-  abstract readonly description: string;
-  readonly inputSchema?: unknown;
+  abstract readonly name: string
+  abstract readonly description: string
+  readonly inputSchema?: unknown
 
-  abstract execute(input: unknown): Promise<unknown>;
+  abstract execute(input: unknown): Promise<unknown>
 }
 
 /**
@@ -184,11 +184,11 @@ export abstract class BaseTool implements Tool {
  * 将普通函数包装为工具
  */
 export class ToolWrapper extends BaseTool {
-  readonly name: string;
-  readonly description: string;
-  readonly inputSchema?: unknown;
+  readonly name: string
+  readonly description: string
+  readonly inputSchema?: unknown
 
-  private executor: (input: unknown) => Promise<unknown>;
+  private executor: (input: unknown) => Promise<unknown>
 
   constructor(
     name: string,
@@ -196,14 +196,14 @@ export class ToolWrapper extends BaseTool {
     executor: (input: unknown) => Promise<unknown>,
     inputSchema?: unknown
   ) {
-    super();
-    this.name = name;
-    this.description = description;
-    this.executor = executor;
-    this.inputSchema = inputSchema;
+    super()
+    this.name = name
+    this.description = description
+    this.executor = executor
+    this.inputSchema = inputSchema
   }
 
   async execute(input: unknown): Promise<unknown> {
-    return this.executor(input);
+    return this.executor(input)
   }
 }

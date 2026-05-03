@@ -68,14 +68,15 @@ sequenceDiagram
 
 ### 2.1 切片覆盖度评估
 
-| MVP切片 | Athena对应步骤 | 覆盖的交互点 | 完整度 |
-|---------|---------------|------------|--------|
-| **切片1**: 发明理解 → 人类确认 | Phase 1 | ✅ 交互点1 | 100% |
-| **切片2**: 检索策略 → 人类确认 | Phase 2 | ✅ 交互点2 | 100% |
-| **切片3**: 权利要求撰写 → 逐段确认 | Phase 4 | ⚠️ 交互点8 | 60% |
-| **切片4**: 说明书撰写 → 逐章确认 | Phase 3 | ⚠️ 交互点3-7 | 40% |
+| MVP切片                            | Athena对应步骤 | 覆盖的交互点 | 完整度 |
+| ---------------------------------- | -------------- | ------------ | ------ |
+| **切片1**: 发明理解 → 人类确认     | Phase 1        | ✅ 交互点1   | 100%   |
+| **切片2**: 检索策略 → 人类确认     | Phase 2        | ✅ 交互点2   | 100%   |
+| **切片3**: 权利要求撰写 → 逐段确认 | Phase 4        | ⚠️ 交互点8   | 60%    |
+| **切片4**: 说明书撰写 → 逐章确认   | Phase 3        | ⚠️ 交互点3-7 | 40%    |
 
 **关键缺失**:
+
 1. ❌ **切片3未实现真正的"逐段确认"** - 仅提到"逐段"，但没有细化为独立权利要求 vs 从属权利要求的独立确认点
 2. ❌ **切片4未实现"逐章确认"** - 仅提到"逐章"，但没有细化为5个独立章节的确认点
 3. ❌ **缺少质量检查交互点** - Athena的交互点9（质量检查确认）在MVP中未体现
@@ -87,6 +88,7 @@ sequenceDiagram
 ### 3.1 交互点1: 发明理解确认 ✅ **完整**
 
 **Athena定义**:
+
 ```yaml
 触发时机: AutoSpecDrafter._understand_invention() 完成后
 展示内容: 三元组摘要（<300字）
@@ -95,19 +97,20 @@ sequenceDiagram
 ```
 
 **MVP实现** (任务2.1-2.4):
+
 ```typescript
 // ✅ 完全符合Athena定义
 interface InventionUnderstandingOutput {
-  invention_title: string;
-  invention_type: 'device' | 'method' | 'system' | 'composition';
-  technical_field: string;
-  core_innovation: string;
-  technical_problem: string;
-  technical_solution: string;
-  technical_effects: string[];
-  essential_features: TechnicalFeature[];
-  optional_features: TechnicalFeature[];
-  confidence_score: number;
+  invention_title: string
+  invention_type: 'device' | 'method' | 'system' | 'composition'
+  technical_field: string
+  core_innovation: string
+  technical_problem: string
+  technical_solution: string
+  technical_effects: string[]
+  essential_features: TechnicalFeature[]
+  optional_features: TechnicalFeature[]
+  confidence_score: number
 }
 
 // ✅ 包含<300字摘要渲染器
@@ -122,6 +125,7 @@ interface InventionUnderstandingOutput {
 ### 3.2 交互点2: 检索策略确认 ✅ **完整**
 
 **Athena定义**:
+
 ```yaml
 触发时机: MultimodalRetrieval 完成后
 展示内容: 检索结果摘要（<300字）
@@ -130,24 +134,25 @@ interface InventionUnderstandingOutput {
 ```
 
 **MVP实现** (任务3.1-3.3):
+
 ```typescript
 // ✅ 符合Athena定义
 interface PriorArtSearchOutput {
   searchStrategy: {
-    keywords: string[];
-    ipcCpcClasses: string[];
-    searchQueries: string[];
-  };
+    keywords: string[]
+    ipcCpcClasses: string[]
+    searchQueries: string[]
+  }
   results: {
-    patents: PatentReference[];
-    papers: PaperReference[];
-    webResources: WebReference[];
-  };
+    patents: PatentReference[]
+    papers: PaperReference[]
+    webResources: WebReference[]
+  }
   comparisonAnalysis: {
-    closestPriorArt: PatentReference;
-    differences: string[];
-    technicalProblemSolved: string;
-  };
+    closestPriorArt: PatentReference
+    differences: string[]
+    technicalProblemSolved: string
+  }
 }
 
 // ⚠️ 但实际检索用模拟数据（标记simulated: true）
@@ -157,6 +162,7 @@ interface PriorArtSearchOutput {
 **合理性评估**: ✅ **合理**，但需注意模拟数据的限制
 
 **改进建议**:
+
 1. 在摘要中明确标注"⚠️ 检索结果为模拟数据，仅供演示"
 2. 优先级P1: 接入真实专利数据库API
 
@@ -165,6 +171,7 @@ interface PriorArtSearchOutput {
 ### 3.3 交互点3: 权利要求布局确认 ⚠️ **需细化**
 
 **Athena定义**:
+
 ```yaml
 触发时机: PatentClaimGenerator.generate() 完成后
 展示内容: 权利要求布局
@@ -176,13 +183,14 @@ interface PriorArtSearchOutput {
 ```
 
 **MVP实现** (任务4.1-4.2):
+
 ```typescript
 // ⚠️ 仅提到"逐段确认"，未细化为独立子交互点
 interface ClaimsSet {
-  independentClaims: IndependentClaim[];
-  dependentClaims: DependentClaim[];
-  layoutStrategy: string;
-  protectionScopeAnalysis: string;
+  independentClaims: IndependentClaim[]
+  dependentClaims: DependentClaim[]
+  layoutStrategy: string
+  protectionScopeAnalysis: string
 }
 
 // ❌ 缺少: 独立权利要求的单独确认点
@@ -192,13 +200,14 @@ interface ClaimsSet {
 
 **垂直切片缺失分析**:
 
-| Athena要求 | MVP实现 | 缺失影响 |
-|-----------|---------|---------|
+| Athena要求           | MVP实现   | 缺失影响                                            |
+| -------------------- | --------- | --------------------------------------------------- |
 | 独立权利要求单独确认 | ❌ 未明确 | 🔴 **严重**: 独立权利要求决定保护范围，必须单独确认 |
-| 从属权利要求分组确认 | ❌ 未明确 | 🟡 **中等**: 无法分层控制保护范围 |
-| 保护范围分析展示 | ✅ 提及 | 🟢 **良好**: 包含在ClaimsSet中 |
+| 从属权利要求分组确认 | ❌ 未明确 | 🟡 **中等**: 无法分层控制保护范围                   |
+| 保护范围分析展示     | ✅ 提及   | 🟢 **良好**: 包含在ClaimsSet中                      |
 
 **改进建议**:
+
 ```typescript
 // 建议将任务4.2细化为:
 export const claimGenerationWorkflow: WorkflowDefinition = {
@@ -236,7 +245,7 @@ export const claimGenerationWorkflow: WorkflowDefinition = {
       requiresApproval: true, // 🔴 交互点3.4: 具体实施方式确认
     },
   ],
-};
+}
 ```
 
 ---
@@ -244,6 +253,7 @@ export const claimGenerationWorkflow: WorkflowDefinition = {
 ### 3.4 交互点4-8: 说明书逐章确认 ⚠️ **严重缺失**
 
 **Athena定义**:
+
 ```yaml
 触发时机: AutoSpecDrafter.draft_specification() 每个章节完成后
 展示内容: 章节内容（<300字）
@@ -257,14 +267,15 @@ export const claimGenerationWorkflow: WorkflowDefinition = {
 ```
 
 **MVP实现** (任务4.3):
+
 ```typescript
 // ⚠️ 仅提到"逐章确认"，未细化为5个独立步骤
 interface SpecificationChapter {
-  technicalField: string;       // 技术领域
-  backgroundArt: string;        // 背景技术
-  inventionContent: string;     // 发明内容
-  embodiments: string;          // 具体实施方式
-  drawingDescription: string;   // 附图说明
+  technicalField: string // 技术领域
+  backgroundArt: string // 背景技术
+  inventionContent: string // 发明内容
+  embodiments: string // 具体实施方式
+  drawingDescription: string // 附图说明
 }
 
 // ❌ 缺少: 5个独立章节的独立确认点
@@ -274,15 +285,16 @@ interface SpecificationChapter {
 
 **垂直切片缺失分析**:
 
-| Athena要求 | MVP实现 | 缺失影响 |
-|-----------|---------|---------|
-| 技术领域单独确认 | ❌ 未明确 | 🟡 **中等**: 技术领域影响分类和检索 |
-| 背景技术单独确认 | ❌ 未明确 | 🟡 **中等**: 背景技术影响创造性判断 |
-| 发明内容单独确认 | ❌ 未明确 | 🔴 **严重**: 发明内容是核心，必须单独确认 |
+| Athena要求           | MVP实现   | 缺失影响                                       |
+| -------------------- | --------- | ---------------------------------------------- |
+| 技术领域单独确认     | ❌ 未明确 | 🟡 **中等**: 技术领域影响分类和检索            |
+| 背景技术单独确认     | ❌ 未明确 | 🟡 **中等**: 背景技术影响创造性判断            |
+| 发明内容单独确认     | ❌ 未明确 | 🔴 **严重**: 发明内容是核心，必须单独确认      |
 | 具体实施方式单独确认 | ❌ 未明确 | 🔴 **严重**: 实施方式影响充分公开要求（A26.3） |
-| 附图说明单独确认 | ❌ 未明确 | 🟢 **轻微**: 附图说明相对标准化 |
+| 附图说明单独确认     | ❌ 未明确 | 🟢 **轻微**: 附图说明相对标准化                |
 
 **改进建议**:
+
 ```typescript
 // 建议将任务4.3细化为:
 export const specificationDraftingWorkflow: WorkflowDefinition = {
@@ -330,7 +342,7 @@ export const specificationDraftingWorkflow: WorkflowDefinition = {
       requiresApproval: true, // 🔴 交互点8: 附图说明确认
     },
   ],
-};
+}
 ```
 
 ---
@@ -338,6 +350,7 @@ export const specificationDraftingWorkflow: WorkflowDefinition = {
 ### 3.5 交互点9: 质量检查确认 ❌ **完全缺失**
 
 **Athena定义**:
+
 ```yaml
 触发时机: QualityReport (7维度评估) 完成后
 展示内容: 质量报告（7维度得分）
@@ -349,6 +362,7 @@ export const specificationDraftingWorkflow: WorkflowDefinition = {
 ```
 
 **MVP实现**:
+
 ```typescript
 // ❌ 完全缺失质量检查交互点
 // ❌ 缺少: 7维度质量评估
@@ -358,13 +372,14 @@ export const specificationDraftingWorkflow: WorkflowDefinition = {
 
 **垂直切片缺失分析**:
 
-| Athena要求 | MVP实现 | 缺失影响 |
-|-----------|---------|---------|
-| 7维度质量评估 | ❌ 未实现 | 🔴 **严重**: 无法保证输出质量 |
-| 质量迭代优化 | ❌ 未实现 | 🔴 **严重**: 低质量输出无法自动修正 |
-| 人工审核降级 | ❌ 未实现 | 🟡 **中等**: 3次迭代失败后无法降级到人工 |
+| Athena要求    | MVP实现   | 缺失影响                                 |
+| ------------- | --------- | ---------------------------------------- |
+| 7维度质量评估 | ❌ 未实现 | 🔴 **严重**: 无法保证输出质量            |
+| 质量迭代优化  | ❌ 未实现 | 🔴 **严重**: 低质量输出无法自动修正      |
+| 人工审核降级  | ❌ 未实现 | 🟡 **中等**: 3次迭代失败后无法降级到人工 |
 
 **改进建议**:
+
 ```typescript
 // 建议新增任务5.4: 质量检查交互点
 export const qualityCheckWorkflow: WorkflowDefinition = {
@@ -394,7 +409,7 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
       requiresApproval: true, // 🔴 交互点9: 人类确认质量报告
     },
   ],
-};
+}
 
 // 质量迭代逻辑:
 // 1. 如果qualityReport.score >= 7.5 → 通过
@@ -415,13 +430,13 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 
 ### 4.2 关键缺失
 
-| 优先级 | 缺失项 | 影响范围 | 建议措施 |
-|--------|--------|---------|---------|
-| 🔴 **P0** | 切片3缺少独立权利要求单独确认 | 保护范围控制 | 细化为4个子交互点（布局/独立/从属2-3/从属4+） |
-| 🔴 **P0** | 切片4缺少5个独立章节确认 | 说明书质量 | 细化为5个子交互点（技术领域/背景/发明内容/实施方式/附图） |
-| 🔴 **P0** | 缺少质量检查交互点 | 输出质量保证 | 新增切片5: 质量检查与迭代优化 |
-| 🟡 **P1** | 检索策略用模拟数据 | 检索可靠性 | 优先接入真实专利数据库API |
-| 🟡 **P1** | PatentCoreBridge Rust耦合 | 系统稳定性 | 全力投入TypeScript降级 |
+| 优先级    | 缺失项                        | 影响范围     | 建议措施                                                  |
+| --------- | ----------------------------- | ------------ | --------------------------------------------------------- |
+| 🔴 **P0** | 切片3缺少独立权利要求单独确认 | 保护范围控制 | 细化为4个子交互点（布局/独立/从属2-3/从属4+）             |
+| 🔴 **P0** | 切片4缺少5个独立章节确认      | 说明书质量   | 细化为5个子交互点（技术领域/背景/发明内容/实施方式/附图） |
+| 🔴 **P0** | 缺少质量检查交互点            | 输出质量保证 | 新增切片5: 质量检查与迭代优化                             |
+| 🟡 **P1** | 检索策略用模拟数据            | 检索可靠性   | 优先接入真实专利数据库API                                 |
+| 🟡 **P1** | PatentCoreBridge Rust耦合     | 系统稳定性   | 全力投入TypeScript降级                                    |
 
 ### 4.3 合理性评估
 
@@ -430,6 +445,7 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 **合理性得分**: 6/10
 
 **详细评分**:
+
 - 框架唤醒策略: 9/10 ✅
 - 切片1和切片2: 10/10 ✅
 - 切片3（权利要求）: 4/10 ⚠️
@@ -437,6 +453,7 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 - 质量保证: 2/10 ❌
 
 **关键问题**:
+
 1. ❌ **"逐段确认"和"逐章确认"未真正垂直切片** - 仅停留在概念层面，未细化为独立可执行的步骤
 2. ❌ **缺少质量检查闭环** - Athena的7维度评估和迭代优化是质量保证的关键，MVP完全缺失
 3. ⚠️ **交互点粒度不一致** - 切片1/2的粒度正确，但切片3/4的粒度过粗
@@ -448,6 +465,7 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 ### 5.1 P0级改进（必须立即实施）
 
 **改进1: 细化切片3为4个独立交互点**
+
 ```typescript
 // 当前（粒度过粗）:
 { id: 'draft-claims', requiresApproval: true }
@@ -462,6 +480,7 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 ```
 
 **改进2: 细化切片4为5个独立交互点**
+
 ```typescript
 // 当前（粒度过粗）:
 { id: 'draft-specification', requiresApproval: true }
@@ -477,27 +496,31 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 ```
 
 **改进3: 新增切片5（质量检查）**
+
 ```typescript
 // 完全缺失，需新增
-[
-  { id: 'quality-assessment', requiresApproval: false },    // 自动评估
-  { id: 'quality-iteration', requiresApproval: true },       // 交互点9
+;[
+  { id: 'quality-assessment', requiresApproval: false }, // 自动评估
+  { id: 'quality-iteration', requiresApproval: true }, // 交互点9
 ]
 ```
 
 ### 5.2 P1级改进（重要但非阻塞）
 
 **改进4: 优化CLI交互体验**
+
 - 当前: y/c/s/r操作后，需重新输入修正内容
 - 建议: 提供`e`（edit）选项，直接打开$EDITOR编辑
 
 **改进5: 增强摘要渲染**
+
 - 当前: <300字Markdown摘要
 - 建议: 增加"关键特征高亮"、"不确定点标记"、"置信度可视化"
 
 ### 5.3 P2级改进（优化）
 
 **改进6: 工作流可视化**
+
 - 当前: CLI文本输出
 - 建议: 生成Mermaid流程图，展示当前执行位置和确认点
 
@@ -507,13 +530,13 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 
 ### 6.1 修正后的垂直切片
 
-| 切片 | 业务步骤 | 子交互点 | Athena对应 | 完整度 |
-|------|----------|---------|-----------|--------|
-| **切片1** | 发明理解 → 人类确认 | 1个 | Phase 1 | 100% ✅ |
-| **切片2** | 检索策略 → 人类确认 | 1个 | Phase 2 | 100% ✅ |
-| **切片3** | 权利要求撰写 → 逐段确认 | 4个 | Phase 4 | 100% ✅ |
-| **切片4** | 说明书撰写 → 逐章确认 | 5个 | Phase 3 | 100% ✅ |
-| **切片5** | 质量检查 → 人类确认 | 1个 | Phase 5 | 100% ✅ |
+| 切片      | 业务步骤                | 子交互点 | Athena对应 | 完整度  |
+| --------- | ----------------------- | -------- | ---------- | ------- |
+| **切片1** | 发明理解 → 人类确认     | 1个      | Phase 1    | 100% ✅ |
+| **切片2** | 检索策略 → 人类确认     | 1个      | Phase 2    | 100% ✅ |
+| **切片3** | 权利要求撰写 → 逐段确认 | 4个      | Phase 4    | 100% ✅ |
+| **切片4** | 说明书撰写 → 逐章确认   | 5个      | Phase 3    | 100% ✅ |
+| **切片5** | 质量检查 → 人类确认     | 1个      | Phase 5    | 100% ✅ |
 
 **总计**: **12个人机交互点**（与Athena文档的9个交互点完全对应，部分交互点进一步细化）
 
@@ -526,12 +549,14 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 **Phase 3: 垂直切片2** (1.5-2周) - 保持不变 ✅
 
 **Phase 4: 垂直切片3** (2-3周) - **需重构** ⚠️
+
 - 任务4.1: 创建权利要求布局规划Agent + 交互点3.1
 - 任务4.2: 创建独立权利要求Agent + 交互点3.2
 - 任务4.3: 创建从属权利要求Agent（2-3）+ 交互点3.3
 - 任务4.4: 创建从属权利要求Agent（4+）+ 交互点3.4
 
 **Phase 5: 垂直切片4** (2-3周) - **需重构** ⚠️
+
 - 任务5.1: 创建技术领域Agent + 交互点4
 - 任务5.2: 创建背景技术Agent + 交互点5
 - 任务5.3: 创建发明内容Agent + 交互点6
@@ -539,6 +564,7 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 - 任务5.5: 创建附图说明Agent + 交互点8
 
 **Phase 6: 垂直切片5** (1-1.5周) - **新增** 🔴
+
 - 任务6.1: 创建质量评估Agent（7维度）
 - 任务6.2: 创建质量迭代优化Agent + 交互点9
 - 任务6.3: 集成人工审核降级策略
@@ -561,14 +587,17 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 ### 7.2 关键决策点
 
 **决策1**: 是否接受10.5-13周的开发周期？
+
 - 如果是 → 按重构后的方案执行
 - 如果否 → 考虑分阶段交付（先交付切片1-3，切片4-5作为v1.1）
 
 **决策2**: 是否优先实现切片5（质量检查）？
+
 - 优先级P0 → 建议在切片3之前实现（保证质量）
 - 优先级P1 → 可以放在切片4之后（不影响核心流程）
 
 **决策3**: PatentCoreBridge Rust的修复策略？
+
 - 1周内无法修复 → 全力投入TypeScript降级
 - 可以修复 → 保持当前降级策略
 
@@ -578,19 +607,19 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 
 ### 8.1 重构后的风险
 
-| 风险 | 概率 | 影响 | 对策 |
-|------|------|------|------|
-| 细化后的交互点过多，用户体验下降 | 中 | 中 | 提供"批量确认"选项，跳过非关键交互点 |
-| 10-13周周期过长，团队士气下降 | 高 | 高 | 分阶段交付，每2周展示一次可演示的进展 |
-| 质量检查迭代次数过多，成本失控 | 中 | 高 | 限制最多3次迭代，之后强制降级到人工 |
+| 风险                             | 概率 | 影响 | 对策                                  |
+| -------------------------------- | ---- | ---- | ------------------------------------- |
+| 细化后的交互点过多，用户体验下降 | 中   | 中   | 提供"批量确认"选项，跳过非关键交互点  |
+| 10-13周周期过长，团队士气下降    | 高   | 高   | 分阶段交付，每2周展示一次可演示的进展 |
+| 质量检查迭代次数过多，成本失控   | 中   | 高   | 限制最多3次迭代，之后强制降级到人工   |
 
 ### 8.2 原方案的风险（未重构）
 
-| 风险 | 概率 | 影响 | 对策 |
-|------|------|------|------|
-| "逐段确认"粒度过粗，无法真正控制保护范围 | 高 | 高 | **必须重构，否则影响核心价值** |
-| "逐章确认"粒度过粗，说明书质量无法保证 | 高 | 高 | **必须重构，否则影响法律合规性** |
-| 缺少质量检查，输出质量不稳定 | 高 | 高 | **必须新增，否则无法商业化** |
+| 风险                                     | 概率 | 影响 | 对策                             |
+| ---------------------------------------- | ---- | ---- | -------------------------------- |
+| "逐段确认"粒度过粗，无法真正控制保护范围 | 高   | 高   | **必须重构，否则影响核心价值**   |
+| "逐章确认"粒度过粗，说明书质量无法保证   | 高   | 高   | **必须重构，否则影响法律合规性** |
+| 缺少质量检查，输出质量不稳定             | 高   | 高   | **必须新增，否则无法商业化**     |
 
 ---
 
@@ -606,6 +635,6 @@ export const qualityCheckWorkflow: WorkflowDefinition = {
 
 ---
 
-*分析完成时间: 2026-05-01*
-*分析方法: 垂直切片深度推理 + Athena文档对比*
-*分析者: Claude (Sonnet 4.6)*
+_分析完成时间: 2026-05-01_
+_分析方法: 垂直切片深度推理 + Athena文档对比_
+_分析者: Claude (Sonnet 4.6)_

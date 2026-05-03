@@ -5,30 +5,30 @@
  * 支持 PKCE (Proof Key for Code Exchange)
  */
 
-import { randomBytes, createHash } from 'crypto';
-import { URLSearchParams } from 'url';
+import { randomBytes, createHash } from 'crypto'
+import { URLSearchParams } from 'url'
 
 /**
  * OAuth Token 响应
  */
 export interface OAuthToken {
   /** 访问令牌 */
-  accessToken: string;
+  accessToken: string
 
   /** 刷新令牌 */
-  refreshToken?: string;
+  refreshToken?: string
 
   /** Token 类型（通常是 Bearer） */
-  tokenType: string;
+  tokenType: string
 
   /** 过期时间（秒） */
-  expiresIn?: number;
+  expiresIn?: number
 
   /** 授权范围 */
-  scope?: string;
+  scope?: string
 
   /** ID Token（OpenID Connect） */
-  idToken?: string;
+  idToken?: string
 }
 
 /**
@@ -36,28 +36,28 @@ export interface OAuthToken {
  */
 export interface OAuthUserInfo {
   /** 用户 ID（提供商特定） */
-  id: string;
+  id: string
 
   /** 用户名 */
-  username?: string;
+  username?: string
 
   /** 显示名称 */
-  displayName?: string;
+  displayName?: string
 
   /** 邮箱 */
-  email?: string;
+  email?: string
 
   /** 邮箱是否验证 */
-  emailVerified?: boolean;
+  emailVerified?: boolean
 
   /** 头像 URL */
-  avatarUrl?: string;
+  avatarUrl?: string
 
   /** 个人资料 URL */
-  profileUrl?: string;
+  profileUrl?: string
 
   /** 原始数据 */
-  raw: Record<string, unknown>;
+  raw: Record<string, unknown>
 }
 
 /**
@@ -65,19 +65,19 @@ export interface OAuthUserInfo {
  */
 export interface AuthUrlOptions {
   /** 重定向 URI */
-  redirectUri: string;
+  redirectUri: string
 
   /** 授权范围 */
-  scope?: string[];
+  scope?: string[]
 
   /** State 参数（防 CSRF） */
-  state?: string;
+  state?: string
 
   /** 是否使用 PKCE */
-  usePkce?: boolean;
+  usePkce?: boolean
 
   /** 额外参数 */
-  extras?: Record<string, string>;
+  extras?: Record<string, string>
 }
 
 /**
@@ -85,13 +85,13 @@ export interface AuthUrlOptions {
  */
 export interface PkcePair {
   /** Code Challenge（用于授权请求） */
-  codeChallenge: string;
+  codeChallenge: string
 
   /** Code Verifier（用于 Token 请求） */
-  codeVerifier: string;
+  codeVerifier: string
 
   /** Challenge 方法（S256 或 plain） */
-  challengeMethod: 'S256' | 'plain';
+  challengeMethod: 'S256' | 'plain'
 }
 
 /**
@@ -99,16 +99,16 @@ export interface PkcePair {
  */
 export interface TokenRequestOptions {
   /** 授权码 */
-  code: string;
+  code: string
 
   /** 重定向 URI */
-  redirectUri: string;
+  redirectUri: string
 
   /** Code Verifier（PKCE） */
-  codeVerifier?: string;
+  codeVerifier?: string
 
   /** State 参数（验证） */
-  state?: string;
+  state?: string
 }
 
 /**
@@ -116,25 +116,25 @@ export interface TokenRequestOptions {
  */
 export interface OAuthProviderConfig {
   /** 客户端 ID */
-  clientId: string;
+  clientId: string
 
   /** 客户端密钥 */
-  clientSecret: string;
+  clientSecret: string
 
   /** 授权端点 */
-  authorizationEndpoint: string;
+  authorizationEndpoint: string
 
   /** Token 端点 */
-  tokenEndpoint: string;
+  tokenEndpoint: string
 
   /** 用户信息端点 */
-  userInfoEndpoint: string;
+  userInfoEndpoint: string
 
   /** 默认授权范围 */
-  defaultScope: string[];
+  defaultScope: string[]
 
   /** 是否使用 PKCE（默认 true） */
-  usePkce?: boolean;
+  usePkce?: boolean
 }
 
 /**
@@ -146,8 +146,8 @@ export class OAuthProviderError extends Error {
     public code: string,
     public statusCode?: number
   ) {
-    super(message);
-    this.name = 'OAuthProviderError';
+    super(message)
+    this.name = 'OAuthProviderError'
   }
 }
 
@@ -158,45 +158,45 @@ export class OAuthProviderError extends Error {
  * 子类需要实现用户信息获取逻辑
  */
 export abstract class BaseOAuthProvider {
-  protected config: OAuthProviderConfig;
+  protected config: OAuthProviderConfig
 
   constructor(config: OAuthProviderConfig) {
     this.config = {
       usePkce: true,
       ...config,
-    };
+    }
   }
 
   /**
    * 获取提供商名称
    */
-  abstract getName(): string;
+  abstract getName(): string
 
   /**
    * 获取用户信息
    * 子类需要实现此方法来解析特定提供商的用户信息格式
    */
-  protected abstract fetchUserInfo(accessToken: string): Promise<OAuthUserInfo>;
+  protected abstract fetchUserInfo(accessToken: string): Promise<OAuthUserInfo>
 
   /**
    * 获取授权端点
    */
   getAuthorizationEndpoint(): string {
-    return this.config.authorizationEndpoint;
+    return this.config.authorizationEndpoint
   }
 
   /**
    * 获取 Token 端点
    */
   getTokenEndpoint(): string {
-    return this.config.tokenEndpoint;
+    return this.config.tokenEndpoint
   }
 
   /**
    * 获取用户信息端点
    */
   getUserInfoEndpoint(): string {
-    return this.config.userInfoEndpoint;
+    return this.config.userInfoEndpoint
   }
 
   /**
@@ -208,8 +208,8 @@ export abstract class BaseOAuthProvider {
   async generateAuthorizationUrl(
     options: AuthUrlOptions
   ): Promise<{ url: string; pkce?: PkcePair }> {
-    const scope = options.scope || this.config.defaultScope;
-    const state = options.state || this.generateSecureRandom(32);
+    const scope = options.scope || this.config.defaultScope
+    const state = options.state || this.generateSecureRandom(32)
 
     // 构建 URL 参数
     const params = new URLSearchParams({
@@ -218,29 +218,29 @@ export abstract class BaseOAuthProvider {
       response_type: 'code',
       scope: Array.isArray(scope) ? scope.join(' ') : scope,
       state,
-    });
+    })
 
     // 添加额外参数
     if (options.extras) {
       Object.entries(options.extras).forEach(([key, value]) => {
-        params.append(key, value);
-      });
+        params.append(key, value)
+      })
     }
 
     // PKCE 支持
-    let pkce: PkcePair | undefined;
+    let pkce: PkcePair | undefined
     // 显式启用 PKCE（选项或配置启用）
-    const enablePkce = options.usePkce !== false && this.config.usePkce !== false;
+    const enablePkce = options.usePkce !== false && this.config.usePkce !== false
 
     if (enablePkce) {
-      pkce = this.generatePkcePair();
-      params.append('code_challenge', pkce.codeChallenge);
-      params.append('code_challenge_method', pkce.challengeMethod);
+      pkce = this.generatePkcePair()
+      params.append('code_challenge', pkce.codeChallenge)
+      params.append('code_challenge_method', pkce.challengeMethod)
     }
 
-    const url = `${this.config.authorizationEndpoint}?${params.toString()}`;
+    const url = `${this.config.authorizationEndpoint}?${params.toString()}`
 
-    return { url, pkce };
+    return { url, pkce }
   }
 
   /**
@@ -256,11 +256,11 @@ export abstract class BaseOAuthProvider {
       redirect_uri: options.redirectUri,
       client_id: this.config.clientId,
       client_secret: this.config.clientSecret,
-    });
+    })
 
     // 添加 PKCE Code Verifier
     if (options.codeVerifier) {
-      params.append('code_verifier', options.codeVerifier);
+      params.append('code_verifier', options.codeVerifier)
     }
 
     const response = await fetch(this.config.tokenEndpoint, {
@@ -269,25 +269,25 @@ export abstract class BaseOAuthProvider {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: params.toString(),
-    });
+    })
 
     if (!response.ok) {
-      const error = await response.text();
+      const error = await response.text()
       throw new OAuthProviderError(
         `Token 请求失败: ${error}`,
         'token_request_failed',
         response.status
-      );
+      )
     }
 
     const data = (await response.json()) as {
-      access_token: string;
-      refresh_token?: string;
-      token_type?: string;
-      expires_in?: number;
-      scope?: string;
-      id_token?: string;
-    };
+      access_token: string
+      refresh_token?: string
+      token_type?: string
+      expires_in?: number
+      scope?: string
+      id_token?: string
+    }
 
     return {
       accessToken: data.access_token,
@@ -296,7 +296,7 @@ export abstract class BaseOAuthProvider {
       expiresIn: data.expires_in,
       scope: data.scope,
       idToken: data.id_token,
-    };
+    }
   }
 
   /**
@@ -311,7 +311,7 @@ export abstract class BaseOAuthProvider {
       refresh_token: refreshToken,
       client_id: this.config.clientId,
       client_secret: this.config.clientSecret,
-    });
+    })
 
     const response = await fetch(this.config.tokenEndpoint, {
       method: 'POST',
@@ -319,25 +319,25 @@ export abstract class BaseOAuthProvider {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: params.toString(),
-    });
+    })
 
     if (!response.ok) {
-      const error = await response.text();
+      const error = await response.text()
       throw new OAuthProviderError(
         `Token 刷新失败: ${error}`,
         'token_refresh_failed',
         response.status
-      );
+      )
     }
 
     const data = (await response.json()) as {
-      access_token: string;
-      refresh_token?: string;
-      token_type?: string;
-      expires_in?: number;
-      scope?: string;
-      id_token?: string;
-    };
+      access_token: string
+      refresh_token?: string
+      token_type?: string
+      expires_in?: number
+      scope?: string
+      id_token?: string
+    }
 
     return {
       accessToken: data.access_token,
@@ -346,7 +346,7 @@ export abstract class BaseOAuthProvider {
       expiresIn: data.expires_in,
       scope: data.scope,
       idToken: data.id_token,
-    };
+    }
   }
 
   /**
@@ -356,7 +356,7 @@ export abstract class BaseOAuthProvider {
    * @returns 用户信息
    */
   async getUserInfo(accessToken: string): Promise<OAuthUserInfo> {
-    return await this.fetchUserInfo(accessToken);
+    return await this.fetchUserInfo(accessToken)
   }
 
   /**
@@ -369,10 +369,10 @@ export abstract class BaseOAuthProvider {
    */
   async verifyToken(accessToken: string): Promise<boolean> {
     try {
-      await this.getUserInfo(accessToken);
-      return true;
+      await this.getUserInfo(accessToken)
+      return true
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -383,17 +383,17 @@ export abstract class BaseOAuthProvider {
    */
   protected generatePkcePair(): PkcePair {
     // 生成随机的 Code Verifier（43-128 个字符）
-    const codeVerifier = this.generateSecureRandom(64);
+    const codeVerifier = this.generateSecureRandom(64)
 
     // 计算 Code Challenge（base64url 编码的 SHA-256 哈希）
-    const hash = createHash('sha256').update(codeVerifier).digest();
-    const codeChallenge = hash.toString('base64url');
+    const hash = createHash('sha256').update(codeVerifier).digest()
+    const codeChallenge = hash.toString('base64url')
 
     return {
       codeChallenge,
       codeVerifier,
       challengeMethod: 'S256',
-    };
+    }
   }
 
   /**
@@ -403,6 +403,6 @@ export abstract class BaseOAuthProvider {
    * @returns base64url 编码的随机字符串
    */
   protected generateSecureRandom(bytes: number): string {
-    return randomBytes(bytes).toString('base64url');
+    return randomBytes(bytes).toString('base64url')
   }
 }

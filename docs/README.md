@@ -70,55 +70,56 @@
 
 ### 已完成
 
-| 模块 | 完成度 | 说明 |
-|------|--------|------|
-| 核心框架 (packages/core) | ~85% | 356+ 导出，五层架构完整 |
-| 知识库集成 | 100% | 1139 个文件 |
-| PatentWriterAgent | ~80% | 最成熟的智能体 |
-| 提示词模板 | ~80% | 1821 行模板代码 |
+| 模块                     | 完成度 | 说明                    |
+| ------------------------ | ------ | ----------------------- |
+| 核心框架 (packages/core) | ~85%   | 356+ 导出，五层架构完整 |
+| 知识库集成               | 100%   | 1139 个文件             |
+| PatentWriterAgent        | ~80%   | 最成熟的智能体          |
+| 提示词模板               | ~80%   | 1821 行模板代码         |
 
 ### 部分完成
 
-| 模块 | 完成度 | 说明 |
-|------|--------|------|
-| PatentResponderAgent | ~50% | 有 patent-core 集成 |
-| PatentAnalyzerAgent | ~50% | 分析返回 LLM 生成数据 |
-| document-tools | ~75% | 文档解析工具 |
-| patent-tools | ~70% | 专利工具集 |
-| builtin-tools | ~60% | 基础工具 |
-| grpc-server | ~50% | gRPC 服务器 |
+| 模块                 | 完成度 | 说明                  |
+| -------------------- | ------ | --------------------- |
+| PatentResponderAgent | ~50%   | 有 patent-core 集成   |
+| PatentAnalyzerAgent  | ~50%   | 分析返回 LLM 生成数据 |
+| document-tools       | ~75%   | 文档解析工具          |
+| patent-tools         | ~70%   | 专利工具集            |
+| builtin-tools        | ~60%   | 基础工具              |
+| grpc-server          | ~50%   | gRPC 服务器           |
 
 ### 待修复
 
-| 模块 | 完成度 | 问题 |
-|------|--------|------|
-| Rust 工具链 | 40% | 25 个编译错误 |
-| MCP 服务器 | 40% | 硬编码数据 |
-| PatentManagerAgent | 20% | 无数据库 |
-| CLI 工具 | 20% | 返回 TODO |
-| 测试覆盖 | ~5% | 仅 EventBus 有可靠测试 |
+| 模块               | 完成度 | 问题                   |
+| ------------------ | ------ | ---------------------- |
+| Rust 工具链        | 40%    | 25 个编译错误          |
+| MCP 服务器         | 40%    | 硬编码数据             |
+| PatentManagerAgent | 20%    | 无数据库               |
+| CLI 工具           | 20%    | 返回 TODO              |
+| 测试覆盖           | ~5%    | 仅 EventBus 有可靠测试 |
 
 ---
 
 ## 代码统计
 
-| 模块 | 文件数 | 语言 | 状态 |
-|------|--------|------|------|
-| 核心框架 (packages/core) | 48+ | TypeScript | 可用 |
-| 专利智能体 (patents/agents/) | 4 | TypeScript | 部分可用 |
-| 通用智能体 (packages/agents/) | 2 | TypeScript | 部分可用 |
-| 工具包 (packages/*-tools/) | 30+ | TypeScript | 部分可用 |
-| Rust 工具 (packages/rust-tools/) | 20+ | Rust | 编译失败 |
-| Python 工具 (packages/python-tools/) | 6 | Python | 可用 |
-| 使用示例 (examples/) | 19 | TypeScript/JS | 可用 |
-| 维护脚本 (scripts/) | 14 | Shell/TS | 可用 |
-| 知识库 (knowledge-base/) | 1139+ | Markdown | 可用 |
+| 模块                                 | 文件数 | 语言          | 状态     |
+| ------------------------------------ | ------ | ------------- | -------- |
+| 核心框架 (packages/core)             | 48+    | TypeScript    | 可用     |
+| 专利智能体 (patents/agents/)         | 4      | TypeScript    | 部分可用 |
+| 通用智能体 (packages/agents/)        | 2      | TypeScript    | 部分可用 |
+| 工具包 (packages/\*-tools/)          | 30+    | TypeScript    | 部分可用 |
+| Rust 工具 (packages/rust-tools/)     | 20+    | Rust          | 编译失败 |
+| Python 工具 (packages/python-tools/) | 6      | Python        | 可用     |
+| 使用示例 (examples/)                 | 19     | TypeScript/JS | 可用     |
+| 维护脚本 (scripts/)                  | 14     | Shell/TS      | 可用     |
+| 知识库 (knowledge-base/)             | 1139+  | Markdown      | 可用     |
 
 ---
 
 ## 工作报告 (reports/)
 
 **2026年5月**
+
 - [代码清理总结](./reports/2026-05/code-cleanup-summary.md) - 代码清理工作总结
 - [代码审查总结](./reports/2026-05/code-review-summary.md) - 代码审查报告
 - [综合修复报告](./reports/2026-05/comprehensive-fix-report.md) - 综合问题修复报告
@@ -133,6 +134,7 @@
 - [目录结构审计](./reports/2026-05/directory-structure-audit.md) - 目录结构审计报告
 
 **2026年4月**
+
 - [2026-04-28 工作总结](./reports/2026-04/2026-04-28-work-summary.md)
 - [2026-04-28 清理总结](./reports/2026-04/2026-04-28-cleanup-summary.md)
 - [2026-04-28 代码质量审查](./reports/2026-04/2026-04-28-code-quality-review.md)
@@ -141,6 +143,7 @@
 - [2026-04-29 完整重构总结](./reports/2026-04/2026-04-29-complete-refactor-summary.md)
 
 **综合报告**
+
 - [CI/CD 状态检查报告](./reports/ci-cd-status.md) - YunPat CI/CD 状态检查
 - [CI 质量报告](./reports/ci-quality-20260430.md) - 2026-04-30 CI/CD 质量检查
 - [代码审查报告](./reports/code-review.md) - 推理层增强代码审查
@@ -232,9 +235,9 @@ docs/
 
 ## 按角色查找
 
-| 角色 | 推荐文档 |
-|------|---------|
-| 开发者 | [CLAUDE.md](../CLAUDE.md)、[AGENTS.md](../AGENTS.md) |
-| 专利代理人 | [专利撰写示例](../examples/patent-agents-usage.README.md) |
-| IP 管理人员 | [路线图](./roadmap.md) |
-| DevOps | [安全指南](./SECURITY_GUIDELINES.md) |
+| 角色        | 推荐文档                                                  |
+| ----------- | --------------------------------------------------------- |
+| 开发者      | [CLAUDE.md](../CLAUDE.md)、[AGENTS.md](../AGENTS.md)      |
+| 专利代理人  | [专利撰写示例](../examples/patent-agents-usage.README.md) |
+| IP 管理人员 | [路线图](./roadmap.md)                                    |
+| DevOps      | [安全指南](./SECURITY_GUIDELINES.md)                      |

@@ -177,19 +177,19 @@ yunpat/
 ```typescript
 class Agent {
   // 1. 前置钩子（可选）
-  protected before?(input, context): Promise<void>;
+  protected before?(input, context): Promise<void>
 
   // 2. 规划阶段（必需）
-  protected abstract plan(input, context): Promise<Plan>;
+  protected abstract plan(input, context): Promise<Plan>
 
   // 3. 执行阶段（必需）
-  protected abstract act(plan, context): Promise<Result>;
+  protected abstract act(plan, context): Promise<Result>
 
   // 4. 反思阶段（可选）
-  protected reflect?(result, context): Promise<Reflection>;
+  protected reflect?(result, context): Promise<Reflection>
 
   // 5. 后置钩子（可选）
-  protected after?(input, output, context): Promise<void>;
+  protected after?(input, output, context): Promise<void>
 }
 ```
 
@@ -201,10 +201,10 @@ class Agent {
 // 订阅事件
 this.on('agent:completed', async (event) => {
   // 处理其他智能体的完成事件
-});
+})
 
 // 发送消息
-await this.send('target-agent', { data: 'message' });
+await this.send('target-agent', { data: 'message' })
 ```
 
 ---
@@ -225,27 +225,27 @@ cd ai/agents/my-agent
 
 ```typescript
 // MyAgent.ts
-import { Agent, ExecutionContext, Plan, ActionResult } from '@yunpat/core';
+import { Agent, ExecutionContext, Plan, ActionResult } from '@yunpat/core'
 
 export class MyAgent extends Agent<Input, Output> {
-  name = 'my-agent';
-  description = '我的智能体描述';
+  name = 'my-agent'
+  description = '我的智能体描述'
 
   protected async plan(input: Input, context: ExecutionContext): Promise<Plan> {
     // 使用 context.llm 制定计划
     const llmInput = {
       task: input.task,
-      context: input.context
-    };
+      context: input.context,
+    }
 
-    const plan = await context.llm.generate(llmInput);
-    return plan;
+    const plan = await context.llm.generate(llmInput)
+    return plan
   }
 
   protected async act(plan: Plan, context: ExecutionContext): Promise<ActionResult> {
     // 使用 context.tools 调用工具
-    const result = await context.tools.call('tool-name', plan.params);
-    return result;
+    const result = await context.tools.call('tool-name', plan.params)
+    return result
   }
 }
 ```
@@ -254,24 +254,24 @@ export class MyAgent extends Agent<Input, Output> {
 
 ```typescript
 // ai/agents/index.ts
-export { MyAgent } from './my-agent/MyAgent';
+export { MyAgent } from './my-agent/MyAgent'
 ```
 
 #### 4. 测试智能体
 
 ```typescript
 // tests/agents/my-agent.test.ts
-import { MyAgent } from '../../ai/agents';
+import { MyAgent } from '../../ai/agents'
 
 describe('MyAgent', () => {
   it('should execute successfully', async () => {
-    const agent = new MyAgent();
+    const agent = new MyAgent()
     const result = await agent.execute({
-      task: '测试任务'
-    });
-    expect(result).toBeDefined();
-  });
-});
+      task: '测试任务',
+    })
+    expect(result).toBeDefined()
+  })
+})
 ```
 
 ### 开发新工具
@@ -280,15 +280,15 @@ describe('MyAgent', () => {
 
 ```typescript
 // tools/MyTool.ts
-import { BaseTool } from '@yunpat/core';
+import { BaseTool } from '@yunpat/core'
 
 export class MyTool extends BaseTool {
-  name = 'my-tool';
-  description = '我的工具描述';
+  name = 'my-tool'
+  description = '我的工具描述'
 
   async execute(params: any): Promise<any> {
     // 工具逻辑
-    return { result: 'success' };
+    return { result: 'success' }
   }
 }
 ```
@@ -297,7 +297,7 @@ export class MyTool extends BaseTool {
 
 ```typescript
 // 在智能体中注册
-this.tools.register(new MyTool());
+this.tools.register(new MyTool())
 ```
 
 ### 开发 Rust 工具
@@ -336,20 +336,20 @@ pub fn execute(input: Input) -> Result<Output, String> {
 
 ```typescript
 // ai/rust/MyToolRust.ts
-import { spawn } from 'child_process';
-import { promises as fs } from 'fs';
+import { spawn } from 'child_process'
+import { promises as fs } from 'fs'
 
 export class MyToolRust {
   async execute(input: any): Promise<any> {
     // 写入输入文件
-    await fs.writeFile('/tmp/input.json', JSON.stringify(input));
+    await fs.writeFile('/tmp/input.json', JSON.stringify(input))
 
     // 调用 Rust 二进制
-    const result = spawn('rust-tool', ['--input', '/tmp/input.json']);
+    const result = spawn('rust-tool', ['--input', '/tmp/input.json'])
 
     // 读取输出
-    const output = await fs.readFile('/tmp/output.json', 'utf-8');
-    return JSON.parse(output);
+    const output = await fs.readFile('/tmp/output.json', 'utf-8')
+    return JSON.parse(output)
   }
 }
 ```
@@ -415,20 +415,20 @@ patent-cli interactive
 #### 使用 MCP 服务器
 
 ```typescript
-import { createPatentMcpServer } from '@yunpat/mcp';
+import { createPatentMcpServer } from '@yunpat/mcp'
 
-const server = createPatentMcpServer();
-await server.start();
+const server = createPatentMcpServer()
+await server.start()
 
 // 测试工具调用
 const result = await server.callTool('search_patents', {
   keywords: ['深度学习'],
-  limit: 5
-});
+  limit: 5,
+})
 
-console.log(result);
+console.log(result)
 
-await server.stop();
+await server.stop()
 ```
 
 ---
@@ -545,16 +545,16 @@ kubectl logs -f deployment/patent-writer
 3. **本地 Ollama** - 离线场景，数据隐私
 
 ```typescript
-import { createDeepSeekModel, createQwenModel, createOllamaModel } from '@yunpat/core';
+import { createDeepSeekModel, createQwenModel, createOllamaModel } from '@yunpat/core'
 
 // 推荐：DeepSeek
-const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY);
+const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY)
 
 // 分析任务：通义千问
-const llm = createQwenModel(process.env.DASHSCOPE_API_KEY);
+const llm = createQwenModel(process.env.DASHSCOPE_API_KEY)
 
 // 离线场景：Ollama
-const llm = createOllamaModel('llama2');
+const llm = createOllamaModel('llama2')
 ```
 
 ### Q2: 智能体之间如何通信？
@@ -563,10 +563,10 @@ const llm = createOllamaModel('llama2');
 
 ```typescript
 // ✅ 正确：使用事件总线
-this.send('target-agent', { data: 'message' });
+this.send('target-agent', { data: 'message' })
 
 // ❌ 错误：直接调用
-await targetAgent.execute(input);
+await targetAgent.execute(input)
 ```
 
 ### Q3: 如何调试智能体？
@@ -574,14 +574,14 @@ await targetAgent.execute(input);
 **A**: 使用检查点机制：
 
 ```typescript
-const memory = new EnhancedMemoryStore(checkpointManager);
+const memory = new EnhancedMemoryStore(checkpointManager)
 
 // 创建检查点
-await memory.createCheckpoint(agentName, executionId, iteration);
+await memory.createCheckpoint(agentName, executionId, iteration)
 
 // 时间旅行
-const timeMachine = memory.getTimeMachine();
-await timeMachine.travelBack(checkpointId);
+const timeMachine = memory.getTimeMachine()
+await timeMachine.travelBack(checkpointId)
 ```
 
 ### Q4: Rust 工具编译失败怎么办？
@@ -608,15 +608,15 @@ server.registerTool(
     inputSchema: {
       type: 'object',
       properties: {
-        param1: { type: 'string' }
-      }
-    }
+        param1: { type: 'string' },
+      },
+    },
   },
   async (params) => {
     // 工具逻辑
-    return { result: 'success' };
+    return { result: 'success' }
   }
-);
+)
 ```
 
 ---

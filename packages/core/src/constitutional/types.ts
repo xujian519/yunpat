@@ -4,10 +4,10 @@
  * 定义原则集、合规检查、自动纠正的核心类型
  */
 
-import type { LLMAdapter } from '../lifecycle/Lifecycle.js';
+import type { LLMAdapter } from '../lifecycle/Lifecycle.js'
 
 // 重新导出 LLMAdapter
-export type { LLMAdapter };
+export type { LLMAdapter }
 
 /**
  * 原则类别
@@ -36,7 +36,7 @@ export enum ViolationSeverity {
  * 原则检查函数
  */
 export interface PrincipleCheckFunction {
-  (content: string): Promise<ComplianceResult>;
+  (content: string): Promise<ComplianceResult>
 }
 
 /**
@@ -44,24 +44,24 @@ export interface PrincipleCheckFunction {
  */
 export interface ConstitutionalPrinciple {
   /** 原则唯一标识 */
-  id: string;
+  id: string
   /** 原则名称 */
-  name: string;
+  name: string
   /** 原则描述 */
-  description: string;
+  description: string
   /** 原则类别 */
-  category: PrincipleCategory;
+  category: PrincipleCategory
   /** 优先级（1-10，10最高） */
-  priority: number;
+  priority: number
   /** 检查函数 */
-  checkFunction: PrincipleCheckFunction;
+  checkFunction: PrincipleCheckFunction
   /** 法律依据（可选） */
-  legalBasis?: string;
+  legalBasis?: string
   /** 示例（可选） */
   examples?: {
-    compliant: string[];
-    nonCompliant: string[];
-  };
+    compliant: string[]
+    nonCompliant: string[]
+  }
 }
 
 /**
@@ -69,13 +69,13 @@ export interface ConstitutionalPrinciple {
  */
 export interface ComplianceResult {
   /** 是否合规 */
-  compliant: boolean;
+  compliant: boolean
   /** 合规分数（0-1，1表示完全合规） */
-  score: number;
+  score: number
   /** 违规列表 */
-  violations: Violation[];
+  violations: Violation[]
   /** 警告列表 */
-  warnings: Warning[];
+  warnings: Warning[]
 }
 
 /**
@@ -83,24 +83,24 @@ export interface ComplianceResult {
  */
 export interface Violation {
   /** 违反的原则ID */
-  principleId: string;
+  principleId: string
   /** 原则名称 */
-  principleName: string;
+  principleName: string
   /** 严重程度 */
-  severity: ViolationSeverity;
+  severity: ViolationSeverity
   /** 违规位置 */
   location: {
-    start: number;
-    end: number;
-    text: string;
-    context?: string;
-  };
+    start: number
+    end: number
+    text: string
+    context?: string
+  }
   /** 违规描述 */
-  description: string;
+  description: string
   /** 建议修正 */
-  suggestedCorrection: string;
+  suggestedCorrection: string
   /** 置信度（0-1） */
-  confidence: number;
+  confidence: number
 }
 
 /**
@@ -108,19 +108,19 @@ export interface Violation {
  */
 export interface Warning {
   /** 原则ID */
-  principleId: string;
+  principleId: string
   /** 原则名称 */
-  principleName: string;
+  principleName: string
   /** 警告描述 */
-  description: string;
+  description: string
   /** 警告位置 */
   location?: {
-    start: number;
-    end: number;
-    text: string;
-  };
+    start: number
+    end: number
+    text: string
+  }
   /** 建议改进 */
-  suggestion: string;
+  suggestion: string
 }
 
 /**
@@ -128,24 +128,24 @@ export interface Warning {
  */
 export interface ComplianceReport {
   /** 总体是否合规 */
-  overallCompliant: boolean;
+  overallCompliant: boolean
   /** 总体合规分数（0-1） */
-  score: number;
+  score: number
   /** 违规列表 */
-  violations: Violation[];
+  violations: Violation[]
   /** 警告列表 */
-  warnings: Warning[];
+  warnings: Warning[]
   /** 检查时间戳 */
-  checkedAt: Date;
+  checkedAt: Date
   /** 检查耗时（毫秒） */
-  duration: number;
+  duration: number
   /** 按原则分类的统计 */
   statistics: {
-    principleId: string;
-    principleName: string;
-    violationCount: number;
-    warningCount: number;
-  }[];
+    principleId: string
+    principleName: string
+    violationCount: number
+    warningCount: number
+  }[]
 }
 
 /**
@@ -162,15 +162,15 @@ export enum CorrectionStrategy {
  */
 export interface CorrectionResult {
   /** 纠正后的内容 */
-  correctedContent: string;
+  correctedContent: string
   /** 应用的纠正列表 */
-  appliedCorrections: AppliedCorrection[];
+  appliedCorrections: AppliedCorrection[]
   /** 纠正策略 */
-  strategy: CorrectionStrategy;
+  strategy: CorrectionStrategy
   /** 纠正耗时（毫秒） */
-  duration: number;
+  duration: number
   /** 纠正时间戳 */
-  correctedAt: Date;
+  correctedAt: Date
 }
 
 /**
@@ -178,18 +178,18 @@ export interface CorrectionResult {
  */
 export interface AppliedCorrection {
   /** 原则ID */
-  principleId: string;
+  principleId: string
   /** 原始文本 */
-  originalText: string;
+  originalText: string
   /** 纠正后文本 */
-  correctedText: string;
+  correctedText: string
   /** 位置 */
   location: {
-    start: number;
-    end: number;
-  };
+    start: number
+    end: number
+  }
   /** 纠正理由 */
-  reason: string;
+  reason: string
 }
 
 /**
@@ -197,17 +197,17 @@ export interface AppliedCorrection {
  */
 export interface ConstitutionalAIConfig {
   /** 启用的原则（空数组表示启用所有） */
-  enabledPrinciples: string[];
+  enabledPrinciples: string[]
   /** 纠正策略 */
-  correctionStrategy: CorrectionStrategy;
+  correctionStrategy: CorrectionStrategy
   /** 严重程度阈值（低于此程度的违规不自动纠正） */
-  severityThreshold: ViolationSeverity;
+  severityThreshold: ViolationSeverity
   /** 是否使用LLM进行智能检查 */
-  useLLMForCheck: boolean;
+  useLLMForCheck: boolean
   /** 是否使用LLM进行智能纠正 */
-  useLLMForCorrection: boolean;
+  useLLMForCorrection: boolean
   /** 最大LLM并发请求数 */
-  maxLLMConcurrency: number;
+  maxLLMConcurrency: number
 }
 
 /**
@@ -215,9 +215,9 @@ export interface ConstitutionalAIConfig {
  */
 export interface ConflictResolution {
   /** 保留的违规（高优先级） */
-  keptViolations: Violation[];
+  keptViolations: Violation[]
   /** 移除的违规（低优先级） */
-  removedViolations: Violation[];
+  removedViolations: Violation[]
   /** 解决说明 */
-  resolution: string;
+  resolution: string
 }

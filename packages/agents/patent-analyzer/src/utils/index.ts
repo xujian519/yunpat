@@ -1,1 +1,1 @@
-export { JSONParser } from './json-parser.js';
+export { JSONParser } from './json-parser.js'

@@ -1,13 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
-import { EventBus, ShortTermMemory, ToolRegistry } from '@yunpat/core';
-import { InventionUnderstandingAgent } from '@yunpat/agent-invention';
-import { HumanReadableRenderer } from '@yunpat/agent-invention';
+import { describe, it, expect, vi } from 'vitest'
+import { EventBus, ShortTermMemory, ToolRegistry } from '@yunpat/core'
+import { InventionUnderstandingAgent } from '@yunpat/agent-invention'
+import { HumanReadableRenderer } from '@yunpat/agent-invention'
 
 describe('InventionUnderstandingAgent', () => {
   const createAgent = () => {
-    const eventBus = new EventBus();
-    const memory = new ShortTermMemory();
-    const tools = new ToolRegistry(eventBus);
+    const eventBus = new EventBus()
+    const memory = new ShortTermMemory()
+    const tools = new ToolRegistry(eventBus)
 
     return new InventionUnderstandingAgent({
       name: 'test-agent',
@@ -16,57 +16,57 @@ describe('InventionUnderstandingAgent', () => {
       memory,
       tools,
       eventBus,
-    });
-  };
+    })
+  }
 
   it('should be instantiable', () => {
-    const agent = createAgent();
-    expect(agent).toBeDefined();
-  });
+    const agent = createAgent()
+    expect(agent).toBeDefined()
+  })
 
   it('should throw error for empty title', async () => {
-    const agent = createAgent();
+    const agent = createAgent()
     await expect(
       agent.execute({
         title: '',
         field: '人工智能',
         technicalDisclosure: '一种深度学习图像识别方法',
       })
-    ).rejects.toThrow('发明名称不能为空');
-  });
+    ).rejects.toThrow('发明名称不能为空')
+  })
 
   it('should throw error for empty field', async () => {
-    const agent = createAgent();
+    const agent = createAgent()
     await expect(
       agent.execute({
         title: '图像识别方法',
         field: '',
         technicalDisclosure: '一种深度学习图像识别方法',
       })
-    ).rejects.toThrow('技术领域不能为空');
-  });
+    ).rejects.toThrow('技术领域不能为空')
+  })
 
   it('should throw error for empty disclosure', async () => {
-    const agent = createAgent();
+    const agent = createAgent()
     await expect(
       agent.execute({
         title: '图像识别方法',
         field: '人工智能',
         technicalDisclosure: '',
       })
-    ).rejects.toThrow('技术交底书不能为空');
-  });
+    ).rejects.toThrow('技术交底书不能为空')
+  })
 
   it('should throw error for whitespace-only input', async () => {
-    const agent = createAgent();
+    const agent = createAgent()
     await expect(
       agent.execute({
         title: '   ',
         field: '人工智能',
         technicalDisclosure: '一种深度学习图像识别方法',
       })
-    ).rejects.toThrow('发明名称不能为空');
-  });
+    ).rejects.toThrow('发明名称不能为空')
+  })
 
   it('should handle LLM failure gracefully', async () => {
     const agent = new InventionUnderstandingAgent({
@@ -78,19 +78,19 @@ describe('InventionUnderstandingAgent', () => {
       memory: new ShortTermMemory(),
       tools: new ToolRegistry(new EventBus()),
       eventBus: new EventBus(),
-    });
+    })
 
     const result = await agent.execute({
       title: '图像识别方法',
       field: '人工智能',
       technicalDisclosure: '一种深度学习图像识别方法，通过卷积神经网络提取特征。',
-    });
+    })
 
-    expect(result).toBeDefined();
-    expect(result.technicalField).toBe('人工智能');
-    expect(result.confidence).toBe(0.5);
-    expect(result.keyFeatures).toEqual([]);
-  });
+    expect(result).toBeDefined()
+    expect(result.technicalField).toBe('人工智能')
+    expect(result.confidence).toBe(0.5)
+    expect(result.keyFeatures).toEqual([])
+  })
 
   it('should handle invalid JSON response', async () => {
     const agent = new InventionUnderstandingAgent({
@@ -104,17 +104,17 @@ describe('InventionUnderstandingAgent', () => {
       memory: new ShortTermMemory(),
       tools: new ToolRegistry(new EventBus()),
       eventBus: new EventBus(),
-    });
+    })
 
     const result = await agent.execute({
       title: '图像识别方法',
       field: '人工智能',
       technicalDisclosure: '一种深度学习图像识别方法。',
-    });
+    })
 
-    expect(result).toBeDefined();
-    expect(result.confidence).toBe(0.5);
-  });
+    expect(result).toBeDefined()
+    expect(result.confidence).toBe(0.5)
+  })
 
   it('should handle JSON in markdown code block', async () => {
     const agent = new InventionUnderstandingAgent({
@@ -130,17 +130,17 @@ describe('InventionUnderstandingAgent', () => {
       memory: new ShortTermMemory(),
       tools: new ToolRegistry(new EventBus()),
       eventBus: new EventBus(),
-    });
+    })
 
     const result = await agent.execute({
       title: '图像识别方法',
       field: '人工智能',
       technicalDisclosure: '一种深度学习图像识别方法。',
-    });
+    })
 
-    expect(result.technicalField).toBe('人工智能');
-    expect(result.confidence).toBe(0.95);
-  });
+    expect(result.technicalField).toBe('人工智能')
+    expect(result.confidence).toBe(0.95)
+  })
 
   it('should validate and normalize output fields', async () => {
     const agent = new InventionUnderstandingAgent({
@@ -161,23 +161,23 @@ describe('InventionUnderstandingAgent', () => {
       memory: new ShortTermMemory(),
       tools: new ToolRegistry(new EventBus()),
       eventBus: new EventBus(),
-    });
+    })
 
     const result = await agent.execute({
       title: '图像识别方法',
       field: '人工智能',
       technicalDisclosure: '一种深度学习图像识别方法。',
-    });
+    })
 
-    expect(result.technicalField).toBe('人工智能'); // 回退到输入字段
-    expect(result.backgroundArt).toBe('');
-    expect(result.keyFeatures).toEqual(['特征1', '特征2']); // 过滤非字符串
-    expect(result.confidence).toBe(0.8); // 回退值
-  });
-});
+    expect(result.technicalField).toBe('人工智能') // 回退到输入字段
+    expect(result.backgroundArt).toBe('')
+    expect(result.keyFeatures).toEqual(['特征1', '特征2']) // 过滤非字符串
+    expect(result.confidence).toBe(0.8) // 回退值
+  })
+})
 
 describe('HumanReadableRenderer', () => {
-  const renderer = new HumanReadableRenderer();
+  const renderer = new HumanReadableRenderer()
 
   it('should render readable report', () => {
     const output = {
@@ -189,15 +189,15 @@ describe('HumanReadableRenderer', () => {
       keyFeatures: ['特征1', '特征2'],
       drawingDescriptions: ['图1: 系统架构'],
       confidence: 0.95,
-    };
+    }
 
-    const report = renderer.render(output);
+    const report = renderer.render(output)
 
-    expect(report).toContain('发明理解报告');
-    expect(report).toContain('人工智能');
-    expect(report).toContain('特征1');
-    expect(report).toContain('95.0%');
-  });
+    expect(report).toContain('发明理解报告')
+    expect(report).toContain('人工智能')
+    expect(report).toContain('特征1')
+    expect(report).toContain('95.0%')
+  })
 
   it('should handle empty arrays', () => {
     const output = {
@@ -209,13 +209,13 @@ describe('HumanReadableRenderer', () => {
       keyFeatures: [],
       drawingDescriptions: [],
       confidence: 0.5,
-    };
+    }
 
-    const report = renderer.render(output);
+    const report = renderer.render(output)
 
-    expect(report).toContain('发明理解报告');
-    expect(report).toContain('暂无');
-  });
+    expect(report).toContain('发明理解报告')
+    expect(report).toContain('暂无')
+  })
 
   it('should format confidence as percentage', () => {
     const output = {
@@ -227,10 +227,10 @@ describe('HumanReadableRenderer', () => {
       keyFeatures: [],
       drawingDescriptions: [],
       confidence: 0.753,
-    };
+    }
 
-    const report = renderer.render(output);
+    const report = renderer.render(output)
 
-    expect(report).toContain('75.3%');
-  });
-});
+    expect(report).toContain('75.3%')
+  })
+})

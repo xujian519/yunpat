@@ -4,19 +4,19 @@
  * 演示如何使用 PatentWriterAgent 从技术交底书生成完整的专利申请文件
  */
 
-import { PatentWriterAgent } from '@yunpat/agent-patent-writer';
-import { EventBus, ShortTermMemory, ToolRegistry } from '@yunpat/core';
-import { OpenAI } from 'openai';
+import { PatentWriterAgent } from '@yunpat/agent-patent-writer'
+import { EventBus, ShortTermMemory, ToolRegistry } from '@yunpat/core'
+import { OpenAI } from 'openai'
 
 // 初始化组件
-const eventBus = new EventBus();
-const memory = new ShortTermMemory();
-const tools = new ToolRegistry(eventBus);
+const eventBus = new EventBus()
+const memory = new ShortTermMemory()
+const tools = new ToolRegistry(eventBus)
 
 // 配置 LLM（使用 OpenAI）
 const llm = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+})
 
 // 创建专利撰写智能体
 const writerAgent = new PatentWriterAgent({
@@ -29,27 +29,27 @@ const writerAgent = new PatentWriterAgent({
     chat: async (params) => {
       const response = await llm.chat.completions.create({
         model: 'gpt-4',
-        messages: params.messages.map(m => ({
+        messages: params.messages.map((m) => ({
           role: m.role,
           content: m.content,
         })),
         temperature: 0.3,
-      });
+      })
 
       return {
         message: {
           content: response.choices[0].message.content || '',
         },
-      };
+      }
     },
   } as any,
   enableKnowledge: true,
   enableTemplates: true,
-});
+})
 
 async function main() {
   try {
-    console.log('=== 专利撰写示例 ===\n');
+    console.log('=== 专利撰写示例 ===\n')
 
     // 准备技术交底书
     const disclosure = {
@@ -123,70 +123,71 @@ async function main() {
         '图4: 特征融合模块结构图',
         '图5: 检测结果对比图',
       ],
-    };
+    }
 
-    console.log('📝 开始撰写专利...\n');
+    console.log('📝 开始撰写专利...\n')
 
     // 执行专利撰写
-    const result = await writerAgent.execute(disclosure);
+    const result = await writerAgent.execute(disclosure)
 
     // 输出结果
-    console.log('✅ 专利撰写完成！\n');
-    console.log('=== 基本信息 ===');
-    console.log(`发明名称: ${result.patentApplication.title}`);
-    console.log(`申请号: ${result.patentApplication.applicationNumber || '待分配'}`);
-    console.log(`申请人: ${result.patentApplication.applicant}`);
-    console.log(`发明人: ${result.patentApplication.inventors.join(', ')}`);
+    console.log('✅ 专利撰写完成！\n')
+    console.log('=== 基本信息 ===')
+    console.log(`发明名称: ${result.patentApplication.title}`)
+    console.log(`申请号: ${result.patentApplication.applicationNumber || '待分配'}`)
+    console.log(`申请人: ${result.patentApplication.applicant}`)
+    console.log(`发明人: ${result.patentApplication.inventors.join(', ')}`)
 
-    console.log('\n=== 撰写统计 ===');
-    console.log(`权利要求数量: ${result.patentApplication.claims.length}`);
-    console.log(`说明书字数: ${result.metrics.descriptionWordCount}`);
-    console.log(`质量评分: ${result.metrics.qualityScore}/100`);
-    console.log(`撰写耗时: ${result.metrics.durationMinutes} 分钟`);
+    console.log('\n=== 撰写统计 ===')
+    console.log(`权利要求数量: ${result.patentApplication.claims.length}`)
+    console.log(`说明书字数: ${result.metrics.descriptionWordCount}`)
+    console.log(`质量评分: ${result.metrics.qualityScore}/100`)
+    console.log(`撰写耗时: ${result.metrics.durationMinutes} 分钟`)
 
-    console.log('\n=== 权利要求书（节选）===');
-    console.log(result.patentApplication.claims.slice(0, 500));
-    console.log('...');
+    console.log('\n=== 权利要求书（节选）===')
+    console.log(result.patentApplication.claims.slice(0, 500))
+    console.log('...')
 
-    console.log('\n=== 摘要 ===');
-    console.log(result.patentApplication.abstract);
+    console.log('\n=== 摘要 ===')
+    console.log(result.patentApplication.abstract)
 
-    console.log('\n=== 质量分析 ===');
-    console.log(`整体质量: ${result.metrics.qualityScore >= 80 ? '优秀' : result.metrics.qualityScore >= 60 ? '良好' : '需改进'}`);
+    console.log('\n=== 质量分析 ===')
+    console.log(
+      `整体质量: ${result.metrics.qualityScore >= 80 ? '优秀' : result.metrics.qualityScore >= 60 ? '良好' : '需改进'}`
+    )
 
     if (result.metrics.qualityScore < 80) {
-      console.log('\n💡 改进建议:');
-      console.log('- 增加具体实施例的详细描述');
-      console.log('- 补充实验数据和对比结果');
-      console.log('- 优化权利要求的保护范围');
+      console.log('\n💡 改进建议:')
+      console.log('- 增加具体实施例的详细描述')
+      console.log('- 补充实验数据和对比结果')
+      console.log('- 优化权利要求的保护范围')
     }
 
     // 导出为 CN 格式
-    console.log('\n📄 导出为 CN 格式...');
-    const exportResult = await writerAgent.exportToFormat('cn');
+    console.log('\n📄 导出为 CN 格式...')
+    const exportResult = await writerAgent.exportToFormat('cn')
 
-    console.log(`✅ 导出完成！`);
-    console.log(`格式: ${exportResult.format}`);
-    console.log(`文档字数: ${exportResult.metadata.wordCount}`);
-    console.log(`权利要求数: ${exportResult.metadata.claimsCount}`);
+    console.log(`✅ 导出完成！`)
+    console.log(`格式: ${exportResult.format}`)
+    console.log(`文档字数: ${exportResult.metadata.wordCount}`)
+    console.log(`权利要求数: ${exportResult.metadata.claimsCount}`)
 
     // 保存到文件
-    const fs = await import('fs/promises');
-    const outputPath = './patent-application-cn.txt';
-    await fs.writeFile(outputPath, exportResult.content, 'utf-8');
-    console.log(`\n💾 文档已保存到: ${outputPath}`);
-
+    const fs = await import('fs/promises')
+    const outputPath = './patent-application-cn.txt'
+    await fs.writeFile(outputPath, exportResult.content, 'utf-8')
+    console.log(`\n💾 文档已保存到: ${outputPath}`)
   } catch (error) {
-    console.error('❌ 撰写失败:', error);
+    console.error('❌ 撰写失败:', error)
     if (error instanceof Error) {
-      console.error(`错误信息: ${error.message}`);
+      console.error(`错误信息: ${error.message}`)
     }
   }
 }
 
 // 运行示例
 if (require.main === module) {
-  main().catch(console.error);
+  main().catch(console.error)
 }
 
-export { main };
+export { main }

@@ -3,11 +3,13 @@
 ## 已创建的文件
 
 ### 1. 测试文件
+
 - `test-glm.ts` - GLM 模型基础测试（5 个测试场景）
 - `test-glm.sh` - 测试执行脚本
 - `verify-glm-setup.sh` - 配置验证脚本
 
 ### 2. 示例文件
+
 - `examples/glm-usage.ts` - 6 个完整使用示例
   - 直接使用 GLM 模型
   - 与 Gateway 集成
@@ -17,6 +19,7 @@
   - 代码生成（编程套餐）
 
 ### 3. 文档
+
 - `docs/guides/glm-usage.md` - 完整使用指南
 - `QUICKSTART_GLM.md` - 快速开始指南
 - `.env.glm` - 环境变量模板
@@ -58,21 +61,22 @@ pnpm --filter @yunpat/core exec tsx examples/glm-usage.ts
 
 ## 支持的 GLM 模型
 
-| 模型 | 说明 | 适用场景 |
-|------|------|---------|
+| 模型          | 说明     | 适用场景              |
+| ------------- | -------- | --------------------- |
 | `glm-4-flash` | 快速响应 | 实时对话、快速测试 ✅ |
-| `glm-4-plus` | 平衡性能 | 日常开发、通用任务 |
-| `glm-4.7` | 最新旗舰 | 复杂推理、深度分析 |
-| `glm-4-air` | 轻量级 | 边缘设备、低资源环境 |
-| `glm-3-turbo` | 旧版本 | 兼容性需求 |
+| `glm-4-plus`  | 平衡性能 | 日常开发、通用任务    |
+| `glm-4.7`     | 最新旗舰 | 复杂推理、深度分析    |
+| `glm-4-air`   | 轻量级   | 边缘设备、低资源环境  |
+| `glm-3-turbo` | 旧版本   | 兼容性需求            |
 
 ## 编程套餐特性
 
 GLM 模型在编程任务上表现优异：
 
 ### 1. 代码生成
+
 ```typescript
-const glm = createZhipuModel(apiKey, NativeModel.GLM_4_FLASH);
+const glm = createZhipuModel(apiKey, NativeModel.GLM_4_FLASH)
 
 const response = await glm.chat({
   messages: [
@@ -82,12 +86,13 @@ const response = await glm.chat({
     },
   ],
   temperature: 0.2,
-});
+})
 
-console.log(response.content);
+console.log(response.content)
 ```
 
 ### 2. 代码审查
+
 ```typescript
 const review = await glm.chat({
   messages: [
@@ -97,10 +102,11 @@ const review = await glm.chat({
     },
   ],
   temperature: 0.3,
-});
+})
 ```
 
 ### 3. 单元测试生成
+
 ```typescript
 const tests = await glm.chat({
   messages: [
@@ -110,7 +116,7 @@ const tests = await glm.chat({
     },
   ],
   temperature: 0.2,
-});
+})
 ```
 
 ## 测试场景
@@ -137,16 +143,16 @@ const tests = await glm.chat({
 项目已提供便捷的工厂函数：
 
 ```typescript
-import { createZhipuModel, NativeModel } from '@yunpat/core';
+import { createZhipuModel, NativeModel } from '@yunpat/core'
 
 // 创建 GLM-4-Flash（快速）
-const glmFlash = createZhipuModel(apiKey, NativeModel.GLM_4_FLASH);
+const glmFlash = createZhipuModel(apiKey, NativeModel.GLM_4_FLASH)
 
 // 创建 GLM-4-Plus（平衡）
-const glmPlus = createZhipuModel(apiKey, NativeModel.GLM_4_PLUS);
+const glmPlus = createZhipuModel(apiKey, NativeModel.GLM_4_PLUS)
 
 // 创建 GLM-4.7（旗舰，默认）
-const glm47 = createZhipuModel(apiKey);
+const glm47 = createZhipuModel(apiKey)
 ```
 
 ## 参数配置
@@ -156,9 +162,9 @@ const glm = new NativeLLMAdapter({
   name: NativeModel.GLM_4_FLASH,
   apiKey: process.env.GLM_API_KEY!,
   baseURL: 'https://open.bigmodel.cn/api/paas/v4',
-  temperature: 0.7,    // 随机性（0-1，默认 0.7）
-  maxTokens: 4096,     // 最大输出（默认 4096）
-});
+  temperature: 0.7, // 随机性（0-1，默认 0.7）
+  maxTokens: 4096, // 最大输出（默认 4096）
+})
 ```
 
 ### 编程任务推荐参数
@@ -169,24 +175,24 @@ const glm = new NativeLLMAdapter({
 
 ## 性能对比
 
-| 模型 | 响应速度 | 代码质量 | 推理能力 | 推荐场景 |
-|------|---------|---------|---------|---------|
-| GLM-4-Flash | ⚡⚡⚡⚡⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐ | 快速测试 |
-| GLM-4-Plus | ⚡⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 日常开发 ✅ |
-| GLM-4.7 | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 复杂任务 |
+| 模型        | 响应速度   | 代码质量   | 推理能力   | 推荐场景    |
+| ----------- | ---------- | ---------- | ---------- | ----------- |
+| GLM-4-Flash | ⚡⚡⚡⚡⚡ | ⭐⭐⭐⭐   | ⭐⭐⭐     | 快速测试    |
+| GLM-4-Plus  | ⚡⚡⚡⚡   | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐   | 日常开发 ✅ |
+| GLM-4.7     | ⚡⚡⚡     | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 复杂任务    |
 
 ## 错误处理
 
 ```typescript
 try {
-  const response = await glm.chat({ messages });
+  const response = await glm.chat({ messages })
 } catch (error) {
   if (error.message.includes('401')) {
-    console.error('API Key 无效');
+    console.error('API Key 无效')
   } else if (error.message.includes('429')) {
-    console.error('请求过于频繁');
+    console.error('请求过于频繁')
   } else if (error.message.includes('quota')) {
-    console.error('API 额度已用尽');
+    console.error('API 额度已用尽')
   }
 }
 ```

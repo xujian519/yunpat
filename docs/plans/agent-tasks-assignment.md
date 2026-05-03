@@ -11,13 +11,16 @@
 ### 🔴 P1 阶段 - 并行执行
 
 #### Agent 1: embedding-implementer
+
 **任务**: P1-1 LLM 嵌入功能实现
 **文件**:
+
 - packages/core/src/llm/EmbeddingAdapter.ts
 - packages/core/src/llm/NativeLLMAdapter.ts
 - packages/core/src/llm/OMXLAdapter.ts
 
 **交付物**:
+
 - 统一的 EmbeddingAdapter 接口
 - BGE-M3 嵌入模型集成
 - 批量嵌入功能
@@ -29,13 +32,16 @@
 ---
 
 #### Agent 2: memory-integrator
+
 **任务**: P1-2 PostgreSQL 向量存储集成
 **文件**:
+
 - packages/core/src/memory/long-term/PostgresVectorStore.ts
 - packages/core/src/memory/long-term/PostgresGraphStore.ts
 - packages/core/src/memory/long-term/schema.sql
 
 **交付物**:
+
 - PostgreSQL + pgvector 集成
 - 向量 CRUD 操作
 - HNSW 索引优化
@@ -49,13 +55,16 @@
 ## 串行任务 (Week 2-3)
 
 #### Agent 3: entity-extraction-specialist
+
 **任务**: P1-3 实体关系自动抽取
 **依赖**: Agent 2 完成
 **文件**:
+
 - packages/core/src/memory/long-term/EntityExtractor.ts
 - packages/core/src/memory/long-term/RelationExtractor.ts
 
 **交付物**:
+
 - 中文 NER 实现（HanLP）
 - 关系抽取逻辑
 - MemoryLayer 自动抽取集成
@@ -68,13 +77,16 @@
 ## 并行任务 (Week 3)
 
 #### Agent 4: oauth-implementer
+
 **任务**: P2-1 OAuth 2.0 认证
 **文件**:
+
 - packages/core/src/gateway/auth/OAuthManager.ts
 - packages/core/src/gateway/auth/providers/GoogleOAuth.ts
 - packages/core/src/gateway/auth/providers/GitHubOAuth.ts
 
 **交付物**:
+
 - OAuth 2.0 流程实现
 - 多提供商支持
 - Token 刷新机制
@@ -85,12 +97,15 @@
 ---
 
 #### Agent 5: fact-check-integrator
+
 **任务**: P2-2 外部事实验证
 **文件**:
+
 - packages/core/src/validation/ExternalFactChecker.ts
 - packages/core/src/validation/FactChecker.ts (扩展)
 
 **交付物**:
+
 - Google Fact Check API 集成
 - 多源交叉验证
 - 缓存优化
@@ -103,11 +118,14 @@
 ## 优化任务 (Week 4)
 
 #### Agent 6: incremental-planner
+
 **任务**: P3-1 增量规划器完善
 **文件**:
+
 - packages/core/src/replanning/IncrementalPlanner.ts
 
 **交付物**:
+
 - 任务添加逻辑
 - 依赖关系重新计算
 - 关键路径检查
@@ -117,11 +135,14 @@
 ---
 
 #### Agent 7: batch-optimizer
+
 **任务**: P3-2 批处理器优化
 **文件**:
+
 - packages/core/src/reasoning/ReasoningBatchProcessor.ts
 
 **交付物**:
+
 - 精确 Token 估算
 - 动态 batch_size 调整
 - 性能优化
@@ -133,8 +154,10 @@
 ## 质量保证 (Week 4-5)
 
 #### Agent 8: test-specialist
+
 **任务**: 集成测试和性能测试
 **交付物**:
+
 - 端到端集成测试
 - 性能基准报告
 - 压力测试
@@ -143,8 +166,10 @@
 ---
 
 #### Agent 9: code-reviewer
+
 **任务**: 代码审查和质量检查
 **交付物**:
+
 - 代码审查报告
 - 安全审计
 - 性能优化建议
@@ -198,16 +223,19 @@ Week 4-5 (QA):
 ## 沟通机制
 
 ### 每日同步
+
 - 每个智能体每日报告进度
 - Team Lead 协调阻塞问题
 - 风险预警和调整
 
 ### 依赖管理
+
 - Entity-extraction 等待 Memory 完成
 - Planner 等待 P1-P2 完成
 - Tester/Reviewer 等待所有开发完成
 
 ### 交付标准
+
 - 所有代码通过 TypeScript 严格模式
 - ESLint 0 错误
 - 单元测试覆盖率 > 85%

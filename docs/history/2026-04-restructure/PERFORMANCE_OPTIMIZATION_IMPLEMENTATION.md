@@ -12,12 +12,12 @@
 
 ### 核心成果
 
-| 优化项 | 效果 | 状态 |
-|--------|------|------|
-| **增量编译** | 构建加速 ~10% | ✅ |
-| **esbuild 构建** | 构建加速 ~20% | ✅ |
-| **并行 LLM 调用** | 增量生成提速 5倍 | ✅ |
-| **事件总线监控** | 性能可视化 | ✅ |
+| 优化项            | 效果             | 状态 |
+| ----------------- | ---------------- | ---- |
+| **增量编译**      | 构建加速 ~10%    | ✅   |
+| **esbuild 构建**  | 构建加速 ~20%    | ✅   |
+| **并行 LLM 调用** | 增量生成提速 5倍 | ✅   |
+| **事件总线监控**  | 性能可视化       | ✅   |
 
 ---
 
@@ -28,6 +28,7 @@
 **修改文件**: `tsconfig.base.json`
 
 **变更内容**:
+
 ```json
 {
   "compilerOptions": {
@@ -38,11 +39,13 @@
 ```
 
 **效果**:
+
 - 首次构建: 1.97秒
 - 二次构建: 1.53秒
 - **提升**: ~22%（二次编译）
 
 **验证**:
+
 ```bash
 $ time pnpm build
 # 首次: 1.966s
@@ -54,12 +57,15 @@ $ time pnpm build
 ### 2. ✅ esbuild 替代 tsc（2小时）
 
 **新增文件**:
+
 - `esbuild.config.mjs` - esbuild 构建配置
 
 **修改文件**:
+
 - `package.json` - 添加 esbuild 构建脚本
 
 **变更内容**:
+
 ```json
 {
   "scripts": {
@@ -71,17 +77,20 @@ $ time pnpm build
 ```
 
 **esbuild 配置亮点**:
+
 - 顺序构建：先 core，再 cli（解决依赖问题）
 - 类型声明：保留 tsc --emitDeclarationOnly
 - 外部化依赖：不打包 @langchain/core 等大型库
 - Tree-shaking：自动移除未使用代码
 
 **效果**:
+
 - tsc 构建: 1.5秒
 - esbuild 构建: 1.27秒
 - **提升**: ~15%
 
 **验证**:
+
 ```bash
 $ rm -rf packages/*/dist
 $ time node esbuild.config.mjs build
@@ -90,6 +99,7 @@ $ time node esbuild.config.mjs build
 ```
 
 **注意**: 虽然实际提升是 15% 而非预期的 30倍，但这是因为：
+
 1. 项目规模较小（16,159 行）
 2. 类型声明生成仍是瓶颈（tsc --emitDeclarationOnly）
 3. 大型项目中 esbuild 优势更明显
@@ -101,10 +111,12 @@ $ time node esbuild.config.mjs build
 **修改文件**: `packages/agents/writer/src/WriterAgent.ts`
 
 **问题**:
+
 - 完整生成模式：已使用 `Promise.all` ✅
 - **增量生成模式**：使用 `for` 循环串行执行 ❌
 
 **优化前**:
+
 ```typescript
 // 串行执行
 for (const section of plan.structure.sections) {
@@ -116,6 +128,7 @@ for (const section of plan.structure.sections) {
 ```
 
 **优化后**:
+
 ```typescript
 // 并行执行
 const sectionUpdatePromises = plan.structure.sections.map(async (section) => {
@@ -130,11 +143,13 @@ const sectionUpdates = await Promise.all(sectionUpdatePromises);
 ```
 
 **效果**:
+
 - 串行执行: 5 章节 × 2秒 = 10秒
 - 并行执行: max(2秒) = 2秒
 - **提升**: **5倍**
 
 **适用场景**:
+
 - ✅ 增量生成模式
 - ✅ 完整生成模式（已有）
 
@@ -143,15 +158,18 @@ const sectionUpdates = await Promise.all(sectionUpdatePromises);
 ### 4. ✅ 事件总线性能监控（1小时）
 
 **新增文件**:
+
 - `packages/core/src/eventbus/EventBusMetrics.ts` (240行)
 
 **修改文件**:
+
 - `packages/core/src/eventbus/EventBus.ts` - 集成性能监控
 - `packages/core/src/index.ts` - 导出 EventBusMetrics
 
 **核心功能**:
 
 1. **自动记录事件执行时间**
+
 ```typescript
 publish(event: AgentEvent): void {
   const start = performance.now();
@@ -165,15 +183,17 @@ publish(event: AgentEvent): void {
 ```
 
 2. **识别慢事件**
+
 ```typescript
-const slowEvents = eventBus.getMetrics().getSlowEvents(100);
+const slowEvents = eventBus.getMetrics().getSlowEvents(100)
 // 返回平均执行时间 > 100ms 的事件
 ```
 
 3. **生成性能报告**
+
 ```typescript
-const report = eventBus.generatePerformanceReport();
-console.log(report);
+const report = eventBus.generatePerformanceReport()
+console.log(report)
 
 // 输出示例：
 // ╔════════════════════════════════════════╗
@@ -190,6 +210,7 @@ console.log(report);
 ```
 
 **效果**:
+
 - ✅ 自动发现性能瓶颈
 - ✅ 支持 P99 延迟分析
 - ✅ 可按需启用/禁用
@@ -200,13 +221,13 @@ console.log(report);
 
 ### 量化指标
 
-| 指标 | 优化前 | 优化后 | 提升 |
-|------|--------|--------|------|
-| **首次构建** | 1.97s | 1.32s | **33%** |
-| **二次构建** | 1.53s | 1.21s | **21%** |
-| **增量生成** | 10s | 2s | **5倍** |
-| **完整生成** | 2s | 2s | - |
-| **可观测性** | 无 | 完整 | **∞** |
+| 指标         | 优化前 | 优化后 | 提升    |
+| ------------ | ------ | ------ | ------- |
+| **首次构建** | 1.97s  | 1.32s  | **33%** |
+| **二次构建** | 1.53s  | 1.21s  | **21%** |
+| **增量生成** | 10s    | 2s     | **5倍** |
+| **完整生成** | 2s     | 2s     | -       |
+| **可观测性** | 无     | 完整   | **∞**   |
 
 ### 定性收益
 
@@ -236,21 +257,21 @@ node esbuild.config.mjs build
 ### 监控事件性能
 
 ```typescript
-import { EventBus } from '@yunpat/core';
+import { EventBus } from '@yunpat/core'
 
-const eventBus = new EventBus();
+const eventBus = new EventBus()
 
 // 执行智能体任务...
-await agent.execute(task);
+await agent.execute(task)
 
 // 生成性能报告
-const report = eventBus.generatePerformanceReport();
-console.log(report);
+const report = eventBus.generatePerformanceReport()
+console.log(report)
 
 // 获取慢事件
-const metrics = eventBus.getMetrics();
-const slowEvents = metrics.getSlowEvents(100); // > 100ms
-console.log('慢事件:', slowEvents);
+const metrics = eventBus.getMetrics()
+const slowEvents = metrics.getSlowEvents(100) // > 100ms
+console.log('慢事件:', slowEvents)
 ```
 
 ### 并行 LLM 调用
@@ -314,7 +335,7 @@ const result = await agent.execute({
 
 3. **结构化日志**（2小时）
    - 引入 pino
-   - 替换所有 console.*
+   - 替换所有 console.\*
    - 配置日志级别
 
 4. **多级缓存**（3小时）
@@ -344,6 +365,7 @@ const result = await agent.execute({
 
 **投入**: ~2 小时
 **产出**:
+
 - ✅ 构建速度提升 33%
 - ✅ 增量生成提速 5倍
 - ✅ 性能监控系统

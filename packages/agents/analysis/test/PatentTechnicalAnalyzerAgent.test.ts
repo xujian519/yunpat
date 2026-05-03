@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { PatentTechnicalAnalyzerAgent } from '../src/PatentTechnicalAnalyzerAgent.js';
+import { describe, it, expect } from 'vitest'
+import { PatentTechnicalAnalyzerAgent } from '../src/PatentTechnicalAnalyzerAgent.js'
 
 describe('PatentTechnicalAnalyzerAgent', () => {
   const mockLLM = {
@@ -28,12 +28,12 @@ describe('PatentTechnicalAnalyzerAgent', () => {
         }),
       },
     }),
-  };
+  }
 
   const mockEventBus = {
     publish: () => {},
     subscribe: () => {},
-  };
+  }
 
   const mockInput = {
     patent: {
@@ -46,7 +46,7 @@ describe('PatentTechnicalAnalyzerAgent', () => {
       technicalSolution: '使用AI优化算法',
       keyFeatures: ['AI芯片', '并行处理'],
     },
-  };
+  }
 
   it('应该成功分析专利技术', async () => {
     const agent = new PatentTechnicalAnalyzerAgent({
@@ -56,15 +56,15 @@ describe('PatentTechnicalAnalyzerAgent', () => {
       memory: {},
       tools: {},
       llm: mockLLM,
-    });
+    })
 
-    const result = await agent.execute(mockInput);
+    const result = await agent.execute(mockInput)
 
-    expect(result.technicalAnalysis.technicalProblems.main).toBe('效率低下');
-    expect(result.technicalAnalysis.technicalSolution.keyFeatures).toHaveLength(2);
-    expect(result.comparison.similarity).toBe(0.3);
-    expect(result.comparison.novelty).toBe(true);
-  });
+    expect(result.technicalAnalysis.technicalProblems.main).toBe('效率低下')
+    expect(result.technicalAnalysis.technicalSolution.keyFeatures).toHaveLength(2)
+    expect(result.comparison.similarity).toBe(0.3)
+    expect(result.comparison.novelty).toBe(true)
+  })
 
   it('应该验证输入参数', async () => {
     const agent = new PatentTechnicalAnalyzerAgent({
@@ -74,9 +74,10 @@ describe('PatentTechnicalAnalyzerAgent', () => {
       memory: {},
       tools: {},
       llm: mockLLM,
-    });
+    })
 
-    await expect(agent.execute({ patent: { publicationNumber: '', title: '', abstract: '' } }))
-      .rejects.toThrow('专利公开号不能为空');
-  });
-});
+    await expect(
+      agent.execute({ patent: { publicationNumber: '', title: '', abstract: '' } })
+    ).rejects.toThrow('专利公开号不能为空')
+  })
+})

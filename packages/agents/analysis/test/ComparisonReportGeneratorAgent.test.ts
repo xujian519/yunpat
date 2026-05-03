@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { ComparisonReportGeneratorAgent } from '../src/ComparisonReportGeneratorAgent.js';
+import { describe, it, expect } from 'vitest'
+import { ComparisonReportGeneratorAgent } from '../src/ComparisonReportGeneratorAgent.js'
 
 describe('ComparisonReportGeneratorAgent', () => {
   const mockLLM = {
@@ -40,12 +40,12 @@ describe('ComparisonReportGeneratorAgent', () => {
         }),
       },
     }),
-  };
+  }
 
   const mockEventBus = {
     publish: () => {},
     subscribe: () => {},
-  };
+  }
 
   const mockInput = {
     inventionUnderstanding: {
@@ -70,7 +70,7 @@ describe('ComparisonReportGeneratorAgent', () => {
         },
       },
     ],
-  };
+  }
 
   it('应该成功生成对比报告', async () => {
     const agent = new ComparisonReportGeneratorAgent({
@@ -80,16 +80,16 @@ describe('ComparisonReportGeneratorAgent', () => {
       memory: {},
       tools: {},
       llm: mockLLM,
-    });
+    })
 
-    const result = await agent.execute(mockInput);
+    const result = await agent.execute(mockInput)
 
-    expect(result.closestPriorArt.publicationNumber).toBe('CN123456789');
-    expect(result.distinctFeatures).toHaveLength(1);
-    expect(result.distinctFeatures[0].novelty).toBe('high');
-    expect(result.inventiveness.score).toBe(0.85);
-    expect(result.protectionScope.independentClaims).toHaveLength(1);
-  });
+    expect(result.closestPriorArt.publicationNumber).toBe('CN123456789')
+    expect(result.distinctFeatures).toHaveLength(1)
+    expect(result.distinctFeatures[0].novelty).toBe('high')
+    expect(result.inventiveness.score).toBe(0.85)
+    expect(result.protectionScope.independentClaims).toHaveLength(1)
+  })
 
   it('应该验证输入参数', async () => {
     const agent = new ComparisonReportGeneratorAgent({
@@ -99,9 +99,10 @@ describe('ComparisonReportGeneratorAgent', () => {
       memory: {},
       tools: {},
       llm: mockLLM,
-    });
+    })
 
-    await expect(agent.execute({ inventionUnderstanding: undefined as any, priorArtAnalysis: [] }))
-      .rejects.toThrow('发明理解结果不能为空');
-  });
-});
+    await expect(
+      agent.execute({ inventionUnderstanding: undefined as any, priorArtAnalysis: [] })
+    ).rejects.toThrow('发明理解结果不能为空')
+  })
+})

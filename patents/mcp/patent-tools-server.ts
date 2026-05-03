@@ -7,9 +7,9 @@
  * 允许 Claude Desktop 等 MCP 客户端使用 YunPat 的专利处理能力
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 
 // 导入 YunPat 工具
 import {
@@ -17,14 +17,14 @@ import {
   PatentSearchTool,
   PatentClaimsStructureTool,
   PatentProcessChartTool,
-} from '@yunpat/builtin-tools';
+} from '@yunpat/builtin-tools'
 
 import {
   OfficialDocParserToolV2,
   PatentApplicationGeneratorTool,
   PatentClaimsGeneratorTool,
   ResponseStatementGeneratorTool,
-} from '@yunpat/document-tools';
+} from '@yunpat/document-tools'
 
 /**
  * 创建 MCP 服务器
@@ -40,7 +40,7 @@ function createServer() {
         tools: {},
       },
     }
-  );
+  )
 
   // 注册工具列表处理器
   server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -384,12 +384,12 @@ function createServer() {
           },
         },
       ],
-    };
-  });
+    }
+  })
 
   // 注册工具调用处理器
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
+    const { name, arguments: args } = request.params
 
     try {
       // 创建简单的上下文（MCP 服务器可能不需要完整的上下文）
@@ -398,65 +398,65 @@ function createServer() {
         llm: null,
         memory: null,
         eventBus: null,
-      } as any;
+      } as any
 
-      let result;
+      let result
 
       if (!args) {
-        throw new Error(`Missing arguments for tool: ${name}`);
+        throw new Error(`Missing arguments for tool: ${name}`)
       }
 
       switch (name) {
         case 'knowledge_search': {
-          const tool = new KnowledgeSearchTool();
-          result = await tool.execute(args as any, context);
-          break;
+          const tool = new KnowledgeSearchTool()
+          result = await tool.execute(args as any, context)
+          break
         }
 
         case 'patent_search': {
-          const tool = new PatentSearchTool();
-          result = await tool.execute(args as any, context);
-          break;
+          const tool = new PatentSearchTool()
+          result = await tool.execute(args as any, context)
+          break
         }
 
         case 'official_doc_parse': {
-          const tool = new OfficialDocParserToolV2();
-          result = await tool.execute(args as any, context);
-          break;
+          const tool = new OfficialDocParserToolV2()
+          result = await tool.execute(args as any, context)
+          break
         }
 
         case 'patent_application_generator': {
-          const tool = new PatentApplicationGeneratorTool();
-          result = await tool.execute(args as any, context);
-          break;
+          const tool = new PatentApplicationGeneratorTool()
+          result = await tool.execute(args as any, context)
+          break
         }
 
         case 'patent_claims_generator': {
-          const tool = new PatentClaimsGeneratorTool();
-          result = await tool.execute(args as any, context);
-          break;
+          const tool = new PatentClaimsGeneratorTool()
+          result = await tool.execute(args as any, context)
+          break
         }
 
         case 'response_statement_generator': {
-          const tool = new ResponseStatementGeneratorTool();
-          result = await tool.execute(args as any, context);
-          break;
+          const tool = new ResponseStatementGeneratorTool()
+          result = await tool.execute(args as any, context)
+          break
         }
 
         case 'patent_claims_structure': {
-          const tool = new PatentClaimsStructureTool();
-          result = await tool.execute(args as any, context);
-          break;
+          const tool = new PatentClaimsStructureTool()
+          result = await tool.execute(args as any, context)
+          break
         }
 
         case 'patent_process_chart': {
-          const tool = new PatentProcessChartTool();
-          result = await tool.execute(args as any, context);
-          break;
+          const tool = new PatentProcessChartTool()
+          result = await tool.execute(args as any, context)
+          break
         }
 
         default:
-          throw new Error(`Unknown tool: ${name}`);
+          throw new Error(`Unknown tool: ${name}`)
       }
 
       return {
@@ -466,7 +466,7 @@ function createServer() {
             text: JSON.stringify(result, null, 2),
           },
         ],
-      };
+      }
     } catch (error) {
       return {
         content: [
@@ -478,27 +478,27 @@ function createServer() {
           },
         ],
         isError: true,
-      };
+      }
     }
-  });
+  })
 
-  return server;
+  return server
 }
 
 /**
  * 启动服务器
  */
 async function main() {
-  const server = createServer();
+  const server = createServer()
 
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  const transport = new StdioServerTransport()
+  await server.connect(transport)
 
   // 服务器已启动，等待请求
   // stderr.write('YunPat Patent Tools MCP Server running on stdio\n');
 }
 
 main().catch((error) => {
-  console.error('Server error:', error);
-  process.exit(1);
-});
+  console.error('Server error:', error)
+  process.exit(1)
+})

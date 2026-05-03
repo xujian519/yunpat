@@ -5,23 +5,23 @@
  * 适用于专利演示、技术培训、案件汇报等场景
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import * as fs from 'fs'
+import * as path from 'path'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 /**
  * 幻灯片数据结构
  */
 export interface SlideData {
   /** 标题 */
-  title: string;
+  title: string
   /** 内容 */
-  content: string[];
+  content: string[]
   /** 备注 */
-  notes?: string;
+  notes?: string
   /** 布局 */
-  layout?: 'title' | 'content' | 'blank';
+  layout?: 'title' | 'content' | 'blank'
 }
 
 /**
@@ -29,13 +29,13 @@ export interface SlideData {
  */
 export interface PresentationData {
   /** 标题 */
-  title: string;
+  title: string
   /** 作者 */
-  author?: string;
+  author?: string
   /** 幻灯片数组 */
-  slides: SlideData[];
+  slides: SlideData[]
   /** 主题 */
-  theme?: string;
+  theme?: string
 }
 
 /**
@@ -43,18 +43,18 @@ export interface PresentationData {
  */
 export class PptxExtractTextTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    includeNotes?: boolean;
-    includeLayout?: boolean;
+    filePath: string
+    includeNotes?: boolean
+    includeLayout?: boolean
   },
   {
-    text: string;
+    text: string
     metadata: {
-      filename: string;
-      slideCount: number;
-      title: string;
-      author: string;
-    };
+      filename: string
+      slideCount: number
+      title: string
+      author: string
+    }
   }
 > {
   readonly metadata = {
@@ -79,14 +79,14 @@ export class PptxExtractTextTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; includeNotes?: boolean; includeLayout?: boolean },
     _context: ToolContext
   ): Promise<{
-    text: string;
-    metadata: { filename: string; slideCount: number; title: string; author: string };
+    text: string
+    metadata: { filename: string; slideCount: number; title: string; author: string }
   }> {
     // 简化实现：使用 mammoth 类似的库提取文本
     // 实际应该使用专门的 PPTX 解析库
@@ -94,7 +94,7 @@ export class PptxExtractTextTool extends EnhancedBaseTool<
     // TODO: 集成实际的 PPTX 解析库
     // 参考：https://github.com/ggabor/node-pptx
 
-    const filename = path.basename(input.filePath);
+    const filename = path.basename(input.filePath)
 
     return {
       text: `# ${filename}\n\n[PowerPoint 文本提取功能待实现]\n\n请使用专门的 PPTX 解析库。`,
@@ -104,7 +104,7 @@ export class PptxExtractTextTool extends EnhancedBaseTool<
         title: '',
         author: '',
       },
-    };
+    }
   }
 }
 
@@ -113,14 +113,14 @@ export class PptxExtractTextTool extends EnhancedBaseTool<
  */
 export class PatentPresentationTool extends EnhancedBaseTool<
   {
-    data: PresentationData;
-    outputPath: string;
-    template?: 'standard' | 'technical' | 'legal';
+    data: PresentationData
+    outputPath: string
+    template?: 'standard' | 'technical' | 'legal'
   },
   {
-    success: boolean;
-    outputPath: string;
-    slideCount: number;
+    success: boolean
+    outputPath: string
+    slideCount: number
   }
 > {
   readonly metadata = {
@@ -159,7 +159,7 @@ export class PatentPresentationTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { data: PresentationData; outputPath: string; template?: string },
@@ -168,35 +168,35 @@ export class PatentPresentationTool extends EnhancedBaseTool<
     // 生成 Markdown 格式的演示文稿
     // 实际应该生成 PPTX 文件
 
-    let markdown = `# ${input.data.title}\n\n`;
+    let markdown = `# ${input.data.title}\n\n`
 
     if (input.data.author) {
-      markdown += `**作者**: ${input.data.author}\n\n`;
+      markdown += `**作者**: ${input.data.author}\n\n`
     }
 
-    markdown += `---\n\n`;
+    markdown += `---\n\n`
 
     for (const slide of input.data.slides) {
-      markdown += `## ${slide.title}\n\n`;
-      markdown += slide.content.map((c) => `- ${c}`).join('\n');
-      markdown += '\n\n';
+      markdown += `## ${slide.title}\n\n`
+      markdown += slide.content.map((c) => `- ${c}`).join('\n')
+      markdown += '\n\n'
 
       if (slide.notes) {
-        markdown += `**备注**: ${slide.notes}\n\n`;
+        markdown += `**备注**: ${slide.notes}\n\n`
       }
 
-      markdown += `---\n\n`;
+      markdown += `---\n\n`
     }
 
     // 保存为 Markdown 文件（临时方案）
-    const mdPath = input.outputPath.replace('.pptx', '.md');
-    fs.writeFileSync(mdPath, markdown, 'utf-8');
+    const mdPath = input.outputPath.replace('.pptx', '.md')
+    fs.writeFileSync(mdPath, markdown, 'utf-8')
 
     return {
       success: true,
       outputPath: mdPath,
       slideCount: input.data.slides.length,
-    };
+    }
   }
 }
 
@@ -205,18 +205,18 @@ export class PatentPresentationTool extends EnhancedBaseTool<
  */
 export class TechnicalDisclosureTool extends EnhancedBaseTool<
   {
-    inventionTitle: string;
-    technicalField: string;
-    backgroundArt: string;
-    inventionContent: string;
-    embodiments: string[];
-    drawings: string[];
-    outputPath: string;
+    inventionTitle: string
+    technicalField: string
+    backgroundArt: string
+    inventionContent: string
+    embodiments: string[]
+    drawings: string[]
+    outputPath: string
   },
   {
-    success: boolean;
-    outputPath: string;
-    slideCount: number;
+    success: boolean
+    outputPath: string
+    slideCount: number
   }
 > {
   readonly metadata = {
@@ -241,17 +241,17 @@ export class TechnicalDisclosureTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      inventionTitle: string;
-      technicalField: string;
-      backgroundArt: string;
-      inventionContent: string;
-      embodiments: string[];
-      drawings: string[];
-      outputPath: string;
+      inventionTitle: string
+      technicalField: string
+      backgroundArt: string
+      inventionContent: string
+      embodiments: string[]
+      drawings: string[]
+      outputPath: string
     },
     _context: ToolContext
   ): Promise<{ success: boolean; outputPath: string; slideCount: number }> {
@@ -290,9 +290,9 @@ export class TechnicalDisclosureTool extends EnhancedBaseTool<
           layout: 'content',
         },
       ],
-    };
+    }
 
-    const generator = new PatentPresentationTool();
+    const generator = new PatentPresentationTool()
     const result = await generator.execute(
       {
         data: presentationData,
@@ -300,9 +300,9 @@ export class TechnicalDisclosureTool extends EnhancedBaseTool<
         template: 'technical',
       },
       _context
-    );
+    )
 
-    return result;
+    return result
   }
 }
 
@@ -311,19 +311,19 @@ export class TechnicalDisclosureTool extends EnhancedBaseTool<
  */
 export class PatentTrainingTool extends EnhancedBaseTool<
   {
-    topic: string;
+    topic: string
     modules: Array<{
-      title: string;
-      content: string[];
-      examples?: string[];
-      exercises?: string[];
-    }>;
-    outputPath: string;
+      title: string
+      content: string[]
+      examples?: string[]
+      exercises?: string[]
+    }>
+    outputPath: string
   },
   {
-    success: boolean;
-    outputPath: string;
-    slideCount: number;
+    success: boolean
+    outputPath: string
+    slideCount: number
   }
 > {
   readonly metadata = {
@@ -353,18 +353,18 @@ export class PatentTrainingTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      topic: string;
+      topic: string
       modules: Array<{
-        title: string;
-        content: string[];
-        examples?: string[];
-        exercises?: string[];
-      }>;
-      outputPath: string;
+        title: string
+        content: string[]
+        examples?: string[]
+        exercises?: string[]
+      }>
+      outputPath: string
     },
     _context: ToolContext
   ): Promise<{ success: boolean; outputPath: string; slideCount: number }> {
@@ -375,7 +375,7 @@ export class PatentTrainingTool extends EnhancedBaseTool<
         content: ['专利培训课程'],
         layout: 'title',
       },
-    ];
+    ]
 
     for (const module of input.modules) {
       // 模块标题页
@@ -383,14 +383,14 @@ export class PatentTrainingTool extends EnhancedBaseTool<
         title: module.title,
         content: [],
         layout: 'title',
-      });
+      })
 
       // 模块内容
       slides.push({
         title: module.title,
         content: module.content,
         layout: 'content',
-      });
+      })
 
       // 案例（如果有）
       if (module.examples && module.examples.length > 0) {
@@ -398,7 +398,7 @@ export class PatentTrainingTool extends EnhancedBaseTool<
           title: `${module.title} - 案例`,
           content: module.examples,
           layout: 'content',
-        });
+        })
       }
 
       // 练习（如果有）
@@ -408,16 +408,16 @@ export class PatentTrainingTool extends EnhancedBaseTool<
           content: module.exercises,
           layout: 'content',
           notes: '学员练习时间',
-        });
+        })
       }
     }
 
     const presentationData: PresentationData = {
       title: input.topic,
       slides,
-    };
+    }
 
-    const generator = new PatentPresentationTool();
+    const generator = new PatentPresentationTool()
     const result = await generator.execute(
       {
         data: presentationData,
@@ -425,8 +425,8 @@ export class PatentTrainingTool extends EnhancedBaseTool<
         template: 'standard',
       },
       _context
-    );
+    )
 
-    return result;
+    return result
   }
 }

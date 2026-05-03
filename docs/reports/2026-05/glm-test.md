@@ -14,21 +14,25 @@
 **目的**: 测试基本对话能力
 
 **输入**:
+
 ```
 你好！请用一句话介绍你自己。
 ```
 
 **输出**:
+
 ```
 你好，我是一个致力于提供丰富知识和帮助的人工智能助手。
 ```
 
 **Token 使用**:
+
 - Prompt: 13 tokens
 - Completion: 14 tokens
 - Total: 27 tokens
 
 **评估**: ✅ 优秀
+
 - 响应自然流畅
 - 理解准确
 - 回答恰当
@@ -40,40 +44,44 @@
 **目的**: 测试 TypeScript 代码生成能力
 
 **输入**:
+
 ```
 用 TypeScript 写一个计算斐波那契数列的函数，要求有类型注释和错误处理。
 ```
 
 **输出**:
+
 ```typescript
 function fibonacci(n: number): number | Error {
-    if (typeof n !== 'number' || n < 0 || !Number.isInteger(n)) {
-        return new Error('Input must be a non-negative integer');
-    }
+  if (typeof n !== 'number' || n < 0 || !Number.isInteger(n)) {
+    return new Error('Input must be a non-negative integer')
+  }
 
-    if (n === 0) return 0;
-    if (n === 1) return 1;
+  if (n === 0) return 0
+  if (n === 1) return 1
 
-    let a = 0;
-    let b = 1;
-    let sum = 0;
+  let a = 0
+  let b = 1
+  let sum = 0
 
-    for (let i = 2; i <= n; i++) {
-        sum = a + b;
-        a = b;
-        b = sum;
-    }
+  for (let i = 2; i <= n; i++) {
+    sum = a + b
+    a = b
+    b = sum
+  }
 
-    return sum;
+  return sum
 }
 ```
 
 **Token 使用**:
+
 - Prompt: 27 tokens
 - Completion: 217 tokens
 - Total: 244 tokens
 
 **评估**: ✅ 优秀
+
 - ✅ 完整的类型注释
 - ✅ 完善的错误处理
 - ✅ 高效的算法实现
@@ -87,25 +95,30 @@ function fibonacci(n: number): number | Error {
 **目的**: 测试上下文保持能力
 
 **对话流程**:
+
 1. 用户: 什么是 TypeScript？
 2. 用户: 它和 JavaScript 有什么区别？
 
 **第一轮输出**:
+
 ```
 TypeScript 是一种由微软开发的开源编程语言，它是 JavaScript 的一个超集，增加了可选的静态类型和基于类的面向对象编程。
 ```
 
 **第二轮输出**:
+
 ```
 TypeScript 和 JavaScript 之间的关系是继承和扩展的关系。TypeScript 是 JavaScript 的一个超集，这意味着 TypeScript 代码是 JavaScript ...
 ```
 
 **Token 使用**:
+
 - Prompt: 218 tokens
 - Completion: 200 tokens
 - Total: 418 tokens
 
 **评估**: ✅ 优秀
+
 - ✅ 上下文保持准确
 - ✅ 理解多轮对话
 - ✅ 回答连贯自然
@@ -117,11 +130,13 @@ TypeScript 和 JavaScript 之间的关系是继承和扩展的关系。TypeScrip
 **目的**: 测试 JSON 格式输出能力
 
 **输入**:
+
 ```
 请用 JSON 格式返回一个用户信息，包含 name, age, email 三个字段。
 ```
 
 **输出**:
+
 ```json
 {
   "name": "John Doe",
@@ -131,6 +146,7 @@ TypeScript 和 JavaScript 之间的关系是继承和扩展的关系。TypeScrip
 ```
 
 **评估**: ✅ 优秀
+
 - ✅ JSON 格式正确
 - ✅ 字段完整
 - ✅ 数据类型正确
@@ -145,6 +161,7 @@ TypeScript 和 JavaScript 之间的关系是继承和扩展的关系。TypeScrip
 **状态**: ⚠️ 功能尚未实现
 
 **说明**:
+
 - NativeLLMAdapter 目前不支持流式输出
 - 计划在后续版本中添加此功能
 
@@ -154,21 +171,21 @@ TypeScript 和 JavaScript 之间的关系是继承和扩展的关系。TypeScrip
 
 ### 响应速度
 
-| 测试 | 响应时间 | 评估 |
-|------|---------|------|
-| 简单对话 | < 1s | ⚡⚡⚡⚡⚡ |
-| 代码生成 | ~2s | ⚡⚡⚡⚡ |
-| 多轮对话 | ~1.5s | ⚡⚡⚡⚡ |
-| JSON 输出 | < 1s | ⚡⚡⚡⚡⚡ |
+| 测试      | 响应时间 | 评估       |
+| --------- | -------- | ---------- |
+| 简单对话  | < 1s     | ⚡⚡⚡⚡⚡ |
+| 代码生成  | ~2s      | ⚡⚡⚡⚡   |
+| 多轮对话  | ~1.5s    | ⚡⚡⚡⚡   |
+| JSON 输出 | < 1s     | ⚡⚡⚡⚡⚡ |
 
 ### Token 效率
 
-| 测试 | Prompt | Completion | 总计 |
-|------|--------|-----------|------|
-| 简单对话 | 13 | 14 | 27 |
-| 代码生成 | 27 | 217 | 244 |
-| 多轮对话 | 218 | 200 | 418 |
-| JSON 输出 | ~20 | ~30 | ~50 |
+| 测试      | Prompt | Completion | 总计 |
+| --------- | ------ | ---------- | ---- |
+| 简单对话  | 13     | 14         | 27   |
+| 代码生成  | 27     | 217        | 244  |
+| 多轮对话  | 218    | 200        | 418  |
+| JSON 输出 | ~20    | ~30        | ~50  |
 
 **平均 Token 效率**: ✅ 高效
 
@@ -202,14 +219,15 @@ TypeScript 和 JavaScript 之间的关系是继承和扩展的关系。TypeScrip
 
 ## 与其他模型对比
 
-| 特性 | GLM-4-Flash | DeepSeek | Qwen |
-|------|------------|----------|------|
-| 响应速度 | ⚡⚡⚡⚡⚡ | ⚡⚡⚡⚡ | ⚡⚡⚡⚡⚡ |
-| 代码质量 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| 中文能力 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| 价格 | 低 | 中 | 低 |
+| 特性     | GLM-4-Flash | DeepSeek   | Qwen       |
+| -------- | ----------- | ---------- | ---------- |
+| 响应速度 | ⚡⚡⚡⚡⚡  | ⚡⚡⚡⚡   | ⚡⚡⚡⚡⚡ |
+| 代码质量 | ⭐⭐⭐⭐⭐  | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐   |
+| 中文能力 | ⭐⭐⭐⭐⭐  | ⭐⭐⭐⭐   | ⭐⭐⭐⭐⭐ |
+| 价格     | 低          | 中         | 低         |
 
 **推荐场景**:
+
 - ✅ 快速测试和开发
 - ✅ 中文代码生成
 - ✅ 实时对话应用
@@ -245,11 +263,13 @@ TypeScript 和 JavaScript 之间的关系是继承和扩展的关系。TypeScrip
 ## 测试配置
 
 **环境**:
+
 - Node.js: v22.17.0
 - TypeScript: 5.3+
 - 框架: YunPat v0.1.0
 
 **模型配置**:
+
 ```typescript
 {
   name: 'glm-4-flash',

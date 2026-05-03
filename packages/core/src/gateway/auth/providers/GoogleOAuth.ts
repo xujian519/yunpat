@@ -10,35 +10,35 @@ import {
   OAuthProviderConfig,
   OAuthUserInfo,
   OAuthProviderError,
-} from './BaseOAuthProvider.js';
+} from './BaseOAuthProvider.js'
 
 /**
  * Google OAuth 配置
  */
 export interface GoogleOAuthConfig {
   /** 客户端 ID */
-  clientId: string;
+  clientId: string
 
   /** 客户端密钥 */
-  clientSecret: string;
+  clientSecret: string
 
   /** 是否使用 PKCE（默认 true） */
-  usePkce?: boolean;
+  usePkce?: boolean
 }
 
 /**
  * Google 用户信息响应
  */
 interface GoogleUserInfoResponse {
-  sub: string;
-  name: string;
-  given_name?: string;
-  family_name?: string;
-  picture?: string;
-  email?: string;
-  email_verified?: boolean;
-  locale?: string;
-  hd?: string; // 托管域名（Google Workspace）
+  sub: string
+  name: string
+  given_name?: string
+  family_name?: string
+  picture?: string
+  email?: string
+  email_verified?: boolean
+  locale?: string
+  hd?: string // 托管域名（Google Workspace）
 }
 
 /**
@@ -54,16 +54,16 @@ export class GoogleOAuth extends BaseOAuthProvider {
       userInfoEndpoint: 'https://www.googleapis.com/oauth2/v2/userinfo',
       defaultScope: ['openid', 'profile', 'email'],
       usePkce: config.usePkce,
-    };
+    }
 
-    super(fullConfig);
+    super(fullConfig)
   }
 
   /**
    * 获取提供商名称
    */
   getName(): string {
-    return 'google';
+    return 'google'
   }
 
   /**
@@ -77,18 +77,18 @@ export class GoogleOAuth extends BaseOAuthProvider {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
-    });
+    })
 
     if (!response.ok) {
-      const error = await response.text();
+      const error = await response.text()
       throw new OAuthProviderError(
         `获取用户信息失败: ${error}`,
         'user_info_failed',
         response.status
-      );
+      )
     }
 
-    const data = (await response.json()) as GoogleUserInfoResponse;
+    const data = (await response.json()) as GoogleUserInfoResponse
 
     return {
       id: data.sub,
@@ -98,7 +98,7 @@ export class GoogleOAuth extends BaseOAuthProvider {
       emailVerified: data.email_verified,
       avatarUrl: data.picture,
       raw: data as unknown as Record<string, unknown>,
-    };
+    }
   }
 
   /**
@@ -111,12 +111,12 @@ export class GoogleOAuth extends BaseOAuthProvider {
    * @returns 是否在允许的域名中
    */
   static verifyHostedDomain(userInfo: OAuthUserInfo, allowedDomains: string[]): boolean {
-    const hd = userInfo.raw.hd as string | undefined;
+    const hd = userInfo.raw.hd as string | undefined
 
     if (!hd) {
-      return false;
+      return false
     }
 
-    return allowedDomains.includes(hd);
+    return allowedDomains.includes(hd)
   }
 }

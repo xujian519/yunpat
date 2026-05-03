@@ -9,7 +9,7 @@ import {
   PrincipleCategory,
   ViolationSeverity,
   ComplianceResult,
-} from './types.js';
+} from './types.js'
 
 /**
  * 专利撰写原则集
@@ -142,7 +142,7 @@ export const PATENT_PRINCIPLES: ConstitutionalPrinciple[] = [
       ],
     },
   },
-];
+]
 
 /**
  * 辅助函数：创建标准违规对象
@@ -171,25 +171,25 @@ function createViolation(
     description,
     suggestedCorrection,
     confidence,
-  };
+  }
 
   // 如果提供了内容，添加上下文
   if (content) {
-    (violation as any).location.context = content.substring(
+    ;(violation as any).location.context = content.substring(
       Math.max(0, start - 20),
       Math.min(content.length, end + 20)
-    );
+    )
   }
 
-  return violation;
+  return violation
 }
 
 /**
  * 检查清楚性原则
  */
 async function checkClarity(content: string): Promise<ComplianceResult> {
-  const violations: any[] = [];
-  const warnings: any[] = [];
+  const violations: any[] = []
+  const warnings: any[] = []
 
   // 模糊词汇列表
   const vagueTerms = [
@@ -203,12 +203,12 @@ async function checkClarity(content: string): Promise<ComplianceResult> {
     '若干',
     '等',
     '等等',
-  ];
+  ]
 
   // 检查模糊词汇
   for (const term of vagueTerms) {
-    const regex = new RegExp(term, 'g');
-    let match;
+    const regex = new RegExp(term, 'g')
+    let match
     while ((match = regex.exec(content)) !== null) {
       violations.push(
         createViolation(
@@ -223,12 +223,12 @@ async function checkClarity(content: string): Promise<ComplianceResult> {
           0.8,
           content
         )
-      );
+      )
     }
   }
 
   // 检查过长的句子（超过100字）
-  const sentences = content.split(/[。；！]/);
+  const sentences = content.split(/[。；！]/)
   for (const sentence of sentences) {
     if (sentence.length > 100) {
       warnings.push({
@@ -241,30 +241,30 @@ async function checkClarity(content: string): Promise<ComplianceResult> {
           text: sentence.substring(0, 50) + '...',
         },
         suggestion: '建议将长句拆分为多个短句，提高可读性',
-      });
+      })
     }
   }
 
-  const score = 1 - (violations.length * 0.15 + warnings.length * 0.05);
+  const score = 1 - (violations.length * 0.15 + warnings.length * 0.05)
 
   return {
     compliant: violations.length === 0,
     score: Math.max(0, score),
     violations,
     warnings,
-  };
+  }
 }
 
 /**
  * 检查简要性原则
  */
 async function checkBrevity(content: string): Promise<ComplianceResult> {
-  const violations: any[] = [];
-  const warnings: any[] = [];
+  const violations: any[] = []
+  const warnings: any[] = []
 
   // 检查重复的词语模式（如"所述处理器...所述处理器...所述处理器"）
-  const repeatedPattern = /(\S+)\s+\1+/g;
-  let match;
+  const repeatedPattern = /(\S+)\s+\1+/g
+  let match
   while ((match = repeatedPattern.exec(content)) !== null) {
     violations.push({
       principleId: 'brevity',
@@ -278,7 +278,7 @@ async function checkBrevity(content: string): Promise<ComplianceResult> {
       description: '存在重复表述',
       suggestedCorrection: '使用代词或省略重复的表述',
       confidence: 0.7,
-    });
+    })
   }
 
   // 检查冗余描述（如"通过连接线连接" -> "连接"）
@@ -286,7 +286,7 @@ async function checkBrevity(content: string): Promise<ComplianceResult> {
     { pattern: /通过连接线连接/g, suggestion: '连接' },
     { pattern: /进行配置/g, suggestion: '配置' },
     { pattern: /执行操作/g, suggestion: '执行' },
-  ];
+  ]
 
   for (const { pattern, suggestion } of redundantPatterns) {
     while ((match = pattern.exec(content)) !== null) {
@@ -300,26 +300,26 @@ async function checkBrevity(content: string): Promise<ComplianceResult> {
           text: match[0],
         },
         suggestion: `建议简化为"${suggestion}"`,
-      });
+      })
     }
   }
 
-  const score = 1 - (violations.length * 0.1 + warnings.length * 0.05);
+  const score = 1 - (violations.length * 0.1 + warnings.length * 0.05)
 
   return {
     compliant: violations.length === 0,
     score: Math.max(0, score),
     violations,
     warnings,
-  };
+  }
 }
 
 /**
  * 检查支持性原则
  */
 async function checkSupport(content: string): Promise<ComplianceResult> {
-  const violations: any[] = [];
-  const warnings: any[] = [];
+  const violations: any[] = []
+  const warnings: any[] = []
 
   // 检查过于宽泛的表述（如"任意类型"、"所有"等）
   const overlyBroadPatterns = [
@@ -327,10 +327,10 @@ async function checkSupport(content: string): Promise<ComplianceResult> {
     { pattern: /所有类型/g, severity: ViolationSeverity.MAJOR },
     { pattern: /任意方式/g, severity: ViolationSeverity.MAJOR },
     { pattern: /等及其组合/g, severity: ViolationSeverity.MINOR },
-  ];
+  ]
 
   for (const { pattern, severity } of overlyBroadPatterns) {
-    let match;
+    let match
     while ((match = pattern.exec(content)) !== null) {
       violations.push(
         createViolation(
@@ -345,13 +345,13 @@ async function checkSupport(content: string): Promise<ComplianceResult> {
           0.75,
           content
         )
-      );
+      )
     }
   }
 
   // 检查权利要求引用格式
-  const invalidReferencePattern = /根据权利要求\d+/g;
-  let match;
+  const invalidReferencePattern = /根据权利要求\d+/g
+  let match
   while ((match = invalidReferencePattern.exec(content)) !== null) {
     warnings.push({
       principleId: 'support',
@@ -363,31 +363,31 @@ async function checkSupport(content: string): Promise<ComplianceResult> {
         text: match[0],
       },
       suggestion: '建议使用"根据权利要求1所述的..."格式',
-    });
+    })
   }
 
-  const score = 1 - (violations.length * 0.15 + warnings.length * 0.05);
+  const score = 1 - (violations.length * 0.15 + warnings.length * 0.05)
 
   return {
     compliant: violations.length === 0,
     score: Math.max(0, score),
     violations,
     warnings,
-  };
+  }
 }
 
 /**
  * 检查完整性原则
  */
 async function checkCompleteness(content: string): Promise<ComplianceResult> {
-  const violations: any[] = [];
-  const warnings: any[] = [];
+  const violations: any[] = []
+  const warnings: any[] = []
 
   // 检查是否包含必要的技术特征
   // 对于方法权利要求，检查是否包含"包括"或"包含"
-  const hasMethodClaim = /一种.*方法/i.test(content);
+  const hasMethodClaim = /一种.*方法/i.test(content)
   if (hasMethodClaim) {
-    const hasIncluding = /包括|包含/i.test(content);
+    const hasIncluding = /包括|包含/i.test(content)
     if (!hasIncluding) {
       violations.push(
         createViolation(
@@ -402,14 +402,14 @@ async function checkCompleteness(content: string): Promise<ComplianceResult> {
           0.9,
           content
         )
-      );
+      )
     }
   }
 
   // 检查装置权利要求是否包含"包括"
-  const hasDeviceClaim = /一种.*装置|设备|系统/i.test(content);
+  const hasDeviceClaim = /一种.*装置|设备|系统/i.test(content)
   if (hasDeviceClaim) {
-    const hasIncluding = /包括|包含|由.*组成/i.test(content);
+    const hasIncluding = /包括|包含|由.*组成/i.test(content)
     if (!hasIncluding) {
       violations.push(
         createViolation(
@@ -424,43 +424,43 @@ async function checkCompleteness(content: string): Promise<ComplianceResult> {
           0.9,
           content
         )
-      );
+      )
     }
   }
 
   // 检查步骤/组件数量（过少可能不完整）
-  const steps = content.match(/；|；/g);
+  const steps = content.match(/；|；/g)
   if (steps && steps.length < 2) {
     warnings.push({
       principleId: 'completeness',
       principleName: '完整性原则',
       description: '技术方案步骤/组件数量较少，可能不够完整',
       suggestion: '建议补充更多必要的技术特征',
-    });
+    })
   }
 
-  const score = 1 - (violations.length * 0.2 + warnings.length * 0.05);
+  const score = 1 - (violations.length * 0.2 + warnings.length * 0.05)
 
   return {
     compliant: violations.length === 0,
     score: Math.max(0, score),
     violations,
     warnings,
-  };
+  }
 }
 
 /**
  * 检查充分公开原则
  */
 async function checkEnablement(content: string): Promise<ComplianceResult> {
-  const violations: any[] = [];
-  const warnings: any[] = [];
+  const violations: any[] = []
+  const warnings: any[] = []
 
   // 检查是否有未公开的参数（如"适当参数"、"合适参数"等）
-  const undisclosedParams = [/适当参数/g, /合适参数/g, /预定参数/g, /相应的参数/g];
+  const undisclosedParams = [/适当参数/g, /合适参数/g, /预定参数/g, /相应的参数/g]
 
   for (const pattern of undisclosedParams) {
-    let match;
+    let match
     while ((match = pattern.exec(content)) !== null) {
       violations.push(
         createViolation(
@@ -475,15 +475,15 @@ async function checkEnablement(content: string): Promise<ComplianceResult> {
           0.85,
           content
         )
-      );
+      )
     }
   }
 
   // 检查功能性描述（可能缺乏具体实现）
-  const functionalDescriptions = [/能够实现.*功能/g, /用于实现/g, /配置为.*$/g];
+  const functionalDescriptions = [/能够实现.*功能/g, /用于实现/g, /配置为.*$/g]
 
   for (const pattern of functionalDescriptions) {
-    let match;
+    let match
     while ((match = pattern.exec(content)) !== null) {
       warnings.push({
         principleId: 'enablement',
@@ -495,26 +495,26 @@ async function checkEnablement(content: string): Promise<ComplianceResult> {
           text: match[0],
         },
         suggestion: '提供具体的实现细节，如算法、参数、结构等',
-      });
+      })
     }
   }
 
-  const score = 1 - (violations.length * 0.15 + warnings.length * 0.05);
+  const score = 1 - (violations.length * 0.15 + warnings.length * 0.05)
 
   return {
     compliant: violations.length === 0,
     score: Math.max(0, score),
     violations,
     warnings,
-  };
+  }
 }
 
 /**
  * 检查确定性原则
  */
 async function checkDefiniteness(content: string): Promise<ComplianceResult> {
-  const violations: any[] = [];
-  const warnings: any[] = [];
+  const violations: any[] = []
+  const warnings: any[] = []
 
   // 检查不确定词汇（按长度排序，先匹配长的词汇）
   const indefiniteTerms = [
@@ -523,19 +523,19 @@ async function checkDefiniteness(content: string): Promise<ComplianceResult> {
     { term: '大概', severity: ViolationSeverity.MAJOR },
     { term: '可能', severity: ViolationSeverity.MINOR },
     { term: '可以', severity: ViolationSeverity.MINOR },
-  ];
+  ]
 
   // 记录已覆盖的位置，避免重复检测
-  const coveredRanges = new Array(content.length).fill(false);
+  const coveredRanges = new Array(content.length).fill(false)
 
   for (const { term, severity } of indefiniteTerms) {
-    const regex = new RegExp(term, 'g');
-    let match;
+    const regex = new RegExp(term, 'g')
+    let match
     while ((match = regex.exec(content)) !== null) {
       // 检查这个范围是否已被覆盖
       const isCovered = coveredRanges
         .slice(match.index, match.index + term.length)
-        .some((covered) => covered);
+        .some((covered) => covered)
 
       if (!isCovered) {
         violations.push(
@@ -551,19 +551,19 @@ async function checkDefiniteness(content: string): Promise<ComplianceResult> {
             0.8,
             content
           )
-        );
+        )
 
         // 标记这个范围已覆盖
         for (let i = match.index; i < match.index + term.length; i++) {
-          coveredRanges[i] = true;
+          coveredRanges[i] = true
         }
       }
     }
   }
 
   // 检查数值范围是否明确
-  const rangePattern = /\d+[-~]\d+/g;
-  let match;
+  const rangePattern = /\d+[-~]\d+/g
+  let match
   while ((match = rangePattern.exec(content)) !== null) {
     // 检查是否使用了"-"或"~"（不够规范）
     if (match[0].includes('-') || match[0].includes('~')) {
@@ -577,32 +577,32 @@ async function checkDefiniteness(content: string): Promise<ComplianceResult> {
           text: match[0],
         },
         suggestion: '建议使用"至"或"～"表示范围，如"10至20"',
-      });
+      })
     }
   }
 
-  const score = 1 - (violations.length * 0.15 + warnings.length * 0.05);
+  const score = 1 - (violations.length * 0.15 + warnings.length * 0.05)
 
   return {
     compliant: violations.length === 0,
     score: Math.max(0, score),
     violations,
     warnings,
-  };
+  }
 }
 
 /**
  * 检查创造性原则
  */
 async function checkNovelty(content: string): Promise<ComplianceResult> {
-  const violations: any[] = [];
-  const warnings: any[] = [];
+  const violations: any[] = []
+  const warnings: any[] = []
 
   // 检查常规技术描述（如"常规的"、"标准的"等）
-  const conventionalTech = [/常规的/g, /标准的/g, /已知的/g, /现有的/g];
+  const conventionalTech = [/常规的/g, /标准的/g, /已知的/g, /现有的/g]
 
   for (const pattern of conventionalTech) {
-    let match;
+    let match
     while ((match = pattern.exec(content)) !== null) {
       warnings.push({
         principleId: 'novelty',
@@ -614,66 +614,66 @@ async function checkNovelty(content: string): Promise<ComplianceResult> {
           text: match[0],
         },
         suggestion: '明确指出本发明的独特之处和技术贡献',
-      });
+      })
     }
   }
 
   // 检查是否有技术效果描述
-  const hasTechnicalEffect = /能够实现|有益效果|技术优势|优点|创新/i.test(content);
+  const hasTechnicalEffect = /能够实现|有益效果|技术优势|优点|创新/i.test(content)
   if (!hasTechnicalEffect) {
     warnings.push({
       principleId: 'novelty',
       principleName: '创造性原则',
       description: '缺少技术效果描述',
       suggestion: '建议补充本发明的有益效果和技术优势',
-    });
+    })
   }
 
-  const score = 1 - warnings.length * 0.1;
+  const score = 1 - warnings.length * 0.1
 
   return {
     compliant: violations.length === 0,
     score: Math.max(0, score),
     violations,
     warnings,
-  };
+  }
 }
 
 /**
  * 检查最佳实施例原则
  */
 async function checkBestMode(content: string): Promise<ComplianceResult> {
-  const violations: any[] = [];
-  const warnings: any[] = [];
+  const violations: any[] = []
+  const warnings: any[] = []
 
   // 检查是否有"优选实施例"或"最佳实施例"描述
-  const hasBestMode = /优选实施例|最佳实施例|优选的|在本发明的实施例中/i.test(content);
+  const hasBestMode = /优选实施例|最佳实施例|优选的|在本发明的实施例中/i.test(content)
   if (!hasBestMode) {
     warnings.push({
       principleId: 'best_mode',
       principleName: '最佳实施例原则',
       description: '缺少最佳实施例描述',
       suggestion: '建议在说明书中描述优选实施例，提供最优技术方案',
-    });
+    })
   }
 
   // 检查是否有参数优选描述
-  const hasPreferredParams = /优选.*范围|优选.*为|最佳.*为/i.test(content);
+  const hasPreferredParams = /优选.*范围|优选.*为|最佳.*为/i.test(content)
   if (!hasPreferredParams) {
     warnings.push({
       principleId: 'best_mode',
       principleName: '最佳实施例原则',
       description: '缺少参数优选描述',
       suggestion: '建议提供关键参数的优选范围或最优值',
-    });
+    })
   }
 
-  const score = 1 - warnings.length * 0.1;
+  const score = 1 - warnings.length * 0.1
 
   return {
     compliant: violations.length === 0,
     score: Math.max(0, score),
     violations,
     warnings,
-  };
+  }
 }

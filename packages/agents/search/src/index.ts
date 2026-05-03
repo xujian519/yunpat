@@ -3,4 +3,4 @@ export {
   type SearchStrategy,
   type SearchInput,
   type SearchOutput,
-} from './PatentSearchAgent.js';
+} from './PatentSearchAgent.js'

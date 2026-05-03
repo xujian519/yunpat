@@ -4,19 +4,19 @@
  * 展示带记忆层的专利撰写流程
  */
 
-import { createPatentWriterAgentWithMemory } from './PatentWriterAgentWithMemory.js';
+import { createPatentWriterAgentWithMemory } from './PatentWriterAgentWithMemory.js'
 
 async function main() {
-  console.log('=== PatentWriterAgent with Memory Layer 示例 ===\n');
+  console.log('=== PatentWriterAgent with Memory Layer 示例 ===\n')
 
   // 1. 创建 Agent
-  console.log('1️⃣ 创建专利撰写助手...');
+  console.log('1️⃣ 创建专利撰写助手...')
   const agent = await createPatentWriterAgentWithMemory({
     databaseUrl: 'postgres://yunpat:yunpat123@localhost:5432/yunpat',
-  });
+  })
 
   // 2. 先添加一些历史专利到记忆库
-  console.log('\n2️⃣ 添加历史专利案例...');
+  console.log('\n2️⃣ 添加历史专利案例...')
   const historicalPatents = [
     {
       type: 'patent',
@@ -77,22 +77,23 @@ async function main() {
         tags: ['NLP', 'BERT', '文本分类'],
       },
     },
-  ];
+  ]
 
   // 通过 memory 直接添加（绕过 BGE-M3，因为这是模拟数据）
   for (const patent of historicalPatents) {
     // 注意：实际应用中应该用 BGE-M3 生成向量
     // 这里为了演示简化，直接添加
-    console.log(`   添加专利: ${patent.metadata?.title}`);
+    console.log(`   添加专利: ${patent.metadata?.title}`)
   }
 
   // 3. 撰写新专利（带 RAG 增强）
-  console.log('\n3️⃣ 撰写新专利（RAG 增强）...');
+  console.log('\n3️⃣ 撰写新专利（RAG 增强）...')
 
   const newPatent = await agent.writePatentWithRAG({
     inventionTitle: '基于注意力机制的医学图像分析方法',
     technicalField: '本发明涉及医学影像分析和深度学习技术领域',
-    backgroundArt: '医学图像分析是医疗诊断的重要辅助手段。传统方法依赖放射科医生的经验判断，存在主观性强、易疲劳等问题。',
+    backgroundArt:
+      '医学图像分析是医疗诊断的重要辅助手段。传统方法依赖放射科医生的经验判断，存在主观性强、易疲劳等问题。',
     inventionContent: `本发明提供了一种基于注意力机制的医学图像分析方法，包括：
 1. 获取医学影像数据（CT、MRI等）
 2. 使用 CNN 提取图像特征
@@ -103,36 +104,42 @@ async function main() {
       '根据权利要求1所述的方法，其特征在于注意力机制采用多头自注意力结构。',
       '根据权利要求1所述的方法，其特征在于使用加权交叉熵损失函数训练模型。',
     ],
-  });
+  })
 
-  console.log('\n📄 生成的专利内容：');
-  console.log('='.repeat(60));
-  console.log(newPatent.patentContent);
-  console.log('='.repeat(60));
+  console.log('\n📄 生成的专利内容：')
+  console.log('='.repeat(60))
+  console.log(newPatent.patentContent)
+  console.log('='.repeat(60))
 
-  console.log(`\n📊 统计信息：`);
-  console.log(`   - 检索到的相关专利: ${newPatent.retrievedPatents} 条`);
-  console.log(`   - 是否使用 RAG 上下文: ${newPatent.ragContextUsed ? '是' : '否'}`);
+  console.log(`\n📊 统计信息：`)
+  console.log(`   - 检索到的相关专利: ${newPatent.retrievedPatents} 条`)
+  console.log(`   - 是否使用 RAG 上下文: ${newPatent.ragContextUsed ? '是' : '否'}`)
 
   // 4. 语义搜索测试
-  console.log('\n4️⃣ 语义搜索测试...');
+  console.log('\n4️⃣ 语义搜索测试...')
 
-  const searchResults = await agent.searchPatents('深度学习在图像识别中的应用', 3);
+  const searchResults = await agent.searchPatents('深度学习在图像识别中的应用', 3)
 
-  console.log(`   找到 ${searchResults.length} 条相关专利：`);
+  console.log(`   找到 ${searchResults.length} 条相关专利：`)
   for (const result of searchResults) {
-    console.log(`   - [${result.metadata?.patentId}] ${result.metadata?.title}`);
-    console.log(`     相似度: ${(result.similarity * 100).toFixed(2)}%`);
+    console.log(`   - [${result.metadata?.patentId}] ${result.metadata?.title}`)
+    console.log(`     相似度: ${(result.similarity * 100).toFixed(2)}%`)
   }
 
   // 5. 对话历史管理
-  console.log('\n5️⃣ 对话历史管理（Token 窗口）...');
+  console.log('\n5️⃣ 对话历史管理（Token 窗口）...')
 
   const conversationHistory = [
     { role: 'user' as const, content: '你好，我想申请一个专利' },
-    { role: 'assistant' as const, content: '你好！我可以帮助你撰写专利申请文件。请告诉我你的发明内容。' },
+    {
+      role: 'assistant' as const,
+      content: '你好！我可以帮助你撰写专利申请文件。请告诉我你的发明内容。',
+    },
     { role: 'user' as const, content: '我的发明是关于医学图像分析的' },
-    { role: 'assistant' as const, content: '好的，请详细描述你的技术方案，包括技术领域、背景技术和发明内容。' },
+    {
+      role: 'assistant' as const,
+      content: '好的，请详细描述你的技术方案，包括技术领域、背景技术和发明内容。',
+    },
     { role: 'user' as const, content: '我的发明使用注意力机制来处理医学图像' },
     { role: 'assistant' as const, content: '很好的创新点！请问你的发明相比现有技术有什么优势？' },
     // ... 模拟更多对话
@@ -140,46 +147,46 @@ async function main() {
       role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
       content: `这是第 ${i + 7} 轮对话内容，用来测试 Token 窗口压缩效果。`.repeat(3),
     })),
-  ];
+  ]
 
-  const { stats } = await agent.manageConversationHistory(conversationHistory);
+  const { stats } = await agent.manageConversationHistory(conversationHistory)
 
-  console.log(`   原始消息数: ${stats.originalMessages}`);
-  console.log(`   压缩后消息数: ${stats.compressedMessages}`);
-  console.log(`   压缩比例: ${(stats.compressionRatio * 100).toFixed(2)}%`);
+  console.log(`   原始消息数: ${stats.originalMessages}`)
+  console.log(`   压缩后消息数: ${stats.compressedMessages}`)
+  console.log(`   压缩比例: ${(stats.compressionRatio * 100).toFixed(2)}%`)
 
   // 6. 获取统计信息
-  console.log('\n6️⃣ 系统统计信息...');
+  console.log('\n6️⃣ 系统统计信息...')
 
-  const agentStats = await agent.getStats();
+  const agentStats = await agent.getStats()
 
-  console.log('   记忆层统计：');
-  console.log(`     - 总专利数: ${agentStats.memory.vector.totalMemories}`);
-  console.log(`     - 类型分布:`, agentStats.memory.vector.typeDistribution);
+  console.log('   记忆层统计：')
+  console.log(`     - 总专利数: ${agentStats.memory.vector.totalMemories}`)
+  console.log(`     - 类型分布:`, agentStats.memory.vector.typeDistribution)
 
-  console.log('\n   BGE-M3 缓存：');
-  console.log(`     - 缓存大小: ${agentStats.bge.cacheSize}`);
-  console.log(`     - 缓存命中率: ${(agentStats.bge.cacheHitRate * 100).toFixed(2)}%`);
+  console.log('\n   BGE-M3 缓存：')
+  console.log(`     - 缓存大小: ${agentStats.bge.cacheSize}`)
+  console.log(`     - 缓存命中率: ${(agentStats.bge.cacheHitRate * 100).toFixed(2)}%`)
 
-  console.log('\n   Token 窗口配置：');
-  console.log(`     - 最大 Token: ${agentStats.tokenWindow.maxTokens}`);
-  console.log(`     - 可用 Token: ${agentStats.tokenWindow.availableTokens}`);
+  console.log('\n   Token 窗口配置：')
+  console.log(`     - 最大 Token: ${agentStats.tokenWindow.maxTokens}`)
+  console.log(`     - 可用 Token: ${agentStats.tokenWindow.availableTokens}`)
 
   // 7. 清理
-  await agent.cleanup();
+  await agent.cleanup()
 
-  console.log('\n\n✅ PatentWriterAgent with Memory 示例执行完成！\n');
+  console.log('\n\n✅ PatentWriterAgent with Memory 示例执行完成！\n')
 
-  console.log('🎯 关键要点：');
-  console.log('   1. 自动检索相关专利案例（RAG）');
-  console.log('   2. 语义搜索相似专利');
-  console.log('   3. Token 窗口自动压缩对话历史');
-  console.log('   4. 自动保存生成的专利到记忆库');
-  console.log('   5. 向量缓存提升性能');
+  console.log('🎯 关键要点：')
+  console.log('   1. 自动检索相关专利案例（RAG）')
+  console.log('   2. 语义搜索相似专利')
+  console.log('   3. Token 窗口自动压缩对话历史')
+  console.log('   4. 自动保存生成的专利到记忆库')
+  console.log('   5. 向量缓存提升性能')
 }
 
 // 运行示例
 main().catch((error) => {
-  console.error('❌ 执行失败:', error);
-  process.exit(1);
-});
+  console.error('❌ 执行失败:', error)
+  process.exit(1)
+})

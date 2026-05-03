@@ -14,9 +14,9 @@ export {
   type KnowledgeInjectionResult,
   type KnowledgeStats,
   type KnowledgeBaseConfig,
-} from './KnowledgeBase.js';
+} from './KnowledgeBase.js'
 
-export { KnowledgeEntryType } from './KnowledgeBase.js';
+export { KnowledgeEntryType } from './KnowledgeBase.js'
 
 export {
   KnowledgeCardSchema,
@@ -29,10 +29,10 @@ export {
   type PipelineConfig,
   type PipelineProgress,
   type PipelineResult,
-} from './KnowledgeCard.js';
+} from './KnowledgeCard.js'
 
-export { CardGenerator, type CardGeneratorConfig } from './CardGenerator.js';
+export { CardGenerator, type CardGeneratorConfig } from './CardGenerator.js'
 
-export { CardRetriever } from './CardRetriever.js';
+export { CardRetriever } from './CardRetriever.js'
 
-export { CardPipeline } from './CardPipeline.js';
+export { CardPipeline } from './CardPipeline.js'

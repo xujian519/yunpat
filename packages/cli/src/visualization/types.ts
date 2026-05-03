@@ -4,39 +4,39 @@
  * 定义文本渲染、TUI渲染、导出功能的核心类型
  */
 
-import type { HierarchicalPlan, DependencyGraph } from '@yunpat/core';
+import type { HierarchicalPlan, DependencyGraph } from '@yunpat/core'
 
 // 重新导出类型
-export type { HierarchicalPlan, DependencyGraph };
+export type { HierarchicalPlan, DependencyGraph }
 
 /**
  * 可视化选项
  */
 export interface VisualizationOptions {
-  format: 'text' | 'tree' | 'graph';
-  showProgress?: boolean;
-  showMetrics?: boolean;
-  interactive?: boolean;
-  compact?: boolean;
-  colors?: boolean;
+  format: 'text' | 'tree' | 'graph'
+  showProgress?: boolean
+  showMetrics?: boolean
+  interactive?: boolean
+  compact?: boolean
+  colors?: boolean
 }
 
 /**
  * 文本渲染选项
  */
 export interface TextRenderOptions extends VisualizationOptions {
-  includeDetails?: boolean;
-  maxDepth?: number;
-  showTimestamps?: boolean;
+  includeDetails?: boolean
+  maxDepth?: number
+  showTimestamps?: boolean
 }
 
 /**
  * TUI渲染选项
  */
 export interface TUIRenderOptions extends VisualizationOptions {
-  refreshRate?: number; // 刷新频率（毫秒）
-  enableKeyboardNav?: boolean;
-  showHelp?: boolean;
+  refreshRate?: number // 刷新频率（毫秒）
+  enableKeyboardNav?: boolean
+  showHelp?: boolean
 }
 
 /**
@@ -54,104 +54,104 @@ export enum ExportFormat {
  * 导出选项
  */
 export interface ExportOptions {
-  format: ExportFormat;
-  outputPath: string;
-  width?: number;
-  height?: number;
-  dpi?: number;
-  backgroundColor?: string;
-  fontName?: string;
+  format: ExportFormat
+  outputPath: string
+  width?: number
+  height?: number
+  dpi?: number
+  backgroundColor?: string
+  fontName?: string
 }
 
 /**
  * 节点样式
  */
 export interface NodeStyle {
-  shape: 'box' | 'ellipse' | 'diamond' | 'circle';
-  color: string;
-  fillColor: string;
-  borderColor: string;
-  borderWidth: number;
-  fontSize: number;
-  fontColor: string;
+  shape: 'box' | 'ellipse' | 'diamond' | 'circle'
+  color: string
+  fillColor: string
+  borderColor: string
+  borderWidth: number
+  fontSize: number
+  fontColor: string
 }
 
 /**
  * 边样式
  */
 export interface EdgeStyle {
-  color: string;
-  style: 'solid' | 'dashed' | 'dotted';
-  thickness: number;
-  label?: string;
+  color: string
+  style: 'solid' | 'dashed' | 'dotted'
+  thickness: number
+  label?: string
 }
 
 /**
  * 渲染结果
  */
 export interface RenderResult {
-  content: string; // 渲染后的文本内容
+  content: string // 渲染后的文本内容
   metadata: {
-    renderTime: number;
-    nodeCount: number;
-    edgeCount: number;
-    format: string;
-  };
+    renderTime: number
+    nodeCount: number
+    edgeCount: number
+    format: string
+  }
 }
 
 /**
  * 图布局信息
  */
 export interface GraphLayout {
-  nodes: Map<string, LayoutNode>;
-  edges: LayoutEdge[];
+  nodes: Map<string, LayoutNode>
+  edges: LayoutEdge[]
   bounds: {
-    width: number;
-    height: number;
-  };
+    width: number
+    height: number
+  }
 }
 
 /**
  * 布局节点
  */
 export interface LayoutNode {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  label: string;
-  status: string;
+  id: string
+  x: number
+  y: number
+  width: number
+  height: number
+  label: string
+  status: string
 }
 
 /**
  * 布局边
  */
 export interface LayoutEdge {
-  from: string;
-  to: string;
-  path: Array<{ x: number; y: number }>;
-  label?: string;
+  from: string
+  to: string
+  path: Array<{ x: number; y: number }>
+  label?: string
 }
 
 /**
  * 进度信息
  */
 export interface ProgressInfo {
-  total: number;
-  completed: number;
-  inProgress: number;
-  pending: number;
-  percentage: number;
+  total: number
+  completed: number
+  inProgress: number
+  pending: number
+  percentage: number
 }
 
 /**
  * 图统计
  */
 export interface GraphStats {
-  totalNodes: number;
-  totalEdges: number;
-  criticalPathLength: number;
-  maxDepth: number;
-  estimatedTime: number;
+  totalNodes: number
+  totalEdges: number
+  criticalPathLength: number
+  maxDepth: number
+  estimatedTime: number
 }

@@ -8,8 +8,8 @@
  * - 安全对齐：Constitutional AI、Guardrails
  */
 
-import { LLMAdapter } from '../lifecycle/Lifecycle.js';
-import { TreeOfThoughtsStrategy, ThoughtNode } from './TreeOfThoughtsStrategy.js';
+import { LLMAdapter } from '../lifecycle/Lifecycle.js'
+import { TreeOfThoughtsStrategy, ThoughtNode } from './TreeOfThoughtsStrategy.js'
 
 /**
  * 推理策略类型
@@ -33,16 +33,16 @@ export enum ReasoningStrategy {
  */
 export interface Observation {
   /** 观察内容 */
-  content: string;
+  content: string
 
   /** 相关数据 */
-  data?: Record<string, unknown>;
+  data?: Record<string, unknown>
 
   /** 时间戳 */
-  timestamp: Date;
+  timestamp: Date
 
   /** 置信度 */
-  confidence?: number;
+  confidence?: number
 }
 
 /**
@@ -50,16 +50,16 @@ export interface Observation {
  */
 export interface Thought {
   /** 思考内容 */
-  reasoning: string;
+  reasoning: string
 
   /** 下一步行动建议 */
-  nextAction?: string;
+  nextAction?: string
 
   /** 是否需要更多信息 */
-  needMoreInfo?: boolean;
+  needMoreInfo?: boolean
 
   /** 当前状态 */
-  state: 'thinking' | 'planning' | 'acting' | 'done';
+  state: 'thinking' | 'planning' | 'acting' | 'done'
 }
 
 /**
@@ -67,16 +67,16 @@ export interface Thought {
  */
 export interface Action {
   /** 行动类型 */
-  type: string;
+  type: string
 
   /** 行动参数 */
-  params?: Record<string, unknown>;
+  params?: Record<string, unknown>
 
   /** 目标 */
-  target?: string;
+  target?: string
 
   /** 预期结果 */
-  expectedOutcome?: string;
+  expectedOutcome?: string
 }
 
 /**
@@ -84,19 +84,19 @@ export interface Action {
  */
 export interface ActionResult {
   /** 是否成功 */
-  success: boolean;
+  success: boolean
 
   /** 结果数据 */
-  data?: unknown;
+  data?: unknown
 
   /** 错误信息 */
-  error?: string;
+  error?: string
 
   /** 使用的工具 */
-  toolUsed?: string;
+  toolUsed?: string
 
   /** Token 消耗 */
-  tokensUsed?: number;
+  tokensUsed?: number
 }
 
 /**
@@ -104,22 +104,22 @@ export interface ActionResult {
  */
 export interface ReActIteration {
   /** 迭代次数 */
-  iteration: number;
+  iteration: number
 
   /** 观察 */
-  observation: Observation;
+  observation: Observation
 
   /** 思考 */
-  thought: Thought;
+  thought: Thought
 
   /** 行动 */
-  action?: Action;
+  action?: Action
 
   /** 行动结果 */
-  actionResult?: ActionResult;
+  actionResult?: ActionResult
 
   /** 是否完成 */
-  done: boolean;
+  done: boolean
 }
 
 /**
@@ -127,16 +127,16 @@ export interface ReActIteration {
  */
 export interface ReActConfig {
   /** 最大迭代次数 */
-  maxIterations: number;
+  maxIterations: number
 
   /** 是否启用详细日志 */
-  verbose: boolean;
+  verbose: boolean
 
   /** 是否在每个步骤后反思 */
-  reflectAfterStep: boolean;
+  reflectAfterStep: boolean
 
   /** 停止条件 */
-  stopConditions?: Array<(iteration: ReActIteration) => boolean>;
+  stopConditions?: Array<(iteration: ReActIteration) => boolean>
 }
 
 /**
@@ -145,17 +145,17 @@ export interface ReActConfig {
  * 观察 → 思考 → 行动 → 重复
  */
 export class ReActLoop {
-  private llm: LLMAdapter;
-  private config: ReActConfig;
+  private llm: LLMAdapter
+  private config: ReActConfig
 
   constructor(llm: LLMAdapter, config?: Partial<ReActConfig>) {
-    this.llm = llm;
+    this.llm = llm
     this.config = {
       maxIterations: 10,
       verbose: false,
       reflectAfterStep: true,
       ...config,
-    };
+    }
   }
 
   /**
@@ -166,29 +166,29 @@ export class ReActLoop {
    * @returns 迭代结果生成器
    */
   async *execute(goal: string, context?: Record<string, unknown>): AsyncIterable<ReActIteration> {
-    let iteration = 0;
-    let done = false;
+    let iteration = 0
+    let done = false
     let observation: Observation = {
       content: `目标: ${goal}`,
       timestamp: new Date(),
-    };
+    }
 
     if (context) {
-      observation.data = context;
+      observation.data = context
     }
 
     while (!done && iteration < this.config.maxIterations) {
-      iteration++;
+      iteration++
 
       if (this.config.verbose) {
-        console.log(`\n[迭代 ${iteration}]`);
+        console.log(`\n[迭代 ${iteration}]`)
       }
 
       // 1. 思考
-      const thought = await this.think(observation, goal);
+      const thought = await this.think(observation, goal)
 
       if (this.config.verbose) {
-        console.log(`[思考] ${thought.reasoning}`);
+        console.log(`[思考] ${thought.reasoning}`)
       }
 
       // 检查是否完成
@@ -198,35 +198,35 @@ export class ReActLoop {
           observation,
           thought,
           done: true,
-        };
-        break;
+        }
+        break
       }
 
       // 2. 决定行动
-      const action = this.decideAction(thought);
+      const action = this.decideAction(thought)
 
       if (this.config.verbose) {
-        console.log(`[行动] ${action.type}`, action.params || '');
+        console.log(`[行动] ${action.type}`, action.params || '')
       }
 
       // 3. 执行行动
-      const actionResult = await this.executeAction(action);
+      const actionResult = await this.executeAction(action)
 
       if (this.config.verbose) {
         console.log(
           `[结果] ${actionResult.success ? '成功' : '失败'}`,
           actionResult.data || actionResult.error || ''
-        );
+        )
       }
 
       // 4. 更新观察
-      observation = this.updateObservation(observation, actionResult);
+      observation = this.updateObservation(observation, actionResult)
 
       // 5. 反思（如果启用）
       if (this.config.reflectAfterStep) {
-        const shouldContinue = await this.reflect(observation, thought, actionResult);
+        const shouldContinue = await this.reflect(observation, thought, actionResult)
         if (!shouldContinue) {
-          done = true;
+          done = true
         }
       }
 
@@ -239,12 +239,12 @@ export class ReActLoop {
           action,
           actionResult,
           done,
-        };
+        }
 
         for (const stopCondition of this.config.stopConditions) {
           if (stopCondition(currentIteration)) {
-            done = true;
-            break;
+            done = true
+            break
           }
         }
       }
@@ -257,7 +257,7 @@ export class ReActLoop {
         action,
         actionResult,
         done,
-      };
+      }
     }
   }
 
@@ -265,7 +265,7 @@ export class ReActLoop {
    * 思考阶段
    */
   private async think(observation: Observation, goal: string): Promise<Thought> {
-    const prompt = this.buildThinkPrompt(observation, goal);
+    const prompt = this.buildThinkPrompt(observation, goal)
 
     const response = await this.llm.chat({
       messages: [
@@ -283,9 +283,9 @@ export class ReActLoop {
         },
       ],
       temperature: 0.7,
-    });
+    })
 
-    return this.parseThought(response.message.content);
+    return this.parseThought(response.message.content)
   }
 
   /**
@@ -296,7 +296,7 @@ export class ReActLoop {
       return {
         type: 'complete',
         expectedOutcome: '任务完成',
-      };
+      }
     }
 
     // 简化实现：直接使用 nextAction
@@ -306,7 +306,7 @@ export class ReActLoop {
       params: {
         query: thought.nextAction,
       },
-    };
+    }
   }
 
   /**
@@ -320,7 +320,7 @@ export class ReActLoop {
       return {
         success: true,
         data: { message: '任务已完成' },
-      };
+      }
     }
 
     if (action.type === 'search') {
@@ -334,14 +334,14 @@ export class ReActLoop {
           ],
         },
         toolUsed: 'search',
-      };
+      }
     }
 
     return {
       success: true,
       data: { message: '行动已执行' },
       toolUsed: action.type,
-    };
+    }
   }
 
   /**
@@ -358,7 +358,7 @@ export class ReActLoop {
       },
       timestamp: new Date(),
       confidence: actionResult.success ? 1.0 : 0.0,
-    };
+    }
   }
 
   /**
@@ -371,7 +371,7 @@ export class ReActLoop {
   ): Promise<boolean> {
     if (!actionResult.success) {
       // 行动失败，继续尝试
-      return true;
+      return true
     }
 
     const prompt = `基于以下信息，判断任务是否完成：
@@ -380,7 +380,7 @@ export class ReActLoop {
 思考：${thought.reasoning}
 行动结果：${JSON.stringify(actionResult.data)}
 
-返回 "继续" 或 "完成"。`;
+返回 "继续" 或 "完成"。`
 
     const response = await this.llm.chat({
       messages: [
@@ -394,26 +394,26 @@ export class ReActLoop {
         },
       ],
       temperature: 0.3,
-    });
+    })
 
-    const shouldContinue = response.message.content.includes('继续');
-    return shouldContinue;
+    const shouldContinue = response.message.content.includes('继续')
+    return shouldContinue
   }
 
   /**
    * 构建思考提示
    */
   private buildThinkPrompt(observation: Observation, goal: string): string {
-    let prompt = `目标：${goal}\n\n`;
-    prompt += `当前情况：\n${observation.content}\n\n`;
+    let prompt = `目标：${goal}\n\n`
+    prompt += `当前情况：\n${observation.content}\n\n`
 
     if (observation.data) {
-      prompt += `可用信息：\n${JSON.stringify(observation.data, null, 2)}\n\n`;
+      prompt += `可用信息：\n${JSON.stringify(observation.data, null, 2)}\n\n`
     }
 
-    prompt += `请分析当前情况，给出你的思考过程和下一步建议。`;
+    prompt += `请分析当前情况，给出你的思考过程和下一步建议。`
 
-    return prompt;
+    return prompt
   }
 
   /**
@@ -426,19 +426,19 @@ export class ReActLoop {
     const thought: Thought = {
       reasoning: content,
       state: 'thinking',
-    };
-
-    if (content.includes('状态：done') || content.includes('完成')) {
-      thought.state = 'done';
-    } else if (content.includes('下一步：')) {
-      const match = content.match(/下一步：(.+)/);
-      if (match) {
-        thought.nextAction = match[1].trim();
-      }
-      thought.state = 'acting';
     }
 
-    return thought;
+    if (content.includes('状态：done') || content.includes('完成')) {
+      thought.state = 'done'
+    } else if (content.includes('下一步：')) {
+      const match = content.match(/下一步：(.+)/)
+      if (match) {
+        thought.nextAction = match[1].trim()
+      }
+      thought.state = 'acting'
+    }
+
+    return thought
   }
 }
 
@@ -447,25 +447,25 @@ export class ReActLoop {
  */
 interface StepResult {
   /** 步骤编号 */
-  step: number;
+  step: number
 
   /** 步骤内容 */
-  content: string;
+  content: string
 
   /** 执行结果 */
-  result?: string;
+  result?: string
 
   /** 是否成功 */
-  success: boolean;
+  success: boolean
 
   /** 错误信息 */
-  error?: string;
+  error?: string
 
   /** 是否完成 */
-  done: boolean;
+  done: boolean
 
   /** Token 消耗 */
-  tokensUsed?: number;
+  tokensUsed?: number
 }
 
 /**
@@ -474,10 +474,10 @@ interface StepResult {
  * 先规划再解决，适合复杂任务
  */
 export class PlanAndSolveStrategy {
-  private llm: LLMAdapter;
+  private llm: LLMAdapter
 
   constructor(llm: LLMAdapter) {
-    this.llm = llm;
+    this.llm = llm
   }
 
   /**
@@ -492,13 +492,13 @@ export class PlanAndSolveStrategy {
 3. 步骤之间要有逻辑顺序
 4. 格式：1. [步骤描述]
 
-**目标**：${goal}`;
+**目标**：${goal}`
 
     if (context && Object.keys(context).length > 0) {
-      prompt += `\n\n**上下文**：\n${JSON.stringify(context, null, 2)}`;
+      prompt += `\n\n**上下文**：\n${JSON.stringify(context, null, 2)}`
     }
 
-    prompt += `\n\n请列出执行计划：`;
+    prompt += `\n\n请列出执行计划：`
 
     const response = await this.llm.chat({
       messages: [
@@ -512,38 +512,38 @@ export class PlanAndSolveStrategy {
         },
       ],
       temperature: 0.5,
-    });
+    })
 
     // 解析计划步骤
-    const steps = this.parsePlanSteps(response.message.content);
+    const steps = this.parsePlanSteps(response.message.content)
 
     if (steps.length === 0) {
-      throw new Error('未能生成有效的执行计划');
+      throw new Error('未能生成有效的执行计划')
     }
 
-    return steps;
+    return steps
   }
 
   /**
    * 执行计划（增强版）
    */
   async *executePlan(plan: string[], context?: Record<string, unknown>): AsyncIterable<StepResult> {
-    let executionContext = context || {};
+    let executionContext = context || {}
 
     for (let i = 0; i < plan.length; i++) {
-      const step = plan[i];
-      const stepNumber = i + 1;
+      const step = plan[i]
+      const stepNumber = i + 1
 
       try {
         // 执行当前步骤
-        const result = await this.executeStep(step, stepNumber, plan.length, executionContext);
+        const result = await this.executeStep(step, stepNumber, plan.length, executionContext)
 
         // 更新执行上下文
         if (result.result) {
           executionContext = {
             ...executionContext,
             [`step${stepNumber}Result`]: result.result,
-          };
+          }
         }
 
         yield {
@@ -553,7 +553,7 @@ export class PlanAndSolveStrategy {
           success: true,
           done: i === plan.length - 1,
           tokensUsed: result.tokensUsed,
-        };
+        }
       } catch (error) {
         // 步骤执行失败
         yield {
@@ -562,10 +562,10 @@ export class PlanAndSolveStrategy {
           success: false,
           error: (error as Error).message,
           done: false,
-        };
+        }
 
         // 失败后停止执行
-        break;
+        break
       }
     }
   }
@@ -581,13 +581,13 @@ export class PlanAndSolveStrategy {
   ): Promise<{ result: string; tokensUsed: number }> {
     let prompt = `请执行以下步骤：
 
-**当前步骤** (${stepNumber}/${totalSteps}): ${step}`;
+**当前步骤** (${stepNumber}/${totalSteps}): ${step}`
 
     if (Object.keys(context).length > 0) {
-      prompt += `\n\n**前序步骤结果**：\n${JSON.stringify(context, null, 2)}`;
+      prompt += `\n\n**前序步骤结果**：\n${JSON.stringify(context, null, 2)}`
     }
 
-    prompt += `\n\n请执行该步骤并返回结果。`;
+    prompt += `\n\n请执行该步骤并返回结果。`
 
     const response = await this.llm.chat({
       messages: [
@@ -601,12 +601,12 @@ export class PlanAndSolveStrategy {
         },
       ],
       temperature: 0.3,
-    });
+    })
 
     return {
       result: response.message.content,
       tokensUsed: response.usage?.totalTokens || 0,
-    };
+    }
   }
 
   /**
@@ -616,9 +616,9 @@ export class PlanAndSolveStrategy {
     goal: string,
     plan: string[]
   ): Promise<{
-    isValid: boolean;
-    score: number;
-    feedback: string;
+    isValid: boolean
+    score: number
+    feedback: string
   }> {
     const prompt = `请验证以下执行计划的质量：
 
@@ -633,7 +633,7 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 3. 逻辑性：步骤顺序是否合理
 4. 清晰性：步骤描述是否清楚
 
-请给出评分（1-10）和改进建议。`;
+请给出评分（1-10）和改进建议。`
 
     const response = await this.llm.chat({
       messages: [
@@ -647,17 +647,17 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
         },
       ],
       temperature: 0.3,
-    });
+    })
 
     // 解析评分
-    const scoreMatch = response.message.content.match(/(\d+)\/?10?/);
-    const score = scoreMatch ? parseInt(scoreMatch[1]) / 10 : 0.5;
+    const scoreMatch = response.message.content.match(/(\d+)\/?10?/)
+    const score = scoreMatch ? parseInt(scoreMatch[1]) / 10 : 0.5
 
     return {
       isValid: score >= 0.6,
       score,
       feedback: response.message.content,
-    };
+    }
   }
 
   /**
@@ -668,10 +668,10 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
     context?: Record<string, unknown>
   ): AsyncIterable<StepResult & { plan?: string[]; validation?: unknown }> {
     // 步骤1：生成计划
-    const plan = await this.makePlan(goal, context);
+    const plan = await this.makePlan(goal, context)
 
     // 步骤2：验证计划
-    const validation = await this.validatePlan(goal, plan);
+    const validation = await this.validatePlan(goal, plan)
 
     yield {
       step: 0,
@@ -681,7 +681,7 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
       done: false,
       plan,
       validation,
-    };
+    }
 
     if (!validation.isValid) {
       yield {
@@ -690,13 +690,13 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
         success: false,
         error: '计划质量不足，请重新规划',
         done: true,
-      };
-      return;
+      }
+      return
     }
 
     // 步骤3：执行计划
     for await (const result of this.executePlan(plan, context)) {
-      yield result;
+      yield result
     }
   }
 
@@ -704,39 +704,39 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
    * 解析计划步骤
    */
   private parsePlanSteps(content: string): string[] {
-    const steps: string[] = [];
+    const steps: string[] = []
 
     // 尝试多种格式
     const patterns = [
       /^\d+[\.\)]\s*(.+)$/gm, // "1. 步骤" 或 "1) 步骤"
       /^[-•]\s*(.+)$/gm, // "- 步骤" 或 "• 步骤"
-    ];
+    ]
 
     for (const pattern of patterns) {
-      const matches = Array.from(content.matchAll(pattern));
+      const matches = Array.from(content.matchAll(pattern))
       if (matches.length > 0) {
         for (const match of matches) {
-          const step = match[1]?.trim();
+          const step = match[1]?.trim()
           if (step && !steps.includes(step)) {
-            steps.push(step);
+            steps.push(step)
           }
         }
-        if (steps.length > 0) break;
+        if (steps.length > 0) break
       }
     }
 
     // 如果没有匹配到，按段落分割
     if (steps.length === 0) {
-      const paragraphs = content.split(/\n\n+/).filter((p) => p.trim());
+      const paragraphs = content.split(/\n\n+/).filter((p) => p.trim())
       for (const para of paragraphs) {
-        const step = para.trim();
+        const step = para.trim()
         if (step && !steps.includes(step)) {
-          steps.push(step);
+          steps.push(step)
         }
       }
     }
 
-    return steps;
+    return steps
   }
 }
 
@@ -1054,4 +1054,4 @@ ${plan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 // }
 
 // 重新导出 ThoughtNode 以保持向后兼容
-export type { ThoughtNode } from './TreeOfThoughtsStrategy.js';
+export type { ThoughtNode } from './TreeOfThoughtsStrategy.js'

@@ -26,6 +26,7 @@ git push -u origin main
 ### 必需的 Secrets
 
 - [ ] `NPM_TOKEN` - npm 发布令牌
+
   ```bash
   # 创建 npm token
   npm login
@@ -34,6 +35,7 @@ git push -u origin main
 
 - [ ] `DOCKER_USERNAME` - Docker Hub 用户名
 - [ ] `DOCKER_PASSWORD` - Docker Hub 密码/令牌
+
   ```bash
   # 创建 Docker Hub access token
   # 访问 https://hub.docker.com/settings/security
@@ -90,6 +92,7 @@ git push -u origin main
 - [ ] 验证构建时间是否 ≤90秒
 
 **监控工具**:
+
 - `./scripts/ci-monitor.sh` - 实时监控 CI 性能
 - `./scripts/ci-performance-report.sh` - 生成性能报告
 - 查看 [CI 监控指南](../../../CI_MONITORING_GUIDE.md)
@@ -97,6 +100,7 @@ git push -u origin main
 ## 第八步：测试 CI/CD 工作流
 
 - [ ] 创建一个测试分支
+
   ```bash
   git checkout -b test-ci
   echo "test" > test.txt
@@ -201,33 +205,40 @@ docker build -f docker/python-tools/Dockerfile -t test .
 5. **常见 CI 问题及解决方案**
 
    **问题 1: Canvas 依赖安装失败**
+
    ```
    错误: canvas@2.11.2 原生模块编译失败
    原因: 缺少 pixman-1 系统库
    ```
+
    **解决方案**: ✅ 已在 CI 配置中修复
    - 设置 `CANVAS_USE_NATIVE: '0'` 环境变量
    - 设置 `PUPPETEET_SKIP_DOWNLOAD: 'true'` 跳过可选依赖
    - 详见 [CI 失败调查报告](../../../CI_FAILURE_INVESTIGATION.md)
 
    **问题 2: Node.js 版本不兼容**
+
    ```
    警告: Node.js 20 actions are deprecated
    ```
+
    **解决方案**: ✅ 已升级到 Node.js 24
    - 所有 CI 工作流已使用 `NODE_VERSION: '24.x'`
    - 如仍有警告，设置 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`
 
    **问题 3: CI 成功率低**
+
    ```
    现象: 成功率 < 90%
    ```
+
    **解决方案**:
    - 运行 `./scripts/ci-monitor.sh` 查看详细统计
    - 检查失败原因，参考 [CI 优化方案](../../../CI_OPTIMIZATION_PLAN.md)
    - 当前项目成功率: 90% → 目标 ≥95%
 
 6. **性能监控**
+
    ```bash
    # 实时监控 CI 性能
    ./scripts/ci-monitor.sh
@@ -251,6 +262,7 @@ docker build -f docker/python-tools/Dockerfile -t test .
 3. 🚀 创建第一个 Pull Request
 4. 📦 发布第一个版本
 5. 📊 **持续监控 CI 性能**
+
    ```bash
    # 每天至少运行一次
    ./scripts/ci-monitor.sh
@@ -276,11 +288,11 @@ gh run view
 
 ### 性能基准
 
-| 指标 | 目标值 | 当前状态 |
-|------|--------|----------|
-| **成功率** | ≥95% | 90% ✅ |
-| **构建时间** | ≤90秒 | 1m20s-1m54s ✅ |
-| **稳定性** | 稳定 | 稳定 ✅ |
+| 指标         | 目标值 | 当前状态       |
+| ------------ | ------ | -------------- |
+| **成功率**   | ≥95%   | 90% ✅         |
+| **构建时间** | ≤90秒  | 1m20s-1m54s ✅ |
+| **稳定性**   | 稳定   | 稳定 ✅        |
 
 ### 相关文档
 

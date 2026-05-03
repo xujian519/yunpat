@@ -27,9 +27,9 @@ export {
   type AuditLogStore,
   type AuditLogFilter,
   type AuditMetrics,
-} from './gateway/Gateway.js';
+} from './gateway/Gateway.js'
 
-export { InputSourceType, OutputTargetType } from './gateway/Gateway.js';
+export { InputSourceType, OutputTargetType } from './gateway/Gateway.js'
 
 // 人机协同审批流程
 export {
@@ -40,7 +40,7 @@ export {
   type UserFeedback,
   type PresentationOptions,
   type FeedbackStats,
-} from './gateway/ApprovalFlow.js';
+} from './gateway/ApprovalFlow.js'
 
 // ========== ② 推理层 (Reasoning) ==========
 export {
@@ -53,15 +53,15 @@ export {
   type Action as ReasoningAction,
   type ActionResult,
   type ThoughtNode,
-} from './reasoning/ReActLoop.js';
+} from './reasoning/ReActLoop.js'
 
 export {
   TreeOfThoughtsStrategy,
   type ThoughtOption,
   type ToTConfig,
-} from './reasoning/TreeOfThoughtsStrategy.js';
+} from './reasoning/TreeOfThoughtsStrategy.js'
 
-export { ReasoningStrategy } from './reasoning/ReActLoop.js';
+export { ReasoningStrategy } from './reasoning/ReActLoop.js'
 
 // Chain-of-Thought 基础推理策略
 export {
@@ -71,7 +71,7 @@ export {
   type CoTResult,
   type ReasoningStep,
   StepFormat,
-} from './reasoning/ChainOfThoughtStrategy.js';
+} from './reasoning/ChainOfThoughtStrategy.js'
 
 // 推理缓存系统
 export {
@@ -81,7 +81,7 @@ export {
   type ReasoningCacheStats,
   type CacheConfig,
   type CacheQueryResult,
-} from './reasoning/ReasoningCache.js';
+} from './reasoning/ReasoningCache.js'
 
 // 推理性能监控
 export {
@@ -89,7 +89,7 @@ export {
   reasoningMonitor,
   type PerformanceMetrics,
   type InferenceRecord,
-} from './reasoning/ReasoningMonitor.js';
+} from './reasoning/ReasoningMonitor.js'
 
 // 批量推理处理器
 export {
@@ -97,7 +97,7 @@ export {
   createBatchProcessor,
   type BatchProcessConfig,
   type BatchResult,
-} from './reasoning/ReasoningBatchProcessor.js';
+} from './reasoning/ReasoningBatchProcessor.js'
 
 // 增强自我反思机制（P1 准确率优化方案 #4）
 export {
@@ -109,13 +109,13 @@ export {
   type IterationResult,
   type DimensionAssessment,
   type Improvement,
-} from './reasoning/EnhancedReflection.js';
+} from './reasoning/EnhancedReflection.js'
 
 export {
   ReflectionDimension,
   QualityLevel,
   ImprovementPriority,
-} from './reasoning/EnhancedReflection.js';
+} from './reasoning/EnhancedReflection.js'
 
 // ========== ③ 核心推理引擎 (LLM) ==========
 export {
@@ -126,25 +126,25 @@ export {
   createOllamaModel,
   type ModelConfig,
   type ModelProvider,
-} from './llm/NativeLLMAdapter.js';
+} from './llm/NativeLLMAdapter.js'
 
-export { NativeModel } from './llm/NativeLLMAdapter.js';
+export { NativeModel } from './llm/NativeLLMAdapter.js'
 
-export { OMLXAdapter, createOMXLModel, type OMLXConfig } from './llm/OMXLAdapter.js';
+export { OMLXAdapter, createOMXLModel, type OMLXConfig } from './llm/OMXLAdapter.js'
 
 // 嵌入向量适配器
 export {
   EmbeddingAdapter,
   createBGEEmbedding,
   type OpenAIEmbeddingConfig as EmbeddingConfig,
-} from './llm/EmbeddingAdapter.js';
+} from './llm/EmbeddingAdapter.js'
 
 // 保留原有的 LangChain 适配器（兼容性）
 export {
   LangChainAdapter,
   type LangChainAdapterConfig,
   MultiModelLLMAdapter,
-} from './llm/LLMAdapter.js';
+} from './llm/LLMAdapter.js'
 
 // 智能任务路由（成本感知）
 export {
@@ -155,7 +155,7 @@ export {
   type Task as RoutingTask,
   type RoutingDecision,
   type TaskRouterConfig,
-} from './llm/TaskRouter.js';
+} from './llm/TaskRouter.js'
 
 // 提示词模板系统
 export {
@@ -163,7 +163,7 @@ export {
   TemplateManager,
   createTemplate,
   createTemplateManager,
-} from './prompts/PromptTemplate.js';
+} from './prompts/PromptTemplate.js'
 
 export type {
   FewShotExample as TemplateFewShotExample,
@@ -171,10 +171,10 @@ export type {
   TemplateMetadata,
   ValidationResult as TemplateValidationResult,
   RenderOptions,
-} from './prompts/PromptTemplate.js';
+} from './prompts/PromptTemplate.js'
 
 // 批处理器（成本优化）
-export { BatchProcessor, type BatchSectionResult, type BatchConfig } from './llm/BatchProcessor.js';
+export { BatchProcessor, type BatchSectionResult, type BatchConfig } from './llm/BatchProcessor.js'
 
 // 自适应温度控制器（准确率优化）
 export {
@@ -185,7 +185,7 @@ export {
   type QualityFeedback,
   type ThermalParams,
   type TemperatureStrategyConfig,
-} from './llm/AdaptiveTemperatureController.js';
+} from './llm/AdaptiveTemperatureController.js'
 
 // 语义缓存（成本优化）
 export {
@@ -197,7 +197,7 @@ export {
   type CachedResponse,
   type CacheStats,
   type SemanticCacheConfig,
-} from './cache/SemanticCache.js';
+} from './cache/SemanticCache.js'
 
 // ========== 知识库系统（准确率优化） ==========
 export {
@@ -210,9 +210,9 @@ export {
   type KnowledgeInjectionResult,
   type KnowledgeStats,
   type KnowledgeBaseConfig,
-} from './knowledge/KnowledgeBase.js';
+} from './knowledge/KnowledgeBase.js'
 
-export { KnowledgeEntryType } from './knowledge/KnowledgeBase.js';
+export { KnowledgeEntryType } from './knowledge/KnowledgeBase.js'
 
 // 知识卡片系统
 export {
@@ -226,14 +226,14 @@ export {
   type PipelineConfig,
   type PipelineProgress,
   type PipelineResult,
-} from './knowledge/KnowledgeCard.js';
+} from './knowledge/KnowledgeCard.js'
 
-export { CardGenerator, type CardGeneratorConfig } from './knowledge/CardGenerator.js';
-export { CardRetriever } from './knowledge/CardRetriever.js';
-export { CardPipeline } from './knowledge/CardPipeline.js';
+export { CardGenerator, type CardGeneratorConfig } from './knowledge/CardGenerator.js'
+export { CardRetriever } from './knowledge/CardRetriever.js'
+export { CardPipeline } from './knowledge/CardPipeline.js'
 
 // 增量生成器（成本优化）
-export { IncrementalGenerator, type ContentDiff } from './agent/IncrementalGenerator.js';
+export { IncrementalGenerator, type ContentDiff } from './agent/IncrementalGenerator.js'
 
 // ========== ④ 记忆层 (Memory) ==========
 export {
@@ -242,19 +242,19 @@ export {
   ResumeManager,
   type Checkpoint,
   type TimeMachine,
-} from './memory/CheckpointManager.js';
+} from './memory/CheckpointManager.js'
 
-export { ShortTermMemory, MemoryManager } from './memory/MemoryStore.js';
+export { ShortTermMemory, MemoryManager } from './memory/MemoryStore.js'
 
 // ========== ⑤ 工具层 (Tools) ==========
-export { ToolRegistry, BaseTool, ToolWrapper as LegacyToolWrapper } from './tools/ToolRegistry.js';
+export { ToolRegistry, BaseTool, ToolWrapper as LegacyToolWrapper } from './tools/ToolRegistry.js'
 
 // 增强的工具系统
 export {
   EnhancedToolRegistry,
   BaseTool as EnhancedBaseTool,
   ToolWrapperClass,
-} from './tools/EnhancedToolRegistry.js';
+} from './tools/EnhancedToolRegistry.js'
 
 export {
   ToolCategory,
@@ -262,7 +262,7 @@ export {
   ToolContext,
   EnhancedTool,
   ToolExecutionStats,
-} from './tools/types.js';
+} from './tools/types.js'
 
 export {
   MiddlewarePipeline,
@@ -271,10 +271,10 @@ export {
   CacheMiddleware,
   RateLimitMiddleware,
   TracingMiddleware,
-} from './tools/middleware.js';
+} from './tools/middleware.js'
 
 // ========== 核心抽象 ==========
-export { Agent, AgentConfig } from './agent/Agent.js';
+export { Agent, AgentConfig } from './agent/Agent.js'
 
 // ========== 生命周期 ==========
 export {
@@ -292,14 +292,14 @@ export {
   type ChatResponse,
   type ChatChunk,
   type ChatMessage,
-} from './lifecycle/Lifecycle.js';
+} from './lifecycle/Lifecycle.js'
 
 // ========== 事件总线 ==========
-export { EventBus } from './eventbus/EventBus.js';
-export { EventBusMetrics, type EventMetric } from './eventbus/EventBusMetrics.js';
+export { EventBus } from './eventbus/EventBus.js'
+export { EventBusMetrics, type EventMetric } from './eventbus/EventBusMetrics.js'
 
 // ========== 配置管理 ==========
-export { ConfigManager, getConfigManager, resetConfigManager } from './config/ConfigManager.js';
+export { ConfigManager, getConfigManager, resetConfigManager } from './config/ConfigManager.js'
 
 export type {
   YunPatConfig,
@@ -313,10 +313,10 @@ export type {
   ToolConfig,
   GatewayConfig,
   ReasoningConfig,
-} from './config/types.js';
+} from './config/types.js'
 
 // ========== 可观测性 (Observability) ==========
-export { TelemetryCollector } from './observability/TelemetryCollector.js';
+export { TelemetryCollector } from './observability/TelemetryCollector.js'
 
 export {
   TelemetryEventType,
@@ -331,14 +331,14 @@ export {
   type Alert,
   type AlertConfig,
   type TelemetryConfig,
-} from './observability/types.js';
+} from './observability/types.js'
 
 // ========== 验证 (Validation) ==========
 export {
   ResultValidator,
   CorrectionStrategy as ValidationCorrectionStrategy,
   ValidationErrorType,
-} from './validation/ResultValidator.js';
+} from './validation/ResultValidator.js'
 
 export type {
   ValidationResult,
@@ -346,9 +346,9 @@ export type {
   QualityReport,
   Inconsistency,
   ResultValidatorConfig,
-} from './validation/ResultValidator.js';
+} from './validation/ResultValidator.js'
 
-export { HallucinationDetector } from './validation/HallucinationDetector.js';
+export { HallucinationDetector } from './validation/HallucinationDetector.js'
 export type {
   HallucinationReport,
   HallucinationDetectorConfig,
@@ -359,19 +359,19 @@ export type {
   SuggestionAction,
   LogicalInconsistencyType,
   SourceAttributionIssueType,
-} from './validation/hallucination-types.js';
+} from './validation/hallucination-types.js'
 
 // ========== 规划系统 (Planning) ==========
-export { WorkflowEngine } from './planning/WorkflowEngine.js';
+export { WorkflowEngine } from './planning/WorkflowEngine.js'
 export type {
   WorkflowStep,
   WorkflowDefinition,
   WorkflowStepResult,
   WorkflowResult,
   WorkflowEngineConfig,
-} from './planning/WorkflowEngine.js';
+} from './planning/WorkflowEngine.js'
 
-export { TaskDecomposer, DependencyAnalyzer, TaskScheduler } from './planning/index.js';
+export { TaskDecomposer, DependencyAnalyzer, TaskScheduler } from './planning/index.js'
 
 export type {
   // 配置和选项
@@ -399,7 +399,7 @@ export type {
   ReplanningContext as PlanningReplanningContext,
   PlanAdjustment as PlanningPlanAdjustment,
   TaskModification as PlanningTaskModification,
-} from './planning/types.js';
+} from './planning/types.js'
 
 export {
   // 基础类型（enum）
@@ -407,7 +407,7 @@ export {
   TaskStatus,
   TaskType,
   PlanStatus,
-} from './planning/types.js';
+} from './planning/types.js'
 
 // ========== Constitutional AI ==========
 export {
@@ -415,7 +415,7 @@ export {
   ComplianceChecker,
   AutoCorrector,
   PATENT_PRINCIPLES,
-} from './constitutional/index.js';
+} from './constitutional/index.js'
 
 export type {
   PrincipleCheckFunction,
@@ -428,13 +428,9 @@ export type {
   AppliedCorrection,
   ConstitutionalAIConfig,
   ConflictResolution,
-} from './constitutional/types.js';
+} from './constitutional/types.js'
 
-export {
-  PrincipleCategory,
-  ViolationSeverity,
-  CorrectionStrategy,
-} from './constitutional/types.js';
+export { PrincipleCategory, ViolationSeverity, CorrectionStrategy } from './constitutional/types.js'
 
 // ========== 动态重规划 (Dynamic Replanning) ==========
 export {
@@ -442,7 +438,7 @@ export {
   DeviationDetector,
   RecoveryStrategySelector,
   IncrementalPlanner,
-} from './replanning/index.js';
+} from './replanning/index.js'
 
 export type {
   ReplanningTrigger,
@@ -459,14 +455,14 @@ export type {
   PlanAdjustment,
   TaskModification,
   ReplanningContext,
-} from './replanning/types.js';
+} from './replanning/types.js'
 
 // ========== 主动学习 (Active Learning) ==========
 export {
   ActiveLearningSystem,
   createActiveLearningSystem,
   createDefaultActiveLearningConfig,
-} from './learning/ActiveLearningSystem.js';
+} from './learning/ActiveLearningSystem.js'
 
 export type {
   Sample,
@@ -478,33 +474,33 @@ export type {
   LearningMetrics,
   ABTestResult,
   LearningRound,
-} from './learning/ActiveLearningSystem.js';
+} from './learning/ActiveLearningSystem.js'
 
 // ========== 工具选择优化 (Tool Selection Optimization) ==========
 export {
   ToolDescriptionEnhancer,
   type EnhancedToolMetadata,
   type ToolExample,
-} from './tools/ToolDescriptionEnhancer.js';
+} from './tools/ToolDescriptionEnhancer.js'
 
 export {
   FewShotPromptManager,
   fewShotManager,
   type FewShotExample,
-} from './reasoning/FewShotPromptManager.js';
+} from './reasoning/FewShotPromptManager.js'
 
-export { ToolUsageTracker, toolUsageTracker } from './tools/ToolUsageTracker.js';
+export { ToolUsageTracker, toolUsageTracker } from './tools/ToolUsageTracker.js'
 
-export { ToolSelectionOptimizer, toolSelectionOptimizer } from './tools/ToolSelectionOptimizer.js';
+export { ToolSelectionOptimizer, toolSelectionOptimizer } from './tools/ToolSelectionOptimizer.js'
 
-export { SimilarityCalculator, similarityCalculator } from './tools/SimilarityCalculator.js';
+export { SimilarityCalculator, similarityCalculator } from './tools/SimilarityCalculator.js'
 
 export type {
   ToolUsageRecord,
   ToolPerformanceStats,
   ToolRecommendation,
-} from './tools/ToolUsageTracker.js';
+} from './tools/ToolUsageTracker.js'
 
 // ========== 版本信息 ==========
-export const VERSION = '0.2.0';
-export const ARCHITECTURE = 'five-layer';
+export const VERSION = '0.2.0'
+export const ARCHITECTURE = 'five-layer'

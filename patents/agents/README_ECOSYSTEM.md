@@ -32,29 +32,29 @@ Agent      Agent      Agent
 ### 1. 初始化全局记忆层
 
 ```typescript
-import { AgentMemoryManager } from './AgentMemoryManager.js';
+import { AgentMemoryManager } from './AgentMemoryManager.js'
 
-const memoryManager = AgentMemoryManager.getInstance();
-await memoryManager.initialize();
+const memoryManager = AgentMemoryManager.getInstance()
+await memoryManager.initialize()
 ```
 
 ### 2. 创建带记忆的 Agent
 
 ```typescript
-import { createPatentWriterAgentWithMemory } from './writer/PatentWriterAgentWithMemory.js';
-import { createDeepSeekModel } from '@yunpat/core';
+import { createPatentWriterAgentWithMemory } from './writer/PatentWriterAgentWithMemory.js'
+import { createDeepSeekModel } from '@yunpat/core'
 
 const agent = await createPatentWriterAgentWithMemory({
   llm: createDeepSeekModel(process.env.DEEPSEEK_API_KEY),
-});
+})
 
-const result = await agent.run(patentInput, {});
+const result = await agent.run(patentInput, {})
 ```
 
 ### 3. 跨 Agent 语义搜索
 
 ```typescript
-const results = await memoryManager.searchMemories('深度学习图像', 5);
+const results = await memoryManager.searchMemories('深度学习图像', 5)
 
 // 返回所有 Agent 的相关记忆
 // - 专利（Writer）
@@ -64,11 +64,11 @@ const results = await memoryManager.searchMemories('深度学习图像', 5);
 
 ## 📊 已集成的 Agent
 
-| Agent | 功能 | 记忆类型 | 状态 |
-|------|------|---------|------|
-| **PatentWriterAgent** | 专利撰写 | patent | ✅ 完成 |
-| **PatentResponderAgent** | 审查答复 | oa-response | ✅ 完成 |
-| **PatentAnalyzerAgent** | 专利分析 | patent-analysis | ✅ 完成 |
+| Agent                    | 功能     | 记忆类型        | 状态    |
+| ------------------------ | -------- | --------------- | ------- |
+| **PatentWriterAgent**    | 专利撰写 | patent          | ✅ 完成 |
+| **PatentResponderAgent** | 审查答复 | oa-response     | ✅ 完成 |
+| **PatentAnalyzerAgent**  | 专利分析 | patent-analysis | ✅ 完成 |
 
 ## 📚 文档
 

@@ -4,10 +4,10 @@
  * 测试处理速度、吞吐量和资源使用情况
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import { EntityExtractor } from '../src/memory/long-term/EntityExtractor.js';
-import { RelationExtractor } from '../src/memory/long-term/RelationExtractor.js';
-import type { Entity } from '../src/memory/long-term/EntityExtractor.js';
+import { describe, it, expect, beforeAll } from 'vitest'
+import { EntityExtractor } from '../src/memory/long-term/EntityExtractor.js'
+import { RelationExtractor } from '../src/memory/long-term/RelationExtractor.js'
+import type { Entity } from '../src/memory/long-term/EntityExtractor.js'
 
 /**
  * 性能基准测试数据
@@ -63,218 +63,218 @@ const benchmarkTexts = [
     申请号：CN202311234567.8
     `.repeat(20)}
   `,
-];
+]
 
 describe('实体抽取性能基准测试', () => {
-  let extractor: EntityExtractor;
+  let extractor: EntityExtractor
 
   beforeAll(() => {
-    extractor = new EntityExtractor();
-  });
+    extractor = new EntityExtractor()
+  })
 
   it('处理速度应该 > 10 docs/s（短文本）', async () => {
-    const iterations = 100;
-    const text = benchmarkTexts[0];
+    const iterations = 100
+    const text = benchmarkTexts[0]
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     for (let i = 0; i < iterations; i++) {
-      await extractor.extractEntities(text);
+      await extractor.extractEntities(text)
     }
 
-    const endTime = Date.now();
-    const duration = (endTime - startTime) / 1000; // 秒
-    const throughput = iterations / duration;
+    const endTime = Date.now()
+    const duration = (endTime - startTime) / 1000 // 秒
+    const throughput = iterations / duration
 
-    console.log(`处理 ${iterations} 个短文本耗时: ${duration.toFixed(2)}秒`);
-    console.log(`吞吐量: ${throughput.toFixed(2)} docs/s`);
+    console.log(`处理 ${iterations} 个短文本耗时: ${duration.toFixed(2)}秒`)
+    console.log(`吞吐量: ${throughput.toFixed(2)} docs/s`)
 
-    expect(throughput).toBeGreaterThan(10);
-  });
+    expect(throughput).toBeGreaterThan(10)
+  })
 
   it('处理速度应该 > 5 docs/s（中等文本）', async () => {
-    const iterations = 50;
-    const text = benchmarkTexts[1];
+    const iterations = 50
+    const text = benchmarkTexts[1]
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     for (let i = 0; i < iterations; i++) {
-      await extractor.extractEntities(text);
+      await extractor.extractEntities(text)
     }
 
-    const endTime = Date.now();
-    const duration = (endTime - startTime) / 1000;
-    const throughput = iterations / duration;
+    const endTime = Date.now()
+    const duration = (endTime - startTime) / 1000
+    const throughput = iterations / duration
 
-    console.log(`处理 ${iterations} 个中等文本耗时: ${duration.toFixed(2)}秒`);
-    console.log(`吞吐量: ${throughput.toFixed(2)} docs/s`);
+    console.log(`处理 ${iterations} 个中等文本耗时: ${duration.toFixed(2)}秒`)
+    console.log(`吞吐量: ${throughput.toFixed(2)} docs/s`)
 
-    expect(throughput).toBeGreaterThan(5);
-  });
+    expect(throughput).toBeGreaterThan(5)
+  })
 
   it('批量处理应该比单次处理快', async () => {
-    const iterations = 50;
-    const texts = Array(iterations).fill(benchmarkTexts[0]);
+    const iterations = 50
+    const texts = Array(iterations).fill(benchmarkTexts[0])
 
     // 单次处理
-    const singleStart = Date.now();
+    const singleStart = Date.now()
     for (const text of texts) {
-      await extractor.extractEntities(text);
+      await extractor.extractEntities(text)
     }
-    const singleEnd = Date.now();
-    const singleDuration = singleEnd - singleStart;
+    const singleEnd = Date.now()
+    const singleDuration = singleEnd - singleStart
 
     // 批量处理
-    const batchStart = Date.now();
-    await extractor.extractEntitiesBatch(texts);
-    const batchEnd = Date.now();
-    const batchDuration = batchEnd - batchStart;
+    const batchStart = Date.now()
+    await extractor.extractEntitiesBatch(texts)
+    const batchEnd = Date.now()
+    const batchDuration = batchEnd - batchStart
 
-    console.log(`单次处理耗时: ${singleDuration}ms`);
-    console.log(`批量处理耗时: ${batchDuration}ms`);
-    console.log(`批量处理加速比: ${(singleDuration / batchDuration).toFixed(2)}x`);
+    console.log(`单次处理耗时: ${singleDuration}ms`)
+    console.log(`批量处理耗时: ${batchDuration}ms`)
+    console.log(`批量处理加速比: ${(singleDuration / batchDuration).toFixed(2)}x`)
 
     // 批量处理应该更快或至少不慢于单次处理（允许一定误差）
-    expect(batchDuration).toBeLessThanOrEqual(singleDuration * 2 + 5);
-  });
+    expect(batchDuration).toBeLessThanOrEqual(singleDuration * 2 + 5)
+  })
 
   it('应该支持增量更新', async () => {
-    const text = '申请号CN202310123456.7，申请人百度公司';
-    const additionalText = '，发明人张三';
+    const text = '申请号CN202310123456.7，申请人百度公司'
+    const additionalText = '，发明人张三'
 
     // 初始抽取
-    const entities1 = await extractor.extractEntities(text);
-    expect(entities1.length).toBeGreaterThan(0);
+    const entities1 = await extractor.extractEntities(text)
+    expect(entities1.length).toBeGreaterThan(0)
 
     // 增量抽取（合并文本）
-    const entities2 = await extractor.extractEntities(text + additionalText);
-    expect(entities2.length).toBeGreaterThanOrEqual(entities1.length);
+    const entities2 = await extractor.extractEntities(text + additionalText)
+    expect(entities2.length).toBeGreaterThanOrEqual(entities1.length)
 
-    console.log(`初始实体数: ${entities1.length}`);
-    console.log(`增量后实体数: ${entities2.length}`);
-  });
+    console.log(`初始实体数: ${entities1.length}`)
+    console.log(`增量后实体数: ${entities2.length}`)
+  })
 
   it('内存使用应该稳定（无内存泄漏）', async () => {
-    const iterations = 100;
-    const text = benchmarkTexts[1];
+    const iterations = 100
+    const text = benchmarkTexts[1]
 
     // 记录初始内存使用
     if (typeof global.gc === 'function') {
-      global.gc();
+      global.gc()
     }
 
-    const initialMemory = process.memoryUsage().heapUsed;
+    const initialMemory = process.memoryUsage().heapUsed
 
     for (let i = 0; i < iterations; i++) {
-      await extractor.extractEntities(text);
+      await extractor.extractEntities(text)
     }
 
     // 强制垃圾回收
     if (typeof global.gc === 'function') {
-      global.gc();
+      global.gc()
     }
 
-    const finalMemory = process.memoryUsage().heapUsed;
-    const memoryIncrease = (finalMemory - initialMemory) / 1024 / 1024; // MB
+    const finalMemory = process.memoryUsage().heapUsed
+    const memoryIncrease = (finalMemory - initialMemory) / 1024 / 1024 // MB
 
-    console.log(`初始内存: ${(initialMemory / 1024 / 1024).toFixed(2)}MB`);
-    console.log(`最终内存: ${(finalMemory / 1024 / 1024).toFixed(2)}MB`);
-    console.log(`内存增长: ${memoryIncrease.toFixed(2)}MB`);
+    console.log(`初始内存: ${(initialMemory / 1024 / 1024).toFixed(2)}MB`)
+    console.log(`最终内存: ${(finalMemory / 1024 / 1024).toFixed(2)}MB`)
+    console.log(`内存增长: ${memoryIncrease.toFixed(2)}MB`)
 
     // 内存增长应该 < 50MB
-    expect(memoryIncrease).toBeLessThan(50);
-  });
-});
+    expect(memoryIncrease).toBeLessThan(50)
+  })
+})
 
 describe('关系抽取性能基准测试', () => {
-  let extractor: RelationExtractor;
-  let entityExtractor: EntityExtractor;
+  let extractor: RelationExtractor
+  let entityExtractor: EntityExtractor
 
   beforeAll(() => {
-    extractor = new RelationExtractor();
-    entityExtractor = new EntityExtractor();
-  });
+    extractor = new RelationExtractor()
+    entityExtractor = new EntityExtractor()
+  })
 
   it('处理速度应该 > 10 docs/s（短文本）', async () => {
-    const iterations = 100;
-    const text = benchmarkTexts[0];
+    const iterations = 100
+    const text = benchmarkTexts[0]
 
-    const entities = await entityExtractor.extractEntities(text);
+    const entities = await entityExtractor.extractEntities(text)
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     for (let i = 0; i < iterations; i++) {
-      await extractor.extractRelations(text, entities);
+      await extractor.extractRelations(text, entities)
     }
 
-    const endTime = Date.now();
-    const duration = (endTime - startTime) / 1000;
-    const throughput = iterations / duration;
+    const endTime = Date.now()
+    const duration = (endTime - startTime) / 1000
+    const throughput = iterations / duration
 
-    console.log(`处理 ${iterations} 个短文本耗时: ${duration.toFixed(2)}秒`);
-    console.log(`吞吐量: ${throughput.toFixed(2)} docs/s`);
+    console.log(`处理 ${iterations} 个短文本耗时: ${duration.toFixed(2)}秒`)
+    console.log(`吞吐量: ${throughput.toFixed(2)} docs/s`)
 
-    expect(throughput).toBeGreaterThan(10);
-  });
+    expect(throughput).toBeGreaterThan(10)
+  })
 
   it('批量处理应该比单次处理快', async () => {
-    const iterations = 200;
-    const texts = Array(iterations).fill(benchmarkTexts[0]);
+    const iterations = 200
+    const texts = Array(iterations).fill(benchmarkTexts[0])
 
-    const entitiesList = await entityExtractor.extractEntitiesBatch(texts);
+    const entitiesList = await entityExtractor.extractEntitiesBatch(texts)
 
     // 单次处理
-    const singleStart = Date.now();
+    const singleStart = Date.now()
     for (let i = 0; i < iterations; i++) {
-      await extractor.extractRelations(texts[i], entitiesList[i]);
+      await extractor.extractRelations(texts[i], entitiesList[i])
     }
-    const singleEnd = Date.now();
-    const singleDuration = singleEnd - singleStart;
+    const singleEnd = Date.now()
+    const singleDuration = singleEnd - singleStart
 
     // 批量处理
-    const batchStart = Date.now();
-    await extractor.extractRelationsBatch(texts, entitiesList);
-    const batchEnd = Date.now();
-    const batchDuration = batchEnd - batchStart;
+    const batchStart = Date.now()
+    await extractor.extractRelationsBatch(texts, entitiesList)
+    const batchEnd = Date.now()
+    const batchDuration = batchEnd - batchStart
 
-    console.log(`单次处理耗时: ${singleDuration}ms`);
-    console.log(`批量处理耗时: ${batchDuration}ms`);
-    console.log(`批量处理加速比: ${(singleDuration / batchDuration).toFixed(2)}x`);
+    console.log(`单次处理耗时: ${singleDuration}ms`)
+    console.log(`批量处理耗时: ${batchDuration}ms`)
+    console.log(`批量处理加速比: ${(singleDuration / batchDuration).toFixed(2)}x`)
 
     // 性能比较在快速机器上不稳定，改为验证批量处理功能正确性
-    expect(batchDuration).toBeGreaterThanOrEqual(0);
-  });
-});
+    expect(batchDuration).toBeGreaterThanOrEqual(0)
+  })
+})
 
 describe('综合性能基准测试', () => {
-  let entityExtractor: EntityExtractor;
-  let relationExtractor: RelationExtractor;
+  let entityExtractor: EntityExtractor
+  let relationExtractor: RelationExtractor
 
   beforeAll(() => {
-    entityExtractor = new EntityExtractor();
-    relationExtractor = new RelationExtractor();
-  });
+    entityExtractor = new EntityExtractor()
+    relationExtractor = new RelationExtractor()
+  })
 
   it('完整流程（实体+关系）处理速度应该 > 5 docs/s', async () => {
-    const iterations = 50;
-    const text = benchmarkTexts[1];
+    const iterations = 50
+    const text = benchmarkTexts[1]
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     for (let i = 0; i < iterations; i++) {
-      const entities = await entityExtractor.extractEntities(text);
-      await relationExtractor.extractRelations(text, entities);
+      const entities = await entityExtractor.extractEntities(text)
+      await relationExtractor.extractRelations(text, entities)
     }
 
-    const endTime = Date.now();
-    const duration = (endTime - startTime) / 1000;
-    const throughput = iterations / duration;
+    const endTime = Date.now()
+    const duration = (endTime - startTime) / 1000
+    const throughput = iterations / duration
 
-    console.log(`完整流程处理 ${iterations} 个文档耗时: ${duration.toFixed(2)}秒`);
-    console.log(`吞吐量: ${throughput.toFixed(2)} docs/s`);
+    console.log(`完整流程处理 ${iterations} 个文档耗时: ${duration.toFixed(2)}秒`)
+    console.log(`吞吐量: ${throughput.toFixed(2)} docs/s`)
 
-    expect(throughput).toBeGreaterThan(5);
-  });
+    expect(throughput).toBeGreaterThan(5)
+  })
 
   it('应该生成性能报告', async () => {
     const report: Record<string, any> = {
@@ -285,100 +285,100 @@ describe('综合性能基准测试', () => {
         memory: `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB`,
       },
       benchmarks: {},
-    };
-
-    // 实体抽取性能
-    const entityIterations = 100;
-    const entityText = benchmarkTexts[0];
-    const entityStart = Date.now();
-
-    for (let i = 0; i < entityIterations; i++) {
-      await entityExtractor.extractEntities(entityText);
     }
 
-    const entityDuration = (Date.now() - entityStart) / 1000;
+    // 实体抽取性能
+    const entityIterations = 100
+    const entityText = benchmarkTexts[0]
+    const entityStart = Date.now()
+
+    for (let i = 0; i < entityIterations; i++) {
+      await entityExtractor.extractEntities(entityText)
+    }
+
+    const entityDuration = (Date.now() - entityStart) / 1000
     report.benchmarks.entityExtraction = {
       iterations: entityIterations,
       duration: `${entityDuration.toFixed(2)}s`,
       throughput: `${(entityIterations / entityDuration).toFixed(2)} docs/s`,
       avgLatency: `${((entityDuration / entityIterations) * 1000).toFixed(2)}ms`,
-    };
-
-    // 关系抽取性能
-    const relationIterations = 100;
-    const relationText = benchmarkTexts[0];
-    const entities = await entityExtractor.extractEntities(relationText);
-    const relationStart = Date.now();
-
-    for (let i = 0; i < relationIterations; i++) {
-      await relationExtractor.extractRelations(relationText, entities);
     }
 
-    const relationDuration = (Date.now() - relationStart) / 1000;
+    // 关系抽取性能
+    const relationIterations = 100
+    const relationText = benchmarkTexts[0]
+    const entities = await entityExtractor.extractEntities(relationText)
+    const relationStart = Date.now()
+
+    for (let i = 0; i < relationIterations; i++) {
+      await relationExtractor.extractRelations(relationText, entities)
+    }
+
+    const relationDuration = (Date.now() - relationStart) / 1000
     report.benchmarks.relationExtraction = {
       iterations: relationIterations,
       duration: `${relationDuration.toFixed(2)}s`,
       throughput: `${(relationIterations / relationDuration).toFixed(2)} docs/s`,
       avgLatency: `${((relationDuration / relationIterations) * 1000).toFixed(2)}ms`,
-    };
+    }
 
-    console.log('\n性能报告:');
-    console.log(JSON.stringify(report, null, 2));
+    console.log('\n性能报告:')
+    console.log(JSON.stringify(report, null, 2))
 
     // 验证性能指标
-    expect(parseFloat(report.benchmarks.entityExtraction.throughput)).toBeGreaterThan(10);
-    expect(parseFloat(report.benchmarks.relationExtraction.throughput)).toBeGreaterThan(10);
-  });
-});
+    expect(parseFloat(report.benchmarks.entityExtraction.throughput)).toBeGreaterThan(10)
+    expect(parseFloat(report.benchmarks.relationExtraction.throughput)).toBeGreaterThan(10)
+  })
+})
 
 describe('边界案例性能测试', () => {
-  let extractor: EntityExtractor;
+  let extractor: EntityExtractor
 
   beforeAll(() => {
-    extractor = new EntityExtractor();
-  });
+    extractor = new EntityExtractor()
+  })
 
   it('应该快速处理空文档', async () => {
-    const iterations = 1000;
-    const startTime = Date.now();
+    const iterations = 1000
+    const startTime = Date.now()
 
     for (let i = 0; i < iterations; i++) {
-      await extractor.extractEntities('');
+      await extractor.extractEntities('')
     }
 
-    const duration = Date.now() - startTime;
-    console.log(`处理 ${iterations} 个空文档耗时: ${duration}ms`);
+    const duration = Date.now() - startTime
+    console.log(`处理 ${iterations} 个空文档耗时: ${duration}ms`)
 
-    expect(duration).toBeLessThan(1000); // < 1秒
-  });
+    expect(duration).toBeLessThan(1000) // < 1秒
+  })
 
   it('应该快速处理无实体文档', async () => {
-    const iterations = 100;
-    const text = '这是一段没有任何专利实体的普通文本。';
-    const startTime = Date.now();
+    const iterations = 100
+    const text = '这是一段没有任何专利实体的普通文本。'
+    const startTime = Date.now()
 
     for (let i = 0; i < iterations; i++) {
-      await extractor.extractEntities(text);
+      await extractor.extractEntities(text)
     }
 
-    const duration = Date.now() - startTime;
-    const throughput = iterations / (duration / 1000);
-    console.log(`处理无实体文档吞吐量: ${throughput.toFixed(2)} docs/s`);
+    const duration = Date.now() - startTime
+    const throughput = iterations / (duration / 1000)
+    console.log(`处理无实体文档吞吐量: ${throughput.toFixed(2)} docs/s`)
 
-    expect(throughput).toBeGreaterThan(50);
-  });
+    expect(throughput).toBeGreaterThan(50)
+  })
 
   it('应该处理超长文档而不超时', async () => {
-    const text = benchmarkTexts[3];
-    const startTime = Date.now();
+    const text = benchmarkTexts[3]
+    const startTime = Date.now()
 
-    const entities = await extractor.extractEntities(text);
+    const entities = await extractor.extractEntities(text)
 
-    const duration = Date.now() - startTime;
-    console.log(`处理超长文档耗时: ${duration}ms`);
-    console.log(`抽取实体数: ${entities.length}`);
+    const duration = Date.now() - startTime
+    console.log(`处理超长文档耗时: ${duration}ms`)
+    console.log(`抽取实体数: ${entities.length}`)
 
-    expect(duration).toBeLessThan(5000); // < 5秒
-    expect(entities.length).toBeGreaterThan(0);
-  });
-});
+    expect(duration).toBeLessThan(5000) // < 5秒
+    expect(entities.length).toBeGreaterThan(0)
+  })
+})

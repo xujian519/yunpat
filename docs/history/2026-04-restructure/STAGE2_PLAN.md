@@ -13,6 +13,7 @@
 **文件**: `rust/vector-service/src/hnsw.rs`
 
 **核心数据结构**:
+
 ```rust
 pub struct HNSWIndex {
     layers: Vec<Layer>,
@@ -35,6 +36,7 @@ struct Node {
 ```
 
 **关键算法**:
+
 - `insert()` - 插入向量
 - `search()` - 搜索最近邻
 - `build_layer()` - 构建层级索引
@@ -54,6 +56,7 @@ struct Node {
 **文件**: `rust/scheduler-service/src/scheduler.rs`
 
 **核心数据结构**:
+
 ```rust
 pub struct TaskScheduler {
     queues: HashMap<Priority, VecDeque<Task>>,
@@ -77,6 +80,7 @@ pub struct Task {
 ```
 
 **关键算法**:
+
 - `submit_task()` - 提交任务
 - `schedule()` - 调度任务
 - `timeout_manager()` - 超时管理
@@ -101,7 +105,7 @@ class BertEmbeddingTool:
         from transformers import AutoTokenizer, AutoModel
         self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
         self.model = AutoModel.from_pretrained('bert-base-uncased')
-    
+
     def embed(self, text: str) -> List[float]:
         inputs = self.tokenizer(text, return_tensors='pt')
         with torch.no_grad():
@@ -142,7 +146,8 @@ class BertEmbeddingTool:
 - ✅ 完整文档
 
 **预计投入**: 8-10 周
-**关键里程碑**: 
+**关键里程碑**:
+
 - Week 6: HNSW PoC 完成
 - Week 8: 调度服务完成
 - Week 10: ML 工具集成完成

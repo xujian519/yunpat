@@ -1,88 +1,88 @@
-import { Agent, type ExecutionContext } from '@yunpat/core';
+import { Agent, type ExecutionContext } from '@yunpat/core'
 
 export interface TechnicalFeature {
-  feature: string;
-  description: string;
-  source: 'invention' | 'prior_art' | 'combination';
+  feature: string
+  description: string
+  source: 'invention' | 'prior_art' | 'combination'
 }
 
 export interface DisclosureRefinerInput {
   originalInvention: {
-    technicalField: string;
-    backgroundArt: string;
-    technicalProblem: string;
-    technicalSolution: string;
-    beneficialEffects: string;
-    keyFeatures: string[];
-    drawingDescriptions: string[];
-    confidence: number;
-  };
+    technicalField: string
+    backgroundArt: string
+    technicalProblem: string
+    technicalSolution: string
+    beneficialEffects: string
+    keyFeatures: string[]
+    drawingDescriptions: string[]
+    confidence: number
+  }
   comparisonReport: {
     distinctFeatures: {
-      feature: string;
-      novelty: string;
-      evidence: string[];
-    }[];
+      feature: string
+      novelty: string
+      evidence: string[]
+    }[]
     technicalProblem: {
-      refined: string;
-      refinementReason: string;
-    };
+      refined: string
+      refinementReason: string
+    }
     technicalSolution: {
       refined: {
-        core: string;
-        innovative: string[];
-        obvious: string[];
-      };
-    };
+        core: string
+        innovative: string[]
+        obvious: string[]
+      }
+    }
     technicalEffects: {
       refined: {
-        unexpected: string[];
-        expected: string[];
-      };
-    };
+        unexpected: string[]
+        expected: string[]
+      }
+    }
     inventiveness: {
-      score: number;
-      keyFactors: string[];
-    };
-  };
+      score: number
+      keyFactors: string[]
+    }
+  }
 }
 
 export interface RefinedInventionUnderstanding {
   original: {
-    technicalField: string;
-    backgroundArt: string;
-    technicalProblem: string;
-    technicalSolution: string;
-    beneficialEffects: string;
-    keyFeatures: string[];
-    drawingDescriptions: string[];
-    confidence: number;
-  };
+    technicalField: string
+    backgroundArt: string
+    technicalProblem: string
+    technicalSolution: string
+    beneficialEffects: string
+    keyFeatures: string[]
+    drawingDescriptions: string[]
+    confidence: number
+  }
   refined: {
-    inventionTitle: string;
-    coreInnovation: string;
-    technicalProblem: string;
-    technicalSolution: string;
-    technicalEffects: string[];
+    inventionTitle: string
+    coreInnovation: string
+    technicalProblem: string
+    technicalSolution: string
+    technicalEffects: string[]
     features: {
-      innovative: TechnicalFeature[];
-      known: TechnicalFeature[];
-      combination: TechnicalFeature[];
-    };
+      innovative: TechnicalFeature[]
+      known: TechnicalFeature[]
+      combination: TechnicalFeature[]
+    }
     protectionScope: {
-      independent: string;
-      dependent: string[];
-    };
-  };
+      independent: string
+      dependent: string[]
+    }
+  }
   improvements: {
-    category: string;
-    description: string;
-    priority: 'high' | 'medium' | 'low';
-  }[];
+    category: string
+    description: string
+    priority: 'high' | 'medium' | 'low'
+  }[]
 }
 
 interface RefinerPlan {
-  input: DisclosureRefinerInput;
+  input: DisclosureRefinerInput
 }
 
 export class DisclosureRefinerAgent extends Agent {
@@ -91,30 +91,30 @@ export class DisclosureRefinerAgent extends Agent {
     _context: ExecutionContext
   ): Promise<RefinerPlan> {
     if (!input.originalInvention?.technicalProblem?.trim()) {
-      throw new Error('原始发明理解不能为空');
+      throw new Error('原始发明理解不能为空')
     }
     if (!input.comparisonReport?.distinctFeatures?.length) {
-      throw new Error('对比分析报告不能为空');
+      throw new Error('对比分析报告不能为空')
     }
 
-    console.log('\n🔄 [交底书再分析] 步骤1: 规划阶段');
-    console.log(`   原始置信度: ${input.originalInvention.confidence.toFixed(2)}`);
-    console.log(`   区别特征: ${input.comparisonReport.distinctFeatures.length} 个`);
-    console.log(`   创造性评分: ${(input.comparisonReport.inventiveness.score * 100).toFixed(1)}%`);
+    console.log('\n🔄 [交底书再分析] 步骤1: 规划阶段')
+    console.log(`   原始置信度: ${input.originalInvention.confidence.toFixed(2)}`)
+    console.log(`   区别特征: ${input.comparisonReport.distinctFeatures.length} 个`)
+    console.log(`   创造性评分: ${(input.comparisonReport.inventiveness.score * 100).toFixed(1)}%`)
 
-    return { input };
+    return { input }
   }
 
   protected async act(
     plan: RefinerPlan,
     context: ExecutionContext
   ): Promise<RefinedInventionUnderstanding> {
-    console.log('\n✨ [交底书再分析] 步骤2: 提炼阶段');
+    console.log('\n✨ [交底书再分析] 步骤2: 提炼阶段')
 
-    const { input } = plan;
+    const { input } = plan
 
     if (!context.llm) {
-      throw new Error('LLM 未配置，无法执行交底书再分析');
+      throw new Error('LLM 未配置，无法执行交底书再分析')
     }
 
     const systemPrompt = `你是一位资深的专利代理师，擅长基于现有技术分析提炼和优化发明理解。
@@ -126,7 +126,7 @@ export class DisclosureRefinerAgent extends Agent {
 4. 明确保护范围建议
 5. 给出改进建议
 
-输出必须是严格的JSON格式。`;
+输出必须是严格的JSON格式。`
 
     const userPrompt = `## 原始发明理解
 
@@ -156,7 +156,7 @@ ${input.comparisonReport.distinctFeatures.map((f) => `- ${f.feature} (新颖性:
 
 请基于以上信息提炼发明理解，输出以下JSON格式:
 
-{\n  "refined": {\n    "invention_title": "提炼后的发明名称",\n    "core_innovation": "核心创新点",\n    "technical_problem": "提炼后的技术问题",\n    "technical_solution": "提炼后的技术方案",\n    "technical_effects": ["效果1", "效果2"],\n    "features": {\n      "innovative": [\n        { "feature": "创新特征1", "description": "描述", "source": "invention" }\n      ],\n      "known": [\n        { "feature": "已知特征1", "description": "描述", "source": "prior_art" }\n      ],\n      "combination": [\n        { "feature": "组合特征1", "description": "描述", "source": "combination" }\n      ]\n    },\n    "protection_scope": {\n      "independent": "独立权利要求建议",\n      "dependent": ["从属权利要求建议1"]\n    }\n  },\n  "improvements": [\n    {\n      "category": "改进类别",\n      "description": "改进描述",\n      "priority": "high | medium | low"\n    }\n  ]\n}`;
+{\n  "refined": {\n    "invention_title": "提炼后的发明名称",\n    "core_innovation": "核心创新点",\n    "technical_problem": "提炼后的技术问题",\n    "technical_solution": "提炼后的技术方案",\n    "technical_effects": ["效果1", "效果2"],\n    "features": {\n      "innovative": [\n        { "feature": "创新特征1", "description": "描述", "source": "invention" }\n      ],\n      "known": [\n        { "feature": "已知特征1", "description": "描述", "source": "prior_art" }\n      ],\n      "combination": [\n        { "feature": "组合特征1", "description": "描述", "source": "combination" }\n      ]\n    },\n    "protection_scope": {\n      "independent": "独立权利要求建议",\n      "dependent": ["从属权利要求建议1"]\n    }\n  },\n  "improvements": [\n    {\n      "category": "改进类别",\n      "description": "改进描述",\n      "priority": "high | medium | low"\n    }\n  ]\n}`
 
     const response = await context.llm.chat({
       messages: [
@@ -164,17 +164,17 @@ ${input.comparisonReport.distinctFeatures.map((f) => `- ${f.feature} (新颖性:
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-    });
+    })
 
-    const refined = this.parseRefinedResponse(response.message.content, input.originalInvention);
+    const refined = this.parseRefinedResponse(response.message.content, input.originalInvention)
 
-    console.log(`   ✅ 提炼完成`);
-    console.log(`      发明名称: ${refined.refined.inventionTitle}`);
-    console.log(`      核心创新: ${refined.refined.coreInnovation.substring(0, 50)}...`);
-    console.log(`      创新特征: ${refined.refined.features.innovative.length} 个`);
-    console.log(`      改进建议: ${refined.improvements.length} 个`);
+    console.log(`   ✅ 提炼完成`)
+    console.log(`      发明名称: ${refined.refined.inventionTitle}`)
+    console.log(`      核心创新: ${refined.refined.coreInnovation.substring(0, 50)}...`)
+    console.log(`      创新特征: ${refined.refined.features.innovative.length} 个`)
+    console.log(`      改进建议: ${refined.improvements.length} 个`)
 
-    return refined;
+    return refined
   }
 
   private parseRefinedResponse(
@@ -182,12 +182,12 @@ ${input.comparisonReport.distinctFeatures.map((f) => `- ${f.feature} (新颖性:
     original: DisclosureRefinerInput['originalInvention']
   ): RefinedInventionUnderstanding {
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
-        throw new Error('未找到JSON格式的提炼数据');
+        throw new Error('未找到JSON格式的提炼数据')
       }
 
-      const data = JSON.parse(jsonMatch[0]);
+      const data = JSON.parse(jsonMatch[0])
 
       return {
         original,
@@ -224,10 +224,10 @@ ${input.comparisonReport.distinctFeatures.map((f) => `- ${f.feature} (新颖性:
           description: i.description || '',
           priority: i.priority || 'medium',
         })),
-      };
+      }
     } catch (error) {
-      console.warn('[DisclosureRefinerAgent] JSON解析失败，回退到默认结构:', error);
-      return this.getDefaultRefined(original);
+      console.warn('[DisclosureRefinerAgent] JSON解析失败，回退到默认结构:', error)
+      return this.getDefaultRefined(original)
     }
   }
 
@@ -253,6 +253,6 @@ ${input.comparisonReport.distinctFeatures.map((f) => `- ${f.feature} (新颖性:
         },
       },
       improvements: [],
-    };
+    }
   }
 }

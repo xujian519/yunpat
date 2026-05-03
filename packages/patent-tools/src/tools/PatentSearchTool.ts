@@ -1,6 +1,6 @@
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
-import { GooglePatentsFetchTool, GooglePatentResult } from './GooglePatentsTool.js';
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
+import { GooglePatentsFetchTool, GooglePatentResult } from './GooglePatentsTool.js'
 
 /**
  * 专利检索模式
@@ -17,29 +17,29 @@ export enum PatentSearchMode {
  */
 export interface PatentRecord {
   /** 专利ID */
-  id: string;
+  id: string
   /** 专利名称 */
-  patentName: string;
+  patentName: string
   /** 申请号 */
-  applicationNumber: string;
+  applicationNumber: string
   /** 公开号 */
-  publicationNumber: string;
+  publicationNumber: string
   /** 申请人 */
-  applicant: string;
+  applicant: string
   /** 发明人 */
-  inventor?: string;
+  inventor?: string
   /** IPC分类号 */
-  ipcCode?: string;
+  ipcCode?: string
   /** 摘要 */
-  abstract?: string;
+  abstract?: string
   /** 权利要求 */
-  claims?: string;
+  claims?: string
   /** 公开日期 */
-  publicationDate?: string;
+  publicationDate?: string
   /** 申请日期 */
-  filingDate?: string;
+  filingDate?: string
   /** URL */
-  url?: string;
+  url?: string
 }
 
 /**
@@ -47,15 +47,15 @@ export interface PatentRecord {
  */
 export interface PatentSearchResult {
   /** 匹配的专利列表 */
-  patents: PatentRecord[];
+  patents: PatentRecord[]
   /** 总数（估算） */
-  total: number;
+  total: number
   /** 当前页码 */
-  page: number;
+  page: number
   /** 每页数量 */
-  pageSize: number;
+  pageSize: number
   /** 检索耗时（毫秒） */
-  elapsedMs: number;
+  elapsedMs: number
 }
 
 /**
@@ -65,10 +65,10 @@ export interface PatentSearchResult {
  */
 export class PatentSearchTool extends EnhancedBaseTool<
   {
-    query: string;
-    mode?: PatentSearchMode;
-    page?: number;
-    limit?: number;
+    query: string
+    mode?: PatentSearchMode
+    page?: number
+    limit?: number
   },
   PatentSearchResult
 > {
@@ -112,52 +112,52 @@ export class PatentSearchTool extends EnhancedBaseTool<
     permissions: ['http:request'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   /**
    * 执行专利检索
    */
   async execute(
     input: {
-      query: string;
-      mode?: PatentSearchMode;
-      page?: number;
-      limit?: number;
+      query: string
+      mode?: PatentSearchMode
+      page?: number
+      limit?: number
     },
     context: ToolContext
   ): Promise<PatentSearchResult> {
-    const { query, mode = PatentSearchMode.KEYWORD, page = 1, limit = 10 } = input;
-    const startTime = Date.now();
+    const { query, mode = PatentSearchMode.KEYWORD, page = 1, limit = 10 } = input
+    const startTime = Date.now()
 
     try {
       // 根据检索模式执行不同的检索策略
-      let googleResults: GooglePatentResult[] = [];
+      let googleResults: GooglePatentResult[] = []
 
       switch (mode) {
         case PatentSearchMode.KEYWORD:
-          googleResults = await this.searchByKeyword(query, page, limit, context);
-          break;
+          googleResults = await this.searchByKeyword(query, page, limit, context)
+          break
 
         case PatentSearchMode.APPLICANT:
-          googleResults = await this.searchByApplicant(query, page, limit, context);
-          break;
+          googleResults = await this.searchByApplicant(query, page, limit, context)
+          break
 
         case PatentSearchMode.IPC:
-          googleResults = await this.searchByIPC(query, page, limit, context);
-          break;
+          googleResults = await this.searchByIPC(query, page, limit, context)
+          break
 
         case PatentSearchMode.NUMBER:
-          googleResults = await this.searchByNumber(query, context);
-          break;
+          googleResults = await this.searchByNumber(query, context)
+          break
 
         default:
-          throw new Error(`Unsupported search mode: ${mode}`);
+          throw new Error(`Unsupported search mode: ${mode}`)
       }
 
       // 转换为标准格式
-      const patents = googleResults.map(this.convertToPatentRecord);
+      const patents = googleResults.map(this.convertToPatentRecord)
 
-      const elapsedMs = Date.now() - startTime;
+      const elapsedMs = Date.now() - startTime
 
       return {
         patents,
@@ -165,11 +165,11 @@ export class PatentSearchTool extends EnhancedBaseTool<
         page,
         pageSize: limit,
         elapsedMs,
-      };
+      }
     } catch (error) {
       throw new Error(
         `Patent search failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 
@@ -183,17 +183,17 @@ export class PatentSearchTool extends EnhancedBaseTool<
     context: ToolContext
   ): Promise<GooglePatentResult[]> {
     // 使用 Google Patents 搜索
-    const googleTool = new GooglePatentsFetchTool();
+    const googleTool = new GooglePatentsFetchTool()
     const result = await googleTool.execute(
       {
         query: keyword,
         page,
       },
       context
-    );
+    )
 
     // 应用限制
-    return result.results.slice(0, limit);
+    return result.results.slice(0, limit)
   }
 
   /**
@@ -206,21 +206,21 @@ export class PatentSearchTool extends EnhancedBaseTool<
     context: ToolContext
   ): Promise<GooglePatentResult[]> {
     // 构建申请人搜索查询
-    const query = `assignee:(${applicant})`;
+    const query = `assignee:(${applicant})`
 
-    const googleTool = new GooglePatentsFetchTool();
+    const googleTool = new GooglePatentsFetchTool()
     const result = await googleTool.execute(
       {
         query,
         page,
       },
       context
-    );
+    )
 
     // 过滤结果，确保申请人匹配
-    const filtered = result.results.filter((r) => r.assignee && r.assignee.includes(applicant));
+    const filtered = result.results.filter((r) => r.assignee && r.assignee.includes(applicant))
 
-    return filtered.slice(0, limit);
+    return filtered.slice(0, limit)
   }
 
   /**
@@ -233,23 +233,23 @@ export class PatentSearchTool extends EnhancedBaseTool<
     context: ToolContext
   ): Promise<GooglePatentResult[]> {
     // 构建IPC分类搜索查询
-    const query = `ipc:(${ipcCode})`;
+    const query = `ipc:(${ipcCode})`
 
-    const googleTool = new GooglePatentsFetchTool();
+    const googleTool = new GooglePatentsFetchTool()
     const result = await googleTool.execute(
       {
         query,
         page,
       },
       context
-    );
+    )
 
     // 过滤结果，确保IPC分类匹配
     const filtered = result.results.filter(
       (r) => r.ipcCodes && r.ipcCodes.some((code) => code.startsWith(ipcCode))
-    );
+    )
 
-    return filtered.slice(0, limit);
+    return filtered.slice(0, limit)
   }
 
   /**
@@ -260,14 +260,14 @@ export class PatentSearchTool extends EnhancedBaseTool<
     context: ToolContext
   ): Promise<GooglePatentResult[]> {
     // 直接使用专利号作为查询
-    const googleTool = new GooglePatentsFetchTool();
+    const googleTool = new GooglePatentsFetchTool()
     const result = await googleTool.execute(
       {
         query: patentNumber,
         page: 1,
       },
       context
-    );
+    )
 
     // 精确匹配专利号
     const exactMatch = result.results.find(
@@ -275,9 +275,9 @@ export class PatentSearchTool extends EnhancedBaseTool<
         r.patentId === patentNumber ||
         r.url.includes(patentNumber) ||
         patentNumber.includes(r.patentId)
-    );
+    )
 
-    return exactMatch ? [exactMatch] : [];
+    return exactMatch ? [exactMatch] : []
   }
 
   /**
@@ -294,7 +294,7 @@ export class PatentSearchTool extends EnhancedBaseTool<
       abstract: googleResult.snippet,
       publicationDate: googleResult.publicationDate,
       url: googleResult.url,
-    };
+    }
   }
 }
 
@@ -305,13 +305,13 @@ export class PatentSearchTool extends EnhancedBaseTool<
  */
 export class SimilarPatentSearchTool extends EnhancedBaseTool<
   {
-    technology: string;
-    features: string[];
-    limit?: number;
+    technology: string
+    features: string[]
+    limit?: number
   },
   {
-    similarPatents: PatentRecord[];
-    similarityScores: number[];
+    similarPatents: PatentRecord[]
+    similarityScores: number[]
   }
 > {
   readonly metadata = {
@@ -340,22 +340,22 @@ export class SimilarPatentSearchTool extends EnhancedBaseTool<
     permissions: ['http:request'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { technology: string; features: string[]; limit?: number },
     context: ToolContext
   ): Promise<{
-    similarPatents: PatentRecord[];
-    similarityScores: number[];
+    similarPatents: PatentRecord[]
+    similarityScores: number[]
   }> {
-    const { technology, features, limit = 10 } = input;
+    const { technology, features, limit = 10 } = input
 
     // 构建增强的检索查询
-    const query = this.buildEnhancedQuery(technology, features);
+    const query = this.buildEnhancedQuery(technology, features)
 
     // 使用专利检索工具
-    const searchTool = new PatentSearchTool();
+    const searchTool = new PatentSearchTool()
     const result = await searchTool.execute(
       {
         query,
@@ -364,26 +364,26 @@ export class SimilarPatentSearchTool extends EnhancedBaseTool<
         limit,
       },
       context
-    );
+    )
 
     // 计算相似度分数（简化版）
     const similarityScores = result.patents.map((patent) => {
-      return this.calculateSimilarity(query, patent.patentName + ' ' + (patent.abstract || ''));
-    });
+      return this.calculateSimilarity(query, patent.patentName + ' ' + (patent.abstract || ''))
+    })
 
     // 按相似度排序
     const sortedIndices = similarityScores
       .map((score, index) => ({ score, index }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+      .slice(0, limit)
 
-    const similarPatents = sortedIndices.map((item) => result.patents[item.index]);
-    const sortedScores = sortedIndices.map((item) => item.score);
+    const similarPatents = sortedIndices.map((item) => result.patents[item.index])
+    const sortedScores = sortedIndices.map((item) => item.score)
 
     return {
       similarPatents,
       similarityScores: sortedScores,
-    };
+    }
   }
 
   /**
@@ -391,24 +391,24 @@ export class SimilarPatentSearchTool extends EnhancedBaseTool<
    */
   private buildEnhancedQuery(technology: string, features: string[]): string {
     // 组合技术领域和特征
-    const featureKeywords = features.join(' OR ');
-    return `${technology} ${featureKeywords}`;
+    const featureKeywords = features.join(' OR ')
+    return `${technology} ${featureKeywords}`
   }
 
   /**
    * 计算相似度分数（简化版，使用关键词重叠）
    */
   private calculateSimilarity(query: string, content: string): number {
-    const queryWords = new Set(query.toLowerCase().split(/\s+/));
-    const contentWords = new Set(content.toLowerCase().split(/\s+/));
+    const queryWords = new Set(query.toLowerCase().split(/\s+/))
+    const contentWords = new Set(content.toLowerCase().split(/\s+/))
 
-    let overlap = 0;
+    let overlap = 0
     for (const word of queryWords) {
       if (contentWords.has(word)) {
-        overlap++;
+        overlap++
       }
     }
 
-    return queryWords.size > 0 ? overlap / queryWords.size : 0;
+    return queryWords.size > 0 ? overlap / queryWords.size : 0
   }
 }

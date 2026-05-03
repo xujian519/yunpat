@@ -12,9 +12,9 @@
  * @module reasoning/EnhancedReflection
  */
 
-import { LLMAdapter, ExecutionContext } from '../lifecycle/Lifecycle.js';
-import { TelemetryCollector } from '../observability/TelemetryCollector.js';
-import { TelemetryEventType, EventStatus } from '../observability/types.js';
+import { LLMAdapter, ExecutionContext } from '../lifecycle/Lifecycle.js'
+import { TelemetryCollector } from '../observability/TelemetryCollector.js'
+import { TelemetryEventType, EventStatus } from '../observability/types.js'
 
 // ========== 类型定义 ==========
 
@@ -77,22 +77,22 @@ export enum ImprovementPriority {
  */
 export interface DimensionAssessment {
   /** 评估维度 */
-  dimension: ReflectionDimension;
+  dimension: ReflectionDimension
 
   /** 质量等级 */
-  level: QualityLevel;
+  level: QualityLevel
 
   /** 评分 (0-1) */
-  score: number;
+  score: number
 
   /** 评估理由 */
-  reasoning: string;
+  reasoning: string
 
   /** 发现的问题 */
-  issues: string[];
+  issues: string[]
 
   /** 证据片段 */
-  evidence?: string[];
+  evidence?: string[]
 }
 
 /**
@@ -100,28 +100,28 @@ export interface DimensionAssessment {
  */
 export interface Improvement {
   /** 改进 ID */
-  id: string;
+  id: string
 
   /** 改进描述 */
-  description: string;
+  description: string
 
   /** 优先级 */
-  priority: ImprovementPriority;
+  priority: ImprovementPriority
 
   /** 相关维度 */
-  relatedDimensions: ReflectionDimension[];
+  relatedDimensions: ReflectionDimension[]
 
   /** 具体行动步骤 */
-  actionSteps: string[];
+  actionSteps: string[]
 
   /** 预期效果 */
-  expectedOutcome?: string;
+  expectedOutcome?: string
 
   /** 是否已应用 */
-  applied: boolean;
+  applied: boolean
 
   /** 应用时间 */
-  appliedAt?: Date;
+  appliedAt?: Date
 }
 
 /**
@@ -129,34 +129,34 @@ export interface Improvement {
  */
 export interface ReflectionReport {
   /** 报告 ID */
-  id: string;
+  id: string
 
   /** 执行 ID */
-  executionId: string;
+  executionId: string
 
   /** 时间戳 */
-  timestamp: Date;
+  timestamp: Date
 
   /** 各维度评估 */
-  assessments: DimensionAssessment[];
+  assessments: DimensionAssessment[]
 
   /** 综合评分 (0-1) */
-  overallScore: number;
+  overallScore: number
 
   /** 综合质量等级 */
-  overallLevel: QualityLevel;
+  overallLevel: QualityLevel
 
   /** 改进建议列表 */
-  improvements: Improvement[];
+  improvements: Improvement[]
 
   /** 是否需要迭代 */
-  needsIteration: boolean;
+  needsIteration: boolean
 
   /** 迭代原因 */
-  iterationReason?: string;
+  iterationReason?: string
 
   /** 置信度 */
-  confidence: number;
+  confidence: number
 }
 
 /**
@@ -164,22 +164,22 @@ export interface ReflectionReport {
  */
 export interface ReflectionRecord {
   /** 执行 ID */
-  executionId: string;
+  executionId: string
 
   /** 时间戳 */
-  timestamp: Date;
+  timestamp: Date
 
   /** 反思报告 */
-  report: ReflectionReport;
+  report: ReflectionReport
 
   /** 是否进行了迭代 */
-  iterated: boolean;
+  iterated: boolean
 
   /** 迭代次数 */
-  iterationCount: number;
+  iterationCount: number
 
   /** 最终结果 */
-  finalResult?: unknown;
+  finalResult?: unknown
 }
 
 /**
@@ -187,22 +187,22 @@ export interface ReflectionRecord {
  */
 export interface IterationResult {
   /** 迭代次数 */
-  iterationCount: number;
+  iterationCount: number
 
   /** 是否成功 */
-  success: boolean;
+  success: boolean
 
   /** 最终结果 */
-  result: unknown;
+  result: unknown
 
   /** 所有反思报告 */
-  reports: ReflectionReport[];
+  reports: ReflectionReport[]
 
   /** 应用的改进 */
-  appliedImprovements: Improvement[];
+  appliedImprovements: Improvement[]
 
   /** 总耗时 */
-  duration: number;
+  duration: number
 }
 
 /**
@@ -210,25 +210,25 @@ export interface IterationResult {
  */
 export interface ReflectionConfig {
   /** 最大迭代次数 */
-  maxIterations: number;
+  maxIterations: number
 
   /** 迭代阈值 - 低于此分数时触发迭代 */
-  iterationThreshold: number;
+  iterationThreshold: number
 
   /** 启用的评估维度 */
-  enabledDimensions: ReflectionDimension[];
+  enabledDimensions: ReflectionDimension[]
 
   /** 是否使用 LLM 进行深度分析 */
-  useDeepAnalysis: boolean;
+  useDeepAnalysis: boolean
 
   /** 是否记录历史 */
-  recordHistory: boolean;
+  recordHistory: boolean
 
   /** 历史记录最大数量 */
-  maxHistorySize: number;
+  maxHistorySize: number
 
   /** 是否与遥测系统集成 */
-  enableTelemetry: boolean;
+  enableTelemetry: boolean
 }
 
 // ========== 默认配置 ==========
@@ -245,7 +245,7 @@ const DEFAULT_CONFIG: ReflectionConfig = {
   recordHistory: true,
   maxHistorySize: 100,
   enableTelemetry: true,
-};
+}
 
 // ========== 主类实现 ==========
 
@@ -255,11 +255,11 @@ const DEFAULT_CONFIG: ReflectionConfig = {
  * 实现多维度、自动迭代的自我反思能力
  */
 export class EnhancedReflection {
-  private llm: LLMAdapter;
-  private config: ReflectionConfig;
-  private telemetryCollector?: TelemetryCollector;
-  private history: ReflectionRecord[] = [];
-  private counter = 0;
+  private llm: LLMAdapter
+  private config: ReflectionConfig
+  private telemetryCollector?: TelemetryCollector
+  private history: ReflectionRecord[] = []
+  private counter = 0
 
   /**
    * 构造函数
@@ -269,9 +269,9 @@ export class EnhancedReflection {
     config: Partial<ReflectionConfig> = {},
     telemetryCollector?: TelemetryCollector
   ) {
-    this.llm = llm;
-    this.config = { ...DEFAULT_CONFIG, ...config };
-    this.telemetryCollector = telemetryCollector;
+    this.llm = llm
+    this.config = { ...DEFAULT_CONFIG, ...config }
+    this.telemetryCollector = telemetryCollector
   }
 
   /**
@@ -287,34 +287,34 @@ export class EnhancedReflection {
     context: ExecutionContext,
     goal?: string
   ): Promise<ReflectionReport> {
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 记录反思开始
     this.recordTelemetryEvent(TelemetryEventType.STAGE_STARTED, {
       stage: 'reflection',
       agentName: context.agentName,
-    });
+    })
 
-    const reportId = `ref_${++this.counter}`;
+    const reportId = `ref_${++this.counter}`
 
     // 1. 执行多维度评估
-    const assessments = await this.performDimensionalAssessments(result, context, goal);
+    const assessments = await this.performDimensionalAssessments(result, context, goal)
 
     // 2. 计算综合评分
-    const { overallScore, overallLevel } = this.calculateOverallScore(assessments);
+    const { overallScore, overallLevel } = this.calculateOverallScore(assessments)
 
     // 3. 生成改进建议
-    const improvements = this.generateImprovements(assessments);
+    const improvements = this.generateImprovements(assessments)
 
     // 4. 判断是否需要迭代
     const { needsIteration, iterationReason } = this.determineIterationNeed(
       overallScore,
       improvements,
       context
-    );
+    )
 
     // 5. 计算置信度
-    const confidence = this.calculateConfidence(assessments, improvements);
+    const confidence = this.calculateConfidence(assessments, improvements)
 
     const report: ReflectionReport = {
       id: reportId,
@@ -327,7 +327,7 @@ export class EnhancedReflection {
       needsIteration,
       iterationReason,
       confidence,
-    };
+    }
 
     // 6. 记录反思历史
     if (this.config.recordHistory) {
@@ -337,7 +337,7 @@ export class EnhancedReflection {
         report,
         iterated: false,
         iterationCount: 0,
-      });
+      })
     }
 
     // 记录反思完成
@@ -350,9 +350,9 @@ export class EnhancedReflection {
         overallScore,
         needsIteration,
       },
-    });
+    })
 
-    return report;
+    return report
   }
 
   /**
@@ -361,24 +361,24 @@ export class EnhancedReflection {
    * @param reflection 反思报告
    * @returns 改进建议列表
    */
-  generateImprovements(reflection: ReflectionReport): Improvement[];
-  generateImprovements(assessments: DimensionAssessment[]): Improvement[];
+  generateImprovements(reflection: ReflectionReport): Improvement[]
+  generateImprovements(assessments: DimensionAssessment[]): Improvement[]
   generateImprovements(input: ReflectionReport | DimensionAssessment[]): Improvement[] {
-    const assessments = Array.isArray(input) ? input : input.assessments;
+    const assessments = Array.isArray(input) ? input : input.assessments
 
-    const improvements: Improvement[] = [];
-    let improvementId = 0;
+    const improvements: Improvement[] = []
+    let improvementId = 0
 
     for (const assessment of assessments) {
       // 只为需要改进的维度生成建议
       if (assessment.level === QualityLevel.EXCELLENT) {
-        continue;
+        continue
       }
 
       // 为每个问题生成改进建议
       for (const issue of assessment.issues) {
-        const priority = this.determinePriority(assessment.level);
-        const actionSteps = this.generateActionSteps(assessment.dimension, issue);
+        const priority = this.determinePriority(assessment.level)
+        const actionSteps = this.generateActionSteps(assessment.dimension, issue)
 
         improvements.push({
           id: `imp_${++improvementId}`,
@@ -388,7 +388,7 @@ export class EnhancedReflection {
           actionSteps,
           expectedOutcome: this.getExpectedOutcome(assessment.dimension),
           applied: false,
-        });
+        })
       }
     }
 
@@ -398,11 +398,11 @@ export class EnhancedReflection {
         [ImprovementPriority.HIGH]: 0,
         [ImprovementPriority.MEDIUM]: 1,
         [ImprovementPriority.LOW]: 2,
-      };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    });
+      }
+      return priorityOrder[a.priority] - priorityOrder[b.priority]
+    })
 
-    return improvements;
+    return improvements
   }
 
   /**
@@ -420,57 +420,57 @@ export class EnhancedReflection {
     context: ExecutionContext,
     reActFunction: (improvements: Improvement[]) => Promise<unknown>
   ): Promise<IterationResult> {
-    const startTime = Date.now();
-    const reports: ReflectionReport[] = [];
-    const appliedImprovements: Improvement[] = [];
-    let currentResult = result;
-    let iterationCount = 0;
-    let success = false;
+    const startTime = Date.now()
+    const reports: ReflectionReport[] = []
+    const appliedImprovements: Improvement[] = []
+    let currentResult = result
+    let iterationCount = 0
+    let success = false
 
     // 最多迭代 maxIterations 次
     while (iterationCount < this.config.maxIterations) {
-      iterationCount++;
+      iterationCount++
 
       // 标记改进为已应用
       for (const imp of improvements) {
         if (!imp.applied) {
-          imp.applied = true;
-          imp.appliedAt = new Date();
-          appliedImprovements.push(imp);
+          imp.applied = true
+          imp.appliedAt = new Date()
+          appliedImprovements.push(imp)
         }
       }
 
       // 重新执行
       try {
-        currentResult = await reActFunction(improvements);
+        currentResult = await reActFunction(improvements)
       } catch (error) {
         // 迭代失败，停止
-        break;
+        break
       }
 
       // 对新结果进行反思
-      const newReport = await this.reflect(currentResult, context);
-      reports.push(newReport);
+      const newReport = await this.reflect(currentResult, context)
+      reports.push(newReport)
 
       // 检查是否达到标准
       if (!newReport.needsIteration || newReport.overallScore >= this.config.iterationThreshold) {
-        success = true;
-        break;
+        success = true
+        break
       }
 
       // 更新改进建议
-      improvements = this.generateImprovements(newReport);
+      improvements = this.generateImprovements(newReport)
     }
 
-    const duration = Date.now() - startTime;
+    const duration = Date.now() - startTime
 
     // 更新历史记录
     if (this.config.recordHistory) {
-      const historyEntry = this.history.find((h) => h.executionId === context.executionId);
+      const historyEntry = this.history.find((h) => h.executionId === context.executionId)
       if (historyEntry) {
-        historyEntry.iterated = true;
-        historyEntry.iterationCount = iterationCount;
-        historyEntry.finalResult = currentResult;
+        historyEntry.iterated = true
+        historyEntry.iterationCount = iterationCount
+        historyEntry.finalResult = currentResult
       }
     }
 
@@ -481,7 +481,7 @@ export class EnhancedReflection {
       reports,
       appliedImprovements,
       duration,
-    };
+    }
   }
 
   /**
@@ -491,15 +491,15 @@ export class EnhancedReflection {
    * @returns 历史记录
    */
   getReflectionHistory(limit?: number): ReflectionRecord[] {
-    const sorted = [...this.history].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    return limit ? sorted.slice(0, limit) : sorted;
+    const sorted = [...this.history].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    return limit ? sorted.slice(0, limit) : sorted
   }
 
   /**
    * 获取特定执行的历史
    */
   getHistoryByExecution(executionId: string): ReflectionRecord | undefined {
-    return this.history.find((h) => h.executionId === executionId);
+    return this.history.find((h) => h.executionId === executionId)
   }
 
   /**
@@ -508,13 +508,13 @@ export class EnhancedReflection {
    * 分析历史记录，找出重复出现的问题
    */
   getRepeatedErrorPatterns(): Array<{ pattern: string; count: number }> {
-    const patternMap = new Map<string, number>();
+    const patternMap = new Map<string, number>()
 
     for (const record of this.history) {
       for (const assessment of record.report.assessments) {
         for (const issue of assessment.issues) {
-          const key = `${assessment.dimension}:${issue}`;
-          patternMap.set(key, (patternMap.get(key) || 0) + 1);
+          const key = `${assessment.dimension}:${issue}`
+          patternMap.set(key, (patternMap.get(key) || 0) + 1)
         }
       }
     }
@@ -522,28 +522,28 @@ export class EnhancedReflection {
     return [...patternMap.entries()]
       .filter(([_, count]) => count > 1)
       .map(([pattern, count]) => ({ pattern, count }))
-      .sort((a, b) => b.count - a.count);
+      .sort((a, b) => b.count - a.count)
   }
 
   /**
    * 清除历史记录
    */
   clearHistory(): void {
-    this.history = [];
+    this.history = []
   }
 
   /**
    * 更新配置
    */
   updateConfig(config: Partial<ReflectionConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config }
   }
 
   /**
    * 获取配置
    */
   getConfig(): ReflectionConfig {
-    return { ...this.config };
+    return { ...this.config }
   }
 
   // ========== 私有方法 ==========
@@ -556,23 +556,23 @@ export class EnhancedReflection {
     context: ExecutionContext,
     goal?: string
   ): Promise<DimensionAssessment[]> {
-    const assessments: DimensionAssessment[] = [];
+    const assessments: DimensionAssessment[] = []
 
     for (const dimension of this.config.enabledDimensions) {
-      let assessment: DimensionAssessment;
+      let assessment: DimensionAssessment
 
       if (this.config.useDeepAnalysis) {
         // 使用 LLM 进行深度分析
-        assessment = await this.performLLMAssessment(dimension, result, context, goal);
+        assessment = await this.performLLMAssessment(dimension, result, context, goal)
       } else {
         // 使用规则进行快速评估
-        assessment = this.performRuleBasedAssessment(dimension, result, context);
+        assessment = this.performRuleBasedAssessment(dimension, result, context)
       }
 
-      assessments.push(assessment);
+      assessments.push(assessment)
     }
 
-    return assessments;
+    return assessments
   }
 
   /**
@@ -584,7 +584,7 @@ export class EnhancedReflection {
     context: ExecutionContext,
     goal?: string
   ): Promise<DimensionAssessment> {
-    const prompt = this.buildAssessmentPrompt(dimension, result, context, goal);
+    const prompt = this.buildAssessmentPrompt(dimension, result, context, goal)
 
     const response = await this.llm.chat({
       messages: [
@@ -599,9 +599,9 @@ export class EnhancedReflection {
       ],
       temperature: 0.3,
       maxTokens: 1000,
-    });
+    })
 
-    return this.parseAssessmentResponse(dimension, response.message.content);
+    return this.parseAssessmentResponse(dimension, response.message.content)
   }
 
   /**
@@ -612,70 +612,70 @@ export class EnhancedReflection {
     result: unknown,
     _context: ExecutionContext
   ): DimensionAssessment {
-    const issues: string[] = [];
-    let score = 1.0;
+    const issues: string[] = []
+    let score = 1.0
 
     switch (dimension) {
       case ReflectionDimension.QUALITY:
         // 检查结果是否为空
         if (!result || result === null || result === undefined) {
-          issues.push('结果为空');
-          score = 0;
+          issues.push('结果为空')
+          score = 0
         } else if (typeof result === 'string' && result.trim().length === 0) {
-          issues.push('结果为空字符串');
-          score = 0.2;
+          issues.push('结果为空字符串')
+          score = 0.2
         }
         // 检查是否包含错误标记
         if (typeof result === 'string' && result.toLowerCase().includes('error')) {
-          issues.push('结果包含错误信息');
-          score = Math.min(score, 0.4);
+          issues.push('结果包含错误信息')
+          score = Math.min(score, 0.4)
         }
-        break;
+        break
 
       case ReflectionDimension.COMPLETENESS:
         // 检查是否有 TODO 标记
         if (typeof result === 'string' && result.toLowerCase().includes('todo')) {
-          issues.push('包含未完成的 TODO 项');
-          score = 0.6;
+          issues.push('包含未完成的 TODO 项')
+          score = 0.6
         }
         // 检查是否有截断标记
         if (typeof result === 'string' && result.endsWith('...')) {
-          issues.push('结果可能被截断');
-          score = 0.7;
+          issues.push('结果可能被截断')
+          score = 0.7
         }
-        break;
+        break
 
       case ReflectionDimension.CONSISTENCY:
         // 检查是否有矛盾陈述（简单启发式）
         if (typeof result === 'string') {
-          const hasBut = result.toLowerCase().split('但是').length > 2;
+          const hasBut = result.toLowerCase().split('但是').length > 2
           if (hasBut) {
-            issues.push('可能包含矛盾的陈述');
-            score = 0.8;
+            issues.push('可能包含矛盾的陈述')
+            score = 0.8
           }
         }
-        break;
+        break
 
       case ReflectionDimension.SAFETY:
         // 检查敏感词
-        const sensitivePatterns = ['密码', 'token', 'secret', 'key'];
-        const resultStr = JSON.stringify(result).toLowerCase();
+        const sensitivePatterns = ['密码', 'token', 'secret', 'key']
+        const resultStr = JSON.stringify(result).toLowerCase()
         for (const pattern of sensitivePatterns) {
           if (resultStr.includes(pattern)) {
-            issues.push(`可能包含敏感信息: ${pattern}`);
-            score = Math.min(score, 0.5);
+            issues.push(`可能包含敏感信息: ${pattern}`)
+            score = Math.min(score, 0.5)
           }
         }
-        break;
+        break
 
       case ReflectionDimension.EFFICIENCY:
         // 检查结果大小
-        const resultSize = JSON.stringify(result).length;
+        const resultSize = JSON.stringify(result).length
         if (resultSize > 100000) {
-          issues.push('结果过大，可能影响效率');
-          score = 0.7;
+          issues.push('结果过大，可能影响效率')
+          score = 0.7
         }
-        break;
+        break
     }
 
     return {
@@ -684,7 +684,7 @@ export class EnhancedReflection {
       score,
       reasoning: issues.length > 0 ? `发现 ${issues.length} 个问题` : '无明显问题',
       issues,
-    };
+    }
   }
 
   /**
@@ -696,22 +696,22 @@ export class EnhancedReflection {
     context: ExecutionContext,
     goal?: string
   ): string {
-    let prompt = `请对以下执行结果进行【${this.getDimensionLabel(dimension)}】维度评估：\n\n`;
+    let prompt = `请对以下执行结果进行【${this.getDimensionLabel(dimension)}】维度评估：\n\n`
 
     if (goal) {
-      prompt += `原始目标：${goal}\n\n`;
+      prompt += `原始目标：${goal}\n\n`
     }
 
-    prompt += `执行结果：\n${JSON.stringify(result, null, 2)}\n\n`;
+    prompt += `执行结果：\n${JSON.stringify(result, null, 2)}\n\n`
 
     prompt += `请返回 JSON 格式：\n{
   "score": 0-1之间的评分,
   "reasoning": "评估理由",
   "issues": ["问题1", "问题2"],
   "evidence": ["证据片段1", "证据片段2"]
-}`;
+}`
 
-    return prompt;
+    return prompt
   }
 
   /**
@@ -753,9 +753,9 @@ export class EnhancedReflection {
 - 结果大小：结果是否冗余
 - 时间复杂度：执行时间是否可接受
 评分：0-1，1表示高效。`,
-    };
+    }
 
-    return prompts[dimension];
+    return prompts[dimension]
   }
 
   /**
@@ -767,9 +767,9 @@ export class EnhancedReflection {
   ): DimensionAssessment {
     try {
       // 尝试提取 JSON
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+        const parsed = JSON.parse(jsonMatch[0])
         return {
           dimension,
           score: this.clampScore(parsed.score || 0.5),
@@ -777,7 +777,7 @@ export class EnhancedReflection {
           reasoning: parsed.reasoning || '未提供理由',
           issues: parsed.issues || [],
           evidence: parsed.evidence,
-        };
+        }
       }
     } catch (e) {
       // 解析失败，返回默认评估
@@ -790,18 +790,18 @@ export class EnhancedReflection {
       level: QualityLevel.FAIR,
       reasoning: 'LLM 响应解析失败，使用默认评估',
       issues: ['无法进行详细评估'],
-    };
+    }
   }
 
   /**
    * 计算综合评分
    */
   private calculateOverallScore(assessments: DimensionAssessment[]): {
-    overallScore: number;
-    overallLevel: QualityLevel;
+    overallScore: number
+    overallLevel: QualityLevel
   } {
     if (assessments.length === 0) {
-      return { overallScore: 0.5, overallLevel: QualityLevel.FAIR };
+      return { overallScore: 0.5, overallLevel: QualityLevel.FAIR }
     }
 
     // 加权平均（质量维度权重更高）
@@ -811,21 +811,21 @@ export class EnhancedReflection {
       [ReflectionDimension.CONSISTENCY]: 0.2,
       [ReflectionDimension.SAFETY]: 0.1,
       [ReflectionDimension.EFFICIENCY]: 0.05,
-    };
-
-    let weightedSum = 0;
-    let totalWeight = 0;
-
-    for (const assessment of assessments) {
-      const weight = weights[assessment.dimension] || 0.2;
-      weightedSum += assessment.score * weight;
-      totalWeight += weight;
     }
 
-    const overallScore = totalWeight > 0 ? weightedSum / totalWeight : 0.5;
-    const overallLevel = this.scoreToLevel(overallScore);
+    let weightedSum = 0
+    let totalWeight = 0
 
-    return { overallScore, overallLevel };
+    for (const assessment of assessments) {
+      const weight = weights[assessment.dimension] || 0.2
+      weightedSum += assessment.score * weight
+      totalWeight += weight
+    }
+
+    const overallScore = totalWeight > 0 ? weightedSum / totalWeight : 0.5
+    const overallLevel = this.scoreToLevel(overallScore)
+
+    return { overallScore, overallLevel }
   }
 
   /**
@@ -841,21 +841,21 @@ export class EnhancedReflection {
       return {
         needsIteration: true,
         iterationReason: `综合评分 ${overallScore.toFixed(2)} 低于阈值 ${this.config.iterationThreshold}`,
-      };
+      }
     }
 
     // 检查高优先级改进
     const highPriorityImprovements = improvements.filter(
       (imp) => imp.priority === ImprovementPriority.HIGH
-    );
+    )
     if (highPriorityImprovements.length > 0) {
       return {
         needsIteration: true,
         iterationReason: `存在 ${highPriorityImprovements.length} 个高优先级问题需要修复`,
-      };
+      }
     }
 
-    return { needsIteration: false };
+    return { needsIteration: false }
   }
 
   /**
@@ -869,17 +869,17 @@ export class EnhancedReflection {
     // 1. 各维度评分的一致性
     // 2. 改进建议的数量
 
-    const scores = assessments.map((a) => a.score);
-    const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-    const variance = scores.reduce((sum, s) => sum + Math.pow(s - avgScore, 2), 0) / scores.length;
+    const scores = assessments.map((a) => a.score)
+    const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length
+    const variance = scores.reduce((sum, s) => sum + Math.pow(s - avgScore, 2), 0) / scores.length
 
     // 低方差 = 高置信度
-    const consistencyConfidence = 1 - Math.min(variance, 1);
+    const consistencyConfidence = 1 - Math.min(variance, 1)
 
     // 少量改进 = 高置信度
-    const improvementConfidence = 1 / (1 + improvements.length * 0.1);
+    const improvementConfidence = 1 / (1 + improvements.length * 0.1)
 
-    return (consistencyConfidence + improvementConfidence) / 2;
+    return (consistencyConfidence + improvementConfidence) / 2
   }
 
   /**
@@ -889,13 +889,13 @@ export class EnhancedReflection {
     switch (level) {
       case QualityLevel.FAILED:
       case QualityLevel.POOR:
-        return ImprovementPriority.HIGH;
+        return ImprovementPriority.HIGH
       case QualityLevel.FAIR:
-        return ImprovementPriority.MEDIUM;
+        return ImprovementPriority.MEDIUM
       case QualityLevel.GOOD:
-        return ImprovementPriority.LOW;
+        return ImprovementPriority.LOW
       case QualityLevel.EXCELLENT:
-        return ImprovementPriority.LOW;
+        return ImprovementPriority.LOW
     }
   }
 
@@ -909,9 +909,9 @@ export class EnhancedReflection {
       [ReflectionDimension.CONSISTENCY]: ['检查内部矛盾', '统一格式和风格', '验证逻辑连贯性'],
       [ReflectionDimension.SAFETY]: ['移除敏感信息', '检查隐私风险', '确保内容安全合规'],
       [ReflectionDimension.EFFICIENCY]: ['优化结果大小', '减少冗余内容', '改进执行效率'],
-    };
+    }
 
-    return stepsMap[dimension] || ['重新评估并改进'];
+    return stepsMap[dimension] || ['重新评估并改进']
   }
 
   /**
@@ -924,27 +924,27 @@ export class EnhancedReflection {
       [ReflectionDimension.CONSISTENCY]: '消除矛盾，保持逻辑一致',
       [ReflectionDimension.SAFETY]: '消除安全风险，保护隐私',
       [ReflectionDimension.EFFICIENCY]: '优化资源使用，提高效率',
-    };
+    }
 
-    return outcomes[dimension];
+    return outcomes[dimension]
   }
 
   /**
    * 分数转质量等级
    */
   private scoreToLevel(score: number): QualityLevel {
-    if (score >= 0.9) return QualityLevel.EXCELLENT;
-    if (score >= 0.75) return QualityLevel.GOOD;
-    if (score >= 0.5) return QualityLevel.FAIR;
-    if (score >= 0.25) return QualityLevel.POOR;
-    return QualityLevel.FAILED;
+    if (score >= 0.9) return QualityLevel.EXCELLENT
+    if (score >= 0.75) return QualityLevel.GOOD
+    if (score >= 0.5) return QualityLevel.FAIR
+    if (score >= 0.25) return QualityLevel.POOR
+    return QualityLevel.FAILED
   }
 
   /**
    * 限制分数在 0-1 范围
    */
   private clampScore(score: number): number {
-    return Math.max(0, Math.min(1, score));
+    return Math.max(0, Math.min(1, score))
   }
 
   /**
@@ -957,21 +957,21 @@ export class EnhancedReflection {
       [ReflectionDimension.CONSISTENCY]: '一致性',
       [ReflectionDimension.SAFETY]: '安全性',
       [ReflectionDimension.EFFICIENCY]: '效率',
-    };
+    }
 
-    return labels[dimension];
+    return labels[dimension]
   }
 
   /**
    * 添加到历史记录
    */
   private addToHistory(record: ReflectionRecord): void {
-    this.history.push(record);
+    this.history.push(record)
 
     // 限制历史大小
     if (this.history.length > this.config.maxHistorySize) {
       // 移除最旧的记录
-      this.history.shift();
+      this.history.shift()
     }
   }
 
@@ -986,7 +986,7 @@ export class EnhancedReflection {
         timestamp: Date.now(),
         status: EventStatus.SUCCESS,
         ...data,
-      });
+      })
     }
   }
 }
@@ -1001,5 +1001,5 @@ export function createEnhancedReflection(
   config?: Partial<ReflectionConfig>,
   telemetryCollector?: TelemetryCollector
 ): EnhancedReflection {
-  return new EnhancedReflection(llm, config, telemetryCollector);
+  return new EnhancedReflection(llm, config, telemetryCollector)
 }

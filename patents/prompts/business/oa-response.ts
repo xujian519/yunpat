@@ -15,11 +15,11 @@ export const OA_ANALYSIS_PROMPT = `
 - 创造性：三步法（确定最接近现有技术→确定区别特征→判断是否显而易见）
 - 清楚性：26条第4款，权利要求应当清楚、简明
 - 支持性：26条第4款，权利要求应当得到说明书支持
-`;
+`
 
 export function renderOaAnalysisPrompt(params: {
-  officeActionText: string;
-  currentClaims: string;
+  officeActionText: string
+  currentClaims: string
 }): string {
   return `${OA_ANALYSIS_PROMPT}
 
@@ -30,5 +30,5 @@ ${params.officeActionText}
 ${params.currentClaims}
 
 请分析审查意见并给出答复建议。
-`;
+`
 }

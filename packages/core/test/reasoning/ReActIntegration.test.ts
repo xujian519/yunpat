@@ -7,16 +7,16 @@
  * - 验证端到端推理流程
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import { ReActLoop } from '../../src/reasoning/ReActLoop.js';
-import { createDeepSeekModel, NativeLLMAdapter } from '../../src/llm/NativeLLMAdapter.js';
-import { EnhancedToolRegistry } from '../../src/tools/EnhancedToolRegistry.js';
-import { EventBus } from '../../src/eventbus/EventBus.js';
-import { ToolCategory } from '../../src/tools/types.js';
-import { z } from 'zod';
-import type { LLMAdapter } from '../../src/lifecycle/Lifecycle.js';
-import type { ToolContext, EnhancedTool } from '../../src/tools/types.js';
-import type { MemoryStore } from '../../src/lifecycle/Lifecycle.js';
+import { describe, it, expect, beforeAll } from 'vitest'
+import { ReActLoop } from '../../src/reasoning/ReActLoop.js'
+import { createDeepSeekModel, NativeLLMAdapter } from '../../src/llm/NativeLLMAdapter.js'
+import { EnhancedToolRegistry } from '../../src/tools/EnhancedToolRegistry.js'
+import { EventBus } from '../../src/eventbus/EventBus.js'
+import { ToolCategory } from '../../src/tools/types.js'
+import { z } from 'zod'
+import type { LLMAdapter } from '../../src/lifecycle/Lifecycle.js'
+import type { ToolContext, EnhancedTool } from '../../src/tools/types.js'
+import type { MemoryStore } from '../../src/lifecycle/Lifecycle.js'
 
 /**
  * 创建简单的模拟工具
@@ -43,35 +43,35 @@ function createMockTools(): EnhancedTool[] {
       isConcurrencySafe: true,
     },
     execute: async (input, _context) => {
-      const { operation, a, b } = input;
-      let result: number = 0;
-      const steps: string[] = [];
+      const { operation, a, b } = input
+      let result: number = 0
+      const steps: string[] = []
 
       switch (operation) {
         case 'add':
-          result = a + b;
-          steps.push(`${a} + ${b} = ${result}`);
-          break;
+          result = a + b
+          steps.push(`${a} + ${b} = ${result}`)
+          break
         case 'subtract':
-          result = a - b;
-          steps.push(`${a} - ${b} = ${result}`);
-          break;
+          result = a - b
+          steps.push(`${a} - ${b} = ${result}`)
+          break
         case 'multiply':
-          result = a * b;
-          steps.push(`${a} × ${b} = ${result}`);
-          break;
+          result = a * b
+          steps.push(`${a} × ${b} = ${result}`)
+          break
         case 'divide':
           if (b === 0) {
-            throw new Error('除数不能为零');
+            throw new Error('除数不能为零')
           }
-          result = a / b;
-          steps.push(`${a} ÷ ${b} = ${result}`);
-          break;
+          result = a / b
+          steps.push(`${a} ÷ ${b} = ${result}`)
+          break
       }
 
-      return { result, steps };
+      return { result, steps }
     },
-  };
+  }
 
   // 搜索模拟工具
   const searchTool: EnhancedTool<
@@ -99,7 +99,7 @@ function createMockTools(): EnhancedTool[] {
       isConcurrencySafe: true,
     },
     execute: async (input, _context) => {
-      const { query, limit = 5 } = input;
+      const { query, limit = 5 } = input
 
       // 模拟搜索结果
       const mockResults = [
@@ -118,14 +118,14 @@ function createMockTools(): EnhancedTool[] {
           url: `https://example.com/best-practices/${encodeURIComponent(query)}`,
           snippet: `${query} 的使用技巧和注意事项...`,
         },
-      ];
+      ]
 
       return {
         results: mockResults.slice(0, limit),
         total: mockResults.length,
-      };
+      }
     },
-  };
+  }
 
   // 文本处理工具
   const textProcessorTool: EnhancedTool<
@@ -148,34 +148,37 @@ function createMockTools(): EnhancedTool[] {
       isConcurrencySafe: true,
     },
     execute: async (input, _context) => {
-      const { text, operation } = input;
-      let result: string;
+      const { text, operation } = input
+      let result: string
 
       switch (operation) {
         case 'uppercase':
-          result = text.toUpperCase();
-          break;
+          result = text.toUpperCase()
+          break
         case 'lowercase':
-          result = text.toLowerCase();
-          break;
+          result = text.toLowerCase()
+          break
         case 'reverse':
-          result = text.split('').reverse().join('');
-          break;
+          result = text.split('').reverse().join('')
+          break
         case 'wordcount':
-          const words = text.trim().split(/\s+/).filter((w) => w.length > 0);
-          result = `${words.length} 个词`;
-          break;
+          const words = text
+            .trim()
+            .split(/\s+/)
+            .filter((w) => w.length > 0)
+          result = `${words.length} 个词`
+          break
       }
 
       return {
         result,
         original: text,
         operation,
-      };
+      }
     },
-  };
+  }
 
-  return [calculatorTool, searchTool, textProcessorTool];
+  return [calculatorTool, searchTool, textProcessorTool]
 }
 
 /**
@@ -184,65 +187,65 @@ function createMockTools(): EnhancedTool[] {
 function createMockMemoryStore(): MemoryStore {
   return {
     async get() {
-      return undefined;
+      return undefined
     },
     async set() {
-      return;
+      return
     },
     async delete() {
-      return;
+      return
     },
     async clear() {
-      return;
+      return
     },
     async has() {
-      return false;
+      return false
     },
     async getAll() {
-      return {};
+      return {}
     },
     async search() {
-      return [];
+      return []
     },
-  };
+  }
 }
 
 /**
  * 创建增强的 ReAct 循环（支持真实工具调用）
  */
 class EnhancedReActLoop {
-  private toolRegistry: EnhancedToolRegistry;
-  private llm: LLMAdapter;
+  private toolRegistry: EnhancedToolRegistry
+  private llm: LLMAdapter
 
   constructor(llm: LLMAdapter, toolRegistry: EnhancedToolRegistry, _config?: any) {
-    this.llm = llm;
-    this.toolRegistry = toolRegistry;
+    this.llm = llm
+    this.toolRegistry = toolRegistry
   }
 
   /**
    * 执行增强的 ReAct 循环
    */
   async *execute(goal: string, context?: Record<string, unknown>) {
-    let iteration = 0;
-    let done = false;
+    let iteration = 0
+    let done = false
     let observation: any = {
       content: `目标: ${goal}`,
       timestamp: new Date(),
-    };
+    }
 
     if (context) {
-      observation.data = context;
+      observation.data = context
     }
 
     while (!done && iteration < 10) {
-      iteration++;
+      iteration++
 
       // 1. 思考（使用工具增强的提示词）
-      const thought = await this.enhancedThink(observation, goal);
+      const thought = await this.enhancedThink(observation, goal)
 
-      console.log(`\n[迭代 ${iteration}]`);
-      console.log(`🤔 思考: ${thought.reasoning.slice(0, 100)}...`);
-      console.log(`📊 状态: ${thought.state}`);
+      console.log(`\n[迭代 ${iteration}]`)
+      console.log(`🤔 思考: ${thought.reasoning.slice(0, 100)}...`)
+      console.log(`📊 状态: ${thought.state}`)
 
       // 检查是否完成
       if (thought.state === 'done') {
@@ -251,31 +254,31 @@ class EnhancedReActLoop {
           observation,
           thought,
           done: true,
-        };
-        break;
+        }
+        break
       }
 
       // 2. 决定行动
-      const action = this.decideAction(thought);
+      const action = this.decideAction(thought)
 
-      console.log(`⚡ 行动: ${action.type}`);
+      console.log(`⚡ 行动: ${action.type}`)
 
       // 3. 执行行动（使用真实的工具调用）
-      const actionResult = await this.executeAction(action);
+      const actionResult = await this.executeAction(action)
 
       if (actionResult.success) {
-        console.log(`✅ 结果: ${JSON.stringify(actionResult.data).slice(0, 100)}...`);
+        console.log(`✅ 结果: ${JSON.stringify(actionResult.data).slice(0, 100)}...`)
       } else {
-        console.log(`❌ 错误: ${actionResult.error}`);
+        console.log(`❌ 错误: ${actionResult.error}`)
       }
 
       // 4. 更新观察
-      observation = this.updateObservation(observation, actionResult);
+      observation = this.updateObservation(observation, actionResult)
 
       // 5. 反思
-      const shouldContinue = await this.reflect(goal, observation, thought, actionResult);
+      const shouldContinue = await this.reflect(goal, observation, thought, actionResult)
       if (!shouldContinue) {
-        done = true;
+        done = true
       }
 
       // 6. 产生迭代结果
@@ -286,7 +289,7 @@ class EnhancedReActLoop {
         action,
         actionResult,
         done,
-      };
+      }
     }
   }
 
@@ -294,22 +297,22 @@ class EnhancedReActLoop {
    * 增强的思考（带工具列表）
    */
   private async enhancedThink(observation: any, goal: string): Promise<any> {
-    const toolsList = this.toolRegistry.list();
-    const availableTools = toolsList.map((t: any) => ({
-      name: t.name || t.metadata?.name,
-      description: t.description || t.metadata?.description,
-    })).filter(t => t.name && t.description);
+    const toolsList = this.toolRegistry.list()
+    const availableTools = toolsList
+      .map((t: any) => ({
+        name: t.name || t.metadata?.name,
+        description: t.description || t.metadata?.description,
+      }))
+      .filter((t) => t.name && t.description)
 
     // 调试信息
     if (availableTools.length === 0) {
-      console.error('⚠️  没有可用的工具！');
+      console.error('⚠️  没有可用的工具！')
     } else {
-      console.log(`✅ 可用工具: ${availableTools.map(t => t.name).join(', ')}`);
+      console.log(`✅ 可用工具: ${availableTools.map((t) => t.name).join(', ')}`)
     }
 
-    const toolsListStr = availableTools.map((t: any) =>
-      `- ${t.name}: ${t.description}`
-    ).join('\n');
+    const toolsListStr = availableTools.map((t: any) => `- ${t.name}: ${t.description}`).join('\n')
 
     const prompt = `你是一个智能助手，使用 ReAct 方法解决问题。
 
@@ -346,7 +349,7 @@ ${toolsListStr}
 目标：将 "hello" 转为大写
 思考：这是一个文本处理任务，我必须使用 text_processor 工具，参数为 text="hello", operation=uppercase
 状态：acting
-下一步：text_processor: {"text": "hello", "operation": "uppercase"}`;
+下一步：text_processor: {"text": "hello", "operation": "uppercase"}`
 
     const response = await this.llm.chat({
       messages: [
@@ -360,9 +363,9 @@ ${toolsListStr}
         },
       ],
       temperature: 0.7,
-    });
+    })
 
-    return this.parseThought(response.message.content);
+    return this.parseThought(response.message.content)
   }
 
   /**
@@ -373,26 +376,26 @@ ${toolsListStr}
       return {
         type: 'complete',
         expectedOutcome: '任务完成',
-      };
+      }
     }
 
     // 解析下一步行动
-    const match = thought.nextAction.match(/^(\w+):\s*(.*)$/);
+    const match = thought.nextAction.match(/^(\w+):\s*(.*)$/)
     if (match) {
-      const toolName = match[1];
-      const paramsStr = match[2];
+      const toolName = match[1]
+      const paramsStr = match[2]
 
       try {
-        const params = JSON.parse(paramsStr);
+        const params = JSON.parse(paramsStr)
         return {
           type: toolName,
           params,
-        };
+        }
       } catch {
         return {
           type: toolName,
           params: { query: thought.nextAction },
-        };
+        }
       }
     }
 
@@ -401,25 +404,25 @@ ${toolsListStr}
       params: {
         query: thought.nextAction,
       },
-    };
+    }
   }
 
   /**
    * 执行行动（使用真实的工具调用）
    */
   private async executeAction(action: any): Promise<any> {
-    const { type, params } = action;
+    const { type, params } = action
 
     // 完成任务
     if (type === 'complete') {
       return {
         success: true,
         data: { message: '任务已完成' },
-      };
+      }
     }
 
     // 从工具名称中提取工具类型
-    let toolName = type.toLowerCase();
+    let toolName = type.toLowerCase()
 
     // 映射常见的工具名称
     const toolNameMapping: Record<string, string> = {
@@ -431,9 +434,9 @@ ${toolsListStr}
       text_processor: 'text_processor',
       textprocessor: 'text_processor',
       process: 'text_processor',
-    };
+    }
 
-    toolName = toolNameMapping[toolName] || toolName;
+    toolName = toolNameMapping[toolName] || toolName
 
     // 构建工具上下文
     const context: ToolContext = {
@@ -441,23 +444,23 @@ ${toolsListStr}
       llm: this.llm,
       memory: createMockMemoryStore(),
       eventBus: new EventBus(),
-    };
+    }
 
     try {
       // 调用工具
-      const result = await this.toolRegistry.call(toolName, params || {}, context);
+      const result = await this.toolRegistry.call(toolName, params || {}, context)
 
       return {
         success: true,
         data: result,
         toolUsed: toolName,
-      };
+      }
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
         toolUsed: toolName,
-      };
+      }
     }
   }
 
@@ -475,15 +478,20 @@ ${toolsListStr}
       },
       timestamp: new Date(),
       confidence: actionResult.success ? 1.0 : 0.0,
-    };
+    }
   }
 
   /**
    * 反思
    */
-  private async reflect(originalGoal: string, observation: any, thought: any, actionResult: any): Promise<boolean> {
+  private async reflect(
+    originalGoal: string,
+    observation: any,
+    thought: any,
+    actionResult: any
+  ): Promise<boolean> {
     if (!actionResult.success) {
-      return true; // 失败则继续重试
+      return true // 失败则继续重试
     }
 
     const prompt = `**原始目标**：${originalGoal}
@@ -506,7 +514,7 @@ ${toolsListStr}
 目标：计算 10 × 5，然后将结果字符串反转
 当前：计算得到 50
 评估：只完成了计算部分，还需要反转字符串
-返回：继续`;
+返回：继续`
 
     const response = await this.llm.chat({
       messages: [
@@ -520,10 +528,10 @@ ${toolsListStr}
         },
       ],
       temperature: 0.3,
-    });
+    })
 
-    const shouldContinue = response.message.content.includes('继续');
-    return shouldContinue;
+    const shouldContinue = response.message.content.includes('继续')
+    return shouldContinue
   }
 
   /**
@@ -533,234 +541,232 @@ ${toolsListStr}
     const thought: any = {
       reasoning: content,
       state: 'thinking',
-    };
-
-    if (content.includes('状态：done') || content.includes('完成')) {
-      thought.state = 'done';
-    } else if (content.includes('下一步：')) {
-      const match = content.match(/下一步：(.+)/);
-      if (match) {
-        thought.nextAction = match[1].trim();
-      }
-      thought.state = 'acting';
     }
 
-    return thought;
+    if (content.includes('状态：done') || content.includes('完成')) {
+      thought.state = 'done'
+    } else if (content.includes('下一步：')) {
+      const match = content.match(/下一步：(.+)/)
+      if (match) {
+        thought.nextAction = match[1].trim()
+      }
+      thought.state = 'acting'
+    }
+
+    return thought
   }
 }
 
 describe('ReAct 循环 - 真实 LLM 集成', () => {
-  let llm: LLMAdapter;
-  let toolRegistry: EnhancedToolRegistry;
-  let eventBus: EventBus;
+  let llm: LLMAdapter
+  let toolRegistry: EnhancedToolRegistry
+  let eventBus: EventBus
 
   beforeAll(() => {
     // 检查环境变量
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DASHSCOPE_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DASHSCOPE_API_KEY
 
     if (!apiKey) {
-      console.warn('⚠️  未设置 DEEPSEEK_API_KEY 或 DASHSCOPE_API_KEY，跳过真实 LLM 测试');
-      return;
+      console.warn('⚠️  未设置 DEEPSEEK_API_KEY 或 DASHSCOPE_API_KEY，跳过真实 LLM 测试')
+      return
     }
 
     // 创建 LLM 适配器
     if (process.env.DEEPSEEK_API_KEY) {
-      console.log('✅ 使用 DeepSeek 模型');
-      llm = createDeepSeekModel(apiKey);
+      console.log('✅ 使用 DeepSeek 模型')
+      llm = createDeepSeekModel(apiKey)
     } else if (process.env.DASHSCOPE_API_KEY) {
-      console.log('✅ 使用通义千问模型');
+      console.log('✅ 使用通义千问模型')
       llm = new NativeLLMAdapter({
         name: 'qwen-plus',
         apiKey,
         baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-      });
+      })
     }
 
     // 创建工具注册表
-    eventBus = new EventBus();
-    toolRegistry = new EnhancedToolRegistry(eventBus);
+    eventBus = new EventBus()
+    toolRegistry = new EnhancedToolRegistry(eventBus)
 
     // 注册工具
-    const tools = createMockTools();
-    toolRegistry.registerBatch(tools);
+    const tools = createMockTools()
+    toolRegistry.registerBatch(tools)
 
-    console.log(`✅ 已注册 ${tools.length} 个工具`);
-  });
+    console.log(`✅ 已注册 ${tools.length} 个工具`)
+  })
 
   it('应该能够使用真实 LLM 执行计算任务', { timeout: 30000 }, async () => {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DASHSCOPE_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DASHSCOPE_API_KEY
     if (!apiKey) {
-      console.log('⏭️  跳过测试：未设置 API Key');
-      return;
+      console.log('⏭️  跳过测试：未设置 API Key')
+      return
     }
 
     const reactLoop = new EnhancedReActLoop(llm, toolRegistry, {
       maxIterations: 5,
       verbose: false,
       reflectAfterStep: true,
-    });
+    })
 
-    const goal = '计算 123 + 456 的结果';
+    const goal = '计算 123 + 456 的结果'
 
-    console.log('\n========== 任务开始 ==========');
-    console.log(`目标: ${goal}\n`);
+    console.log('\n========== 任务开始 ==========')
+    console.log(`目标: ${goal}\n`)
 
-    const iterations: any[] = [];
+    const iterations: any[] = []
     for await (const iteration of reactLoop.execute(goal)) {
-      iterations.push(iteration);
+      iterations.push(iteration)
 
-      console.log(`[迭代 ${iteration.iteration}]`);
-      console.log(`🤔 思考: ${iteration.thought.reasoning.slice(0, 100)}...`);
-      console.log(`📊 状态: ${iteration.thought.state}`);
+      console.log(`[迭代 ${iteration.iteration}]`)
+      console.log(`🤔 思考: ${iteration.thought.reasoning.slice(0, 100)}...`)
+      console.log(`📊 状态: ${iteration.thought.state}`)
 
       if (iteration.action) {
-        console.log(`⚡ 行动: ${iteration.action.type}`);
+        console.log(`⚡ 行动: ${iteration.action.type}`)
       }
 
       if (iteration.actionResult) {
         if (iteration.actionResult.success) {
-          console.log(`✅ 结果: ${JSON.stringify(iteration.actionResult.data).slice(0, 100)}...`);
+          console.log(`✅ 结果: ${JSON.stringify(iteration.actionResult.data).slice(0, 100)}...`)
         } else {
-          console.log(`❌ 错误: ${iteration.actionResult.error}`);
+          console.log(`❌ 错误: ${iteration.actionResult.error}`)
         }
       }
 
-      console.log('');
+      console.log('')
 
-      if (iteration.done) break;
+      if (iteration.done) break
     }
 
-    console.log('========== 验证结果 ==========');
+    console.log('========== 验证结果 ==========')
 
     // 验证至少执行了一次迭代
-    expect(iterations.length).toBeGreaterThan(0);
+    expect(iterations.length).toBeGreaterThan(0)
 
     // 验证最后一次迭代标记为完成
-    const lastIteration = iterations[iterations.length - 1];
-    expect(lastIteration.done).toBe(true);
+    const lastIteration = iterations[iterations.length - 1]
+    expect(lastIteration.done).toBe(true)
 
     // 验证使用了计算器工具
-    const usedCalculator = iterations.some(
-      (iter) => iter.actionResult?.toolUsed === 'calculator'
-    );
-    expect(usedCalculator).toBe(true);
+    const usedCalculator = iterations.some((iter) => iter.actionResult?.toolUsed === 'calculator')
+    expect(usedCalculator).toBe(true)
 
-    console.log('✅ 测试通过');
-  });
+    console.log('✅ 测试通过')
+  })
 
   it('应该能够使用真实 LLM 执行文本处理任务', { timeout: 30000 }, async () => {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DASHSCOPE_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DASHSCOPE_API_KEY
     if (!apiKey) {
-      console.log('⏭️  跳过测试：未设置 API Key');
-      return;
+      console.log('⏭️  跳过测试：未设置 API Key')
+      return
     }
 
     const reactLoop = new EnhancedReActLoop(llm, toolRegistry, {
       maxIterations: 5,
       verbose: false,
       reflectAfterStep: true,
-    });
+    })
 
-    const goal = '将文本 "hello world" 转换为大写';
+    const goal = '将文本 "hello world" 转换为大写'
 
-    console.log('\n========== 任务开始 ==========');
-    console.log(`目标: ${goal}\n`);
+    console.log('\n========== 任务开始 ==========')
+    console.log(`目标: ${goal}\n`)
 
-    const iterations: any[] = [];
+    const iterations: any[] = []
     for await (const iteration of reactLoop.execute(goal)) {
-      iterations.push(iteration);
+      iterations.push(iteration)
 
-      console.log(`[迭代 ${iteration.iteration}]`);
-      console.log(`🤔 思考: ${iteration.thought.reasoning.slice(0, 100)}...`);
-      console.log(`📊 状态: ${iteration.thought.state}`);
+      console.log(`[迭代 ${iteration.iteration}]`)
+      console.log(`🤔 思考: ${iteration.thought.reasoning.slice(0, 100)}...`)
+      console.log(`📊 状态: ${iteration.thought.state}`)
 
       if (iteration.action) {
-        console.log(`⚡ 行动: ${iteration.action.type}`);
+        console.log(`⚡ 行动: ${iteration.action.type}`)
       }
 
       if (iteration.actionResult) {
         if (iteration.actionResult.success) {
-          console.log(`✅ 结果: ${JSON.stringify(iteration.actionResult.data).slice(0, 100)}...`);
+          console.log(`✅ 结果: ${JSON.stringify(iteration.actionResult.data).slice(0, 100)}...`)
         } else {
-          console.log(`❌ 错误: ${iteration.actionResult.error}`);
+          console.log(`❌ 错误: ${iteration.actionResult.error}`)
         }
       }
 
-      console.log('');
+      console.log('')
 
-      if (iteration.done) break;
+      if (iteration.done) break
     }
 
-    console.log('========== 验证结果 ==========');
+    console.log('========== 验证结果 ==========')
 
     // 验证至少执行了一次迭代
-    expect(iterations.length).toBeGreaterThan(0);
+    expect(iterations.length).toBeGreaterThan(0)
 
     // 验证使用了文本处理工具
     const usedTextProcessor = iterations.some(
       (iter) => iter.actionResult?.toolUsed === 'text_processor'
-    );
-    expect(usedTextProcessor).toBe(true);
+    )
+    expect(usedTextProcessor).toBe(true)
 
-    console.log('✅ 测试通过');
-  });
+    console.log('✅ 测试通过')
+  })
 
   it('应该能够使用真实 LLM 执行多步骤任务', { timeout: 30000 }, async () => {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DASHSCOPE_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DASHSCOPE_API_KEY
     if (!apiKey) {
-      console.log('⏭️  跳过测试：未设置 API Key');
-      return;
+      console.log('⏭️  跳过测试：未设置 API Key')
+      return
     }
 
     const reactLoop = new EnhancedReActLoop(llm, toolRegistry, {
       maxIterations: 10,
       verbose: false,
       reflectAfterStep: true,
-    });
+    })
 
-    const goal = '计算 10 × 5，然后将结果字符串反转';
+    const goal = '计算 10 × 5，然后将结果字符串反转'
 
-    console.log('\n========== 任务开始 ==========');
-    console.log(`目标: ${goal}\n`);
+    console.log('\n========== 任务开始 ==========')
+    console.log(`目标: ${goal}\n`)
 
-    const iterations: any[] = [];
+    const iterations: any[] = []
     for await (const iteration of reactLoop.execute(goal)) {
-      iterations.push(iteration);
+      iterations.push(iteration)
 
-      console.log(`[迭代 ${iteration.iteration}]`);
-      console.log(`🤔 思考: ${iteration.thought.reasoning.slice(0, 100)}...`);
-      console.log(`📊 状态: ${iteration.thought.state}`);
+      console.log(`[迭代 ${iteration.iteration}]`)
+      console.log(`🤔 思考: ${iteration.thought.reasoning.slice(0, 100)}...`)
+      console.log(`📊 状态: ${iteration.thought.state}`)
 
       if (iteration.action) {
-        console.log(`⚡ 行动: ${iteration.action.type}`);
+        console.log(`⚡ 行动: ${iteration.action.type}`)
       }
 
       if (iteration.actionResult) {
         if (iteration.actionResult.success) {
-          console.log(`✅ 结果: ${JSON.stringify(iteration.actionResult.data).slice(0, 100)}...`);
+          console.log(`✅ 结果: ${JSON.stringify(iteration.actionResult.data).slice(0, 100)}...`)
         } else {
-          console.log(`❌ 错误: ${iteration.actionResult.error}`);
+          console.log(`❌ 错误: ${iteration.actionResult.error}`)
         }
       }
 
-      console.log('');
+      console.log('')
 
-      if (iteration.done) break;
+      if (iteration.done) break
     }
 
-    console.log('========== 验证结果 ==========');
+    console.log('========== 验证结果 ==========')
 
     // 验证执行了多次迭代
-    expect(iterations.length).toBeGreaterThan(1);
+    expect(iterations.length).toBeGreaterThan(1)
 
     // 验证使用了多个工具
     const usedTools = new Set(
       iterations
         .filter((iter) => iter.actionResult?.toolUsed)
         .map((iter) => iter.actionResult.toolUsed)
-    );
-    expect(usedTools.size).toBeGreaterThan(0);
+    )
+    expect(usedTools.size).toBeGreaterThan(0)
 
-    console.log(`✅ 测试通过，使用了 ${Array.from(usedTools).join(', ')}`);
-  });
-});
+    console.log(`✅ 测试通过，使用了 ${Array.from(usedTools).join(', ')}`)
+  })
+})

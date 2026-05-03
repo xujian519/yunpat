@@ -4,20 +4,20 @@
  * 基于 docx.js 生成专利申请文件、意见陈述书等
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import * as fs from 'fs'
+import * as path from 'path'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 // 动态导入 docx
-let docx: any;
-let docxPacker: any;
+let docx: any
+let docxPacker: any
 
 async function loadDocx() {
   if (!docx) {
-    const module = await import('docx');
-    docx = module;
-    docxPacker = module.Packer;
+    const module = await import('docx')
+    docx = module
+    docxPacker = module.Packer
   }
 }
 
@@ -26,40 +26,40 @@ async function loadDocx() {
  */
 export interface PatentApplicationData {
   /** 发明名称 */
-  inventionTitle: string;
+  inventionTitle: string
   /** 技术领域 */
-  technicalField: string;
+  technicalField: string
   /** 背景技术 */
-  backgroundArt: string;
+  backgroundArt: string
   /** 发明内容 */
-  inventionContent: string;
+  inventionContent: string
   /** 附图说明 */
-  drawingsDescription?: string;
+  drawingsDescription?: string
   /** 具体实施方式 */
-  embodiment?: string;
+  embodiment?: string
   /** 权利要求书 */
   claims: Array<{
     /** 权利要求类型（独立/从属） */
-    type: 'independent' | 'dependent';
+    type: 'independent' | 'dependent'
     /** 权利要求编号 */
-    number: number;
+    number: number
     /** 权利要求内容 */
-    content: string;
+    content: string
     /** 从属关系（仅从属权利要求） */
-    dependsOn?: number;
-  }>;
+    dependsOn?: number
+  }>
   /** 摘要 */
-  abstract: string;
+  abstract: string
   /** 申请人信息 */
   applicant?: {
-    name: string;
-    address: string;
-  };
+    name: string
+    address: string
+  }
   /** 发明人信息 */
   inventors?: Array<{
-    name: string;
-    address: string;
-  }>;
+    name: string
+    address: string
+  }>
 }
 
 /**
@@ -67,38 +67,38 @@ export interface PatentApplicationData {
  */
 export interface ResponseStatementData {
   /** 申请号 */
-  applicationNumber: string;
+  applicationNumber: string
   /** 发明名称 */
-  inventionTitle: string;
+  inventionTitle: string
   /** 审查意见摘要 */
-  reviewOpinionSummary: string;
+  reviewOpinionSummary: string
   /** 答复要点 */
   responsePoints: Array<{
     /** 审查员观点 */
-    examinerView: string;
+    examinerView: string
     /** 申请人答复 */
-    applicantResponse: string;
+    applicantResponse: string
     /** 法律依据 */
-    legalBasis?: string;
-  }>;
+    legalBasis?: string
+  }>
   /** 修改说明 */
   amendments?: Array<{
     /** 修改位置 */
-    location: string;
+    location: string
     /** 原内容 */
-    originalContent: string;
+    originalContent: string
     /** 新内容 */
-    newContent: string;
+    newContent: string
     /** 修改理由 */
-    reason: string;
-  }>;
+    reason: string
+  }>
   /** 申请人信息 */
   applicant?: {
-    name: string;
-    address: string;
-  };
+    name: string
+    address: string
+  }
   /** 日期 */
-  date?: string;
+  date?: string
 }
 
 /**
@@ -106,14 +106,14 @@ export interface ResponseStatementData {
  */
 export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
   {
-    data: PatentApplicationData;
-    outputPath: string;
-    template?: 'standard' | 'pct' | 'utility';
+    data: PatentApplicationData
+    outputPath: string
+    template?: 'standard' | 'pct' | 'utility'
   },
   {
-    success: boolean;
-    outputPath: string;
-    pages: number;
+    success: boolean
+    outputPath: string
+    pages: number
   }
 > {
   readonly metadata = {
@@ -172,20 +172,20 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      data: PatentApplicationData;
-      outputPath: string;
-      template?: 'standard' | 'pct' | 'utility';
+      data: PatentApplicationData
+      outputPath: string
+      template?: 'standard' | 'pct' | 'utility'
     },
     _context: ToolContext
   ): Promise<{ success: boolean; outputPath: string; pages: number }> {
-    await loadDocx();
+    await loadDocx()
 
-    const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
-    const { data, outputPath } = input;
+    const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx
+    const { data, outputPath } = input
 
     // 创建文档
     const doc = new Document({
@@ -202,18 +202,18 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
           ),
         },
       ],
-    });
+    })
 
     // 保存文档
     await docxPacker.toBuffer(doc).then((buffer: Buffer) => {
-      fs.writeFileSync(outputPath, buffer);
-    });
+      fs.writeFileSync(outputPath, buffer)
+    })
 
     return {
       success: true,
       outputPath,
       pages: this.estimatePages(data),
-    };
+    }
   }
 
   /**
@@ -227,7 +227,7 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
     HeadingLevel: any,
     AlignmentType: any
   ): any[] {
-    const children: any[] = [];
+    const children: any[] = []
 
     // 标题
     children.push(
@@ -236,7 +236,7 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
         heading: HeadingLevel.HEADING_1,
         alignment: AlignmentType.CENTER,
       })
-    );
+    )
 
     // 发明名称
     children.push(
@@ -244,7 +244,7 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
         text: `发明名称：${data.inventionTitle}`,
         heading: HeadingLevel.HEADING_2,
       })
-    );
+    )
 
     // 技术领域
     children.push(
@@ -261,7 +261,7 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
           }),
         ],
       })
-    );
+    )
 
     // 背景技术
     children.push(
@@ -278,7 +278,7 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
           }),
         ],
       })
-    );
+    )
 
     // 发明内容
     children.push(
@@ -295,7 +295,7 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
           }),
         ],
       })
-    );
+    )
 
     // 附图说明（如果有）
     if (data.drawingsDescription) {
@@ -313,7 +313,7 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
             }),
           ],
         })
-      );
+      )
     }
 
     // 具体实施方式（如果有）
@@ -332,7 +332,7 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
             }),
           ],
         })
-      );
+      )
     }
 
     // 摘要
@@ -350,9 +350,9 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
           }),
         ],
       })
-    );
+    )
 
-    return children;
+    return children
   }
 
   /**
@@ -365,9 +365,9 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
       data.inventionContent.length +
       (data.drawingsDescription?.length || 0) +
       (data.embodiment?.length || 0) +
-      data.abstract.length;
+      data.abstract.length
 
-    return Math.ceil(wordCount / 500); // 假设每页 500 字
+    return Math.ceil(wordCount / 500) // 假设每页 500 字
   }
 }
 
@@ -377,17 +377,17 @@ export class PatentApplicationGeneratorTool extends EnhancedBaseTool<
 export class PatentClaimsGeneratorTool extends EnhancedBaseTool<
   {
     claims: Array<{
-      type: 'independent' | 'dependent';
-      number: number;
-      content: string;
-      dependsOn?: number;
-    }>;
-    outputPath: string;
+      type: 'independent' | 'dependent'
+      number: number
+      content: string
+      dependsOn?: number
+    }>
+    outputPath: string
   },
   {
-    success: boolean;
-    outputPath: string;
-    claimsCount: number;
+    success: boolean
+    outputPath: string
+    claimsCount: number
   }
 > {
   readonly metadata = {
@@ -416,26 +416,26 @@ export class PatentClaimsGeneratorTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
       claims: Array<{
-        type: 'independent' | 'dependent';
-        number: number;
-        content: string;
-        dependsOn?: number;
-      }>;
-      outputPath: string;
+        type: 'independent' | 'dependent'
+        number: number
+        content: string
+        dependsOn?: number
+      }>
+      outputPath: string
     },
     _context: ToolContext
   ): Promise<{ success: boolean; outputPath: string; claimsCount: number }> {
-    await loadDocx();
+    await loadDocx()
 
-    const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
-    const { claims, outputPath } = input;
+    const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx
+    const { claims, outputPath } = input
 
-    const children: any[] = [];
+    const children: any[] = []
 
     // 标题
     children.push(
@@ -444,11 +444,11 @@ export class PatentClaimsGeneratorTool extends EnhancedBaseTool<
         heading: HeadingLevel.HEADING_1,
         alignment: AlignmentType.CENTER,
       })
-    );
+    )
 
     // 生成权利要求
     for (const claim of claims) {
-      const claimText = `${claim.number}. ${claim.content}`;
+      const claimText = `${claim.number}. ${claim.content}`
       children.push(
         new Paragraph({
           children: [
@@ -460,7 +460,7 @@ export class PatentClaimsGeneratorTool extends EnhancedBaseTool<
             }),
           ],
         })
-      );
+      )
     }
 
     // 创建文档
@@ -471,18 +471,18 @@ export class PatentClaimsGeneratorTool extends EnhancedBaseTool<
           children,
         },
       ],
-    });
+    })
 
     // 保存文档
     await docxPacker.toBuffer(doc).then((buffer: Buffer) => {
-      fs.writeFileSync(outputPath, buffer);
-    });
+      fs.writeFileSync(outputPath, buffer)
+    })
 
     return {
       success: true,
       outputPath,
       claimsCount: claims.length,
-    };
+    }
   }
 }
 
@@ -491,13 +491,13 @@ export class PatentClaimsGeneratorTool extends EnhancedBaseTool<
  */
 export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
   {
-    data: ResponseStatementData;
-    outputPath: string;
+    data: ResponseStatementData
+    outputPath: string
   },
   {
-    success: boolean;
-    outputPath: string;
-    pages: number;
+    success: boolean
+    outputPath: string
+    pages: number
   }
 > {
   readonly metadata = {
@@ -549,21 +549,21 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
     permissions: ['fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      data: ResponseStatementData;
-      outputPath: string;
+      data: ResponseStatementData
+      outputPath: string
     },
     _context: ToolContext
   ): Promise<{ success: boolean; outputPath: string; pages: number }> {
-    await loadDocx();
+    await loadDocx()
 
-    const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
-    const { data, outputPath } = input;
+    const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx
+    const { data, outputPath } = input
 
-    const children: any[] = [];
+    const children: any[] = []
 
     // 标题
     children.push(
@@ -572,7 +572,7 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
         heading: HeadingLevel.HEADING_1,
         alignment: AlignmentType.CENTER,
       })
-    );
+    )
 
     // 申请信息
     children.push(
@@ -594,7 +594,7 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
           }),
         ],
       })
-    );
+    )
 
     // 审查意见摘要
     children.push(
@@ -611,7 +611,7 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
           }),
         ],
       })
-    );
+    )
 
     // 答复要点
     children.push(
@@ -619,10 +619,10 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
         text: '答复要点',
         heading: HeadingLevel.HEADING_2,
       })
-    );
+    )
 
     for (let i = 0; i < data.responsePoints.length; i++) {
-      const point = data.responsePoints[i];
+      const point = data.responsePoints[i]
       children.push(
         new Paragraph({
           text: `${i + 1}. ${point.examinerView}`,
@@ -637,7 +637,7 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
             }),
           ],
         })
-      );
+      )
 
       if (point.legalBasis) {
         children.push(
@@ -651,7 +651,7 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
               }),
             ],
           })
-        );
+        )
       }
     }
 
@@ -662,10 +662,10 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
           text: '修改说明',
           heading: HeadingLevel.HEADING_2,
         })
-      );
+      )
 
       for (let i = 0; i < data.amendments.length; i++) {
-        const amendment = data.amendments[i];
+        const amendment = data.amendments[i]
         children.push(
           new Paragraph({
             text: `修改 ${i + 1}`,
@@ -708,7 +708,7 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
               }),
             ],
           })
-        );
+        )
       }
     }
 
@@ -720,27 +720,27 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
           children,
         },
       ],
-    });
+    })
 
     // 保存文档
     await docxPacker.toBuffer(doc).then((buffer: Buffer) => {
-      fs.writeFileSync(outputPath, buffer);
-    });
+      fs.writeFileSync(outputPath, buffer)
+    })
 
     return {
       success: true,
       outputPath,
       pages: this.estimatePages(data),
-    };
+    }
   }
 
   /**
    * 估算页数
    */
   private estimatePages(data: ResponseStatementData): number {
-    let wordCount = data.reviewOpinionSummary.length;
+    let wordCount = data.reviewOpinionSummary.length
     for (const point of data.responsePoints) {
-      wordCount += point.examinerView.length + point.applicantResponse.length;
+      wordCount += point.examinerView.length + point.applicantResponse.length
     }
     if (data.amendments) {
       for (const amendment of data.amendments) {
@@ -748,9 +748,9 @@ export class ResponseStatementGeneratorTool extends EnhancedBaseTool<
           amendment.location.length +
           amendment.originalContent.length +
           amendment.newContent.length +
-          amendment.reason.length;
+          amendment.reason.length
       }
     }
-    return Math.ceil(wordCount / 500);
+    return Math.ceil(wordCount / 500)
   }
 }

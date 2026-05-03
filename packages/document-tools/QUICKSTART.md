@@ -38,9 +38,9 @@ pnpm --filter @yunpat/document-tools build
 ### 基础用法
 
 ```typescript
-import { OfficialDocParserTool, OfficialDocType } from '@yunpat/document-tools';
+import { OfficialDocParserTool, OfficialDocType } from '@yunpat/document-tools'
 
-const parser = new OfficialDocParserTool();
+const parser = new OfficialDocParserTool()
 
 const result = await parser.execute(
   {
@@ -50,9 +50,9 @@ const result = await parser.execute(
     ocrEndpoint: 'http://localhost:8009',
   },
   context
-);
+)
 
-console.log(result.fields);
+console.log(result.fields)
 // {
 //   applicationNumber: '202310123456.7',
 //   inventionTitle: '一种智能控制系统',
@@ -78,13 +78,13 @@ python3 packages/python-tools/official_doc_parser.py extract \
 
 ## 4. 支持的官文类型
 
-| 类型 | 枚举值 | 提取字段 |
-|------|--------|---------|
-| 审查意见通知书 | `review_opinion` | 申请号、发明名称、审查意见、答复期限、审查员、引用文献 |
-| 驳回决定 | `rejection_decision` | 申请号、发明名称、驳回理由、法律条款、决定日期 |
-| 缴费通知书 | `payment_notice` | 申请号、费用类型、缴费金额、截止日期 |
-| 授予决定 | `grant_decision` | 申请号、发明名称、决定日期、授权专利号 |
-| 复审无效决定 | `reexamination_decision` | 申请号、决定类型、决定结果、法律条款、决定日期 |
+| 类型           | 枚举值                   | 提取字段                                               |
+| -------------- | ------------------------ | ------------------------------------------------------ |
+| 审查意见通知书 | `review_opinion`         | 申请号、发明名称、审查意见、答复期限、审查员、引用文献 |
+| 驳回决定       | `rejection_decision`     | 申请号、发明名称、驳回理由、法律条款、决定日期         |
+| 缴费通知书     | `payment_notice`         | 申请号、费用类型、缴费金额、截止日期                   |
+| 授予决定       | `grant_decision`         | 申请号、发明名称、决定日期、授权专利号                 |
+| 复审无效决定   | `reexamination_decision` | 申请号、决定类型、决定结果、法律条款、决定日期         |
 
 ## 5. 故障排查
 
@@ -95,6 +95,7 @@ Error: Docling未安装。请运行: pip install docling
 ```
 
 **解决方案：**
+
 ```bash
 pip install docling
 ```
@@ -106,6 +107,7 @@ Error: GLM-OCR请求失败: Connection refused
 ```
 
 **解决方案：**
+
 ```bash
 # 检查端口是否运行
 lsof -i :8009
@@ -121,6 +123,7 @@ Error: 文件不存在: /path/to/doc.pdf
 ```
 
 **解决方案：**
+
 - 检查文件路径是否正确
 - 使用绝对路径而非相对路径
 
@@ -130,26 +133,26 @@ Error: 文件不存在: /path/to/doc.pdf
 
 ```typescript
 // 使用 Promise.all 并发处理多个文件
-const files = ['doc1.pdf', 'doc2.pdf', 'doc3.pdf'];
+const files = ['doc1.pdf', 'doc2.pdf', 'doc3.pdf']
 const results = await Promise.all(
-  files.map(file => parser.execute({ filePath: file, useOcr: true }, context))
-);
+  files.map((file) => parser.execute({ filePath: file, useOcr: true }, context))
+)
 ```
 
 ### 缓存结果
 
 ```typescript
 // 对于相同的文件，缓存解析结果
-const cache = new Map();
+const cache = new Map()
 
 async function parseWithCache(filePath: string) {
   if (cache.has(filePath)) {
-    return cache.get(filePath);
+    return cache.get(filePath)
   }
 
-  const result = await parser.execute({ filePath, useOcr: true }, context);
-  cache.set(filePath, result);
-  return result;
+  const result = await parser.execute({ filePath, useOcr: true }, context)
+  cache.set(filePath, result)
+  return result
 }
 ```
 

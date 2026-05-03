@@ -13,9 +13,9 @@
  * - 可扩展：支持用户自定义知识库
  */
 
-import { promises as fs } from 'fs';
-import * as path from 'path';
-import { ExecutionContext } from '../lifecycle/Lifecycle.js';
+import { promises as fs } from 'fs'
+import * as path from 'path'
+import { ExecutionContext } from '../lifecycle/Lifecycle.js'
 
 /**
  * 知识条目类型
@@ -40,43 +40,43 @@ export enum KnowledgeEntryType {
  */
 export interface KnowledgeEntry {
   /** 唯一标识符 */
-  id: string;
+  id: string
 
   /** 知识类型 */
-  type: KnowledgeEntryType;
+  type: KnowledgeEntryType
 
   /** 标题 */
-  title: string;
+  title: string
 
   /** 内容 */
-  content: string;
+  content: string
 
   /** 标签（用于检索） */
-  tags: string[];
+  tags: string[]
 
   /** 类别/命名空间 */
-  category: string;
+  category: string
 
   /** 优先级/权重（用于排序） */
-  priority: number;
+  priority: number
 
   /** 创建时间 */
-  createdAt: Date;
+  createdAt: Date
 
   /** 更新时间 */
-  updatedAt: Date;
+  updatedAt: Date
 
   /** 版本号 */
-  version: number;
+  version: number
 
   /** 元数据 */
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown>
 
   /** 嵌入向量（用于语义搜索） */
-  embedding?: number[];
+  embedding?: number[]
 
   /** 引用计数（用于评估知识价值） */
-  referenceCount: number;
+  referenceCount: number
 }
 
 /**
@@ -84,28 +84,28 @@ export interface KnowledgeEntry {
  */
 export interface SearchOptions {
   /** 搜索模式 */
-  mode: 'keyword' | 'semantic' | 'hybrid';
+  mode: 'keyword' | 'semantic' | 'hybrid'
 
   /** 最大结果数 */
-  limit?: number;
+  limit?: number
 
   /** 最低相似度阈值（语义搜索） */
-  minSimilarity?: number;
+  minSimilarity?: number
 
   /** 类别过滤 */
-  categories?: string[];
+  categories?: string[]
 
   /** 类型过滤 */
-  types?: KnowledgeEntryType[];
+  types?: KnowledgeEntryType[]
 
   /** 标签过滤 */
-  tags?: string[];
+  tags?: string[]
 
   /** 混合搜索中关键词的权重 */
-  keywordWeight?: number;
+  keywordWeight?: number
 
   /** 混合搜索中语义的权重 */
-  semanticWeight?: number;
+  semanticWeight?: number
 }
 
 /**
@@ -113,17 +113,17 @@ export interface SearchOptions {
  */
 export interface SearchResult {
   /** 知识条目 */
-  entry: KnowledgeEntry;
+  entry: KnowledgeEntry
 
   /** 相关性分数 */
-  score: number;
+  score: number
 
   /** 匹配原因（用于调试） */
   matchReason: {
-    keywordScore: number;
-    semanticScore: number;
-    tagMatches: string[];
-  };
+    keywordScore: number
+    semanticScore: number
+    tagMatches: string[]
+  }
 }
 
 /**
@@ -131,13 +131,13 @@ export interface SearchResult {
  */
 export interface KnowledgeInjectionResult {
   /** 增强后的提示词 */
-  enhancedPrompt: string;
+  enhancedPrompt: string
 
   /** 注入的知识条目 */
-  injectedEntries: KnowledgeEntry[];
+  injectedEntries: KnowledgeEntry[]
 
   /** 注入的类别 */
-  injectedCategories: string[];
+  injectedCategories: string[]
 }
 
 /**
@@ -145,19 +145,19 @@ export interface KnowledgeInjectionResult {
  */
 export interface KnowledgeStats {
   /** 总条目数 */
-  totalEntries: number;
+  totalEntries: number
 
   /** 按类型分组的统计 */
-  byType: Record<KnowledgeEntryType, number>;
+  byType: Record<KnowledgeEntryType, number>
 
   /** 按类别分组的统计 */
-  byCategory: Record<string, number>;
+  byCategory: Record<string, number>
 
   /** 总引用次数 */
-  totalReferences: number;
+  totalReferences: number
 
   /** 平均引用次数 */
-  averageReferences: number;
+  averageReferences: number
 }
 
 /**
@@ -165,25 +165,25 @@ export interface KnowledgeStats {
  */
 export interface KnowledgeBaseConfig {
   /** 知识库标识符 */
-  name: string;
+  name: string
 
   /** 描述 */
-  description?: string;
+  description?: string
 
   /** 持久化路径 */
-  storagePath?: string;
+  storagePath?: string
 
   /** 是否启用持久化 */
-  persistent?: boolean;
+  persistent?: boolean
 
   /** 自动加载内置知识库 */
-  loadBuiltin?: boolean;
+  loadBuiltin?: boolean
 
   /** 嵌入函数（用于语义搜索） */
-  embedFn?: (text: string) => Promise<number[]>;
+  embedFn?: (text: string) => Promise<number[]>
 
   /** 默认搜索选项 */
-  defaultSearchOptions?: Partial<SearchOptions>;
+  defaultSearchOptions?: Partial<SearchOptions>
 }
 
 /**
@@ -197,25 +197,25 @@ export interface KnowledgeBaseConfig {
  */
 export class KnowledgeBase {
   /** 知识条目存储（按 ID 索引） */
-  private entries: Map<string, KnowledgeEntry> = new Map();
+  private entries: Map<string, KnowledgeEntry> = new Map()
 
   /** 标签索引（标签 -> 条目 ID 集合） */
-  private tagIndex: Map<string, Set<string>> = new Map();
+  private tagIndex: Map<string, Set<string>> = new Map()
 
   /** 类别索引（类别 -> 条目 ID 集合） */
-  private categoryIndex: Map<string, Set<string>> = new Map();
+  private categoryIndex: Map<string, Set<string>> = new Map()
 
   /** 类型索引（类型 -> 条目 ID 集合） */
-  private typeIndex: Map<KnowledgeEntryType, Set<string>> = new Map();
+  private typeIndex: Map<KnowledgeEntryType, Set<string>> = new Map()
 
   /** 配置 */
   private config: Required<
     Pick<KnowledgeBaseConfig, 'name' | 'storagePath' | 'persistent' | 'loadBuiltin'>
   > & {
-    description?: string;
-    embedFn?: (text: string) => Promise<number[]>;
-    defaultSearchOptions: Partial<SearchOptions>;
-  };
+    description?: string
+    embedFn?: (text: string) => Promise<number[]>
+    defaultSearchOptions: Partial<SearchOptions>
+  }
 
   /**
    * 构造函数
@@ -237,7 +237,7 @@ export class KnowledgeBase {
         keywordWeight: 0.5,
         semanticWeight: 0.5,
       },
-    };
+    }
   }
 
   /**
@@ -248,17 +248,17 @@ export class KnowledgeBase {
   async initialize(): Promise<void> {
     // 创建存储目录
     if (this.config.persistent) {
-      await fs.mkdir(path.dirname(this.config.storagePath), { recursive: true });
+      await fs.mkdir(path.dirname(this.config.storagePath), { recursive: true })
     }
 
     // 加载持久化数据
     if (this.config.persistent) {
-      await this.load();
+      await this.load()
     }
 
     // 加载内置知识库
     if (this.config.loadBuiltin) {
-      await this.loadBuiltinKnowledge();
+      await this.loadBuiltinKnowledge()
     }
   }
 
@@ -268,8 +268,8 @@ export class KnowledgeBase {
   async store(
     entry: Omit<KnowledgeEntry, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'referenceCount'>
   ): Promise<string> {
-    const now = new Date();
-    const id = this.generateId(entry.title, entry.category);
+    const now = new Date()
+    const id = this.generateId(entry.title, entry.category)
 
     const newEntry: KnowledgeEntry = {
       ...entry,
@@ -278,25 +278,25 @@ export class KnowledgeBase {
       updatedAt: now,
       version: 1,
       referenceCount: 0,
-    };
+    }
 
     // 生成嵌入向量
     if (this.config.embedFn && !newEntry.embedding) {
-      newEntry.embedding = await this.config.embedFn(`${newEntry.title}\n${newEntry.content}`);
+      newEntry.embedding = await this.config.embedFn(`${newEntry.title}\n${newEntry.content}`)
     }
 
     // 存储条目
-    this.entries.set(id, newEntry);
+    this.entries.set(id, newEntry)
 
     // 更新索引
-    this.updateIndexes(id, newEntry);
+    this.updateIndexes(id, newEntry)
 
     // 持久化
     if (this.config.persistent) {
-      await this.save();
+      await this.save()
     }
 
-    return id;
+    return id
   }
 
   /**
@@ -306,9 +306,9 @@ export class KnowledgeBase {
     entryId: string,
     updates: Partial<Omit<KnowledgeEntry, 'id' | 'createdAt'>>
   ): Promise<void> {
-    const existing = this.entries.get(entryId);
+    const existing = this.entries.get(entryId)
     if (!existing) {
-      throw new Error(`知识条目不存在: ${entryId}`);
+      throw new Error(`知识条目不存在: ${entryId}`)
     }
 
     const updated: KnowledgeEntry = {
@@ -318,23 +318,23 @@ export class KnowledgeBase {
       createdAt: existing.createdAt, // 保持创建时间
       updatedAt: new Date(),
       version: existing.version + 1,
-    };
+    }
 
     // 重新生成嵌入向量（如果内容变化）
     if (this.config.embedFn && (updates.title || updates.content)) {
-      updated.embedding = await this.config.embedFn(`${updated.title}\n${updated.content}`);
+      updated.embedding = await this.config.embedFn(`${updated.title}\n${updated.content}`)
     }
 
-    this.entries.set(entryId, updated);
+    this.entries.set(entryId, updated)
 
     // 更新索引（如果类别、标签或类型变化）
     if (updates.category || updates.tags || updates.type) {
-      this.removeFromIndexes(entryId, existing);
-      this.updateIndexes(entryId, updated);
+      this.removeFromIndexes(entryId, existing)
+      this.updateIndexes(entryId, updated)
     }
 
     if (this.config.persistent) {
-      await this.save();
+      await this.save()
     }
   }
 
@@ -342,26 +342,26 @@ export class KnowledgeBase {
    * 获取知识条目
    */
   get(entryId: string): KnowledgeEntry | undefined {
-    return this.entries.get(entryId);
+    return this.entries.get(entryId)
   }
 
   /**
    * 删除知识条目
    */
   async delete(entryId: string): Promise<boolean> {
-    const entry = this.entries.get(entryId);
+    const entry = this.entries.get(entryId)
     if (!entry) {
-      return false;
+      return false
     }
 
-    this.entries.delete(entryId);
-    this.removeFromIndexes(entryId, entry);
+    this.entries.delete(entryId)
+    this.removeFromIndexes(entryId, entry)
 
     if (this.config.persistent) {
-      await this.save();
+      await this.save()
     }
 
-    return true;
+    return true
   }
 
   /**
@@ -378,26 +378,26 @@ export class KnowledgeBase {
       keywordWeight: options.keywordWeight ?? this.config.defaultSearchOptions.keywordWeight ?? 0.5,
       semanticWeight:
         options.semanticWeight ?? this.config.defaultSearchOptions.semanticWeight ?? 0.5,
-    };
+    }
 
     // 获取候选条目（通过索引过滤）
-    const candidates = this.getCandidates(opts);
+    const candidates = this.getCandidates(opts)
 
     // 计算相关性分数
-    const results: SearchResult[] = [];
+    const results: SearchResult[] = []
 
     for (const entry of candidates) {
-      const result = await this.scoreEntry(entry, query, opts);
+      const result = await this.scoreEntry(entry, query, opts)
       if (result.score >= opts.minSimilarity!) {
-        results.push(result);
+        results.push(result)
       }
     }
 
     // 按分数排序
-    results.sort((a, b) => b.score - a.score);
+    results.sort((a, b) => b.score - a.score)
 
     // 限制结果数量
-    return results.slice(0, opts.limit);
+    return results.slice(0, opts.limit)
   }
 
   /**
@@ -408,50 +408,50 @@ export class KnowledgeBase {
     context?: ExecutionContext
   ): Promise<KnowledgeInjectionResult> {
     // 提取提示词中的关键词
-    const keywords = this.extractKeywords(prompt);
+    const keywords = this.extractKeywords(prompt)
 
     // 搜索相关知识
     const searchResults = await this.search(keywords.join(' '), {
       mode: 'hybrid',
       limit: 10,
       tags: context?.metadata?.knowledgeTags as string[] | undefined,
-    });
+    })
 
     // 去重并分类
-    const injectedEntries: KnowledgeEntry[] = [];
-    const injectedCategories = new Set<string>();
+    const injectedEntries: KnowledgeEntry[] = []
+    const injectedCategories = new Set<string>()
 
     for (const result of searchResults) {
       // 避免重复类别
       if (injectedCategories.has(result.entry.category)) {
-        continue;
+        continue
       }
 
-      injectedEntries.push(result.entry);
-      injectedCategories.add(result.entry.category);
+      injectedEntries.push(result.entry)
+      injectedCategories.add(result.entry.category)
 
       // 增加引用计数
-      result.entry.referenceCount++;
+      result.entry.referenceCount++
     }
 
     // 构建增强后的提示词
-    let enhancedPrompt = prompt;
+    let enhancedPrompt = prompt
 
     if (injectedEntries.length > 0) {
-      const knowledgeSection = this.formatKnowledge(injectedEntries);
-      enhancedPrompt = `${knowledgeSection}\n\n## 用户任务\n\n${prompt}`;
+      const knowledgeSection = this.formatKnowledge(injectedEntries)
+      enhancedPrompt = `${knowledgeSection}\n\n## 用户任务\n\n${prompt}`
     }
 
     // 保存引用计数更新
     if (this.config.persistent && injectedEntries.length > 0) {
-      await this.save();
+      await this.save()
     }
 
     return {
       enhancedPrompt,
       injectedEntries,
       injectedCategories: Array.from(injectedCategories),
-    };
+    }
   }
 
   /**
@@ -465,15 +465,15 @@ export class KnowledgeBase {
       [KnowledgeEntryType.ERROR_SOLUTION]: 0,
       [KnowledgeEntryType.DOMAIN_KNOWLEDGE]: 0,
       [KnowledgeEntryType.PATTERN]: 0,
-    };
+    }
 
-    const byCategory: Record<string, number> = {};
-    let totalReferences = 0;
+    const byCategory: Record<string, number> = {}
+    let totalReferences = 0
 
     for (const entry of this.entries.values()) {
-      byType[entry.type]++;
-      byCategory[entry.category] = (byCategory[entry.category] ?? 0) + 1;
-      totalReferences += entry.referenceCount;
+      byType[entry.type]++
+      byCategory[entry.category] = (byCategory[entry.category] ?? 0) + 1
+      totalReferences += entry.referenceCount
     }
 
     return {
@@ -482,55 +482,55 @@ export class KnowledgeBase {
       byCategory,
       totalReferences,
       averageReferences: this.entries.size > 0 ? totalReferences / this.entries.size : 0,
-    };
+    }
   }
 
   /**
    * 列出所有条目
    */
   listAll(): KnowledgeEntry[] {
-    return Array.from(this.entries.values());
+    return Array.from(this.entries.values())
   }
 
   /**
    * 按类别获取条目
    */
   getByCategory(category: string): KnowledgeEntry[] {
-    const ids = this.categoryIndex.get(category);
+    const ids = this.categoryIndex.get(category)
     if (!ids) {
-      return [];
+      return []
     }
 
     return Array.from(ids)
       .map((id) => this.entries.get(id))
-      .filter((entry): entry is KnowledgeEntry => entry !== undefined);
+      .filter((entry): entry is KnowledgeEntry => entry !== undefined)
   }
 
   /**
    * 按标签获取条目
    */
   getByTag(tag: string): KnowledgeEntry[] {
-    const ids = this.tagIndex.get(tag);
+    const ids = this.tagIndex.get(tag)
     if (!ids) {
-      return [];
+      return []
     }
 
     return Array.from(ids)
       .map((id) => this.entries.get(id))
-      .filter((entry): entry is KnowledgeEntry => entry !== undefined);
+      .filter((entry): entry is KnowledgeEntry => entry !== undefined)
   }
 
   /**
    * 清空知识库
    */
   async clear(): Promise<void> {
-    this.entries.clear();
-    this.tagIndex.clear();
-    this.categoryIndex.clear();
-    this.typeIndex.clear();
+    this.entries.clear()
+    this.tagIndex.clear()
+    this.categoryIndex.clear()
+    this.typeIndex.clear()
 
     if (this.config.persistent) {
-      await this.save();
+      await this.save()
     }
   }
 
@@ -539,7 +539,7 @@ export class KnowledgeBase {
    */
   private async save(): Promise<void> {
     if (!this.config.persistent) {
-      return;
+      return
     }
 
     const data = {
@@ -548,9 +548,9 @@ export class KnowledgeBase {
       description: this.config.description,
       entries: Array.from(this.entries.values()),
       savedAt: new Date().toISOString(),
-    };
+    }
 
-    await fs.writeFile(this.config.storagePath, JSON.stringify(data, null, 2), 'utf-8');
+    await fs.writeFile(this.config.storagePath, JSON.stringify(data, null, 2), 'utf-8')
   }
 
   /**
@@ -558,17 +558,17 @@ export class KnowledgeBase {
    */
   private async load(): Promise<void> {
     try {
-      const content = await fs.readFile(this.config.storagePath, 'utf-8');
-      const data = JSON.parse(content);
+      const content = await fs.readFile(this.config.storagePath, 'utf-8')
+      const data = JSON.parse(content)
 
       // 重建索引
       for (const entry of data.entries as KnowledgeEntry[]) {
         // 确保 Date 对象正确反序列化
-        entry.createdAt = new Date(entry.createdAt);
-        entry.updatedAt = new Date(entry.updatedAt);
+        entry.createdAt = new Date(entry.createdAt)
+        entry.updatedAt = new Date(entry.updatedAt)
 
-        this.entries.set(entry.id, entry);
-        this.updateIndexes(entry.id, entry);
+        this.entries.set(entry.id, entry)
+        this.updateIndexes(entry.id, entry)
       }
     } catch (error) {
       // 文件不存在或解析错误，忽略
@@ -580,22 +580,22 @@ export class KnowledgeBase {
    * 生成条目 ID
    */
   private generateId(title: string, category: string): string {
-    const normalized = `${category}:${title}`.toLowerCase().replace(/\s+/g, '-');
-    const hash = this.simpleHash(normalized);
-    return `${normalized}-${hash.slice(0, 8)}`;
+    const normalized = `${category}:${title}`.toLowerCase().replace(/\s+/g, '-')
+    const hash = this.simpleHash(normalized)
+    return `${normalized}-${hash.slice(0, 8)}`
   }
 
   /**
    * 简单哈希函数
    */
   private simpleHash(str: string): string {
-    let hash = 0;
+    let hash = 0
     for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
+      const char = str.charCodeAt(i)
+      hash = (hash << 5) - hash + char
+      hash = hash & hash
     }
-    return Math.abs(hash).toString(36);
+    return Math.abs(hash).toString(36)
   }
 
   /**
@@ -603,25 +603,25 @@ export class KnowledgeBase {
    */
   private updateIndexes(id: string, entry: KnowledgeEntry): void {
     // 标签索引（确保tags存在且可迭代）
-    const tags = entry.tags || [];
+    const tags = entry.tags || []
     for (const tag of tags) {
       if (!this.tagIndex.has(tag)) {
-        this.tagIndex.set(tag, new Set());
+        this.tagIndex.set(tag, new Set())
       }
-      this.tagIndex.get(tag)!.add(id);
+      this.tagIndex.get(tag)!.add(id)
     }
 
     // 类别索引
     if (!this.categoryIndex.has(entry.category)) {
-      this.categoryIndex.set(entry.category, new Set());
+      this.categoryIndex.set(entry.category, new Set())
     }
-    this.categoryIndex.get(entry.category)!.add(id);
+    this.categoryIndex.get(entry.category)!.add(id)
 
     // 类型索引
     if (!this.typeIndex.has(entry.type)) {
-      this.typeIndex.set(entry.type, new Set());
+      this.typeIndex.set(entry.type, new Set())
     }
-    this.typeIndex.get(entry.type)!.add(id);
+    this.typeIndex.get(entry.type)!.add(id)
   }
 
   /**
@@ -630,56 +630,56 @@ export class KnowledgeBase {
   private removeFromIndexes(id: string, entry: KnowledgeEntry): void {
     // 标签索引
     for (const tag of entry.tags) {
-      this.tagIndex.get(tag)?.delete(id);
+      this.tagIndex.get(tag)?.delete(id)
     }
 
     // 类别索引
-    this.categoryIndex.get(entry.category)?.delete(id);
+    this.categoryIndex.get(entry.category)?.delete(id)
 
     // 类型索引
-    this.typeIndex.get(entry.type)?.delete(id);
+    this.typeIndex.get(entry.type)?.delete(id)
   }
 
   /**
    * 获取候选条目（通过索引过滤）
    */
   private getCandidates(options: SearchOptions): KnowledgeEntry[] {
-    let candidateIds: Set<string> | undefined;
+    let candidateIds: Set<string> | undefined
 
     // 按类别过滤
     if (options.categories && options.categories.length > 0) {
       const categoryIds = options.categories.flatMap((cat) =>
         Array.from(this.categoryIndex.get(cat) ?? [])
-      );
+      )
       candidateIds = candidateIds
         ? new Set([...candidateIds, ...categoryIds])
-        : new Set(categoryIds);
+        : new Set(categoryIds)
     }
 
     // 按类型过滤
     if (options.types && options.types.length > 0) {
-      const typeIds = options.types.flatMap((type) => Array.from(this.typeIndex.get(type) ?? []));
+      const typeIds = options.types.flatMap((type) => Array.from(this.typeIndex.get(type) ?? []))
       candidateIds = candidateIds
         ? new Set([...candidateIds].filter((id) => typeIds.includes(id)))
-        : new Set(typeIds);
+        : new Set(typeIds)
     }
 
     // 按标签过滤
     if (options.tags && options.tags.length > 0) {
-      const tagIds = options.tags.flatMap((tag) => Array.from(this.tagIndex.get(tag) ?? []));
+      const tagIds = options.tags.flatMap((tag) => Array.from(this.tagIndex.get(tag) ?? []))
       candidateIds = candidateIds
         ? new Set([...candidateIds].filter((id) => tagIds.includes(id)))
-        : new Set(tagIds);
+        : new Set(tagIds)
     }
 
     // 获取条目
     if (candidateIds) {
       return Array.from(candidateIds)
         .map((id) => this.entries.get(id))
-        .filter((entry): entry is KnowledgeEntry => entry !== undefined);
+        .filter((entry): entry is KnowledgeEntry => entry !== undefined)
     }
 
-    return Array.from(this.entries.values());
+    return Array.from(this.entries.values())
   }
 
   /**
@@ -690,59 +690,59 @@ export class KnowledgeBase {
     query: string,
     options: SearchOptions
   ): Promise<SearchResult> {
-    const queryLower = query.toLowerCase();
-    const keywords = queryLower.split(/\s+/);
+    const queryLower = query.toLowerCase()
+    const keywords = queryLower.split(/\s+/)
 
     // 关键词匹配分数
-    let keywordScore = 0;
-    const titleLower = entry.title.toLowerCase();
-    const contentLower = entry.content.toLowerCase();
-    const tagMatches: string[] = [];
+    let keywordScore = 0
+    const titleLower = entry.title.toLowerCase()
+    const contentLower = entry.content.toLowerCase()
+    const tagMatches: string[] = []
 
     // 标题匹配（权重更高）
     for (const keyword of keywords) {
       if (titleLower.includes(keyword)) {
-        keywordScore += 0.3;
+        keywordScore += 0.3
       }
       if (contentLower.includes(keyword)) {
-        keywordScore += 0.1;
+        keywordScore += 0.1
       }
     }
 
     // 标签匹配
     for (const tag of entry.tags) {
       if (queryLower.includes(tag.toLowerCase()) || tag.toLowerCase().includes(queryLower)) {
-        keywordScore += 0.2;
-        tagMatches.push(tag);
+        keywordScore += 0.2
+        tagMatches.push(tag)
       }
     }
 
     // 优先级加成
-    keywordScore *= 1 + entry.priority * 0.1;
+    keywordScore *= 1 + entry.priority * 0.1
 
     // 语义相似度分数
-    let semanticScore = 0;
+    let semanticScore = 0
     if (options.mode === 'semantic' || options.mode === 'hybrid') {
       if (this.config.embedFn && entry.embedding) {
-        const queryEmbedding = await this.config.embedFn(query);
-        semanticScore = this.cosineSimilarity(queryEmbedding, entry.embedding);
+        const queryEmbedding = await this.config.embedFn(query)
+        semanticScore = this.cosineSimilarity(queryEmbedding, entry.embedding)
       } else {
         // 回退到简单的文本相似度
-        semanticScore = this.textSimilarity(query, entry.title + ' ' + entry.content);
+        semanticScore = this.textSimilarity(query, entry.title + ' ' + entry.content)
       }
     }
 
     // 混合分数
-    let finalScore: number;
+    let finalScore: number
     if (options.mode === 'keyword') {
-      finalScore = Math.min(keywordScore, 1);
+      finalScore = Math.min(keywordScore, 1)
     } else if (options.mode === 'semantic') {
-      finalScore = semanticScore;
+      finalScore = semanticScore
     } else {
       // 混合模式
-      const kw = options.keywordWeight ?? 0.5;
-      const sw = options.semanticWeight ?? 0.5;
-      finalScore = (keywordScore * kw + semanticScore * sw) / (kw + sw);
+      const kw = options.keywordWeight ?? 0.5
+      const sw = options.semanticWeight ?? 0.5
+      finalScore = (keywordScore * kw + semanticScore * sw) / (kw + sw)
     }
 
     return {
@@ -753,7 +753,7 @@ export class KnowledgeBase {
         semanticScore,
         tagMatches,
       },
-    };
+    }
   }
 
   /**
@@ -761,34 +761,34 @@ export class KnowledgeBase {
    */
   private cosineSimilarity(vecA: number[], vecB: number[]): number {
     if (vecA.length !== vecB.length) {
-      return 0;
+      return 0
     }
 
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
+    let dotProduct = 0
+    let normA = 0
+    let normB = 0
 
     for (let i = 0; i < vecA.length; i++) {
-      dotProduct += vecA[i] * vecB[i];
-      normA += vecA[i] * vecA[i];
-      normB += vecB[i] * vecB[i];
+      dotProduct += vecA[i] * vecB[i]
+      normA += vecA[i] * vecA[i]
+      normB += vecB[i] * vecB[i]
     }
 
-    const denominator = Math.sqrt(normA) * Math.sqrt(normB);
-    return denominator === 0 ? 0 : dotProduct / denominator;
+    const denominator = Math.sqrt(normA) * Math.sqrt(normB)
+    return denominator === 0 ? 0 : dotProduct / denominator
   }
 
   /**
    * 文本相似度（简单的 Jaccard 相似度）
    */
   private textSimilarity(text1: string, text2: string): number {
-    const words1 = new Set(text1.toLowerCase().split(/\s+/));
-    const words2 = new Set(text2.toLowerCase().split(/\s+/));
+    const words1 = new Set(text1.toLowerCase().split(/\s+/))
+    const words2 = new Set(text2.toLowerCase().split(/\s+/))
 
-    const intersection = new Set([...words1].filter((x) => words2.has(x)));
-    const union = new Set([...words1, ...words2]);
+    const intersection = new Set([...words1].filter((x) => words2.has(x)))
+    const union = new Set([...words1, ...words2])
 
-    return union.size === 0 ? 0 : intersection.size / union.size;
+    return union.size === 0 ? 0 : intersection.size / union.size
   }
 
   /**
@@ -831,42 +831,42 @@ export class KnowledgeBase {
       'then',
       'this',
       'that',
-    ]);
+    ])
 
     const words = text
       .toLowerCase()
       .split(/[\s,;.!?，；。！？]+/)
-      .filter((word) => word.length > 1 && !stopWords.has(word));
+      .filter((word) => word.length > 1 && !stopWords.has(word))
 
     // 统计词频
-    const frequency = new Map<string, number>();
+    const frequency = new Map<string, number>()
     for (const word of words) {
-      frequency.set(word, (frequency.get(word) ?? 0) + 1);
+      frequency.set(word, (frequency.get(word) ?? 0) + 1)
     }
 
     // 返回前 10 个高频词
     return Array.from(frequency.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
-      .map(([word]) => word);
+      .map(([word]) => word)
   }
 
   /**
    * 格式化知识内容
    */
   private formatKnowledge(entries: KnowledgeEntry[]): string {
-    const sections: string[] = ['## 相关知识\n'];
+    const sections: string[] = ['## 相关知识\n']
 
     for (const entry of entries) {
-      sections.push(`### ${entry.title}`);
-      sections.push('');
-      sections.push(entry.content);
-      sections.push('');
-      sections.push(`*类别: ${entry.category} | 标签: ${entry.tags.join(', ')}*`);
-      sections.push('');
+      sections.push(`### ${entry.title}`)
+      sections.push('')
+      sections.push(entry.content)
+      sections.push('')
+      sections.push(`*类别: ${entry.category} | 标签: ${entry.tags.join(', ')}*`)
+      sections.push('')
     }
 
-    return sections.join('\n');
+    return sections.join('\n')
   }
 
   /**
@@ -874,16 +874,16 @@ export class KnowledgeBase {
    */
   private async loadBuiltinKnowledge(): Promise<void> {
     // 写作最佳实践
-    await this.loadWritingBestPractices();
+    await this.loadWritingBestPractices()
 
     // 代码模式库
-    await this.loadCodePatterns();
+    await this.loadCodePatterns()
 
     // 领域知识
-    await this.loadDomainKnowledge();
+    await this.loadDomainKnowledge()
 
     // 错误解决方案
-    await this.loadErrorSolutions();
+    await this.loadErrorSolutions()
   }
 
   /**
@@ -950,10 +950,10 @@ function findPair(arr: number[], target: number): number[] | null {
         tags: ['错误', '用户体验', '消息'],
         priority: 1,
       },
-    ];
+    ]
 
     for (const practice of practices) {
-      await this.store(practice);
+      await this.store(practice)
     }
   }
 
@@ -1049,10 +1049,10 @@ class Subject {
         tags: ['设计模式', '观察者', '事件'],
         priority: 1,
       },
-    ];
+    ]
 
     for (const pattern of patterns) {
-      await this.store(pattern);
+      await this.store(pattern)
     }
   }
 
@@ -1130,10 +1130,10 @@ class Subject {
         tags: ['API', 'REST', '设计'],
         priority: 1,
       },
-    ];
+    ]
 
     for (const item of knowledge) {
-      await this.store(item);
+      await this.store(item)
     }
   }
 
@@ -1247,10 +1247,10 @@ useEffect(() => {
         tags: ['错误', 'React', 'Hook'],
         priority: 1,
       },
-    ];
+    ]
 
     for (const solution of solutions) {
-      await this.store(solution);
+      await this.store(solution)
     }
   }
 }
@@ -1259,7 +1259,7 @@ useEffect(() => {
  * 创建知识库实例
  */
 export function createKnowledgeBase(config: KnowledgeBaseConfig): KnowledgeBase {
-  return new KnowledgeBase(config);
+  return new KnowledgeBase(config)
 }
 
 /**
@@ -1270,4 +1270,4 @@ export const BUILTIN_KNOWLEDGE_BASES = {
   CODE_PATTERNS: 'code-patterns',
   DOMAIN_KNOWLEDGE: 'domain-knowledge',
   ERROR_SOLUTIONS: 'error-solutions',
-} as const;
+} as const

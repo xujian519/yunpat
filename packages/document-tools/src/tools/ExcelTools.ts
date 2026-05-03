@@ -4,21 +4,21 @@
  * 支持XLSX/XLS文件的读取和转换
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as XLSX from 'xlsx';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
-import { DocumentParseResult, DocumentType, ElementType, OutputFormat } from '../types/document.js';
+import * as fs from 'fs'
+import * as path from 'path'
+import * as XLSX from 'xlsx'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
+import { DocumentParseResult, DocumentType, ElementType, OutputFormat } from '../types/document.js'
 
 /**
  * Excel工作表数据
  */
 interface WorksheetData {
-  name: string;
-  data: any[][];
-  rowCount: number;
-  columnCount: number;
+  name: string
+  data: any[][]
+  rowCount: number
+  columnCount: number
 }
 
 /**
@@ -26,18 +26,18 @@ interface WorksheetData {
  */
 export class ExcelReadTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    sheetName?: string;
-    sheetIndex?: number;
-    headerRow?: number;
+    filePath: string
+    sheetName?: string
+    sheetIndex?: number
+    headerRow?: number
   },
   {
-    sheets: WorksheetData[];
-    activeSheet: string;
+    sheets: WorksheetData[]
+    activeSheet: string
     metadata: {
-      filename: string;
-      sheetCount: number;
-    };
+      filename: string
+      sheetCount: number
+    }
   }
 > {
   readonly metadata = {
@@ -69,45 +69,45 @@ export class ExcelReadTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; sheetName?: string; sheetIndex?: number; headerRow?: number },
     _context: ToolContext
   ): Promise<{
-    sheets: WorksheetData[];
-    activeSheet: string;
-    metadata: any;
+    sheets: WorksheetData[]
+    activeSheet: string
+    metadata: any
   }> {
-    const workbook = XLSX.readFile(input.filePath);
+    const workbook = XLSX.readFile(input.filePath)
 
-    const sheets: WorksheetData[] = [];
+    const sheets: WorksheetData[] = []
 
     // 确定要读取哪些工作表
-    let sheetNamesToRead: string[] = [];
+    let sheetNamesToRead: string[] = []
 
     if (input.sheetName) {
-      sheetNamesToRead = [input.sheetName];
+      sheetNamesToRead = [input.sheetName]
     } else if (input.sheetIndex !== undefined) {
-      sheetNamesToRead = [workbook.SheetNames[input.sheetIndex]];
+      sheetNamesToRead = [workbook.SheetNames[input.sheetIndex]]
     } else {
-      sheetNamesToRead = workbook.SheetNames;
+      sheetNamesToRead = workbook.SheetNames
     }
 
     // 读取每个工作表
     for (const sheetName of sheetNamesToRead) {
-      const worksheet = workbook.Sheets[sheetName];
+      const worksheet = workbook.Sheets[sheetName]
       const data = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
         defval: '',
-      }) as any[][];
+      }) as any[][]
 
       sheets.push({
         name: sheetName,
         data,
         rowCount: data.length,
         columnCount: data.length > 0 ? data[0].length : 0,
-      });
+      })
     }
 
     return {
@@ -117,7 +117,7 @@ export class ExcelReadTool extends EnhancedBaseTool<
         filename: path.basename(input.filePath),
         sheetCount: workbook.SheetNames.length,
       },
-    };
+    }
   }
 }
 
@@ -126,18 +126,18 @@ export class ExcelReadTool extends EnhancedBaseTool<
  */
 export class ExcelToJsonTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    sheetName?: string;
-    headerRow?: number;
-    pretty?: boolean;
+    filePath: string
+    sheetName?: string
+    headerRow?: number
+    pretty?: boolean
   },
   {
-    json: string;
-    sheets: Record<string, any[]>;
+    json: string
+    sheets: Record<string, any[]>
     metadata: {
-      filename: string;
-      sheetCount: number;
-    };
+      filename: string
+      sheetCount: number
+    }
   }
 > {
   readonly metadata = {
@@ -162,27 +162,27 @@ export class ExcelToJsonTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; sheetName?: string; headerRow?: number; pretty?: boolean },
     _context: ToolContext
   ): Promise<{ json: string; sheets: Record<string, any[]>; metadata: any }> {
-    const workbook = XLSX.readFile(input.filePath);
+    const workbook = XLSX.readFile(input.filePath)
 
-    const sheets: Record<string, any[]> = {};
+    const sheets: Record<string, any[]> = {}
 
     // 确定要读取哪些工作表
-    const sheetNamesToRead = input.sheetName ? [input.sheetName] : workbook.SheetNames;
+    const sheetNamesToRead = input.sheetName ? [input.sheetName] : workbook.SheetNames
 
     // 读取每个工作表
     for (const sheetName of sheetNamesToRead) {
-      const worksheet = workbook.Sheets[sheetName];
+      const worksheet = workbook.Sheets[sheetName]
       const jsonData = XLSX.utils.sheet_to_json(worksheet, {
         header: input.headerRow || 0,
-      });
+      })
 
-      sheets[sheetName] = jsonData;
+      sheets[sheetName] = jsonData
     }
 
     return {
@@ -192,7 +192,7 @@ export class ExcelToJsonTool extends EnhancedBaseTool<
         filename: path.basename(input.filePath),
         sheetCount: workbook.SheetNames.length,
       },
-    };
+    }
   }
 }
 
@@ -201,16 +201,16 @@ export class ExcelToJsonTool extends EnhancedBaseTool<
  */
 export class ExcelToMarkdownTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    sheetName?: string;
-    tableFormat?: 'github' | 'pipe';
+    filePath: string
+    sheetName?: string
+    tableFormat?: 'github' | 'pipe'
   },
   {
-    markdown: string;
+    markdown: string
     metadata: {
-      filename: string;
-      sheetCount: number;
-    };
+      filename: string
+      sheetCount: number
+    }
   }
 > {
   readonly metadata = {
@@ -233,34 +233,34 @@ export class ExcelToMarkdownTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; sheetName?: string; tableFormat?: string },
     _context: ToolContext
   ): Promise<{ markdown: string; metadata: any }> {
-    const readTool = new ExcelReadTool();
+    const readTool = new ExcelReadTool()
     const { sheets } = await readTool.execute(
       {
         filePath: input.filePath,
         sheetName: input.sheetName,
       },
       _context
-    );
+    )
 
-    const markdownParts: string[] = [];
+    const markdownParts: string[] = []
 
     for (const sheet of sheets) {
-      markdownParts.push(`## ${sheet.name}\n`);
+      markdownParts.push(`## ${sheet.name}\n`)
 
       if (sheet.data.length === 0) {
-        markdownParts.push('*空工作表*\n');
-        continue;
+        markdownParts.push('*空工作表*\n')
+        continue
       }
 
       // 转换为Markdown表格
-      const table = this.convertToMarkdownTable(sheet.data, input.tableFormat as any);
-      markdownParts.push(table);
+      const table = this.convertToMarkdownTable(sheet.data, input.tableFormat as any)
+      markdownParts.push(table)
     }
 
     return {
@@ -269,32 +269,32 @@ export class ExcelToMarkdownTool extends EnhancedBaseTool<
         filename: path.basename(input.filePath),
         sheetCount: sheets.length,
       },
-    };
+    }
   }
 
   /**
    * 将数据转换为Markdown表格
    */
   private convertToMarkdownTable(data: any[][], format: 'github' | 'pipe'): string {
-    if (data.length === 0) return '';
+    if (data.length === 0) return ''
 
-    const lines: string[] = [];
+    const lines: string[] = []
 
     // 表头
-    const header = data[0].map((cell) => String(cell ?? ''));
-    lines.push(`| ${header.join(' | ')} |`);
+    const header = data[0].map((cell) => String(cell ?? ''))
+    lines.push(`| ${header.join(' | ')} |`)
 
     // 分隔行
-    const separator = header.map(() => '---');
-    lines.push(`| ${separator.join(' | ')} |`);
+    const separator = header.map(() => '---')
+    lines.push(`| ${separator.join(' | ')} |`)
 
     // 数据行
     for (let i = 1; i < data.length; i++) {
-      const row = data[i].map((cell) => String(cell ?? ''));
-      lines.push(`| ${row.join(' | ')} |`);
+      const row = data[i].map((cell) => String(cell ?? ''))
+      lines.push(`| ${row.join(' | ')} |`)
     }
 
-    return lines.join('\n') + '\n';
+    return lines.join('\n') + '\n'
   }
 }
 
@@ -303,8 +303,8 @@ export class ExcelToMarkdownTool extends EnhancedBaseTool<
  */
 export class ExcelParseTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    outputFormat?: OutputFormat;
+    filePath: string
+    outputFormat?: OutputFormat
   },
   DocumentParseResult
 > {
@@ -332,30 +332,30 @@ export class ExcelParseTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; outputFormat?: OutputFormat },
     context: ToolContext
   ): Promise<DocumentParseResult> {
-    const startTime = Date.now();
+    const startTime = Date.now()
 
-    const readTool = new ExcelReadTool();
-    const { sheets } = await readTool.execute({ filePath: input.filePath }, context);
+    const readTool = new ExcelReadTool()
+    const { sheets } = await readTool.execute({ filePath: input.filePath }, context)
 
     // 将所有工作表数据合并为文本
-    const textParts: string[] = [];
-    const elements: any[] = [];
+    const textParts: string[] = []
+    const elements: any[] = []
 
     for (const sheet of sheets) {
-      textParts.push(`## ${sheet.name}`);
+      textParts.push(`## ${sheet.name}`)
 
       // 转换为表格元素
       elements.push({
         type: ElementType.TITLE,
         content: sheet.name,
         metadata: { level: 2 },
-      });
+      })
 
       elements.push({
         type: ElementType.TABLE,
@@ -364,16 +364,16 @@ export class ExcelParseTool extends EnhancedBaseTool<
           rows: sheet.rowCount,
           columns: sheet.columnCount,
         },
-      });
+      })
 
       // 文本表示
       for (const row of sheet.data) {
-        textParts.push(row.join('\t'));
+        textParts.push(row.join('\t'))
       }
-      textParts.push('');
+      textParts.push('')
     }
 
-    const stats = fs.statSync(input.filePath);
+    const stats = fs.statSync(input.filePath)
 
     return {
       documentType:
@@ -388,6 +388,6 @@ export class ExcelParseTool extends EnhancedBaseTool<
         sheetCount: sheets.length,
       },
       parseTime: Date.now() - startTime,
-    };
+    }
   }
 }

@@ -2,7 +2,7 @@
  * 专利工具提示词模板
  */
 
-import { InventionType } from '../types/patent.js';
+import { InventionType } from '../types/patent.js'
 
 /**
  * 权利要求生成模板
@@ -12,7 +12,7 @@ export const CLAIMS_TEMPLATES = {
   [InventionType.METHOD]: '一种[方法名称]，其特征在于，包括以下步骤：',
   [InventionType.SYSTEM]: '一种[系统名称]，其特征在于，包括：',
   [InventionType.COMPOSITION]: '一种[组合物名称]，其特征在于，包含：',
-};
+}
 
 /**
  * 默认前序部分
@@ -22,7 +22,7 @@ export const DEFAULT_PREAMBLES: Record<InventionType, string> = {
   [InventionType.METHOD]: '一种方法',
   [InventionType.SYSTEM]: '一种系统',
   [InventionType.COMPOSITION]: '一种组合物',
-};
+}
 
 /**
  * 默认过渡词
@@ -32,16 +32,16 @@ export const DEFAULT_TRANSITION_WORDS: Record<InventionType, string> = {
   [InventionType.METHOD]: '其特征在于，包括以下步骤：',
   [InventionType.SYSTEM]: '其特征在于，包括：',
   [InventionType.COMPOSITION]: '其特征在于，包含：',
-};
+}
 
 /**
  * 构建独立权利要求生成提示词
  */
 export function buildIndependentClaimPrompt(params: {
-  inventionType: InventionType;
-  preamble: string;
-  transitionWord: string;
-  features: string;
+  inventionType: InventionType
+  preamble: string
+  transitionWord: string
+  features: string
 }): string {
   return `请根据以下信息撰写独立权利要求：
 
@@ -65,16 +65,16 @@ ${params.features}
 一种图像识别装置，其特征在于，包括：
 图像采集模块，用于采集待识别图像；
 特征提取模块，与所述图像采集模块连接，用于从所述待识别图像中提取特征向量；
-识别模块，与所述特征提取模块连接，用于基于所述特征向量进行识别。`;
+识别模块，与所述特征提取模块连接，用于基于所述特征向量进行识别。`
 }
 
 /**
  * 构建从属权利要求生成提示词
  */
 export function buildDependentClaimPrompt(params: {
-  independentClaim: string;
-  claimNumber: number;
-  additionalFeature: string;
+  independentClaim: string
+  claimNumber: number
+  additionalFeature: string
 }): string {
   return `根据以下独立权利要求，撰写第 ${params.claimNumber} 项从属权利要求：
 
@@ -91,7 +91,7 @@ ${params.additionalFeature}
 4. 只返回权利要求文本，不要其他说明或解释
 
 **示例格式：**
-根据权利要求1所述的图像识别装置，其特征在于，所述特征提取模块采用卷积神经网络模型。`;
+根据权利要求1所述的图像识别装置，其特征在于，所述特征提取模块采用卷积神经网络模型。`
 }
 
 /**
@@ -129,7 +129,7 @@ ${claimsText}
 }
 \`\`\`
 
-请只返回JSON，不要包含其他说明文字。`;
+请只返回JSON，不要包含其他说明文字。`
 }
 
 /**
@@ -174,15 +174,15 @@ ${officeActionText}
 }
 \`\`\`
 
-请只返回JSON，不要包含其他说明文字。`;
+请只返回JSON，不要包含其他说明文字。`
 }
 
 /**
  * 构建答复策略提示词
  */
 export function buildResponseStrategyPrompt(params: {
-  officeAction: string;
-  currentClaims: string;
+  officeAction: string
+  currentClaims: string
 }): string {
   return `根据审查意见和当前权利要求，制定答复策略：
 
@@ -216,8 +216,8 @@ ${params.currentClaims}
 }
 \`\`\`
 
-请只返回JSON，不要包含其他说明文字。`;
+请只返回JSON，不要包含其他说明文字。`
 }
 
 // 重新导出枚举
-export { InventionType } from '../types/patent.js';
+export { InventionType } from '../types/patent.js'

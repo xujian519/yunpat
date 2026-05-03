@@ -9,9 +9,9 @@
 ### 1. KnowledgeSearchTool - 知识库检索工具
 
 ```typescript
-import { KnowledgeSearchTool } from '@yunpat/builtin-tools';
+import { KnowledgeSearchTool } from '@yunpat/builtin-tools'
 
-const searchTool = new KnowledgeSearchTool();
+const searchTool = new KnowledgeSearchTool()
 
 const result = await searchTool.execute(
   {
@@ -20,28 +20,28 @@ const result = await searchTool.execute(
     includeContent: true,
   },
   context
-);
+)
 
-console.log(`找到 ${result.cards.length} 张相关卡片`);
-result.cards.forEach(card => {
-  console.log(`- ${card.metadata.title}`);
-  console.log(`  概念: ${card.metadata.concept}`);
-  console.log(`  相关性: ${card.relevanceScore}`);
+console.log(`找到 ${result.cards.length} 张相关卡片`)
+result.cards.forEach((card) => {
+  console.log(`- ${card.metadata.title}`)
+  console.log(`  概念: ${card.metadata.concept}`)
+  console.log(`  相关性: ${card.relevanceScore}`)
   if (card.content) {
-    console.log(`  内容: ${card.content.substring(0, 100)}...`);
+    console.log(`  内容: ${card.content.substring(0, 100)}...`)
   }
-});
+})
 ```
 
 ### 2. KnowledgeIndexBuilderTool - 索引构建工具
 
 ```typescript
-import { KnowledgeIndexBuilderTool } from '@yunpat/builtin-tools';
+import { KnowledgeIndexBuilderTool } from '@yunpat/builtin-tools'
 
-const builder = new KnowledgeIndexBuilderTool();
+const builder = new KnowledgeIndexBuilderTool()
 
 // 构建索引
-await builder.execute({ forceRebuild: true }, context);
+await builder.execute({ forceRebuild: true }, context)
 ```
 
 ## 使用场景
@@ -53,10 +53,10 @@ await builder.execute({ forceRebuild: true }, context);
 const result = await searchTool.execute(
   { query: '三步法 创造性判断', concepts: ['三步法', '创造性'] },
   context
-);
+)
 
 // 使用检索到的卡片内容指导撰写
-const guidance = result.cards.map(c => c.content).join('\n\n');
+const guidance = result.cards.map((c) => c.content).join('\n\n')
 ```
 
 ### 场景 2：审查答复时查找法律依据
@@ -70,7 +70,7 @@ const result = await searchTool.execute(
     limit: 5,
   },
   context
-);
+)
 ```
 
 ### 场景 3：专利分析时收集案例
@@ -84,7 +84,7 @@ const result = await searchTool.execute(
     limit: 10,
   },
   context
-);
+)
 ```
 
 ## 索引结构
@@ -137,10 +137,7 @@ const result = await searchTool.execute(
 
 ```typescript
 // 简单关键词检索
-const result = await searchTool.execute(
-  { query: '专利侵权' },
-  context
-);
+const result = await searchTool.execute({ query: '专利侵权' }, context)
 ```
 
 ### 2. 概念过滤
@@ -153,7 +150,7 @@ const result = await searchTool.execute(
     concepts: ['三步法', '创造性'],
   },
   context
-);
+)
 ```
 
 ### 3. 领域过滤
@@ -166,7 +163,7 @@ const result = await searchTool.execute(
     domains: ['专利实务', '法律法规'],
   },
   context
-);
+)
 ```
 
 ### 4. 组合检索
@@ -182,7 +179,7 @@ const result = await searchTool.execute(
     includeContent: true,
   },
   context
-);
+)
 ```
 
 ## 性能优化
@@ -191,25 +188,23 @@ const result = await searchTool.execute(
 
 ```typescript
 // 索引会自动缓存，避免重复构建
-const searchTool = new KnowledgeSearchTool();
+const searchTool = new KnowledgeSearchTool()
 
 // 第一次调用会加载索引
-await searchTool.execute({ query: 'test' }, context);
+await searchTool.execute({ query: 'test' }, context)
 
 // 后续调用直接使用缓存的索引
-await searchTool.execute({ query: '三步法' }, context);
+await searchTool.execute({ query: '三步法' }, context)
 ```
 
 ### 批量检索
 
 ```typescript
 // 批量检索多个概念
-const queries = ['三步法', '新颖性', '创造性'];
+const queries = ['三步法', '新颖性', '创造性']
 const results = await Promise.all(
-  queries.map(query =>
-    searchTool.execute({ query, limit: 5 }, context)
-  )
-);
+  queries.map((query) => searchTool.execute({ query, limit: 5 }, context))
+)
 ```
 
 ## 相关性计算

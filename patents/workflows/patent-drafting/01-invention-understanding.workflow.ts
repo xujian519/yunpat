@@ -1,6 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
-import type { WorkflowDefinition } from '@yunpat/core';
-import { InventionUnderstandingAgent, HumanReadableRenderer } from '@yunpat/agent-invention';
+import { v4 as uuidv4 } from 'uuid'
+import type { WorkflowDefinition } from '@yunpat/core'
+import { InventionUnderstandingAgent, HumanReadableRenderer } from '@yunpat/agent-invention'
 
 export function createInventionUnderstandingWorkflow(): WorkflowDefinition {
   return {
@@ -43,5 +43,5 @@ export function createInventionUnderstandingWorkflow(): WorkflowDefinition {
       },
     ],
     enableCheckpoints: true,
-  };
+  }
 }

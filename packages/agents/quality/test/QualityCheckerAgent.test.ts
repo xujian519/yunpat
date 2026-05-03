@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { QualityCheckerAgent } from '../src/QualityCheckerAgent.js';
+import { describe, it, expect } from 'vitest'
+import { QualityCheckerAgent } from '../src/QualityCheckerAgent.js'
 
 describe('QualityCheckerAgent', () => {
   const mockLLM = {
@@ -13,12 +13,12 @@ describe('QualityCheckerAgent', () => {
         }),
       },
     }),
-  };
+  }
 
   const mockEventBus = {
     publish: () => {},
     subscribe: () => {},
-  };
+  }
 
   const mockInput = {
     claims: {
@@ -51,7 +51,7 @@ describe('QualityCheckerAgent', () => {
       detailedDescription: '实施例一：使用AI芯片...',
       abstract: '本发明提供一种智能设备...',
     },
-  };
+  }
 
   it('应该成功执行质量检查', async () => {
     const agent = new QualityCheckerAgent({
@@ -61,16 +61,16 @@ describe('QualityCheckerAgent', () => {
       memory: {},
       tools: {},
       llm: mockLLM,
-    });
+    })
 
-    const result = await agent.execute(mockInput);
+    const result = await agent.execute(mockInput)
 
-    expect(result.overallScore).toBeGreaterThan(0);
-    expect(result.claimsCheck.score).toBeGreaterThan(0);
-    expect(result.specificationCheck.score).toBeGreaterThan(0);
-    expect(result.formalCheck.score).toBeGreaterThan(0);
-    expect(result.formalCheck.errors.length).toBe(0);
-  });
+    expect(result.overallScore).toBeGreaterThan(0)
+    expect(result.claimsCheck.score).toBeGreaterThan(0)
+    expect(result.specificationCheck.score).toBeGreaterThan(0)
+    expect(result.formalCheck.score).toBeGreaterThan(0)
+    expect(result.formalCheck.errors.length).toBe(0)
+  })
 
   it('应该检测权利要求编号重复', async () => {
     const agent = new QualityCheckerAgent({
@@ -80,7 +80,7 @@ describe('QualityCheckerAgent', () => {
       memory: {},
       tools: {},
       llm: mockLLM,
-    });
+    })
 
     const badInput = {
       ...mockInput,
@@ -91,13 +91,13 @@ describe('QualityCheckerAgent', () => {
         ],
         dependentClaims: [],
       },
-    };
+    }
 
-    const result = await agent.execute(badInput);
+    const result = await agent.execute(badInput)
 
-    const duplicateErrors = result.formalCheck.errors.filter((e) => e.type === '编号重复');
-    expect(duplicateErrors.length).toBeGreaterThan(0);
-  });
+    const duplicateErrors = result.formalCheck.errors.filter((e) => e.type === '编号重复')
+    expect(duplicateErrors.length).toBeGreaterThan(0)
+  })
 
   it('应该检测引用错误', async () => {
     const agent = new QualityCheckerAgent({
@@ -107,7 +107,7 @@ describe('QualityCheckerAgent', () => {
       memory: {},
       tools: {},
       llm: mockLLM,
-    });
+    })
 
     const badInput = {
       ...mockInput,
@@ -119,13 +119,13 @@ describe('QualityCheckerAgent', () => {
           { claimNumber: 2, content: '如权利要求3所述...', parentClaim: 3, additionalFeatures: [] },
         ],
       },
-    };
+    }
 
-    const result = await agent.execute(badInput);
+    const result = await agent.execute(badInput)
 
-    const referenceErrors = result.formalCheck.errors.filter((e) => e.type === '引用错误');
-    expect(referenceErrors.length).toBeGreaterThan(0);
-  });
+    const referenceErrors = result.formalCheck.errors.filter((e) => e.type === '引用错误')
+    expect(referenceErrors.length).toBeGreaterThan(0)
+  })
 
   it('应该验证输入参数', async () => {
     const agent = new QualityCheckerAgent({
@@ -135,9 +135,10 @@ describe('QualityCheckerAgent', () => {
       memory: {},
       tools: {},
       llm: mockLLM,
-    });
+    })
 
-    await expect(agent.execute({ claims: undefined as any, specification: undefined as any }))
-      .rejects.toThrow('权利要求不能为空');
-  });
-});
+    await expect(
+      agent.execute({ claims: undefined as any, specification: undefined as any })
+    ).rejects.toThrow('权利要求不能为空')
+  })
+})

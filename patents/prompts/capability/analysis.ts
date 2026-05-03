@@ -14,7 +14,7 @@ export const CAP_ANALYSIS_PROMPT = `
 - 全面性：不遗漏关键技术特征
 - 准确性：特征描述与原文一致
 - 层次性：区分核心特征和可选特征
-`;
+`
 
 export function renderAnalysisPrompt(params: { text: string; analysisType: string }): string {
   return `${CAP_ANALYSIS_PROMPT}
@@ -24,5 +24,5 @@ ${params.text}
 
 ## 分析类型
 ${params.analysisType}
-`;
+`
 }

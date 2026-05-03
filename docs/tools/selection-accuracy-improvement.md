@@ -3,6 +3,7 @@
 ## 🎯 核心问题
 
 智能体在工具选择时面临的主要挑战：
+
 1. **语义理解** - 准确理解用户意图
 2. **工具匹配** - 从大量工具中找到最合适的
 3. **参数映射** - 正确映射用户输入到工具参数
@@ -16,6 +17,7 @@
 ### 1.1 增强工具元数据
 
 **当前问题**：
+
 ```typescript
 // ❌ 简单描述，缺乏上下文
 {
@@ -25,6 +27,7 @@
 ```
 
 **优化方案**：
+
 ```typescript
 // ✅ 详细描述，包含使用场景
 {
@@ -60,20 +63,20 @@
 ```typescript
 interface ToolMetadata {
   // 现有字段...
-  
+
   // 🆕 新增字段
-  examples?: ToolExample[];        // 使用示例
-  commonUseCases?: string[];       // 常见用例
-  relatedTools?: string[];         // 相关工具
-  prerequisites?: string[];        // 前置条件
-  limitations?: string[];          // 限制说明
+  examples?: ToolExample[] // 使用示例
+  commonUseCases?: string[] // 常见用例
+  relatedTools?: string[] // 相关工具
+  prerequisites?: string[] // 前置条件
+  limitations?: string[] // 限制说明
 }
 
 interface ToolExample {
-  description: string;             // 示例描述
-  input: Record<string, any>;       // 输入示例
-  output: Record<string, any>;      // 输出示例
-  scenario?: string;               // 使用场景
+  description: string // 示例描述
+  input: Record<string, any> // 输入示例
+  output: Record<string, any> // 输出示例
+  scenario?: string // 使用场景
 }
 ```
 
@@ -89,18 +92,18 @@ interface ToolExample {
  * 使用向量相似度找到最相关的工具
  */
 export class SemanticToolRetriever {
-  private embeddings: Map<string, number[]>;
-  private embeddingModel: EmbeddingModel;
+  private embeddings: Map<string, number[]>
+  private embeddingModel: EmbeddingModel
 
   async initialize(tools: BaseTool[]) {
-    this.embeddingModel = new OpenAIEmbeddings();
-    this.embeddings = new Map();
+    this.embeddingModel = new OpenAIEmbeddings()
+    this.embeddings = new Map()
 
     // 为每个工具生成嵌入
     for (const tool of tools) {
-      const text = this.generateToolText(tool);
-      const embedding = await this.embeddingModel.embedQuery(text);
-      this.embeddings.set(tool.metadata.name, embedding);
+      const text = this.generateToolText(tool)
+      const embedding = await this.embeddingModel.embedQuery(text)
+      this.embeddings.set(tool.metadata.name, embedding)
     }
   }
 
@@ -111,40 +114,40 @@ export class SemanticToolRetriever {
     query: string,
     topK: number = 5
   ): Promise<Array<{ tool: BaseTool; score: number }>> {
-    const queryEmbedding = await this.embeddingModel.embedQuery(query);
-    const scores: Array<{ toolName: string; score: number }> = [];
+    const queryEmbedding = await this.embeddingModel.embedQuery(query)
+    const scores: Array<{ toolName: string; score: number }> = []
 
     // 计算相似度
     for (const [toolName, toolEmbedding] of this.embeddings) {
-      const score = this.cosineSimilarity(queryEmbedding, toolEmbedding);
-      scores.push({ toolName, score });
+      const score = this.cosineSimilarity(queryEmbedding, toolEmbedding)
+      scores.push({ toolName, score })
     }
 
     // 排序并返回topK
-    scores.sort((a, b) => b.score - a.score);
+    scores.sort((a, b) => b.score - a.score)
     return scores.slice(0, topK).map(({ toolName, score }) => ({
       tool: this.getToolByName(toolName),
       score,
-    }));
+    }))
   }
 
   /**
    * 生成工具的文本表示
    */
   private generateToolText(tool: BaseTool): string {
-    const metadata = tool.metadata;
+    const metadata = tool.metadata
     return `
       ${metadata.name}
       ${metadata.description}
-      ${metadata.examples?.map(e => e.description).join('\n') || ''}
-    `.trim();
+      ${metadata.examples?.map((e) => e.description).join('\n') || ''}
+    `.trim()
   }
 
   private cosineSimilarity(a: number[], b: number[]): number {
-    const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
-    const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-    const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-    return dotProduct / (magnitudeA * magnitudeB);
+    const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0)
+    const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0))
+    const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0))
+    return dotProduct / (magnitudeA * magnitudeB)
   }
 }
 ```
@@ -157,41 +160,36 @@ export class SemanticToolRetriever {
  * 结合语义、关键词、分类三种策略
  */
 export class HybridToolRetriever {
-  private semanticRetriever: SemanticToolRetriever;
-  private keywordRetriever: KeywordRetriever;
-  private categoryRetriever: CategoryRetriever;
+  private semanticRetriever: SemanticToolRetriever
+  private keywordRetriever: KeywordRetriever
+  private categoryRetriever: CategoryRetriever
 
-  async retrieveTools(
-    query: string,
-    context: ToolContext
-  ): Promise<BaseTool[]> {
+  async retrieveTools(query: string, context: ToolContext): Promise<BaseTool[]> {
     // 1. 语义检索（权重：0.5）
-    const semanticResults = await this.semanticRetriever.retrieveTools(query, 5);
-    
+    const semanticResults = await this.semanticRetriever.retrieveTools(query, 5)
+
     // 2. 关键词检索（权重：0.3）
-    const keywordResults = this.keywordRetriever.retrieveTools(query, 5);
-    
+    const keywordResults = this.keywordRetriever.retrieveTools(query, 5)
+
     // 3. 分类检索（权重：0.2）
-    const categoryResults = this.categoryRetriever.retrieveTools(context);
+    const categoryResults = this.categoryRetriever.retrieveTools(context)
 
     // 4. 融合结果
     return this.mergeResults([
       { results: semanticResults, weight: 0.5 },
       { results: keywordResults, weight: 0.3 },
       { results: categoryResults, weight: 0.2 },
-    ]);
+    ])
   }
 
-  private mergeResults(
-    resultSets: Array<{ results: BaseTool[]; weight: number }>
-  ): BaseTool[] {
-    const scores = new Map<string, number>();
+  private mergeResults(resultSets: Array<{ results: BaseTool[]; weight: number }>): BaseTool[] {
+    const scores = new Map<string, number>()
 
     for (const { results, weight } of resultSets) {
       for (let i = 0; i < results.length; i++) {
-        const toolName = results[i].metadata.name;
-        const score = (1 - i / results.length) * weight;
-        scores.set(toolName, (scores.get(toolName) || 0) + score);
+        const toolName = results[i].metadata.name
+        const score = (1 - i / results.length) * weight
+        scores.set(toolName, (scores.get(toolName) || 0) + score)
       }
     }
 
@@ -199,7 +197,7 @@ export class HybridToolRetriever {
     return Array.from(scores.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
-      .map(([toolName]) => this.getToolByName(toolName));
+      .map(([toolName]) => this.getToolByName(toolName))
   }
 }
 ```
@@ -219,7 +217,7 @@ const ENHANCED_REACT_PROMPT = `
 
 ## 可用工具列表
 
-${tools.map(tool => formatToolWithExamples(tool)).join('\n\n')}
+${tools.map((tool) => formatToolWithExamples(tool)).join('\n\n')}
 
 ## 工具选择示例
 
@@ -255,7 +253,7 @@ ${tools.map(tool => formatToolWithExamples(tool)).join('\n\n')}
 6. **调整策略**: 如果结果不符合预期，如何调整？
 
 现在开始：
-`;
+`
 ```
 
 ### 3.2 思维链提示
@@ -306,7 +304,7 @@ const COT_TOOL_SELECTION_PROMPT = `
    - ExtractTablesTool: 可以提取表格
    - 组合使用：先解析PDF，再提取表格
 4. 决策：使用PdfParseTool + ExtractTablesTool
-`;
+`
 ```
 
 ---
@@ -321,42 +319,42 @@ const COT_TOOL_SELECTION_PROMPT = `
  */
 interface EnhancedToolMetadata {
   // 基础信息
-  name: string;
-  description: string;
-  category: ToolCategory;
+  name: string
+  description: string
+  category: ToolCategory
 
   // 🆕 多维度标签
   tags: {
     // 功能标签
-    capabilities: string[];      // ['parse', 'convert', 'extract']
-    
+    capabilities: string[] // ['parse', 'convert', 'extract']
+
     // 数据类型标签
-    dataTypes: string[];         // ['pdf', 'docx', 'image', 'audio']
-    
+    dataTypes: string[] // ['pdf', 'docx', 'image', 'audio']
+
     // 操作类型标签
-    operations: string[];        // ['read', 'write', 'transform']
-    
+    operations: string[] // ['read', 'write', 'transform']
+
     // 领域标签
-    domains: string[];           // ['document', 'web', 'database']
-    
+    domains: string[] // ['document', 'web', 'database']
+
     // 场景标签
-    scenarios: string[];         // ['batch-processing', 'automation']
-  };
+    scenarios: string[] // ['batch-processing', 'automation']
+  }
 
   // 使用统计
   usage: {
-    totalCalls: number;          // 总调用次数
-    successRate: number;         // 成功率
-    avgExecutionTime: number;    // 平均执行时间
-    lastUsed: Date;             // 最后使用时间
-  };
+    totalCalls: number // 总调用次数
+    successRate: number // 成功率
+    avgExecutionTime: number // 平均执行时间
+    lastUsed: Date // 最后使用时间
+  }
 
   // 依赖关系
   dependencies?: {
-    requires?: string[];         // 前置工具
-    conflictsWith?: string[];    // 冲突工具
-    oftenUsedWith?: string[];    // 经常一起使用
-  };
+    requires?: string[] // 前置工具
+    conflictsWith?: string[] // 冲突工具
+    oftenUsedWith?: string[] // 经常一起使用
+  }
 }
 
 /**
@@ -368,50 +366,51 @@ export class TagBasedToolRetriever {
    */
   retrieveByTags(
     query: {
-      capabilities?: string[];
-      dataTypes?: string[];
-      operations?: string[];
-      domains?: string[];
-      scenarios?: string[];
+      capabilities?: string[]
+      dataTypes?: string[]
+      operations?: string[]
+      domains?: string[]
+      scenarios?: string[]
     },
     registry: ToolRegistry
   ): BaseTool[] {
-    const tools = registry.listAll();
-    const matched: BaseTool[] = [];
+    const tools = registry.listAll()
+    const matched: BaseTool[] = []
 
     for (const tool of tools) {
-      const metadata = tool.metadata as EnhancedToolMetadata;
-      const score = this.calculateMatchScore(query, metadata.tags);
-      
-      if (score > 0.5) {  // 相似度阈值
-        matched.push(tool);
+      const metadata = tool.metadata as EnhancedToolMetadata
+      const score = this.calculateMatchScore(query, metadata.tags)
+
+      if (score > 0.5) {
+        // 相似度阈值
+        matched.push(tool)
       }
     }
 
     return matched.sort((a, b) => {
-      const scoreA = this.calculateMatchScore(query, (a.metadata as any).tags);
-      const scoreB = this.calculateMatchScore(query, (b.metadata as any).tags);
-      return scoreB - scoreA;
-    });
+      const scoreA = this.calculateMatchScore(query, (a.metadata as any).tags)
+      const scoreB = this.calculateMatchScore(query, (b.metadata as any).tags)
+      return scoreB - scoreA
+    })
   }
 
   private calculateMatchScore(
     query: Record<string, string[]>,
     tags: Record<string, string[]>
   ): number {
-    let totalScore = 0;
-    let totalWeight = 0;
+    let totalScore = 0
+    let totalWeight = 0
 
     for (const [key, queryValues] of Object.entries(query)) {
-      const toolValues = tags[key] || [];
-      const matchCount = queryValues.filter(v => toolValues.includes(v)).length;
-      const score = matchCount / queryValues.length;
-      
-      totalScore += score;
-      totalWeight += 1;
+      const toolValues = tags[key] || []
+      const matchCount = queryValues.filter((v) => toolValues.includes(v)).length
+      const score = matchCount / queryValues.length
+
+      totalScore += score
+      totalWeight += 1
     }
 
-    return totalWeight > 0 ? totalScore / totalWeight : 0;
+    return totalWeight > 0 ? totalScore / totalWeight : 0
   }
 }
 ```
@@ -446,32 +445,32 @@ const TOOL_TAXONOMY = {
     analysis: ['WebSnapshotTool', 'WebExtractTextTool'],
   },
   // ... 更多分类
-};
+}
 
 /**
  * 层级检索器
  */
 export class HierarchicalToolRetriever {
   retrieveByPath(path: string[]): BaseTool[] {
-    let current = TOOL_TAXONOMY;
-    
+    let current = TOOL_TAXONOMY
+
     for (const segment of path) {
       if (current[segment]) {
-        current = current[segment];
+        current = current[segment]
       } else {
-        return [];
+        return []
       }
     }
 
-    return current; // 返回最终的工具列表
+    return current // 返回最终的工具列表
   }
 }
 
 // 使用示例
-const retriever = new HierarchicalToolRetriever();
+const retriever = new HierarchicalToolRetriever()
 
 // 检索所有PDF转Markdown的工具
-const tools = retriever.retrieveByPath(['document', 'conversion', 'toMarkdown']);
+const tools = retriever.retrieveByPath(['document', 'conversion', 'toMarkdown'])
 // 结果: ['PdfToMarkdownTool', 'DocxToMarkdownTool']
 ```
 
@@ -486,7 +485,7 @@ const tools = retriever.retrieveByPath(['document', 'conversion', 'toMarkdown'])
  * 工具使用分析器
  */
 export class ToolUsageAnalyzer {
-  private usageHistory: Map<string, ToolUsageRecord[]> = new Map();
+  private usageHistory: Map<string, ToolUsageRecord[]> = new Map()
 
   /**
    * 记录工具使用
@@ -494,10 +493,10 @@ export class ToolUsageAnalyzer {
   recordUsage(
     toolName: string,
     context: {
-      userInput: string;
-      success: boolean;
-      executionTime: number;
-      error?: string;
+      userInput: string
+      success: boolean
+      executionTime: number
+      error?: string
     }
   ) {
     const record: ToolUsageRecord = {
@@ -506,64 +505,61 @@ export class ToolUsageAnalyzer {
       success: context.success,
       executionTime: context.executionTime,
       error: context.error,
-    };
+    }
 
     if (!this.usageHistory.has(toolName)) {
-      this.usageHistory.set(toolName, []);
+      this.usageHistory.set(toolName, [])
     }
-    
-    this.usageHistory.get(toolName)!.push(record);
+
+    this.usageHistory.get(toolName)!.push(record)
   }
 
   /**
    * 分析工具性能
    */
   analyzePerformance(toolName: string): ToolPerformance {
-    const records = this.usageHistory.get(toolName) || [];
-    
+    const records = this.usageHistory.get(toolName) || []
+
     return {
       totalCalls: records.length,
-      successRate: records.filter(r => r.success).length / records.length,
+      successRate: records.filter((r) => r.success).length / records.length,
       avgExecutionTime: records.reduce((sum, r) => sum + r.executionTime, 0) / records.length,
       commonErrors: this.getCommonErrors(records),
       bestUseCases: this.getBestUseCases(records),
-    };
+    }
   }
 
   /**
    * 获取推荐工具
    */
   getRecommendedTools(userInput: string): ToolRecommendation[] {
-    const recommendations: ToolRecommendation[] = [];
+    const recommendations: ToolRecommendation[] = []
 
     for (const [toolName, records] of this.usageHistory) {
-      const performance = this.analyzePerformance(toolName);
-      
+      const performance = this.analyzePerformance(toolName)
+
       // 基于历史表现推荐
-      if (
-        performance.successRate > 0.8 &&
-        this.isInputSimilar(userInput, records)
-      ) {
+      if (performance.successRate > 0.8 && this.isInputSimilar(userInput, records)) {
         recommendations.push({
           toolName,
           confidence: performance.successRate,
           reason: `历史成功率 ${(performance.successRate * 100).toFixed(0)}%`,
-        });
+        })
       }
     }
 
-    return recommendations.sort((a, b) => b.confidence - a.confidence);
+    return recommendations.sort((a, b) => b.confidence - a.confidence)
   }
 
   private isInputSimilar(input: string, records: ToolUsageRecord[]): boolean {
     // 使用简单的关键词匹配
-    const inputWords = input.toLowerCase().split(/\s+/);
-    
-    return records.some(record => {
-      const recordWords = record.userInput.toLowerCase().split(/\s+/);
-      const intersection = inputWords.filter(w => recordWords.includes(w));
-      return intersection.length / inputWords.length > 0.3;
-    });
+    const inputWords = input.toLowerCase().split(/\s+/)
+
+    return records.some((record) => {
+      const recordWords = record.userInput.toLowerCase().split(/\s+/)
+      const intersection = inputWords.filter((w) => recordWords.includes(w))
+      return intersection.length / inputWords.length > 0.3
+    })
   }
 }
 ```
@@ -575,27 +571,27 @@ export class ToolUsageAnalyzer {
  * 工具选择A/B测试
  */
 export class ToolSelectionABTester {
-  private variants: Map<string, string[]> = new Map();
+  private variants: Map<string, string[]> = new Map()
 
   /**
    * 注册测试变体
    */
   registerVariant(scenario: string, variants: string[]) {
-    this.variants.set(scenario, variants);
+    this.variants.set(scenario, variants)
   }
 
   /**
    * 选择工具（带A/B测试）
    */
   selectTool(scenario: string): string {
-    const variants = this.variants.get(scenario);
+    const variants = this.variants.get(scenario)
     if (!variants || variants.length === 0) {
-      throw new Error(`No variants found for scenario: ${scenario}`);
+      throw new Error(`No variants found for scenario: ${scenario}`)
     }
 
     // 随机选择（可以改为更智能的策略）
-    const index = Math.floor(Math.random() * variants.length);
-    return variants[index];
+    const index = Math.floor(Math.random() * variants.length)
+    return variants[index]
   }
 
   /**
@@ -605,9 +601,9 @@ export class ToolSelectionABTester {
     scenario: string,
     toolName: string,
     result: {
-      success: boolean;
-      userSatisfaction: number;
-      executionTime: number;
+      success: boolean
+      userSatisfaction: number
+      executionTime: number
     }
   ) {
     // 保存到数据库或文件
@@ -629,21 +625,25 @@ export class ToolSelectionABTester {
 ## 🎯 实施路线图
 
 ### 阶段1：快速优化（1-2天）
+
 - ✅ 优化工具描述（添加示例、用例）
 - ✅ 实现Few-shot提示模板
 - ✅ 添加工具使用指南文档
 
 ### 阶段2：智能检索（3-5天）
+
 - ✅ 实现语义工具检索
 - ✅ 实现混合检索策略
 - ✅ 添加多维度标签系统
 
 ### 阶段3：学习优化（1-2周）
+
 - ✅ 实现工具使用追踪
 - ✅ 建立性能分析系统
 - ✅ 实现A/B测试框架
 
 ### 阶段4：持续优化（长期）
+
 - ✅ 基于用户反馈调整
 - ✅ 自动优化工具选择
 - ✅ 机器学习模型训练
@@ -670,7 +670,7 @@ export class PdfParseTool extends EnhancedBaseTool {
   readonly metadata = {
     name: 'pdf_parse',
     description: '解析PDF文件',
-  };
+  }
 }
 
 // 修改后
@@ -692,15 +692,11 @@ export class PdfParseTool extends EnhancedBaseTool {
       {
         description: '解析PDF并提取文本',
         input: { filePath: '/path/to/document.pdf' },
-        output: { text: '提取的内容...' }
-      }
+        output: { text: '提取的内容...' },
+      },
     ],
-    commonUseCases: [
-      '文档内容提取',
-      'PDF格式转换',
-      '文档数据分析'
-    ]
-  };
+    commonUseCases: ['文档内容提取', 'PDF格式转换', '文档数据分析'],
+  }
 }
 ```
 
@@ -709,20 +705,20 @@ export class PdfParseTool extends EnhancedBaseTool {
 ```typescript
 // 在Agent中添加工具检索
 class EnhancedAgent extends Agent {
-  private toolRetriever: SemanticToolRetriever;
+  private toolRetriever: SemanticToolRetriever
 
   async plan(input: Input, context: ExecutionContext): Promise<Plan> {
     // 1. 检索相关工具（而非使用全部工具）
     const relevantTools = await this.toolRetriever.retrieveTools(
       input.taskDescription,
-      10  // 只检索top 10
-    );
+      10 // 只检索top 10
+    )
 
     // 2. 生成计划时只考虑相关工具
-    const prompt = this.generatePrompt(input, relevantTools);
-    const plan = await this.llm.generate(prompt);
+    const prompt = this.generatePrompt(input, relevantTools)
+    const plan = await this.llm.generate(prompt)
 
-    return plan;
+    return plan
   }
 }
 ```
@@ -739,6 +735,7 @@ class EnhancedAgent extends Agent {
 4. **长期目标**：机器学习优化、自动调优
 
 **建议优先级**：
+
 1. 🔥 **高优先级**：优化工具描述（1天）
 2. 🔥 **高优先级**：Few-shot提示（1天）
 3. 🌟 **中优先级**：语义检索（3天）

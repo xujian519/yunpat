@@ -10,16 +10,16 @@
  */
 export interface RerankResult {
   /** 原始索引 */
-  index: number;
+  index: number
 
   /** 文档内容 */
-  document: string;
+  document: string
 
   /** 相关性分数 */
-  relevanceScore: number;
+  relevanceScore: number
 
   /** 排名 */
-  rank: number;
+  rank: number
 }
 
 /**
@@ -27,26 +27,26 @@ export interface RerankResult {
  */
 export interface RerankConfig {
   /** API 基础 URL */
-  baseURL: string;
+  baseURL: string
 
   /** API 密钥 */
-  apiKey: string;
+  apiKey: string
 
   /** 模型名称 */
-  modelName?: string;
+  modelName?: string
 
   /** 超时时间（毫秒） */
-  timeout?: number;
+  timeout?: number
 
   /** Top K（返回前 K 个结果） */
-  topK?: number;
+  topK?: number
 }
 
 /**
  * Jina Reranker 适配器
  */
 export class JinaRerankerAdapter {
-  private config: Required<RerankConfig>;
+  private config: Required<RerankConfig>
 
   constructor(config: RerankConfig) {
     this.config = {
@@ -54,7 +54,7 @@ export class JinaRerankerAdapter {
       modelName: config.modelName || 'jina-reranker-v3-mlx',
       topK: config.topK || 10,
       timeout: config.timeout || 60000,
-    };
+    }
   }
 
   /**
@@ -66,8 +66,8 @@ export class JinaRerankerAdapter {
    * @returns 重排序后的文档列表
    */
   async rerank(query: string, documents: string[], topK?: number): Promise<RerankResult[]> {
-    const url = `${this.config.baseURL}/rerank`;
-    const k = topK ?? this.config.topK;
+    const url = `${this.config.baseURL}/rerank`
+    const k = topK ?? this.config.topK
 
     try {
       const response = await fetch(url, {
@@ -83,19 +83,19 @@ export class JinaRerankerAdapter {
           top_n: k,
         }),
         signal: AbortSignal.timeout(this.config.timeout),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error(`Jina Reranker API 请求失败: ${response.status} ${response.statusText}`);
+        throw new Error(`Jina Reranker API 请求失败: ${response.status} ${response.statusText}`)
       }
 
       const data = (await response.json()) as {
         results: Array<{
-          index: number;
-          relevance_score: number;
-          document: { text: string };
-        }>;
-      };
+          index: number
+          relevance_score: number
+          document: { text: string }
+        }>
+      }
 
       // 转换结果格式
       const results: RerankResult[] = data.results.map((item, rank) => ({
@@ -103,13 +103,13 @@ export class JinaRerankerAdapter {
         document: item.document.text,
         relevanceScore: item.relevance_score,
         rank: rank + 1,
-      }));
+      }))
 
-      return results;
+      return results
     } catch (error) {
       throw new Error(
         `Jina Reranker 重排序失败: ${error instanceof Error ? error.message : String(error)}`
-      );
+      )
     }
   }
 
@@ -122,8 +122,8 @@ export class JinaRerankerAdapter {
    * @returns 重排序后的文档内容列表
    */
   async rerankAndExtract(query: string, documents: string[], topK?: number): Promise<string[]> {
-    const results = await this.rerank(query, documents, topK);
-    return results.map((r) => r.document);
+    const results = await this.rerank(query, documents, topK)
+    return results.map((r) => r.document)
   }
 
   /**
@@ -139,25 +139,25 @@ export class JinaRerankerAdapter {
     candidates: string[],
     topK: number = 5
   ): Promise<Array<{ document: string; score: number; rank: number }>> {
-    console.log(`\n🔍 RAG 重排序管道`);
-    console.log(`📝 查询: ${query}`);
-    console.log(`📦 候选文档: ${candidates.length} 个`);
-    console.log(`🎯 返回 Top: ${topK} 个\n`);
+    console.log(`\n🔍 RAG 重排序管道`)
+    console.log(`📝 查询: ${query}`)
+    console.log(`📦 候选文档: ${candidates.length} 个`)
+    console.log(`🎯 返回 Top: ${topK} 个\n`)
 
-    const results = await this.rerank(query, candidates, topK);
+    const results = await this.rerank(query, candidates, topK)
 
-    console.log(`✅ 重排序完成:`);
+    console.log(`✅ 重排序完成:`)
     results.forEach((r) => {
       console.log(
         `   ${r.rank}. [分数: ${r.relevanceScore.toFixed(4)}] ${r.document.substring(0, 50)}...`
-      );
-    });
+      )
+    })
 
     return results.map((r) => ({
       document: r.document,
       score: r.relevanceScore,
       rank: r.rank,
-    }));
+    }))
   }
 
   /**
@@ -174,18 +174,18 @@ export class JinaRerankerAdapter {
     topK?: number
   ): Promise<RerankResult[][]> {
     if (queries.length !== documentsList.length) {
-      throw new Error('查询列表和文档列表长度不匹配');
+      throw new Error('查询列表和文档列表长度不匹配')
     }
 
-    const results: RerankResult[][] = [];
+    const results: RerankResult[][] = []
 
     for (let i = 0; i < queries.length; i++) {
-      const result = await this.rerank(queries[i], documentsList[i], topK);
-      results.push(result);
-      console.log(`✅ 已处理 ${i + 1}/${queries.length} 个查询`);
+      const result = await this.rerank(queries[i], documentsList[i], topK)
+      results.push(result)
+      console.log(`✅ 已处理 ${i + 1}/${queries.length} 个查询`)
     }
 
-    return results;
+    return results
   }
 
   /**
@@ -197,24 +197,24 @@ export class JinaRerankerAdapter {
     beforeScores: number[],
     afterResults: RerankResult[]
   ): {
-    beforeAvg: number;
-    afterAvg: number;
-    improvement: number;
-    improvementPercent: number;
+    beforeAvg: number
+    afterAvg: number
+    improvement: number
+    improvementPercent: number
   } {
-    const beforeAvg = beforeScores.reduce((a, b) => a + b, 0) / beforeScores.length;
+    const beforeAvg = beforeScores.reduce((a, b) => a + b, 0) / beforeScores.length
     const afterAvg =
       afterResults.slice(0, beforeScores.length).reduce((a, b) => a + b.relevanceScore, 0) /
-      afterResults.length;
-    const improvement = afterAvg - beforeAvg;
-    const improvementPercent = (improvement / beforeAvg) * 100;
+      afterResults.length
+    const improvement = afterAvg - beforeAvg
+    const improvementPercent = (improvement / beforeAvg) * 100
 
     return {
       beforeAvg,
       afterAvg,
       improvement,
       improvementPercent,
-    };
+    }
   }
 }
 
@@ -228,7 +228,7 @@ export function createJinaReranker(apiKey?: string, topK?: number): JinaReranker
     modelName: 'jina-reranker-v3-mlx',
     topK: topK || 10,
     timeout: 60000,
-  });
+  })
 }
 
 /**
@@ -246,6 +246,6 @@ export async function rerankRAG(
   topK: number = 5,
   apiKey?: string
 ): Promise<string[]> {
-  const reranker = createJinaReranker(apiKey, topK);
-  return reranker.rerankAndExtract(query, candidates, topK);
+  const reranker = createJinaReranker(apiKey, topK)
+  return reranker.rerankAndExtract(query, candidates, topK)
 }

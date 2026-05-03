@@ -9,40 +9,40 @@
  * - 图算法（PageRank、社区发现）
  */
 
-import { eq, and, or, sql, inArray } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import { graphEntities, graphRelations, type GraphEntity, type GraphRelation } from './schema.js';
+import { eq, and, or, sql, inArray } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import { graphEntities, graphRelations, type GraphEntity, type GraphRelation } from './schema.js'
 
 /**
  * 图节点（实体）
  */
 export interface GraphNode {
-  id: number;
-  type: string;
-  name: string;
-  properties?: Record<string, any>;
+  id: number
+  type: string
+  name: string
+  properties?: Record<string, any>
 }
 
 /**
  * 图边（关系）
  */
 export interface GraphEdge {
-  id: number;
-  fromEntityId: number;
-  toEntityId: number;
-  relationType: string;
-  weight: number;
-  properties?: Record<string, any>;
+  id: number
+  fromEntityId: number
+  toEntityId: number
+  relationType: string
+  weight: number
+  properties?: Record<string, any>
 }
 
 /**
  * 图路径（节点序列）
  */
 export interface GraphPath {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  totalWeight: number;
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+  totalWeight: number
 }
 
 /**
@@ -50,7 +50,7 @@ export interface GraphPath {
  */
 export interface PostgresGraphStoreConfig {
   /** 数据库连接 URL */
-  databaseUrl: string;
+  databaseUrl: string
 }
 
 /**
@@ -63,44 +63,44 @@ export interface PostgresGraphStoreConfig {
  * 4. 邻居发现
  */
 export class PostgresGraphStore {
-  private db: ReturnType<typeof drizzle>;
-  private client: postgres.Sql<{}>;
+  private db: ReturnType<typeof drizzle>
+  private client: postgres.Sql<{}>
 
   constructor(config: PostgresGraphStoreConfig) {
     this.client = postgres(config.databaseUrl, {
       max: 10,
       idle_timeout: 20,
       connect_timeout: 10,
-    });
+    })
 
-    this.db = drizzle(this.client);
+    this.db = drizzle(this.client)
   }
 
   /**
    * 创建实体
    */
   async createEntity(entity: {
-    type: string;
-    name: string;
-    properties?: Record<string, any>;
+    type: string
+    name: string
+    properties?: Record<string, any>
   }): Promise<number> {
     const result = await this.db
       .insert(graphEntities)
       .values(entity)
-      .returning({ id: graphEntities.id });
+      .returning({ id: graphEntities.id })
 
-    return result[0].id;
+    return result[0].id
   }
 
   /**
    * 创建关系
    */
   async createRelation(relation: {
-    fromEntityId: number;
-    toEntityId: number;
-    relationType: string;
-    weight?: number;
-    properties?: Record<string, any>;
+    fromEntityId: number
+    toEntityId: number
+    relationType: string
+    weight?: number
+    properties?: Record<string, any>
   }): Promise<number> {
     const result = await this.db
       .insert(graphRelations)
@@ -108,19 +108,19 @@ export class PostgresGraphStore {
         ...relation,
         weight: relation.weight?.toString() ?? '1.0',
       })
-      .returning({ id: graphRelations.id });
+      .returning({ id: graphRelations.id })
 
-    return result[0].id;
+    return result[0].id
   }
 
   /**
    * 获取实体的所有邻居（1 跳）
    */
   async getNeighbors(entityId: number, relationType?: string): Promise<GraphNode[]> {
-    const conditions = [eq(graphRelations.fromEntityId, entityId)];
+    const conditions = [eq(graphRelations.fromEntityId, entityId)]
 
     if (relationType) {
-      conditions.push(eq(graphRelations.relationType, relationType));
+      conditions.push(eq(graphRelations.relationType, relationType))
     }
 
     const result = await this.db
@@ -132,9 +132,9 @@ export class PostgresGraphStore {
       })
       .from(graphRelations)
       .innerJoin(graphEntities, eq(graphRelations.toEntityId, graphEntities.id))
-      .where(and(...conditions));
+      .where(and(...conditions))
 
-    return result as GraphNode[];
+    return result as GraphNode[]
   }
 
   /**
@@ -176,25 +176,25 @@ export class PostgresGraphStore {
       WHERE entity_id = ${toEntityId}
       ORDER BY hop, total_weight
       LIMIT 1
-    `;
+    `
 
     if (result.length === 0) {
-      return null;
+      return null
     }
 
-    const pathResult = result[0];
+    const pathResult = result[0]
 
     // 获取节点详情
     const nodes = await this.db
       .select()
       .from(graphEntities)
-      .where(inArray(graphEntities.id, pathResult.path as number[]));
+      .where(inArray(graphEntities.id, pathResult.path as number[]))
 
     // 获取边详情
     const edges = await this.db
       .select()
       .from(graphRelations)
-      .where(inArray(graphRelations.id, pathResult.edge_ids as number[]));
+      .where(inArray(graphRelations.id, pathResult.edge_ids as number[]))
 
     return {
       nodes: nodes as GraphNode[],
@@ -203,7 +203,7 @@ export class PostgresGraphStore {
         weight: parseFloat(e.weight as unknown as string),
       })) as GraphEdge[],
       totalWeight: pathResult.total_weight,
-    };
+    }
   }
 
   /**
@@ -242,9 +242,9 @@ export class PostgresGraphStore {
       FROM related r
       JOIN graph_entities ge ON r.to_entity_id = ge.id
       ORDER BY r.depth, r.weight DESC
-    `;
+    `
 
-    const entityMap = new Map<number, GraphNode>();
+    const entityMap = new Map<number, GraphNode>()
 
     for (const row of result) {
       entityMap.set(row.id, {
@@ -252,29 +252,29 @@ export class PostgresGraphStore {
         type: row.type,
         name: row.name,
         properties: row.properties,
-      });
+      })
     }
 
-    return entityMap;
+    return entityMap
   }
 
   /**
    * 查找实体
    */
   async findEntityByName(name: string, type?: string): Promise<GraphNode | null> {
-    const conditions = [eq(graphEntities.name, name)];
+    const conditions = [eq(graphEntities.name, name)]
 
     if (type) {
-      conditions.push(eq(graphEntities.type, type));
+      conditions.push(eq(graphEntities.type, type))
     }
 
     const result = await this.db
       .select()
       .from(graphEntities)
       .where(and(...conditions))
-      .limit(1);
+      .limit(1)
 
-    return result[0] ? { ...result[0], properties: result[0].properties ?? undefined } : null;
+    return result[0] ? { ...result[0], properties: result[0].properties ?? undefined } : null
   }
 
   /**
@@ -285,9 +285,9 @@ export class PostgresGraphStore {
       .select()
       .from(graphEntities)
       .where(eq(graphEntities.id, id))
-      .limit(1);
+      .limit(1)
 
-    return result[0] ? { ...result[0], properties: result[0].properties ?? undefined } : null;
+    return result[0] ? { ...result[0], properties: result[0].properties ?? undefined } : null
   }
 
   /**
@@ -297,33 +297,31 @@ export class PostgresGraphStore {
     // 先删除相关关系
     await this.db
       .delete(graphRelations)
-      .where(or(eq(graphRelations.fromEntityId, id), eq(graphRelations.toEntityId, id)));
+      .where(or(eq(graphRelations.fromEntityId, id), eq(graphRelations.toEntityId, id)))
 
     // 检查实体是否存在
-    const existing = await this.getEntity(id);
-    if (!existing) return false;
+    const existing = await this.getEntity(id)
+    if (!existing) return false
 
     // 删除实体
-    await this.db.delete(graphEntities).where(eq(graphEntities.id, id));
-    return true;
+    await this.db.delete(graphEntities).where(eq(graphEntities.id, id))
+    return true
   }
 
   /**
    * 获取图统计信息
    */
   async getStats(): Promise<{
-    totalEntities: number;
-    totalRelations: number;
-    entityTypes: Record<string, number>;
-    relationTypes: Record<string, number>;
+    totalEntities: number
+    totalRelations: number
+    entityTypes: Record<string, number>
+    relationTypes: Record<string, number>
   }> {
-    const entities = await this.db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(graphEntities);
+    const entities = await this.db.select({ count: sql<number>`count(*)::int` }).from(graphEntities)
 
     const relations = await this.db
       .select({ count: sql<number>`count(*)::int` })
-      .from(graphRelations);
+      .from(graphRelations)
 
     const entityTypes = await this.db
       .select({
@@ -331,7 +329,7 @@ export class PostgresGraphStore {
         count: sql<number>`count(*)::int`,
       })
       .from(graphEntities)
-      .groupBy(graphEntities.type);
+      .groupBy(graphEntities.type)
 
     const relationTypes = await this.db
       .select({
@@ -339,16 +337,16 @@ export class PostgresGraphStore {
         count: sql<number>`count(*)::int`,
       })
       .from(graphRelations)
-      .groupBy(graphRelations.relationType);
+      .groupBy(graphRelations.relationType)
 
-    const entityTypesMap: Record<string, number> = {};
+    const entityTypesMap: Record<string, number> = {}
     for (const row of entityTypes) {
-      entityTypesMap[row.type] = row.count;
+      entityTypesMap[row.type] = row.count
     }
 
-    const relationTypesMap: Record<string, number> = {};
+    const relationTypesMap: Record<string, number> = {}
     for (const row of relationTypes) {
-      relationTypesMap[row.type] = row.count;
+      relationTypesMap[row.type] = row.count
     }
 
     return {
@@ -356,14 +354,14 @@ export class PostgresGraphStore {
       totalRelations: relations[0].count,
       entityTypes: entityTypesMap,
       relationTypes: relationTypesMap,
-    };
+    }
   }
 
   /**
    * 关闭连接
    */
   async close(): Promise<void> {
-    await this.client.end();
+    await this.client.end()
   }
 }
 
@@ -373,5 +371,5 @@ export class PostgresGraphStore {
  * 创建 PostgreSQL 图存储实例
  */
 export function createPostgresGraphStore(config: PostgresGraphStoreConfig): PostgresGraphStore {
-  return new PostgresGraphStore(config);
+  return new PostgresGraphStore(config)
 }

@@ -19,12 +19,12 @@ export const NOVELTY_ANALYSIS_SYSTEM_PROMPT = `
 ## 输出要求
 - 客观、准确、基于证据
 - 输出严格的JSON格式
-`;
+`
 
 export function renderNoveltyAnalysisPrompt(params: {
-  patentId: string;
-  claims: string;
-  referenceDocs: Array<{ documentNumber: string; title: string; abstract: string }>;
+  patentId: string
+  claims: string
+  referenceDocs: Array<{ documentNumber: string; title: string; abstract: string }>
 }): string {
   return `${NOVELTY_ANALYSIS_SYSTEM_PROMPT}
 
@@ -48,5 +48,5 @@ ${params.referenceDocs.map((doc, i) => `${i + 1}. ${doc.documentNumber} - ${doc.
 3. 识别区别技术特征
 4. 做出新颖性判断并评估置信度
 
-请用JSON格式输出分析结果。`;
+请用JSON格式输出分析结果。`
 }

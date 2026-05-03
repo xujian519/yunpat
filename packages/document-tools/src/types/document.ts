@@ -50,14 +50,14 @@ export enum ElementType {
  * 文档元素
  */
 export interface DocumentElement {
-  type: ElementType;
-  content: string;
+  type: ElementType
+  content: string
   metadata?: {
-    level?: number; // 标题级别
-    page?: number; // 页码
-    bbox?: [number, number, number, number]; // 边界框 [x1, y1, x2, y2]
-    [key: string]: any;
-  };
+    level?: number // 标题级别
+    page?: number // 页码
+    bbox?: [number, number, number, number] // 边界框 [x1, y1, x2, y2]
+    [key: string]: any
+  }
 }
 
 /**
@@ -65,27 +65,27 @@ export interface DocumentElement {
  */
 export interface DocumentParseResult {
   /** 文档类型 */
-  documentType: DocumentType;
+  documentType: DocumentType
   /** 原始文件名 */
-  filename: string;
+  filename: string
   /** 文本内容 */
-  text: string;
+  text: string
   /** 结构化元素 */
-  elements: DocumentElement[];
+  elements: DocumentElement[]
   /** 元数据 */
   metadata: {
-    totalPages?: number;
-    author?: string;
-    creationDate?: Date;
-    modificationDate?: Date;
-    title?: string;
-    subject?: string;
-    keywords?: string[];
-    language?: string;
-    [key: string]: any;
-  };
+    totalPages?: number
+    author?: string
+    creationDate?: Date
+    modificationDate?: Date
+    title?: string
+    subject?: string
+    keywords?: string[]
+    language?: string
+    [key: string]: any
+  }
   /** 解析时间（毫秒） */
-  parseTime: number;
+  parseTime: number
 }
 
 /**
@@ -93,13 +93,13 @@ export interface DocumentParseResult {
  */
 export interface MarkdownOptions {
   /** 包含页眉页脚 */
-  includeHeaderFooter?: boolean;
+  includeHeaderFooter?: boolean
   /** 图片处理方式 */
-  imageHandling?: 'embed' | 'reference' | 'ignore';
+  imageHandling?: 'embed' | 'reference' | 'ignore'
   /** 表格格式 */
-  tableFormat?: 'markdown' | 'html';
+  tableFormat?: 'markdown' | 'html'
   /** 代码块语言 */
-  codeBlockLanguage?: string;
+  codeBlockLanguage?: string
 }
 
 /**
@@ -107,11 +107,11 @@ export interface MarkdownOptions {
  */
 export interface JsonOptions {
   /** 包含坐标信息 */
-  includeCoordinates?: boolean;
+  includeCoordinates?: boolean
   /** 包含样式信息 */
-  includeStyles?: boolean;
+  includeStyles?: boolean
   /** 压缩输出 */
-  compress?: boolean;
+  compress?: boolean
 }
 
 /**
@@ -119,17 +119,17 @@ export interface JsonOptions {
  */
 export interface ParseOptions {
   /** 输出格式 */
-  outputFormat?: OutputFormat;
+  outputFormat?: OutputFormat
   /** OCR语言（用于图片/扫描版PDF） */
-  ocrLanguages?: string[];
+  ocrLanguages?: string[]
   /** 是否提取图片 */
-  extractImages?: boolean;
+  extractImages?: boolean
   /** 是否提取表格 */
-  extractTables?: boolean;
+  extractTables?: boolean
   /** Markdown选项 */
-  markdownOptions?: MarkdownOptions;
+  markdownOptions?: MarkdownOptions
   /** JSON选项 */
-  jsonOptions?: JsonOptions;
+  jsonOptions?: JsonOptions
 }
 
 /**
@@ -137,11 +137,11 @@ export interface ParseOptions {
  */
 export interface TranscriptionOptions {
   /** 语言代码 */
-  language?: string;
+  language?: string
   /** 是否翻译成英文 */
-  translateToEnglish?: boolean;
+  translateToEnglish?: boolean
   /** 输出格式 */
-  outputFormat?: 'text' | 'srt' | 'vtt' | 'json';
+  outputFormat?: 'text' | 'srt' | 'vtt' | 'json'
 }
 
 /**
@@ -149,16 +149,16 @@ export interface TranscriptionOptions {
  */
 export interface TranscriptionResult {
   /** 转写文本 */
-  text: string;
+  text: string
   /** 时间戳分段 */
   segments?: Array<{
-    id: number;
-    start: number;
-    end: number;
-    text: string;
-  }>;
+    id: number
+    start: number
+    end: number
+    text: string
+  }>
   /** 检测到的语言 */
-  language: string;
+  language: string
   /** 处理时长（秒） */
-  processingTime: number;
+  processingTime: number
 }

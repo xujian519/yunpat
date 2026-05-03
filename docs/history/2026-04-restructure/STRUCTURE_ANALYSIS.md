@@ -22,11 +22,13 @@
 ```
 
 **影响**：
+
 - 新人难以理解项目结构
 - 文档分散，难以维护
 - 缺乏清晰的入口
 
 **具体问题文件**：
+
 ```
 ❌ FINAL_*.md (3个) - 临时总结文档
 ❌ IMPLEMENTATION_*.md - 实施记录
@@ -43,6 +45,7 @@
 #### 2. packages/ 和 ai/ 的定位不清晰（中等）
 
 **问题**：
+
 ```
 packages/
 ├── core/          # 核心框架（通用）
@@ -57,11 +60,13 @@ ai/
 ```
 
 **疑问**：
+
 - `packages/agents` 和 `ai/agents` 的关系？
 - `packages/core` 是否应该移到 `ai/core`？
 - 为什么 `ai/` 下面既有 `agents/` 又有 `retrieval/`、`generation/`？
 
 **影响**：
+
 - 开发者困惑：新智能体放哪里？
 - 依赖关系不清晰
 - 难以扩展到其他领域
@@ -73,6 +78,7 @@ ai/
 **问题**：没有明确的 `internal/` 或 `shared/` 目录
 
 **影响**：
+
 - 代码复用困难
 - 共享工具散落各处
 - 类型定义重复
@@ -82,12 +88,14 @@ ai/
 #### 4. 文档组织混乱（严重）
 
 **问题**：
+
 - 根目录有 20+ 个文档
 - 缺乏文档分类
 - 历史文档未归档
 - 临时文档未清理
 
 **建议**：
+
 ```
 docs/
 ├── guides/           # 用户指南
@@ -103,6 +111,7 @@ docs/
 #### 5. 测试组织不清晰（轻微）
 
 **问题**：
+
 - `tests/` 目录存在但不清楚用途
 - 缺少 `e2e/`、`integration/`、`unit/` 的明确划分
 
@@ -284,28 +293,33 @@ mv BatchProcessor.README.md examples/
 ## YunPat 文档中心
 
 ### 🚀 快速开始
+
 - [项目介绍](../README.md)
 - [快速开始指南](getting-started/)
 - [环境搭建](development/setup/)
 
 ### 📖 用户指南
+
 - [专利代理人指南](business/patent-writers/)
 - [专利工程师指南](business/patent-engineers/)
 - [IP 管理指南](business/ip-managers/)
 
 ### 🔧 开发文档
+
 - [架构设计](architecture/)
 - [API 文档](api/)
 - [测试指南](development/testing/)
 - [部署指南](development/deployment/)
 
 ### 📚 历史文档
+
 - [2026-04 重构记录](history/2026-04-restructure/)
 ```
 
 ### 第 3 步：统一 ai/ 和 packages/ 的关系
 
 **选项 A：合并到 ai/**
+
 ```bash
 # 将 packages/ 内容合并到 ai/
 mv packages/core ai/core
@@ -318,12 +332,16 @@ rm -rf packages/
 ```
 
 **选项 B：保持分离，明确职责**
+
 ```markdown
 # packages/ - 通用框架和工具
+
 # ai/ - 专利专用 AI 能力
 
 # 映射关系：
+
 # packages/core → ai/core 的通用基础
+
 # packages/agents → ai/agents/common
 ```
 
@@ -400,18 +418,21 @@ yunpat/
 ## 🎯 总结
 
 ### 当前问题
+
 1. ❌ 根目录过于混乱（39个文件）
 2. ❌ 文档分散，缺乏组织
 3. ❌ packages/ 和 ai/ 定位不清晰
 4. ❌ 缺少标准的 monorepo 结构
 
 ### 优化建议
+
 1. ✅ 清理根目录，移动历史文档
 2. ✅ 重新组织文档结构
 3. ✅ 明确 ai/ 和 packages/ 的关系
 4. ✅ 采用标准的 monorepo 工具
 
 ### 长期发展
+
 - ✅ 支持插件化扩展
 - ✅ 支持多领域（商标、版权）
 - ✅ 支持多语言架构

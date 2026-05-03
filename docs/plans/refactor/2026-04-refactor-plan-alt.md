@@ -8,13 +8,13 @@
 
 ## 📊 问题诊断总结
 
-| 核心问题 | 严重程度 | 影响 |
-|---------|---------|------|
-| 过度工程化 | 🔴 严重 | 代码量是实际需要的 5-10 倍 |
-| 缺少测试 | 🔴 严重 | 测试覆盖率 < 5%，无 CI/CD |
-| 死代码/Mock 数据 | 🔴 严重 | ~40% 是硬编码模拟数据 |
-| 代码重复 | 🟡 中等 | Agent 基类内部 200 行重复 |
-| 关键 Bug | 🔴 严重 | EventBus 缩进错误导致功能失败 |
+| 核心问题         | 严重程度 | 影响                          |
+| ---------------- | -------- | ----------------------------- |
+| 过度工程化       | 🔴 严重  | 代码量是实际需要的 5-10 倍    |
+| 缺少测试         | 🔴 严重  | 测试覆盖率 < 5%，无 CI/CD     |
+| 死代码/Mock 数据 | 🔴 严重  | ~40% 是硬编码模拟数据         |
+| 代码重复         | 🟡 中等  | Agent 基类内部 200 行重复     |
+| 关键 Bug         | 🔴 严重  | EventBus 缩进错误导致功能失败 |
 
 ---
 
@@ -25,28 +25,31 @@
 **目标**: 修复会导致功能失败的关键问题
 
 #### 1.1 修复 EventBus 缩进 Bug
+
 - **文件**: `packages/core/src/eventbus/EventBus.ts` 第 141-146 行
 - **问题**: `request()` 方法会立即 reject，超时机制失效
 - **修复**:
+
   ```typescript
   // 修复前（错误缩进）
   const timer = setTimeout(() => {
-    this.pendingRequests.delete(requestId);
-    reject(new Error(`Request timeout: ${requestId}`));
-  }, timeout);
-    this.pendingRequests.delete(requestId);   // ← 错误！
-    reject(new Error(`Request timeout: ${requestId}`));
+    this.pendingRequests.delete(requestId)
+    reject(new Error(`Request timeout: ${requestId}`))
+  }, timeout)
+  this.pendingRequests.delete(requestId) // ← 错误！
+  reject(new Error(`Request timeout: ${requestId}`))
 
   // 修复后
   const timer = setTimeout(() => {
-    this.pendingRequests.delete(requestId);
-    reject(new Error(`Request timeout: ${requestId}`));
-  }, timeout);
+    this.pendingRequests.delete(requestId)
+    reject(new Error(`Request timeout: ${requestId}`))
+  }, timeout)
   ```
 
 #### 1.2 删除过度设计的模块（等真正需要时再加）
 
 **删除列表**（共 ~3,500 行）:
+
 - `packages/core/src/gateway/Gateway.ts` (551 行，全是 mock)
 - `packages/core/src/llm/ModelVoting.ts` (1123 行，解决不存在的问题)
 - `packages/core/src/llm/PromptOptimizer.ts` (368 行，删除"请"字)
@@ -54,12 +57,17 @@
 - `packages/core/src/memory/TransactionManager.ts` (内存事务无意义)
 
 **替代方案**:
+
 ```typescript
 // ResilientLLMAdapter 替代（10 行）
 async function chatWithRetry(adapter, params, retries = 3) {
   for (let i = 0; i < retries; i++) {
-    try { return await adapter.chat(params); }
-    catch (e) { if (i === retries - 1) throw e; await sleep(1000 * 2 ** i); }
+    try {
+      return await adapter.chat(params)
+    } catch (e) {
+      if (i === retries - 1) throw e
+      await sleep(1000 * 2 ** i)
+    }
   }
 }
 ```
@@ -67,12 +75,14 @@ async function chatWithRetry(adapter, params, retries = 3) {
 #### 1.3 删除或替换硬编码的 Mock 数据
 
 **目标文件**:
+
 - `ai/agents/analyzer/PatentAnalyzerAgent.ts` (594 行)
 - `ai/agents/writer/EnhancedPatentWriterAgent.ts`
 - `ai/agents/manager/PatentManagerAgent.ts`
 - `cli/patent-cli/index.js` (310 行)
 
 **策略**:
+
 - 删除返回硬编码数据的方法
 - 保留接口定义，添加 `// TODO: 实现真实逻辑` 注释
 - 或用简单的随机数据生成替代（用于演示）
@@ -109,27 +119,29 @@ jobs:
 ```typescript
 // 简化后的 Agent 定义
 interface AgentConfig {
-  name: string;
-  prompt: string;
-  llm: LLMAdapter;
+  name: string
+  prompt: string
+  llm: LLMAdapter
 }
 
 async function runAgent(input: string, config: AgentConfig): Promise<string> {
   const response = await config.llm.chat([
     { role: 'system', content: config.prompt },
-    { role: 'user', content: input }
-  ]);
-  return response.message.content;
+    { role: 'user', content: input },
+  ])
+  return response.message.content
 }
 ```
 
 #### 2.2 合并重复的专利智能体
 
 **问题**:
+
 - `PatentWriterAgent` vs `EnhancedPatentWriterAgent`（后者无实质增强）
 - 4 个专利智能体高度同质化
 
 **策略**:
+
 1. 删除 `EnhancedPatentWriterAgent`
 2. 提取公共的 `PatentAgent` 基类
 3. 共享 LLM 调用模式和专利领域模型
@@ -157,11 +169,11 @@ async function runAgent(input: string, config: AgentConfig): Promise<string> {
 
 #### 2.4 使用现成的库替代自制实现
 
-| 自制实现 | 替代库 | 减少代码量 |
-|---------|--------|-----------|
-| `PromptTemplate.ts` (504 行) | Handlebars / Mustache | -500 行 |
-| `ResilientLLMAdapter.ts` (543 行) | p-retry | -530 行 |
-| 事件系统 | EventEmitter3 ✅ 已使用 | 0 |
+| 自制实现                          | 替代库                  | 减少代码量 |
+| --------------------------------- | ----------------------- | ---------- |
+| `PromptTemplate.ts` (504 行)      | Handlebars / Mustache   | -500 行    |
+| `ResilientLLMAdapter.ts` (543 行) | p-retry                 | -530 行    |
+| 事件系统                          | EventEmitter3 ✅ 已使用 | 0          |
 
 ---
 
@@ -172,6 +184,7 @@ async function runAgent(input: string, config: AgentConfig): Promise<string> {
 #### 3.1 清理空目录
 
 **删除**:
+
 - `apps/*` (5 个空目录)
 - `services/*` (5 个空目录)
 - `ai/core`, `ai/retrieval`, `ai/generation`, `ai/knowledge`
@@ -179,6 +192,7 @@ async function runAgent(input: string, config: AgentConfig): Promise<string> {
 #### 3.2 合并重复的 CLI
 
 **问题**: 三处重复
+
 - `cli/patent-cli/`
 - `packages/cli/`
 - `rust/crates/patent-cli/`
@@ -190,6 +204,7 @@ async function runAgent(input: string, config: AgentConfig): Promise<string> {
 **目标**: 核心模块覆盖率达到 60%
 
 **优先级**:
+
 1. `packages/core/src/agent/Agent.ts` - 核心抽象
 2. `packages/core/src/llm/` - LLM 适配器
 3. `packages/core/src/eventbus/EventBus.ts` - 事件总线
@@ -252,8 +267,8 @@ npx husky install
 
 ### ✅ 阶段三（P2 - 本月内）
 
-- [ ] 删除 apps/* 空目录
-- [ ] 删除 services/* 空目录
+- [ ] 删除 apps/\* 空目录
+- [ ] 删除 services/\* 空目录
 - [ ] 删除 ai/core, ai/retrieval, ai/generation, ai/knowledge
 - [ ] 统一 CLI 到 packages/cli/
 - [ ] 为 Agent.ts 添加单元测试
@@ -268,18 +283,21 @@ npx husky install
 ## 🎯 成功标准
 
 ### 阶段一成功标准
+
 - [ ] EventBus Bug 已修复，测试通过
 - [ ] 删除 ~3,500 行过度设计的代码
 - [ ] CI 可以自动运行测试
 - [ ] 所有硬编码 mock 数据已清理或标记 TODO
 
 ### 阶段二成功标准
+
 - [ ] Agent 基类简化到 < 100 行
 - [ ] ESLint 可以正常运行
 - [ ] 无重复的智能体实现
 - [ ] 使用现成库替代自制实现
 
 ### 阶段三成功标准
+
 - [ ] 无空目录
 - [ ] 核心模块测试覆盖率达到 60%
 - [ ] Pre-commit hook 正常工作

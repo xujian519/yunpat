@@ -51,6 +51,7 @@ protos/
 **职责**: Agent 协调与事件路由
 
 **核心方法**:
+
 - `ExecuteAgent`: 执行 Agent 任务
 - `StreamExecuteAgent`: 流式执行（实时反馈）
 - `GetAgentStatus`: 获取 Agent 状态
@@ -65,6 +66,7 @@ protos/
 **职责**: 高性能向量检索
 
 **核心方法**:
+
 - `AddVector`: 添加向量
 - `Search`: 搜索相似向量
 - `DeleteVector`: 删除向量
@@ -73,6 +75,7 @@ protos/
 **实现语言**: Rust
 
 **性能指标**:
+
 - QPS > 10k
 - P99 延迟 < 10ms
 
@@ -83,6 +86,7 @@ protos/
 **职责**: 任务调度与队列管理
 
 **核心方法**:
+
 - `SubmitTask`: 提交任务
 - `GetTaskResult`: 获取任务结果
 - `CancelTask`: 取消任务
@@ -91,6 +95,7 @@ protos/
 **实现语言**: Rust
 
 **特性**:
+
 - 优先级队列（4 级）
 - 超时管理
 - 自动重试
@@ -102,6 +107,7 @@ protos/
 **职责**: ML 模型推理、数据分析
 
 **核心方法**:
+
 - `ExecuteTool`: 执行工具
 - `ExecuteTools`: 批量执行工具
 - `ListTools`: 列出可用工具
@@ -110,6 +116,7 @@ protos/
 **实现语言**: Python
 
 **限制**:
+
 - 最多 2 核 CPU
 - 最多 4GB 内存
 - 最多 10 并发请求
@@ -121,17 +128,14 @@ protos/
 ### TypeScript 客户端
 
 ```typescript
-import * as grpc from '@grpc/grpc-js';
-import * as protoLoader from '@grpc/proto-loader';
+import * as grpc from '@grpc/grpc-js'
+import * as protoLoader from '@grpc/proto-loader'
 
-const PROTO_PATH = __dirname + '/protos/agent.proto';
-const packageDefinition = protoLoader.loadSync(PROTO_PATH);
-const agentProto = grpc.loadPackageDefinition(packageDefinition).yunpat.agent;
+const PROTO_PATH = __dirname + '/protos/agent.proto'
+const packageDefinition = protoLoader.loadSync(PROTO_PATH)
+const agentProto = grpc.loadPackageDefinition(packageDefinition).yunpat.agent
 
-const client = new agentProto.AgentService(
-  'localhost:50051',
-  grpc.credentials.createInsecure()
-);
+const client = new agentProto.AgentService('localhost:50051', grpc.credentials.createInsecure())
 
 const response = await client.executeAgent({
   agent_name: 'writer',
@@ -141,7 +145,7 @@ const response = await client.executeAgent({
     timeout_ms: 30000,
     max_iterations: 10,
   },
-});
+})
 ```
 
 ### Rust 客户端
@@ -239,12 +243,12 @@ python -m grpc_tools.protoc -Iprotos \
 
 ## 性能基准
 
-| 服务 | QPS | P99 延迟 | 实现 |
-|------|-----|---------|------|
-| AgentService | 1k | 50ms | TypeScript |
-| VectorService | 10k | 10ms | Rust |
-| SchedulerService | 50k | 5ms | Rust |
-| PythonToolsService | 100 | 500ms | Python |
+| 服务               | QPS | P99 延迟 | 实现       |
+| ------------------ | --- | -------- | ---------- |
+| AgentService       | 1k  | 50ms     | TypeScript |
+| VectorService      | 10k | 10ms     | Rust       |
+| SchedulerService   | 50k | 5ms      | Rust       |
+| PythonToolsService | 100 | 500ms    | Python     |
 
 ---
 

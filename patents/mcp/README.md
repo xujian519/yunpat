@@ -34,9 +34,7 @@ pnpm build
   "mcpServers": {
     "yunpat-patent-tools": {
       "command": "node",
-      "args": [
-        "/Users/xujian/projects/YunPat/patents/mcp/patent-tools-server.ts"
-      ]
+      "args": ["/Users/xujian/projects/YunPat/patents/mcp/patent-tools-server.ts"]
     }
   }
 }
@@ -53,6 +51,7 @@ pnpm build
 从专利知识库中检索相关卡片和文档。
 
 **参数**：
+
 - `query` (string, 必需): 检索查询（关键词或问题）
 - `concepts` (array, 可选): 限定概念范围
 - `domains` (array, 可选): 限定领域范围
@@ -60,6 +59,7 @@ pnpm build
 - `includeContent` (boolean, 可选): 是否包含卡片内容（默认 true）
 
 **示例**：
+
 ```json
 {
   "query": "三步法 创造性判断",
@@ -72,6 +72,7 @@ pnpm build
 执行迭代式专利检索。
 
 **参数**：
+
 - `query` (string, 必需): 检索关键词
 - `searchFields` (array, 可选): 检索字段（标题、摘要、权利要求等）
 - `dateRange` (object, 可选): 日期范围
@@ -80,6 +81,7 @@ pnpm build
 - `ipc` (string, 可选): IPC分类号
 
 **示例**：
+
 ```json
 {
   "query": "智能控制系统",
@@ -92,11 +94,13 @@ pnpm build
 解析专利官文，提取结构化字段。
 
 **参数**：
+
 - `filePath` (string, 必需): 官文文件路径（PDF/图片）
 - `docType` (string, 可选): 官文类型（自动检测）
 - `useOcr` (boolean, 可选): 是否使用OCR（默认 false）
 
 **示例**：
+
 ```json
 {
   "filePath": "/path/to/审查意见通知书.pdf",
@@ -109,6 +113,7 @@ pnpm build
 生成专利申请文件。
 
 **参数**：
+
 - `data` (object, 必需): 专利申请数据
   - `inventionTitle` (string): 发明名称
   - `technicalField` (string): 技术领域
@@ -124,6 +129,7 @@ pnpm build
 生成权利要求书。
 
 **参数**：
+
 - `claims` (array, 必需): 权利要求数组
 - `outputPath` (string, 必需): 输出文件路径
 
@@ -132,6 +138,7 @@ pnpm build
 生成审查意见陈述书。
 
 **参数**：
+
 - `data` (object, 必需): 答复陈述数据
   - `applicationNumber` (string): 申请号
   - `inventionTitle` (string): 发明名称
@@ -144,6 +151,7 @@ pnpm build
 生成专利权利要求结构图（Mermaid 格式）。
 
 **参数**：
+
 - `claims` (array, 必需): 权利要求数组
 - `title` (string, 可选): 图表标题
 
@@ -154,6 +162,7 @@ pnpm build
 生成专利申请/审查流程图（Mermaid 格式）。
 
 **参数**：
+
 - `steps` (array, 必需): 流程步骤
 - `flows` (array, 必需): 流程连线
 - `title` (string, 可选): 图表标题

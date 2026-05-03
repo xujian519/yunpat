@@ -1,57 +1,61 @@
-import chalk from 'chalk';
-import ora from 'ora';
-import { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } from '@yunpat/core';
-import { WriterAgent, WritingTask } from '@yunpat/agent-writer';
-import { ResearcherAgent, ResearchQuery } from '@yunpat/agent-researcher';
-import type { PatentRecord } from '@yunpat/patent-tools';
-import type { IndependentClaim, DependentClaim } from '@yunpat/agent-claims';
-import type { PatentTechnicalAnalysis, ComparisonReport, RefinedInventionUnderstanding } from '@yunpat/agent-analysis';
-import type { PatentSpecification } from '@yunpat/agent-specification';
-import type { QualityCheckResult } from '@yunpat/agent-quality';
+import chalk from 'chalk'
+import ora from 'ora'
+import { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } from '@yunpat/core'
+import { WriterAgent, WritingTask } from '@yunpat/agent-writer'
+import { ResearcherAgent, ResearchQuery } from '@yunpat/agent-researcher'
+import type { PatentRecord } from '@yunpat/patent-tools'
+import type { IndependentClaim, DependentClaim } from '@yunpat/agent-claims'
+import type {
+  PatentTechnicalAnalysis,
+  ComparisonReport,
+  RefinedInventionUnderstanding,
+} from '@yunpat/agent-analysis'
+import type { PatentSpecification } from '@yunpat/agent-specification'
+import type { QualityCheckResult } from '@yunpat/agent-quality'
 
 /**
  * 创建智能体框架
  */
 export async function createAgentFramework(options: {
-  model?: string;
-  apiKey?: string;
+  model?: string
+  apiKey?: string
 }): Promise<void> {
-  const spinner = ora('初始化智能体框架...').start();
+  const spinner = ora('初始化智能体框架...').start()
 
   try {
     // 获取 API 密钥（优先 DeepSeek）
-    const apiKey = options.apiKey || process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = options.apiKey || process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      spinner.fail(chalk.red('错误: 未找到 API 密钥'));
-      console.log(chalk.gray('\n请通过以下方式提供 API 密钥:'));
-      console.log(chalk.gray('1. 设置环境变量: export DEEPSEEK_API_KEY=your_key'));
-      console.log(chalk.gray('2. 使用参数: yunpat init --api-key your_key'));
-      return;
+      spinner.fail(chalk.red('错误: 未找到 API 密钥'))
+      console.log(chalk.gray('\n请通过以下方式提供 API 密钥:'))
+      console.log(chalk.gray('1. 设置环境变量: export DEEPSEEK_API_KEY=your_key'))
+      console.log(chalk.gray('2. 使用参数: yunpat init --api-key your_key'))
+      return
     }
 
-    const eventBus = new EventBus();
-    new ShortTermMemory();
-    new ToolRegistry(eventBus);
-    createDeepSeekModel(apiKey);
+    const eventBus = new EventBus()
+    new ShortTermMemory()
+    new ToolRegistry(eventBus)
+    createDeepSeekModel(apiKey)
 
     // 订阅事件用于显示
     eventBus.subscribe('agent:*', (event) => {
-      console.log(chalk.gray(`[事件] ${event.type}`));
-    });
+      console.log(chalk.gray(`[事件] ${event.type}`))
+    })
 
-    spinner.succeed(chalk.green('✓ 框架初始化成功'));
+    spinner.succeed(chalk.green('✓ 框架初始化成功'))
 
-    console.log(chalk.blue('\n可用组件:'));
-    console.log(chalk.gray('  - 事件总线: ✓'));
-    console.log(chalk.gray('  - 记忆存储: ✓'));
-    console.log(chalk.gray('  - 工具注册: ✓'));
-    console.log(chalk.gray('  - LLM 适配器: ✓'));
+    console.log(chalk.blue('\n可用组件:'))
+    console.log(chalk.gray('  - 事件总线: ✓'))
+    console.log(chalk.gray('  - 记忆存储: ✓'))
+    console.log(chalk.gray('  - 工具注册: ✓'))
+    console.log(chalk.gray('  - LLM 适配器: ✓'))
 
-    console.log(chalk.green('\n框架已就绪! 使用 `yunpat run <agent>` 启动智能体'));
+    console.log(chalk.green('\n框架已就绪! 使用 `yunpat run <agent>` 启动智能体'))
   } catch (error) {
-    spinner.fail(chalk.red('初始化失败'));
-    console.error(error);
+    spinner.fail(chalk.red('初始化失败'))
+    console.error(error)
   }
 }
 
@@ -61,77 +65,77 @@ export async function createAgentFramework(options: {
 export async function runAgent(
   agentName: string,
   options: {
-    task?: string;
-    input?: string;
-    output?: string;
+    task?: string
+    input?: string
+    output?: string
   }
 ): Promise<void> {
-  const spinner = ora(`启动 ${agentName} 智能体...`).start();
+  const spinner = ora(`启动 ${agentName} 智能体...`).start()
 
   try {
     // 获取 API 密钥（优先 DeepSeek）
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      spinner.fail(chalk.red('错误: 未找到 API 密钥'));
-      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'));
-      return;
+      spinner.fail(chalk.red('错误: 未找到 API 密钥'))
+      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'))
+      return
     }
 
     // 初始化框架
-    const eventBus = new EventBus();
-    const memory = new ShortTermMemory();
-    const tools = new ToolRegistry(eventBus);
-    const llm = createDeepSeekModel(apiKey);
+    const eventBus = new EventBus()
+    const memory = new ShortTermMemory()
+    const tools = new ToolRegistry(eventBus)
+    const llm = createDeepSeekModel(apiKey)
 
-    spinner.succeed(chalk.green(`✓ ${agentName} 智能体已启动`));
+    spinner.succeed(chalk.green(`✓ ${agentName} 智能体已启动`))
 
     // 执行任务
-    spinner.start(chalk.blue('执行中...'));
+    spinner.start(chalk.blue('执行中...'))
 
     // 订阅进度事件
     eventBus.subscribe('agent:progress', (event) => {
-      const data = event.data as { iteration: number };
-      spinner.text = chalk.blue(`执行中... 迭代 ${data.iteration}`);
-    });
+      const data = event.data as { iteration: number }
+      spinner.text = chalk.blue(`执行中... 迭代 ${data.iteration}`)
+    })
 
-    let result: unknown;
-    const taskInput = options.task || options.input;
+    let result: unknown
+    const taskInput = options.task || options.input
 
     if (!taskInput) {
-      spinner.fail(chalk.red('请提供任务描述 (--task) 或输入文件 (--input)'));
-      return;
+      spinner.fail(chalk.red('请提供任务描述 (--task) 或输入文件 (--input)'))
+      return
     }
 
     if (agentName === 'writer') {
-      const agent = new WriterAgent({ eventBus, memory, tools, llm });
-      const task = parseTask(agentName, taskInput) as WritingTask;
-      result = await agent.execute(task);
+      const agent = new WriterAgent({ eventBus, memory, tools, llm })
+      const task = parseTask(agentName, taskInput) as WritingTask
+      result = await agent.execute(task)
     } else if (agentName === 'researcher') {
-      const agent = new ResearcherAgent({ eventBus, memory, tools, llm });
-      const task = parseTask(agentName, taskInput) as ResearchQuery;
-      result = await agent.execute(task);
+      const agent = new ResearcherAgent({ eventBus, memory, tools, llm })
+      const task = parseTask(agentName, taskInput) as ResearchQuery
+      result = await agent.execute(task)
     } else {
-      spinner.fail(chalk.red(`未知的智能体: ${agentName}`));
-      return;
+      spinner.fail(chalk.red(`未知的智能体: ${agentName}`))
+      return
     }
 
-    spinner.succeed(chalk.green('✓ 执行完成'));
+    spinner.succeed(chalk.green('✓ 执行完成'))
 
     // 输出结果
-    console.log(chalk.green('\n执行结果:'));
-    console.log(JSON.stringify(result, null, 2));
+    console.log(chalk.green('\n执行结果:'))
+    console.log(JSON.stringify(result, null, 2))
 
     // 保存到文件
     if (options.output) {
       throw new Error(
         '文件保存功能尚未实现。请移除 --output 参数，或等待此功能实现。\n' +
-        '临时方案：使用命令行重定向保存结果，例如：yunpat chat > output.json'
-      );
+          '临时方案：使用命令行重定向保存结果，例如：yunpat chat > output.json'
+      )
     }
   } catch (error) {
-    spinner.fail(chalk.red('执行失败'));
-    console.error(error);
+    spinner.fail(chalk.red('执行失败'))
+    console.error(error)
   }
 }
 
@@ -139,7 +143,7 @@ export async function runAgent(
  * 列出所有智能体
  */
 export async function listAgents(): Promise<void> {
-  console.log(chalk.blue('\n可用智能体:\n'));
+  console.log(chalk.blue('\n可用智能体:\n'))
 
   const agents = [
     {
@@ -152,17 +156,17 @@ export async function listAgents(): Promise<void> {
       description: '研究分析师',
       capabilities: ['信息搜集', '数据整理', '报告生成'],
     },
-  ];
+  ]
 
   agents.forEach((agent) => {
-    console.log(chalk.green(`${agent.name} - ${agent.description}`));
+    console.log(chalk.green(`${agent.name} - ${agent.description}`))
     agent.capabilities.forEach((cap) => {
-      console.log(chalk.gray(`  • ${cap}`));
-    });
-    console.log();
-  });
+      console.log(chalk.gray(`  • ${cap}`))
+    })
+    console.log()
+  })
 
-  console.log(chalk.gray('使用 `yunpat run <agent>` 启动智能体'));
+  console.log(chalk.gray('使用 `yunpat run <agent>` 启动智能体'))
 }
 
 /**
@@ -174,49 +178,47 @@ function parseTask(agentName: string, taskString: string): WritingTask | Researc
       type: 'generate',
       topic: taskString,
       format: 'markdown',
-    };
+    }
   } else {
     return {
       question: taskString,
       depth: 'standard',
       sources: ['web'],
-    };
+    }
   }
 }
 
 /**
  * 专利撰写（发明理解阶段）
  */
-export async function draftPatent(
-  options: {
-    title: string;
-    field: string;
-    disclosure: string;
-    output?: string;
-  }
-): Promise<void> {
-  const spinner = ora('启动专利撰写流程...').start();
+export async function draftPatent(options: {
+  title: string
+  field: string
+  disclosure: string
+  output?: string
+}): Promise<void> {
+  const spinner = ora('启动专利撰写流程...').start()
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      spinner.fail(chalk.red('错误: 未找到 API 密钥'));
-      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'));
-      return;
+      spinner.fail(chalk.red('错误: 未找到 API 密钥'))
+      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'))
+      return
     }
 
-    const eventBus = new EventBus();
-    const memory = new ShortTermMemory();
-    const tools = new ToolRegistry(eventBus);
-    const llm = createDeepSeekModel(apiKey);
+    const eventBus = new EventBus()
+    const memory = new ShortTermMemory()
+    const tools = new ToolRegistry(eventBus)
+    const llm = createDeepSeekModel(apiKey)
 
-    spinner.succeed(chalk.green('✓ 专利撰写智能体已启动'));
+    spinner.succeed(chalk.green('✓ 专利撰写智能体已启动'))
 
-    spinner.start(chalk.blue('正在分析技术交底书...'));
+    spinner.start(chalk.blue('正在分析技术交底书...'))
 
-    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention');
-    const { HumanReadableRenderer } = await import('@yunpat/agent-invention');
+    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention')
+    const { HumanReadableRenderer } = await import('@yunpat/agent-invention')
 
     const agent = new InventionUnderstandingAgent({
       name: 'invention-understanding',
@@ -225,63 +227,61 @@ export async function draftPatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const result = await agent.execute({
       title: options.title,
       field: options.field,
       technicalDisclosure: options.disclosure,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 发明理解完成'));
+    spinner.succeed(chalk.green('✓ 发明理解完成'))
 
-    const renderer = new HumanReadableRenderer();
-    const report = renderer.render(result);
+    const renderer = new HumanReadableRenderer()
+    const report = renderer.render(result)
 
-    console.log(chalk.green('\n=== 发明理解报告 ===\n'));
-    console.log(report);
+    console.log(chalk.green('\n=== 发明理解报告 ===\n'))
+    console.log(report)
 
     if (options.output) {
-      const fs = await import('fs/promises');
-      await fs.writeFile(options.output, report, 'utf-8');
-      console.log(chalk.green(`\n✓ 报告已保存到: ${options.output}`));
+      const fs = await import('fs/promises')
+      await fs.writeFile(options.output, report, 'utf-8')
+      console.log(chalk.green(`\n✓ 报告已保存到: ${options.output}`))
     }
   } catch (error) {
-    spinner.fail(chalk.red('执行失败'));
-    console.error(error);
+    spinner.fail(chalk.red('执行失败'))
+    console.error(error)
   }
 }
 
-export async function searchPatents(
-  options: {
-    title: string;
-    field: string;
-    disclosure: string;
-    output?: string;
-  }
-): Promise<void> {
-  const spinner = ora('启动专利检索流程...').start();
+export async function searchPatents(options: {
+  title: string
+  field: string
+  disclosure: string
+  output?: string
+}): Promise<void> {
+  const spinner = ora('启动专利检索流程...').start()
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      spinner.fail(chalk.red('错误: 未找到 API 密钥'));
-      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'));
-      return;
+      spinner.fail(chalk.red('错误: 未找到 API 密钥'))
+      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'))
+      return
     }
 
-    const eventBus = new EventBus();
-    const memory = new ShortTermMemory();
-    const tools = new ToolRegistry(eventBus);
-    const llm = createDeepSeekModel(apiKey);
+    const eventBus = new EventBus()
+    const memory = new ShortTermMemory()
+    const tools = new ToolRegistry(eventBus)
+    const llm = createDeepSeekModel(apiKey)
 
-    spinner.succeed(chalk.green('✓ 专利检索智能体已启动'));
+    spinner.succeed(chalk.green('✓ 专利检索智能体已启动'))
 
-    spinner.start(chalk.blue('步骤1/2: 发明理解...'));
+    spinner.start(chalk.blue('步骤1/2: 发明理解...'))
 
-    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention');
-    const { PatentSearchAgent } = await import('@yunpat/agent-search');
+    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention')
+    const { PatentSearchAgent } = await import('@yunpat/agent-search')
 
     const inventionAgent = new InventionUnderstandingAgent({
       name: 'invention-understanding',
@@ -290,19 +290,19 @@ export async function searchPatents(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const inventionResult = await inventionAgent.execute({
       title: options.title,
       field: options.field,
       technicalDisclosure: options.disclosure,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 发明理解完成'));
-    console.log(chalk.gray(`   技术领域: ${inventionResult.technicalField}`));
-    console.log(chalk.gray(`   关键特征: ${inventionResult.keyFeatures.length} 个`));
+    spinner.succeed(chalk.green('✓ 发明理解完成'))
+    console.log(chalk.gray(`   技术领域: ${inventionResult.technicalField}`))
+    console.log(chalk.gray(`   关键特征: ${inventionResult.keyFeatures.length} 个`))
 
-    spinner.start(chalk.blue('步骤2/2: 生成检索策略并执行检索...'));
+    spinner.start(chalk.blue('步骤2/2: 生成检索策略并执行检索...'))
 
     const searchAgent = new PatentSearchAgent({
       name: 'patent-search',
@@ -311,7 +311,7 @@ export async function searchPatents(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const searchResult = await searchAgent.execute({
       title: options.title,
@@ -319,81 +319,81 @@ export async function searchPatents(
       technicalProblem: inventionResult.technicalProblem,
       technicalSolution: inventionResult.technicalSolution,
       keyFeatures: inventionResult.keyFeatures,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 专利检索完成'));
+    spinner.succeed(chalk.green('✓ 专利检索完成'))
 
-    console.log(chalk.green('\n=== 检索策略 ===\n'));
-    console.log(chalk.blue(`检索查询: ${searchResult.strategy.searchQuery}`));
-    console.log(chalk.gray(`关键词: ${searchResult.strategy.keywords.join(', ')}`));
+    console.log(chalk.green('\n=== 检索策略 ===\n'))
+    console.log(chalk.blue(`检索查询: ${searchResult.strategy.searchQuery}`))
+    console.log(chalk.gray(`关键词: ${searchResult.strategy.keywords.join(', ')}`))
     if (searchResult.strategy.ipcCodes.length > 0) {
-      console.log(chalk.gray(`IPC分类: ${searchResult.strategy.ipcCodes.join(', ')}`));
+      console.log(chalk.gray(`IPC分类: ${searchResult.strategy.ipcCodes.join(', ')}`))
     }
-    console.log(chalk.gray(`策略理由: ${searchResult.strategy.rationale}`));
+    console.log(chalk.gray(`策略理由: ${searchResult.strategy.rationale}`))
 
-    console.log(chalk.green('\n=== 检索结果 ===\n'));
-    console.log(chalk.gray(`找到 ${searchResult.totalFound} 条相关专利 (耗时 ${searchResult.searchTimeMs}ms)`));
-    console.log();
+    console.log(chalk.green('\n=== 检索结果 ===\n'))
+    console.log(
+      chalk.gray(`找到 ${searchResult.totalFound} 条相关专利 (耗时 ${searchResult.searchTimeMs}ms)`)
+    )
+    console.log()
 
     if (searchResult.results.length > 0) {
       searchResult.results.forEach((patent: PatentRecord, index: number) => {
-        console.log(chalk.blue(`${index + 1}. ${patent.patentName}`));
-        console.log(chalk.gray(`   申请号: ${patent.applicationNumber}`));
-        console.log(chalk.gray(`   申请人: ${patent.applicant}`));
+        console.log(chalk.blue(`${index + 1}. ${patent.patentName}`))
+        console.log(chalk.gray(`   申请号: ${patent.applicationNumber}`))
+        console.log(chalk.gray(`   申请人: ${patent.applicant}`))
         if (patent.abstract) {
-          console.log(chalk.gray(`   摘要: ${patent.abstract.substring(0, 100)}...`));
+          console.log(chalk.gray(`   摘要: ${patent.abstract.substring(0, 100)}...`))
         }
-        console.log();
-      });
+        console.log()
+      })
     } else {
-      console.log(chalk.yellow('未找到相关专利'));
+      console.log(chalk.yellow('未找到相关专利'))
     }
 
     if (options.output) {
-      const fs = await import('fs/promises');
+      const fs = await import('fs/promises')
       const report = {
         invention: inventionResult,
         search: searchResult,
-      };
-      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8');
-      console.log(chalk.green(`✓ 检索报告已保存到: ${options.output}`));
+      }
+      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8')
+      console.log(chalk.green(`✓ 检索报告已保存到: ${options.output}`))
     }
   } catch (error) {
-    spinner.fail(chalk.red('执行失败'));
-    console.error(error);
+    spinner.fail(chalk.red('执行失败'))
+    console.error(error)
   }
 }
 
-export async function generateClaims(
-  options: {
-    title: string;
-    field: string;
-    disclosure: string;
-    output?: string;
-  }
-): Promise<void> {
-  const spinner = ora('启动权利要求生成流程...').start();
+export async function generateClaims(options: {
+  title: string
+  field: string
+  disclosure: string
+  output?: string
+}): Promise<void> {
+  const spinner = ora('启动权利要求生成流程...').start()
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      spinner.fail(chalk.red('错误: 未找到 API 密钥'));
-      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'));
-      return;
+      spinner.fail(chalk.red('错误: 未找到 API 密钥'))
+      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'))
+      return
     }
 
-    const eventBus = new EventBus();
-    const memory = new ShortTermMemory();
-    const tools = new ToolRegistry(eventBus);
-    const llm = createDeepSeekModel(apiKey);
+    const eventBus = new EventBus()
+    const memory = new ShortTermMemory()
+    const tools = new ToolRegistry(eventBus)
+    const llm = createDeepSeekModel(apiKey)
 
-    spinner.succeed(chalk.green('✓ 权利要求生成智能体已启动'));
+    spinner.succeed(chalk.green('✓ 权利要求生成智能体已启动'))
 
-    spinner.start(chalk.blue('步骤1/2: 发明理解...'));
+    spinner.start(chalk.blue('步骤1/2: 发明理解...'))
 
-    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention');
-    const { ClaimsGenerationAgent } = await import('@yunpat/agent-claims');
+    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention')
+    const { ClaimsGenerationAgent } = await import('@yunpat/agent-claims')
 
     const inventionAgent = new InventionUnderstandingAgent({
       name: 'invention-understanding',
@@ -402,19 +402,19 @@ export async function generateClaims(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const inventionResult = await inventionAgent.execute({
       title: options.title,
       field: options.field,
       technicalDisclosure: options.disclosure,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 发明理解完成'));
-    console.log(chalk.gray(`   技术领域: ${inventionResult.technicalField}`));
-    console.log(chalk.gray(`   关键特征: ${inventionResult.keyFeatures.length} 个`));
+    spinner.succeed(chalk.green('✓ 发明理解完成'))
+    console.log(chalk.gray(`   技术领域: ${inventionResult.technicalField}`))
+    console.log(chalk.gray(`   关键特征: ${inventionResult.keyFeatures.length} 个`))
 
-    spinner.start(chalk.blue('步骤2/2: 生成权利要求...'));
+    spinner.start(chalk.blue('步骤2/2: 生成权利要求...'))
 
     const claimsAgent = new ClaimsGenerationAgent({
       name: 'claims-generation',
@@ -423,84 +423,82 @@ export async function generateClaims(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const claimsResult = await claimsAgent.execute({
       inventionUnderstanding: inventionResult,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 权利要求生成完成'));
+    spinner.succeed(chalk.green('✓ 权利要求生成完成'))
 
-    console.log(chalk.green('\n=== 权利要求书 ===\n'));
+    console.log(chalk.green('\n=== 权利要求书 ===\n'))
 
     claimsResult.independentClaims.forEach((claim: IndependentClaim) => {
-      console.log(chalk.blue(`${claim.claimNumber}. ${claim.fullText}`));
-      console.log(chalk.gray(`   类型: ${claim.claimType}`));
-      console.log(chalk.gray(`   必要特征: ${claim.essentialFeatures.join(', ')}`));
-      console.log();
-    });
+      console.log(chalk.blue(`${claim.claimNumber}. ${claim.fullText}`))
+      console.log(chalk.gray(`   类型: ${claim.claimType}`))
+      console.log(chalk.gray(`   必要特征: ${claim.essentialFeatures.join(', ')}`))
+      console.log()
+    })
 
     claimsResult.dependentClaims.forEach((claim: DependentClaim) => {
-      console.log(chalk.blue(`${claim.claimNumber}. ${claim.content}`));
-      console.log(chalk.gray(`   引用权利要求: ${claim.parentClaim}`));
-      console.log(chalk.gray(`   附加特征: ${claim.additionalFeatures.join(', ')}`));
-      console.log();
-    });
+      console.log(chalk.blue(`${claim.claimNumber}. ${claim.content}`))
+      console.log(chalk.gray(`   引用权利要求: ${claim.parentClaim}`))
+      console.log(chalk.gray(`   附加特征: ${claim.additionalFeatures.join(', ')}`))
+      console.log()
+    })
 
-    console.log(chalk.green('=== 布局策略 ==='));
-    console.log(chalk.gray(claimsResult.layoutStrategy));
+    console.log(chalk.green('=== 布局策略 ==='))
+    console.log(chalk.gray(claimsResult.layoutStrategy))
 
-    console.log(chalk.green('\n=== 保护范围分析 ==='));
-    console.log(chalk.gray(claimsResult.protectionScopeAnalysis));
+    console.log(chalk.green('\n=== 保护范围分析 ==='))
+    console.log(chalk.gray(claimsResult.protectionScopeAnalysis))
 
     if (options.output) {
-      const fs = await import('fs/promises');
+      const fs = await import('fs/promises')
       const report = {
         invention: inventionResult,
         claims: claimsResult,
-      };
-      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8');
-      console.log(chalk.green(`\n✓ 权利要求报告已保存到: ${options.output}`));
+      }
+      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8')
+      console.log(chalk.green(`\n✓ 权利要求报告已保存到: ${options.output}`))
     }
   } catch (error) {
-    spinner.fail(chalk.red('执行失败'));
-    console.error(error);
+    spinner.fail(chalk.red('执行失败'))
+    console.error(error)
   }
 }
 
-export async function analyzePatent(
-  options: {
-    title: string;
-    field: string;
-    disclosure: string;
-    output?: string;
-  }
-): Promise<void> {
-  const spinner = ora('启动专利深度分析流程...').start();
+export async function analyzePatent(options: {
+  title: string
+  field: string
+  disclosure: string
+  output?: string
+}): Promise<void> {
+  const spinner = ora('启动专利深度分析流程...').start()
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      spinner.fail(chalk.red('错误: 未找到 API 密钥'));
-      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'));
-      return;
+      spinner.fail(chalk.red('错误: 未找到 API 密钥'))
+      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'))
+      return
     }
 
-    const eventBus = new EventBus();
-    const memory = new ShortTermMemory();
-    const tools = new ToolRegistry(eventBus);
-    const llm = createDeepSeekModel(apiKey);
+    const eventBus = new EventBus()
+    const memory = new ShortTermMemory()
+    const tools = new ToolRegistry(eventBus)
+    const llm = createDeepSeekModel(apiKey)
 
-    spinner.succeed(chalk.green('✓ 专利分析智能体已启动'));
+    spinner.succeed(chalk.green('✓ 专利分析智能体已启动'))
 
-    spinner.start(chalk.blue('步骤1/3: 发明理解...'));
+    spinner.start(chalk.blue('步骤1/3: 发明理解...'))
 
-    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention');
-    const { PatentSearchAgent } = await import('@yunpat/agent-search');
-    const { PatentTechnicalAnalyzerAgent } = await import('@yunpat/agent-analysis');
-    const { ComparisonReportGeneratorAgent } = await import('@yunpat/agent-analysis');
-    const { DisclosureRefinerAgent } = await import('@yunpat/agent-analysis');
+    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention')
+    const { PatentSearchAgent } = await import('@yunpat/agent-search')
+    const { PatentTechnicalAnalyzerAgent } = await import('@yunpat/agent-analysis')
+    const { ComparisonReportGeneratorAgent } = await import('@yunpat/agent-analysis')
+    const { DisclosureRefinerAgent } = await import('@yunpat/agent-analysis')
 
     const inventionAgent = new InventionUnderstandingAgent({
       name: 'invention-understanding',
@@ -509,17 +507,17 @@ export async function analyzePatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const inventionResult = await inventionAgent.execute({
       title: options.title,
       field: options.field,
       technicalDisclosure: options.disclosure,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 发明理解完成'));
+    spinner.succeed(chalk.green('✓ 发明理解完成'))
 
-    spinner.start(chalk.blue('步骤2/3: 检索策略与执行...'));
+    spinner.start(chalk.blue('步骤2/3: 检索策略与执行...'))
 
     const searchAgent = new PatentSearchAgent({
       name: 'patent-search',
@@ -528,7 +526,7 @@ export async function analyzePatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const searchResult = await searchAgent.execute({
       title: options.title,
@@ -536,12 +534,12 @@ export async function analyzePatent(
       technicalProblem: inventionResult.technicalProblem,
       technicalSolution: inventionResult.technicalSolution,
       keyFeatures: inventionResult.keyFeatures,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 专利检索完成'));
-    console.log(chalk.gray(`   找到 ${searchResult.totalFound} 条相关专利`));
+    spinner.succeed(chalk.green('✓ 专利检索完成'))
+    console.log(chalk.gray(`   找到 ${searchResult.totalFound} 条相关专利`))
 
-    spinner.start(chalk.blue('步骤3/3: 深度技术分析...'));
+    spinner.start(chalk.blue('步骤3/3: 深度技术分析...'))
 
     const analyzerAgent = new PatentTechnicalAnalyzerAgent({
       name: 'patent-analyzer',
@@ -550,9 +548,9 @@ export async function analyzePatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
-    const priorArtAnalysis: PatentTechnicalAnalysis[] = [];
+    const priorArtAnalysis: PatentTechnicalAnalysis[] = []
     for (const patent of searchResult.results.slice(0, 3)) {
       const analysis = await analyzerAgent.execute({
         patent: {
@@ -566,8 +564,8 @@ export async function analyzePatent(
           technicalSolution: inventionResult.technicalSolution,
           keyFeatures: inventionResult.keyFeatures,
         },
-      });
-      priorArtAnalysis.push(analysis);
+      })
+      priorArtAnalysis.push(analysis)
     }
 
     const comparisonAgent = new ComparisonReportGeneratorAgent({
@@ -577,7 +575,7 @@ export async function analyzePatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const comparisonReport: ComparisonReport = await comparisonAgent.execute({
       inventionUnderstanding: {
@@ -587,7 +585,7 @@ export async function analyzePatent(
         keyFeatures: inventionResult.keyFeatures,
       },
       priorArtAnalysis,
-    });
+    })
 
     const refinerAgent = new DisclosureRefinerAgent({
       name: 'disclosure-refiner',
@@ -596,7 +594,7 @@ export async function analyzePatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const refinedInvention: RefinedInventionUnderstanding = await refinerAgent.execute({
       originalInvention: inventionResult,
@@ -607,95 +605,99 @@ export async function analyzePatent(
         technicalEffects: comparisonReport.technicalEffects,
         inventiveness: comparisonReport.inventiveness,
       },
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 深度分析完成'));
+    spinner.succeed(chalk.green('✓ 深度分析完成'))
 
-    console.log(chalk.green('\n=== 对比分析报告 ===\n'));
-    console.log(chalk.blue('最接近现有技术:'));
-    console.log(chalk.gray(`  ${comparisonReport.closestPriorArt.publicationNumber} - ${comparisonReport.closestPriorArt.title}`));
-    console.log(chalk.gray(`  相似度: ${(comparisonReport.closestPriorArt.similarity * 100).toFixed(1)}%`));
-    console.log(chalk.gray(`  理由: ${comparisonReport.closestPriorArt.reason}`));
+    console.log(chalk.green('\n=== 对比分析报告 ===\n'))
+    console.log(chalk.blue('最接近现有技术:'))
+    console.log(
+      chalk.gray(
+        `  ${comparisonReport.closestPriorArt.publicationNumber} - ${comparisonReport.closestPriorArt.title}`
+      )
+    )
+    console.log(
+      chalk.gray(`  相似度: ${(comparisonReport.closestPriorArt.similarity * 100).toFixed(1)}%`)
+    )
+    console.log(chalk.gray(`  理由: ${comparisonReport.closestPriorArt.reason}`))
 
-    console.log(chalk.blue('\n区别特征:'));
+    console.log(chalk.blue('\n区别特征:'))
     comparisonReport.distinctFeatures.forEach((feature) => {
-      console.log(chalk.gray(`  • ${feature.feature} (新颖性: ${feature.novelty})`));
-    });
+      console.log(chalk.gray(`  • ${feature.feature} (新颖性: ${feature.novelty})`))
+    })
 
-    console.log(chalk.blue('\n创造性评估:'));
-    console.log(chalk.gray(`  评分: ${(comparisonReport.inventiveness.score * 100).toFixed(1)}%`));
+    console.log(chalk.blue('\n创造性评估:'))
+    console.log(chalk.gray(`  评分: ${(comparisonReport.inventiveness.score * 100).toFixed(1)}%`))
     comparisonReport.inventiveness.keyFactors.forEach((factor) => {
-      console.log(chalk.gray(`  • ${factor}`));
-    });
+      console.log(chalk.gray(`  • ${factor}`))
+    })
 
-    console.log(chalk.green('\n=== 提炼后的发明理解 ===\n'));
-    console.log(chalk.blue('发明名称:'));
-    console.log(chalk.gray(`  ${refinedInvention.refined.inventionTitle}`));
-    console.log(chalk.blue('核心创新:'));
-    console.log(chalk.gray(`  ${refinedInvention.refined.coreInnovation}`));
-    console.log(chalk.blue('技术问题:'));
-    console.log(chalk.gray(`  ${refinedInvention.refined.technicalProblem}`));
-    console.log(chalk.blue('创新特征:'));
+    console.log(chalk.green('\n=== 提炼后的发明理解 ===\n'))
+    console.log(chalk.blue('发明名称:'))
+    console.log(chalk.gray(`  ${refinedInvention.refined.inventionTitle}`))
+    console.log(chalk.blue('核心创新:'))
+    console.log(chalk.gray(`  ${refinedInvention.refined.coreInnovation}`))
+    console.log(chalk.blue('技术问题:'))
+    console.log(chalk.gray(`  ${refinedInvention.refined.technicalProblem}`))
+    console.log(chalk.blue('创新特征:'))
     refinedInvention.refined.features.innovative.forEach((f) => {
-      console.log(chalk.gray(`  • ${f.feature}`));
-    });
+      console.log(chalk.gray(`  • ${f.feature}`))
+    })
 
     if (refinedInvention.improvements.length > 0) {
-      console.log(chalk.blue('\n改进建议:'));
+      console.log(chalk.blue('\n改进建议:'))
       refinedInvention.improvements.forEach((imp) => {
-        console.log(chalk.gray(`  [${imp.priority}] ${imp.category}: ${imp.description}`));
-      });
+        console.log(chalk.gray(`  [${imp.priority}] ${imp.category}: ${imp.description}`))
+      })
     }
 
     if (options.output) {
-      const fs = await import('fs/promises');
+      const fs = await import('fs/promises')
       const report = {
         invention: inventionResult,
         search: searchResult,
         priorArtAnalysis,
         comparisonReport,
         refinedInvention,
-      };
-      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8');
-      console.log(chalk.green(`\n✓ 分析报告已保存到: ${options.output}`));
+      }
+      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8')
+      console.log(chalk.green(`\n✓ 分析报告已保存到: ${options.output}`))
     }
   } catch (error) {
-    spinner.fail(chalk.red('执行失败'));
-    console.error(error);
+    spinner.fail(chalk.red('执行失败'))
+    console.error(error)
   }
 }
 
-export async function generateSpecification(
-  options: {
-    title: string;
-    field: string;
-    disclosure: string;
-    output?: string;
-  }
-): Promise<void> {
-  const spinner = ora('启动说明书撰写流程...').start();
+export async function generateSpecification(options: {
+  title: string
+  field: string
+  disclosure: string
+  output?: string
+}): Promise<void> {
+  const spinner = ora('启动说明书撰写流程...').start()
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      spinner.fail(chalk.red('错误: 未找到 API 密钥'));
-      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'));
-      return;
+      spinner.fail(chalk.red('错误: 未找到 API 密钥'))
+      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'))
+      return
     }
 
-    const eventBus = new EventBus();
-    const memory = new ShortTermMemory();
-    const tools = new ToolRegistry(eventBus);
-    const llm = createDeepSeekModel(apiKey);
+    const eventBus = new EventBus()
+    const memory = new ShortTermMemory()
+    const tools = new ToolRegistry(eventBus)
+    const llm = createDeepSeekModel(apiKey)
 
-    spinner.succeed(chalk.green('✓ 说明书撰写智能体已启动'));
+    spinner.succeed(chalk.green('✓ 说明书撰写智能体已启动'))
 
-    spinner.start(chalk.blue('步骤1/3: 发明理解...'));
+    spinner.start(chalk.blue('步骤1/3: 发明理解...'))
 
-    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention');
-    const { ClaimsGenerationAgent } = await import('@yunpat/agent-claims');
-    const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification');
+    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention')
+    const { ClaimsGenerationAgent } = await import('@yunpat/agent-claims')
+    const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification')
 
     const inventionAgent = new InventionUnderstandingAgent({
       name: 'invention-understanding',
@@ -704,17 +706,17 @@ export async function generateSpecification(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const inventionResult = await inventionAgent.execute({
       title: options.title,
       field: options.field,
       technicalDisclosure: options.disclosure,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 发明理解完成'));
+    spinner.succeed(chalk.green('✓ 发明理解完成'))
 
-    spinner.start(chalk.blue('步骤2/3: 生成权利要求...'));
+    spinner.start(chalk.blue('步骤2/3: 生成权利要求...'))
 
     const claimsAgent = new ClaimsGenerationAgent({
       name: 'claims-generation',
@@ -723,15 +725,15 @@ export async function generateSpecification(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const claimsResult = await claimsAgent.execute({
       inventionUnderstanding: inventionResult,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 权利要求生成完成'));
+    spinner.succeed(chalk.green('✓ 权利要求生成完成'))
 
-    spinner.start(chalk.blue('步骤3/3: 撰写说明书...'));
+    spinner.start(chalk.blue('步骤3/3: 撰写说明书...'))
 
     const specAgent = new SpecificationDrafterAgent({
       name: 'specification-drafter',
@@ -740,7 +742,7 @@ export async function generateSpecification(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const specResult = await specAgent.execute({
       inventionUnderstanding: inventionResult,
@@ -756,95 +758,93 @@ export async function generateSpecification(
           parentClaim: c.parentClaim,
         })),
       },
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 说明书撰写完成'));
+    spinner.succeed(chalk.green('✓ 说明书撰写完成'))
 
-    console.log(chalk.green('\n=== 专利说明书 ===\n'));
+    console.log(chalk.green('\n=== 专利说明书 ===\n'))
 
-    console.log(chalk.blue('【摘要】'));
-    console.log(chalk.gray(specResult.abstract));
+    console.log(chalk.blue('【摘要】'))
+    console.log(chalk.gray(specResult.abstract))
 
-    console.log(chalk.blue('\n【技术领域】'));
-    console.log(chalk.gray(specResult.technicalField));
+    console.log(chalk.blue('\n【技术领域】'))
+    console.log(chalk.gray(specResult.technicalField))
 
-    console.log(chalk.blue('\n【背景技术】'));
-    console.log(chalk.gray(specResult.backgroundArt));
+    console.log(chalk.blue('\n【背景技术】'))
+    console.log(chalk.gray(specResult.backgroundArt))
 
-    console.log(chalk.blue('\n【发明内容】'));
-    console.log(chalk.blue('  技术问题：'));
-    console.log(chalk.gray(specResult.inventionContent.technicalProblem));
-    console.log(chalk.blue('  技术方案：'));
-    console.log(chalk.gray(specResult.inventionContent.technicalSolution));
-    console.log(chalk.blue('  有益效果：'));
-    console.log(chalk.gray(specResult.inventionContent.beneficialEffects));
+    console.log(chalk.blue('\n【发明内容】'))
+    console.log(chalk.blue('  技术问题：'))
+    console.log(chalk.gray(specResult.inventionContent.technicalProblem))
+    console.log(chalk.blue('  技术方案：'))
+    console.log(chalk.gray(specResult.inventionContent.technicalSolution))
+    console.log(chalk.blue('  有益效果：'))
+    console.log(chalk.gray(specResult.inventionContent.beneficialEffects))
 
-    console.log(chalk.blue('\n【附图说明】'));
-    console.log(chalk.gray(specResult.drawingsDescription));
+    console.log(chalk.blue('\n【附图说明】'))
+    console.log(chalk.gray(specResult.drawingsDescription))
 
-    console.log(chalk.blue('\n【具体实施方式】'));
-    console.log(chalk.gray(specResult.detailedDescription.substring(0, 500) + '...'));
+    console.log(chalk.blue('\n【具体实施方式】'))
+    console.log(chalk.gray(specResult.detailedDescription.substring(0, 500) + '...'))
 
-    console.log(chalk.blue('\n【质量检查】'));
-    console.log(chalk.gray(`充分公开: ${specResult.qualityCheck.disclosure}`));
-    console.log(chalk.gray(`清楚性: ${specResult.qualityCheck.clarity}`));
-    console.log(chalk.gray(`完整性: ${specResult.qualityCheck.completeness}`));
-    console.log(chalk.gray(`支持性: ${specResult.qualityCheck.support}`));
+    console.log(chalk.blue('\n【质量检查】'))
+    console.log(chalk.gray(`充分公开: ${specResult.qualityCheck.disclosure}`))
+    console.log(chalk.gray(`清楚性: ${specResult.qualityCheck.clarity}`))
+    console.log(chalk.gray(`完整性: ${specResult.qualityCheck.completeness}`))
+    console.log(chalk.gray(`支持性: ${specResult.qualityCheck.support}`))
     if (specResult.qualityCheck.potentialIssues.length > 0) {
-      console.log(chalk.yellow('\n潜在问题:'));
+      console.log(chalk.yellow('\n潜在问题:'))
       specResult.qualityCheck.potentialIssues.forEach((issue: string) => {
-        console.log(chalk.yellow(`  • ${issue}`));
-      });
+        console.log(chalk.yellow(`  • ${issue}`))
+      })
     }
 
     if (options.output) {
-      const fs = await import('fs/promises');
+      const fs = await import('fs/promises')
       const report = {
         invention: inventionResult,
         claims: claimsResult,
         specification: specResult,
-      };
-      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8');
-      console.log(chalk.green(`\n✓ 说明书报告已保存到: ${options.output}`));
+      }
+      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8')
+      console.log(chalk.green(`\n✓ 说明书报告已保存到: ${options.output}`))
     }
   } catch (error) {
-    spinner.fail(chalk.red('执行失败'));
-    console.error(error);
+    spinner.fail(chalk.red('执行失败'))
+    console.error(error)
   }
 }
 
-export async function checkPatent(
-  options: {
-    title: string;
-    field: string;
-    disclosure: string;
-    output?: string;
-  }
-): Promise<void> {
-  const spinner = ora('启动专利质量检查流程...').start();
+export async function checkPatent(options: {
+  title: string
+  field: string
+  disclosure: string
+  output?: string
+}): Promise<void> {
+  const spinner = ora('启动专利质量检查流程...').start()
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      spinner.fail(chalk.red('错误: 未找到 API 密钥'));
-      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'));
-      return;
+      spinner.fail(chalk.red('错误: 未找到 API 密钥'))
+      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'))
+      return
     }
 
-    const eventBus = new EventBus();
-    const memory = new ShortTermMemory();
-    const tools = new ToolRegistry(eventBus);
-    const llm = createDeepSeekModel(apiKey);
+    const eventBus = new EventBus()
+    const memory = new ShortTermMemory()
+    const tools = new ToolRegistry(eventBus)
+    const llm = createDeepSeekModel(apiKey)
 
-    spinner.succeed(chalk.green('✓ 质量检查智能体已启动'));
+    spinner.succeed(chalk.green('✓ 质量检查智能体已启动'))
 
-    spinner.start(chalk.blue('步骤1/3: 发明理解...'));
+    spinner.start(chalk.blue('步骤1/3: 发明理解...'))
 
-    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention');
-    const { ClaimsGenerationAgent } = await import('@yunpat/agent-claims');
-    const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification');
-    const { QualityCheckerAgent } = await import('@yunpat/agent-quality');
+    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention')
+    const { ClaimsGenerationAgent } = await import('@yunpat/agent-claims')
+    const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification')
+    const { QualityCheckerAgent } = await import('@yunpat/agent-quality')
 
     const inventionAgent = new InventionUnderstandingAgent({
       name: 'invention-understanding',
@@ -853,17 +853,17 @@ export async function checkPatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const inventionResult = await inventionAgent.execute({
       title: options.title,
       field: options.field,
       technicalDisclosure: options.disclosure,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 发明理解完成'));
+    spinner.succeed(chalk.green('✓ 发明理解完成'))
 
-    spinner.start(chalk.blue('步骤2/3: 生成权利要求与说明书...'));
+    spinner.start(chalk.blue('步骤2/3: 生成权利要求与说明书...'))
 
     const claimsAgent = new ClaimsGenerationAgent({
       name: 'claims-generation',
@@ -872,11 +872,11 @@ export async function checkPatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const claimsResult = await claimsAgent.execute({
       inventionUnderstanding: inventionResult,
-    });
+    })
 
     const specAgent = new SpecificationDrafterAgent({
       name: 'specification-drafter',
@@ -885,7 +885,7 @@ export async function checkPatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const specResult = await specAgent.execute({
       inventionUnderstanding: inventionResult,
@@ -901,11 +901,11 @@ export async function checkPatent(
           parentClaim: c.parentClaim,
         })),
       },
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 权利要求与说明书生成完成'));
+    spinner.succeed(chalk.green('✓ 权利要求与说明书生成完成'))
 
-    spinner.start(chalk.blue('步骤3/3: 质量检查...'));
+    spinner.start(chalk.blue('步骤3/3: 质量检查...'))
 
     const qualityAgent = new QualityCheckerAgent({
       name: 'quality-checker',
@@ -914,7 +914,7 @@ export async function checkPatent(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const qualityResult = await qualityAgent.execute({
       claims: {
@@ -932,93 +932,101 @@ export async function checkPatent(
         })),
       },
       specification: specResult,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 质量检查完成'));
+    spinner.succeed(chalk.green('✓ 质量检查完成'))
 
-    console.log(chalk.green('\n=== 质量检查报告 ===\n'));
-    console.log(chalk.blue(`综合评分: ${qualityResult.overallScore}/100`));
+    console.log(chalk.green('\n=== 质量检查报告 ===\n'))
+    console.log(chalk.blue(`综合评分: ${qualityResult.overallScore}/100`))
 
-    console.log(chalk.blue('\n权利要求检查:'));
-    console.log(chalk.gray(`  得分: ${qualityResult.claimsCheck.score}/100`));
-    console.log(chalk.gray(`  保护范围: ${qualityResult.claimsCheck.protectionScope.status}`));
-    console.log(chalk.gray(`  清楚性: ${qualityResult.claimsCheck.clarity.status}`));
-    console.log(chalk.gray(`  支持性: ${qualityResult.claimsCheck.support.status}`));
+    console.log(chalk.blue('\n权利要求检查:'))
+    console.log(chalk.gray(`  得分: ${qualityResult.claimsCheck.score}/100`))
+    console.log(chalk.gray(`  保护范围: ${qualityResult.claimsCheck.protectionScope.status}`))
+    console.log(chalk.gray(`  清楚性: ${qualityResult.claimsCheck.clarity.status}`))
+    console.log(chalk.gray(`  支持性: ${qualityResult.claimsCheck.support.status}`))
 
-    console.log(chalk.blue('\n说明书检查:'));
-    console.log(chalk.gray(`  得分: ${qualityResult.specificationCheck.score}/100`));
-    console.log(chalk.gray(`  充分公开: ${qualityResult.specificationCheck.disclosure.status}`));
-    console.log(chalk.gray(`  术语一致性: ${qualityResult.specificationCheck.termConsistency.status}`));
-    console.log(chalk.gray(`  完整性: ${qualityResult.specificationCheck.completeness.status}`));
+    console.log(chalk.blue('\n说明书检查:'))
+    console.log(chalk.gray(`  得分: ${qualityResult.specificationCheck.score}/100`))
+    console.log(chalk.gray(`  充分公开: ${qualityResult.specificationCheck.disclosure.status}`))
+    console.log(
+      chalk.gray(`  术语一致性: ${qualityResult.specificationCheck.termConsistency.status}`)
+    )
+    console.log(chalk.gray(`  完整性: ${qualityResult.specificationCheck.completeness.status}`))
 
-    console.log(chalk.blue('\n形式检查:'));
-    console.log(chalk.gray(`  得分: ${qualityResult.formalCheck.score}/100`));
-    console.log(chalk.gray(`  错误数: ${qualityResult.formalCheck.errors.length}`));
-    qualityResult.formalCheck.errors.forEach((error: QualityCheckResult['formalCheck']['errors'][0]) => {
-      const color = error.severity === 'error' ? chalk.red : chalk.yellow;
-      console.log(color(`  [${error.severity}] ${error.type}: ${error.description}`));
-    });
+    console.log(chalk.blue('\n形式检查:'))
+    console.log(chalk.gray(`  得分: ${qualityResult.formalCheck.score}/100`))
+    console.log(chalk.gray(`  错误数: ${qualityResult.formalCheck.errors.length}`))
+    qualityResult.formalCheck.errors.forEach(
+      (error: QualityCheckResult['formalCheck']['errors'][0]) => {
+        const color = error.severity === 'error' ? chalk.red : chalk.yellow
+        console.log(color(`  [${error.severity}] ${error.type}: ${error.description}`))
+      }
+    )
 
     if (qualityResult.improvementSuggestions.length > 0) {
-      console.log(chalk.blue('\n改进建议:'));
-      qualityResult.improvementSuggestions.forEach((suggestion: QualityCheckResult['improvementSuggestions'][0]) => {
-        const priorityColor = suggestion.priority === 'high' ? chalk.red : chalk.yellow;
-        console.log(priorityColor(`  [${suggestion.priority}] ${suggestion.category}: ${suggestion.description}`));
-      });
+      console.log(chalk.blue('\n改进建议:'))
+      qualityResult.improvementSuggestions.forEach(
+        (suggestion: QualityCheckResult['improvementSuggestions'][0]) => {
+          const priorityColor = suggestion.priority === 'high' ? chalk.red : chalk.yellow
+          console.log(
+            priorityColor(
+              `  [${suggestion.priority}] ${suggestion.category}: ${suggestion.description}`
+            )
+          )
+        }
+      )
     }
 
     if (options.output) {
-      const fs = await import('fs/promises');
+      const fs = await import('fs/promises')
       const report = {
         invention: inventionResult,
         claims: claimsResult,
         specification: specResult,
         quality: qualityResult,
-      };
-      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8');
-      console.log(chalk.green(`\n✓ 质量检查报告已保存到: ${options.output}`));
+      }
+      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8')
+      console.log(chalk.green(`\n✓ 质量检查报告已保存到: ${options.output}`))
     }
   } catch (error) {
-    spinner.fail(chalk.red('执行失败'));
-    console.error(error);
+    spinner.fail(chalk.red('执行失败'))
+    console.error(error)
   }
 }
 
-export async function fullPatentWorkflow(
-  options: {
-    title: string;
-    field: string;
-    disclosure: string;
-    output?: string;
-  }
-): Promise<void> {
-  const spinner = ora('启动完整专利撰写流程...').start();
+export async function fullPatentWorkflow(options: {
+  title: string
+  field: string
+  disclosure: string
+  output?: string
+}): Promise<void> {
+  const spinner = ora('启动完整专利撰写流程...').start()
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      spinner.fail(chalk.red('错误: 未找到 API 密钥'));
-      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'));
-      return;
+      spinner.fail(chalk.red('错误: 未找到 API 密钥'))
+      console.log(chalk.gray('\n请设置环境变量: export DEEPSEEK_API_KEY=your_key'))
+      return
     }
 
-    const eventBus = new EventBus();
-    const memory = new ShortTermMemory();
-    const tools = new ToolRegistry(eventBus);
-    const llm = createDeepSeekModel(apiKey);
+    const eventBus = new EventBus()
+    const memory = new ShortTermMemory()
+    const tools = new ToolRegistry(eventBus)
+    const llm = createDeepSeekModel(apiKey)
 
-    spinner.succeed(chalk.green('✓ 专利撰写工作流已启动'));
+    spinner.succeed(chalk.green('✓ 专利撰写工作流已启动'))
 
-    console.log(chalk.green('\n=== v1.1 完整专利撰写工作流 ===\n'));
+    console.log(chalk.green('\n=== v1.1 完整专利撰写工作流 ===\n'))
 
-    spinner.start(chalk.blue('步骤1/5: 发明理解...'));
+    spinner.start(chalk.blue('步骤1/5: 发明理解...'))
 
-    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention');
-    const { PatentSearchAgent } = await import('@yunpat/agent-search');
-    const { ClaimsGenerationAgent } = await import('@yunpat/agent-claims');
-    const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification');
-    const { QualityCheckerAgent } = await import('@yunpat/agent-quality');
+    const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention')
+    const { PatentSearchAgent } = await import('@yunpat/agent-search')
+    const { ClaimsGenerationAgent } = await import('@yunpat/agent-claims')
+    const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification')
+    const { QualityCheckerAgent } = await import('@yunpat/agent-quality')
 
     const inventionAgent = new InventionUnderstandingAgent({
       name: 'invention-understanding',
@@ -1027,19 +1035,19 @@ export async function fullPatentWorkflow(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const inventionResult = await inventionAgent.execute({
       title: options.title,
       field: options.field,
       technicalDisclosure: options.disclosure,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 发明理解完成'));
-    console.log(chalk.gray(`   技术领域: ${inventionResult.technicalField}`));
-    console.log(chalk.gray(`   关键特征: ${inventionResult.keyFeatures.length} 个`));
+    spinner.succeed(chalk.green('✓ 发明理解完成'))
+    console.log(chalk.gray(`   技术领域: ${inventionResult.technicalField}`))
+    console.log(chalk.gray(`   关键特征: ${inventionResult.keyFeatures.length} 个`))
 
-    spinner.start(chalk.blue('步骤2/5: 专利检索...'));
+    spinner.start(chalk.blue('步骤2/5: 专利检索...'))
 
     const searchAgent = new PatentSearchAgent({
       name: 'patent-search',
@@ -1048,7 +1056,7 @@ export async function fullPatentWorkflow(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const searchResult = await searchAgent.execute({
       title: options.title,
@@ -1056,12 +1064,12 @@ export async function fullPatentWorkflow(
       technicalProblem: inventionResult.technicalProblem,
       technicalSolution: inventionResult.technicalSolution,
       keyFeatures: inventionResult.keyFeatures,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 专利检索完成'));
-    console.log(chalk.gray(`   找到 ${searchResult.totalFound} 条相关专利`));
+    spinner.succeed(chalk.green('✓ 专利检索完成'))
+    console.log(chalk.gray(`   找到 ${searchResult.totalFound} 条相关专利`))
 
-    spinner.start(chalk.blue('步骤3/5: 生成权利要求...'));
+    spinner.start(chalk.blue('步骤3/5: 生成权利要求...'))
 
     const claimsAgent = new ClaimsGenerationAgent({
       name: 'claims-generation',
@@ -1070,17 +1078,17 @@ export async function fullPatentWorkflow(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const claimsResult = await claimsAgent.execute({
       inventionUnderstanding: inventionResult,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 权利要求生成完成'));
-    console.log(chalk.gray(`   独立权利要求: ${claimsResult.independentClaims.length} 项`));
-    console.log(chalk.gray(`   从属权利要求: ${claimsResult.dependentClaims.length} 项`));
+    spinner.succeed(chalk.green('✓ 权利要求生成完成'))
+    console.log(chalk.gray(`   独立权利要求: ${claimsResult.independentClaims.length} 项`))
+    console.log(chalk.gray(`   从属权利要求: ${claimsResult.dependentClaims.length} 项`))
 
-    spinner.start(chalk.blue('步骤4/5: 撰写说明书...'));
+    spinner.start(chalk.blue('步骤4/5: 撰写说明书...'))
 
     const specAgent = new SpecificationDrafterAgent({
       name: 'specification-drafter',
@@ -1089,7 +1097,7 @@ export async function fullPatentWorkflow(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const specResult = await specAgent.execute({
       inventionUnderstanding: inventionResult,
@@ -1105,13 +1113,15 @@ export async function fullPatentWorkflow(
           parentClaim: c.parentClaim,
         })),
       },
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 说明书撰写完成'));
-    console.log(chalk.gray(`   摘要: ${specResult.abstract.length} 字`));
-    console.log(chalk.gray(`   技术方案: ${specResult.inventionContent.technicalSolution.length} 字`));
+    spinner.succeed(chalk.green('✓ 说明书撰写完成'))
+    console.log(chalk.gray(`   摘要: ${specResult.abstract.length} 字`))
+    console.log(
+      chalk.gray(`   技术方案: ${specResult.inventionContent.technicalSolution.length} 字`)
+    )
 
-    spinner.start(chalk.blue('步骤5/5: 质量检查...'));
+    spinner.start(chalk.blue('步骤5/5: 质量检查...'))
 
     const qualityAgent = new QualityCheckerAgent({
       name: 'quality-checker',
@@ -1120,7 +1130,7 @@ export async function fullPatentWorkflow(
       memory,
       tools,
       eventBus,
-    });
+    })
 
     const qualityResult = await qualityAgent.execute({
       claims: {
@@ -1138,44 +1148,46 @@ export async function fullPatentWorkflow(
         })),
       },
       specification: specResult,
-    });
+    })
 
-    spinner.succeed(chalk.green('✓ 质量检查完成'));
-    console.log(chalk.gray(`   综合评分: ${qualityResult.overallScore}/100`));
+    spinner.succeed(chalk.green('✓ 质量检查完成'))
+    console.log(chalk.gray(`   综合评分: ${qualityResult.overallScore}/100`))
 
-    console.log(chalk.green('\n=== 完整专利申请文件 ===\n'));
+    console.log(chalk.green('\n=== 完整专利申请文件 ===\n'))
 
-    console.log(chalk.blue('【发明理解】'));
-    console.log(chalk.gray(`  技术问题: ${inventionResult.technicalProblem}`));
-    console.log(chalk.gray(`  核心创新: ${inventionResult.keyFeatures.join(', ')}`));
+    console.log(chalk.blue('【发明理解】'))
+    console.log(chalk.gray(`  技术问题: ${inventionResult.technicalProblem}`))
+    console.log(chalk.gray(`  核心创新: ${inventionResult.keyFeatures.join(', ')}`))
 
-    console.log(chalk.blue('\n【检索结果】'));
-    console.log(chalk.gray(`  相关专利: ${searchResult.totalFound} 条`));
-    console.log(chalk.gray(`  检索策略: ${searchResult.strategy.searchQuery}`));
+    console.log(chalk.blue('\n【检索结果】'))
+    console.log(chalk.gray(`  相关专利: ${searchResult.totalFound} 条`))
+    console.log(chalk.gray(`  检索策略: ${searchResult.strategy.searchQuery}`))
 
-    console.log(chalk.blue('\n【权利要求书】'));
+    console.log(chalk.blue('\n【权利要求书】'))
     claimsResult.independentClaims.forEach((claim: IndependentClaim) => {
-      console.log(chalk.gray(`  ${claim.claimNumber}. ${claim.fullText.substring(0, 100)}...`));
-    });
+      console.log(chalk.gray(`  ${claim.claimNumber}. ${claim.fullText.substring(0, 100)}...`))
+    })
 
-    console.log(chalk.blue('\n【说明书摘要】'));
-    console.log(chalk.gray(`  ${specResult.abstract}`));
+    console.log(chalk.blue('\n【说明书摘要】'))
+    console.log(chalk.gray(`  ${specResult.abstract}`))
 
-    console.log(chalk.blue('\n【质量评分】'));
-    console.log(chalk.gray(`  综合评分: ${qualityResult.overallScore}/100`));
-    console.log(chalk.gray(`  权利要求: ${qualityResult.claimsCheck.score}/100`));
-    console.log(chalk.gray(`  说明书: ${qualityResult.specificationCheck.score}/100`));
-    console.log(chalk.gray(`  形式: ${qualityResult.formalCheck.score}/100`));
+    console.log(chalk.blue('\n【质量评分】'))
+    console.log(chalk.gray(`  综合评分: ${qualityResult.overallScore}/100`))
+    console.log(chalk.gray(`  权利要求: ${qualityResult.claimsCheck.score}/100`))
+    console.log(chalk.gray(`  说明书: ${qualityResult.specificationCheck.score}/100`))
+    console.log(chalk.gray(`  形式: ${qualityResult.formalCheck.score}/100`))
 
     if (qualityResult.improvementSuggestions.length > 0) {
-      console.log(chalk.yellow('\n【待改进项】'));
-      qualityResult.improvementSuggestions.slice(0, 5).forEach((suggestion: QualityCheckResult['improvementSuggestions'][0]) => {
-        console.log(chalk.yellow(`  [${suggestion.priority}] ${suggestion.description}`));
-      });
+      console.log(chalk.yellow('\n【待改进项】'))
+      qualityResult.improvementSuggestions
+        .slice(0, 5)
+        .forEach((suggestion: QualityCheckResult['improvementSuggestions'][0]) => {
+          console.log(chalk.yellow(`  [${suggestion.priority}] ${suggestion.description}`))
+        })
     }
 
     if (options.output) {
-      const fs = await import('fs/promises');
+      const fs = await import('fs/promises')
       const report = {
         version: 'v1.1',
         invention: inventionResult,
@@ -1183,14 +1195,14 @@ export async function fullPatentWorkflow(
         claims: claimsResult,
         specification: specResult,
         quality: qualityResult,
-      };
-      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8');
-      console.log(chalk.green(`\n✓ 完整专利文件已保存到: ${options.output}`));
+      }
+      await fs.writeFile(options.output, JSON.stringify(report, null, 2), 'utf-8')
+      console.log(chalk.green(`\n✓ 完整专利文件已保存到: ${options.output}`))
     }
 
-    console.log(chalk.green('\n🎉 v1.1 完整专利撰写工作流已完成!'));
+    console.log(chalk.green('\n🎉 v1.1 完整专利撰写工作流已完成!'))
   } catch (error) {
-    spinner.fail(chalk.red('执行失败'));
-    console.error(error);
+    spinner.fail(chalk.red('执行失败'))
+    console.error(error)
   }
 }

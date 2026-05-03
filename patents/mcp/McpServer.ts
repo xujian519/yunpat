@@ -4,105 +4,105 @@
  * 为 YunPat 提供 MCP 工具接口
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events'
 
 /**
  * MCP 工具定义
  */
 export interface McpTool {
-  name: string;
-  description: string;
-  inputSchema: Record<string, any>;
+  name: string
+  description: string
+  inputSchema: Record<string, any>
 }
 
 /**
  * MCP 工具调用结果
  */
 export interface McpToolResult {
-  content: any;
-  isError?: boolean;
+  content: any
+  isError?: boolean
 }
 
 /**
  * MCP 服务器配置
  */
 export interface McpServerConfig {
-  name: string;
-  version: string;
-  tools: McpTool[];
+  name: string
+  version: string
+  tools: McpTool[]
 }
 
 /**
  * MCP 服务器
  */
 export class McpServer extends EventEmitter {
-  private config: McpServerConfig;
-  private tools: Map<string, (params: any) => Promise<any>>;
+  private config: McpServerConfig
+  private tools: Map<string, (params: any) => Promise<any>>
 
   constructor(config: McpServerConfig) {
-    super();
-    this.config = config;
-    this.tools = new Map();
+    super()
+    this.config = config
+    this.tools = new Map()
 
     // 注册工具
     config.tools.forEach((tool) => {
-      this.tools.set(tool.name, this.createToolHandler(tool));
-    });
+      this.tools.set(tool.name, this.createToolHandler(tool))
+    })
   }
 
   /**
    * 启动服务器
    */
   async start(): Promise<void> {
-    console.log(`🚀 MCP 服务器启动: ${this.config.name} v${this.config.version}`);
-    console.log(`📦 已注册工具: ${Array.from(this.tools.keys()).join(', ')}`);
-    this.emit('started');
+    console.log(`🚀 MCP 服务器启动: ${this.config.name} v${this.config.version}`)
+    console.log(`📦 已注册工具: ${Array.from(this.tools.keys()).join(', ')}`)
+    this.emit('started')
   }
 
   /**
    * 停止服务器
    */
   async stop(): Promise<void> {
-    console.log(`🛑 MCP 服务器停止`);
-    this.emit('stopped');
+    console.log(`🛑 MCP 服务器停止`)
+    this.emit('stopped')
   }
 
   /**
    * 列出工具
    */
   listTools(): McpTool[] {
-    return this.config.tools;
+    return this.config.tools
   }
 
   /**
    * 调用工具
    */
   async callTool(name: string, params: any): Promise<McpToolResult> {
-    const handler = this.tools.get(name);
+    const handler = this.tools.get(name)
 
     if (!handler) {
       return {
         content: null,
         isError: true,
-      };
+      }
     }
 
     try {
-      const result = await handler(params);
-      this.emit('toolCalled', { name, params, result });
+      const result = await handler(params)
+      this.emit('toolCalled', { name, params, result })
 
       return {
         content: result,
-      };
+      }
     } catch (error) {
-      this.emit('toolError', { name, params, error });
+      this.emit('toolError', { name, params, error })
 
       return {
         content: {
           error: error instanceof Error ? error.message : String(error),
         },
         isError: true,
-      };
+      }
     }
   }
 
@@ -114,32 +114,32 @@ export class McpServer extends EventEmitter {
       // 根据工具名称分发
       switch (tool.name) {
         case 'search_patents':
-          return this.handleSearchPatents(params);
+          return this.handleSearchPatents(params)
         case 'generate_claims':
-          return this.handleGenerateClaims(params);
+          return this.handleGenerateClaims(params)
         case 'assess_quality':
-          return this.handleAssessQuality(params);
+          return this.handleAssessQuality(params)
         case 'parse_office_action':
-          return this.handleParseOfficeAction(params);
+          return this.handleParseOfficeAction(params)
         default:
-          throw new Error(`Unknown tool: ${tool.name}`);
+          throw new Error(`Unknown tool: ${tool.name}`)
       }
-    };
+    }
   }
 
   /**
    * 处理专利搜索
    */
   private async handleSearchPatents(params: any): Promise<any> {
-    console.log(`🔍 [MCP] 搜索专利:`, params);
+    console.log(`🔍 [MCP] 搜索专利:`, params)
 
-    const keywords: string[] = params.keywords || [];
-    const keywordStr = keywords.join('');
-    const limit = Math.min(params.limit || 10, 10);
+    const keywords: string[] = params.keywords || []
+    const keywordStr = keywords.join('')
+    const limit = Math.min(params.limit || 10, 10)
 
-    const patents = [];
+    const patents = []
     for (let i = 0; i < limit; i++) {
-      const seed = keywordStr + String(i);
+      const seed = keywordStr + String(i)
       patents.push({
         patentNumber: `CN${202310000000 + i}A`,
         title:
@@ -150,27 +150,27 @@ export class McpServer extends EventEmitter {
           keywords.length > 0
             ? `本发明涉及${keywords.slice(0, 3).join('、')}领域，公开了一种${seed.slice(0, 8)}...`
             : `本发明公开了一种技术方案${i + 1}...`,
-      });
+      })
     }
 
     return {
       total: 100,
       patents,
-    };
+    }
   }
 
   /**
    * 处理权利要求生成
    */
   private async handleGenerateClaims(params: any): Promise<any> {
-    console.log(`✍️ [MCP] 生成权利要求:`, params);
+    console.log(`✍️ [MCP] 生成权利要求:`, params)
 
-    const inventionType: string = params.inventionType || '发明';
+    const inventionType: string = params.inventionType || '发明'
     const features: Array<{ name?: string; description?: string; featureType?: string }> =
-      params.technicalFeatures || [];
+      params.technicalFeatures || []
 
-    const featureList = features.map((f) => f.name || f.description || '技术特征').join('、');
-    const independentContent = `一种${inventionType}，其特征在于，包括：${featureList || '核心组件'}。`;
+    const featureList = features.map((f) => f.name || f.description || '技术特征').join('、')
+    const independentContent = `一种${inventionType}，其特征在于，包括：${featureList || '核心组件'}。`
 
     const claims = [
       {
@@ -178,40 +178,40 @@ export class McpServer extends EventEmitter {
         number: 1,
         content: independentContent,
       },
-    ];
+    ]
 
     features.forEach((f, idx) => {
       claims.push({
         claimType: 'dependent',
         number: idx + 2,
         content: `根据权利要求${idx + 1}所述的${inventionType}，其特征在于，${f.description || f.name || '进一步限定'}。`,
-      });
-    });
+      })
+    })
 
-    return { claims };
+    return { claims }
   }
 
   /**
    * 处理质量评估
    */
   private async handleAssessQuality(params: any): Promise<any> {
-    console.log(`📊 [MCP] 评估质量:`, params);
+    console.log(`📊 [MCP] 评估质量:`, params)
 
-    const claims: any[] = params.claims || [];
-    const claimCount = claims.length;
+    const claims: any[] = params.claims || []
+    const claimCount = claims.length
     const independentCount = claims.filter(
       (c: any) => c.claimType === 'independent' || c.number === 1
-    ).length;
+    ).length
 
-    const baseScore = 60;
-    const countBonus = Math.min(claimCount * 3, 15);
-    const structureBonus = independentCount >= 1 ? 10 : 0;
-    const detailBonus = claimCount >= 3 ? 10 : 0;
+    const baseScore = 60
+    const countBonus = Math.min(claimCount * 3, 15)
+    const structureBonus = independentCount >= 1 ? 10 : 0
+    const detailBonus = claimCount >= 3 ? 10 : 0
 
-    const overallScore = Math.min(baseScore + countBonus + structureBonus + detailBonus, 100);
-    const clarityScore = Math.min(70 + claimCount * 2, 100);
-    const supportScore = Math.min(65 + independentCount * 10, 100);
-    const breadthScore = Math.min(60 + claimCount * 3, 100);
+    const overallScore = Math.min(baseScore + countBonus + structureBonus + detailBonus, 100)
+    const clarityScore = Math.min(70 + claimCount * 2, 100)
+    const supportScore = Math.min(65 + independentCount * 10, 100)
+    const breadthScore = Math.min(60 + claimCount * 3, 100)
 
     return {
       overallScore,
@@ -220,40 +220,40 @@ export class McpServer extends EventEmitter {
       breadthScore,
       claimCount,
       independentCount,
-    };
+    }
   }
 
   /**
    * 处理审查意见解析
    */
   private async handleParseOfficeAction(params: any): Promise<any> {
-    console.log(`📋 [MCP] 解析审查意见:`, params);
+    console.log(`📋 [MCP] 解析审查意见:`, params)
 
-    const text: string = params.text || '';
-    const textLength = text.length;
+    const text: string = params.text || ''
+    const textLength = text.length
 
-    const appNumberMatch = text.match(/CN\d{4}\d[\d\.]+/);
-    const applicationNumber = appNumberMatch ? appNumberMatch[0] : '未知';
+    const appNumberMatch = text.match(/CN\d{4}\d[\d\.]+/)
+    const applicationNumber = appNumberMatch ? appNumberMatch[0] : '未知'
 
     const actionType =
       text.includes('第一次审查意见') || text.includes('一通')
         ? 'FirstAction'
         : text.includes('驳回决定')
           ? 'Rejection'
-          : 'Unknown';
+          : 'Unknown'
 
-    const rejections = [];
+    const rejections = []
     if (text.includes('创造性') || text.includes('显而易见')) {
-      rejections.push({ type: 'Obviousness', reason: '不具备创造性（第22条第3款）' });
+      rejections.push({ type: 'Obviousness', reason: '不具备创造性（第22条第3款）' })
     }
     if (text.includes('新颖性') || text.includes('现有技术')) {
-      rejections.push({ type: 'Novelty', reason: '不具备新颖性（第22条第2款）' });
+      rejections.push({ type: 'Novelty', reason: '不具备新颖性（第22条第2款）' })
     }
     if (text.includes('不支持') || text.includes('说明书')) {
-      rejections.push({ type: 'LackOfSupport', reason: '权利要求得不到说明书支持（第26条第4款）' });
+      rejections.push({ type: 'LackOfSupport', reason: '权利要求得不到说明书支持（第26条第4款）' })
     }
     if (rejections.length === 0 && textLength > 0) {
-      rejections.push({ type: 'General', reason: '审查意见中包含驳回理由' });
+      rejections.push({ type: 'General', reason: '审查意见中包含驳回理由' })
     }
 
     return {
@@ -261,16 +261,16 @@ export class McpServer extends EventEmitter {
       actionType,
       textLength,
       rejections,
-    };
+    }
   }
 
   /**
    * 注册新工具
    */
   registerTool(tool: McpTool, handler: (params: any) => Promise<any>): void {
-    this.config.tools.push(tool);
-    this.tools.set(tool.name, handler);
-    console.log(`✅ 新工具已注册: ${tool.name}`);
+    this.config.tools.push(tool)
+    this.tools.set(tool.name, handler)
+    console.log(`✅ 新工具已注册: ${tool.name}`)
   }
 }
 
@@ -355,48 +355,48 @@ export function createPatentMcpServer(): McpServer {
         },
       },
     ],
-  };
+  }
 
-  const server = new McpServer(config);
+  const server = new McpServer(config)
 
   // 事件监听
   server.on('started', () => {
-    console.log('✅ MCP 服务器已启动');
-  });
+    console.log('✅ MCP 服务器已启动')
+  })
 
   server.on('stopped', () => {
-    console.log('✅ MCP 服务器已停止');
-  });
+    console.log('✅ MCP 服务器已停止')
+  })
 
   server.on('toolCalled', ({ name, params, result }) => {
-    console.log(`🔧 [MCP] 工具调用: ${name}`);
-    console.log(`   参数:`, JSON.stringify(params, null, 2));
-  });
+    console.log(`🔧 [MCP] 工具调用: ${name}`)
+    console.log(`   参数:`, JSON.stringify(params, null, 2))
+  })
 
   server.on('toolError', ({ name, params, error }) => {
-    console.error(`❌ [MCP] 工具错误: ${name}`);
-    console.error(`   参数:`, JSON.stringify(params, null, 2));
-    console.error(`   错误:`, error);
-  });
+    console.error(`❌ [MCP] 工具错误: ${name}`)
+    console.error(`   参数:`, JSON.stringify(params, null, 2))
+    console.error(`   错误:`, error)
+  })
 
-  return server;
+  return server
 }
 
 /**
  * MCP 工具调用示例
  */
 export async function exampleMcpUsage() {
-  const server = createPatentMcpServer();
+  const server = createPatentMcpServer()
 
-  await server.start();
+  await server.start()
 
   // 调用工具
   const searchResult = await server.callTool('search_patents', {
     keywords: ['深度学习', '图像识别'],
     limit: 5,
-  });
+  })
 
-  console.log('搜索结果:', searchResult);
+  console.log('搜索结果:', searchResult)
 
-  await server.stop();
+  await server.stop()
 }

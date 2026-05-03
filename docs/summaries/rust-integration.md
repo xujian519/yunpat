@@ -36,6 +36,7 @@ rust/
 #### 2. 实现核心功能
 
 **patent-tools**:
+
 - ✅ 专利搜索（SearchEngine）
 - ✅ 权利要求生成（ClaimGenerator）
 - ✅ 说明书撰写（SpecificationWriter）
@@ -45,6 +46,7 @@ rust/
 - ✅ 审查意见解析（OfficeActionParser）
 
 **patent-agent**:
+
 - ✅ 专利智能体（PatentAgent）
 - ✅ 智能体协调器（AgentCoordinator）
 - ✅ 赫布学习引擎（HebbianLearner）
@@ -118,21 +120,21 @@ pub struct HebbianLearner {
 
 ```typescript
 // 使用 Rust 工具
-const rustTools = new PatentToolsRust();
+const rustTools = new PatentToolsRust()
 const claims = await rustTools.generateClaims({
   technicalFeatures,
   inventionType: 'method',
-});
+})
 
 // 增强版智能体（混合模式）
 const writer = new EnhancedPatentWriterAgent({
   llm: createDeepSeekModel(process.env.DEEPSEEK_API_KEY),
-});
+})
 
 const output = await writer.execute({
   ...input,
-  useRustTools: true,  // 启用 Rust 工具
-});
+  useRustTools: true, // 启用 Rust 工具
+})
 ```
 
 ---
@@ -141,12 +143,12 @@ const output = await writer.execute({
 
 ### TypeScript vs Rust
 
-| 操作 | TypeScript | Rust | 提升 |
-|------|-----------|------|------|
-| 权利要求生成 | 3-5 分钟 | 1-2 分钟 | 50-60% |
-| 质量评估 | 1-2 分钟 | 0.5-1 分钟 | 50% |
-| 特征提取 | 2-3 分钟 | 0.5-1 分钟 | 70-80% |
-| 审查意见解析 | 3-4 分钟 | 1-2 分钟 | 50-60% |
+| 操作         | TypeScript | Rust       | 提升   |
+| ------------ | ---------- | ---------- | ------ |
+| 权利要求生成 | 3-5 分钟   | 1-2 分钟   | 50-60% |
+| 质量评估     | 1-2 分钟   | 0.5-1 分钟 | 50%    |
+| 特征提取     | 2-3 分钟   | 0.5-1 分钟 | 70-80% |
+| 审查意见解析 | 3-4 分钟   | 1-2 分钟   | 50-60% |
 
 **总体提升**: 50-70%
 
@@ -170,16 +172,16 @@ cargo build --release
 ### TypeScript + Rust 混合模式
 
 ```typescript
-import { EnhancedPatentWriterAgent } from '@yunpat/writer';
+import { EnhancedPatentWriterAgent } from '@yunpat/writer'
 
 const writer = new EnhancedPatentWriterAgent({
   llm: createDeepSeekModel(process.env.DEEPSEEK_API_KEY),
-});
+})
 
 const output = await writer.execute({
   ...input,
-  useRustTools: true,  // 启用 Rust 工具
-});
+  useRustTools: true, // 启用 Rust 工具
+})
 ```
 
 ---
@@ -253,6 +255,7 @@ const output = await writer.execute({
 ### 下一步
 
 **建议优先级**：
+
 1. 完善 Rust 工具实现（添加 LLM 调用）
 2. 创建 CLI 工具（方便独立使用）
 3. 实现 MCP 集成（统一工具接口）

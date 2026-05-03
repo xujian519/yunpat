@@ -12,7 +12,7 @@ export {
   ModelType,
   createTokenCounter,
   tokenCounter,
-} from './TokenCounter.js';
+} from './TokenCounter.js'
 export {
   BatchProcessorOptimizer,
   createBatchProcessorOptimizer,
@@ -20,4 +20,4 @@ export {
   type BatchInfo,
   type BatchOptimizationResult,
   type BatchOptimizerConfig,
-} from './BatchProcessorOptimizer.js';
+} from './BatchProcessorOptimizer.js'

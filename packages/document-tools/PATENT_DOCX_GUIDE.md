@@ -9,9 +9,9 @@
 ### 1. PatentApplicationGeneratorTool - 专利申请文件生成器
 
 ```typescript
-import { PatentApplicationGeneratorTool } from '@yunpat/document-tools';
+import { PatentApplicationGeneratorTool } from '@yunpat/document-tools'
 
-const generator = new PatentApplicationGeneratorTool();
+const generator = new PatentApplicationGeneratorTool()
 
 const result = await generator.execute(
   {
@@ -41,18 +41,18 @@ const result = await generator.execute(
     template: 'standard',
   },
   context
-);
+)
 
-console.log(`文档已生成：${result.outputPath}`);
-console.log(`预估页数：${result.pages}`);
+console.log(`文档已生成：${result.outputPath}`)
+console.log(`预估页数：${result.pages}`)
 ```
 
 ### 2. PatentClaimsGeneratorTool - 权利要求书生成器
 
 ```typescript
-import { PatentClaimsGeneratorTool } from '@yunpat/document-tools';
+import { PatentClaimsGeneratorTool } from '@yunpat/document-tools'
 
-const generator = new PatentClaimsGeneratorTool();
+const generator = new PatentClaimsGeneratorTool()
 
 const result = await generator.execute(
   {
@@ -78,17 +78,17 @@ const result = await generator.execute(
     outputPath: '/path/to/权利要求书.docx',
   },
   context
-);
+)
 
-console.log(`权利要求书已生成，共 ${result.claimsCount} 项权利要求`);
+console.log(`权利要求书已生成，共 ${result.claimsCount} 项权利要求`)
 ```
 
 ### 3. ResponseStatementGeneratorTool - 意见陈述书生成器
 
 ```typescript
-import { ResponseStatementGeneratorTool } from '@yunpat/document-tools';
+import { ResponseStatementGeneratorTool } from '@yunpat/document-tools'
 
-const generator = new ResponseStatementGeneratorTool();
+const generator = new ResponseStatementGeneratorTool()
 
 const result = await generator.execute(
   {
@@ -124,9 +124,9 @@ const result = await generator.execute(
     outputPath: '/path/to/意见陈述书.docx',
   },
   context
-);
+)
 
-console.log(`意见陈述书已生成：${result.outputPath}`);
+console.log(`意见陈述书已生成：${result.outputPath}`)
 ```
 
 ## 数据结构详解
@@ -136,49 +136,49 @@ console.log(`意见陈述书已生成：${result.outputPath}`);
 ```typescript
 interface PatentApplicationData {
   /** 发明名称 */
-  inventionTitle: string;
-  
+  inventionTitle: string
+
   /** 技术领域 */
-  technicalField: string;
-  
+  technicalField: string
+
   /** 背景技术 */
-  backgroundArt: string;
-  
+  backgroundArt: string
+
   /** 发明内容 */
-  inventionContent: string;
-  
+  inventionContent: string
+
   /** 附图说明（可选） */
-  drawingsDescription?: string;
-  
+  drawingsDescription?: string
+
   /** 具体实施方式（可选） */
-  embodiment?: string;
-  
+  embodiment?: string
+
   /** 权利要求书 */
   claims: Array<{
     /** 权利要求类型（独立/从属） */
-    type: 'independent' | 'dependent';
+    type: 'independent' | 'dependent'
     /** 权利要求编号 */
-    number: number;
+    number: number
     /** 权利要求内容 */
-    content: string;
+    content: string
     /** 从属关系（仅从属权利要求） */
-    dependsOn?: number;
-  }>;
-  
+    dependsOn?: number
+  }>
+
   /** 摘要 */
-  abstract: string;
-  
+  abstract: string
+
   /** 申请人信息（可选） */
   applicant?: {
-    name: string;
-    address: string;
-  };
-  
+    name: string
+    address: string
+  }
+
   /** 发明人信息（可选） */
   inventors?: Array<{
-    name: string;
-    address: string;
-  }>;
+    name: string
+    address: string
+  }>
 }
 ```
 
@@ -187,44 +187,44 @@ interface PatentApplicationData {
 ```typescript
 interface ResponseStatementData {
   /** 申请号 */
-  applicationNumber: string;
-  
+  applicationNumber: string
+
   /** 发明名称 */
-  inventionTitle: string;
-  
+  inventionTitle: string
+
   /** 审查意见摘要 */
-  reviewOpinionSummary: string;
-  
+  reviewOpinionSummary: string
+
   /** 答复要点 */
   responsePoints: Array<{
     /** 审查员观点 */
-    examinerView: string;
+    examinerView: string
     /** 申请人答复 */
-    applicantResponse: string;
+    applicantResponse: string
     /** 法律依据（可选） */
-    legalBasis?: string;
-  }>;
-  
+    legalBasis?: string
+  }>
+
   /** 修改说明（可选） */
   amendments?: Array<{
     /** 修改位置 */
-    location: string;
+    location: string
     /** 原内容 */
-    originalContent: string;
+    originalContent: string
     /** 新内容 */
-    newContent: string;
+    newContent: string
     /** 修改理由 */
-    reason: string;
-  }>;
-  
+    reason: string
+  }>
+
   /** 申请人信息（可选） */
   applicant?: {
-    name: string;
-    address: string;
-  };
-  
+    name: string
+    address: string
+  }
+
   /** 日期（可选） */
-  date?: string;
+  date?: string
 }
 ```
 
@@ -234,7 +234,7 @@ interface ResponseStatementData {
 
 ```typescript
 // 1. 解析技术交底书
-const inventionDisclosure = await parseInventionDisclosure('/path/to/技术交底书.pdf');
+const inventionDisclosure = await parseInventionDisclosure('/path/to/技术交底书.pdf')
 
 // 2. 提取关键信息
 const applicationData: PatentApplicationData = {
@@ -244,13 +244,13 @@ const applicationData: PatentApplicationData = {
   inventionContent: inventionDisclosure.content,
   claims: inventionDisclosure.claims,
   abstract: inventionDisclosure.summary,
-};
+}
 
 // 3. 生成专利申请文件
 const result = await generator.execute(
   { data: applicationData, outputPath: '专利申请文件.docx' },
   context
-);
+)
 ```
 
 ### 场景 2：批量生成权利要求书
@@ -261,7 +261,7 @@ const applications = [
   { id: 'app1', claims: claims1 },
   { id: 'app2', claims: claims2 },
   { id: 'app3', claims: claims3 },
-];
+]
 
 for (const app of applications) {
   await generator.execute(
@@ -270,7 +270,7 @@ for (const app of applications) {
       outputPath: `/output/${app.id}_权利要求书.docx`,
     },
     context
-  );
+  )
 }
 ```
 
@@ -281,17 +281,14 @@ for (const app of applications) {
 class PatentResponderAgent extends Agent {
   protected async act(plan: Plan, context: ExecutionContext): Promise<Result> {
     // 1. 解析审查意见通知书
-    const docParser = new OfficialDocParserToolV2();
-    const docResult = await docParser.execute(
-      { filePath: this.reviewOpinionPath },
-      context
-    );
+    const docParser = new OfficialDocParserToolV2()
+    const docResult = await docParser.execute({ filePath: this.reviewOpinionPath }, context)
 
     // 2. 生成答复策略
-    const responseStrategy = await this.generateResponseStrategy(docResult.fields);
+    const responseStrategy = await this.generateResponseStrategy(docResult.fields)
 
     // 3. 生成意见陈述书
-    const responseGenerator = new ResponseStatementGeneratorTool();
+    const responseGenerator = new ResponseStatementGeneratorTool()
     const statementResult = await responseGenerator.execute(
       {
         data: {
@@ -304,9 +301,9 @@ class PatentResponderAgent extends Agent {
         outputPath: this.outputPath,
       },
       context
-    );
+    )
 
-    return { success: true, outputPath: statementResult.outputPath };
+    return { success: true, outputPath: statementResult.outputPath }
   }
 }
 ```
@@ -334,13 +331,13 @@ const result = await generator.execute(
     template: 'pct', // 使用 PCT 模板
   },
   context
-);
+)
 ```
 
 ### 添加格式化
 
 ```typescript
-const { TextRun } = await import('docx');
+const { TextRun } = await import('docx')
 
 // 在文档内容中添加格式化
 children.push(
@@ -353,13 +350,13 @@ children.push(
       }),
     ],
   })
-);
+)
 ```
 
 ### 插入表格
 
 ```typescript
-const { Table, TableRow, TableCell } = await import('docx');
+const { Table, TableRow, TableCell } = await import('docx')
 
 children.push(
   new Table({
@@ -372,7 +369,7 @@ children.push(
       }),
     ],
   })
-);
+)
 ```
 
 ## 最佳实践
@@ -397,6 +394,7 @@ pnpm install docx@latest
 **问题**：生成的文档无法打开
 
 **解决方案**：
+
 1. 检查数据格式是否正确
 2. 确保输出路径有写权限
 3. 查看 TypeScript 编译错误
@@ -406,6 +404,7 @@ pnpm install docx@latest
 **问题**：文档中中文显示为乱码
 
 **解决方案**：
+
 - 已在工具中设置字体为"宋体"
 - 确保系统已安装中文字体
 - 使用支持中文的文档查看器

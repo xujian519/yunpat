@@ -44,6 +44,7 @@
 ### 知识库特点
 
 ✅ **优势**：
+
 1. **知识体系完整**：覆盖专利法、审查指南、实务操作
 2. **卡片化组织**：每个问题都有对应的知识卡片
 3. **概念关联**：100个核心概念的反向索引
@@ -51,6 +52,7 @@
 5. **动态生成**：卡片通过LLM动态生成，保持更新
 
 ⚠️ **挑战**：
+
 1. **Obsidian格式**：使用`[[wikilink]]`，需要转换
 2. **文件数量大**：556个文件，需要智能筛选
 3. **知识深度不一**：有些是原理，有些是实务，需要分层
@@ -86,6 +88,7 @@
 ## 📋 Phase 1: Layer 1 - 原始知识层集成 (Week 1)
 
 ### 目标
+
 建立YunPat与Obsidian知识库的连接，支持直接查询
 
 ### 实施步骤
@@ -272,19 +275,19 @@ export class ObsidianKnowledgeBridge {
 ```typescript
 // ai/agents/writer/PatentWriterAgent.ts
 
-import { ObsidianKnowledgeBridge } from '../../knowledge/ObsidianKnowledgeBridge.js';
+import { ObsidianKnowledgeBridge } from '../../knowledge/ObsidianKnowledgeBridge.js'
 
 export class PatentWriterAgent extends Agent<DisclosureInput, PatentDraft> {
-  private knowledge: ObsidianKnowledgeBridge;
+  private knowledge: ObsidianKnowledgeBridge
 
   constructor(config: AgentConfig) {
-    super(config);
+    super(config)
 
     // 初始化知识库桥接
     this.knowledge = new ObsidianKnowledgeBridge(
       '/Users/xujian/Library/Mobile Documents/iCloud~md~obsidian/Documents/宝宸知识库',
       config.eventBus
-    );
+    )
   }
 
   /**
@@ -292,12 +295,12 @@ export class PatentWriterAgent extends Agent<DisclosureInput, PatentDraft> {
    */
   protected async plan(input: DisclosureInput, context: ExecutionContext) {
     // 基础理解（使用LLM）
-    const baseUnderstanding = await this.understandInvention(input.disclosure);
+    const baseUnderstanding = await this.understandInvention(input.disclosure)
 
     // 知识库增强：查询相关概念
-    const enhancedUnderstanding = await this.enhanceWithKnowledge(baseUnderstanding);
+    const enhancedUnderstanding = await this.enhanceWithKnowledge(baseUnderstanding)
 
-    return enhancedUnderstanding;
+    return enhancedUnderstanding
   }
 
   /**
@@ -305,19 +308,19 @@ export class PatentWriterAgent extends Agent<DisclosureInput, PatentDraft> {
    */
   private async enhanceWithKnowledge(baseUnderstanding: any) {
     // 查询"创造性"相关知识
-    const creativityCard = await this.knowledge.queryCard('什么是创造性');
+    const creativityCard = await this.knowledge.queryCard('什么是创造性')
     if (creativityCard) {
-      context.logger.info('找到创造性知识卡片，质量分: ' + creativityCard.quality);
+      context.logger.info('找到创造性知识卡片，质量分: ' + creativityCard.quality)
 
       // 读取相关页面
       for (const page of creativityCard.relatedPages) {
-        const content = await this.knowledge.readWikiPage(page);
+        const content = await this.knowledge.readWikiPage(page)
         // 将知识注入到上下文中
-        baseUnderstanding.knowledgeContext += `\n\n${content}`;
+        baseUnderstanding.knowledgeContext += `\n\n${content}`
       }
     }
 
-    return baseUnderstanding;
+    return baseUnderstanding
   }
 }
 ```
@@ -331,31 +334,31 @@ describe('Obsidian知识库桥接测试', () => {
   const bridge = new ObsidianKnowledgeBridge(
     process.env.KNOWLEDGE_BASE_PATH || '', // 从环境变量读取
     eventBus
-  );
+  )
 
   it('应该能够查询"什么是创造性"卡片', async () => {
-    const card = await bridge.queryCard('什么是创造性');
+    const card = await bridge.queryCard('什么是创造性')
 
-    expect(card).not.toBeNull();
-    expect(card?.quality).toBeGreaterThan(0.7);
-    expect(card?.content).toContain('技术启示');
-    expect(card?.relatedPages.length).toBeGreaterThan(0);
-  });
+    expect(card).not.toBeNull()
+    expect(card?.quality).toBeGreaterThan(0.7)
+    expect(card?.content).toContain('技术启示')
+    expect(card?.relatedPages.length).toBeGreaterThan(0)
+  })
 
   it('应该能够根据概念查询相关页面', async () => {
-    const pages = await bridge.queryByConcept('充分公开');
+    const pages = await bridge.queryByConcept('充分公开')
 
-    expect(pages.length).toBeGreaterThan(5);
-    expect(pages).toContain('专利实务/说明书/说明书-充分公开概述');
-  });
+    expect(pages.length).toBeGreaterThan(5)
+    expect(pages).toContain('专利实务/说明书/说明书-充分公开概述')
+  })
 
   it('应该能够读取Wiki页面内容', async () => {
-    const content = await bridge.readWikiPage('专利实务/说明书/说明书-充分公开概述');
+    const content = await bridge.readWikiPage('专利实务/说明书/说明书-充分公开概述')
 
-    expect(content).toContain('充分公开');
-    expect(content).toContain('A26.3');
-  });
-});
+    expect(content).toContain('充分公开')
+    expect(content).toContain('A26.3')
+  })
+})
 ```
 
 ---
@@ -363,6 +366,7 @@ describe('Obsidian知识库桥接测试', () => {
 ## 📋 Phase 2: Layer 2 - 提示词模板层提炼 (Week 2-3)
 
 ### 目标
+
 从知识库中提炼结构化的提示词模板
 
 ### 提炼方法
@@ -387,7 +391,7 @@ grep -r "三步法" Wiki/专利实务/创造性/ --include="*.md"
 
 #### Step 2: 提炼提示词模板
 
-```typescript
+````typescript
 // prompts/patent-drafting/claims-generation-template.md
 
 # 权利要求生成提示词模板
@@ -450,7 +454,7 @@ grep -r "三步法" Wiki/专利实务/创造性/ --include="*.md"
     "differences": ["区别特征1", "区别特征2"]
   }
 }
-```
+````
 
 ## 输出格式
 
@@ -503,12 +507,14 @@ grep -r "三步法" Wiki/专利实务/创造性/ --include="*.md"
 
 ---
 
-*本提示词模板基于宝宸知识库提炼，包含以下知识来源：*
+_本提示词模板基于宝宸知识库提炼，包含以下知识来源：_
+
 - [[专利实务/权利要求/权利要求-清楚]]
 - [[专利实务/权利要求/权利要求-支持]]
 - [[创造性-概述与三步法框架]]
 - [[创造性-技术启示的判断]]
-```
+
+````
 
 #### Step 3: 创建提示词管理系统
 
@@ -596,7 +602,7 @@ ${contents.join('\n\n---\n\n')}
     return prompt;
   }
 }
-```
+````
 
 ### 验证测试
 
@@ -606,27 +612,24 @@ ${contents.join('\n\n---\n\n')}
 describe('提示词模板提炼测试', () => {
   const manager = new PromptTemplateManager(
     process.env.PROMPT_TEMPLATES_DIR || './prompts/patent-drafting'
-  );
-  const knowledge = new ObsidianKnowledgeBridge(
-    process.env.KNOWLEDGE_BASE_PATH || '',
-    eventBus
-  );
+  )
+  const knowledge = new ObsidianKnowledgeBridge(process.env.KNOWLEDGE_BASE_PATH || '', eventBus)
 
   it('应该能够从知识库提炼"权利要求"提示词', async () => {
-    const prompt = await manager.extractFromKnowledge(knowledge, '权利要求');
+    const prompt = await manager.extractFromKnowledge(knowledge, '权利要求')
 
-    expect(prompt).toContain('知识来源');
-    expect(prompt).toContain('核心知识');
-    expect(prompt).toContain('专利实务/权利要求');
-  });
+    expect(prompt).toContain('知识来源')
+    expect(prompt).toContain('核心知识')
+    expect(prompt).toContain('专利实务/权利要求')
+  })
 
   it('应该能够从知识库提炼"创造性"提示词', async () => {
-    const prompt = await manager.extractFromKnowledge(knowledge, '创造性');
+    const prompt = await manager.extractFromKnowledge(knowledge, '创造性')
 
-    expect(prompt).toContain('三步法');
-    expect(prompt).toContain('技术启示');
-  });
-});
+    expect(prompt).toContain('三步法')
+    expect(prompt).toContain('技术启示')
+  })
+})
 ```
 
 ---
@@ -634,6 +637,7 @@ describe('提示词模板提炼测试', () => {
 ## 📋 Phase 3: Layer 3 - 检索增强层 (RAG) (Week 4)
 
 ### 目标
+
 建立向量索引，实现语义检索
 
 ### 实施步骤
@@ -643,21 +647,21 @@ describe('提示词模板提炼测试', () => {
 ```typescript
 // ai/knowledge/VectorStore.ts
 
-import { embed } from '../../packages/core/src/llm/embedding.js';
+import { embed } from '../../packages/core/src/llm/embedding.js'
 
 export class VectorStore {
-  private index: Map<string, number[]> = new Map();
+  private index: Map<string, number[]> = new Map()
 
   /**
    * 向量化Wiki页面
    */
   async indexWikiPage(pagePath: string, content: string) {
     // 分块（每500字一块）
-    const chunks = this.chunkContent(content, 500);
+    const chunks = this.chunkContent(content, 500)
 
     for (const chunk of chunks) {
-      const embedding = await embed(chunk.text);
-      this.index.set(`${pagePath}#${chunk.index}`, embedding);
+      const embedding = await embed(chunk.text)
+      this.index.set(`${pagePath}#${chunk.index}`, embedding)
     }
   }
 
@@ -665,50 +669,48 @@ export class VectorStore {
    * 语义检索
    */
   async search(query: string, topK: number = 5): Promise<SearchResult[]> {
-    const queryEmbedding = await embed(query);
+    const queryEmbedding = await embed(query)
 
-    const results: Array<{ page: string; score: number }> = [];
+    const results: Array<{ page: string; score: number }> = []
 
     for (const [key, embedding] of this.index) {
-      const score = this.cosineSimilarity(queryEmbedding, embedding);
-      results.push({ page: key, score });
+      const score = this.cosineSimilarity(queryEmbedding, embedding)
+      results.push({ page: key, score })
     }
 
     // 按相似度排序，返回topK
-    return results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK);
+    return results.sort((a, b) => b.score - a.score).slice(0, topK)
   }
 
   private cosineSimilarity(a: number[], b: number[]): number {
     // 计算余弦相似度
-    const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
-    const normA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-    const normB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-    return dotProduct / (normA * normB);
+    const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0)
+    const normA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0))
+    const normB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0))
+    return dotProduct / (normA * normB)
   }
 
   private chunkContent(content: string, chunkSize: number) {
-    const chunks: Array<{ index: number; text: string }> = [];
-    const paragraphs = content.split('\n\n');
+    const chunks: Array<{ index: number; text: string }> = []
+    const paragraphs = content.split('\n\n')
 
-    let currentChunk = '';
-    let chunkIndex = 0;
+    let currentChunk = ''
+    let chunkIndex = 0
 
     for (const para of paragraphs) {
       if (currentChunk.length + para.length > chunkSize) {
-        chunks.push({ index: chunkIndex++, text: currentChunk });
-        currentChunk = para;
+        chunks.push({ index: chunkIndex++, text: currentChunk })
+        currentChunk = para
       } else {
-        currentChunk += '\n\n' + para;
+        currentChunk += '\n\n' + para
       }
     }
 
     if (currentChunk) {
-      chunks.push({ index: chunkIndex, text: currentChunk });
+      chunks.push({ index: chunkIndex, text: currentChunk })
     }
 
-    return chunks;
+    return chunks
   }
 }
 ```
@@ -719,28 +721,25 @@ export class VectorStore {
 // ai/agents/writer/PatentWriterAgent.ts
 
 export class PatentWriterAgent extends Agent<DisclosureInput, PatentDraft> {
-  private vectorStore: VectorStore;
+  private vectorStore: VectorStore
 
   /**
    * RAG增强的发明理解
    */
   protected async plan(input: DisclosureInput, context: ExecutionContext) {
     // 1. 基础理解
-    const baseUnderstanding = await this.understandInvention(input.disclosure);
+    const baseUnderstanding = await this.understandInvention(input.disclosure)
 
     // 2. 语义检索相关知识
-    const relevantKnowledge = await this.vectorStore.search(
-      baseUnderstanding.core_innovation,
-      3
-    );
+    const relevantKnowledge = await this.vectorStore.search(baseUnderstanding.core_innovation, 3)
 
     // 3. 将检索到的知识注入上下文
     const enhancedContext = {
       ...baseUnderstanding,
-      retrievedKnowledge: relevantKnowledge
-    };
+      retrievedKnowledge: relevantKnowledge,
+    }
 
-    return enhancedContext;
+    return enhancedContext
   }
 }
 ```
@@ -759,25 +758,23 @@ export class QualityFilter {
    * 筛选高质量卡片（质量分 > 0.7）
    */
   filterHighQualityCards(cards: WikiCard[]): WikiCard[] {
-    return cards.filter(card => card.quality > 0.7);
+    return cards.filter((card) => card.quality > 0.7)
   }
 
   /**
    * 筛选相关卡片（根据问题相似度）
    */
   filterRelevantCards(cards: WikiCard[], query: string): WikiCard[] {
-    return cards.filter(card =>
-      this.isRelevant(card.question, query)
-    );
+    return cards.filter((card) => this.isRelevant(card.question, query))
   }
 
   private isRelevant(cardQuestion: string, query: string): boolean {
     // 简单的关键词匹配（后续可以升级为语义相似度）
-    const cardKeywords = cardQuestion.toLowerCase().split(/\s+/);
-    const queryKeywords = query.toLowerCase().split(/\s+/);
+    const cardKeywords = cardQuestion.toLowerCase().split(/\s+/)
+    const queryKeywords = query.toLowerCase().split(/\s+/)
 
-    const intersection = cardKeywords.filter(k => queryKeywords.includes(k));
-    return intersection.length > 0;
+    const intersection = cardKeywords.filter((k) => queryKeywords.includes(k))
+    return intersection.length > 0
   }
 }
 ```
@@ -786,13 +783,13 @@ export class QualityFilter {
 
 ## 🎯 实施时间表
 
-| Week | Phase | 任务 | 验证 |
-|------|-------|------|------|
-| **Week 1** | Layer 1 | ObsidianKnowledgeBridge | 查询"什么是创造性" |
-| **Week 2** | Layer 2 | 提炼权利要求提示词 | 生成第一个提示词模板 |
-| **Week 3** | Layer 2 | 提炼说明书、创造性提示词 | 生成3-5个核心模板 |
-| **Week 4** | Layer 3 | 向量化 + RAG | 语义检索验证 |
-| **Week 5** | Integration | 集成到睿羿科技案例 | 端到端测试 |
+| Week       | Phase       | 任务                     | 验证                 |
+| ---------- | ----------- | ------------------------ | -------------------- |
+| **Week 1** | Layer 1     | ObsidianKnowledgeBridge  | 查询"什么是创造性"   |
+| **Week 2** | Layer 2     | 提炼权利要求提示词       | 生成第一个提示词模板 |
+| **Week 3** | Layer 2     | 提炼说明书、创造性提示词 | 生成3-5个核心模板    |
+| **Week 4** | Layer 3     | 向量化 + RAG             | 语义检索验证         |
+| **Week 5** | Integration | 集成到睿羿科技案例       | 端到端测试           |
 
 ---
 
@@ -802,7 +799,7 @@ export class QualityFilter {
 
 ```typescript
 // 在Agent中使用
-const creativityCard = await knowledge.queryCard('什么是创造性');
+const creativityCard = await knowledge.queryCard('什么是创造性')
 
 if (creativityCard && creativityCard.quality > 0.7) {
   // 使用高质量知识卡片
@@ -812,9 +809,9 @@ if (creativityCard && creativityCard.quality > 0.7) {
 ${creativityCard.content}
 
 发明信息：${invention}
-  `;
+  `
 
-  const analysis = await llm.chat({ messages: [{ role: 'user', content: prompt }] });
+  const analysis = await llm.chat({ messages: [{ role: 'user', content: prompt }] })
 }
 ```
 
@@ -822,24 +819,24 @@ ${creativityCard.content}
 
 ```typescript
 // 加载模板
-const template = await promptManager.loadTemplate('claims-generation');
+const template = await promptManager.loadTemplate('claims-generation')
 
 // 渲染模板
 const prompt = promptManager.render('claims-generation', {
   invention_title: '自动驾驶掉头方法',
   invention_type: 'method',
   // ... 其他变量
-});
+})
 
 // 生成权利要求
-const claims = await llm.chat({ messages: [{ role: 'user', content: prompt }] });
+const claims = await llm.chat({ messages: [{ role: 'user', content: prompt }] })
 ```
 
 ### 示例3: RAG增强检索
 
 ```typescript
 // 语义检索
-const relevantDocs = await vectorStore.search('如何判断发明的创造性？', 3);
+const relevantDocs = await vectorStore.search('如何判断发明的创造性？', 3)
 
 // 将检索结果注入提示词
 const prompt = `
@@ -848,11 +845,15 @@ const prompt = `
 问题：如何判断发明的创造性？
 
 相关知识：
-${relevantDocs.map((doc, i) => `
+${relevantDocs
+  .map(
+    (doc, i) => `
 【资料${i + 1}】${doc.page}
 相关度：${(doc.score * 100).toFixed(1)}%
-`).join('\n')}
-`;
+`
+  )
+  .join('\n')}
+`
 ```
 
 ---

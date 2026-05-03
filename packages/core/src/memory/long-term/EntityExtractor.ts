@@ -16,18 +16,18 @@ export type EntityType =
   | 'PublicationNumber' // 公开号
   | 'Date' // 日期
   | 'Organization' // 组织机构
-  | 'Person'; // 人物
+  | 'Person' // 人物
 
 /**
  * 实体接口
  */
 export interface Entity {
-  type: EntityType;
-  name: string;
-  properties?: Record<string, any>;
-  confidence: number;
-  startOffset: number;
-  endOffset: number;
+  type: EntityType
+  name: string
+  properties?: Record<string, any>
+  confidence: number
+  startOffset: number
+  endOffset: number
 }
 
 /**
@@ -35,9 +35,9 @@ export interface Entity {
  */
 export interface EntityExtractorConfig {
   /** 是否启用实体归一化 */
-  enableNormalization?: boolean;
+  enableNormalization?: boolean
   /** 最小置信度阈值 */
-  minConfidence?: number;
+  minConfidence?: number
 }
 
 /**
@@ -50,8 +50,8 @@ export interface EntityExtractorConfig {
  * 4. 自定义词典支持
  */
 export class EntityExtractor {
-  private config: Required<EntityExtractorConfig>;
-  private customDictionary: Set<string> = new Set();
+  private config: Required<EntityExtractorConfig>
+  private customDictionary: Set<string> = new Set()
 
   // 实体归一化映射（同义词表）
   private readonly normalizationMap: Map<string, string> = new Map([
@@ -65,7 +65,7 @@ export class EntityExtractor {
     ['年', '-'],
     ['月', '-'],
     ['日', ''],
-  ]);
+  ])
 
   // 专利实体正则表达式
   private readonly patterns = {
@@ -82,44 +82,44 @@ export class EntityExtractor {
     chineseName: /[一-龥]{2,4}(?=\s|，|。|$|、|；)/g,
     // 公司名：包含"公司"、"集团"、"科技"等关键词
     companyName: /[一-龥A-Za-z0-9（）()]+(?:公司|集团|科技|技术|有限|股份)/g,
-  };
+  }
 
   constructor(config: EntityExtractorConfig = {}) {
     this.config = {
       enableNormalization: config.enableNormalization ?? true,
       minConfidence: config.minConfidence ?? 0.6,
-    };
+    }
   }
 
   /**
    * 从文本中抽取实体
    */
   async extractEntities(text: string, entityType?: EntityType): Promise<Entity[]> {
-    const entities: Entity[] = [];
+    const entities: Entity[] = []
 
     // 如果指定了实体类型，只抽取该类型
     if (entityType) {
       switch (entityType) {
         case 'ApplicationNumber':
-          entities.push(...this.extractApplicationNumbers(text));
-          break;
+          entities.push(...this.extractApplicationNumbers(text))
+          break
         case 'PublicationNumber':
-          entities.push(...this.extractPublicationNumbers(text));
-          break;
+          entities.push(...this.extractPublicationNumbers(text))
+          break
         case 'IPC':
-          entities.push(...this.extractIPCs(text));
-          break;
+          entities.push(...this.extractIPCs(text))
+          break
         case 'Date':
-          entities.push(...this.extractDates(text));
-          break;
+          entities.push(...this.extractDates(text))
+          break
         case 'Applicant':
         case 'Organization':
-          entities.push(...this.extractOrganizations(text));
-          break;
+          entities.push(...this.extractOrganizations(text))
+          break
         case 'Inventor':
         case 'Person':
-          entities.push(...this.extractPersons(text));
-          break;
+          entities.push(...this.extractPersons(text))
+          break
       }
     } else {
       // 抽取所有类型实体
@@ -130,66 +130,66 @@ export class EntityExtractor {
         ...this.extractDates(text),
         ...this.extractOrganizations(text),
         ...this.extractPersons(text)
-      );
+      )
     }
 
     // 应用实体归一化
     if (this.config.enableNormalization) {
-      entities.forEach((e) => this.normalizeEntity(e));
+      entities.forEach((e) => this.normalizeEntity(e))
     }
 
     // 过滤低置信度实体
-    return entities.filter((e) => e.confidence >= this.config.minConfidence);
+    return entities.filter((e) => e.confidence >= this.config.minConfidence)
   }
 
   /**
    * 抽取申请号
    */
   private extractApplicationNumbers(text: string): Entity[] {
-    const matches = this.findOverlappingMatches(text, this.patterns.applicationNumber);
+    const matches = this.findOverlappingMatches(text, this.patterns.applicationNumber)
     return matches.map((m) => ({
       type: 'ApplicationNumber' as EntityType,
       name: m.text,
       confidence: 0.95,
       startOffset: m.start,
       endOffset: m.end,
-    }));
+    }))
   }
 
   /**
    * 抽取公开号
    */
   private extractPublicationNumbers(text: string): Entity[] {
-    const matches = this.findOverlappingMatches(text, this.patterns.publicationNumber);
+    const matches = this.findOverlappingMatches(text, this.patterns.publicationNumber)
     return matches.map((m) => ({
       type: 'PublicationNumber' as EntityType,
       name: m.text,
       confidence: 0.95,
       startOffset: m.start,
       endOffset: m.end,
-    }));
+    }))
   }
 
   /**
    * 抽取 IPC 分类号
    */
   private extractIPCs(text: string): Entity[] {
-    const matches = this.findOverlappingMatches(text, this.patterns.ipc);
+    const matches = this.findOverlappingMatches(text, this.patterns.ipc)
     return matches.map((m) => ({
       type: 'IPC' as EntityType,
       name: m.text.trim(),
       confidence: 0.9,
       startOffset: m.start,
       endOffset: m.end,
-    }));
+    }))
   }
 
   /**
    * 抽取日期
    */
   private extractDates(text: string): Entity[] {
-    const matches = this.findOverlappingMatches(text, this.patterns.date);
-    const seen = new Set<string>();
+    const matches = this.findOverlappingMatches(text, this.patterns.date)
+    const seen = new Set<string>()
 
     return matches
       .map((m) => ({
@@ -201,23 +201,23 @@ export class EntityExtractor {
       }))
       .filter((e) => {
         // 去重
-        if (seen.has(e.name)) return false;
-        seen.add(e.name);
-        return true;
-      });
+        if (seen.has(e.name)) return false
+        seen.add(e.name)
+        return true
+      })
   }
 
   /**
    * 抽取组织机构（公司名）
    */
   private extractOrganizations(text: string): Entity[] {
-    const matches = this.findOverlappingMatches(text, this.patterns.companyName);
-    const orgs = new Map<string, Entity>();
+    const matches = this.findOverlappingMatches(text, this.patterns.companyName)
+    const orgs = new Map<string, Entity>()
 
     matches.forEach((m) => {
-      const name = m.text.trim();
+      const name = m.text.trim()
       // 去重
-      if (orgs.has(name)) return;
+      if (orgs.has(name)) return
 
       orgs.set(name, {
         type: 'Organization',
@@ -225,10 +225,10 @@ export class EntityExtractor {
         confidence: this.calculateConfidence(name, 'Organization'),
         startOffset: m.start,
         endOffset: m.end,
-      });
-    });
+      })
+    })
 
-    return Array.from(orgs.values());
+    return Array.from(orgs.values())
   }
 
   /**
@@ -236,38 +236,38 @@ export class EntityExtractor {
    */
   private extractPersons(text: string): Entity[] {
     // 上下文关键词
-    const personKeywords = ['发明人', '设计人', '申请人', '权利人', '作者'];
-    const persons: Entity[] = [];
-    const seen = new Set<string>();
+    const personKeywords = ['发明人', '设计人', '申请人', '权利人', '作者']
+    const persons: Entity[] = []
+    const seen = new Set<string>()
 
     // 查找包含人名关键词的句子
     for (const keyword of personKeywords) {
-      const regex = new RegExp(`${keyword}[：:：\\s]*([^，。；\\n]{1,100})`, 'g');
-      const matches = this.findOverlappingMatches(text, regex);
+      const regex = new RegExp(`${keyword}[：:：\\s]*([^，。；\\n]{1,100})`, 'g')
+      const matches = this.findOverlappingMatches(text, regex)
 
       for (const match of matches) {
         // 从匹配的文本中提取人名
         // 先按顿号、空格等分隔符分割
-        const parts = match.text.split(/[、\s,，]+/);
+        const parts = match.text.split(/[、\s,，]+/)
         for (const part of parts) {
-          const names = this.extractChineseNames(part);
+          const names = this.extractChineseNames(part)
           for (const name of names) {
             if (name.length >= 2 && name.length <= 4 && !seen.has(name)) {
-              seen.add(name);
+              seen.add(name)
               persons.push({
                 type: 'Person',
                 name,
                 confidence: 0.85,
                 startOffset: match.start,
                 endOffset: match.start + match.text.length,
-              });
+              })
             }
           }
         }
       }
     }
 
-    return persons;
+    return persons
   }
 
   /**
@@ -275,8 +275,8 @@ export class EntityExtractor {
    */
   private extractChineseNames(text: string): string[] {
     // 匹配2-4个连续的汉字
-    const nameRegex = /[一-龥]{2,4}/g;
-    const matches = text.match(nameRegex) || [];
+    const nameRegex = /[一-龥]{2,4}/g
+    const matches = text.match(nameRegex) || []
     return matches.filter((name) => {
       // 过滤掉常见的非人名词汇
       const excludeWords = [
@@ -298,9 +298,9 @@ export class EntityExtractor {
         '本案',
         '优先权',
         '同族',
-      ];
-      return !excludeWords.some((word) => name.includes(word));
-    });
+      ]
+      return !excludeWords.some((word) => name.includes(word))
+    })
   }
 
   /**
@@ -310,26 +310,26 @@ export class EntityExtractor {
     text: string,
     regex: RegExp
   ): Array<{ text: string; start: number; end: number }> {
-    const matches: Array<{ text: string; start: number; end: number }> = [];
-    let match: RegExpExecArray | null;
+    const matches: Array<{ text: string; start: number; end: number }> = []
+    let match: RegExpExecArray | null
 
     // 重置正则表达式的 lastIndex
-    regex.lastIndex = 0;
+    regex.lastIndex = 0
 
     while ((match = regex.exec(text)) !== null) {
       matches.push({
         text: match[0],
         start: match.index,
         end: match.index + match[0].length,
-      });
+      })
 
       // 防止无限循环（零长度匹配）
       if (match[0].length === 0) {
-        regex.lastIndex++;
+        regex.lastIndex++
       }
     }
 
-    return matches;
+    return matches
   }
 
   /**
@@ -338,34 +338,34 @@ export class EntityExtractor {
   private calculateConfidence(name: string, type: EntityType): number {
     // 包含完整关键词的组织名置信度更高
     if (type === 'Organization') {
-      if (name.includes('公司') || name.includes('集团')) return 0.9;
-      if (name.includes('科技') || name.includes('技术')) return 0.8;
-      return 0.7;
+      if (name.includes('公司') || name.includes('集团')) return 0.9
+      if (name.includes('科技') || name.includes('技术')) return 0.8
+      return 0.7
     }
 
     // 包含常见后缀的人名置信度更高
     if (type === 'Person') {
-      if (/^[一-龥]{2,4}$/.test(name)) return 0.85;
-      return 0.6;
+      if (/^[一-龥]{2,4}$/.test(name)) return 0.85
+      return 0.6
     }
 
-    return 0.7;
+    return 0.7
   }
 
   /**
    * 实体归一化
    */
   normalizeEntity(entity: Entity): Entity {
-    if (!this.config.enableNormalization) return entity;
+    if (!this.config.enableNormalization) return entity
 
     // 应用归一化映射
-    let normalized = entity.name;
+    let normalized = entity.name
     for (const [from, to] of this.normalizationMap) {
-      normalized = normalized.replace(from, to);
+      normalized = normalized.replace(from, to)
     }
 
     // 去除多余空格
-    normalized = normalized.trim().replace(/\s+/g, ' ');
+    normalized = normalized.trim().replace(/\s+/g, ' ')
 
     return {
       ...entity,
@@ -374,7 +374,7 @@ export class EntityExtractor {
         ...entity.properties,
         originalName: entity.name,
       },
-    };
+    }
   }
 
   /**
@@ -382,28 +382,28 @@ export class EntityExtractor {
    */
   addCustomDictionary(words: string[]): void {
     words.forEach((word) => {
-      this.customDictionary.add(word);
-    });
+      this.customDictionary.add(word)
+    })
   }
 
   /**
    * 批量抽取实体
    */
   async extractEntitiesBatch(texts: string[]): Promise<Entity[][]> {
-    return Promise.all(texts.map((text) => this.extractEntities(text)));
+    return Promise.all(texts.map((text) => this.extractEntities(text)))
   }
 
   /**
    * 获取统计信息
    */
   getStats(text: string): {
-    entityCount: number;
-    entityTypes: Record<string, number>;
+    entityCount: number
+    entityTypes: Record<string, number>
   } {
     return {
       entityCount: 0,
       entityTypes: {},
-    };
+    }
   }
 }
 
@@ -411,5 +411,5 @@ export class EntityExtractor {
  * 创建实体抽取器实例
  */
 export function createEntityExtractor(config?: EntityExtractorConfig): EntityExtractor {
-  return new EntityExtractor(config);
+  return new EntityExtractor(config)
 }

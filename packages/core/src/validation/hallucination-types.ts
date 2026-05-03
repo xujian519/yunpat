@@ -9,22 +9,22 @@
  */
 export interface HallucinationDetectorConfig {
   /** 是否启用事实验证 */
-  enableFactCheck?: boolean;
+  enableFactCheck?: boolean
 
   /** 是否启用逻辑一致性检查 */
-  enableLogicalConsistencyCheck?: boolean;
+  enableLogicalConsistencyCheck?: boolean
 
   /** 是否启用源归属验证 */
-  enableSourceAttribution?: boolean;
+  enableSourceAttribution?: boolean
 
   /** 事实验证阈值 */
-  factCheckThreshold?: number;
+  factCheckThreshold?: number
 
   /** 逻辑一致性阈值 */
-  logicalConsistencyThreshold?: number;
+  logicalConsistencyThreshold?: number
 
   /** 最大验证时间（毫秒） */
-  maxValidationTime?: number;
+  maxValidationTime?: number
 }
 
 /**
@@ -32,36 +32,36 @@ export interface HallucinationDetectorConfig {
  */
 export interface HallucinationReport {
   /** 总体幻觉分数（0-1，越低越好） */
-  overallScore: number;
+  overallScore: number
 
   /** 事实验证结果 */
-  factCheckResults: FactCheckResult[];
+  factCheckResults: FactCheckResult[]
 
   /** 逻辑不一致问题 */
-  logicalInconsistencies: LogicalInconsistency[];
+  logicalInconsistencies: LogicalInconsistency[]
 
   /** 源归属问题 */
-  sourceAttributionIssues: SourceAttributionIssue[];
+  sourceAttributionIssues: SourceAttributionIssue[]
 
   /** 改进建议 */
-  suggestions: ImprovementSuggestion[];
+  suggestions: ImprovementSuggestion[]
 
   /** 检测耗时（毫秒） */
-  duration: number;
+  duration: number
 
   /** 检测时间戳 */
-  timestamp: Date;
+  timestamp: Date
 }
 
 /**
  * 声明（Claim）
  */
 export interface Claim {
-  id: string;
-  content: string;
-  category: ClaimCategory;
-  confidence: number;
-  location?: TextLocation;
+  id: string
+  content: string
+  category: ClaimCategory
+  confidence: number
+  location?: TextLocation
 }
 
 /**
@@ -89,44 +89,44 @@ export enum ClaimCategory {
  */
 export interface FactCheckResult {
   /** 声明 */
-  claim: Claim;
+  claim: Claim
 
   /** 是否可验证 */
-  isVerifiable: boolean;
+  isVerifiable: boolean
 
   /** 是否通过验证 */
-  isVerified: boolean;
+  isVerified: boolean
 
   /** 置信度 */
-  confidence: number;
+  confidence: number
 
   /** 可信来源 */
-  sources: SourceReference[];
+  sources: SourceReference[]
 
   /** 验证方法 */
-  verificationMethod: 'knowledge_base' | 'external_api' | 'manual';
+  verificationMethod: 'knowledge_base' | 'external_api' | 'manual'
 
   /** 验证详情 */
-  details?: string;
+  details?: string
 }
 
 /**
  * 逻辑不一致
  */
 export interface LogicalInconsistency {
-  id: string;
-  type: LogicalInconsistencyType;
-  severity: 'critical' | 'major' | 'minor';
-  description: string;
+  id: string
+  type: LogicalInconsistencyType
+  severity: 'critical' | 'major' | 'minor'
+  description: string
 
   /** 不一致的位置 */
-  locations: TextLocation[];
+  locations: TextLocation[]
 
   /** 矛盾的陈述 */
-  conflictingStatements: string[];
+  conflictingStatements: string[]
 
   /** 建议修正 */
-  suggestedFix?: string;
+  suggestedFix?: string
 }
 
 /**
@@ -153,21 +153,21 @@ export enum LogicalInconsistencyType {
  * 源归属问题
  */
 export interface SourceAttributionIssue {
-  id: string;
-  type: SourceAttributionIssueType;
-  severity: 'critical' | 'major' | 'minor';
+  id: string
+  type: SourceAttributionIssueType
+  severity: 'critical' | 'major' | 'minor'
 
   /** 缺少来源的内容 */
-  content: string;
+  content: string
 
   /** 内容位置 */
-  location: TextLocation;
+  location: TextLocation
 
   /** 建议的来源 */
-  suggestedSources?: SourceReference[];
+  suggestedSources?: SourceReference[]
 
   /** 描述 */
-  description: string;
+  description: string
 }
 
 /**
@@ -191,14 +191,14 @@ export enum SourceAttributionIssueType {
  * 来源引用
  */
 export interface SourceReference {
-  id: string;
-  type: SourceType;
-  title: string;
-  author?: string;
-  year?: number;
-  url?: string;
-  credibility: number; // 0-1
-  lastVerified?: Date;
+  id: string
+  type: SourceType
+  title: string
+  author?: string
+  year?: number
+  url?: string
+  credibility: number // 0-1
+  lastVerified?: Date
 }
 
 /**
@@ -228,27 +228,27 @@ export enum SourceType {
  * 文本位置
  */
 export interface TextLocation {
-  start: number;
-  end: number;
-  line?: number;
-  column?: number;
-  text: string;
+  start: number
+  end: number
+  line?: number
+  column?: number
+  text: string
 }
 
 /**
  * 改进建议
  */
 export interface ImprovementSuggestion {
-  id: string;
-  priority: 'high' | 'medium' | 'low';
-  category: 'factual' | 'logical' | 'attribution';
-  description: string;
+  id: string
+  priority: 'high' | 'medium' | 'low'
+  category: 'factual' | 'logical' | 'attribution'
+  description: string
 
   /** 建议的操作 */
-  action: SuggestionAction;
+  action: SuggestionAction
 
   /** 预期效果 */
-  expectedImpact: string;
+  expectedImpact: string
 }
 
 /**
@@ -276,19 +276,19 @@ export enum SuggestionAction {
  */
 export interface FactCheckerConfig {
   /** 声明提取方法 */
-  extractionMethod: 'regex' | 'llm' | 'hybrid';
+  extractionMethod: 'regex' | 'llm' | 'hybrid'
 
   /** 验证方法 */
-  verificationMethods: Array<'knowledge_base' | 'external_api'>;
+  verificationMethods: Array<'knowledge_base' | 'external_api'>
 
   /** 知识库搜索选项 */
   knowledgeBaseOptions?: {
-    maxResults?: number;
-    similarityThreshold?: number;
-  };
+    maxResults?: number
+    similarityThreshold?: number
+  }
 
   /** 外部API配置 */
-  externalAPIConfig?: Record<string, unknown>;
+  externalAPIConfig?: Record<string, unknown>
 }
 
 /**
@@ -296,16 +296,16 @@ export interface FactCheckerConfig {
  */
 export interface LogicalConsistencyCheckerConfig {
   /** 是否检测矛盾 */
-  detectContradictions?: boolean;
+  detectContradictions?: boolean
 
   /** 是否检测重复 */
-  detectDuplication?: boolean;
+  detectDuplication?: boolean
 
   /** 是否检测逻辑断层 */
-  detectLogicalGaps?: boolean;
+  detectLogicalGaps?: boolean
 
   /** 相似度阈值（用于检测重复） */
-  similarityThreshold?: number;
+  similarityThreshold?: number
 }
 
 /**
@@ -313,11 +313,11 @@ export interface LogicalConsistencyCheckerConfig {
  */
 export interface SourceAttributionValidatorConfig {
   /** 必须引用的类别 */
-  requiredCitationCategories?: ClaimCategory[];
+  requiredCitationCategories?: ClaimCategory[]
 
   /** 允许的引用格式 */
-  allowedCitationFormats?: string[];
+  allowedCitationFormats?: string[]
 
   /** 最小来源可信度 */
-  minSourceCredibility?: number;
+  minSourceCredibility?: number
 }

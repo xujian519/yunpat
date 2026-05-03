@@ -24,12 +24,12 @@
 #### 初始化
 
 ```typescript
-import { PatentWriterAgent } from '@yunpat/agents';
+import { PatentWriterAgent } from '@yunpat/agents'
 
 const writer = new PatentWriterAgent({
   llm: deepseekModel,
-  tools: toolRegistry
-});
+  tools: toolRegistry,
+})
 ```
 
 #### 方法
@@ -42,13 +42,13 @@ const writer = new PatentWriterAgent({
 
 ```typescript
 interface WriterInput {
-  inventionTitle: string;        // 发明名称
-  technicalField: string;        // 技术领域
-  backgroundArt: string;         // 背景技术
-  inventionContent: string;      // 发明内容
-  technicalFeatures: string[];   // 技术特征
-  embodiment: string;            // 具体实施方式
-  claims?: ClaimDraft[];         // 权利要求草稿（可选）
+  inventionTitle: string // 发明名称
+  technicalField: string // 技术领域
+  backgroundArt: string // 背景技术
+  inventionContent: string // 发明内容
+  technicalFeatures: string[] // 技术特征
+  embodiment: string // 具体实施方式
+  claims?: ClaimDraft[] // 权利要求草稿（可选）
 }
 ```
 
@@ -57,17 +57,17 @@ interface WriterInput {
 ```typescript
 interface WriterOutput {
   application: {
-    claims: Claim[];             // 权利要求
-    description: Description;    // 说明书
-    abstract: string;            // 摘要
-    figures: FigureDescription[]; // 附图说明
-  };
-  quality: QualityScore;         // 质量评分
+    claims: Claim[] // 权利要求
+    description: Description // 说明书
+    abstract: string // 摘要
+    figures: FigureDescription[] // 附图说明
+  }
+  quality: QualityScore // 质量评分
   metadata: {
-    generatedAt: Date;
-    model: string;
-    tokens: number;
-  };
+    generatedAt: Date
+    model: string
+    tokens: number
+  }
 }
 ```
 
@@ -79,16 +79,12 @@ const result = await writer.execute({
   technicalField: '人工智能',
   backgroundArt: '传统图像识别方法准确率低...',
   inventionContent: '本发明提供了一种基于深度学习的图像识别方法...',
-  technicalFeatures: [
-    '使用卷积神经网络',
-    '采用注意力机制',
-    '支持实时处理'
-  ],
-  embodiment: '具体实施方式...'
-});
+  technicalFeatures: ['使用卷积神经网络', '采用注意力机制', '支持实时处理'],
+  embodiment: '具体实施方式...',
+})
 
-console.log(result.application.claims);
-console.log(result.quality.overallScore);
+console.log(result.application.claims)
+console.log(result.quality.overallScore)
 ```
 
 ---
@@ -107,10 +103,10 @@ console.log(result.quality.overallScore);
 
 ```typescript
 interface ResponderInput {
-  applicationNumber: string;     // 申请号
-  officeActionText: string;      // 审查意见文本
-  currentClaims: Claim[];        // 当前权利要求
-  priorArt?: PatentRecord[];     // 现有技术（可选）
+  applicationNumber: string // 申请号
+  officeActionText: string // 审查意见文本
+  currentClaims: Claim[] // 当前权利要求
+  priorArt?: PatentRecord[] // 现有技术（可选）
 }
 ```
 
@@ -119,13 +115,13 @@ interface ResponderInput {
 ```typescript
 interface ResponderOutput {
   analysis: {
-    rejections: Rejection[];     // 驳回理由分析
-    citedReferences: PatentRecord[]; // 引用文献
-    keyIssues: string[];         // 关键问题
-  };
-  strategy: ResponseStrategy;    // 答复策略
-  response: ResponseDocument;    // 答复书
-  recommendations: string[];     // 建议
+    rejections: Rejection[] // 驳回理由分析
+    citedReferences: PatentRecord[] // 引用文献
+    keyIssues: string[] // 关键问题
+  }
+  strategy: ResponseStrategy // 答复策略
+  response: ResponseDocument // 答复书
+  recommendations: string[] // 建议
 }
 ```
 
@@ -158,17 +154,17 @@ console.log(result.strategy);
 
 ```typescript
 interface ValueAnalysis {
-  overallScore: number;          // 综合评分 (0-100)
+  overallScore: number // 综合评分 (0-100)
   dimensions: {
-    marketValue: number;         // 市场价值
-    technicalValue: number;      // 技术价值
-    legalValue: number;          // 法律价值
-  };
+    marketValue: number // 市场价值
+    technicalValue: number // 技术价值
+    legalValue: number // 法律价值
+  }
   ranking: {
-    global: number;              // 全球排名
-    inField: number;             // 领域内排名
-  };
-  recommendations: string[];     // 建议
+    global: number // 全球排名
+    inField: number // 领域内排名
+  }
+  recommendations: string[] // 建议
 }
 ```
 
@@ -180,12 +176,12 @@ interface ValueAnalysis {
 
 ```typescript
 interface TrendQuery {
-  field: string;                 // 技术领域
+  field: string // 技术领域
   timeRange: {
-    start: Date;
-    end: Date;
-  };
-  granularity: 'year' | 'month' | 'quarter';
+    start: Date
+    end: Date
+  }
+  granularity: 'year' | 'month' | 'quarter'
 }
 ```
 
@@ -193,32 +189,32 @@ interface TrendQuery {
 
 ```typescript
 interface TrendAnalysis {
-  timeline: TimelineData[];      // 时间线数据
-  emergingTopics: string[];      // 新兴主题
-  keyPlayers: Company[];         // 关键参与者
+  timeline: TimelineData[] // 时间线数据
+  emergingTopics: string[] // 新兴主题
+  keyPlayers: Company[] // 关键参与者
   predictions: {
-    nextYear: string[];
-    nextThreeYears: string[];
-  };
+    nextYear: string[]
+    nextThreeYears: string[]
+  }
 }
 ```
 
 **示例**:
 
 ```typescript
-const valueAnalysis = await analyzer.analyzeValue(patents);
-console.log(`综合评分: ${valueAnalysis.overallScore}`);
+const valueAnalysis = await analyzer.analyzeValue(patents)
+console.log(`综合评分: ${valueAnalysis.overallScore}`)
 
 const trendAnalysis = await analyzer.analyzeTrends({
   field: '深度学习',
   timeRange: {
     start: new Date('2020-01-01'),
-    end: new Date('2025-12-31')
+    end: new Date('2025-12-31'),
   },
-  granularity: 'year'
-});
+  granularity: 'year',
+})
 
-console.log(trendAnalysis.emergingTopics);
+console.log(trendAnalysis.emergingTopics)
 ```
 
 ---
@@ -237,14 +233,14 @@ console.log(trendAnalysis.emergingTopics);
 
 ```typescript
 interface DeadlineReport {
-  urgent: DeadlineItem[];        // 紧急期限（7天内）
-  upcoming: DeadlineItem[];      // 即将来临（30天内）
+  urgent: DeadlineItem[] // 紧急期限（7天内）
+  upcoming: DeadlineItem[] // 即将来临（30天内）
   overview: {
-    total: number;
-    completed: number;
-    overdue: number;
-  };
-  alerts: Alert[];               // 预警信息
+    total: number
+    completed: number
+    overdue: number
+  }
+  alerts: Alert[] // 预警信息
 }
 ```
 
@@ -257,31 +253,31 @@ interface DeadlineReport {
 ```typescript
 interface PortfolioAnalysis {
   overview: {
-    totalPatents: number;
-    totalValue: number;
-    averageAge: number;
-  };
+    totalPatents: number
+    totalValue: number
+    averageAge: number
+  }
   distribution: {
-    byField: Record<string, number>;
-    byStatus: Record<string, number>;
-    byJurisdiction: Record<string, number>;
-  };
+    byField: Record<string, number>
+    byStatus: Record<string, number>
+    byJurisdiction: Record<string, number>
+  }
   recommendations: {
-    optimization: string[];
-    costSaving: string[];
-    riskMitigation: string[];
-  };
+    optimization: string[]
+    costSaving: string[]
+    riskMitigation: string[]
+  }
 }
 ```
 
 **示例**:
 
 ```typescript
-const deadlineReport = await manager.manageDeadlines(patents);
-console.log(`紧急期限: ${deadlineReport.urgent.length} 项`);
+const deadlineReport = await manager.manageDeadlines(patents)
+console.log(`紧急期限: ${deadlineReport.urgent.length} 项`)
 
-const portfolioAnalysis = await manager.analyzePortfolio(portfolio);
-console.log(`总价值: ${portfolioAnalysis.overview.totalValue}`);
+const portfolioAnalysis = await manager.analyzePortfolio(portfolio)
+console.log(`总价值: ${portfolioAnalysis.overview.totalValue}`)
 ```
 
 ---
@@ -491,10 +487,10 @@ for issue in assessment.issues {
 #### 初始化
 
 ```typescript
-import { createPatentMcpServer } from '@yunpat/mcp';
+import { createPatentMcpServer } from '@yunpat/mcp'
 
-const server = createPatentMcpServer();
-await server.start();
+const server = createPatentMcpServer()
+await server.start()
 ```
 
 #### 已注册工具
@@ -531,11 +527,11 @@ await server.start();
 ```typescript
 {
   technicalFeatures: Array<{
-    name: string;
-    description: string;
-    featureType: string;
-  }>;
-  inventionType: string;
+    name: string
+    description: string
+    featureType: string
+  }>
+  inventionType: string
 }
 ```
 
@@ -544,10 +540,10 @@ await server.start();
 ```typescript
 {
   claims: Array<{
-    claimType: string;
-    number: number;
-    content: string;
-  }>;
+    claimType: string
+    number: number
+    content: string
+  }>
 }
 ```
 
@@ -560,9 +556,9 @@ await server.start();
 ```typescript
 {
   claims: Array<{
-    number: number;
-    content: string;
-  }>;
+    number: number
+    content: string
+  }>
 }
 ```
 
@@ -570,10 +566,10 @@ await server.start();
 
 ```typescript
 {
-  overallScore: number;
-  clarityScore: number;
-  supportScore: number;
-  breadthScore: number;
+  overallScore: number
+  clarityScore: number
+  supportScore: number
+  breadthScore: number
 }
 ```
 
@@ -585,7 +581,7 @@ await server.start();
 
 ```typescript
 {
-  text: string;                  // 审查意见文本
+  text: string // 审查意见文本
 }
 ```
 
@@ -593,18 +589,18 @@ await server.start();
 
 ```typescript
 {
-  applicationNumber: string;
-  actionType: string;
+  applicationNumber: string
+  actionType: string
   rejections: Array<{
-    rejectionType: string;
-    claimNumbers: number[];
-    reasons: string;
-  }>;
+    rejectionType: string
+    claimNumbers: number[]
+    reasons: string
+  }>
   citedReferences: Array<{
-    publicationNumber: string;
-    documentType: string;
-    relevance: string;
-  }>;
+    publicationNumber: string
+    documentType: string
+    relevance: string
+  }>
 }
 ```
 
@@ -614,10 +610,10 @@ await server.start();
 // 调用工具
 const searchResult = await server.callTool('search_patents', {
   keywords: ['深度学习', '图像识别'],
-  limit: 5
-});
+  limit: 5,
+})
 
-console.log(`找到 ${searchResult.content.total} 件专利`);
+console.log(`找到 ${searchResult.content.total} 件专利`)
 
 // 注册自定义工具
 server.registerTool(
@@ -628,26 +624,26 @@ server.registerTool(
       type: 'object',
       properties: {
         features: { type: 'array' },
-        priorArt: { type: 'array' }
-      }
-    }
+        priorArt: { type: 'array' },
+      },
+    },
   },
   async (params) => {
     return {
       hasNovelty: true,
       hasInventiveStep: true,
-      confidence: 0.85
-    };
+      confidence: 0.85,
+    }
   }
-);
+)
 
 // 监听事件
 server.on('toolCalled', ({ name, params, result }) => {
-  console.log(`工具 ${name} 被调用`);
-});
+  console.log(`工具 ${name} 被调用`)
+})
 
 // 停止服务器
-await server.stop();
+await server.stop()
 ```
 
 ---
@@ -682,10 +678,7 @@ Authorization: Bearer YOUR_API_KEY
   "technicalField": "人工智能",
   "backgroundArt": "传统方法...",
   "inventionContent": "本发明提供...",
-  "technicalFeatures": [
-    "使用卷积神经网络",
-    "采用注意力机制"
-  ],
+  "technicalFeatures": ["使用卷积神经网络", "采用注意力机制"],
   "embodiment": "具体实施方式..."
 }
 ```
@@ -787,37 +780,34 @@ service PatentService {
 ### 使用示例
 
 ```typescript
-import { createClient } from '@grpc/grpc-js';
-import { ProtoReflectionService } from '@grpc/proto-loader';
+import { createClient } from '@grpc/grpc-js'
+import { ProtoReflectionService } from '@grpc/proto-loader'
 
-const client = createClient(
-  'patent-service.proto',
-  'localhost:50051'
-);
+const client = createClient('patent-service.proto', 'localhost:50051')
 
 const request = {
   inventionTitle: '一种基于深度学习的图像识别方法',
   technicalField: '人工智能',
   // ... 其他字段
-};
+}
 
-const response = await client.generatePatent(request);
-console.log(response.application);
+const response = await client.generatePatent(request)
+console.log(response.application)
 ```
 
 ---
 
 ## 📝 错误码
 
-| 错误码 | 说明 |
-|-------|------|
-| 400 | 请求参数错误 |
-| 401 | 未授权（API Key 无效） |
-| 403 | 禁止访问（权限不足） |
-| 404 | 资源不存在 |
-| 429 | 请求过于频繁 |
-| 500 | 服务器内部错误 |
-| 503 | 服务不可用 |
+| 错误码 | 说明                   |
+| ------ | ---------------------- |
+| 400    | 请求参数错误           |
+| 401    | 未授权（API Key 无效） |
+| 403    | 禁止访问（权限不足）   |
+| 404    | 资源不存在             |
+| 429    | 请求过于频繁           |
+| 500    | 服务器内部错误         |
+| 503    | 服务不可用             |
 
 ---
 

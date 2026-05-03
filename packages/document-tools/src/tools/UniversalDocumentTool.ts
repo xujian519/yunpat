@@ -4,24 +4,24 @@
  * 自动检测文件类型并调用相应的解析器
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import * as fs from 'fs'
+import * as path from 'path'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 import {
   DocumentParseResult,
   DocumentType,
   ElementType,
   OutputFormat,
   ParseOptions,
-} from '../types/document.js';
-import { detectFileType } from '../utils/converters.js';
+} from '../types/document.js'
+import { detectFileType } from '../utils/converters.js'
 
 // 导入各类工具
-import { PdfParseTool } from './PdfTools.js';
-import { DocxParseTool } from './DocxTools.js';
-import { ExcelParseTool } from './ExcelTools.js';
-import { ImageOcrTool } from './OcrTools.js';
+import { PdfParseTool } from './PdfTools.js'
+import { DocxParseTool } from './DocxTools.js'
+import { ExcelParseTool } from './ExcelTools.js'
+import { ImageOcrTool } from './OcrTools.js'
 
 /**
  * 通用文档解析工具
@@ -30,9 +30,9 @@ import { ImageOcrTool } from './OcrTools.js';
  */
 export class UniversalDocumentParserTool extends EnhancedBaseTool<
   {
-    filePath: string;
-    outputFormat?: OutputFormat;
-    options?: ParseOptions;
+    filePath: string
+    outputFormat?: OutputFormat
+    options?: ParseOptions
   },
   DocumentParseResult
 > {
@@ -68,7 +68,7 @@ export class UniversalDocumentParserTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { filePath: string; outputFormat?: OutputFormat; options?: ParseOptions },
@@ -76,48 +76,48 @@ export class UniversalDocumentParserTool extends EnhancedBaseTool<
   ): Promise<DocumentParseResult> {
     // 检查文件是否存在
     if (!fs.existsSync(input.filePath)) {
-      throw new Error(`文件不存在: ${input.filePath}`);
+      throw new Error(`文件不存在: ${input.filePath}`)
     }
 
     // 检测文件类型
-    const ext = path.extname(input.filePath).toLowerCase();
-    const documentType = this.getDocumentType(ext);
+    const ext = path.extname(input.filePath).toLowerCase()
+    const documentType = this.getDocumentType(ext)
 
     // 根据文件类型选择解析器
     switch (documentType) {
       case DocumentType.PDF:
-        const pdfTool = new PdfParseTool();
+        const pdfTool = new PdfParseTool()
         return await pdfTool.execute(
           {
             filePath: input.filePath,
             outputFormat: input.outputFormat,
           },
           context
-        );
+        )
 
       case DocumentType.DOCX:
-        const docxTool = new DocxParseTool();
+        const docxTool = new DocxParseTool()
         return await docxTool.execute(
           {
             filePath: input.filePath,
             outputFormat: input.outputFormat,
           },
           context
-        );
+        )
 
       case DocumentType.XLSX:
       case DocumentType.XLS:
-        const excelTool = new ExcelParseTool();
+        const excelTool = new ExcelParseTool()
         return await excelTool.execute(
           {
             filePath: input.filePath,
             outputFormat: input.outputFormat,
           },
           context
-        );
+        )
 
       case DocumentType.IMAGE:
-        const ocrTool = new ImageOcrTool();
+        const ocrTool = new ImageOcrTool()
         const ocrResult = await ocrTool.execute(
           {
             imagePath: input.filePath,
@@ -125,7 +125,7 @@ export class UniversalDocumentParserTool extends EnhancedBaseTool<
             outputFormat: 'text',
           },
           context
-        );
+        )
 
         return {
           documentType: DocumentType.IMAGE,
@@ -142,11 +142,11 @@ export class UniversalDocumentParserTool extends EnhancedBaseTool<
             language: ocrResult.language,
           },
           parseTime: 0,
-        };
+        }
 
       case DocumentType.TXT:
       case DocumentType.MD:
-        const text = fs.readFileSync(input.filePath, 'utf-8');
+        const text = fs.readFileSync(input.filePath, 'utf-8')
         return {
           documentType,
           filename: path.basename(input.filePath),
@@ -159,10 +159,10 @@ export class UniversalDocumentParserTool extends EnhancedBaseTool<
           ],
           metadata: {},
           parseTime: 0,
-        };
+        }
 
       default:
-        throw new Error(`不支持的文件类型: ${ext}`);
+        throw new Error(`不支持的文件类型: ${ext}`)
     }
   }
 
@@ -183,9 +183,9 @@ export class UniversalDocumentParserTool extends EnhancedBaseTool<
       '.bmp': DocumentType.IMAGE,
       '.txt': DocumentType.TXT,
       '.md': DocumentType.MD,
-    };
+    }
 
-    return typeMap[ext] || DocumentType.TXT;
+    return typeMap[ext] || DocumentType.TXT
   }
 }
 
@@ -194,23 +194,23 @@ export class UniversalDocumentParserTool extends EnhancedBaseTool<
  */
 export class BatchDocumentParserTool extends EnhancedBaseTool<
   {
-    filePaths: string[];
-    outputFormat?: OutputFormat;
-    options?: ParseOptions;
+    filePaths: string[]
+    outputFormat?: OutputFormat
+    options?: ParseOptions
   },
   {
     results: Array<{
-      filePath: string;
-      success: boolean;
-      result?: DocumentParseResult;
-      error?: string;
-    }>;
+      filePath: string
+      success: boolean
+      result?: DocumentParseResult
+      error?: string
+    }>
     summary: {
-      totalFiles: number;
-      successful: number;
-      failed: number;
-      totalParseTime: number;
-    };
+      totalFiles: number
+      successful: number
+      failed: number
+      totalParseTime: number
+    }
   }
 > {
   readonly metadata = {
@@ -253,24 +253,24 @@ export class BatchDocumentParserTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      filePaths: string[];
-      outputFormat?: OutputFormat;
-      options?: ParseOptions;
+      filePaths: string[]
+      outputFormat?: OutputFormat
+      options?: ParseOptions
     },
     context: ToolContext
   ): Promise<{
-    results: any[];
-    summary: any;
+    results: any[]
+    summary: any
   }> {
-    const parserTool = new UniversalDocumentParserTool();
-    const results: any[] = [];
-    let successful = 0;
-    let failed = 0;
-    let totalParseTime = 0;
+    const parserTool = new UniversalDocumentParserTool()
+    const results: any[] = []
+    let successful = 0
+    let failed = 0
+    let totalParseTime = 0
 
     for (const filePath of input.filePaths) {
       try {
@@ -281,23 +281,23 @@ export class BatchDocumentParserTool extends EnhancedBaseTool<
             options: input.options,
           },
           context
-        );
+        )
 
         results.push({
           filePath,
           success: true,
           result,
-        });
+        })
 
-        successful++;
-        totalParseTime += result.parseTime;
+        successful++
+        totalParseTime += result.parseTime
       } catch (error) {
-        failed++;
+        failed++
         results.push({
           filePath,
           success: false,
           error: error instanceof Error ? error.message : String(error),
-        });
+        })
       }
     }
 
@@ -309,7 +309,7 @@ export class BatchDocumentParserTool extends EnhancedBaseTool<
         failed,
         totalParseTime,
       },
-    };
+    }
   }
 }
 
@@ -318,17 +318,17 @@ export class BatchDocumentParserTool extends EnhancedBaseTool<
  */
 export class DocumentConverterTool extends EnhancedBaseTool<
   {
-    inputPath: string;
-    outputPath: string;
-    outputFormat: OutputFormat;
-    options?: ParseOptions;
+    inputPath: string
+    outputPath: string
+    outputFormat: OutputFormat
+    options?: ParseOptions
   },
   {
-    success: boolean;
-    inputPath: string;
-    outputPath: string;
-    outputFormat: OutputFormat;
-    parseTime: number;
+    success: boolean
+    inputPath: string
+    outputPath: string
+    outputFormat: OutputFormat
+    parseTime: number
   }
 > {
   readonly metadata = {
@@ -361,24 +361,24 @@ export class DocumentConverterTool extends EnhancedBaseTool<
     permissions: ['fs:read', 'fs:write'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      inputPath: string;
-      outputPath: string;
-      outputFormat: OutputFormat;
-      options?: ParseOptions;
+      inputPath: string
+      outputPath: string
+      outputFormat: OutputFormat
+      options?: ParseOptions
     },
     context: ToolContext
   ): Promise<{
-    success: boolean;
-    inputPath: string;
-    outputPath: string;
-    outputFormat: OutputFormat;
-    parseTime: number;
+    success: boolean
+    inputPath: string
+    outputPath: string
+    outputFormat: OutputFormat
+    parseTime: number
   }> {
-    const parserTool = new UniversalDocumentParserTool();
+    const parserTool = new UniversalDocumentParserTool()
     const result = await parserTool.execute(
       {
         filePath: input.inputPath,
@@ -386,31 +386,31 @@ export class DocumentConverterTool extends EnhancedBaseTool<
         options: input.options,
       },
       context
-    );
+    )
 
     // 根据输出格式生成内容
-    let content: string;
+    let content: string
 
     switch (input.outputFormat) {
       case OutputFormat.JSON:
-        content = JSON.stringify(result, null, 2);
-        break;
+        content = JSON.stringify(result, null, 2)
+        break
 
       case OutputFormat.MARKDOWN:
         // 简单的Markdown生成（实际应用中应该更复杂）
-        content = `# ${result.filename}\n\n${result.text}`;
-        break;
+        content = `# ${result.filename}\n\n${result.text}`
+        break
 
       case OutputFormat.TEXT:
-        content = result.text;
-        break;
+        content = result.text
+        break
 
       default:
-        throw new Error(`不支持的输出格式: ${input.outputFormat}`);
+        throw new Error(`不支持的输出格式: ${input.outputFormat}`)
     }
 
     // 写入文件
-    fs.writeFileSync(input.outputPath, content, 'utf-8');
+    fs.writeFileSync(input.outputPath, content, 'utf-8')
 
     return {
       success: true,
@@ -418,6 +418,6 @@ export class DocumentConverterTool extends EnhancedBaseTool<
       outputPath: input.outputPath,
       outputFormat: input.outputFormat,
       parseTime: result.parseTime,
-    };
+    }
   }
 }

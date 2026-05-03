@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ImageOcrTool, BatchImageOcrTool, ImageToMarkdownTool } from '../../src/tools/OcrTools.js';
-import { ToolCategory } from '@yunpat/core';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ImageOcrTool, BatchImageOcrTool, ImageToMarkdownTool } from '../../src/tools/OcrTools.js'
+import { ToolCategory } from '@yunpat/core'
 
 vi.mock('tesseract.js', () => ({
   default: {
@@ -17,127 +17,121 @@ vi.mock('tesseract.js', () => ({
       })
     ),
   },
-}));
+}))
 
 vi.mock('fs', async () => {
-  const actual = await vi.importActual<typeof import('fs')>('fs');
+  const actual = await vi.importActual<typeof import('fs')>('fs')
   return {
     ...actual,
     existsSync: vi.fn(() => true),
     statSync: vi.fn(() => ({ size: 2048 }) as any),
     readFileSync: vi.fn(() => Buffer.from('mock image')),
-  };
-});
+  }
+})
 
 const mockContext: any = {
   registry: {},
   llm: {} as any,
   memory: {} as any,
   eventBus: {} as any,
-};
+}
 
 describe('OcrTools', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   describe('ImageOcrTool', () => {
     it('has correct metadata', () => {
-      const tool = new ImageOcrTool();
-      expect(tool.metadata.name).toBe('image_ocr');
-      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT);
-      expect(tool.metadata.isConcurrencySafe).toBe(true);
-      expect(tool.metadata.permissions).toContain('fs:read');
-    });
+      const tool = new ImageOcrTool()
+      expect(tool.metadata.name).toBe('image_ocr')
+      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT)
+      expect(tool.metadata.isConcurrencySafe).toBe(true)
+      expect(tool.metadata.permissions).toContain('fs:read')
+    })
 
     it('recognizes text from image', async () => {
-      const tool = new ImageOcrTool();
-      const result = await tool.execute({ imagePath: '/mock/test.png' }, mockContext);
-      expect(result.text).toBe('OCR result text');
-      expect(result.confidence).toBe(95);
-      expect(result.language).toBe('eng+chi_sim');
-      expect(result.metadata.filename).toBe('test.png');
-      expect(result.metadata.size).toBe(2048);
-    });
+      const tool = new ImageOcrTool()
+      const result = await tool.execute({ imagePath: '/mock/test.png' }, mockContext)
+      expect(result.text).toBe('OCR result text')
+      expect(result.confidence).toBe(95)
+      expect(result.language).toBe('eng+chi_sim')
+      expect(result.metadata.filename).toBe('test.png')
+      expect(result.metadata.size).toBe(2048)
+    })
 
     it('throws error when file does not exist', async () => {
-      const { existsSync } = await import('fs');
-      vi.mocked(existsSync).mockReturnValueOnce(false);
-      const tool = new ImageOcrTool();
+      const { existsSync } = await import('fs')
+      vi.mocked(existsSync).mockReturnValueOnce(false)
+      const tool = new ImageOcrTool()
       await expect(tool.execute({ imagePath: '/nonexistent.png' }, mockContext)).rejects.toThrow(
         '图片文件不存在'
-      );
-    });
+      )
+    })
 
     it('returns word details in json mode', async () => {
-      const tool = new ImageOcrTool();
+      const tool = new ImageOcrTool()
       const result = await tool.execute(
         { imagePath: '/mock/test.png', outputFormat: 'json' },
         mockContext
-      );
-      expect(result.words).toBeDefined();
-      expect(result.words).toHaveLength(2);
-    });
-  });
+      )
+      expect(result.words).toBeDefined()
+      expect(result.words).toHaveLength(2)
+    })
+  })
 
   describe('BatchImageOcrTool', () => {
     it('has correct metadata', () => {
-      const tool = new BatchImageOcrTool();
-      expect(tool.metadata.name).toBe('batch_image_ocr');
-      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT);
-    });
+      const tool = new BatchImageOcrTool()
+      expect(tool.metadata.name).toBe('batch_image_ocr')
+      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT)
+    })
 
     it('processes multiple images', async () => {
-      const tool = new BatchImageOcrTool();
-      const result = await tool.execute(
-        { imagePaths: ['/mock/1.png', '/mock/2.png'] },
-        mockContext
-      );
-      expect(result.results).toHaveLength(2);
-      expect(result.summary.totalImages).toBe(2);
-      expect(result.summary.successful).toBe(2);
-      expect(result.summary.failed).toBe(0);
-    });
+      const tool = new BatchImageOcrTool()
+      const result = await tool.execute({ imagePaths: ['/mock/1.png', '/mock/2.png'] }, mockContext)
+      expect(result.results).toHaveLength(2)
+      expect(result.summary.totalImages).toBe(2)
+      expect(result.summary.successful).toBe(2)
+      expect(result.summary.failed).toBe(0)
+    })
 
     it('handles failures gracefully', async () => {
-      const { existsSync } = await import('fs');
-      vi.mocked(existsSync).mockReturnValueOnce(true).mockReturnValueOnce(false);
-      const tool = new BatchImageOcrTool();
-      const result = await tool.execute(
-        { imagePaths: ['/mock/1.png', '/mock/2.png'] },
-        mockContext
-      );
-      expect(result.summary.totalImages).toBe(2);
-      expect(result.summary.failed).toBe(1);
-    });
-  });
+      const { existsSync } = await import('fs')
+      vi.mocked(existsSync).mockReturnValueOnce(true).mockReturnValueOnce(false)
+      const tool = new BatchImageOcrTool()
+      const result = await tool.execute({ imagePaths: ['/mock/1.png', '/mock/2.png'] }, mockContext)
+      expect(result.summary.totalImages).toBe(2)
+      expect(result.summary.failed).toBe(1)
+    })
+  })
 
   describe('ImageToMarkdownTool', () => {
     it('has correct metadata', () => {
-      const tool = new ImageToMarkdownTool();
-      expect(tool.metadata.name).toBe('image_to_markdown');
-      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT);
-    });
+      const tool = new ImageToMarkdownTool()
+      expect(tool.metadata.name).toBe('image_to_markdown')
+      expect(tool.metadata.category).toBe(ToolCategory.DOCUMENT)
+    })
 
     it('converts image OCR to markdown with alt text', async () => {
-      const tool = new ImageToMarkdownTool();
+      const tool = new ImageToMarkdownTool()
       const result = await tool.execute(
         { imagePath: '/mock/test.png', includeAlt: true },
         mockContext
-      );
-      expect(result.markdown).toContain('![test.png](/mock/test.png)');
-      expect(result.markdown).toContain('OCR result text');
-      expect(result.metadata.confidence).toBe(95);
-    });
+      )
+      expect(result.markdown).toContain('![test.png](/mock/test.png)')
+      expect(result.markdown).toContain('OCR result text')
+      expect(result.metadata.confidence).toBe(95)
+    })
 
     it('excludes alt text when includeAlt is false', async () => {
-      const tool = new ImageToMarkdownTool();
+      const tool = new ImageToMarkdownTool()
       const result = await tool.execute(
         { imagePath: '/mock/test.png', includeAlt: false },
         mockContext
-      );
-      expect(result.markdown).not.toContain('![');
-      expect(result.markdown).toBe('OCR result text');
-    });
-  });
-});
+      )
+      expect(result.markdown).not.toContain('![')
+      expect(result.markdown).toBe('OCR result text')
+    })
+  })
+})

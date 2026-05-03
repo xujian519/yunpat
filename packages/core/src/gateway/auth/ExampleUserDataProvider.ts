@@ -5,7 +5,7 @@
  * 实际生产环境应该从数据库、缓存或其他用户管理系统中获取数据
  */
 
-import type { UserDataProvider, UserData } from './JwtManager.js';
+import type { UserDataProvider, UserData } from './JwtManager.js'
 
 /**
  * 内存用户数据提供者（仅用于示例/测试）
@@ -14,12 +14,12 @@ import type { UserDataProvider, UserData } from './JwtManager.js';
  * 生产环境应该实现从数据库或缓存读取用户数据
  */
 export class InMemoryUserDataProvider implements UserDataProvider {
-  private users = new Map<string, UserData>();
+  private users = new Map<string, UserData>()
 
   constructor(initialUsers?: UserData[]) {
     if (initialUsers) {
       for (const user of initialUsers) {
-        this.users.set(user.userId, user);
+        this.users.set(user.userId, user)
       }
     }
   }
@@ -28,21 +28,21 @@ export class InMemoryUserDataProvider implements UserDataProvider {
    * 添加或更新用户
    */
   setUserData(userData: UserData): void {
-    this.users.set(userData.userId, userData);
+    this.users.set(userData.userId, userData)
   }
 
   /**
    * 删除用户
    */
   deleteUserData(userId: string): void {
-    this.users.delete(userId);
+    this.users.delete(userId)
   }
 
   /**
    * 获取用户数据
    */
   async getUserData(userId: string): Promise<UserData | null> {
-    return this.users.get(userId) || null;
+    return this.users.get(userId) || null
   }
 }
 
@@ -62,7 +62,7 @@ export function createExampleUserDataProvider(): InMemoryUserDataProvider {
       roles: ['admin', 'user'],
       permissions: ['read', 'write', 'delete', 'admin'],
     },
-  ]);
+  ])
 
-  return provider;
+  return provider
 }

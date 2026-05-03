@@ -7,5 +7,5 @@
  * - 内容优化
  */
 
-export { WriterAgent } from './WriterAgent.js';
-export type { WritingTask, WritingPlan, WritingResult } from './WriterAgent.js';
+export { WriterAgent } from './WriterAgent.js'
+export type { WritingTask, WritingPlan, WritingResult } from './WriterAgent.js'

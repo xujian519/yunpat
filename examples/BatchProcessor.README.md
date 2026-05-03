@@ -9,6 +9,7 @@
 ### 1. 核心文件
 
 **`packages/core/src/llm/BatchProcessor.ts`**
+
 - ✅ 批量生成章节
 - ✅ 批量接口适配
 - ✅ 智能分批策略
@@ -18,17 +19,15 @@
 ### 2. 导出配置
 
 **`packages/core/src/index.ts`**
+
 ```typescript
-export {
-  BatchProcessor,
-  type BatchSectionResult,
-  type BatchConfig,
-} from './llm/BatchProcessor.js';
+export { BatchProcessor, type BatchSectionResult, type BatchConfig } from './llm/BatchProcessor.js'
 ```
 
 ### 3. 文档
 
 **`packages/core/src/llm/BatchProcessor.README.md`**
+
 - 完整的使用文档
 - 配置说明
 - 最佳实践
@@ -39,16 +38,16 @@ export {
 ### 批量生成
 
 ```typescript
-import { BatchProcessor } from '@yunpat/core';
+import { BatchProcessor } from '@yunpat/core'
 
 const batchProcessor = new BatchProcessor(llmAdapter, {
   maxSectionsPerBatch: 8,
   timeout: 120000,
   enabled: true,
-});
+})
 
-const sections = ['引言', '架构设计', '核心组件'];
-const results = await batchProcessor.batchGenerate(sections, plan, context);
+const sections = ['引言', '架构设计', '核心组件']
+const results = await batchProcessor.batchGenerate(sections, plan, context)
 ```
 
 ### 智能分批
@@ -58,11 +57,11 @@ const results = await batchProcessor.batchGenerate(sections, plan, context);
 
 ### 成本节省
 
-| 章节 | 原始调用 | 批处理后 | 节省 |
-|------|---------|---------|------|
-| 5个 | 5次 | 1次 | **80%** |
-| 10个 | 10次 | 2次 | **80%** |
-| 20个 | 20次 | 3次 | **85%** |
+| 章节 | 原始调用 | 批处理后 | 节省    |
+| ---- | -------- | -------- | ------- |
+| 5个  | 5次      | 1次      | **80%** |
+| 10个 | 10次     | 2次      | **80%** |
+| 20个 | 20次     | 3次      | **85%** |
 
 ## 集成到 WriterAgent
 
@@ -84,20 +83,20 @@ protected async act(plan: WritingPlan, context: ExecutionContext): Promise<Writi
 
 ```typescript
 // BatchWriterAgent.ts
-import { WriterAgent } from '@yunpat/agent-writer';
-import { BatchProcessor } from '@yunpat/core';
+import { WriterAgent } from '@yunpat/agent-writer'
+import { BatchProcessor } from '@yunpat/core'
 
 export class BatchWriterAgent extends WriterAgent {
-  private batchProcessor?: BatchProcessor;
+  private batchProcessor?: BatchProcessor
 
   // 重写 act 方法
   protected async act(plan: WritingPlan, context: ExecutionContext): Promise<WritingResult> {
     if (!this.batchProcessor) {
-      this.batchProcessor = new BatchProcessor(context.llm);
+      this.batchProcessor = new BatchProcessor(context.llm)
     }
 
-    const sections = plan.structure.sections.map(s => s.heading);
-    const resultMap = await this.batchProcessor.batchGenerate(sections, plan, context);
+    const sections = plan.structure.sections.map((s) => s.heading)
+    const resultMap = await this.batchProcessor.batchGenerate(sections, plan, context)
 
     // 组装内容...
   }
@@ -134,34 +133,37 @@ node packages/cli/dist/index.js run batch-writer --task "写一篇技术文档"
 ### 代码使用
 
 ```typescript
-import { BatchWriterAgent } from '@yunpat/agent-writer';
-import { createDeepSeekModel } from '@yunpat/core';
+import { BatchWriterAgent } from '@yunpat/agent-writer'
+import { createDeepSeekModel } from '@yunpat/core'
 
-const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY);
-const agent = new BatchWriterAgent({ llm });
+const llm = createDeepSeekModel(process.env.DEEPSEEK_API_KEY)
+const agent = new BatchWriterAgent({ llm })
 
 const result = await agent.execute({
   type: 'generate',
   topic: 'YunPat 智能体框架',
   requirements: ['技术文档', '详细'],
-});
+})
 ```
 
 ## 配置建议
 
 ### 小文档（< 5章节）
+
 ```typescript
 maxSectionsPerBatch: 8
 timeout: 60000
 ```
 
 ### 中等文档（5-15章节）
+
 ```typescript
 maxSectionsPerBatch: 6
 timeout: 120000
 ```
 
 ### 大文档（> 15章节）
+
 ```typescript
 maxSectionsPerBatch: 5
 timeout: 180000
@@ -175,7 +177,7 @@ timeout: 180000
 
 ```typescript
 try {
-  const results = await batchProcessor.batchGenerate(sections, plan, context);
+  const results = await batchProcessor.batchGenerate(sections, plan, context)
 } catch (error) {
   // 自动回退到逐个生成
 }
@@ -186,7 +188,7 @@ try {
 部分章节失败时，自动重新生成：
 
 ```typescript
-const missingSections = sections.filter(s => !results.has(s));
+const missingSections = sections.filter((s) => !results.has(s))
 if (missingSections.length > 0) {
   // 自动处理缺失章节
 }
@@ -195,8 +197,8 @@ if (missingSections.length > 0) {
 ### ✅ 成本估算
 
 ```typescript
-const savings = batchProcessor.estimateCostSavings(10);
-console.log(`节省: ${savings.savingsPercentage}%`); // 80%
+const savings = batchProcessor.estimateCostSavings(10)
+console.log(`节省: ${savings.savingsPercentage}%`) // 80%
 ```
 
 ## 下一步
@@ -249,6 +251,7 @@ packages/agents/writer/examples/
 BatchProcessor 已成功实施并可用，可立即集成到 WriterAgent 中使用。
 
 **预期效果**：
+
 - API 调用次数减少 60-80%
 - 成本降低 40-60%
 - 质量基本保持

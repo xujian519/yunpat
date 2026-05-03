@@ -11,18 +11,18 @@ import type {
   DeviationType,
   QualityMetrics,
   ResourceUsage,
-} from './types.js';
+} from './types.js'
 
 /**
  * 偏离检测器
  */
 export class DeviationDetector {
-  private baselineMetrics: Map<string, number>;
-  private detectionHistory: DeviationReport[];
+  private baselineMetrics: Map<string, number>
+  private detectionHistory: DeviationReport[]
 
   constructor() {
-    this.baselineMetrics = new Map();
-    this.detectionHistory = [];
+    this.baselineMetrics = new Map()
+    this.detectionHistory = []
   }
 
   /**
@@ -32,21 +32,21 @@ export class DeviationDetector {
     plannedState: ExecutionState,
     actualState: ExecutionState,
     thresholds: {
-      scheduleDeviation?: number;
-      qualityDeviation?: number;
-      resourceDeviation?: number;
+      scheduleDeviation?: number
+      qualityDeviation?: number
+      resourceDeviation?: number
     } = {}
   ): Promise<DeviationReport> {
-    const deviations: Deviation[] = [];
+    const deviations: Deviation[] = []
 
     // 1. 检测进度偏离
     const scheduleDeviation = this.detectScheduleDeviation(
       plannedState,
       actualState,
       thresholds.scheduleDeviation ?? 0.2
-    );
+    )
     if (scheduleDeviation) {
-      deviations.push(scheduleDeviation);
+      deviations.push(scheduleDeviation)
     }
 
     // 2. 检测质量偏离
@@ -54,37 +54,37 @@ export class DeviationDetector {
       plannedState.qualityMetrics,
       actualState.qualityMetrics,
       thresholds.qualityDeviation ?? 0.15
-    );
-    deviations.push(...qualityDeviations);
+    )
+    deviations.push(...qualityDeviations)
 
     // 3. 检测资源偏离
     const resourceDeviations = this.detectResourceDeviations(
       plannedState.resourceUsage,
       actualState.resourceUsage,
       thresholds.resourceDeviation ?? 0.25
-    );
-    deviations.push(...resourceDeviations);
+    )
+    deviations.push(...resourceDeviations)
 
     // 4. 检测依赖偏离
-    const dependencyDeviation = this.detectDependencyDeviation(plannedState, actualState);
+    const dependencyDeviation = this.detectDependencyDeviation(plannedState, actualState)
     if (dependencyDeviation) {
-      deviations.push(dependencyDeviation);
+      deviations.push(dependencyDeviation)
     }
 
     // 计算总体偏离分数
-    const overallDeviationScore = this.calculateOverallDeviationScore(deviations);
+    const overallDeviationScore = this.calculateOverallDeviationScore(deviations)
 
     const report: DeviationReport = {
       hasDeviation: deviations.length > 0,
       deviations,
       overallDeviationScore,
       timestamp: new Date(),
-    };
+    }
 
     // 记录历史
-    this.detectionHistory.push(report);
+    this.detectionHistory.push(report)
 
-    return report;
+    return report
   }
 
   /**
@@ -95,16 +95,16 @@ export class DeviationDetector {
     actualState: ExecutionState,
     threshold: number
   ): Deviation | null {
-    const plannedProgress = this.calculateProgress(plannedState);
-    const actualProgress = this.calculateProgress(actualState);
+    const plannedProgress = this.calculateProgress(plannedState)
+    const actualProgress = this.calculateProgress(actualState)
 
-    const deviationDegree = Math.abs(actualProgress - plannedProgress);
+    const deviationDegree = Math.abs(actualProgress - plannedProgress)
 
     if (deviationDegree < threshold) {
-      return null;
+      return null
     }
 
-    const isBehind = actualProgress < plannedProgress;
+    const isBehind = actualProgress < plannedProgress
 
     return {
       type: 'schedule_deviation' as DeviationType,
@@ -119,7 +119,7 @@ export class DeviationDetector {
       suggestions: isBehind
         ? ['增加资源投入', '调整任务优先级', '并行化执行', '分解剩余任务']
         : ['提高质量标准', '增加验证步骤'],
-    };
+    }
   }
 
   /**
@@ -130,10 +130,10 @@ export class DeviationDetector {
     actualQuality: QualityMetrics,
     threshold: number
   ): Deviation[] {
-    const deviations: Deviation[] = [];
+    const deviations: Deviation[] = []
 
     // 检测总体质量偏离
-    const qualityDeviation = Math.abs(plannedQuality.overallQuality - actualQuality.overallQuality);
+    const qualityDeviation = Math.abs(plannedQuality.overallQuality - actualQuality.overallQuality)
     if (qualityDeviation >= threshold) {
       deviations.push({
         type: 'quality_deviation' as DeviationType,
@@ -145,13 +145,13 @@ export class DeviationDetector {
         deviationDegree: qualityDeviation,
         affectedGoals: [],
         suggestions: this.generateQualityImprovementSuggestions(actualQuality),
-      });
+      })
     }
 
     // 检测成功率偏离
     const successRateDeviation = Math.abs(
       plannedQuality.taskSuccessRate - actualQuality.taskSuccessRate
-    );
+    )
     if (successRateDeviation >= threshold) {
       deviations.push({
         type: 'quality_deviation' as DeviationType,
@@ -162,7 +162,7 @@ export class DeviationDetector {
         deviationDegree: successRateDeviation,
         affectedGoals: [],
         suggestions: ['分析失败原因', '调整任务难度', '增加资源支持', '改进任务描述'],
-      });
+      })
     }
 
     // 检测质量趋势
@@ -176,10 +176,10 @@ export class DeviationDetector {
         deviationDegree: 0.3,
         affectedGoals: [],
         suggestions: ['暂停执行，分析原因', '调整执行策略', '增加质量控制'],
-      });
+      })
     }
 
-    return deviations;
+    return deviations
   }
 
   /**
@@ -190,7 +190,7 @@ export class DeviationDetector {
     actualResources: ResourceUsage,
     threshold: number
   ): Deviation[] {
-    const deviations: Deviation[] = [];
+    const deviations: Deviation[] = []
 
     // 检测Token使用偏离
     const tokenDeviation = this.calculateResourceDeviation(
@@ -198,10 +198,10 @@ export class DeviationDetector {
       plannedResources.estimatedTokens,
       actualResources.tokensUsed,
       actualResources.estimatedTokens
-    );
+    )
 
     if (Math.abs(tokenDeviation) >= threshold) {
-      const isOverBudget = tokenDeviation > 0;
+      const isOverBudget = tokenDeviation > 0
       deviations.push({
         type: 'resource_deviation' as DeviationType,
         severity: Math.abs(tokenDeviation) > 0.5 ? 'severe' : 'moderate',
@@ -213,7 +213,7 @@ export class DeviationDetector {
         suggestions: isOverBudget
           ? ['优化提示词', '减少冗余步骤', '使用语义缓存']
           : ['增加任务深度', '提高输出质量'],
-      });
+      })
     }
 
     // 检测时间偏离
@@ -222,10 +222,10 @@ export class DeviationDetector {
       plannedResources.estimatedTime,
       actualResources.timeElapsed,
       actualResources.estimatedTime
-    );
+    )
 
     if (Math.abs(timeDeviation) >= threshold) {
-      const isOverTime = timeDeviation > 0;
+      const isOverTime = timeDeviation > 0
       deviations.push({
         type: 'resource_deviation' as DeviationType,
         severity: Math.abs(timeDeviation) > 0.6 ? 'severe' : 'moderate',
@@ -237,10 +237,10 @@ export class DeviationDetector {
         suggestions: isOverTime
           ? ['跳过非关键任务', '降低输出质量', '并行化执行']
           : ['增加验证步骤', '提高输出质量'],
-      });
+      })
     }
 
-    return deviations;
+    return deviations
   }
 
   /**
@@ -251,25 +251,25 @@ export class DeviationDetector {
     actualState: ExecutionState
   ): Deviation | null {
     // 检查是否有任务在不满足依赖的情况下执行
-    const plannedDeps = plannedState.plan.dependencies;
-    const completedGoals = actualState.completedGoals;
+    const plannedDeps = plannedState.plan.dependencies
+    const completedGoals = actualState.completedGoals
 
-    let violatedDeps = 0;
-    const affectedGoals: string[] = [];
+    let violatedDeps = 0
+    const affectedGoals: string[] = []
 
     for (const edge of plannedDeps.edges) {
-      const fromCompleted = completedGoals.has(edge.from);
-      const toCompleted = completedGoals.has(edge.to);
+      const fromCompleted = completedGoals.has(edge.from)
+      const toCompleted = completedGoals.has(edge.to)
 
       // 如果依赖的目标已完成，但被依赖的目标未完成，可能存在依赖违反
       if (toCompleted && !fromCompleted) {
-        violatedDeps++;
-        affectedGoals.push(edge.to);
+        violatedDeps++
+        affectedGoals.push(edge.to)
       }
     }
 
     if (violatedDeps === 0) {
-      return null;
+      return null
     }
 
     return {
@@ -281,7 +281,7 @@ export class DeviationDetector {
       deviationDegree: Math.min(violatedDeps * 0.2, 1.0),
       affectedGoals,
       suggestions: ['重新排序任务', '调整依赖关系', '增加中间检查点'],
-    };
+    }
   }
 
   /**
@@ -289,7 +289,7 @@ export class DeviationDetector {
    */
   private calculateOverallDeviationScore(deviations: Deviation[]): number {
     if (deviations.length === 0) {
-      return 0;
+      return 0
     }
 
     // 加权平均，严重程度高的偏离权重更大
@@ -297,28 +297,28 @@ export class DeviationDetector {
       minor: 0.3,
       moderate: 0.6,
       severe: 1.0,
-    };
+    }
 
-    const totalWeight = deviations.reduce((sum, d) => sum + weights[d.severity], 0);
+    const totalWeight = deviations.reduce((sum, d) => sum + weights[d.severity], 0)
 
     const weightedSum = deviations.reduce(
       (sum, d) => sum + d.deviationDegree * weights[d.severity],
       0
-    );
+    )
 
-    return totalWeight > 0 ? weightedSum / totalWeight : 0;
+    return totalWeight > 0 ? weightedSum / totalWeight : 0
   }
 
   /**
    * 计算进度
    */
   private calculateProgress(state: ExecutionState): number {
-    const totalGoals = state.plan.subGoals.length;
+    const totalGoals = state.plan.subGoals.length
     if (totalGoals === 0) {
-      return 1;
+      return 1
     }
 
-    return state.completedGoals.size / totalGoals;
+    return state.completedGoals.size / totalGoals
   }
 
   /**
@@ -330,76 +330,76 @@ export class DeviationDetector {
     actualUsed: number,
     actualEstimated: number
   ): number {
-    const plannedRatio = plannedEstimated > 0 ? plannedUsed / plannedEstimated : 0;
-    const actualRatio = actualEstimated > 0 ? actualUsed / actualEstimated : 0;
+    const plannedRatio = plannedEstimated > 0 ? plannedUsed / plannedEstimated : 0
+    const actualRatio = actualEstimated > 0 ? actualUsed / actualEstimated : 0
 
-    return actualRatio - plannedRatio;
+    return actualRatio - plannedRatio
   }
 
   /**
    * 获取受影响的子目标
    */
   private getAffectedGoals(plannedState: ExecutionState, actualState: ExecutionState): string[] {
-    const behindGoals: string[] = [];
+    const behindGoals: string[] = []
 
     for (const goal of plannedState.plan.subGoals) {
       if (!actualState.completedGoals.has(goal.id)) {
-        behindGoals.push(goal.id);
+        behindGoals.push(goal.id)
       }
     }
 
-    return behindGoals;
+    return behindGoals
   }
 
   /**
    * 生成质量改进建议
    */
   private generateQualityImprovementSuggestions(quality: QualityMetrics): string[] {
-    const suggestions: string[] = [];
+    const suggestions: string[] = []
 
     if (quality.taskSuccessRate < 0.8) {
-      suggestions.push('分析失败任务模式');
-      suggestions.push('增加任务前验证');
+      suggestions.push('分析失败任务模式')
+      suggestions.push('增加任务前验证')
     }
 
     if (quality.averageQuality < 0.7) {
-      suggestions.push('提高输出标准');
-      suggestions.push('增加质量检查点');
+      suggestions.push('提高输出标准')
+      suggestions.push('增加质量检查点')
     }
 
     if (quality.qualityTrend === 'declining') {
-      suggestions.push('暂停并分析趋势原因');
-      suggestions.push('调整执行策略');
+      suggestions.push('暂停并分析趋势原因')
+      suggestions.push('调整执行策略')
     }
 
-    return suggestions;
+    return suggestions
   }
 
   /**
    * 获取历史记录
    */
   getHistory(): DeviationReport[] {
-    return [...this.detectionHistory];
+    return [...this.detectionHistory]
   }
 
   /**
    * 清除历史记录
    */
   clearHistory(): void {
-    this.detectionHistory = [];
+    this.detectionHistory = []
   }
 
   /**
    * 设置基线指标
    */
   setBaselineMetrics(metrics: Map<string, number>): void {
-    this.baselineMetrics = new Map(metrics);
+    this.baselineMetrics = new Map(metrics)
   }
 
   /**
    * 获取基线指标
    */
   getBaselineMetrics(): Map<string, number> {
-    return new Map(this.baselineMetrics);
+    return new Map(this.baselineMetrics)
   }
 }

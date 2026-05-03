@@ -7,17 +7,23 @@
 **验证点**：框架层只提供通用能力，不包含业务逻辑
 
 **检查方法**：
+
 - [x] `core/src/agent/Agent.ts` 只定义生命周期钩子，无业务逻辑
 - [x] `WriterAgent` 和 `ResearcherAgent` 继承 `Agent` 并实现自己的业务逻辑
 - [x] 新增智能体不需要修改 `core` 包
 
 **测试**：
+
 ```typescript
 // 创建自定义智能体 - 不需要修改 core 包
 class CustomAgent extends Agent {
-  name = 'custom';
-  protected async plan(input, ctx) { /* 业务逻辑 */ }
-  protected async act(plan, ctx) { /* 业务逻辑 */ }
+  name = 'custom'
+  protected async plan(input, ctx) {
+    /* 业务逻辑 */
+  }
+  protected async act(plan, ctx) {
+    /* 业务逻辑 */
+  }
 }
 ```
 
@@ -26,19 +32,21 @@ class CustomAgent extends Agent {
 **验证点**：智能体之间通过 EventBus 通信，无直接依赖
 
 **检查方法**：
+
 - [x] `EventBus` 实现发布订阅模式
 - [x] 智能体使用 `this.on()` 订阅事件
 - [x] 智能体使用 `this.send()` 发送消息
 
 **测试**：
+
 ```typescript
 // 智能体 A 订阅事件
 this.on('agent:completed', async (event) => {
-  console.log(`${event.source} 完成了任务`);
-});
+  console.log(`${event.source} 完成了任务`)
+})
 
 // 智能体 B 发送消息
-await this.send('agent-a', { data: 'message' });
+await this.send('agent-a', { data: 'message' })
 ```
 
 ### ✅ 3. 新增智能体不改框架
@@ -46,6 +54,7 @@ await this.send('agent-a', { data: 'message' });
 **验证点**：添加新智能体只需创建新文件，不修改现有代码
 
 **检查方法**：
+
 - [x] `WriterAgent` 和 `ResearcherAgent` 独立在各自的包中
 - [x] 框架通过依赖注入提供能力（eventBus, memory, tools, llm）
 - [x] 无需修改 `core` 包即可添加新智能体
@@ -55,11 +64,13 @@ await this.send('agent-a', { data: 'message' });
 ### ✅ 生命周期完整
 
 **执行流程**：
+
 ```
 before → init → plan → act (循环) → reflect → after
 ```
 
 **验证方法**：
+
 - [x] 所有钩子按正确顺序执行
 - [x] `plan` 和 `act` 是必需的
 - [x] 其他钩子是可选的
@@ -68,6 +79,7 @@ before → init → plan → act (循环) → reflect → after
 ### ✅ 事件总线解耦
 
 **事件类型**：
+
 - `agent:started` - 智能体开始执行
 - `agent:progress` - 执行进度更新
 - `agent:completed` - 智能体完成执行
@@ -77,6 +89,7 @@ before → init → plan → act (循环) → reflect → after
 - `tool:error` - 工具执行出错
 
 **验证方法**：
+
 - [x] 支持广播订阅（`agent:*`）
 - [x] 支持目标订阅（`agent:started:writer`）
 - [x] 支持请求响应模式（`request/respond`）
@@ -84,6 +97,7 @@ before → init → plan → act (循环) → reflect → after
 ### ✅ 工具扩展性
 
 **验证方法**：
+
 - [x] 动态注册工具：`tools.register()`
 - [x] 工具自动发送事件
 - [x] 支持自定义工具类
@@ -123,6 +137,7 @@ packages/
 ### ✅ Writer Agent（技术写作助手）
 
 **能力**：
+
 - [x] 文档生成
 - [x] 大纲规划
 - [x] 内容生成
@@ -131,6 +146,7 @@ packages/
 ### ✅ Researcher Agent（研究分析师）
 
 **能力**：
+
 - [x] 搜索策略制定
 - [x] 信息提取
 - [x] 数据分析
@@ -139,6 +155,7 @@ packages/
 ### ✅ CLI 工具
 
 **命令**：
+
 - [x] `yunpat init` - 初始化框架
 - [x] `yunpat run <agent>` - 运行智能体
 - [x] `yunpat list` - 列出智能体

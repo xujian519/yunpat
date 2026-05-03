@@ -15,13 +15,13 @@ export const OA_RESPONSE_PROMPT = `
 5. 评估答复成功率
 
 请用中文回复，保持专业法律用语。
-`;
+`
 
 export function renderOaResponsePrompt(params: {
-  oaType: string;
-  officeActionText: string;
-  citedReferences: string;
-  currentClaims: string;
+  oaType: string
+  officeActionText: string
+  citedReferences: string
+  currentClaims: string
 }): string {
   return `${OA_RESPONSE_PROMPT}
 
@@ -36,5 +36,5 @@ ${params.citedReferences}
 
 ## 当前权利要求
 ${params.currentClaims}
-`;
+`
 }

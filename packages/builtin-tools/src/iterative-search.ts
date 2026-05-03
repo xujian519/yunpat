@@ -5,24 +5,24 @@
  * 适用于专利检索、现有技术搜索、法律条文查证等
  */
 
-import * as fs from 'fs';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
+import * as fs from 'fs'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 /**
  * 搜索结果项
  */
 export interface SearchResultItem {
   /** 标题 */
-  title: string;
+  title: string
   /** 链接 */
-  url: string;
+  url: string
   /** 摘要 */
-  snippet: string;
+  snippet: string
   /** 相关性分数 */
-  relevanceScore: number;
+  relevanceScore: number
   /** 迭代轮次 */
-  iteration: number;
+  iteration: number
 }
 
 /**
@@ -30,30 +30,30 @@ export interface SearchResultItem {
  */
 export interface IterativeSearchResult {
   /** 搜索主题 */
-  query: string;
+  query: string
   /** 迭代次数 */
-  iterations: number;
+  iterations: number
   /** 总搜索结果数 */
-  totalResults: number;
+  totalResults: number
   /** 去重后的结果 */
-  uniqueResults: SearchResultItem[];
+  uniqueResults: SearchResultItem[]
   /** 搜索轮次详情 */
   rounds: Array<{
-    round: number;
-    queries: string[];
-    results: SearchResultItem[];
-  }>;
+    round: number
+    queries: string[]
+    results: SearchResultItem[]
+  }>
   /** 分析报告 */
   analysis: {
     /** 关键发现 */
-    keyFindings: string[];
+    keyFindings: string[]
     /** 知识空白 */
-    knowledgeGaps: string[];
+    knowledgeGaps: string[]
     /** 建议的后续查询 */
-    suggestedQueries: string[];
-  };
+    suggestedQueries: string[]
+  }
   /** 搜索时间 */
-  searchTime: number;
+  searchTime: number
 }
 
 /**
@@ -61,13 +61,13 @@ export interface IterativeSearchResult {
  */
 export class IterativeSearchTool extends EnhancedBaseTool<
   {
-    query: string;
-    iterations?: number;
-    width?: number;
-    temperature?: number;
-    dedupThreshold?: number;
-    deepRead?: boolean;
-    searchType?: 'auto' | 'web' | 'patent';
+    query: string
+    iterations?: number
+    width?: number
+    temperature?: number
+    dedupThreshold?: number
+    deepRead?: boolean
+    searchType?: 'auto' | 'web' | 'patent'
   },
   IterativeSearchResult
 > {
@@ -119,21 +119,21 @@ export class IterativeSearchTool extends EnhancedBaseTool<
     permissions: ['network:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      query: string;
-      iterations?: number;
-      width?: number;
-      temperature?: number;
-      dedupThreshold?: number;
-      deepRead?: boolean;
-      searchType?: 'auto' | 'web' | 'patent';
+      query: string
+      iterations?: number
+      width?: number
+      temperature?: number
+      dedupThreshold?: number
+      deepRead?: boolean
+      searchType?: 'auto' | 'web' | 'patent'
     },
     context: ToolContext
   ): Promise<IterativeSearchResult> {
-    const startTime = Date.now();
+    const startTime = Date.now()
     const {
       query,
       iterations = 3,
@@ -142,16 +142,16 @@ export class IterativeSearchTool extends EnhancedBaseTool<
       dedupThreshold = 0.85,
       deepRead = false,
       searchType = 'auto',
-    } = input;
+    } = input
 
     const rounds: Array<{
-      round: number;
-      queries: string[];
-      results: SearchResultItem[];
-    }> = [];
+      round: number
+      queries: string[]
+      results: SearchResultItem[]
+    }> = []
 
-    let allResults: SearchResultItem[] = [];
-    let currentQuery = query;
+    let allResults: SearchResultItem[] = []
+    let currentQuery = query
 
     // 执行多轮迭代搜索
     for (let i = 0; i < iterations; i++) {
@@ -163,36 +163,36 @@ export class IterativeSearchTool extends EnhancedBaseTool<
         temperature,
         allResults,
         context
-      );
+      )
 
       // 2. 执行搜索
-      const roundResults: SearchResultItem[] = [];
+      const roundResults: SearchResultItem[] = []
       for (const q of queries) {
-        const results = await this.executeSearch(q, searchType, context);
-        roundResults.push(...results);
+        const results = await this.executeSearch(q, searchType, context)
+        roundResults.push(...results)
       }
 
       // 3. 去重和排序
-      const uniqueResults = this.deduplicateResults(roundResults, allResults, dedupThreshold);
+      const uniqueResults = this.deduplicateResults(roundResults, allResults, dedupThreshold)
 
       // 4. 分析结果并更新查询
-      const analysis = await this.analyzeResults(uniqueResults, context);
-      allResults.push(...uniqueResults);
+      const analysis = await this.analyzeResults(uniqueResults, context)
+      allResults.push(...uniqueResults)
 
       rounds.push({
         round: i + 1,
         queries,
         results: uniqueResults,
-      });
+      })
 
       // 5. 基于分析结果更新下一轮查询
       if (i < iterations - 1) {
-        currentQuery = this.refineQuery(analysis, currentQuery);
+        currentQuery = this.refineQuery(analysis, currentQuery)
       }
     }
 
     // 最终分析
-    const finalAnalysis = await this.analyzeResults(allResults, context);
+    const finalAnalysis = await this.analyzeResults(allResults, context)
 
     return {
       query,
@@ -202,7 +202,7 @@ export class IterativeSearchTool extends EnhancedBaseTool<
       rounds,
       analysis: finalAnalysis,
       searchTime: Date.now() - startTime,
-    };
+    }
   }
 
   /**
@@ -224,14 +224,14 @@ export class IterativeSearchTool extends EnhancedBaseTool<
       `${baseQuery} 实践应用`,
       `${baseQuery} 判断标准`,
       `${baseQuery} 要点`,
-    ];
+    ]
 
     // 如果有前序结果，可以基于结果优化（这里简化处理）
     if (iteration > 0 && previousResults.length > 0) {
-      return baseQueries.slice(0, width);
+      return baseQueries.slice(0, width)
     }
 
-    return baseQueries.slice(0, width);
+    return baseQueries.slice(0, width)
   }
 
   /**
@@ -255,7 +255,7 @@ export class IterativeSearchTool extends EnhancedBaseTool<
         relevanceScore: 0.8,
         iteration: 1,
       },
-    ];
+    ]
   }
 
   /**
@@ -266,25 +266,25 @@ export class IterativeSearchTool extends EnhancedBaseTool<
     existingResults: SearchResultItem[],
     threshold: number
   ): SearchResultItem[] {
-    const unique: SearchResultItem[] = [];
+    const unique: SearchResultItem[] = []
 
     for (const result of newResults) {
       // 检查是否与现有结果重复
       const isDuplicate = existingResults.some(
         (existing) => this.calculateSimilarity(result, existing) >= threshold
-      );
+      )
 
       // 检查是否与新结果中已添加的重复
       const isDuplicateInNew = unique.some(
         (existing) => this.calculateSimilarity(result, existing) >= threshold
-      );
+      )
 
       if (!isDuplicate && !isDuplicateInNew) {
-        unique.push(result);
+        unique.push(result)
       }
     }
 
-    return unique;
+    return unique
   }
 
   /**
@@ -293,13 +293,13 @@ export class IterativeSearchTool extends EnhancedBaseTool<
   private calculateSimilarity(result1: SearchResultItem, result2: SearchResultItem): number {
     // 简化的相似度计算
     // 实际应该使用更复杂的算法（如编辑距离、余弦相似度等）
-    if (result1.url === result2.url) return 1.0;
+    if (result1.url === result2.url) return 1.0
 
-    const titleSimilarity = result1.title === result2.title ? 0.8 : 0.2;
+    const titleSimilarity = result1.title === result2.title ? 0.8 : 0.2
 
-    const snippetSimilarity = result1.snippet === result2.snippet ? 0.5 : 0.1;
+    const snippetSimilarity = result1.snippet === result2.snippet ? 0.5 : 0.1
 
-    return titleSimilarity * 0.7 + snippetSimilarity * 0.3;
+    return titleSimilarity * 0.7 + snippetSimilarity * 0.3
   }
 
   /**
@@ -309,19 +309,19 @@ export class IterativeSearchTool extends EnhancedBaseTool<
     results: SearchResultItem[],
     _context: ToolContext
   ): Promise<{
-    keyFindings: string[];
-    knowledgeGaps: string[];
-    suggestedQueries: string[];
+    keyFindings: string[]
+    knowledgeGaps: string[]
+    suggestedQueries: string[]
   }> {
     // 简化实现：基于搜索结果生成基础分析
-    const keyFindings = results.slice(0, 3).map((r) => r.title);
-    const suggestedQueries = results.slice(0, 3).map((r) => r.title);
+    const keyFindings = results.slice(0, 3).map((r) => r.title)
+    const suggestedQueries = results.slice(0, 3).map((r) => r.title)
 
     return {
       keyFindings,
       knowledgeGaps: [],
       suggestedQueries,
-    };
+    }
   }
 
   /**
@@ -333,9 +333,9 @@ export class IterativeSearchTool extends EnhancedBaseTool<
   ): string {
     // 基于分析结果优化查询
     if (analysis.knowledgeGaps.length > 0) {
-      return `${currentQuery} ${analysis.knowledgeGaps[0]}`;
+      return `${currentQuery} ${analysis.knowledgeGaps[0]}`
     }
-    return currentQuery;
+    return currentQuery
   }
 }
 
@@ -344,12 +344,12 @@ export class IterativeSearchTool extends EnhancedBaseTool<
  */
 export class PatentSearchTool extends EnhancedBaseTool<
   {
-    query: string;
-    searchFields?: string[];
-    dateRange?: { start: string; end: string };
-    assignee?: string;
-    inventor?: string;
-    ipc?: string;
+    query: string
+    searchFields?: string[]
+    dateRange?: { start: string; end: string }
+    assignee?: string
+    inventor?: string
+    ipc?: string
   },
   IterativeSearchResult
 > {
@@ -388,27 +388,27 @@ export class PatentSearchTool extends EnhancedBaseTool<
     permissions: ['network:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      query: string;
-      searchFields?: string[];
-      dateRange?: { start: string; end: string };
-      assignee?: string;
-      inventor?: string;
-      ipc?: string;
+      query: string
+      searchFields?: string[]
+      dateRange?: { start: string; end: string }
+      assignee?: string
+      inventor?: string
+      ipc?: string
     },
     context: ToolContext
   ): Promise<IterativeSearchResult> {
     // 使用迭代搜索工具，但针对专利检索优化
-    const iterativeTool = new IterativeSearchTool();
+    const iterativeTool = new IterativeSearchTool()
 
     // 构建专利检索查询
-    let patentQuery = input.query;
-    if (input.assignee) patentQuery += ` 申请人:${input.assignee}`;
-    if (input.inventor) patentQuery += ` 发明人:${input.inventor}`;
-    if (input.ipc) patentQuery += ` IPC:${input.ipc}`;
+    let patentQuery = input.query
+    if (input.assignee) patentQuery += ` 申请人:${input.assignee}`
+    if (input.inventor) patentQuery += ` 发明人:${input.inventor}`
+    if (input.ipc) patentQuery += ` IPC:${input.ipc}`
 
     return iterativeTool.execute(
       {
@@ -418,6 +418,6 @@ export class PatentSearchTool extends EnhancedBaseTool<
         searchType: 'patent',
       },
       context
-    );
+    )
   }
 }

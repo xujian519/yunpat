@@ -302,7 +302,7 @@ jobs:
     runs-on: [self-hosted, macos-arm64]
     needs: quality
     timeout-minutes: 15
-    continue-on-error: true  # 失败不阻塞主流程
+    continue-on-error: true # 失败不阻塞主流程
 
     steps:
       - name: 🔧 修复 Git 网络配置
@@ -343,7 +343,7 @@ jobs:
     runs-on: [self-hosted, macos-arm64]
     needs: quality
     timeout-minutes: 15
-    continue-on-error: true  # 失败不阻塞主流程
+    continue-on-error: true # 失败不阻塞主流程
 
     steps:
       - name: 🔧 修复 Git 网络配置

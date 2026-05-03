@@ -4,22 +4,22 @@
  * 支持使用Whisper进行语音转文字
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { z } from 'zod';
-import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core';
-import { TranscriptionResult, TranscriptionOptions, DocumentType } from '../types/document.js';
+import * as fs from 'fs'
+import * as path from 'path'
+import { z } from 'zod'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
+import { TranscriptionResult, TranscriptionOptions, DocumentType } from '../types/document.js'
 
 // 动态导入
-let whisper: any;
+let whisper: any
 
 async function loadWhisper() {
   if (!whisper) {
     try {
-      const module = await import('nodejs-whisper');
-      whisper = module.default || module;
+      const module = await import('nodejs-whisper')
+      whisper = module.default || module
     } catch (error) {
-      throw new Error('nodejs-whisper未安装。请运行: npm install nodejs-whisper');
+      throw new Error('nodejs-whisper未安装。请运行: npm install nodejs-whisper')
     }
   }
 }
@@ -29,10 +29,10 @@ async function loadWhisper() {
  */
 export class AudioTranscriptionTool extends EnhancedBaseTool<
   {
-    audioPath: string;
-    language?: string;
-    translateToEnglish?: boolean;
-    outputFormat?: 'text' | 'srt' | 'vtt' | 'json';
+    audioPath: string
+    language?: string
+    translateToEnglish?: boolean
+    outputFormat?: 'text' | 'srt' | 'vtt' | 'json'
   },
   TranscriptionResult
 > {
@@ -69,25 +69,25 @@ export class AudioTranscriptionTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: {
-      audioPath: string;
-      language?: string;
-      translateToEnglish?: boolean;
-      outputFormat?: 'text' | 'srt' | 'vtt' | 'json';
+      audioPath: string
+      language?: string
+      translateToEnglish?: boolean
+      outputFormat?: 'text' | 'srt' | 'vtt' | 'json'
     },
     _context: ToolContext
   ): Promise<TranscriptionResult> {
-    await loadWhisper();
+    await loadWhisper()
 
     // 检查文件是否存在
     if (!fs.existsSync(input.audioPath)) {
-      throw new Error(`音频文件不存在: ${input.audioPath}`);
+      throw new Error(`音频文件不存在: ${input.audioPath}`)
     }
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // 使用Whisper进行转写
     try {
@@ -95,17 +95,17 @@ export class AudioTranscriptionTool extends EnhancedBaseTool<
         language: input.language,
         model: 'base', // 使用基础模型，可配置为tiny、small、medium、large
         task: input.translateToEnglish ? 'translate' : 'transcribe',
-      });
+      })
 
-      const processingTime = (Date.now() - startTime) / 1000;
+      const processingTime = (Date.now() - startTime) / 1000
 
       return {
         text: transcript.text || transcript,
         language: input.language || 'auto-detected',
         processingTime,
-      };
+      }
     } catch (error) {
-      throw new Error(`音频转写失败: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`音频转写失败: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 }
@@ -115,16 +115,16 @@ export class AudioTranscriptionTool extends EnhancedBaseTool<
  */
 export class AudioToSrtTool extends EnhancedBaseTool<
   {
-    audioPath: string;
-    language?: string;
+    audioPath: string
+    language?: string
   },
   {
-    srt: string;
+    srt: string
     metadata: {
-      filename: string;
-      duration: number;
-      language: string;
-    };
+      filename: string
+      duration: number
+      language: string
+    }
   }
 > {
   readonly metadata = {
@@ -147,13 +147,13 @@ export class AudioToSrtTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { audioPath: string; language?: string },
     context: ToolContext
   ): Promise<{ srt: string; metadata: any }> {
-    const transcribeTool = new AudioTranscriptionTool();
+    const transcribeTool = new AudioTranscriptionTool()
     const result = await transcribeTool.execute(
       {
         audioPath: input.audioPath,
@@ -161,11 +161,11 @@ export class AudioToSrtTool extends EnhancedBaseTool<
         outputFormat: 'json',
       },
       context
-    );
+    )
 
     // 如果有分段信息，生成SRT格式
     if (result.segments && result.segments.length > 0) {
-      const srt = this.generateSrt(result.segments);
+      const srt = this.generateSrt(result.segments)
       return {
         srt,
         metadata: {
@@ -173,18 +173,18 @@ export class AudioToSrtTool extends EnhancedBaseTool<
           duration: result.processingTime,
           language: result.language,
         },
-      };
+      }
     }
 
     // 如果没有分段信息，生成简单的SRT
-    const lines = result.text.split('\n').filter((line) => line.trim());
+    const lines = result.text.split('\n').filter((line) => line.trim())
     const srt = lines
       .map((line, index) => {
-        const startTime = index * 3; // 假设每行3秒
-        const endTime = (index + 1) * 3;
-        return `${index + 1}\n${this.formatTime(startTime)} --> ${this.formatTime(endTime)}\n${line}\n`;
+        const startTime = index * 3 // 假设每行3秒
+        const endTime = (index + 1) * 3
+        return `${index + 1}\n${this.formatTime(startTime)} --> ${this.formatTime(endTime)}\n${line}\n`
       })
-      .join('\n');
+      .join('\n')
 
     return {
       srt,
@@ -193,7 +193,7 @@ export class AudioToSrtTool extends EnhancedBaseTool<
         duration: result.processingTime,
         language: result.language,
       },
-    };
+    }
   }
 
   /**
@@ -204,23 +204,23 @@ export class AudioToSrtTool extends EnhancedBaseTool<
   ): string {
     return segments
       .map((seg) => {
-        return `${seg.id}\n${this.formatTime(seg.start)} --> ${this.formatTime(seg.end)}\n${seg.text}\n`;
+        return `${seg.id}\n${this.formatTime(seg.start)} --> ${this.formatTime(seg.end)}\n${seg.text}\n`
       })
-      .join('\n');
+      .join('\n')
   }
 
   /**
    * 格式化时间为SRT格式
    */
   private formatTime(seconds: number): string {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-    const ms = Math.floor((seconds % 1) * 1000);
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = Math.floor(seconds % 60)
+    const ms = Math.floor((seconds % 1) * 1000)
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs
       .toString()
-      .padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
+      .padStart(2, '0')},${ms.toString().padStart(3, '0')}`
   }
 }
 
@@ -229,16 +229,16 @@ export class AudioToSrtTool extends EnhancedBaseTool<
  */
 export class AudioToVttTool extends EnhancedBaseTool<
   {
-    audioPath: string;
-    language?: string;
+    audioPath: string
+    language?: string
   },
   {
-    vtt: string;
+    vtt: string
     metadata: {
-      filename: string;
-      duration: number;
-      language: string;
-    };
+      filename: string
+      duration: number
+      language: string
+    }
   }
 > {
   readonly metadata = {
@@ -261,20 +261,20 @@ export class AudioToVttTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { audioPath: string; language?: string },
     context: ToolContext
   ): Promise<{ vtt: string; metadata: any }> {
-    const srtTool = new AudioToSrtTool();
-    const { srt } = await srtTool.execute(input, context);
+    const srtTool = new AudioToSrtTool()
+    const { srt } = await srtTool.execute(input, context)
 
     // 将SRT转换为VTT格式
-    let vtt = 'WEBVTT\n\n';
+    let vtt = 'WEBVTT\n\n'
 
     // 简单的SRT到VTT转换（将逗号改为点）
-    vtt += srt.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+    vtt += srt.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2')
 
     return {
       vtt,
@@ -283,7 +283,7 @@ export class AudioToVttTool extends EnhancedBaseTool<
         duration: 0, // VTT工具没有duration信息
         language: input.language || 'unknown',
       },
-    };
+    }
   }
 }
 
@@ -292,17 +292,17 @@ export class AudioToVttTool extends EnhancedBaseTool<
  */
 export class AudioToMarkdownTool extends EnhancedBaseTool<
   {
-    audioPath: string;
-    language?: string;
-    includeTimestamps?: boolean;
+    audioPath: string
+    language?: string
+    includeTimestamps?: boolean
   },
   {
-    markdown: string;
+    markdown: string
     metadata: {
-      filename: string;
-      duration: number;
-      language: string;
-    };
+      filename: string
+      duration: number
+      language: string
+    }
   }
 > {
   readonly metadata = {
@@ -326,13 +326,13 @@ export class AudioToMarkdownTool extends EnhancedBaseTool<
     permissions: ['fs:read'],
     version: '1.0.0',
     author: 'YunPat Team',
-  };
+  }
 
   async execute(
     input: { audioPath: string; language?: string; includeTimestamps?: boolean },
     context: ToolContext
   ): Promise<{ markdown: string; metadata: any }> {
-    const transcribeTool = new AudioTranscriptionTool();
+    const transcribeTool = new AudioTranscriptionTool()
     const result = await transcribeTool.execute(
       {
         audioPath: input.audioPath,
@@ -340,21 +340,21 @@ export class AudioToMarkdownTool extends EnhancedBaseTool<
         outputFormat: 'json',
       },
       context
-    );
+    )
 
-    let markdown = `# 音频转写结果\n\n`;
-    markdown += `**文件名**: ${path.basename(input.audioPath)}\n`;
-    markdown += `**语言**: ${result.language}\n`;
-    markdown += `**处理时长**: ${result.processingTime.toFixed(2)}秒\n\n`;
-    markdown += `---\n\n`;
+    let markdown = `# 音频转写结果\n\n`
+    markdown += `**文件名**: ${path.basename(input.audioPath)}\n`
+    markdown += `**语言**: ${result.language}\n`
+    markdown += `**处理时长**: ${result.processingTime.toFixed(2)}秒\n\n`
+    markdown += `---\n\n`
 
     if (input.includeTimestamps && result.segments && result.segments.length > 0) {
       for (const segment of result.segments) {
-        const timestamp = this.formatTimestamp(segment.start);
-        markdown += `**[${timestamp}]** ${segment.text}\n\n`;
+        const timestamp = this.formatTimestamp(segment.start)
+        markdown += `**[${timestamp}]** ${segment.text}\n\n`
       }
     } else {
-      markdown += result.text;
+      markdown += result.text
     }
 
     return {
@@ -364,15 +364,15 @@ export class AudioToMarkdownTool extends EnhancedBaseTool<
         duration: result.processingTime,
         language: result.language,
       },
-    };
+    }
   }
 
   /**
    * 格式化时间戳
    */
   private formatTimestamp(seconds: number): string {
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    const minutes = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${minutes}:${secs.toString().padStart(2, '0')}`
   }
 }

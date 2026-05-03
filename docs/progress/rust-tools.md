@@ -12,6 +12,7 @@
 **文件**: `rust/crates/patent-tools/src/llm.rs`
 
 **功能**:
+
 - ✅ 支持 DeepSeek API
 - ✅ 支持通义千问 API
 - ✅ 支持 OpenAI 兼容 API
@@ -23,11 +24,13 @@
 ### 2. Rust 工具集成 LLM ✅
 
 **已更新的模块**:
+
 - ✅ `generation.rs` - 权利要求生成器集成 LLM
 - ✅ `analysis.rs` - 专利分析工具集成 LLM
 - ✅ `patent-agent/src/agent.rs` - 智能体使用 LLM 客户端
 
 **核心特性**:
+
 - ✅ 生成权利要求（调用 LLM）
 - ✅ 评估质量（调用 LLM）
 - ✅ 提取技术特征（调用 LLM）
@@ -38,6 +41,7 @@
 **文件**: `rust/crates/patent-cli/src/main.rs`
 
 **子命令**:
+
 - ✅ `search` - 搜索专利
 - ✅ `generate` - 生成权利要求
 - ✅ `assess` - 评估质量
@@ -45,6 +49,7 @@
 - ✅ `analyze` - 分析专利
 
 **特性**:
+
 - ✅ 配置文件支持
 - ✅ 环境变量支持
 - ✅ 彩色输出
@@ -56,11 +61,13 @@
 
 ### 编译错误
 
-**原因**: 
+**原因**:
+
 1. 类型导入路径问题
 2. 方法调用问题（join、is_false）
 
 **解决方案**:
+
 - 正在修复导入路径
 - 简化部分实现
 
@@ -122,6 +129,7 @@ npm install commander chalk
 ### 方案 A: 修复 Rust 编译（推荐）
 
 **优点**:
+
 - 完整的 Rust 实现
 - 性能最优
 - 类型安全
@@ -131,6 +139,7 @@ npm install commander chalk
 ### 方案 B: 创建 Node.js CLI（快速）
 
 **优点**:
+
 - 立即可用
 - 快速迭代
 - 易于调试
@@ -140,6 +149,7 @@ npm install commander chalk
 ### 方案 C: 混合方案（平衡）
 
 **优点**:
+
 - Rust 核心工具（高性能）
 - Node.js CLI（易用性）
 - MCP 服务器（灵活性）

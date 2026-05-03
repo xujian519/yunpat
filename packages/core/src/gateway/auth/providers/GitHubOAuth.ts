@@ -10,53 +10,53 @@ import {
   OAuthProviderConfig,
   OAuthUserInfo,
   OAuthProviderError,
-} from './BaseOAuthProvider.js';
+} from './BaseOAuthProvider.js'
 
 /**
  * GitHub OAuth 配置
  */
 export interface GitHubOAuthConfig {
   /** 客户端 ID */
-  clientId: string;
+  clientId: string
 
   /** 客户端密钥 */
-  clientSecret: string;
+  clientSecret: string
 
   /** 是否使用 PKCE（默认 true） */
-  usePkce?: boolean;
+  usePkce?: boolean
 }
 
 /**
  * GitHub 用户信息响应
  */
 interface GitHubUserInfoResponse {
-  id: number;
-  login: string;
-  name: string | null;
-  email: string | null;
-  avatar_url: string;
-  html_url: string;
-  bio: string | null;
-  blog: string | null;
-  location: string | null;
-  company: string | null;
-  public_repos: number;
-  followers: number;
-  following: number;
-  created_at: string;
-  updated_at: string;
-  type: string;
-  site_admin: boolean;
+  id: number
+  login: string
+  name: string | null
+  email: string | null
+  avatar_url: string
+  html_url: string
+  bio: string | null
+  blog: string | null
+  location: string | null
+  company: string | null
+  public_repos: number
+  followers: number
+  following: number
+  created_at: string
+  updated_at: string
+  type: string
+  site_admin: boolean
 }
 
 /**
  * GitHub 邮箱信息响应
  */
 interface GitHubEmailResponse {
-  email: string;
-  verified: boolean;
-  primary: boolean;
-  visibility: string | null;
+  email: string
+  verified: boolean
+  primary: boolean
+  visibility: string | null
 }
 
 /**
@@ -72,16 +72,16 @@ export class GitHubOAuth extends BaseOAuthProvider {
       userInfoEndpoint: 'https://api.github.com/user',
       defaultScope: ['read:user', 'user:email'],
       usePkce: config.usePkce,
-    };
+    }
 
-    super(fullConfig);
+    super(fullConfig)
   }
 
   /**
    * 获取提供商名称
    */
   getName(): string {
-    return 'github';
+    return 'github'
   }
 
   /**
@@ -97,22 +97,22 @@ export class GitHubOAuth extends BaseOAuthProvider {
         Authorization: `Bearer ${accessToken}`,
         Accept: 'application/vnd.github.v3+json',
       },
-    });
+    })
 
     if (!userResponse.ok) {
-      const error = await userResponse.text();
+      const error = await userResponse.text()
       throw new OAuthProviderError(
         `获取用户信息失败: ${error}`,
         'user_info_failed',
         userResponse.status
-      );
+      )
     }
 
-    const userData = (await userResponse.json()) as GitHubUserInfoResponse;
+    const userData = (await userResponse.json()) as GitHubUserInfoResponse
 
     // 获取邮箱信息（GitHub 默认不返回公开邮箱）
-    let primaryEmail: string | undefined;
-    let emailVerified = false;
+    let primaryEmail: string | undefined
+    let emailVerified = false
 
     try {
       const emailsResponse = await fetch('https://api.github.com/user/emails', {
@@ -120,15 +120,15 @@ export class GitHubOAuth extends BaseOAuthProvider {
           Authorization: `Bearer ${accessToken}`,
           Accept: 'application/vnd.github.v3+json',
         },
-      });
+      })
 
       if (emailsResponse.ok) {
-        const emails = (await emailsResponse.json()) as GitHubEmailResponse[];
-        const primaryEmailData = emails.find((e) => e.primary);
+        const emails = (await emailsResponse.json()) as GitHubEmailResponse[]
+        const primaryEmailData = emails.find((e) => e.primary)
 
         if (primaryEmailData) {
-          primaryEmail = primaryEmailData.email;
-          emailVerified = primaryEmailData.verified;
+          primaryEmail = primaryEmailData.email
+          emailVerified = primaryEmailData.verified
         }
       }
     } catch {
@@ -155,6 +155,6 @@ export class GitHubOAuth extends BaseOAuthProvider {
         type: userData.type,
         siteAdmin: userData.site_admin,
       },
-    };
+    }
   }
 }

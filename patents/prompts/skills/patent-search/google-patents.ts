@@ -14,13 +14,13 @@ export const PATENT_SEARCH_PROMPT = `
 - 构建布尔表达式：(关键词A OR 同义词A) AND (关键词B OR 同义词B)
 - 使用IPC分类号缩小范围
 - 注意同义词和近义词扩展
-`;
+`
 
 export function renderPatentSearchPrompt(params: {
-  query: string;
-  techField?: string;
-  ipcCodes?: string[];
-  applicant?: string;
+  query: string
+  techField?: string
+  ipcCodes?: string[]
+  applicant?: string
 }): string {
   return `${PATENT_SEARCH_PROMPT}
 
@@ -32,5 +32,5 @@ ${params.ipcCodes?.length ? `## IPC分类\n${params.ipcCodes.join(', ')}` : ''}
 ${params.applicant ? `## 申请人\n${params.applicant}` : ''}
 
 请构建最优检索策略。
-`;
+`
 }

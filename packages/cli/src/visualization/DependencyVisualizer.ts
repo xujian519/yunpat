@@ -11,26 +11,26 @@ import type {
   TextRenderOptions,
   ExportOptions,
   RenderResult,
-} from './types.js';
-import { ExportFormat } from './types.js';
-import { TextRenderer } from './TextRenderer.js';
-import { TUIRenderer } from './TUIRenderer.js';
-import { writeFile } from 'fs/promises';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+} from './types.js'
+import { ExportFormat } from './types.js'
+import { TextRenderer } from './TextRenderer.js'
+import { TUIRenderer } from './TUIRenderer.js'
+import { writeFile } from 'fs/promises'
+import { exec } from 'child_process'
+import { promisify } from 'util'
 
-const execAsync = promisify(exec);
+const execAsync = promisify(exec)
 
 /**
  * 依赖图可视化器
  */
 export class DependencyVisualizer {
-  private textRenderer: TextRenderer;
-  private tuiRenderer: TUIRenderer;
+  private textRenderer: TextRenderer
+  private tuiRenderer: TUIRenderer
 
   constructor() {
-    this.textRenderer = new TextRenderer();
-    this.tuiRenderer = new TUIRenderer();
+    this.textRenderer = new TextRenderer()
+    this.tuiRenderer = new TUIRenderer()
   }
 
   /**
@@ -43,7 +43,7 @@ export class DependencyVisualizer {
         return this.textRenderer.render(plan, {
           ...options,
           format: options.format,
-        } as TextRenderOptions);
+        } as TextRenderOptions)
 
       case 'tui' as any:
         return this.tuiRenderer.render(plan, {
@@ -51,13 +51,13 @@ export class DependencyVisualizer {
           refreshRate: 1000,
           enableKeyboardNav: true,
           showHelp: true,
-        } as TUIRenderOptions);
+        } as TUIRenderOptions)
 
       default:
         return this.textRenderer.render(plan, {
           ...options,
           format: 'text',
-        } as TextRenderOptions);
+        } as TextRenderOptions)
     }
   }
 
@@ -67,27 +67,27 @@ export class DependencyVisualizer {
   async export(plan: HierarchicalPlan, options: ExportOptions): Promise<void> {
     switch (options.format) {
       case ExportFormat.DOT:
-        await this.exportAsDOT(plan, options.outputPath);
-        break;
+        await this.exportAsDOT(plan, options.outputPath)
+        break
 
       case ExportFormat.PNG:
-        await this.exportAsPNG(plan, options);
-        break;
+        await this.exportAsPNG(plan, options)
+        break
 
       case ExportFormat.SVG:
-        await this.exportAsSVG(plan, options);
-        break;
+        await this.exportAsSVG(plan, options)
+        break
 
       case ExportFormat.JSON:
-        await this.exportAsJSON(plan, options.outputPath);
-        break;
+        await this.exportAsJSON(plan, options.outputPath)
+        break
 
       case ExportFormat.MERMAID:
-        await this.exportAsMermaid(plan, options.outputPath);
-        break;
+        await this.exportAsMermaid(plan, options.outputPath)
+        break
 
       default:
-        throw new Error(`不支持的导出格式: ${options.format}`);
+        throw new Error(`不支持的导出格式: ${options.format}`)
     }
   }
 
@@ -95,24 +95,24 @@ export class DependencyVisualizer {
    * 导出为DOT格式
    */
   private async exportAsDOT(plan: HierarchicalPlan, outputPath: string): Promise<void> {
-    const dotContent = this.textRenderer.exportToDOT(plan);
-    await writeFile(outputPath, dotContent, 'utf-8');
+    const dotContent = this.textRenderer.exportToDOT(plan)
+    await writeFile(outputPath, dotContent, 'utf-8')
   }
 
   /**
    * 导出为Mermaid格式
    */
   private async exportAsMermaid(plan: HierarchicalPlan, outputPath: string): Promise<void> {
-    const mermaidContent = this.textRenderer.exportToMermaid(plan);
-    await writeFile(outputPath, mermaidContent, 'utf-8');
+    const mermaidContent = this.textRenderer.exportToMermaid(plan)
+    await writeFile(outputPath, mermaidContent, 'utf-8')
   }
 
   /**
    * 导出为JSON格式
    */
   private async exportAsJSON(plan: HierarchicalPlan, outputPath: string): Promise<void> {
-    const jsonContent = JSON.stringify(plan, null, 2);
-    await writeFile(outputPath, jsonContent, 'utf-8');
+    const jsonContent = JSON.stringify(plan, null, 2)
+    await writeFile(outputPath, jsonContent, 'utf-8')
   }
 
   /**
@@ -120,22 +120,22 @@ export class DependencyVisualizer {
    */
   private async exportAsPNG(plan: HierarchicalPlan, options: ExportOptions): Promise<void> {
     // 1. 先生成DOT文件
-    const dotPath = options.outputPath.replace('.png', '.dot');
-    await this.exportAsDOT(plan, dotPath);
+    const dotPath = options.outputPath.replace('.png', '.dot')
+    await this.exportAsDOT(plan, dotPath)
 
     // 2. 使用Graphviz的dot命令转换为PNG
-    const width = options.width || 1200;
-    const height = options.height || 800;
-    const dpi = options.dpi || 300;
+    const width = options.width || 1200
+    const height = options.height || 800
+    const dpi = options.dpi || 300
 
     try {
-      const command = `dot -Tpng -Gsize=${width / dpi},${height / dpi}\\! -Gdpi=${dpi} -o "${options.outputPath}" "${dotPath}"`;
-      await execAsync(command);
+      const command = `dot -Tpng -Gsize=${width / dpi},${height / dpi}\\! -Gdpi=${dpi} -o "${options.outputPath}" "${dotPath}"`
+      await execAsync(command)
 
       // 3. 清理临时DOT文件
-      await execAsync(`rm "${dotPath}"`);
+      await execAsync(`rm "${dotPath}"`)
     } catch (error) {
-      throw new Error(`导出PNG失败: ${error}. 请确保已安装Graphviz (brew install graphviz)`);
+      throw new Error(`导出PNG失败: ${error}. 请确保已安装Graphviz (brew install graphviz)`)
     }
   }
 
@@ -144,18 +144,18 @@ export class DependencyVisualizer {
    */
   private async exportAsSVG(plan: HierarchicalPlan, options: ExportOptions): Promise<void> {
     // 1. 先生成DOT文件
-    const dotPath = options.outputPath.replace('.svg', '.dot');
-    await this.exportAsDOT(plan, dotPath);
+    const dotPath = options.outputPath.replace('.svg', '.dot')
+    await this.exportAsDOT(plan, dotPath)
 
     // 2. 使用Graphviz的dot命令转换为SVG
     try {
-      const command = `dot -Tsvg -o "${options.outputPath}" "${dotPath}"`;
-      await execAsync(command);
+      const command = `dot -Tsvg -o "${options.outputPath}" "${dotPath}"`
+      await execAsync(command)
 
       // 3. 清理临时DOT文件
-      await execAsync(`rm "${dotPath}"`);
+      await execAsync(`rm "${dotPath}"`)
     } catch (error) {
-      throw new Error(`导出SVG失败: ${error}. 请确保已安装Graphviz (brew install graphviz)`);
+      throw new Error(`导出SVG失败: ${error}. 请确保已安装Graphviz (brew install graphviz)`)
     }
   }
 
@@ -163,43 +163,43 @@ export class DependencyVisualizer {
    * 获取文本渲染器
    */
   getTextRenderer(): TextRenderer {
-    return this.textRenderer;
+    return this.textRenderer
   }
 
   /**
    * 获取TUI渲染器
    */
   getTUIRenderer(): TUIRenderer {
-    return this.tuiRenderer;
+    return this.tuiRenderer
   }
 
   /**
    * 检查导出依赖
    */
   async checkExportDependencies(format: ExportFormat): Promise<{
-    available: boolean;
-    message: string;
+    available: boolean
+    message: string
   }> {
     if (format === ExportFormat.PNG || format === ExportFormat.SVG) {
       try {
-        await execAsync('which dot');
-        return { available: true, message: 'Graphviz已安装' };
+        await execAsync('which dot')
+        return { available: true, message: 'Graphviz已安装' }
       } catch {
         return {
           available: false,
           message: '需要安装Graphviz: brew install graphviz',
-        };
+        }
       }
     }
 
-    return { available: true, message: '导出依赖已满足' };
+    return { available: true, message: '导出依赖已满足' }
   }
 
   /**
    * 获取支持的导出格式
    */
   getSupportedFormats(): ExportFormat[] {
-    return Object.values(ExportFormat);
+    return Object.values(ExportFormat)
   }
 
   /**
@@ -212,8 +212,8 @@ export class DependencyVisualizer {
       [ExportFormat.SVG]: 'SVG矢量图 (需要Graphviz)',
       [ExportFormat.JSON]: 'JSON格式 (数据)',
       [ExportFormat.MERMAID]: 'Mermaid图表格式',
-    };
+    }
 
-    return descriptions[format] || format;
+    return descriptions[format] || format
   }
 }

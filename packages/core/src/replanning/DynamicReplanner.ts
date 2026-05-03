@@ -15,11 +15,11 @@ import type {
   DynamicReplannerConfig,
   ReplanningHistory,
   PlanAdjustment,
-} from './types.js';
-import { ReplanningTriggerType, RecoveryStrategyType } from './types.js';
-import { DeviationDetector } from './DeviationDetector.js';
-import { RecoveryStrategySelector } from './RecoveryStrategySelector.js';
-import { IncrementalPlanner } from './IncrementalPlanner.js';
+} from './types.js'
+import { ReplanningTriggerType, RecoveryStrategyType } from './types.js'
+import { DeviationDetector } from './DeviationDetector.js'
+import { RecoveryStrategySelector } from './RecoveryStrategySelector.js'
+import { IncrementalPlanner } from './IncrementalPlanner.js'
 
 /**
  * 默认配置
@@ -37,26 +37,26 @@ const DEFAULT_CONFIG: DynamicReplannerConfig = {
   minConfidenceThreshold: 0.6,
   useLLMForAnalysis: false,
   useLLMForPlanning: false,
-};
+}
 
 /**
  * 动态重规划器
  */
 export class DynamicReplanner {
-  private config: DynamicReplannerConfig;
-  private deviationDetector: DeviationDetector;
-  private strategySelector: RecoveryStrategySelector;
-  private incrementalPlanner: IncrementalPlanner;
-  private replanningHistory: ReplanningHistory[];
-  private llm: LLMAdapter | null;
+  private config: DynamicReplannerConfig
+  private deviationDetector: DeviationDetector
+  private strategySelector: RecoveryStrategySelector
+  private incrementalPlanner: IncrementalPlanner
+  private replanningHistory: ReplanningHistory[]
+  private llm: LLMAdapter | null
 
   constructor(llm: LLMAdapter | null = null, config: Partial<DynamicReplannerConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
-    this.llm = llm;
-    this.deviationDetector = new DeviationDetector();
-    this.strategySelector = new RecoveryStrategySelector();
-    this.incrementalPlanner = new IncrementalPlanner();
-    this.replanningHistory = [];
+    this.config = { ...DEFAULT_CONFIG, ...config }
+    this.llm = llm
+    this.deviationDetector = new DeviationDetector()
+    this.strategySelector = new RecoveryStrategySelector()
+    this.incrementalPlanner = new IncrementalPlanner()
+    this.replanningHistory = []
   }
 
   /**
@@ -77,13 +77,13 @@ export class DynamicReplanner {
           condition: (state) => state.failedGoals.size > 0,
         },
         reason: `失败任务数: ${actualState.failedGoals.size}`,
-      };
+      }
     }
 
     // 2. 检测质量下降（高优先级）
     if (this.config.enableQualityDropDetection) {
       const qualityDrop =
-        plannedState.qualityMetrics.overallQuality - actualState.qualityMetrics.overallQuality;
+        plannedState.qualityMetrics.overallQuality - actualState.qualityMetrics.overallQuality
 
       if (qualityDrop > this.config.qualityDropThreshold) {
         return {
@@ -97,13 +97,13 @@ export class DynamicReplanner {
               this.config.qualityDropThreshold,
           },
           reason: `质量下降: ${(qualityDrop * 100).toFixed(1)}%`,
-        };
+        }
       }
     }
 
     // 3. 检测超时
     if (this.config.enableTimeoutDetection) {
-      const timeOverrun = actualState.elapsedTime / actualState.resourceUsage.estimatedTime;
+      const timeOverrun = actualState.elapsedTime / actualState.resourceUsage.estimatedTime
       if (timeOverrun > 1 + this.config.timeoutTolerance) {
         return {
           shouldReplan: true,
@@ -116,7 +116,7 @@ export class DynamicReplanner {
               1 + this.config.timeoutTolerance,
           },
           reason: `超时比例: ${(timeOverrun * 100).toFixed(1)}%`,
-        };
+        }
       }
     }
 
@@ -130,7 +130,7 @@ export class DynamicReplanner {
           qualityDeviation: this.config.qualityDropThreshold,
           resourceDeviation: this.config.timeoutTolerance,
         }
-      );
+      )
 
       if (deviationReport.hasDeviation) {
         return {
@@ -143,11 +143,11 @@ export class DynamicReplanner {
               deviationReport.overallDeviationScore > this.config.deviationThreshold,
           },
           reason: `偏离分数: ${deviationReport.overallDeviationScore.toFixed(2)}`,
-        };
+        }
       }
     }
 
-    return { shouldReplan: false };
+    return { shouldReplan: false }
   }
 
   /**
@@ -158,13 +158,13 @@ export class DynamicReplanner {
     executionState: ExecutionState,
     trigger: ReplanningTrigger
   ): Promise<ReplanningResult> {
-    console.log(`[DynamicReplanner] 开始重规划，触发原因: ${trigger.description}`);
+    console.log(`[DynamicReplanner] 开始重规划，触发原因: ${trigger.description}`)
 
     // 1. 检测偏离
     const deviationReport = await this.deviationDetector.detectDeviations(
       this.createPlannedState(currentPlan),
       executionState
-    );
+    )
 
     // 2. 创建重规划上下文
     const context: ReplanningContext = {
@@ -173,16 +173,16 @@ export class DynamicReplanner {
       deviationReport,
       trigger,
       history: this.replanningHistory,
-    };
+    }
 
     // 3. 选择恢复策略
     const strategy = await this.strategySelector.selectBestStrategy(
       deviationReport,
       context,
       this.config.preferredStrategies
-    );
+    )
 
-    console.log(`[DynamicReplanner] 选择策略: ${strategy.name}`);
+    console.log(`[DynamicReplanner] 选择策略: ${strategy.name}`)
 
     // 4. 生成增量调整
     const adjustment = await this.incrementalPlanner.generateIncrementalAdjustment(context, {
@@ -190,16 +190,16 @@ export class DynamicReplanner {
       modifications: [],
       estimatedImprovement: strategy.estimatedSuccess,
       reasoning: strategy.description,
-    });
+    })
 
     // 5. 应用调整
-    const adjustedPlan = await this.incrementalPlanner.applyAdjustment(currentPlan, adjustment);
+    const adjustedPlan = await this.incrementalPlanner.applyAdjustment(currentPlan, adjustment)
 
     // 6. 验证调整
-    const isValid = await this.incrementalPlanner.validateAdjustment(adjustedPlan, adjustment);
+    const isValid = await this.incrementalPlanner.validateAdjustment(adjustedPlan, adjustment)
 
     if (!isValid) {
-      console.warn('[DynamicReplanner] 调整验证失败，返回原始计划');
+      console.warn('[DynamicReplanner] 调整验证失败，返回原始计划')
       return {
         originalPlan: currentPlan,
         adjustedPlan: currentPlan,
@@ -212,11 +212,11 @@ export class DynamicReplanner {
         reasoning: '调整验证失败',
         confidence: 0,
         estimatedImprovement: 0,
-      };
+      }
     }
 
     // 7. 计算置信度
-    const confidence = this.calculateConfidence(adjustment, deviationReport);
+    const confidence = this.calculateConfidence(adjustment, deviationReport)
 
     // 8. 记录历史
     const historyEntry: ReplanningHistory = {
@@ -224,10 +224,10 @@ export class DynamicReplanner {
       trigger: trigger.type,
       adjustment,
       result: confidence >= this.config.minConfidenceThreshold ? 'success' : 'failure',
-    };
-    this.replanningHistory.push(historyEntry);
+    }
+    this.replanningHistory.push(historyEntry)
 
-    console.log(`[DynamicReplanner] 重规划完成，置信度: ${confidence.toFixed(2)}`);
+    console.log(`[DynamicReplanner] 重规划完成，置信度: ${confidence.toFixed(2)}`)
 
     return {
       originalPlan: currentPlan,
@@ -236,7 +236,7 @@ export class DynamicReplanner {
       reasoning: this.generateReasoning(deviationReport, strategy, adjustment),
       confidence,
       estimatedImprovement: adjustment.estimatedImprovement,
-    };
+    }
   }
 
   /**
@@ -262,7 +262,7 @@ export class DynamicReplanner {
         estimatedTime: plan.estimatedDuration,
         resources: new Map(),
       },
-    };
+    }
   }
 
   /**
@@ -272,34 +272,34 @@ export class DynamicReplanner {
     adjustment: PlanAdjustment,
     deviationReport: DeviationReport
   ): number {
-    let confidence = 0.5; // 基础置信度
+    let confidence = 0.5 // 基础置信度
 
     // 根据偏离严重程度调整
     if (deviationReport.hasDeviation) {
       const maxSeverity = deviationReport.deviations.reduce(
         (max, d) => (d.severity === 'severe' ? d : max),
         {} as unknown
-      );
+      )
 
       if ((maxSeverity as any).severity === 'severe') {
-        confidence -= 0.2;
+        confidence -= 0.2
       } else if ((maxSeverity as any).severity === 'moderate') {
-        confidence -= 0.1;
+        confidence -= 0.1
       }
     }
 
     // 根据修改数量调整
-    const modificationCount = adjustment.modifications.length;
+    const modificationCount = adjustment.modifications.length
     if (modificationCount > 5) {
-      confidence -= 0.15;
+      confidence -= 0.15
     } else if (modificationCount > 3) {
-      confidence -= 0.05;
+      confidence -= 0.05
     }
 
     // 根据预期改进调整
-    confidence += adjustment.estimatedImprovement * 0.3;
+    confidence += adjustment.estimatedImprovement * 0.3
 
-    return Math.max(0, Math.min(1, confidence));
+    return Math.max(0, Math.min(1, confidence))
   }
 
   /**
@@ -310,69 +310,69 @@ export class DynamicReplanner {
     strategy: unknown,
     adjustment: PlanAdjustment
   ): string {
-    const parts: string[] = [];
+    const parts: string[] = []
 
     // 偏离描述
     if (deviationReport.hasDeviation) {
-      parts.push(`检测到${deviationReport.deviations.length}个偏离`);
-      parts.push(`总体偏离分数: ${deviationReport.overallDeviationScore.toFixed(2)}`);
+      parts.push(`检测到${deviationReport.deviations.length}个偏离`)
+      parts.push(`总体偏离分数: ${deviationReport.overallDeviationScore.toFixed(2)}`)
     }
 
     // 策略描述
-    parts.push(`选择策略: ${(strategy as any).description}`);
+    parts.push(`选择策略: ${(strategy as any).description}`)
 
     // 调整描述
-    parts.push(`应用${adjustment.modifications.length}个修改`);
+    parts.push(`应用${adjustment.modifications.length}个修改`)
 
-    return parts.join('；');
+    return parts.join('；')
   }
 
   /**
    * 获取重规划历史
    */
   getHistory(): ReplanningHistory[] {
-    return [...this.replanningHistory];
+    return [...this.replanningHistory]
   }
 
   /**
    * 清除历史
    */
   clearHistory(): void {
-    this.replanningHistory = [];
+    this.replanningHistory = []
   }
 
   /**
    * 更新配置
    */
   updateConfig(config: Partial<DynamicReplannerConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config }
   }
 
   /**
    * 获取配置
    */
   getConfig(): DynamicReplannerConfig {
-    return { ...this.config };
+    return { ...this.config }
   }
 
   /**
    * 获取偏离检测器
    */
   getDeviationDetector(): DeviationDetector {
-    return this.deviationDetector;
+    return this.deviationDetector
   }
 
   /**
    * 获取策略选择器
    */
   getStrategySelector(): RecoveryStrategySelector {
-    return this.strategySelector;
+    return this.strategySelector
   }
 
   /**
    * 获取增量规划器
    */
   getIncrementalPlanner(): IncrementalPlanner {
-    return this.incrementalPlanner;
+    return this.incrementalPlanner
   }
 }

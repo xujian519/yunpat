@@ -394,7 +394,7 @@ export class OrchestratorAgent {
           success: false,
           error: error as Error,
           executionTime: 0,
-          data: undefined,
+          data: {},
         })
       }
     }
@@ -453,7 +453,7 @@ export class OrchestratorAgent {
         success: false,
         error: error as Error,
         executionTime: Date.now() - startTime,
-        data: undefined,
+        data: {},
       }
     }
 

@@ -12,6 +12,7 @@ import type { AgentConfig } from '@yunpat/core'
  */
 export interface ExecutionContext {
   sessionId?: string
+  userId?: string
   logger?: {
     info: (...args: any[]) => void
     error: (...args: any[]) => void

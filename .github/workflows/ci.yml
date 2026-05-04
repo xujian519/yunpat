@@ -35,6 +35,11 @@ jobs:
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
+      - name: 构建依赖包
+        run: |
+          # 构建orchestrator依赖的core包
+          pnpm --filter "@yunpat/core" build
+
       - name: 运行测试
         run: |
           # 暂时跳过core包测试（需要外部服务，作为技术债务处理）

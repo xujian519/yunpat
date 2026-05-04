@@ -85,3 +85,6 @@ packages/rust-tools/crates/*/target/
 
 **/.DS_Store
 .tsbuildinfo
+# 有语法错误的开发文件，暂时忽略
+patents/agents/writer/PatentWriterAgent.js
+test/enhanced-oa-responder.test.js

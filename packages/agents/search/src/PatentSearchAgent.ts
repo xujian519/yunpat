@@ -1,5 +1,13 @@
-import { Agent, type ExecutionContext } from '@yunpat/core'
+import {
+  Agent,
+  type ExecutionContext,
+  type EventBus,
+  type MemoryStore,
+  type ToolRegistry,
+  type LLMAdapter,
+} from '@yunpat/core'
 import { PatentSearchTool, PatentSearchMode, type PatentRecord } from '@yunpat/patent-tools'
+import { AcademicSearchTool } from '@yunpat/builtin-tools'
 
 export interface SearchStrategy {
   keywords: string[]
@@ -21,6 +29,15 @@ export interface SearchOutput {
   results: PatentRecord[]
   totalFound: number
   searchTimeMs: number
+  academicPapers?: Array<{
+    title: string
+    authors: string
+    year: string
+    venue: string
+    citations: number
+    url: string
+    abstract: string
+  }>
 }
 
 interface SearchPlan {
@@ -29,18 +46,21 @@ interface SearchPlan {
 
 export class PatentSearchAgent extends Agent {
   private searchTool: PatentSearchTool
+  private academicSearchTool: AcademicSearchTool
 
   constructor(config: {
     name: string
     description: string
-    eventBus: any
-    memory: any
-    tools: any
-    llm: any
+    eventBus: EventBus
+    memory: MemoryStore
+    tools: ToolRegistry
+    llm: LLMAdapter
     searchTool?: PatentSearchTool
+    academicSearchTool?: AcademicSearchTool
   }) {
     super(config)
     this.searchTool = config.searchTool || new PatentSearchTool()
+    this.academicSearchTool = config.academicSearchTool || new AcademicSearchTool()
   }
 
   protected async plan(input: SearchInput, _context: ExecutionContext): Promise<SearchPlan> {
@@ -85,6 +105,8 @@ export class PatentSearchAgent extends Agent {
       },
     }
 
+    // 专利检索
+    console.log('\n📊 [专利检索] 正在检索专利数据库...')
     const searchResult = await this.searchTool.execute(
       {
         query: strategy.searchQuery,
@@ -95,9 +117,42 @@ export class PatentSearchAgent extends Agent {
       toolContext as any
     )
 
+    // 学术论文检索
+    console.log('\n📚 [学术论文检索] 正在检索学术论文...')
+    let academicPapers: SearchOutput['academicPapers'] = undefined
+
+    try {
+      const academicResult = await this.academicSearchTool.execute(
+        {
+          query: strategy.searchQuery,
+          limit: 5,
+        },
+        toolContext as any
+      )
+
+      if (academicResult.success && academicResult.results.length > 0) {
+        academicPapers = academicResult.results.map((paper) => ({
+          title: paper.title,
+          authors: paper.authors,
+          year: paper.year,
+          venue: paper.venue,
+          citations: paper.citations,
+          url: paper.url,
+          abstract: paper.abstract,
+        }))
+        console.log(`   找到 ${academicResult.totalResults} 篇学术论文`)
+      }
+    } catch (error) {
+      console.warn(`   学术论文检索失败: ${error instanceof Error ? error.message : String(error)}`)
+      // 学术论文检索失败不影响专利检索结果
+    }
+
     const searchTimeMs = Date.now() - startTime
 
-    console.log(`\n✅ [专利检索] 完成 (找到 ${searchResult.total} 条结果)`)
+    console.log(`\n✅ [专利检索] 完成 (找到 ${searchResult.total} 条专利结果)`)
+    if (academicPapers) {
+      console.log(`   学术论文: ${academicPapers.length} 篇`)
+    }
     console.log(`   耗时: ${searchTimeMs}ms`)
 
     return {
@@ -105,6 +160,7 @@ export class PatentSearchAgent extends Agent {
       results: searchResult.patents,
       totalFound: searchResult.total,
       searchTimeMs,
+      academicPapers,
     }
   }
 
@@ -163,7 +219,6 @@ export class PatentSearchAgent extends Agent {
 
     return this.createFallbackStrategy(input)
   }
-
 
   private normalizeStrategy(parsed: Record<string, unknown>): SearchStrategy {
     const getStringArray = (key: string): string[] => {

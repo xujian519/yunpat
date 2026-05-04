@@ -14,7 +14,7 @@ export {
 } from './file/FileTools.js'
 
 // 搜索工具
-export { GrepTool, GlobTool } from './search/SearchTools.js'
+export { GrepTool, GlobTool, AcademicSearchTool } from './search/SearchTools.js'
 
 // 网络工具
 export { WebFetchTool, WebSearchTool } from './network/NetworkTools.js'

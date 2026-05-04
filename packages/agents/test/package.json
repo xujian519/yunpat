@@ -1,7 +1,7 @@
 {
-  "name": "@yunpat/agents-integration-tests",
+  "name": "@yunpat/workflow-tests",
   "version": "0.1.0",
-  "description": "集成测试 - 验证智能体协作",
+  "description": "工作流测试 - 验证专利申请工作流",
   "type": "module",
   "scripts": {
     "test": "vitest run"

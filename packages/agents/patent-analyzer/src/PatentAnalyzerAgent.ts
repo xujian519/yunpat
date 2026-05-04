@@ -11,6 +11,8 @@
 
 import { Agent, type ExecutionContext } from '@yunpat/core'
 import { JSONParser } from './utils/index.js'
+import { PatentDownloadTool } from '@yunpat/patent-tools'
+import { promises as fs } from 'fs'
 
 export interface PatentAnalyzerInput {
   /** 专利文献信息 */
@@ -116,9 +118,27 @@ interface AnalysisPlan {
 }
 
 export class PatentAnalyzerAgent extends Agent {
+  private patentDownloadTool?: PatentDownloadTool
+  private downloadDir: string
+
+  constructor(config: {
+    name: string
+    description: string
+    eventBus: any
+    memory: any
+    tools: any
+    llm: any
+    patentDownloadTool?: PatentDownloadTool
+    downloadDir?: string
+  }) {
+    super(config)
+    this.patentDownloadTool = config.patentDownloadTool
+    this.downloadDir = config.downloadDir || './downloads'
+  }
+
   protected async plan(
     input: PatentAnalyzerInput,
-    _context: ExecutionContext
+    context: ExecutionContext
   ): Promise<AnalysisPlan> {
     if (!input.patent?.publicationNumber?.trim()) {
       throw new Error('专利公开号不能为空')
@@ -133,6 +153,44 @@ export class PatentAnalyzerAgent extends Agent {
     console.log('[PatentAnalyzer] 步骤1: 规划阶段')
     console.log(`   专利: ${input.patent.publicationNumber} - ${input.patent.title}`)
     console.log(`   分析类型: ${input.analysisTypes?.join(', ') || '全面分析'}`)
+
+    // 尝试下载专利全文（如果配置了PatentDownloadTool）
+    if (this.patentDownloadTool && !input.patent.fullText) {
+      try {
+        console.log('[PatentAnalyzer] 正在下载专利全文...')
+        const toolContext = {
+          registry: this.tools,
+          llm: context.llm,
+          memory: this.memory,
+          eventBus: this.eventBus,
+          metadata: {
+            agentName: this.name,
+            executionId: `analyzer-${Date.now()}`,
+          },
+        }
+
+        const downloadResult = await this.patentDownloadTool.execute(
+          {
+            patent: input.patent.publicationNumber,
+            outputPath: this.downloadDir,
+          },
+          toolContext as any
+        )
+
+        if (downloadResult.success && downloadResult.outputPath) {
+          console.log(`   ✅ 专利全文下载成功: ${downloadResult.outputPath}`)
+
+          // 尝试读取PDF文件（需要额外的PDF解析库）
+          // 这里只是标记下载成功，实际PDF解析需要额外的库如pdf-parse
+          // 为了简化，我们暂时不读取PDF内容
+        }
+      } catch (error) {
+        console.warn(
+          `   ⚠️ 专利全文下载失败: ${error instanceof Error ? error.message : String(error)}`
+        )
+        console.warn('   继续使用摘要进行分析...')
+      }
+    }
 
     return {
       input,
@@ -337,7 +395,7 @@ ${input.patent.fullText.substring(0, 3000)}
 
 请分析目标专利与对比专利的相似性和区别。`
 
-    let userPrompt = `## 目标专利
+    const userPrompt = `## 目标专利
 
 ${input.patent.title}
 ${input.patent.abstract}

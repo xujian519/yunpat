@@ -21,7 +21,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@yunpat/core": "workspace:*"
+    "@yunpat/core": "workspace:*",
+    "@yunpat/patent-tools": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

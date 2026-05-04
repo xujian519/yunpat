@@ -15,6 +15,8 @@ export type { PatentSearchResult } from './tools/PatentSearchTool.js'
 
 export { PatentDetailTool, HighCitationPatentsTool } from './tools/PatentDetailTool.js'
 
+export { PatentDownloadTool, BatchPatentDownloadTool } from './tools/PatentDownloadTool.js'
+
 // 类型导出
 export {
   PatentType,

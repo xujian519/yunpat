@@ -1,12 +1,13 @@
 export {
   PriorArtSearchAgent,
   type PriorArtSearchInput,
-  type PriorArtSearchOutput,
-  type SearchStrategy,
+  type PriorArtSearchResult,
   type PatentReference,
-  type PaperReference,
-  type WebReference,
-  type ComparisonAnalysis,
+  type TimeDistribution,
+  type ApplicantStats,
+  type CitationRelation,
+  type NoveltyAssessment,
+  type PriorArtAnalysis,
+  type SearchReport,
+  type OverallReport,
 } from './PriorArtSearchAgent.js'
-
-export { SearchStrategyRenderer } from './SearchStrategyRenderer.js'

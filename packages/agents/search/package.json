@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "@yunpat/core": "workspace:*",
-    "@yunpat/patent-tools": "workspace:*"
+    "@yunpat/patent-tools": "workspace:*",
+    "@yunpat/builtin-tools": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

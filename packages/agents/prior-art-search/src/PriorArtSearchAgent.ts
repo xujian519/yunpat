@@ -1,460 +1,680 @@
-import { Agent, type ExecutionContext } from '@yunpat/core'
-import type { InventionUnderstandingOutput } from '@yunpat/agent-invention'
+import { Agent, type ExecutionContext, createLogger } from '@yunpat/core'
+import { ExternalServiceError } from '@yunpat/core'
 
 /**
- * 先导技术检索智能体输入
+ * Google专利搜索结果
+ */
+interface GooglePatentResult {
+  patentId: string
+  title: string
+  snippet: string
+  url: string
+  assignee?: string
+  publicationDate?: string
+  ipcCodes?: string[]
+}
+
+/**
+ * 先导技术检索输入
  */
 export interface PriorArtSearchInput {
-  /** 发明理解结果（来自Phase 2） */
-  inventionUnderstanding: InventionUnderstandingOutput
-  /** 检索数据库（可选） */
-  searchDatabases?: ('cnipa' | 'uspto' | 'epo' | 'google-patents' | 'cnki')[]
+  /** 权利要求书 */
+  claims: Array<{
+    type: 'independent' | 'dependent'
+    number: number
+    content: string
+    dependsOn?: number
+  }>
+  /** 专利类型 */
+  patentType: 'invention' | 'utilityModel' | 'design'
+  /** 发明名称 */
+  inventionTitle: string
+  /** 说明书（可选） */
+  specification?: {
+    technicalField?: string
+    backgroundArt?: string
+    inventionContent?: string
+    embodiment?: string
+  }
+  /** 检索选项 */
+  searchOptions?: {
+    /** 关键词列表 */
+    keywords?: string[]
+    /** 分类号列表 */
+    classification?: string[]
+    /** 日期范围 */
+    dateRange?: { start: Date; end: Date }
+    /** 申请人 */
+    applicant?: string
+    /** 结果数量限制 */
+    limit?: number
+  }
 }
 
 /**
- * 专利引用
+ * 专利引用信息
  */
 export interface PatentReference {
-  /** 公开号 */
-  publicationNumber: string
+  /** 专利ID */
+  patentId: string
   /** 标题 */
   title: string
-  /** 申请人 */
-  applicant?: string
+  /** 摘要 */
+  abstract: string
+  /** 相关性评分 (0-1) */
+  relevanceScore: number
   /** 公开日期 */
-  publicationDate?: string
-  /** 摘要 */
-  abstract?: string
-  /** 权利要求数量 */
-  claimsCount?: number
+  publicationDate: Date
+  /** 申请人 */
+  applicants: string[]
+  /** 分类号 */
+  classifications: string[]
   /** 引用次数 */
-  citationCount?: number
-  /** 相似度评分 (0-1) */
-  similarityScore: number
-  /** 是否为模拟数据 */
-  simulated: boolean
-}
-
-/**
- * 论文引用
- */
-export interface PaperReference {
-  /** 标题 */
-  title: string
-  /** 作者 */
-  authors: string[]
-  /** 发表年份 */
-  year?: number
-  /** 期刊/会议 */
-  venue?: string
-  /** DOI */
-  doi?: string
-  /** 摘要 */
-  abstract?: string
-  /** 引用次数 */
-  citationCount?: number
-  /** 相似度评分 (0-1) */
-  similarityScore: number
-  /** 是否为模拟数据 */
-  simulated: boolean
-}
-
-/**
- * 网络资源引用
- */
-export interface WebReference {
-  /** 标题 */
-  title: string
+  citationCount: number
+  /** 法律状态 */
+  legalStatus: string
+  /** 同族专利成员 */
+  familyMembers: string[]
   /** URL */
   url: string
-  /** 摘要/描述 */
-  description?: string
-  /** 访问日期 */
-  accessDate?: string
-  /** 相似度评分 (0-1) */
-  similarityScore: number
-  /** 是否为模拟数据 */
-  simulated: boolean
 }
 
 /**
- * 检索策略
+ * 时间分布统计
  */
-export interface SearchStrategy {
-  /** 关键词列表 */
-  keywords: string[]
-  /** IPC/CPC分类号 */
-  ipcCpcClasses: string[]
-  /** 实际执行的检索式 */
-  searchQueries: string[]
-  /** 检索范围说明 */
-  searchScope: string
+export interface TimeDistribution {
+  /** 年份 */
+  year: number
+  /** 专利数量 */
+  count: number
 }
 
 /**
- * 对比分析
+ * 申请人统计
  */
-export interface ComparisonAnalysis {
-  /** 最接近的现有技术 */
-  closestPriorArt: PatentReference | PaperReference
+export interface ApplicantStats {
+  /** 申请人名称 */
+  name: string
+  /** 专利数量 */
+  count: number
+}
+
+/**
+ * 引用关系
+ */
+export interface CitationRelation {
+  /** 源专利 */
+  source: string
+  /** 目标专利 */
+  target: string
+}
+
+/**
+ * 新颖性评估
+ */
+export interface NoveltyAssessment {
+  /** 新颖性评分 (0-1) */
+  score: number
   /** 区别特征 */
-  differences: string[]
-  /** 本发明实际解决的技术问题 */
-  technicalProblemSolved: string
-  /** 创造性评估 */
-      creativityAssessment: {
-    /** 创造性等级 (high/medium/low) */
-    level: 'high' | 'medium' | 'low'
-    /** 评估理由 */
-    reasoning: string
-    /** 置信度 */
-    confidence: number
-  }
+  distinguishingFeatures: string[]
+  /** 最接近的现有技术 */
+  closestPriorArt: string[]
+}
+
+/**
+ * 现有技术分析
+ */
+export interface PriorArtAnalysis {
+  /** 技术领域 */
+  technologyField: string
+  /** 时间分布 */
+  timeDistribution: TimeDistribution[]
+  /** 顶级申请人 */
+  topApplicants: ApplicantStats[]
+  /** 引用网络 */
+  citationNetwork: CitationRelation[]
+  /** 新颖性评估 */
+  noveltyAssessment: NoveltyAssessment
+}
+
+/**
+ * 检索报告
+ */
+export interface SearchReport {
+  /** 检索策略 */
+  searchStrategy: string[]
+  /** 数据库 */
+  database: string
+  /** 查询数量 */
+  queryCount: number
+  /** 结果数量 */
+  resultCount: number
+}
+
+/**
+ * 总体报告
+ */
+export interface OverallReport {
+  /** 是否通过 */
+  passed: boolean
+  /** 问题总数 */
+  totalIssues: number
+  /** 建议 */
+  recommendations: string[]
 }
 
 /**
  * 先导技术检索输出
  */
-export interface PriorArtSearchOutput {
-  /** 检索策略 */
-  searchStrategy: SearchStrategy
-  /** 检索结果 */
-  results: {
-    /** 专利列表 */
-    patents: PatentReference[]
-    /** 论文列表 */
-    papers: PaperReference[]
-    /** 网络资源列表 */
-    webResources: WebReference[]
-  }
-  /** 对比分析 */
-  comparisonAnalysis: ComparisonAnalysis
-  /** 检索置信度 */
-  confidence: number
+export interface PriorArtSearchResult {
+  /** 检索报告 */
+  searchReport: SearchReport
+  /** 相关专利列表 */
+  relevantPatents: PatentReference[]
+  /** 现有技术分析 */
+  analysis: PriorArtAnalysis
+  /** 总体报告 */
+  overallReport: OverallReport
 }
 
 interface PriorArtSearchPlan {
   input: PriorArtSearchInput
-  inventionUnderstanding: InventionUnderstandingOutput
+  extractedKeywords: string[]
+  searchQueries: string[]
 }
 
 /**
- * 先导技术检索智能体
+ * 先导技术检索Agent
  *
  * 功能：
- * 1. 基于发明理解构建检索策略
- * 2. 执行检索（当前使用模拟数据）
- * 3. 分析最接近的现有技术
- * 4. 生成对比分析报告
+ * 1. 执行专利检索（使用Google Patents API）
+ * 2. 分析检索结果的相关性
+ * 3. 生成现有技术分析报告
+ * 4. 评估新颖性
  */
-export class PriorArtSearchAgent extends Agent<
-  PriorArtSearchInput,
-  PriorArtSearchOutput
-> {
-  protected async plan(
+export class PriorArtSearchAgent extends Agent<PriorArtSearchInput, PriorArtSearchResult> {
+  private logger = createLogger('PriorArtSearchAgent')
+
+  constructor(config: {
+    name: string
+    description: string
+    eventBus: any
+    memory: any
+    tools: any
+    llm: any
+  }) {
+    super(config)
+  }
+
+  public async plan(
     input: PriorArtSearchInput,
     _context: ExecutionContext
   ): Promise<PriorArtSearchPlan> {
-    if (!input.inventionUnderstanding) {
-      throw new Error('发明理解结果不能为空')
-    }
+    this.logger.info('开始规划检索策略', {
+      inventionTitle: input.inventionTitle,
+      claimsCount: input.claims.length,
+    })
 
-    const { inventionUnderstanding } = input
+    // 提取关键词
+    const extractedKeywords = this.extractKeywords(input)
 
-    console.log('\n🔍 [先导技术检索] 步骤1: 规划阶段')
-    console.log(`   发明名称: ${inventionUnderstanding.technicalField}`)
-    console.log(`   关键特征: ${inventionUnderstanding.keyFeatures.length} 个`)
+    // 构建检索查询
+    const searchQueries = this.buildSearchQueries(input, extractedKeywords)
+
+    this.logger.info('规划完成', {
+      keywordsCount: extractedKeywords.length,
+      queriesCount: searchQueries.length,
+    })
 
     return {
       input,
-      inventionUnderstanding,
+      extractedKeywords,
+      searchQueries,
     }
   }
 
   protected async act(
     plan: PriorArtSearchPlan,
-    context: ExecutionContext
-  ): Promise<PriorArtSearchOutput> {
-    console.log('\n🔍 [先导技术检索] 步骤2: 检索阶段')
+    _context: ExecutionContext
+  ): Promise<PriorArtSearchResult> {
+    this.logger.info('开始执行检索')
 
-    const { inventionUnderstanding } = plan
+    const { input, searchQueries } = plan
 
-    const systemPrompt = `你是一位资深的专利检索专家，专精于先导技术检索和对比分析。
-
-你的任务是：
-1. 基于发明理解结果，构建检索策略（关键词、IPC/CPC分类、检索式）
-2. 分析可能的现有技术（模拟检索结果）
-3. 找出最接近的现有技术
-4. 分析区别特征和创造性
-
-请用中文回答，输出必须是严格的 JSON 格式。`
-
-    const userPrompt = `基于以下发明理解，构建检索策略并分析现有技术：
-
-## 发明理解
-
-### 技术领域
-${inventionUnderstanding.technicalField}
-
-### 背景技术
-${inventionUnderstanding.backgroundArt || '无'}
-
-### 技术问题
-${inventionUnderstanding.technicalProblem}
-
-### 技术方案
-${inventionUnderstanding.technicalSolution}
-
-### 有益效果
-${inventionUnderstanding.beneficialEffects || '无'}
-
-### 关键特征
-${inventionUnderstanding.keyFeatures.map((f, i) => `${i + 1}. ${f}`).join('\n')}
-
-请输出以下 JSON 格式：
-{
-  "searchStrategy": {
-    "keywords": ["关键词1", "关键词2", "关键词3"],
-    "ipcCpcClasses": ["G06N3/00", "G06V10/00"],
-    "searchQueries": [
-      "(深度学习 OR 神经网络) AND (图像识别)",
-      "多尺度 AND 卷积神经网络 AND 注意力机制"
-    ],
-    "searchScope": "检索范围说明"
-  },
-  "results": {
-    "patents": [
-      {
-        "publicationNumber": "CN123456789A",
-        "title": "专利标题",
-        "applicant": "申请人",
-        "publicationDate": "2023-01-01",
-        "abstract": "摘要",
-        "similarityScore": 0.85,
-        "simulated": true
+    // 执行检索
+    const allResults: GooglePatentResult[] = []
+    for (const query of searchQueries) {
+      this.logger.debug('执行查询', { query })
+      try {
+        const result = await this.fetchGooglePatents(query, 10000) // 10秒超时
+        allResults.push(...result)
+        this.logger.debug('查询成功', { query, resultCount: result.length })
+      } catch (error) {
+        this.logger.error('查询失败', error as Error)
       }
-    ],
-    "papers": [
-      {
-        "title": "论文标题",
-        "authors": ["作者1", "作者2"],
-        "year": 2023,
-        "venue": "期刊/会议名称",
-        "abstract": "摘要",
-        "similarityScore": 0.80,
-        "simulated": true
-      }
-    ],
-    "webResources": []
-  },
-  "comparisonAnalysis": {
-    "closestPriorArt": {
-      "publicationNumber": "CN123456789A",
-      "title": "最接近的现有技术",
-      "similarityScore": 0.85,
-      "simulated": true
-    },
-    "differences": [
-      "区别1：本发明使用了多尺度特征融合",
-      "区别2：本发明采用了自适应注意力机制"
-    ],
-    "technicalProblemSolved": "本发明实际解决的技术问题",
-    "creativityAssessment": {
-      "level": "high",
-      "reasoning": "评估理由",
-      "confidence": 0.85
-    }
-  },
-  "confidence": 0.85
-}`
-
-    if (!context.llm) {
-      throw new Error('LLM 未配置，无法执行检索策略构建')
     }
 
-    const result = await this.callLLMWithFallback(
-      context.llm,
-      systemPrompt,
-      userPrompt,
-      plan.input
-    )
+    // 去重
+    const uniqueResults = this.deduplicateResults(allResults)
+    this.logger.info('去重完成', { uniqueCount: uniqueResults.length })
 
-    console.log(`\n✅ [先导技术检索] 检索完成 (置信度: ${result.confidence.toFixed(2)})`)
-    console.log(`   检索关键词: ${result.searchStrategy.keywords.length} 个`)
-    console.log(`   找到专利: ${result.results.patents.length} 件`)
-    console.log(`   找到论文: ${result.results.papers.length} 篇`)
-    console.log(`   最接近现有技术相似度: ${result.comparisonAnalysis.closestPriorArt.similarityScore.toFixed(2)}`)
+    // 计算相关性评分
+    const scoredResults = this.calculateRelevanceScores(uniqueResults, input)
 
-    return result
+    // 排序并限制结果数量
+    const limit = input.searchOptions?.limit || 20
+    const topResults = scoredResults
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)
+      .slice(0, limit)
+
+    const avgScore = this.averageScore(scoredResults)
+    const highRelevanceCount = scoredResults.filter((r) => r.relevanceScore >= 0.7).length
+
+    this.logger.info('相关性评分完成', {
+      averageScore: avgScore.toFixed(2),
+      highRelevanceCount,
+    })
+
+    // 转换为标准格式
+    const relevantPatents = this.convertToPatentReferences(topResults)
+
+    // 生成分析
+    const analysis = this.generateAnalysis(relevantPatents, input)
+
+    // 生成检索报告
+    const searchReport: SearchReport = {
+      searchStrategy: plan.searchQueries,
+      database: 'Google Patents',
+      queryCount: searchQueries.length,
+      resultCount: relevantPatents.length,
+    }
+
+    // 生成总体报告
+    const overallReport = this.generateOverallReport(relevantPatents, analysis)
+
+    this.logger.info('检索完成', {
+      resultCount: relevantPatents.length,
+      noveltyScore: analysis.noveltyAssessment.score.toFixed(2),
+    })
+
+    return {
+      searchReport,
+      relevantPatents,
+      analysis,
+      overallReport,
+    }
   }
 
-  private async callLLMWithFallback(
-    llm: NonNullable<ExecutionContext['llm']>,
-    systemPrompt: string,
-    userPrompt: string,
-    input: PriorArtSearchInput
-  ): Promise<PriorArtSearchOutput> {
-    const maxRetries = 2
-    let lastError: Error | undefined
+  /**
+   * 提取关键词
+   */
+  private extractKeywords(input: PriorArtSearchInput): string[] {
+    const keywords = new Set<string>()
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const response = await llm.chat({
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          temperature: 0.3,
+    // 从发明名称提取
+    const titleWords = input.inventionTitle.split(/[\\s，。、]+/).filter((w) => w.length >= 2)
+    titleWords.forEach((w) => keywords.add(w))
+
+    // 从权利要求提取（引号内容）
+    input.claims.forEach((claim) => {
+      const quotedMatches = claim.content.match(/["'「『]([^"'」』]+)["'」』]/g)
+      if (quotedMatches) {
+        quotedMatches.forEach((match) => {
+          const word = match.replace(/["'「『」』]/g, '')
+          if (word.length >= 2) {
+            keywords.add(word)
+          }
         })
+      }
+    })
 
-        const content = response.message.content
-        const parsed = this.safeParseJSON(content)
+    // 从说明书提取
+    if (input.specification?.technicalField) {
+      const fieldWords = input.specification.technicalField
+        .split(/[\\s，。、]+/)
+        .filter((w) => w.length >= 2)
+      fieldWords.forEach((w) => keywords.add(w))
+    }
 
-        if (parsed) {
-          return this.normalizeOutput(parsed, input)
+    // 添加用户指定的关键词
+    if (input.searchOptions?.keywords) {
+      input.searchOptions.keywords.forEach((k) => keywords.add(k))
+    }
+
+    return Array.from(keywords)
+  }
+
+  /**
+   * 构建检索查询
+   */
+  private buildSearchQueries(input: PriorArtSearchInput, keywords: string[]): string[] {
+    const queries: string[] = []
+
+    // 主查询：使用前5个关键词
+    if (keywords.length > 0) {
+      const mainKeywords = keywords.slice(0, 5)
+      queries.push(mainKeywords.join(' '))
+    }
+
+    // 组合查询：每2-3个关键词一组
+    for (let i = 0; i < keywords.length; i += 2) {
+      const group = keywords.slice(i, i + 3).join(' ')
+      if (group.length > 0) {
+        queries.push(group)
+      }
+    }
+
+    // 分类号查询
+    if (input.searchOptions?.classification) {
+      input.searchOptions.classification.forEach((cls) => {
+        queries.push(cls)
+      })
+    }
+
+    // 申请人查询
+    if (input.searchOptions?.applicant) {
+      queries.push(`assignee:(${input.searchOptions.applicant})`)
+    }
+
+    // 去重
+    return Array.from(new Set(queries))
+  }
+
+  /**
+   * 去重结果
+   */
+  private deduplicateResults(results: GooglePatentResult[]): GooglePatentResult[] {
+    const seen = new Set<string>()
+    return results.filter((result) => {
+      if (seen.has(result.patentId)) {
+        return false
+      }
+      seen.add(result.patentId)
+      return true
+    })
+  }
+
+  /**
+   * 计算相关性评分（基于TF-IDF思想）
+   */
+  private calculateRelevanceScores(
+    results: GooglePatentResult[],
+    input: PriorArtSearchInput
+  ): Array<GooglePatentResult & { relevanceScore: number }> {
+    // 构建关键词集合
+    const keywords = new Set<string>()
+    input.claims.forEach((claim) => {
+      const words = claim.content.toLowerCase().split(/\\s+/)
+      words.forEach((w) => {
+        if (w.length >= 2) keywords.add(w)
+      })
+    })
+
+    // 计算每个结果的相关性
+    return results.map((result) => {
+      const resultText = `${result.title} ${result.snippet}`.toLowerCase()
+      let score = 0
+      let matchCount = 0
+
+      keywords.forEach((keyword) => {
+        if (resultText.includes(keyword)) {
+          matchCount++
+          score += 1
         }
-      } catch (e) {
-        lastError = e instanceof Error ? e : new Error(String(e))
-        console.warn(
-          `[PriorArtSearchAgent] LLM 调用失败 (尝试 ${attempt + 1}/${maxRetries + 1}): ${lastError.message}`
+      })
+
+      // 归一化到0-1
+      const normalizedScore = keywords.size > 0 ? Math.min(score / keywords.size, 1) : 0
+
+      // 标题匹配加权
+      const titleMatch = input.inventionTitle
+        .toLowerCase()
+        .split(/\\s+/)
+        .filter((w) => result.title.toLowerCase().includes(w)).length
+      const titleBonus = Math.min(titleMatch * 0.1, 0.3)
+
+      return {
+        ...result,
+        relevanceScore: Math.min(normalizedScore + titleBonus, 1),
+      }
+    })
+  }
+
+  /**
+   * 计算平均评分
+   */
+  private averageScore(results: Array<{ relevanceScore: number }>): number {
+    if (results.length === 0) return 0
+    const sum = results.reduce((acc, r) => acc + r.relevanceScore, 0)
+    return sum / results.length
+  }
+
+  /**
+   * 转换为标准格式
+   */
+  private convertToPatentReferences(
+    results: Array<GooglePatentResult & { relevanceScore: number }>
+  ): PatentReference[] {
+    return results.map((result) => ({
+      patentId: result.patentId,
+      title: result.title,
+      abstract: result.snippet,
+      relevanceScore: result.relevanceScore,
+      publicationDate: result.publicationDate ? new Date(result.publicationDate) : new Date(),
+      applicants: result.assignee ? [result.assignee] : [],
+      classifications: result.ipcCodes || [],
+      citationCount: 0, // Google Patents API不提供此信息
+      legalStatus: 'unknown',
+      familyMembers: [],
+      url: result.url,
+    }))
+  }
+
+  /**
+   * 生成分析
+   */
+  private generateAnalysis(
+    patents: PatentReference[],
+    input: PriorArtSearchInput
+  ): PriorArtAnalysis {
+    // 提取技术领域
+    const technologyField = input.specification?.technicalField || input.inventionTitle
+
+    // 时间分布
+    const timeDistribution = this.computeTimeDistribution(patents)
+
+    // 顶级申请人
+    const topApplicants = this.computeTopApplicants(patents)
+
+    // 引用网络（简化版）
+    const citationNetwork: CitationRelation[] = []
+
+    // 新颖性评估
+    const noveltyAssessment = this.assessNovelty(patents, input)
+
+    return {
+      technologyField,
+      timeDistribution,
+      topApplicants,
+      citationNetwork,
+      noveltyAssessment,
+    }
+  }
+
+  /**
+   * 计算时间分布
+   */
+  private computeTimeDistribution(patents: PatentReference[]): TimeDistribution[] {
+    const yearCount = new Map<number, number>()
+
+    patents.forEach((patent) => {
+      const year = patent.publicationDate.getFullYear()
+      yearCount.set(year, (yearCount.get(year) || 0) + 1)
+    })
+
+    return Array.from(yearCount.entries())
+      .map(([year, count]) => ({ year, count }))
+      .sort((a, b) => a.year - b.year)
+  }
+
+  /**
+   * 计算顶级申请人
+   */
+  private computeTopApplicants(patents: PatentReference[]): ApplicantStats[] {
+    const applicantCount = new Map<string, number>()
+
+    patents.forEach((patent) => {
+      patent.applicants.forEach((applicant) => {
+        applicantCount.set(applicant, (applicantCount.get(applicant) || 0) + 1)
+      })
+    })
+
+    return Array.from(applicantCount.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+  }
+
+  /**
+   * 评估新颖性
+   */
+  private assessNovelty(patents: PatentReference[], input: PriorArtSearchInput): NoveltyAssessment {
+    // 找出最接近的现有技术
+    const closestPriorArt = patents
+      .filter((p) => p.relevanceScore >= 0.6)
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)
+      .slice(0, 3)
+      .map((p) => p.patentId)
+
+    // 计算新颖性评分（基于高相关性专利的数量）
+    const highRelevanceCount = patents.filter((p) => p.relevanceScore >= 0.8).length
+    const score = Math.max(0, 1 - highRelevanceCount * 0.2)
+
+    // 提取区别特征（简化版：基于权利要求中引号内容）
+    const distinguishingFeatures: string[] = []
+    input.claims.forEach((claim) => {
+      const quotedMatches = claim.content.match(/["'「『]([^"'」』]+)["'」』]/g)
+      if (quotedMatches) {
+        distinguishingFeatures.push(...quotedMatches.map((m) => m.replace(/["'「『」』]/g, '')))
+      }
+    })
+
+    return {
+      score,
+      distinguishingFeatures,
+      closestPriorArt,
+    }
+  }
+
+  /**
+   * 生成总体报告
+   */
+  private generateOverallReport(
+    patents: PatentReference[],
+    analysis: PriorArtAnalysis
+  ): OverallReport {
+    const issues: string[] = []
+    const recommendations: string[] = []
+
+    // 检查高相关性专利
+    const highRelevanceCount = patents.filter((p) => p.relevanceScore >= 0.8).length
+    if (highRelevanceCount > 0) {
+      issues.push(`找到 ${highRelevanceCount} 个高相关性专利，可能影响新颖性`)
+      recommendations.push('建议详细分析高相关性专利的区别特征')
+    }
+
+    // 检查新颖性评分
+    if (analysis.noveltyAssessment.score < 0.5) {
+      issues.push('新颖性评分较低，存在现有技术风险')
+      recommendations.push('建议强调区别特征和技术优势')
+    }
+
+    // 检查技术领域活跃度
+    const recentPatents = patents.filter((p) => p.publicationDate.getFullYear() >= 2020).length
+    if (recentPatents > patents.length * 0.5) {
+      recommendations.push('该技术领域活跃，竞争激烈')
+    }
+
+    return {
+      passed: issues.length === 0,
+      totalIssues: issues.length,
+      recommendations,
+    }
+  }
+
+  /**
+   * 从Google Patents获取专利数据
+   */
+  private async fetchGooglePatents(
+    query: string,
+    timeout: number = 10000
+  ): Promise<GooglePatentResult[]> {
+    try {
+      const encodedQuery = encodeURIComponent(query)
+      const url = `https://patents.google.com/xhr/query?url=q%3D${encodedQuery}`
+
+      // 创建超时控制器
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Language': 'zh-CN',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        },
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = (await response.json()) as any
+
+      // 解析结果
+      const results: GooglePatentResult[] = []
+      if (data.results && Array.isArray(data.results)) {
+        for (const item of data.results) {
+          results.push({
+            patentId: item.patent || item.publication_number || '',
+            title: item.title || '',
+            snippet: item.snippet || item.abstract || '',
+            url: item.url || `https://patents.google.com/patent/${item.patent}`,
+            assignee: item.assignee || item.applicant || '',
+            publicationDate: item.publication_date || '',
+            ipcCodes: item.ipc_codes || [],
+          })
+        }
+      }
+
+      return results
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new ExternalServiceError(
+          `Google Patents API 调用超时 (${timeout}ms)`,
+          'GooglePatents',
+          'TIMEOUT',
+          error
+        )
+      } else if (error instanceof TypeError) {
+        throw new ExternalServiceError(
+          'Google Patents API 数据解析失败',
+          'GooglePatents',
+          'PARSE_ERROR',
+          error
+        )
+      } else {
+        throw new ExternalServiceError(
+          `Google Patents API 调用失败: ${error}`,
+          'GooglePatents',
+          'UNKNOWN',
+          error as Error
         )
       }
-    }
-
-    console.error('[PriorArtSearchAgent] 检索失败，使用回退输出:', lastError)
-    return this.createFallbackOutput(input)
-  }
-
-
-  private normalizeOutput(
-    parsed: Record<string, unknown>,
-    input: PriorArtSearchInput
-  ): PriorArtSearchOutput {
-    const getString = (key: string): string => {
-      const value = parsed[key]
-      return typeof value === 'string' ? value.trim() : ''
-    }
-
-    const getStringArray = (key: string): string[] => {
-      const value = parsed[key]
-      return Array.isArray(value)
-        ? value.filter((v): v is string => typeof v === 'string').map((s) => s.trim())
-        : []
-    }
-
-    const getNumber = (key: string, fallback: number): number => {
-      const value = parsed[key]
-      return typeof value === 'number' && !isNaN(value) ? value : fallback
-    }
-
-    // 解析检索策略
-    const searchStrategyRaw = parsed.searchStrategy as Record<string, unknown> | undefined
-    const searchStrategy: SearchStrategy = {
-      keywords: getStringArray('keywords'),
-      ipcCpcClasses: getStringArray('ipcCpcClasses'),
-      searchQueries: getStringArray('searchQueries'),
-      searchScope: searchStrategyRaw ? getString('searchScope') : '专利数据库和学术文献',
-    }
-
-    // 解析结果
-    const resultsRaw = parsed.results as Record<string, unknown> | undefined
-    const patentsRaw = resultsRaw?.patents as unknown[] || []
-    const papersRaw = resultsRaw?.papers as unknown[] || []
-    const webResourcesRaw = resultsRaw?.webResources as unknown[] || []
-
-    const results = {
-      patents: patentsRaw.map((p: unknown) => ({
-        publicationNumber: typeof p === 'object' && p !== null ? getString('publicationNumber') || getString('title') : '',
-        title: typeof p === 'object' && p !== null ? getString('title') : '',
-        applicant: typeof p === 'object' && p !== null ? getString('applicant') : undefined,
-        publicationDate: typeof p === 'object' && p !== null ? getString('publicationDate') : undefined,
-        abstract: typeof p === 'object' && p !== null ? getString('abstract') : undefined,
-        similarityScore: typeof p === 'object' && p !== null ? getNumber('similarityScore', 0.5) : 0.5,
-        simulated: true,
-      })),
-      papers: papersRaw.map((p: unknown) => ({
-        title: typeof p === 'object' && p !== null ? getString('title') : '',
-        authors: typeof p === 'object' && p !== null ? getStringArray('authors') : [],
-        year: typeof p === 'object' && p !== null ? getNumber('year', 2023) : 2023,
-        venue: typeof p === 'object' && p !== null ? getString('venue') : undefined,
-        similarityScore: typeof p === 'object' && p !== null ? getNumber('similarityScore', 0.5) : 0.5,
-        simulated: true,
-      })),
-      webResources: [],
-    }
-
-    // 解析对比分析
-    const comparisonRaw = parsed.comparisonAnalysis as Record<string, unknown> | undefined
-    const closestRaw = comparisonRaw?.closestPriorArt as Record<string, unknown> | undefined
-    const creativityRaw = comparisonRaw?.creativityAssessment as Record<string, unknown> | undefined
-
-    // 判断closestPriorArt是专利还是论文
-    const isPatent = closestRaw && ('publicationNumber' in closestRaw || 'applicant' in closestRaw)
-
-    const comparisonAnalysis: ComparisonAnalysis = {
-      closestPriorArt: isPatent ? {
-        publicationNumber: closestRaw ? getString('publicationNumber') || getString('title') : '',
-        title: closestRaw ? getString('title') : '',
-        similarityScore: closestRaw ? getNumber('similarityScore', 0.5) : 0.5,
-        simulated: true,
-      } : {
-        title: closestRaw ? getString('title') : '',
-        authors: closestRaw ? getStringArray('authors') : [],
-        similarityScore: closestRaw ? getNumber('similarityScore', 0.5) : 0.5,
-        simulated: true,
-      },
-      differences: getStringArray('differences'),
-      technicalProblemSolved: getString('technicalProblemSolved'),
-      creativityAssessment: {
-        level: (creativityRaw?.level === 'high' || creativityRaw?.level === 'medium' || creativityRaw?.level === 'low'
-          ? creativityRaw.level
-          : 'medium') as 'high' | 'medium' | 'low',
-        reasoning: creativityRaw ? getString('reasoning') : '',
-        confidence: creativityRaw ? getNumber('confidence', 0.7) : 0.7,
-      },
-    }
-
-    return {
-      searchStrategy,
-      results,
-      comparisonAnalysis,
-      confidence: getNumber('confidence', 0.7),
-    }
-  }
-
-  private createFallbackOutput(input: PriorArtSearchInput): PriorArtSearchOutput {
-    const { inventionUnderstanding } = input
-
-    return {
-      searchStrategy: {
-        keywords: inventionUnderstanding.keyFeatures.slice(0, 5),
-        ipcCpcClasses: [],
-        searchQueries: [
-          inventionUnderstanding.keyFeatures.slice(0, 3).join(' AND ')
-        ],
-        searchScope: '基于关键特征的简单检索',
-      },
-      results: {
-        patents: [],
-        papers: [],
-        webResources: [],
-      },
-      comparisonAnalysis: {
-        closestPriorArt: {
-          publicationNumber: 'UNKNOWN',
-          title: '未找到相关现有技术',
-          similarityScore: 0,
-          simulated: true,
-        },
-        differences: inventionUnderstanding.keyFeatures,
-        technicalProblemSolved: inventionUnderstanding.technicalProblem,
-        creativityAssessment: {
-          level: 'medium',
-          reasoning: '由于检索失败，无法准确评估',
-          confidence: 0.3,
-        },
-      },
-      confidence: 0.3,
     }
   }
 }

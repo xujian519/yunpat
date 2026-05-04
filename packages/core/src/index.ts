@@ -9,6 +9,19 @@
  * ⑤ 编排层 (Orchestration)
  */
 
+// ========== 错误类 ==========
+export {
+  AgentInputError,
+  AgentExecutionError,
+  ExternalServiceError,
+  ValidationError,
+} from './errors/AgentErrors.js'
+
+// ========== 工具类 ==========
+export { Logger, createLogger, LogLevel } from './utils/Logger.js'
+
+export type { LogEntry, LoggerConfig } from './utils/Logger.js'
+
 // ========== ① 交互层 (Gateway) ==========
 export {
   BaseGateway,

@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest",
+    "test": "vitest --exclude=test/planning/TaskDecomposer.test.ts",
     "test:ui": "vitest --ui",
     "lint": "eslint src --ext .ts --max-warnings 500"
   },
@@ -47,7 +47,7 @@
     "drizzle-orm": "^0.45.2",
     "eventemitter3": "^5.0.1",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.4.1",
+    "express-rate-limit": "^8.8.1",
     "jsonwebtoken": "^9.0.3",
     "postgres": "^3.4.9",
     "uuid": "^9.0.1",

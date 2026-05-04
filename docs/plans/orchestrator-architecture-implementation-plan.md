@@ -901,9 +901,7 @@ interface CreativityAnalysisInput {
 interface CreativityAnalysisOutput {
   distinctFeatures: {
     // 区别特征
-    feature: string
-    source: 'claim' | 'specification'
-    description: string
+ji'xu    description: string
   }[]
   technicalEffect: {
     // 技术效果

@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@yunpat/claims-formality-checker": ["../../claims-formality-checker/src"],
+      "@yunpat/spec-formality-checker": ["../../spec-formality-checker/src"],
+      "@yunpat/subject-matter-checker": ["../../subject-matter-checker/src"],
+      "@yunpat/unity-checker": ["../../unity-checker/src"],
+      "@yunpat/format-converter": ["../../format-converter/src"],
+      "@yunpat/technical-drawing": ["../../technical-drawing/src"],
+      "@yunpat/core": ["../../../core/src"]
+    }
+  },
+  "include": ["test/**/*"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@yunpat/agents-integration-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "dependencies": {
+    "@yunpat/claims-formality-checker": "workspace:*",
+    "@yunpat/core": "workspace:*",
+    "@yunpat/format-converter": "workspace:*",
+    "@yunpat/spec-formality-checker": "workspace:*",
+    "@yunpat/subject-matter-checker": "workspace:*",
+    "@yunpat/technical-drawing": "workspace:*",
+    "@yunpat/unity-checker": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.0.5",
+    "typescript": "^5.7.3",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^2.0.5"
+  }
+}

@@ -25,6 +25,7 @@
     "protos/**",
     "scripts/**",
     "docker/**",
+    "test/**",
     "**/*.js",
     "esbuild.config.mjs"
   ]

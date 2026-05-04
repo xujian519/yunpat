@@ -36,7 +36,7 @@
     "dev": "tsc --watch",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts --max-warnings 500"
   },
   "dependencies": {
     "@langchain/core": "^0.2.26",

@@ -22,7 +22,8 @@
       "warn",
       {
         "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_"
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
       }
     ],
     "@typescript-eslint/explicit-function-return-type": "off",
@@ -44,5 +45,14 @@
     "cli/patent-cli/**",
     "ai/agents/**/node_modules/**",
     "ai/agents/**/dist/**"
+  ],
+  "overrides": [
+    {
+      "files": ["packages/orchestrator/**", "packages/agents/test/**"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-explicit-any": "error"
+      }
+    }
   ]
 }

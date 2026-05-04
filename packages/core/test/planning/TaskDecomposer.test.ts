@@ -1,6 +1,20 @@
 import { describe, it, expect, vi } from 'vitest'
 import { TaskDecomposer } from '../../src/planning/TaskDecomposer.js'
 
+/**
+ * 创建完整的LLM mock对象
+ * 包含chat和generate方法，避免测试环境中的方法缺失错误
+ */
+function createMockLLM(response: any = {}) {
+  return {
+    chat: vi.fn().mockResolvedValue({
+      content: JSON.stringify(response.subGoals || []),
+      usage: { promptTokens: 100, completionTokens: 50 },
+    }),
+    generate: vi.fn().mockResolvedValue(response),
+  }
+}
+
 describe('TaskDecomposer', () => {
   describe('constructor', () => {
     it('应该使用默认配置', () => {
@@ -47,26 +61,25 @@ describe('TaskDecomposer', () => {
     })
 
     it('应该使用智能分解', async () => {
-      const mockLlm = {
-        generate: vi.fn().mockResolvedValue({
-          subGoals: [
-            {
-              title: '子目标1',
-              description: '描述1',
-              tasks: [
-                {
-                  title: '任务1',
-                  description: '任务描述',
-                  type: 'analysis',
-                  requiredCapabilities: [],
-                  estimatedTokens: 100,
-                  estimatedDuration: 60,
-                },
-              ],
-            },
-          ],
-        }),
+      const mockResponse = {
+        subGoals: [
+          {
+            title: '子目标1',
+            description: '描述1',
+            tasks: [
+              {
+                title: '任务1',
+                description: '任务描述',
+                type: 'analysis',
+                requiredCapabilities: [],
+                estimatedTokens: 100,
+                estimatedDuration: 60,
+              },
+            ],
+          },
+        ],
       }
+      const mockLlm = createMockLLM(mockResponse)
 
       const decomposer = new TaskDecomposer({
         llm: mockLlm as any,

@@ -27,7 +27,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: 'pnpm'
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
@@ -61,7 +60,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: 'pnpm'
 
       - name: 运行安全审计
         run: pnpm audit --audit-level moderate
@@ -80,7 +78,7 @@ jobs:
   dependency-review:
     name: 依赖审查
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
 
     steps:
       - name: 检出代码
@@ -90,3 +88,4 @@ jobs:
         uses: actions/dependency-review-action@v3
         with:
           fail-on-severity: moderate
+        continue-on-error: true

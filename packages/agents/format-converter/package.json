@@ -1,0 +1,42 @@
+{
+  "name": "@yunpat/format-converter",
+  "version": "1.0.0",
+  "description": "专利格式转换智能体 - Markdown/结构化内容转DOCX",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "patent",
+    "format-converter",
+    "docx",
+    "agent"
+  ],
+  "author": "YunPat Team",
+  "license": "MIT",
+  "dependencies": {
+    "@yunpat/core": "workspace:*",
+    "@yunpat/document-tools": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.2"
+  }
+}

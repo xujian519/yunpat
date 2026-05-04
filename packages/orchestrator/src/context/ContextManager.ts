@@ -15,7 +15,7 @@ import {
   TaskPlan,
   AgentResult,
   IntentType,
-  OrchestratorLLMConfig
+  OrchestratorLLMConfig,
 } from '../types/index.js'
 import { LLMClient, LLMMessage } from '../llm/LLMClient.js'
 
@@ -41,10 +41,7 @@ export class ContextManager {
   /**
    * 添加消息到对话历史
    */
-  async addMessage(
-    sessionId: string,
-    message: ConversationMessage
-  ): Promise<void> {
+  async addMessage(sessionId: string, message: ConversationMessage): Promise<void> {
     let history = this.histories.get(sessionId)
 
     if (!history) {
@@ -52,7 +49,7 @@ export class ContextManager {
         sessionId,
         messages: [],
         totalTokens: 0,
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
       }
       this.histories.set(sessionId, history)
     }
@@ -88,10 +85,7 @@ export class ContextManager {
     if (!history) return
 
     // Token超限或消息过多，压缩
-    if (
-      history.totalTokens > this.maxTokens ||
-      history.messages.length > this.maxHistoryLength
-    ) {
+    if (history.totalTokens > this.maxTokens || history.messages.length > this.maxHistoryLength) {
       await this.compressHistory(sessionId)
     }
   }
@@ -115,9 +109,9 @@ export class ContextManager {
         id: `summary-${Date.now()}`,
         role: 'system',
         content: `[历史对话摘要]\n${summary}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       },
-      ...recentMessages
+      ...recentMessages,
     ]
 
     history.totalTokens = await this.recalculateTokens(sessionId)
@@ -126,9 +120,7 @@ export class ContextManager {
   /**
    * 摘要消息（使用LLM）
    */
-  private async summarizeMessages(
-    messages: ConversationMessage[]
-  ): Promise<string> {
+  private async summarizeMessages(messages: ConversationMessage[]): Promise<string> {
     if (messages.length === 0) return ''
 
     // 如果没有LLM客户端，使用简化版本
@@ -141,12 +133,13 @@ export class ContextManager {
       const llmMessages: LLMMessage[] = [
         {
           role: 'system',
-          content: '你是一个对话摘要专家。请将以下对话历史摘要为关键信息，包括：主要话题、用户需求、已完成任务、待办事项。'
+          content:
+            '你是一个对话摘要专家。请将以下对话历史摘要为关键信息，包括：主要话题、用户需求、已完成任务、待办事项。',
         },
         {
           role: 'user',
-          content: this.formatMessagesForSummary(messages)
-        }
+          content: this.formatMessagesForSummary(messages),
+        },
       ]
 
       const response = await this.llmClient.chat(llmMessages)
@@ -161,7 +154,7 @@ export class ContextManager {
    * 格式化消息用于摘要
    */
   private formatMessagesForSummary(messages: ConversationMessage[]): string {
-    return messages.map(m => `[${m.role}] ${m.content}`).join('\n')
+    return messages.map((m) => `[${m.role}] ${m.content}`).join('\n')
   }
 
   /**
@@ -171,8 +164,8 @@ export class ContextManager {
     if (messages.length === 0) return ''
 
     // 提取关键信息
-    const userMessages = messages.filter(m => m.role === 'user')
-    const assistantMessages = messages.filter(m => m.role === 'assistant')
+    const userMessages = messages.filter((m) => m.role === 'user')
+    const assistantMessages = messages.filter((m) => m.role === 'assistant')
 
     // 统计意图类型
     const intentCounts: Record<string, number> = {}
@@ -239,7 +232,7 @@ export class ContextManager {
       completedSteps: [],
       results: new Map(),
       startTime: new Date(),
-      lastUpdate: new Date()
+      lastUpdate: new Date(),
     }
 
     this.activeTasks.set(task.taskId, task)
@@ -270,19 +263,13 @@ export class ContextManager {
   async getActiveTask(sessionId: string): Promise<ActiveTask | null> {
     const tasks = Array.from(this.activeTasks.values())
     // 返回该会话的任何任务（不仅仅是running状态的）
-    return (
-      tasks.find(t => t.sessionId === sessionId) || null
-    )
+    return tasks.find((t) => t.sessionId === sessionId) || null
   }
 
   /**
    * 完成步骤
    */
-  async completeStep(
-    taskId: string,
-    stepId: string,
-    result: AgentResult
-  ): Promise<void> {
+  async completeStep(taskId: string, stepId: string, result: AgentResult): Promise<void> {
     const task = this.activeTasks.get(taskId)
     if (!task) {
       throw new Error(`Task not found: ${taskId}`)
@@ -351,7 +338,7 @@ export class ContextManager {
     return {
       totalSteps,
       completedSteps,
-      percentage
+      percentage,
     }
   }
 
@@ -401,14 +388,12 @@ export class ContextManager {
   ): Promise<void> {
     const profile = await this.getUserProfile(userId)
     profile.statistics.totalTasks++
-    profile.statistics.taskTypes[taskType] =
-      (profile.statistics.taskTypes[taskType] || 0) + 1
+    profile.statistics.taskTypes[taskType] = (profile.statistics.taskTypes[taskType] || 0) + 1
 
     // 更新平均时长
     const total = profile.statistics.totalTasks
     const current = profile.statistics.averageTaskDuration
-    profile.statistics.averageTaskDuration =
-      (current * (total - 1) + duration) / total
+    profile.statistics.averageTaskDuration = (current * (total - 1) + duration) / total
 
     profile.statistics.lastActive = new Date()
   }
@@ -426,14 +411,14 @@ export class ContextManager {
         language: 'zh',
         includeLegalBasis: true,
         includeExamples: true,
-        tone: 'professional'
+        tone: 'professional',
       },
       statistics: {
         totalTasks: 0,
         taskTypes: {},
         averageTaskDuration: 0,
-        lastActive: new Date()
-      }
+        lastActive: new Date(),
+      },
     }
   }
 
@@ -458,10 +443,7 @@ export class ContextManager {
 
     // 清理已完成任务
     for (const [taskId, task] of this.activeTasks.entries()) {
-      if (
-        task.status === 'completed' &&
-        now - task.lastUpdate.getTime() > maxAge
-      ) {
+      if (task.status === 'completed' && now - task.lastUpdate.getTime() > maxAge) {
         this.activeTasks.delete(taskId)
       }
     }
@@ -488,11 +470,10 @@ export class ContextManager {
 
     return {
       totalSessions: this.histories.size,
-      activeTasks: Array.from(this.activeTasks.values()).filter(
-        t => t.status === 'running'
-      ).length,
+      activeTasks: Array.from(this.activeTasks.values()).filter((t) => t.status === 'running')
+        .length,
       totalUsers: this.userProfiles.size,
-      totalTokens
+      totalTokens,
     }
   }
 }

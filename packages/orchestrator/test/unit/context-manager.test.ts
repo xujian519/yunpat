@@ -19,7 +19,7 @@ describe('ContextManager', () => {
         id: 'msg-1',
         role: 'user',
         content: '你好',
-        timestamp: new Date()
+        timestamp: new Date(),
       }
 
       await contextManager.addMessage('session-1', message)
@@ -35,14 +35,14 @@ describe('ContextManager', () => {
           id: 'msg-1',
           role: 'user',
           content: '你好',
-          timestamp: new Date()
+          timestamp: new Date(),
         },
         {
           id: 'msg-2',
           role: 'assistant',
           content: '您好！',
-          timestamp: new Date()
-        }
+          timestamp: new Date(),
+        },
       ]
 
       for (const message of messages) {
@@ -60,7 +60,7 @@ describe('ContextManager', () => {
         id: 'msg-1',
         role: 'user',
         content: '你好',
-        timestamp: new Date()
+        timestamp: new Date(),
       }
 
       await contextManager.addMessage('session-1', message)
@@ -75,7 +75,7 @@ describe('ContextManager', () => {
         id: 'msg-1',
         role: 'user',
         content: '这是一条中文消息',
-        timestamp: new Date()
+        timestamp: new Date(),
       }
 
       await contextManager.addMessage('session-1', chineseMessage)
@@ -96,8 +96,8 @@ describe('ContextManager', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const taskId = await contextManager.createActiveTask(plan, 'session-1')
@@ -115,8 +115,8 @@ describe('ContextManager', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       await contextManager.createActiveTask(plan, 'session-1')
@@ -135,8 +135,8 @@ describe('ContextManager', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const taskId = await contextManager.createActiveTask(plan, 'session-1')
@@ -155,8 +155,8 @@ describe('ContextManager', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const taskId = await contextManager.createActiveTask(plan, 'session-1')
@@ -164,7 +164,7 @@ describe('ContextManager', () => {
       const result: AgentResult = {
         success: true,
         data: { test: 'data' },
-        executionTime: 100
+        executionTime: 100,
       }
 
       await contextManager.completeStep(taskId, 'step-1', result)
@@ -189,7 +189,7 @@ describe('ContextManager', () => {
     it('应该能够更新用户偏好', async () => {
       await contextManager.updateUserPreferences('user-1', {
         tone: 'friendly',
-        includeExamples: false
+        includeExamples: false,
       })
 
       const profile = await contextManager.getUserProfile('user-1')
@@ -223,7 +223,7 @@ describe('ContextManager', () => {
         id: 'msg-1',
         role: 'user',
         content: '测试',
-        timestamp: new Date()
+        timestamp: new Date(),
       }
       await contextManager.addMessage('session-1', message)
 

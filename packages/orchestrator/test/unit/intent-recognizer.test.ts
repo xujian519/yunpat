@@ -14,7 +14,7 @@ describe('IntentRecognizer', () => {
   beforeEach(() => {
     // 创建Mock LLM客户端
     mockLLMClient = {
-      chatWithSchema: vi.fn()
+      chatWithSchema: vi.fn(),
     }
 
     intentRecognizer = new IntentRecognizer(mockLLMClient, 0.7)
@@ -32,14 +32,14 @@ describe('IntentRecognizer', () => {
           field: '控制技术',
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['智能控制器', '撰写', '专利申请']
-        }
+          keywords: ['智能控制器', '撰写', '专利申请'],
+        },
       })
 
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '帮我撰写一个专利申请'
+        message: '帮我撰写一个专利申请',
       }
 
       const result = await intentRecognizer.recognize(input)
@@ -55,7 +55,7 @@ describe('IntentRecognizer', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '帮我撰写一个关于智能控制器的专利申请'
+        message: '帮我撰写一个关于智能控制器的专利申请',
       }
 
       const result = await intentRecognizer.recognize(input)
@@ -75,9 +75,9 @@ describe('IntentRecognizer', () => {
             filename: 'test.pdf',
             mimeType: 'application/pdf',
             size: 1024,
-            data: 'base64data'
-          }
-        ]
+            data: 'base64data',
+          },
+        ],
       }
 
       const result = await intentRecognizer.recognize(input)
@@ -95,7 +95,7 @@ describe('IntentRecognizer', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '测试消息'
+        message: '测试消息',
       }
 
       const result = await intentRecognizer.recognize(input)
@@ -114,14 +114,14 @@ describe('IntentRecognizer', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['测试']
-        }
+          keywords: ['测试'],
+        },
       })
 
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '测试消息'
+        message: '测试消息',
       }
 
       const result = await intentRecognizer.recognize(input)

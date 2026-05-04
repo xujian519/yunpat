@@ -26,15 +26,15 @@ describe('HITLGenerator', () => {
         hitl: true,
         hitlDescription: '请确认权利要求内容',
         retryOnFailure: true,
-        maxRetries: 2
+        maxRetries: 2,
       }
 
       const result: AgentResult = {
         success: true,
         data: {
-          claims: ['1. 一种智能控制器，其特征在于...']
+          claims: ['1. 一种智能控制器，其特征在于...'],
         },
-        executionTime: 5000
+        executionTime: 5000,
       }
 
       const request = await hitlGenerator.generateHITLRequest(step, result)
@@ -58,13 +58,13 @@ describe('HITLGenerator', () => {
         input: {},
         hitl: false,
         retryOnFailure: true,
-        maxRetries: 2
+        maxRetries: 2,
       }
 
       const result: AgentResult = {
         success: true,
         data: {},
-        executionTime: 2000
+        executionTime: 2000,
       }
 
       const request = await hitlGenerator.generateHITLRequest(step, result)
@@ -84,12 +84,12 @@ describe('HITLGenerator', () => {
           confirmButtonText: '确认',
           rejectButtonText: '修改',
           modificationAllowed: true,
-          timeout: 300000
-        }
+          timeout: 300000,
+        },
       }
 
       const response: HITLResponse = {
-        action: 'confirm'
+        action: 'confirm',
       }
 
       const result = await hitlGenerator.processHITLResponse(request, response)
@@ -108,13 +108,13 @@ describe('HITLGenerator', () => {
           confirmButtonText: '确认',
           rejectButtonText: '修改',
           modificationAllowed: true,
-          timeout: 300000
-        }
+          timeout: 300000,
+        },
       }
 
       const response: HITLResponse = {
         action: 'reject',
-        feedback: '内容需要修改'
+        feedback: '内容需要修改',
       }
 
       const result = await hitlGenerator.processHITLResponse(request, response)
@@ -133,13 +133,13 @@ describe('HITLGenerator', () => {
           confirmButtonText: '确认',
           rejectButtonText: '修改',
           modificationAllowed: true,
-          timeout: 300000
-        }
+          timeout: 300000,
+        },
       }
 
       const response: HITLResponse = {
         action: 'modify',
-        modifications: { test: 'modified data' }
+        modifications: { test: 'modified data' },
       }
 
       const result = await hitlGenerator.processHITLResponse(request, response)
@@ -160,8 +160,8 @@ describe('HITLGenerator', () => {
           confirmButtonText: '确认',
           rejectButtonText: '修改',
           modificationAllowed: true,
-          timeout: 300000
-        }
+          timeout: 300000,
+        },
       }
 
       const result = await hitlGenerator.handleTimeout(request)

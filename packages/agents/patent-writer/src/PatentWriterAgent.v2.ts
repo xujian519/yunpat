@@ -89,7 +89,7 @@ export class PatentWriterAgent extends Agent {
     super({
       ...config,
       name: config.name || 'patent-writer',
-      description: config.description || '专利撰写智能体 - 专业的专利申请文件撰写助手'
+      description: config.description || '专利撰写智能体 - 专业的专利申请文件撰写助手',
     })
     this.llm = config.llm
   }
@@ -97,10 +97,7 @@ export class PatentWriterAgent extends Agent {
   /**
    * 规划阶段：分析输入，制定撰写计划
    */
-  protected async plan(
-    input: PatentWriterInput,
-    _context: ExecutionContext
-  ): Promise<WritingPlan> {
+  protected async plan(input: PatentWriterInput, _context: ExecutionContext): Promise<WritingPlan> {
     // 验证输入
     this.validateInput(input)
 
@@ -120,7 +117,7 @@ export class PatentWriterAgent extends Agent {
     return {
       input,
       mode,
-      stages
+      stages,
     }
   }
 
@@ -137,7 +134,7 @@ export class PatentWriterAgent extends Agent {
     let claims = ''
     let description = ''
     let abstract = ''
-    let drawings = input.drawings?.join('\n') || ''
+    const drawings = input.drawings?.join('\n') || ''
 
     // 执行各个阶段
     for (const stage of stages) {
@@ -170,11 +167,7 @@ export class PatentWriterAgent extends Agent {
     const duration = Date.now() - startTime
     const claimsCount = this.countClaims(claims)
     const descriptionWordCount = description.length
-    const qualityScore = this.calculateQualityScore(
-      claims,
-      description,
-      abstract
-    )
+    const qualityScore = this.calculateQualityScore(claims, description, abstract)
 
     return {
       title: input.title,
@@ -186,8 +179,8 @@ export class PatentWriterAgent extends Agent {
         duration,
         claimsCount,
         descriptionWordCount,
-        qualityScore
-      }
+        qualityScore,
+      },
     }
   }
 
@@ -215,10 +208,7 @@ export class PatentWriterAgent extends Agent {
   /**
    * 撰写权利要求
    */
-  private async draftClaims(
-    input: PatentWriterInput,
-    context: ExecutionContext
-  ): Promise<string> {
+  private async draftClaims(input: PatentWriterInput, context: ExecutionContext): Promise<string> {
     const prompt = this.buildClaimsPrompt(input)
 
     try {
@@ -226,15 +216,15 @@ export class PatentWriterAgent extends Agent {
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利代理师，擅长撰写权利要求书。'
+            content: '你是一位专业的专利代理师，擅长撰写权利要求书。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 2000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       return response.content || ''
@@ -259,15 +249,15 @@ export class PatentWriterAgent extends Agent {
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利代理师，擅长撰写专利说明书。'
+            content: '你是一位专业的专利代理师，擅长撰写专利说明书。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 4000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       return response.content || ''
@@ -305,15 +295,15 @@ ${description.substring(0, 1000)}
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利代理师，擅长撰写专利摘要。'
+            content: '你是一位专业的专利代理师，擅长撰写专利摘要。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 500,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       return response.content || ''
@@ -349,10 +339,7 @@ ${input.technicalDisclosure}
   /**
    * 构建说明书撰写提示词
    */
-  private buildSpecificationPrompt(
-    input: PatentWriterInput,
-    claims: string
-  ): string {
+  private buildSpecificationPrompt(input: PatentWriterInput, claims: string): string {
     return `请根据以下技术交底书和权利要求书，撰写专利说明书：
 
 发明名称：${input.title}
@@ -381,17 +368,13 @@ ${input.technicalDisclosure}
    * 统计权利要求数量
    */
   private countClaims(claims: string): number {
-    return claims.split(/\n\d+\./).filter(s => s.trim().length > 0).length
+    return claims.split(/\n\d+\./).filter((s) => s.trim().length > 0).length
   }
 
   /**
    * 计算质量评分
    */
-  private calculateQualityScore(
-    claims: string,
-    description: string,
-    abstract: string
-  ): number {
+  private calculateQualityScore(claims: string, description: string, abstract: string): number {
     let score = 0
 
     // 权利要求质量（40分）

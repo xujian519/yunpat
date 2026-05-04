@@ -15,8 +15,8 @@ describe('HITLManager', () => {
     // 创建Mock LLM客户端
     mockLLMClient = {
       chat: vi.fn().mockResolvedValue({
-        content: '请审阅生成的权利要求，确认保护范围是否准确。'
-      })
+        content: '请审阅生成的权利要求，确认保护范围是否准确。',
+      }),
     }
 
     hitlManager = new HITLManager(mockLLMClient, 300000)
@@ -35,13 +35,13 @@ describe('HITLManager', () => {
         hitl: true,
         hitlDescription: '请确认',
         retryOnFailure: true,
-        maxRetries: 2
+        maxRetries: 2,
       }
 
       const result: AgentResult = {
         success: true,
         data: { claims: ['1. 一种智能控制器...'] },
-        executionTime: 5000
+        executionTime: 5000,
       }
 
       const request = await hitlManager.generateHITLRequest(step, result)
@@ -63,13 +63,13 @@ describe('HITLManager', () => {
         input: {},
         hitl: false,
         retryOnFailure: true,
-        maxRetries: 2
+        maxRetries: 2,
       }
 
       const result: AgentResult = {
         success: true,
         data: {},
-        executionTime: 2000
+        executionTime: 2000,
       }
 
       const request = await hitlManager.generateHITLRequest(step, result)
@@ -91,13 +91,13 @@ describe('HITLManager', () => {
         hitl: true,
         hitlDescription: '请确认',
         retryOnFailure: true,
-        maxRetries: 2
+        maxRetries: 2,
       }
 
       const result: AgentResult = {
         success: true,
         data: { claims: ['1. 一种智能控制器...'] },
-        executionTime: 5000
+        executionTime: 5000,
       }
 
       const checkpointId = await hitlManager.createCheckpoint('task-1', 'step-1', step, result)
@@ -111,7 +111,7 @@ describe('HITLManager', () => {
       const checkpointId = await createTestCheckpoint()
 
       const response = {
-        action: 'confirm'
+        action: 'confirm',
       }
 
       const result = await hitlManager.processResponse(checkpointId, response)
@@ -125,7 +125,7 @@ describe('HITLManager', () => {
 
       const response = {
         action: 'reject',
-        feedback: '内容需要修改'
+        feedback: '内容需要修改',
       }
 
       const result = await hitlManager.processResponse(checkpointId, response)
@@ -139,7 +139,7 @@ describe('HITLManager', () => {
 
       const response = {
         action: 'modify',
-        modifications: { modified: true }
+        modifications: { modified: true },
       }
 
       const result = await hitlManager.processResponse(checkpointId, response)
@@ -222,13 +222,13 @@ describe('HITLManager', () => {
       hitl: true,
       hitlDescription: '请确认',
       retryOnFailure: true,
-      maxRetries: 2
+      maxRetries: 2,
     }
 
     const result: AgentResult = {
       success: true,
       data: { test: 'data' },
-      executionTime: 1000
+      executionTime: 1000,
     }
 
     return await hitlManager.createCheckpoint('task-test', 'step-test', step, result)

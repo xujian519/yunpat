@@ -14,7 +14,7 @@ describe('TaskPlanner', () => {
   beforeEach(() => {
     // 创建Mock LLM客户端
     mockLLMClient = {
-      chatWithSchema: vi.fn()
+      chatWithSchema: vi.fn(),
     }
 
     taskPlanner = new TaskPlanner(mockLLMClient, 20, 30000, true)
@@ -29,8 +29,8 @@ describe('TaskPlanner', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['权利要求']
-        }
+          keywords: ['权利要求'],
+        },
       }
 
       const plan = await taskPlanner.generatePlan(intent)
@@ -52,8 +52,8 @@ describe('TaskPlanner', () => {
           field: '控制技术',
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['检索', '搜索']
-        }
+          keywords: ['检索', '搜索'],
+        },
       }
 
       const plan = await taskPlanner.generatePlan(intent)
@@ -74,8 +74,8 @@ describe('TaskPlanner', () => {
           field: '控制技术',
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['智能控制器', '撰写']
-        }
+          keywords: ['智能控制器', '撰写'],
+        },
       }
 
       // Mock LLM失败
@@ -100,14 +100,14 @@ describe('TaskPlanner', () => {
           field: '测试技术',
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['测试']
-        }
+          keywords: ['测试'],
+        },
       }
 
       const plan = await taskPlanner.generatePlan(intent)
 
       // 检查是否有并行步骤
-      const parallelSteps = plan.steps.filter(s => s.parallel)
+      const parallelSteps = plan.steps.filter((s) => s.parallel)
       expect(parallelSteps.length).toBeGreaterThan(0)
     })
 
@@ -121,8 +121,8 @@ describe('TaskPlanner', () => {
           field: '测试技术',
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['测试']
-        }
+          keywords: ['测试'],
+        },
       }
 
       const plan = await taskPlanner.generatePlan(intent)
@@ -141,9 +141,9 @@ describe('TaskPlanner', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: []
+          keywords: [],
         },
-        clarifyQuestion: '请问需要什么帮助？'
+        clarifyQuestion: '请问需要什么帮助？',
       }
 
       const plan = await taskPlanner.generatePlan(intent)
@@ -159,8 +159,8 @@ describe('TaskPlanner', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['检索', '撰写']
-        }
+          keywords: ['检索', '撰写'],
+        },
       }
 
       const plan = await taskPlanner.generatePlan(intent)
@@ -181,8 +181,8 @@ describe('TaskPlanner', () => {
           field: '测试技术',
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['测试']
-        }
+          keywords: ['测试'],
+        },
       }
 
       const plan = await taskPlanner.generatePlan(intent)

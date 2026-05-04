@@ -17,21 +17,21 @@ describe('OrchestratorAgent', () => {
         provider: 'local',
         model: 'test-model',
         temperature: 0.7,
-        maxTokens: 4096
+        maxTokens: 4096,
       },
       intentConfig: {
         confidenceThreshold: 0.7,
-        maxClarifyRounds: 3
+        maxClarifyRounds: 3,
       },
       planningConfig: {
         maxSteps: 20,
         defaultTimeout: 30000,
-        enableParallel: true
+        enableParallel: true,
       },
       hitlConfig: {
         autoConfirmThreshold: 0.9,
-        timeout: 300000
-      }
+        timeout: 300000,
+      },
     } as any
 
     orchestratorAgent = new OrchestratorAgent(config)
@@ -59,7 +59,7 @@ describe('OrchestratorAgent', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '你好'
+        message: '你好',
       }
 
       const output = await orchestratorAgent.execute(input)
@@ -75,7 +75,7 @@ describe('OrchestratorAgent', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '你好'
+        message: '你好',
       }
 
       await orchestratorAgent.execute(input)
@@ -91,7 +91,7 @@ describe('OrchestratorAgent', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-error',
         userId: 'user-error',
-        message: ''
+        message: '',
       }
 
       const output = await orchestratorAgent.execute(input)
@@ -106,7 +106,7 @@ describe('OrchestratorAgent', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '帮我撰写专利申请'
+        message: '帮我撰写专利申请',
       }
 
       const output = await orchestratorAgent.execute(input)
@@ -120,7 +120,7 @@ describe('OrchestratorAgent', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '帮我撰写一个完整的专利申请，包括检索、说明书和权利要求'
+        message: '帮我撰写一个完整的专利申请，包括检索、说明书和权利要求',
       }
 
       const output = await orchestratorAgent.execute(input)
@@ -134,7 +134,7 @@ describe('OrchestratorAgent', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '你能做什么？'
+        message: '你能做什么？',
       }
 
       const output = await orchestratorAgent.execute(input)
@@ -150,7 +150,7 @@ describe('OrchestratorAgent', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: ''
+        message: '',
       }
 
       const output = await orchestratorAgent.execute(input)
@@ -164,7 +164,7 @@ describe('OrchestratorAgent', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: longMessage
+        message: longMessage,
       }
 
       const output = await orchestratorAgent.execute(input)
@@ -183,9 +183,9 @@ describe('OrchestratorAgent', () => {
             filename: 'test.pdf',
             mimeType: 'application/pdf',
             size: 1024,
-            data: 'base64data'
-          }
-        ]
+            data: 'base64data',
+          },
+        ],
       }
 
       const output = await orchestratorAgent.execute(input)
@@ -199,7 +199,7 @@ describe('OrchestratorAgent', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-1',
         userId: 'user-1',
-        message: '你好'
+        message: '你好',
       }
 
       const startTime = Date.now()

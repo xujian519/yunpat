@@ -8,10 +8,7 @@
  */
 
 import { Anthropic } from '@anthropic-ai/sdk'
-import type {
-  OrchestratorLLMConfig,
-  IntentRecognitionResult
-} from '../types/index.js'
+import type { OrchestratorLLMConfig, IntentRecognitionResult } from '../types/index.js'
 
 export interface LLMMessage {
   role: 'user' | 'assistant' | 'system'
@@ -37,7 +34,7 @@ export class LLMClient {
     // 初始化Anthropic客户端
     if (config.provider === 'anthropic') {
       this.anthropic = new Anthropic({
-        apiKey: config.apiKey || process.env.ANTHROPIC_API_KEY
+        apiKey: config.apiKey || process.env.ANTHROPIC_API_KEY,
       })
     }
   }
@@ -67,12 +64,12 @@ export class LLMClient {
     }
 
     // 分离system消息和user/assistant消息
-    const systemMessage = messages.find(m => m.role === 'system')
+    const systemMessage = messages.find((m) => m.role === 'system')
     const conversationMessages = messages
-      .filter(m => m.role !== 'system')
-      .map(m => ({
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({
         role: m.role as 'user' | 'assistant',
-        content: m.content
+        content: m.content,
       }))
 
     const response = await this.anthropic.messages.create({
@@ -80,7 +77,7 @@ export class LLMClient {
       system: systemMessage?.content,
       messages: conversationMessages,
       temperature: this.config.temperature || 0.7,
-      max_tokens: this.config.maxTokens || 4096
+      max_tokens: this.config.maxTokens || 4096,
     })
 
     return {
@@ -88,8 +85,8 @@ export class LLMClient {
       usage: {
         inputTokens: response.usage.input_tokens,
         outputTokens: response.usage.output_tokens,
-        totalTokens: response.usage.input_tokens + response.usage.output_tokens
-      }
+        totalTokens: response.usage.input_tokens + response.usage.output_tokens,
+      },
     }
   }
 
@@ -112,10 +109,7 @@ export class LLMClient {
   /**
    * 结构化输出（JSON模式）
    */
-  async chatWithSchema<T>(
-    messages: LLMMessage[],
-    schema: object
-  ): Promise<T> {
+  async chatWithSchema<T>(messages: LLMMessage[], schema: object): Promise<T> {
     const response = await this.chat(messages)
 
     try {

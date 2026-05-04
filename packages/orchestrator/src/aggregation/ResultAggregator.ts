@@ -25,18 +25,15 @@ export class ResultAggregator {
       suggestedActions: [],
       metadata: {
         resultsCount: results.size,
-        successfulResults: Array.from(results.values()).filter(r => r.success)
-          .length
-      }
+        successfulResults: Array.from(results.values()).filter((r) => r.success).length,
+      },
     }
   }
 
   /**
    * 生成Markdown响应
    */
-  private async generateMarkdown(
-    results: Map<string, AgentResult>
-  ): Promise<string> {
+  private async generateMarkdown(results: Map<string, AgentResult>): Promise<string> {
     // TODO: 实现Markdown生成
     return ''
   }
@@ -44,9 +41,7 @@ export class ResultAggregator {
   /**
    * 提取附件
    */
-  private async extractAttachments(
-    results: Map<string, AgentResult>
-  ): Promise<Attachment[]> {
+  private async extractAttachments(results: Map<string, AgentResult>): Promise<Attachment[]> {
     // TODO: 实现附件提取
     return []
   }
@@ -54,9 +49,7 @@ export class ResultAggregator {
   /**
    * 生成建议操作
    */
-  private async generateSuggestedActions(
-    results: Map<string, AgentResult>
-  ): Promise<string[]> {
+  private async generateSuggestedActions(results: Map<string, AgentResult>): Promise<string[]> {
     // TODO: 实现建议操作生成
     return []
   }

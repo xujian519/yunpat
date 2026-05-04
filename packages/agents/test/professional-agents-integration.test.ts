@@ -6,19 +6,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   PatentWriterAgent,
-  type PatentWriterInput
+  type PatentWriterInput,
 } from '../patent-writer/src/PatentWriterAgent.v2.js'
 import {
   PatentResponderAgent,
-  type PatentResponderInput
+  type PatentResponderInput,
 } from '../patent-responder/src/PatentResponderAgent.v2.js'
 import {
   PatentAnalyzerAgent,
-  type PatentAnalyzerInput
+  type PatentAnalyzerInput,
 } from '../patent-analyzer/src/PatentAnalyzerAgent.v2.js'
 import {
   CreativeAnalyzerAgent,
-  type CreativeAnalyzerInput
+  type CreativeAnalyzerInput,
 } from '../patent-analyzer/src/CreativeAnalyzerAgent.js'
 
 describe('专业层Agent集成测试', () => {
@@ -34,62 +34,72 @@ describe('专业层Agent集成测试', () => {
         // 根据不同的提示词返回不同的响应
         if (content.includes('撰写权利要求')) {
           return {
-            content: '1. 一种智能控制器，其特征在于，包括：\n控制模块，用于接收控制指令；\n传感器模块，用于检测环境参数；\n执行模块，用于执行控制动作。\n\n2. 根据权利要求1所述的智能控制器，其特征在于，所述控制模块采用PID控制算法。'
+            content:
+              '1. 一种智能控制器，其特征在于，包括：\n控制模块，用于接收控制指令；\n传感器模块，用于检测环境参数；\n执行模块，用于执行控制动作。\n\n2. 根据权利要求1所述的智能控制器，其特征在于，所述控制模块采用PID控制算法。',
           }
         } else if (content.includes('撰写专利说明书')) {
           return {
-            content: '技术领域\n本发明涉及自动化控制技术领域，具体涉及一种智能控制器。\n\n背景技术\n现有控制器存在控制精度低、响应速度慢等问题。\n\n发明内容\n本发明提供一种智能控制器，包括控制模块、传感器模块和执行模块...'
+            content:
+              '技术领域\n本发明涉及自动化控制技术领域，具体涉及一种智能控制器。\n\n背景技术\n现有控制器存在控制精度低、响应速度慢等问题。\n\n发明内容\n本发明提供一种智能控制器，包括控制模块、传感器模块和执行模块...',
           }
         } else if (content.includes('撰写专利摘要')) {
           return {
-            content: '本发明公开了一种智能控制器，包括控制模块、传感器模块和执行模块。控制模块采用PID控制算法，能够实现精确控制，提高控制精度和响应速度，适用于工业自动化控制领域。'
+            content:
+              '本发明公开了一种智能控制器，包括控制模块、传感器模块和执行模块。控制模块采用PID控制算法，能够实现精确控制，提高控制精度和响应速度，适用于工业自动化控制领域。',
           }
         } else if (content.includes('分析审查意见')) {
           return {
-            content: '审查意见摘要：审查员认为权利要求1不具备新颖性。\n\n关键问题：\n1. 新颖性问题（高）\n\n可克服性：70%'
+            content:
+              '审查意见摘要：审查员认为权利要求1不具备新颖性。\n\n关键问题：\n1. 新颖性问题（高）\n\n可克服性：70%',
           }
         } else if (content.includes('制定答复策略')) {
           return {
-            content: '总体策略：修改\n成功概率：75%\n\n关键论点：\n1. 增加技术特征"采用模糊控制算法"\n2. 强调技术效果的显著性\n\n建议修改：\n权利要求1：增加"所述控制模块采用模糊控制算法"'
+            content:
+              '总体策略：修改\n成功概率：75%\n\n关键论点：\n1. 增加技术特征"采用模糊控制算法"\n2. 强调技术效果的显著性\n\n建议修改：\n权利要求1：增加"所述控制模块采用模糊控制算法"',
           }
         } else if (content.includes('撰写答复文档')) {
           return {
-            content: '答复陈述意见\n\n审查员：\n\n关于权利要求1的新颖性问题，申请人认为...\n\n修改后的权利要求书：\n1. 一种智能控制器，其特征在于，包括：\n控制模块，采用模糊控制算法；\n传感器模块；\n执行模块。'
+            content:
+              '答复陈述意见\n\n审查员：\n\n关于权利要求1的新颖性问题，申请人认为...\n\n修改后的权利要求书：\n1. 一种智能控制器，其特征在于，包括：\n控制模块，采用模糊控制算法；\n传感器模块；\n执行模块。',
           }
         } else if (content.includes('分析技术方案')) {
           return {
-            content: '技术领域：自动化控制\n技术问题：控制精度低\n技术方案：采用模糊控制算法\n技术效果：提高控制精度\n关键技术特征：模糊控制、传感器融合'
+            content:
+              '技术领域：自动化控制\n技术问题：控制精度低\n技术方案：采用模糊控制算法\n技术效果：提高控制精度\n关键技术特征：模糊控制、传感器融合',
           }
         } else if (content.includes('分析权利要求')) {
           return {
-            content: '独立权利要求：1条\n从属权利要求：3条\n保护范围：中等\n清楚性：清楚\n风险：低\n质量评分：75'
+            content:
+              '独立权利要求：1条\n从属权利要求：3条\n保护范围：中等\n清楚性：清楚\n风险：低\n质量评分：75',
           }
         } else if (content.includes('评估创造性')) {
           return {
-            content: '创造性等级：有创造性\n创造性评分：80\n\n突出实质性特点：75分\n理由：采用模糊控制算法，具有实质性特点\n\n显著进步：80分\n理由：显著提高控制精度\n\n技术贡献：85分\n理由：为自动化控制领域做出显著贡献'
+            content:
+              '创造性等级：有创造性\n创造性评分：80\n\n突出实质性特点：75分\n理由：采用模糊控制算法，具有实质性特点\n\n显著进步：80分\n理由：显著提高控制精度\n\n技术贡献：85分\n理由：为自动化控制领域做出显著贡献',
           }
         } else if (content.includes('分析技术问题')) {
           return {
-            content: '解决的技术问题：如何提高控制精度\n问题难度：中等\n不可预见性：是'
+            content: '解决的技术问题：如何提高控制精度\n问题难度：中等\n不可预见性：是',
           }
         } else if (content.includes('分析技术方案(方法)')) {
           return {
-            content: '技术手段：模糊控制、传感器融合\n特征组合：多层次控制\n协同效应：是'
+            content: '技术手段：模糊控制、传感器融合\n特征组合：多层次控制\n协同效应：是',
           }
         } else if (content.includes('分析技术效果')) {
           return {
-            content: '技术效果：提高控制精度、加快响应速度\n意料之外：是\n量化效果：精度提升50%'
+            content: '技术效果：提高控制精度、加快响应速度\n意料之外：是\n量化效果：精度提升50%',
           }
         } else if (content.includes('对比现有技术')) {
           return {
-            content: '区别技术特征：\n1. 采用模糊控制算法\n2. 多传感器融合\n\n显而易见性：不显而易见\n启示：无启示'
+            content:
+              '区别技术特征：\n1. 采用模糊控制算法\n2. 多传感器融合\n\n显而易见性：不显而易见\n启示：无启示',
           }
         }
 
         return {
-          content: 'Mock LLM response'
+          content: 'Mock LLM response',
         }
-      })
+      }),
     }
 
     // 创建Mock Context
@@ -97,16 +107,16 @@ describe('专业层Agent集成测试', () => {
       logger: {
         info: vi.fn(),
         error: vi.fn(),
-        warn: vi.fn()
+        warn: vi.fn(),
       },
       memory: {
         get: vi.fn(),
-        set: vi.fn()
+        set: vi.fn(),
       },
       eventBus: {
         emit: vi.fn(),
-        on: vi.fn()
-      }
+        on: vi.fn(),
+      },
     }
   })
 
@@ -120,7 +130,7 @@ describe('专业层Agent集成测试', () => {
         llm: mockLLM,
         eventBus: mockContext.eventBus,
         memory: mockContext.memory,
-        tools: {}
+        tools: {},
       })
     })
 
@@ -130,8 +140,9 @@ describe('专业层Agent集成测试', () => {
         field: '自动化控制',
         applicant: '测试科技有限公司',
         inventors: ['张三', '李四'],
-        technicalDisclosure: '一种智能控制器，采用模糊控制算法，能够提高控制精度。包括控制模块、传感器模块和执行模块。',
-        drawings: ['图1 控制器结构图', '图2 控制流程图']
+        technicalDisclosure:
+          '一种智能控制器，采用模糊控制算法，能够提高控制精度。包括控制模块、传感器模块和执行模块。',
+        drawings: ['图1 控制器结构图', '图2 控制流程图'],
       }
 
       const plan = await agent['plan'](input, mockContext)
@@ -153,7 +164,7 @@ describe('专业层Agent集成测试', () => {
         applicant: '测试科技有限公司',
         inventors: ['张三'],
         technicalDisclosure: '一种智能控制器',
-        mode: 'claims-only'
+        mode: 'claims-only',
       }
 
       const plan = await agent['plan'](input, mockContext)
@@ -171,7 +182,7 @@ describe('专业层Agent集成测试', () => {
         applicant: '测试科技有限公司',
         inventors: ['张三'],
         technicalDisclosure: '一种智能控制器',
-        mode: 'specification-only'
+        mode: 'specification-only',
       }
 
       const plan = await agent['plan'](input, mockContext)
@@ -193,7 +204,7 @@ describe('专业层Agent集成测试', () => {
         llm: mockLLM,
         eventBus: mockContext.eventBus,
         memory: mockContext.memory,
-        tools: {}
+        tools: {},
       })
     })
 
@@ -210,19 +221,20 @@ describe('专业层Agent集成测试', () => {
             {
               publicationNumber: 'CN112345678A',
               title: '一种控制方法',
-              relevance: '公开了控制模块'
-            }
+              relevance: '公开了控制模块',
+            },
           ],
-          rejectionTypes: ['novelty']
+          rejectionTypes: ['novelty'],
         },
         originalApplication: {
           title: '智能控制器',
-          claims: '1. 一种智能控制器，其特征在于，包括：控制模块，用于接收控制指令；传感器模块，用于检测环境参数。',
+          claims:
+            '1. 一种智能控制器，其特征在于，包括：控制模块，用于接收控制指令；传感器模块，用于检测环境参数。',
           description: '技术领域：自动化控制...',
-          abstract: '一种智能控制器...'
+          abstract: '一种智能控制器...',
         },
         strategyPreference: 'moderate',
-        documentType: 'cn'
+        documentType: 'cn',
       }
 
       const plan = await agent['plan'](input, mockContext)
@@ -242,14 +254,14 @@ describe('专业层Agent集成测试', () => {
         officeAction: {
           applicationNumber: 'CN202310000000',
           patentTitle: '智能控制器',
-          officeActionContent: '权利要求1不具备创造性'
+          officeActionContent: '权利要求1不具备创造性',
         },
         originalApplication: {
           title: '智能控制器',
           claims: '1. 一种智能控制器...',
-          description: '技术领域...'
+          description: '技术领域...',
         },
-        strategyPreference: 'aggressive'
+        strategyPreference: 'aggressive',
       }
 
       const plan = await agent['plan'](input, mockContext)
@@ -269,7 +281,7 @@ describe('专业层Agent集成测试', () => {
         llm: mockLLM,
         eventBus: mockContext.eventBus,
         memory: mockContext.memory,
-        tools: {}
+        tools: {},
       })
     })
 
@@ -281,9 +293,9 @@ describe('专业层Agent集成测试', () => {
           abstract: '一种智能控制器，采用模糊控制算法',
           applicant: '测试科技有限公司',
           inventors: ['张三', '李四'],
-          publicationDate: '2024-01-01'
+          publicationDate: '2024-01-01',
         },
-        analysisTypes: ['technical', 'claims', 'creativity', 'risk']
+        analysisTypes: ['technical', 'claims', 'creativity', 'risk'],
       }
 
       const plan = await agent['plan'](input, mockContext)
@@ -304,16 +316,16 @@ describe('专业层Agent集成测试', () => {
         patent: {
           publicationNumber: 'CN112345678A',
           title: '智能控制器',
-          abstract: '一种智能控制器，采用模糊控制算法'
+          abstract: '一种智能控制器，采用模糊控制算法',
         },
         comparisonPatents: [
           {
             publicationNumber: 'CN112345679A',
             title: '传统控制器',
-            abstract: '一种传统控制器，采用PID控制算法'
-          }
+            abstract: '一种传统控制器，采用PID控制算法',
+          },
         ],
-        analysisTypes: ['technical', 'priorArt']
+        analysisTypes: ['technical', 'priorArt'],
       }
 
       const plan = await agent['plan'](input, mockContext)
@@ -335,7 +347,7 @@ describe('专业层Agent集成测试', () => {
         llm: mockLLM,
         eventBus: mockContext.eventBus,
         memory: mockContext.memory,
-        tools: {}
+        tools: {},
       })
     })
 
@@ -346,17 +358,17 @@ describe('专业层Agent集成测试', () => {
           title: '智能控制器',
           abstract: '一种智能控制器，采用模糊控制算法',
           claims: '1. 一种智能控制器，其特征在于，采用模糊控制算法。',
-          description: '技术领域：自动化控制...'
+          description: '技术领域：自动化控制...',
         },
         priorArt: [
           {
             publicationNumber: 'CN112345679A',
             title: '传统控制器',
-            abstract: '一种传统控制器，采用PID控制算法'
-          }
+            abstract: '一种传统控制器，采用PID控制算法',
+          },
         ],
         assessmentStandard: 'cn',
-        technicalField: '自动化控制'
+        technicalField: '自动化控制',
       }
 
       const plan = await agent['plan'](input, mockContext)
@@ -366,7 +378,9 @@ describe('专业层Agent集成测试', () => {
       expect(result.basicInfo.assessmentStandard).toBe('cn')
       expect(result.creativityAssessment.level).toBeDefined()
       expect(result.creativityAssessment.score).toBeGreaterThan(0)
-      expect(result.creativityAssessment.dimensions.substantiveCharacteristics.score).toBeGreaterThan(0)
+      expect(
+        result.creativityAssessment.dimensions.substantiveCharacteristics.score
+      ).toBeGreaterThan(0)
       expect(result.creativityAssessment.dimensions.significantProgress.score).toBeGreaterThan(0)
       expect(result.creativityAssessment.dimensions.technicalContribution.score).toBeGreaterThan(0)
       expect(result.problemAnalysis.solvedProblem).toBeTruthy()
@@ -383,8 +397,8 @@ describe('专业层Agent集成测试', () => {
         patent: {
           publicationNumber: 'CN112345678A',
           title: '简单控制器',
-          abstract: '一种简单的控制器'
-        }
+          abstract: '一种简单的控制器',
+        },
       }
 
       const planLow = await agent['plan'](inputLow, mockContext)
@@ -406,7 +420,7 @@ describe('专业层Agent集成测试', () => {
         llm: mockLLM,
         eventBus: mockContext.eventBus,
         memory: mockContext.memory,
-        tools: {}
+        tools: {},
       })
 
       const writerInput: PatentWriterInput = {
@@ -414,7 +428,7 @@ describe('专业层Agent集成测试', () => {
         field: '自动化控制',
         applicant: '测试科技有限公司',
         inventors: ['张三'],
-        technicalDisclosure: '一种智能控制器，采用模糊控制算法'
+        technicalDisclosure: '一种智能控制器，采用模糊控制算法',
       }
 
       const writerPlan = await writerAgent['plan'](writerInput, mockContext)
@@ -427,7 +441,7 @@ describe('专业层Agent集成测试', () => {
         llm: mockLLM,
         eventBus: mockContext.eventBus,
         memory: mockContext.memory,
-        tools: {}
+        tools: {},
       })
 
       const analyzerInput: PatentAnalyzerInput = {
@@ -435,8 +449,8 @@ describe('专业层Agent集成测试', () => {
           publicationNumber: 'CN112345678A',
           title: writerResult.title,
           abstract: writerResult.abstract,
-          fullText: `${writerResult.claims}\n\n${writerResult.description}`
-        }
+          fullText: `${writerResult.claims}\n\n${writerResult.description}`,
+        },
       }
 
       const analyzerPlan = await analyzerAgent['plan'](analyzerInput, mockContext)
@@ -455,22 +469,22 @@ describe('专业层Agent集成测试', () => {
         llm: mockLLM,
         eventBus: mockContext.eventBus,
         memory: mockContext.memory,
-        tools: {}
+        tools: {},
       })
 
       const analyzerInput: PatentAnalyzerInput = {
         patent: {
           publicationNumber: 'CN112345678A',
           title: '智能控制器',
-          abstract: '一种智能控制器，采用模糊控制算法'
+          abstract: '一种智能控制器，采用模糊控制算法',
         },
         comparisonPatents: [
           {
             publicationNumber: 'CN112345679A',
             title: '传统控制器',
-            abstract: '一种传统控制器，采用PID控制算法'
-          }
-        ]
+            abstract: '一种传统控制器，采用PID控制算法',
+          },
+        ],
       }
 
       const analyzerPlan = await analyzerAgent['plan'](analyzerInput, mockContext)
@@ -483,13 +497,13 @@ describe('专业层Agent集成测试', () => {
         llm: mockLLM,
         eventBus: mockContext.eventBus,
         memory: mockContext.memory,
-        tools: {}
+        tools: {},
       })
 
       const creativeInput: CreativeAnalyzerInput = {
         patent: analyzerInput.patent,
         priorArt: analyzerInput.comparisonPatents,
-        assessmentStandard: 'cn'
+        assessmentStandard: 'cn',
       }
 
       const creativePlan = await creativeAgent['plan'](creativeInput, mockContext)
@@ -497,7 +511,9 @@ describe('专业层Agent集成测试', () => {
 
       expect(analyzerResult.priorArtAnalysis).toBeDefined()
       expect(creativeResult.creativityAssessment.level).toBeDefined()
-      expect(creativeResult.differencesFromPriorArt.distinguishingFeatures.length).toBeGreaterThan(0)
+      expect(creativeResult.differencesFromPriorArt.distinguishingFeatures.length).toBeGreaterThan(
+        0
+      )
     })
   })
 })

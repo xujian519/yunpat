@@ -20,22 +20,22 @@ describe('OrchestratorAgent集成测试', () => {
         model: 'claude-3-5-sonnet-20241022',
         apiKey: 'test-key',
         maxTokens: 4096,
-        temperature: 0.7
+        temperature: 0.7,
       },
       intentConfig: {
         confidenceThreshold: 0.7,
         enableFewShot: true,
-        enableConfidenceEvaluation: true
+        enableConfidenceEvaluation: true,
       },
       planningConfig: {
         maxSteps: 10,
         defaultTimeout: 60000,
-        enableParallel: true
+        enableParallel: true,
       },
       hitlConfig: {
         enabled: true,
-        timeout: 300000
-      }
+        timeout: 300000,
+      },
     }
 
     orchestrator = new OrchestratorAgent(mockConfig)
@@ -54,7 +54,7 @@ describe('OrchestratorAgent集成测试', () => {
 
       // 提交确认响应
       const result = await orchestrator.submitHITLResponse(checkpointId, {
-        action: 'confirm'
+        action: 'confirm',
       })
 
       // 由于checkpoint不存在，应该返回错误
@@ -66,7 +66,7 @@ describe('OrchestratorAgent集成测试', () => {
 
       const result = await orchestrator.submitHITLResponse(checkpointId, {
         action: 'reject',
-        feedback: '内容需要修改'
+        feedback: '内容需要修改',
       })
 
       expect(result.success).toBe(false)
@@ -77,7 +77,7 @@ describe('OrchestratorAgent集成测试', () => {
 
       const result = await orchestrator.submitHITLResponse(checkpointId, {
         action: 'modify',
-        modifications: { modified: true }
+        modifications: { modified: true },
       })
 
       expect(result.success).toBe(false)
@@ -99,7 +99,7 @@ describe('OrchestratorAgent集成测试', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-test-1',
         message: '帮我撰写一个专利',
-        userId: 'user-1'
+        userId: 'user-1',
       }
 
       // 执行（会保存对话历史）
@@ -125,7 +125,7 @@ describe('OrchestratorAgent集成测试', () => {
           id: `msg-${i}`,
           role: 'user',
           content: `测试消息 ${i}`,
-          timestamp: new Date()
+          timestamp: new Date(),
         })
       }
 
@@ -133,7 +133,9 @@ describe('OrchestratorAgent集成测试', () => {
       const history = await contextManager.getHistory(sessionId)
 
       // 应该有摘要消息
-      const summaryMsg = history.find(m => m.role === 'system' && m.content.includes('历史对话摘要'))
+      const summaryMsg = history.find(
+        (m) => m.role === 'system' && m.content.includes('历史对话摘要')
+      )
       expect(summaryMsg).toBeDefined()
     })
   })
@@ -143,7 +145,7 @@ describe('OrchestratorAgent集成测试', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-test-3',
         message: '你好',
-        userId: 'user-1'
+        userId: 'user-1',
       }
 
       const output = await orchestrator.execute(input)
@@ -158,7 +160,7 @@ describe('OrchestratorAgent集成测试', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-test-4',
         message: '帮我撰写一个关于智能控制器的完整专利申请',
-        userId: 'user-1'
+        userId: 'user-1',
       }
 
       const output = await orchestrator.execute(input)
@@ -172,7 +174,7 @@ describe('OrchestratorAgent集成测试', () => {
       const input: OrchestratorInput = {
         sessionId: 'session-test-5',
         message: '检索相关技术',
-        userId: 'user-1'
+        userId: 'user-1',
       }
 
       const output = await orchestrator.execute(input)
@@ -189,7 +191,7 @@ describe('OrchestratorAgent集成测试', () => {
       await contextManager.updateUserPreferences('user-test-1', {
         tone: 'friendly',
         includeExamples: false,
-        language: 'zh'
+        language: 'zh',
       })
 
       // 获取用户画像
@@ -230,8 +232,8 @@ describe('OrchestratorAgent集成测试', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       await contextManager.createActiveTask(plan1, 'session-1')
@@ -251,8 +253,8 @@ describe('OrchestratorAgent集成测试', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const taskId = await contextManager.createActiveTask(plan, 'session-2')
@@ -280,7 +282,7 @@ describe('OrchestratorAgent集成测试', () => {
             input: {},
             hitl: false,
             retryOnFailure: true,
-            maxRetries: 2
+            maxRetries: 2,
           },
           {
             stepId: 'step-2',
@@ -292,14 +294,14 @@ describe('OrchestratorAgent集成测试', () => {
             input: {},
             hitl: false,
             retryOnFailure: true,
-            maxRetries: 2
-          }
+            maxRetries: 2,
+          },
         ],
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const taskId = await contextManager.createActiveTask(plan, 'session-3')
@@ -308,7 +310,7 @@ describe('OrchestratorAgent集成测试', () => {
       await contextManager.completeStep(taskId, 'step-1', {
         success: true,
         data: {},
-        executionTime: 1000
+        executionTime: 1000,
       })
 
       // 获取进度

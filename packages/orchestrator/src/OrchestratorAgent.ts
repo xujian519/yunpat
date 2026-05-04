@@ -24,7 +24,7 @@ import {
   TaskPlan,
   HITLRequest,
   AgentResult,
-  AggregatedResult
+  AggregatedResult,
 } from './types/index.js'
 
 import { ContextManager } from './context/ContextManager.js'
@@ -118,10 +118,7 @@ export class OrchestratorAgent {
 
     // 初始化执行器和管理器
     this.taskExecutor = new TaskExecutor()
-    this.hitlManager = new HITLManager(
-      this.llmClient,
-      config.planningConfig.defaultTimeout
-    )
+    this.hitlManager = new HITLManager(this.llmClient, config.planningConfig.defaultTimeout)
     this.resultAggregator = new ResultAggregator()
     this.exceptionHandler = new ExceptionHandler()
     this.router = new Router()
@@ -161,8 +158,8 @@ export class OrchestratorAgent {
       run: async (input: any, context: any) => ({
         success: true,
         data: { result: `Mock ${agentType} result`, agentType },
-        executionTime: 100
-      })
+        executionTime: 100,
+      }),
     }
   }
 
@@ -178,14 +175,14 @@ export class OrchestratorAgent {
       taskExecutionDuration: 0,
       hitlGenerationDuration: 0,
       resultAggregationDuration: 0,
-      llmCallsCount: 0
+      llmCallsCount: 0,
     }
 
     const stats: ExecutionStats = {
       stepsExecuted: 0,
       successfulSteps: 0,
       failedSteps: 0,
-      hitlCheckpoints: 0
+      hitlCheckpoints: 0,
     }
 
     try {
@@ -194,7 +191,7 @@ export class OrchestratorAgent {
         id: `msg-${Date.now()}`,
         role: 'user',
         content: input.message,
-        timestamp: new Date()
+        timestamp: new Date(),
       })
 
       // Call 1: 意图识别
@@ -227,7 +224,7 @@ export class OrchestratorAgent {
 
         stats.stepsExecuted = executionResult.results.size
         stats.successfulSteps = Array.from(executionResult.results.values()).filter(
-          r => r.success
+          (r) => r.success
         ).length
         stats.failedSteps = stats.stepsExecuted - stats.successfulSteps
 
@@ -235,10 +232,7 @@ export class OrchestratorAgent {
         let hitlRequests: HITLRequest[] = []
         if (taskPlan.hitlCheckpoints.length > 0) {
           const hitlStartTime = Date.now()
-          hitlRequests = await this.call3_HITLGeneration(
-            taskPlan,
-            executionResult.results
-          )
+          hitlRequests = await this.call3_HITLGeneration(taskPlan, executionResult.results)
           metrics.hitlGenerationDuration = Date.now() - hitlStartTime
           stats.hitlCheckpoints = hitlRequests.length
           metrics.llmCallsCount++
@@ -256,8 +250,8 @@ export class OrchestratorAgent {
               executionTime: Date.now() - startTime,
               stepsExecuted: stats.stepsExecuted,
               metrics,
-              stats
-            }
+              stats,
+            },
           }
         }
 
@@ -272,7 +266,7 @@ export class OrchestratorAgent {
           id: `msg-${Date.now()}`,
           role: 'assistant',
           content: aggregated.markdown || this.generateDefaultResponse(),
-          timestamp: new Date()
+          timestamp: new Date(),
         })
 
         metrics.totalDuration = Date.now() - startTime
@@ -297,8 +291,8 @@ export class OrchestratorAgent {
             executionTime: metrics.totalDuration,
             stepsExecuted: stats.stepsExecuted,
             metrics,
-            stats
-          }
+            stats,
+          },
         }
       }
 
@@ -324,8 +318,8 @@ export class OrchestratorAgent {
             executionTime: metrics.totalDuration,
             stepsExecuted: 0,
             metrics,
-            stats
-          }
+            stats,
+          },
         }
       }
 
@@ -339,8 +333,8 @@ export class OrchestratorAgent {
             executionTime: metrics.totalDuration,
             stepsExecuted: 0,
             metrics,
-            stats
-          }
+            stats,
+          },
         }
       }
 
@@ -354,8 +348,8 @@ export class OrchestratorAgent {
           executionTime: metrics.totalDuration,
           stepsExecuted: 0,
           metrics,
-          stats
-        }
+          stats,
+        },
       }
     } catch (error) {
       // Call 5: 异常降级
@@ -376,8 +370,8 @@ export class OrchestratorAgent {
           executionTime: metrics.totalDuration,
           stepsExecuted: 0,
           metrics,
-          stats
-        }
+          stats,
+        },
       }
     }
   }
@@ -400,25 +394,22 @@ export class OrchestratorAgent {
           success: false,
           error: error as Error,
           executionTime: 0,
-          data: undefined
+          data: undefined,
         })
       }
     }
 
-    const allSuccess = Array.from(results.values()).every(r => r.success)
+    const allSuccess = Array.from(results.values()).every((r) => r.success)
     return {
       success: allSuccess,
-      results
+      results,
     }
   }
 
   /**
    * 执行单个步骤（路由到专业层Agent）
    */
-  private async executeStep(
-    step: any,
-    input: OrchestratorInput
-  ): Promise<AgentResult> {
+  private async executeStep(step: any, input: OrchestratorInput): Promise<AgentResult> {
     const startTime = Date.now()
 
     // 根据agentId路由到相应的Agent
@@ -453,7 +444,7 @@ export class OrchestratorAgent {
           return {
             success: true,
             data: { result: `Mock execution for ${step.agentId}` },
-            executionTime: Date.now() - startTime
+            executionTime: Date.now() - startTime,
           }
       }
     } catch (error) {
@@ -462,7 +453,7 @@ export class OrchestratorAgent {
         success: false,
         error: error as Error,
         executionTime: Date.now() - startTime,
-        data: undefined
+        data: undefined,
       }
     }
 
@@ -470,7 +461,7 @@ export class OrchestratorAgent {
     return {
       success: true,
       data: { result: `Mock execution for ${step.agentId}` },
-      executionTime: Date.now() - startTime
+      executionTime: Date.now() - startTime,
     }
   }
 
@@ -486,9 +477,7 @@ export class OrchestratorAgent {
   /**
    * Call 2: 任务规划
    */
-  protected async call2_TaskPlanning(
-    intent: IntentRecognitionResult
-  ): Promise<TaskPlan> {
+  protected async call2_TaskPlanning(intent: IntentRecognitionResult): Promise<TaskPlan> {
     return await this.taskPlanner.generatePlan(intent)
   }
 
@@ -502,19 +491,14 @@ export class OrchestratorAgent {
     const hitlRequests: HITLRequest[] = []
 
     for (const checkpointId of taskPlan.hitlCheckpoints) {
-      const step = taskPlan.steps.find(s => s.stepId === checkpointId)
+      const step = taskPlan.steps.find((s) => s.stepId === checkpointId)
       const result = results.get(checkpointId)
 
       if (step && result) {
         const request = await this.hitlManager.generateHITLRequest(step, result)
         if (request) {
           hitlRequests.push(request)
-          await this.hitlManager.createCheckpoint(
-            `task-${Date.now()}`,
-            checkpointId,
-            step,
-            result
-          )
+          await this.hitlManager.createCheckpoint(`task-${Date.now()}`, checkpointId, step, result)
         }
       }
     }
@@ -541,7 +525,7 @@ export class OrchestratorAgent {
     const recovery = await this.exceptionHandler.handleException(error, {
       sessionId: input.sessionId,
       userId: input.userId,
-      message: input.message
+      message: input.message,
     })
 
     if (recovery.success) {
@@ -554,15 +538,15 @@ export class OrchestratorAgent {
             intent: 'CHITCHAT',
             confidence: 1,
             executionTime: 0,
-            stepsExecuted: 0
-          }
-        }
+            stepsExecuted: 0,
+          },
+        },
       }
     }
 
     return {
       success: false,
-      errorMessage: recovery.errorMessage || '系统出现错误'
+      errorMessage: recovery.errorMessage || '系统出现错误',
     }
   }
 
@@ -573,7 +557,7 @@ export class OrchestratorAgent {
     const responses = [
       '您好！我是YunPat专利代理AI助手，很高兴为您服务。',
       '我可以帮您撰写专利申请、答复审查意见、检索现有技术等。',
-      '请告诉我您需要什么帮助？'
+      '请告诉我您需要什么帮助？',
     ]
     return responses.join('\n')
   }
@@ -618,13 +602,13 @@ export class OrchestratorAgent {
         success: true,
         status: result.status,
         data: result.data,
-        feedback: result.feedback
+        feedback: result.feedback,
       }
     } catch (error) {
       return {
         success: false,
         status: 'timeout',
-        feedback: error instanceof Error ? error.message : 'Unknown error'
+        feedback: error instanceof Error ? error.message : 'Unknown error',
       }
     }
   }

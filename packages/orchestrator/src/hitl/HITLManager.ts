@@ -14,7 +14,7 @@ import {
   HITLResult,
   TaskStep,
   AgentResult,
-  OrchestratorLLMConfig
+  OrchestratorLLMConfig,
 } from '../types/index.js'
 import { LLMClient, LLMMessage } from '../llm/LLMClient.js'
 
@@ -44,15 +44,11 @@ export class HITLManager {
   /**
    * 生成HITL请求
    */
-  async generateHITLRequest(
-    step: TaskStep,
-    result: AgentResult
-  ): Promise<HITLRequest | null> {
+  async generateHITLRequest(step: TaskStep, result: AgentResult): Promise<HITLRequest | null> {
     if (!step.hitl) return null
 
     // 如果有自定义描述，使用自定义描述
-    const description = step.hitlDescription ||
-      await this.generateHITLDescription(step, result)
+    const description = step.hitlDescription || (await this.generateHITLDescription(step, result))
 
     // 生成唯一的checkpointId：时间戳 + 随机数
     const checkpointId = `hitl-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -66,29 +62,27 @@ export class HITLManager {
         confirmButtonText: '确认',
         rejectButtonText: '修改',
         modificationAllowed: true,
-        timeout: this.defaultTimeout
-      }
+        timeout: this.defaultTimeout,
+      },
     }
   }
 
   /**
    * 生成HITL描述
    */
-  private async generateHITLDescription(
-    step: TaskStep,
-    result: AgentResult
-  ): Promise<string> {
+  private async generateHITLDescription(step: TaskStep, result: AgentResult): Promise<string> {
     // 使用LLM生成友好的描述
     try {
       const messages: LLMMessage[] = [
         {
           role: 'system',
-          content: '你是一个人机交互专家。请根据任务步骤和执行结果，生成一个清晰、友好的用户确认提示。'
+          content:
+            '你是一个人机交互专家。请根据任务步骤和执行结果，生成一个清晰、友好的用户确认提示。',
         },
         {
           role: 'user',
-          content: `任务步骤：${step.stepId}\n执行结果：${JSON.stringify(result.data)}\n\n请生成一个简短的确认提示，让用户理解这一步做了什么，并请求确认。`
-        }
+          content: `任务步骤：${step.stepId}\n执行结果：${JSON.stringify(result.data)}\n\n请生成一个简短的确认提示，让用户理解这一步做了什么，并请求确认。`,
+        },
       ]
 
       const response = await this.llmClient.chat(messages)
@@ -121,7 +115,7 @@ export class HITLManager {
       status: 'waiting',
       request,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     }
 
     this.activeCheckpoints.set(checkpoint.checkpointId, checkpoint)
@@ -131,10 +125,7 @@ export class HITLManager {
   /**
    * 处理HITL响应
    */
-  async processResponse(
-    checkpointId: string,
-    response: HITLResponse
-  ): Promise<HITLResult> {
+  async processResponse(checkpointId: string, response: HITLResponse): Promise<HITLResult> {
     const checkpoint = this.activeCheckpoints.get(checkpointId)
     if (!checkpoint) {
       throw new Error(`Checkpoint not found: ${checkpointId}`)
@@ -149,7 +140,7 @@ export class HITLManager {
       case 'confirm':
         result = {
           status: 'confirmed',
-          data: checkpoint.request.data
+          data: checkpoint.request.data,
         }
         checkpoint.status = 'confirmed'
         break
@@ -157,7 +148,7 @@ export class HITLManager {
       case 'reject':
         result = {
           status: 'rejected',
-          feedback: response.feedback
+          feedback: response.feedback,
         }
         checkpoint.status = 'rejected'
         break
@@ -165,7 +156,7 @@ export class HITLManager {
       case 'modify':
         result = {
           status: 'modified',
-          data: response.modifications
+          data: response.modifications,
         }
         checkpoint.status = 'modified'
         break
@@ -192,7 +183,7 @@ export class HITLManager {
 
     return {
       status: 'timeout',
-      data: checkpoint.request.data
+      data: checkpoint.request.data,
     }
   }
 
@@ -228,7 +219,7 @@ export class HITLManager {
    */
   getActiveCheckpoints(): HITLCheckpoint[] {
     return Array.from(this.activeCheckpoints.values()).filter(
-      cp => cp.status === 'waiting' || cp.status === 'pending'
+      (cp) => cp.status === 'waiting' || cp.status === 'pending'
     )
   }
 
@@ -290,7 +281,7 @@ export class HITLManager {
       totalCheckpoints: this.activeCheckpoints.size,
       activeCheckpoints: this.getActiveCheckpoints().length,
       completedCheckpoints,
-      timeoutCheckpoints
+      timeoutCheckpoints,
     }
   }
 }

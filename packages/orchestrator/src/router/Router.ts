@@ -9,11 +9,7 @@
  * 5. 不明确意图追问
  */
 
-import {
-  RoutingDecision,
-  IntentRecognitionResult,
-  IntentType
-} from '../types/index.js'
+import { RoutingDecision, IntentRecognitionResult, IntentType } from '../types/index.js'
 
 export class Router {
   /**
@@ -24,7 +20,7 @@ export class Router {
     if (intent.intent === 'CHITCHAT') {
       return {
         type: 'chitchat',
-        chitchatResponse: this.generateChitchatResponse()
+        chitchatResponse: this.generateChitchatResponse(),
       }
     }
 
@@ -32,7 +28,7 @@ export class Router {
     if (intent.intent === 'CLARIFY') {
       return {
         type: 'clarify',
-        clarifyQuestion: intent.clarifyQuestion || '请问您能详细说明一下需求吗？'
+        clarifyQuestion: intent.clarifyQuestion || '请问您能详细说明一下需求吗？',
       }
     }
 
@@ -40,13 +36,13 @@ export class Router {
     if (intent.complexity === 'simple') {
       return {
         type: 'direct',
-        targetAgent: this.getDirectAgent(intent.intent)
+        targetAgent: this.getDirectAgent(intent.intent),
       }
     }
 
     // COMPLEX - 编排执行
     return {
-      type: 'orchestrated'
+      type: 'orchestrated',
     }
   }
 
@@ -55,9 +51,9 @@ export class Router {
    */
   private getDirectAgent(intent: IntentType): string {
     const directRoutes: Record<string, string> = {
-      'DRAFT_CLAIMS': 'patent-writer',
-      'DRAFT_SPEC': 'patent-writer',
-      'SEARCH': 'search-agent'
+      DRAFT_CLAIMS: 'patent-writer',
+      DRAFT_SPEC: 'patent-writer',
+      SEARCH: 'search-agent',
     }
 
     return directRoutes[intent] || 'patent-writer'
@@ -70,7 +66,7 @@ export class Router {
     const responses = [
       '您好！我是YunPat专利代理AI助手，很高兴为您服务。',
       '我可以帮您撰写专利申请、答复审查意见、检索现有技术等。',
-      '请告诉我您需要什么帮助？'
+      '请告诉我您需要什么帮助？',
     ]
     return responses.join('\n')
   }
@@ -79,16 +75,18 @@ export class Router {
    * 判断是否需要TaskPlanning
    */
   needsTaskPlanning(intent: IntentRecognitionResult): boolean {
-    return intent.complexity === 'complex' && intent.intent !== 'CHITCHAT' && intent.intent !== 'CLARIFY'
+    return (
+      intent.complexity === 'complex' && intent.intent !== 'CHITCHAT' && intent.intent !== 'CLARIFY'
+    )
   }
 
   /**
    * 判断是否可以直接路由
    */
   canRouteDirectly(intent: IntentRecognitionResult): boolean {
-    return intent.complexity === 'simple' &&
-           intent.intent !== 'CHITCHAT' &&
-           intent.intent !== 'CLARIFY'
+    return (
+      intent.complexity === 'simple' && intent.intent !== 'CHITCHAT' && intent.intent !== 'CLARIFY'
+    )
   }
 
   /**

@@ -22,8 +22,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['你好']
-        }
+          keywords: ['你好'],
+        },
       }
 
       const decision = router.route(intent)
@@ -40,9 +40,9 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: []
+          keywords: [],
         },
-        clarifyQuestion: '请问您需要什么帮助？'
+        clarifyQuestion: '请问您需要什么帮助？',
       }
 
       const decision = router.route(intent)
@@ -59,8 +59,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['权利要求']
-        }
+          keywords: ['权利要求'],
+        },
       }
 
       const decision = router.route(intent)
@@ -79,8 +79,8 @@ describe('Router', () => {
           field: '控制技术',
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['智能控制器', '撰写']
-        }
+          keywords: ['智能控制器', '撰写'],
+        },
       }
 
       const decision = router.route(intent)
@@ -96,8 +96,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: ['检索']
-        }
+          keywords: ['检索'],
+        },
       }
 
       const decision = router.route(intent)
@@ -116,8 +116,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: []
-        }
+          keywords: [],
+        },
       }
 
       expect(router.needsTaskPlanning(complexIntent)).toBe(true)
@@ -129,8 +129,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: []
-        }
+          keywords: [],
+        },
       }
 
       expect(router.needsTaskPlanning(chitchatIntent)).toBe(false)
@@ -144,8 +144,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: []
-        }
+          keywords: [],
+        },
       }
 
       expect(router.canRouteDirectly(simpleIntent)).toBe(true)
@@ -157,8 +157,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: []
-        }
+          keywords: [],
+        },
       }
 
       expect(router.canRouteDirectly(complexIntent)).toBe(false)
@@ -172,8 +172,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: []
-        }
+          keywords: [],
+        },
       }
 
       expect(router.needsClarification(clarifyIntent)).toBe(true)
@@ -185,8 +185,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: []
-        }
+          keywords: [],
+        },
       }
 
       expect(router.needsClarification(lowConfidenceIntent)).toBe(true)
@@ -198,8 +198,8 @@ describe('Router', () => {
         extracted: {
           hasAttachment: false,
           urgency: 'normal',
-          keywords: []
-        }
+          keywords: [],
+        },
       }
 
       expect(router.needsClarification(normalIntent)).toBe(false)

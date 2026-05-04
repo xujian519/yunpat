@@ -28,8 +28,8 @@ describe('TaskExecutor', () => {
           input: {},
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
-        }
+          maxRetries: 2,
+        },
       ]
 
       // 使用buildDAG方法（需要通过execute间接测试）
@@ -41,8 +41,8 @@ describe('TaskExecutor', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const result = await executor.execute(plan, mockContext)
@@ -63,7 +63,7 @@ describe('TaskExecutor', () => {
           input: {},
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         {
           stepId: 'step-2',
@@ -75,8 +75,8 @@ describe('TaskExecutor', () => {
           input: {},
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
-        }
+          maxRetries: 2,
+        },
       ]
 
       const plan: TaskPlan = {
@@ -87,8 +87,8 @@ describe('TaskExecutor', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const result = await executor.execute(plan, mockContext)
@@ -109,7 +109,7 @@ describe('TaskExecutor', () => {
           input: {},
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         {
           stepId: 'step-2',
@@ -121,7 +121,7 @@ describe('TaskExecutor', () => {
           input: {},
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         {
           stepId: 'step-3',
@@ -133,8 +133,8 @@ describe('TaskExecutor', () => {
           input: {},
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
-        }
+          maxRetries: 2,
+        },
       ]
 
       const plan: TaskPlan = {
@@ -145,8 +145,8 @@ describe('TaskExecutor', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: true
-        }
+          parallelizable: true,
+        },
       }
 
       const result = await executor.execute(plan, mockContext)
@@ -169,8 +169,8 @@ describe('TaskExecutor', () => {
           input: {},
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
-        }
+          maxRetries: 2,
+        },
       ]
 
       const plan: TaskPlan = {
@@ -181,8 +181,8 @@ describe('TaskExecutor', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const result = await executor.execute(plan, mockContext)
@@ -205,8 +205,8 @@ describe('TaskExecutor', () => {
           hitl: true,
           hitlDescription: '请确认',
           retryOnFailure: true,
-          maxRetries: 2
-        }
+          maxRetries: 2,
+        },
       ]
 
       const plan: TaskPlan = {
@@ -217,8 +217,8 @@ describe('TaskExecutor', () => {
         hitlCheckpoints: ['step-1'],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const result = await executor.execute(plan, mockContext)
@@ -241,8 +241,8 @@ describe('TaskExecutor', () => {
           input: {},
           hitl: false,
           retryOnFailure: false, // 不重试
-          maxRetries: 0
-        }
+          maxRetries: 0,
+        },
       ]
 
       const plan: TaskPlan = {
@@ -253,8 +253,8 @@ describe('TaskExecutor', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       // 目前实现返回成功，因为executeStep是模拟的

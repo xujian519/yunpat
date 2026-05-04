@@ -8,12 +8,7 @@
  * 4. 设置HITL检查点
  */
 
-import {
-  TaskPlan,
-  IntentRecognitionResult,
-  TaskStep,
-  IntentType
-} from '../types/index.js'
+import { TaskPlan, IntentRecognitionResult, TaskStep, IntentType } from '../types/index.js'
 import { LLMClient, LLMMessage } from '../llm/LLMClient.js'
 
 export class TaskPlanner {
@@ -68,7 +63,7 @@ export class TaskPlanner {
       input: this.buildStepInput(intent),
       hitl: false,
       retryOnFailure: true,
-      maxRetries: 2
+      maxRetries: 2,
     }
 
     return {
@@ -79,26 +74,24 @@ export class TaskPlanner {
       hitlCheckpoints: [],
       metadata: {
         createdAt: new Date(),
-        parallelizable: false
-      }
+        parallelizable: false,
+      },
     }
   }
 
   /**
    * 使用LLM生成复杂计划
    */
-  private async generateComplexPlanWithLLM(
-    intent: IntentRecognitionResult
-  ): Promise<TaskPlan> {
+  private async generateComplexPlanWithLLM(intent: IntentRecognitionResult): Promise<TaskPlan> {
     const messages: LLMMessage[] = [
       {
         role: 'system',
-        content: this.getSystemPrompt()
+        content: this.getSystemPrompt(),
       },
       {
         role: 'user',
-        content: this.buildUserPrompt(intent)
-      }
+        content: this.buildUserPrompt(intent),
+      },
     ]
 
     // 添加Few-shot示例
@@ -106,11 +99,11 @@ export class TaskPlanner {
     for (const example of fewShotExamples) {
       messages.push({
         role: 'user',
-        content: example.input
+        content: example.input,
       })
       messages.push({
         role: 'assistant',
-        content: JSON.stringify(example.output)
+        content: JSON.stringify(example.output),
       })
     }
 
@@ -246,7 +239,7 @@ export class TaskPlanner {
               input: { mode: 'iterative', query: '智能控制器' },
               hitl: false,
               retryOnFailure: true,
-              maxRetries: 3
+              maxRetries: 3,
             },
             {
               stepId: 'query-knowledge-base',
@@ -258,7 +251,7 @@ export class TaskPlanner {
               input: { query: '智能控制器' },
               hitl: false,
               retryOnFailure: true,
-              maxRetries: 2
+              maxRetries: 2,
             },
             {
               stepId: 'draft-claims',
@@ -271,17 +264,17 @@ export class TaskPlanner {
               hitl: true,
               hitlDescription: '请审阅生成的权利要求',
               retryOnFailure: true,
-              maxRetries: 2
-            }
+              maxRetries: 2,
+            },
           ],
           hitlCheckpoints: ['draft-claims'],
           metadata: {
             createdAt: new Date().toISOString(),
             parallelizable: true,
-            estimatedCost: 0.15
-          }
-        }
-      }
+            estimatedCost: 0.15,
+          },
+        },
+      },
     ]
   }
 
@@ -310,10 +303,21 @@ export class TaskPlanner {
               hitl: { type: 'boolean' },
               hitlDescription: { type: 'string' },
               retryOnFailure: { type: 'boolean' },
-              maxRetries: { type: 'number' }
+              maxRetries: { type: 'number' },
             },
-            required: ['stepId', 'agentId', 'layer', 'parallel', 'dependsOn', 'timeout', 'input', 'hitl', 'retryOnFailure', 'maxRetries']
-          }
+            required: [
+              'stepId',
+              'agentId',
+              'layer',
+              'parallel',
+              'dependsOn',
+              'timeout',
+              'input',
+              'hitl',
+              'retryOnFailure',
+              'maxRetries',
+            ],
+          },
         },
         hitlCheckpoints: { type: 'array', items: { type: 'string' } },
         metadata: {
@@ -321,12 +325,12 @@ export class TaskPlanner {
           properties: {
             createdAt: { type: 'string' },
             parallelizable: { type: 'boolean' },
-            estimatedCost: { type: 'number' }
+            estimatedCost: { type: 'number' },
           },
-          required: ['createdAt', 'parallelizable']
-        }
+          required: ['createdAt', 'parallelizable'],
+        },
       },
-      required: ['planId', 'intent', 'estimatedMinutes', 'steps', 'hitlCheckpoints', 'metadata']
+      required: ['planId', 'intent', 'estimatedMinutes', 'steps', 'hitlCheckpoints', 'metadata'],
     }
   }
 
@@ -343,8 +347,8 @@ export class TaskPlanner {
       intent: response.intent as IntentType,
       metadata: {
         ...response.metadata,
-        createdAt: new Date(response.metadata.createdAt)
-      }
+        createdAt: new Date(response.metadata.createdAt),
+      },
     }
   }
 
@@ -368,11 +372,11 @@ export class TaskPlanner {
           input: {
             mode: 'iterative',
             query: intent.extracted.title || intent.extracted.keywords.join(' '),
-            databases: ['cn_patent', 'us_patent']
+            databases: ['cn_patent', 'us_patent'],
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 3
+          maxRetries: 3,
         },
         {
           stepId: 'query-knowledge-base',
@@ -383,11 +387,11 @@ export class TaskPlanner {
           timeout: 30000,
           input: {
             query: intent.extracted.title || intent.extracted.keywords.join(' '),
-            domain: intent.extracted.field
+            domain: intent.extracted.field,
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         // Step 2: 发明理解（依赖Step 1）
         {
@@ -399,11 +403,11 @@ export class TaskPlanner {
           timeout: 60000,
           input: {
             task: 'understand-invention',
-            inventionTitle: intent.extracted.title
+            inventionTitle: intent.extracted.title,
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         // Step 3: 权利要求撰写（HITL检查点）
         {
@@ -414,12 +418,12 @@ export class TaskPlanner {
           dependsOn: ['understand-invention'],
           timeout: 90000,
           input: {
-            task: 'draft-claims'
+            task: 'draft-claims',
           },
           hitl: true,
           hitlDescription: '请审阅生成的权利要求，确认保护范围和技术特征是否准确',
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         // Step 4: 说明书撰写
         {
@@ -430,11 +434,11 @@ export class TaskPlanner {
           dependsOn: ['draft-claims'],
           timeout: 120000,
           input: {
-            task: 'draft-specification'
+            task: 'draft-specification',
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         // Step 5: 形式检查（并行）
         {
@@ -447,7 +451,7 @@ export class TaskPlanner {
           input: {},
           hitl: false,
           retryOnFailure: false,
-          maxRetries: 0
+          maxRetries: 0,
         },
         {
           stepId: 'spec-formality-check',
@@ -459,7 +463,7 @@ export class TaskPlanner {
           input: {},
           hitl: false,
           retryOnFailure: false,
-          maxRetries: 0
+          maxRetries: 0,
         },
         // Step 6: 格式转换
         {
@@ -471,19 +475,19 @@ export class TaskPlanner {
           timeout: 30000,
           input: {
             format: 'docx',
-            patentOfficeFormat: 'CNIPA'
+            patentOfficeFormat: 'CNIPA',
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
-        }
+          maxRetries: 2,
+        },
       ],
       hitlCheckpoints: ['draft-claims'],
       metadata: {
         createdAt: new Date(),
         parallelizable: true,
-        estimatedCost: 0.15
-      }
+        estimatedCost: 0.15,
+      },
     }
   }
 
@@ -504,11 +508,11 @@ export class TaskPlanner {
           dependsOn: [],
           timeout: 30000,
           input: {
-            task: 'parse-oa'
+            task: 'parse-oa',
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         {
           stepId: 'search-counter-evidence',
@@ -519,11 +523,11 @@ export class TaskPlanner {
           timeout: 60000,
           input: {
             mode: 'iterative',
-            query: '反证检索'
+            query: '反证检索',
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 3
+          maxRetries: 3,
         },
         {
           stepId: 'determine-response-strategy',
@@ -533,12 +537,12 @@ export class TaskPlanner {
           dependsOn: ['search-counter-evidence'],
           timeout: 60000,
           input: {
-            task: 'determine-strategy'
+            task: 'determine-strategy',
           },
           hitl: true,
           hitlDescription: '请确认答复策略：修改权利要求、争辩、还是组合策略',
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         {
           stepId: 'draft-response',
@@ -548,19 +552,19 @@ export class TaskPlanner {
           dependsOn: ['determine-response-strategy'],
           timeout: 120000,
           input: {
-            task: 'draft-response'
+            task: 'draft-response',
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
-        }
+          maxRetries: 2,
+        },
       ],
       hitlCheckpoints: ['determine-response-strategy'],
       metadata: {
         createdAt: new Date(),
         parallelizable: false,
-        estimatedCost: 0.20
-      }
+        estimatedCost: 0.2,
+      },
     }
   }
 
@@ -581,11 +585,11 @@ export class TaskPlanner {
           dependsOn: [],
           timeout: 30000,
           input: {
-            task: 'collect-patents'
+            task: 'collect-patents',
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         {
           stepId: 'analyze-technical-distribution',
@@ -595,11 +599,11 @@ export class TaskPlanner {
           dependsOn: ['collect-patents'],
           timeout: 60000,
           input: {
-            task: 'analyze-distribution'
+            task: 'analyze-distribution',
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         {
           stepId: 'evaluate-value',
@@ -609,11 +613,11 @@ export class TaskPlanner {
           dependsOn: ['analyze-technical-distribution'],
           timeout: 60000,
           input: {
-            task: 'evaluate-value'
+            task: 'evaluate-value',
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
+          maxRetries: 2,
         },
         {
           stepId: 'generate-report',
@@ -623,19 +627,19 @@ export class TaskPlanner {
           dependsOn: ['evaluate-value'],
           timeout: 60000,
           input: {
-            task: 'generate-report'
+            task: 'generate-report',
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 2
-        }
+          maxRetries: 2,
+        },
       ],
       hitlCheckpoints: [],
       metadata: {
         createdAt: new Date(),
         parallelizable: false,
-        estimatedCost: 0.12
-      }
+        estimatedCost: 0.12,
+      },
     }
   }
 
@@ -656,11 +660,11 @@ export class TaskPlanner {
           dependsOn: [],
           timeout: 60000,
           input: {
-            query: intent.extracted.keywords.join(' ')
+            query: intent.extracted.keywords.join(' '),
           },
           hitl: false,
           retryOnFailure: true,
-          maxRetries: 3
+          maxRetries: 3,
         },
         {
           stepId: 'task-2-draft',
@@ -670,20 +674,20 @@ export class TaskPlanner {
           dependsOn: ['task-1-search'],
           timeout: 120000,
           input: {
-            task: 'draft-full'
+            task: 'draft-full',
           },
           hitl: true,
           hitlDescription: '请确认完整的专利申请内容',
           retryOnFailure: true,
-          maxRetries: 2
-        }
+          maxRetries: 2,
+        },
       ],
       hitlCheckpoints: ['task-2-draft'],
       metadata: {
         createdAt: new Date(),
         parallelizable: true,
-        estimatedCost: 0.18
-      }
+        estimatedCost: 0.18,
+      },
     }
   }
 
@@ -692,9 +696,9 @@ export class TaskPlanner {
    */
   private getDirectAgent(intent: IntentType): string {
     const directRoutes: Record<string, string> = {
-      'DRAFT_CLAIMS': 'patent-writer',
-      'DRAFT_SPEC': 'patent-writer',
-      'SEARCH': 'search-agent'
+      DRAFT_CLAIMS: 'patent-writer',
+      DRAFT_SPEC: 'patent-writer',
+      SEARCH: 'search-agent',
     }
     return directRoutes[intent] || 'patent-writer'
   }
@@ -713,7 +717,7 @@ export class TaskPlanner {
   private buildStepInput(intent: IntentRecognitionResult): Record<string, any> {
     return {
       intent: intent.intent,
-      extracted: intent.extracted
+      extracted: intent.extracted,
     }
   }
 }

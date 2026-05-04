@@ -148,7 +148,7 @@ export class PatentAnalyzerAgent extends Agent {
     super({
       ...config,
       name: config.name || 'patent-analyzer',
-      description: config.description || '专利分析智能体 - 专业的专利文献分析助手'
+      description: config.description || '专利分析智能体 - 专业的专利文献分析助手',
     })
     this.llm = config.llm
   }
@@ -164,12 +164,7 @@ export class PatentAnalyzerAgent extends Agent {
     this.validateInput(input)
 
     // 确定分析类型
-    const analysisTypes = input.analysisTypes || [
-      'technical',
-      'claims',
-      'creativity',
-      'risk'
-    ]
+    const analysisTypes = input.analysisTypes || ['technical', 'claims', 'creativity', 'risk']
 
     // 确定分析阶段
     const stages: string[] = []
@@ -193,7 +188,7 @@ export class PatentAnalyzerAgent extends Agent {
     return {
       input,
       analysisTypes,
-      stages
+      stages,
     }
   }
 
@@ -264,14 +259,14 @@ export class PatentAnalyzerAgent extends Agent {
         publicationNumber: input.patent.publicationNumber,
         title: input.patent.title,
         applicant: input.patent.applicant,
-        publicationDate: input.patent.publicationDate
+        publicationDate: input.patent.publicationDate,
       },
       technicalAnalysis,
       claimsAnalysis,
       priorArtAnalysis,
       creativityAssessment,
       riskAssessment,
-      recommendations
+      recommendations,
     }
   }
 
@@ -319,15 +314,15 @@ ${input.patent.fullText || '未提供'}
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利分析师，擅长技术方案分析。'
+            content: '你是一位专业的专利分析师，擅长技术方案分析。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 1500,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -367,15 +362,15 @@ ${input.patent.fullText || '未提供'}
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利分析师，擅长权利要求分析。'
+            content: '你是一位专业的专利分析师，擅长权利要求分析。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 1000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -396,7 +391,7 @@ ${input.patent.fullText || '未提供'}
     if (!input.comparisonPatents?.length) {
       return {
         closestPriorArt: [],
-        innovations: []
+        innovations: [],
       }
     }
 
@@ -408,7 +403,7 @@ ${input.patent.fullText || '未提供'}
 摘要：${input.patent.abstract}
 
 对比专利：
-${input.comparisonPatents.map(p => `- ${p.publicationNumber}: ${p.title}\n摘要: ${p.abstract}`).join('\n\n')}
+${input.comparisonPatents.map((p) => `- ${p.publicationNumber}: ${p.title}\n摘要: ${p.abstract}`).join('\n\n')}
 
 请分析：
 1. 最接近的现有技术（相似度评分0-100）
@@ -421,15 +416,15 @@ ${input.comparisonPatents.map(p => `- ${p.publicationNumber}: ${p.title}\n摘要
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利分析师，擅长现有技术对比。'
+            content: '你是一位专业的专利分析师，擅长现有技术对比。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 2000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -458,7 +453,7 @@ ${input.comparisonPatents.map(p => `- ${p.publicationNumber}: ${p.title}\n摘要
 ${technicalAnalysis ? `- 技术方案: ${technicalAnalysis.solution}\n- 关键特征: ${technicalAnalysis.keyFeatures.join(', ')}` : '未分析'}
 
 现有技术对比：
-${priorArtAnalysis ? `- 最接近现有技术: ${priorArtAnalysis.closestPriorArt.map(p => `${p.publicationNumber} (${p.similarity}%)`).join(', ')}\n- 创新点: ${priorArtAnalysis.innovations.join(', ')}` : '未分析'}
+${priorArtAnalysis ? `- 最接近现有技术: ${priorArtAnalysis.closestPriorArt.map((p) => `${p.publicationNumber} (${p.similarity}%)`).join(', ')}\n- 创新点: ${priorArtAnalysis.innovations.join(', ')}` : '未分析'}
 
 请评估：
 1. 创造性等级（有创造性/显而易见/缺乏创造性）
@@ -471,15 +466,15 @@ ${priorArtAnalysis ? `- 最接近现有技术: ${priorArtAnalysis.closestPriorAr
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利分析师，擅长创造性评估。'
+            content: '你是一位专业的专利分析师，擅长创造性评估。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 1000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -506,7 +501,7 @@ ${priorArtAnalysis ? `- 最接近现有技术: ${priorArtAnalysis.closestPriorAr
     return {
       invalidityRisk,
       infringementRisk,
-      riskFactors
+      riskFactors,
     }
   }
 
@@ -548,7 +543,7 @@ ${priorArtAnalysis ? `- 最接近现有技术: ${priorArtAnalysis.closestPriorAr
       problems: this.extractProblems(content),
       solution: this.extractSolution(content),
       effects: this.extractEffects(content),
-      keyFeatures: this.extractKeyFeatures(content)
+      keyFeatures: this.extractKeyFeatures(content),
     }
   }
 
@@ -559,9 +554,9 @@ ${priorArtAnalysis ? `- 最接近现有技术: ${priorArtAnalysis.closestPriorAr
       protectionScope: {
         breadth: this.extractBreadth(content),
         clarity: this.extractClarity(content),
-        risk: this.extractRisk(content)
+        risk: this.extractRisk(content),
       },
-      qualityScore: this.extractQualityScore(content)
+      qualityScore: this.extractQualityScore(content),
     }
   }
 
@@ -570,13 +565,14 @@ ${priorArtAnalysis ? `- 最接近现有技术: ${priorArtAnalysis.closestPriorAr
     comparisonPatents?: PatentInfo[]
   ): PatentAnalyzerOutput['priorArtAnalysis'] {
     return {
-      closestPriorArt: comparisonPatents?.map(p => ({
-        publicationNumber: p.publicationNumber,
-        title: p.title,
-        similarity: 70,
-        differences: ['技术方案不同', '技术效果不同']
-      })) || [],
-      innovations: ['创新点1', '创新点2', '创新点3']
+      closestPriorArt:
+        comparisonPatents?.map((p) => ({
+          publicationNumber: p.publicationNumber,
+          title: p.title,
+          similarity: 70,
+          differences: ['技术方案不同', '技术效果不同'],
+        })) || [],
+      innovations: ['创新点1', '创新点2', '创新点3'],
     }
   }
 
@@ -584,7 +580,7 @@ ${priorArtAnalysis ? `- 最接近现有技术: ${priorArtAnalysis.closestPriorAr
     return {
       level: 'inventive',
       score: 75,
-      reasoning: '具备突出的实质性特点和显著的进步'
+      reasoning: '具备突出的实质性特点和显著的进步',
     }
   }
 

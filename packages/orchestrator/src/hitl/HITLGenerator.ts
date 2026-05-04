@@ -7,22 +7,13 @@
  * 3. 超时处理
  */
 
-import {
-  HITLRequest,
-  HITLResponse,
-  HITLResult,
-  TaskStep,
-  AgentResult
-} from '../types/index.js'
+import { HITLRequest, HITLResponse, HITLResult, TaskStep, AgentResult } from '../types/index.js'
 
 export class HITLGenerator {
   /**
    * 生成HITL请求
    */
-  async generateHITLRequest(
-    step: TaskStep,
-    result: AgentResult
-  ): Promise<HITLRequest | null> {
+  async generateHITLRequest(step: TaskStep, result: AgentResult): Promise<HITLRequest | null> {
     if (!step.hitl) return null
 
     return {
@@ -34,33 +25,30 @@ export class HITLGenerator {
         confirmButtonText: '确认',
         rejectButtonText: '修改',
         modificationAllowed: true,
-        timeout: 300000 // 5分钟
-      }
+        timeout: 300000, // 5分钟
+      },
     }
   }
 
   /**
    * 处理HITL响应
    */
-  async processHITLResponse(
-    request: HITLRequest,
-    response: HITLResponse
-  ): Promise<HITLResult> {
+  async processHITLResponse(request: HITLRequest, response: HITLResponse): Promise<HITLResult> {
     switch (response.action) {
       case 'confirm':
         return {
           status: 'confirmed',
-          data: request.data
+          data: request.data,
         }
       case 'reject':
         return {
           status: 'rejected',
-          feedback: response.feedback
+          feedback: response.feedback,
         }
       case 'modify':
         return {
           status: 'modified',
-          data: response.modifications
+          data: response.modifications,
         }
     }
   }
@@ -71,7 +59,7 @@ export class HITLGenerator {
   async handleTimeout(request: HITLRequest): Promise<HITLResult> {
     return {
       status: 'timeout',
-      data: request.data
+      data: request.data,
     }
   }
 }

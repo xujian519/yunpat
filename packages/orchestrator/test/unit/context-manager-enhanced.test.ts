@@ -5,11 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ContextManager } from '../../src/context/ContextManager.js'
 import { LLMClient } from '../../src/llm/LLMClient.js'
-import type {
-  ConversationMessage,
-  TaskPlan,
-  AgentResult
-} from '../../src/types/index.js'
+import type { ConversationMessage, TaskPlan, AgentResult } from '../../src/types/index.js'
 
 describe('ContextManager增强', () => {
   let contextManager: ContextManager
@@ -19,8 +15,8 @@ describe('ContextManager增强', () => {
     // 创建Mock LLM客户端
     mockLLMClient = {
       chat: vi.fn().mockResolvedValue({
-        content: '对话摘要：用户询问了专利撰写和检索'
-      })
+        content: '对话摘要：用户询问了专利撰写和检索',
+      }),
     }
 
     contextManager = new ContextManager(mockLLMClient)
@@ -33,20 +29,20 @@ describe('ContextManager增强', () => {
           id: 'msg-1',
           role: 'user',
           content: '帮我撰写一个专利',
-          timestamp: new Date()
+          timestamp: new Date(),
         },
         {
           id: 'msg-2',
           role: 'assistant',
           content: '好的，我来帮您撰写',
-          timestamp: new Date()
+          timestamp: new Date(),
         },
         {
           id: 'msg-3',
           role: 'user',
           content: '再检索一下现有技术',
-          timestamp: new Date()
-        }
+          timestamp: new Date(),
+        },
       ]
 
       // 添加超过maxHistoryLength的消息
@@ -55,14 +51,16 @@ describe('ContextManager增强', () => {
           id: `msg-${i}`,
           role: 'user',
           content: '测试消息',
-          timestamp: new Date()
+          timestamp: new Date(),
         })
       }
 
       const history = await contextManager.getHistory('session-1')
 
       // 应该有摘要消息
-      const summaryMsg = history.find(m => m.role === 'system' && m.content.includes('历史对话摘要'))
+      const summaryMsg = history.find(
+        (m) => m.role === 'system' && m.content.includes('历史对话摘要')
+      )
       expect(summaryMsg).toBeDefined()
 
       // 应该调用了LLM
@@ -77,14 +75,14 @@ describe('ContextManager增强', () => {
           id: 'msg-1',
           role: 'user',
           content: '帮我撰写一个专利',
-          timestamp: new Date()
+          timestamp: new Date(),
         },
         {
           id: 'msg-2',
           role: 'user',
           content: '再检索一下现有技术',
-          timestamp: new Date()
-        }
+          timestamp: new Date(),
+        },
       ]
 
       // 添加大量消息触发压缩
@@ -93,14 +91,16 @@ describe('ContextManager增强', () => {
           id: `msg-${i}`,
           role: 'user',
           content: '测试消息',
-          timestamp: new Date()
+          timestamp: new Date(),
         })
       }
 
       const history = await contextManagerNoLLM.getHistory('session-2')
 
       // 应该有简化摘要
-      const summaryMsg = history.find(m => m.role === 'system' && m.content.includes('历史对话摘要'))
+      const summaryMsg = history.find(
+        (m) => m.role === 'system' && m.content.includes('历史对话摘要')
+      )
       expect(summaryMsg).toBeDefined()
       expect(summaryMsg?.content).toContain('对话包含')
     })
@@ -116,8 +116,8 @@ describe('ContextManager增强', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       await contextManager.createActiveTask(plan, 'session-1')
@@ -136,8 +136,8 @@ describe('ContextManager增强', () => {
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const taskId = await contextManager.createActiveTask(plan, 'session-1')
@@ -162,14 +162,36 @@ describe('ContextManager增强', () => {
         intent: 'DRAFT_FULL',
         estimatedMinutes: 30,
         steps: [
-          { stepId: 'step-1', agentId: 'agent-1', layer: 'execution', parallel: false, dependsOn: [], timeout: 30000, input: {}, hitl: false, retryOnFailure: true, maxRetries: 2 },
-          { stepId: 'step-2', agentId: 'agent-2', layer: 'execution', parallel: false, dependsOn: ['step-1'], timeout: 30000, input: {}, hitl: false, retryOnFailure: true, maxRetries: 2 }
+          {
+            stepId: 'step-1',
+            agentId: 'agent-1',
+            layer: 'execution',
+            parallel: false,
+            dependsOn: [],
+            timeout: 30000,
+            input: {},
+            hitl: false,
+            retryOnFailure: true,
+            maxRetries: 2,
+          },
+          {
+            stepId: 'step-2',
+            agentId: 'agent-2',
+            layer: 'execution',
+            parallel: false,
+            dependsOn: ['step-1'],
+            timeout: 30000,
+            input: {},
+            hitl: false,
+            retryOnFailure: true,
+            maxRetries: 2,
+          },
         ],
         hitlCheckpoints: [],
         metadata: {
           createdAt: new Date(),
-          parallelizable: false
-        }
+          parallelizable: false,
+        },
       }
 
       const taskId = await contextManager.createActiveTask(plan, 'session-1')
@@ -178,7 +200,7 @@ describe('ContextManager增强', () => {
       await contextManager.completeStep(taskId, 'step-1', {
         success: true,
         data: {},
-        executionTime: 1000
+        executionTime: 1000,
       })
 
       const progress = contextManager.getTaskProgress(taskId)
@@ -194,7 +216,7 @@ describe('ContextManager增强', () => {
       await contextManager.updateUserPreferences('user-1', {
         tone: 'friendly',
         includeExamples: false,
-        language: 'zh'
+        language: 'zh',
       })
 
       const profile = await contextManager.getUserProfile('user-1')

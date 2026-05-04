@@ -27,12 +27,12 @@ export class IntentRecognizer {
     const messages: LLMMessage[] = [
       {
         role: 'system',
-        content: this.getSystemPrompt()
+        content: this.getSystemPrompt(),
       },
       {
         role: 'user',
-        content: this.buildUserPrompt(input)
-      }
+        content: this.buildUserPrompt(input),
+      },
     ]
 
     // 添加Few-shot示例
@@ -40,18 +40,18 @@ export class IntentRecognizer {
     for (const example of fewShotExamples) {
       messages.push({
         role: 'user',
-        content: example.input
+        content: example.input,
       })
       messages.push({
         role: 'assistant',
-        content: JSON.stringify(example.output)
+        content: JSON.stringify(example.output),
       })
     }
 
     // 添加当前输入
     messages.push({
       role: 'user',
-      content: input.message
+      content: input.message,
     })
 
     try {
@@ -70,9 +70,9 @@ export class IntentRecognizer {
         extracted: {
           hasAttachment: input.attachments ? input.attachments.length > 0 : false,
           urgency: 'normal',
-          keywords: []
+          keywords: [],
         },
-        clarifyQuestion: '抱歉，我没有理解您的需求，能否详细说明一下？'
+        clarifyQuestion: '抱歉，我没有理解您的需求，能否详细说明一下？',
       }
     }
   }
@@ -201,9 +201,9 @@ export class IntentRecognizer {
             field: '控制技术',
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['智能控制器', '撰写', '专利申请']
-          }
-        }
+            keywords: ['智能控制器', '撰写', '专利申请'],
+          },
+        },
       },
       {
         input: '帮我修改权利要求，增加从属权利要求',
@@ -216,24 +216,24 @@ export class IntentRecognizer {
             field: '',
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['权利要求', '从属权利要求', '修改']
-          }
-        }
+            keywords: ['权利要求', '从属权利要求', '修改'],
+          },
+        },
       },
       {
         input: '只写说明书部分，不要权利要求',
         output: {
           intent: 'DRAFT_SPEC',
-          confidence: 0.90,
+          confidence: 0.9,
           complexity: 'simple',
           extracted: {
             title: '',
             field: '',
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['说明书', '不要权利要求']
-          }
-        }
+            keywords: ['说明书', '不要权利要求'],
+          },
+        },
       },
       {
         input: '我收到了审查意见，需要帮忙答复',
@@ -244,10 +244,11 @@ export class IntentRecognizer {
           extracted: {
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['审查意见', '答复']
+            keywords: ['审查意见', '答复'],
           },
-          clarifyQuestion: '请问您是否已经上传了审查意见文件？如果已上传，我将自动分析审查意见并生成答复策略。'
-        }
+          clarifyQuestion:
+            '请问您是否已经上传了审查意见文件？如果已上传，我将自动分析审查意见并生成答复策略。',
+        },
       },
       {
         input: '帮我检索一下智能控制器的现有技术',
@@ -260,9 +261,9 @@ export class IntentRecognizer {
             field: '控制技术',
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['检索', '智能控制器', '现有技术']
-          }
-        }
+            keywords: ['检索', '智能控制器', '现有技术'],
+          },
+        },
       },
       {
         input: '分析我们公司的专利组合情况',
@@ -275,9 +276,9 @@ export class IntentRecognizer {
             field: '',
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['专利组合', '分析', '公司']
-          }
-        }
+            keywords: ['专利组合', '分析', '公司'],
+          },
+        },
       },
       {
         input: '你好',
@@ -288,9 +289,9 @@ export class IntentRecognizer {
           extracted: {
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['你好']
-          }
-        }
+            keywords: ['你好'],
+          },
+        },
       },
       {
         input: '谢谢你的帮助',
@@ -301,9 +302,9 @@ export class IntentRecognizer {
           extracted: {
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['谢谢', '帮助']
-          }
-        }
+            keywords: ['谢谢', '帮助'],
+          },
+        },
       },
       {
         input: '你能做什么？',
@@ -314,9 +315,9 @@ export class IntentRecognizer {
           extracted: {
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['能做什么', '功能']
-          }
-        }
+            keywords: ['能做什么', '功能'],
+          },
+        },
       },
       {
         input: '先帮我检索现有技术，然后撰写完整的专利申请',
@@ -329,9 +330,9 @@ export class IntentRecognizer {
             field: '',
             hasAttachment: false,
             urgency: 'normal',
-            keywords: ['检索', '撰写', '专利申请']
-          }
-        }
+            keywords: ['检索', '撰写', '专利申请'],
+          },
+        },
       },
       {
         input: '这是一个关于新能源汽车的技术方案，帮我写专利',
@@ -344,9 +345,9 @@ export class IntentRecognizer {
             field: '汽车技术',
             hasAttachment: true,
             urgency: 'normal',
-            keywords: ['新能源汽车', '技术方案', '写专利']
-          }
-        }
+            keywords: ['新能源汽车', '技术方案', '写专利'],
+          },
+        },
       },
       {
         input: '紧急！需要今天完成专利撰写',
@@ -359,10 +360,10 @@ export class IntentRecognizer {
             field: '',
             hasAttachment: false,
             urgency: 'urgent',
-            keywords: ['紧急', '今天完成', '专利撰写']
-          }
-        }
-      }
+            keywords: ['紧急', '今天完成', '专利撰写'],
+          },
+        },
+      },
     ]
   }
 
@@ -384,17 +385,17 @@ export class IntentRecognizer {
             'ANALYZE_PORTFOLIO',
             'MULTI_INTENT',
             'CLARIFY',
-            'CHITCHAT'
-          ]
+            'CHITCHAT',
+          ],
         },
         confidence: {
           type: 'number',
           minimum: 0,
-          maximum: 1
+          maximum: 1,
         },
         complexity: {
           type: 'string',
-          enum: ['simple', 'complex']
+          enum: ['simple', 'complex'],
         },
         extracted: {
           type: 'object',
@@ -405,16 +406,16 @@ export class IntentRecognizer {
             urgency: { type: 'string', enum: ['normal', 'urgent'] },
             keywords: {
               type: 'array',
-              items: { type: 'string' }
-            }
+              items: { type: 'string' },
+            },
           },
-          required: ['hasAttachment', 'urgency', 'keywords']
+          required: ['hasAttachment', 'urgency', 'keywords'],
         },
         clarifyQuestion: {
-          type: 'string'
-        }
+          type: 'string',
+        },
       },
-      required: ['intent', 'confidence', 'complexity', 'extracted']
+      required: ['intent', 'confidence', 'complexity', 'extracted'],
     }
   }
 
@@ -432,7 +433,7 @@ export class IntentRecognizer {
         confidence: response.confidence,
         complexity: 'simple',
         extracted: response.extracted,
-        clarifyQuestion: this.generateClarifyQuestion(response)
+        clarifyQuestion: this.generateClarifyQuestion(response),
       }
     }
 

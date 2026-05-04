@@ -154,7 +154,7 @@ export class PatentResponderAgent extends Agent {
     super({
       ...config,
       name: config.name || 'patent-responder',
-      description: config.description || '专利答复智能体 - 专业的审查意见答复助手'
+      description: config.description || '专利答复智能体 - 专业的审查意见答复助手',
     })
     this.llm = config.llm
   }
@@ -177,13 +177,13 @@ export class PatentResponderAgent extends Agent {
       'analyze-office-action',
       'determine-strategy',
       'draft-response',
-      'quality-check'
+      'quality-check',
     ]
 
     return {
       input,
       strategyPreference,
-      stages
+      stages,
     }
   }
 
@@ -212,7 +212,12 @@ export class PatentResponderAgent extends Agent {
           break
 
         case 'determine-strategy':
-          strategy = await this.determineStrategy(input, analysis!, plan.strategyPreference, context)
+          strategy = await this.determineStrategy(
+            input,
+            analysis!,
+            plan.strategyPreference,
+            context
+          )
           break
 
         case 'draft-response':
@@ -236,7 +241,7 @@ export class PatentResponderAgent extends Agent {
       analysis: analysis!,
       strategy: strategy!,
       responseDocument: responseDocument!,
-      nextSteps
+      nextSteps,
     }
   }
 
@@ -272,15 +277,15 @@ export class PatentResponderAgent extends Agent {
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利代理师，擅长分析审查意见。'
+            content: '你是一位专业的专利代理师，擅长分析审查意见。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 1500,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       // 解析LLM响应（简化版）
@@ -292,7 +297,7 @@ export class PatentResponderAgent extends Agent {
       return {
         summary,
         keyIssues,
-        overcomeProbability
+        overcomeProbability,
       }
     } catch (error) {
       context.logger?.error('[PatentResponderAgent] 分析审查意见失败:', error)
@@ -316,15 +321,15 @@ export class PatentResponderAgent extends Agent {
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利代理师，擅长制定答复策略。'
+            content: '你是一位专业的专利代理师，擅长制定答复策略。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 2000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       // 解析LLM响应（简化版）
@@ -342,7 +347,7 @@ export class PatentResponderAgent extends Agent {
         keyArguments,
         suggestedAmendments,
         additionalEvidence,
-        risks
+        risks,
       }
     } catch (error) {
       context.logger?.error('[PatentResponderAgent] 确定答复策略失败:', error)
@@ -365,15 +370,15 @@ export class PatentResponderAgent extends Agent {
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利代理师，擅长撰写答复文档。'
+            content: '你是一位专业的专利代理师，擅长撰写答复文档。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 3000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -389,8 +394,8 @@ export class PatentResponderAgent extends Agent {
           wordCount: responseLetter.length,
           argumentCount: strategy.keyArguments.length,
           amendmentCount: strategy.suggestedAmendments.length,
-          generationTime: 0 // 会在execute方法中设置
-        }
+          generationTime: 0, // 会在execute方法中设置
+        },
       }
     } catch (error) {
       context.logger?.error('[PatentResponderAgent] 撰写答复文档失败:', error)
@@ -438,7 +443,7 @@ export class PatentResponderAgent extends Agent {
 ${input.officeAction.officeActionContent}
 
 引用的对比文件：
-${input.officeAction.citedReferences?.map(r => `- ${r.publicationNumber}: ${r.title} (${r.relevance})`).join('\n') || '无'}
+${input.officeAction.citedReferences?.map((r) => `- ${r.publicationNumber}: ${r.title} (${r.relevance})`).join('\n') || '无'}
 
 请分析：
 1. 审查意见的主要问题是什么？
@@ -461,7 +466,7 @@ ${input.officeAction.citedReferences?.map(r => `- ${r.publicationNumber}: ${r.ti
 ${analysis.summary}
 
 关键问题：
-${analysis.keyIssues.map(i => `- ${i.type}: ${i.description}（严重程度：${i.severity}）`).join('\n')}
+${analysis.keyIssues.map((i) => `- ${i.type}: ${i.description}（严重程度：${i.severity}）`).join('\n')}
 
 可克服性：${analysis.overcomeProbability}%
 
@@ -480,10 +485,7 @@ ${analysis.keyIssues.map(i => `- ${i.type}: ${i.description}（严重程度：${
   /**
    * 构建答复提示词
    */
-  private buildResponsePrompt(
-    input: PatentResponderInput,
-    strategy: ResponseStrategy
-  ): string {
+  private buildResponsePrompt(input: PatentResponderInput, strategy: ResponseStrategy): string {
     return `请根据以下策略撰写答复文档：
 
 总体策略：${strategy.overallStrategy}
@@ -492,7 +494,7 @@ ${analysis.keyIssues.map(i => `- ${i.type}: ${i.description}（严重程度：${
 ${strategy.keyArguments.map((a, i) => `${i + 1}. ${a}`).join('\n')}
 
 建议修改：
-${strategy.suggestedAmendments.map(a => `权利要求${a.claimNumber}:\n当前: ${a.currentText}\n建议: ${a.proposedText}\n理由: ${a.reason}`).join('\n\n')}
+${strategy.suggestedAmendments.map((a) => `权利要求${a.claimNumber}:\n当前: ${a.currentText}\n建议: ${a.proposedText}\n理由: ${a.reason}`).join('\n\n')}
 
 原始权利要求书：
 ${input.originalApplication.claims}
@@ -522,8 +524,8 @@ ${input.originalApplication.claims}
       {
         type: 'novelty',
         description: '新颖性问题',
-        severity: 'high'
-      }
+        severity: 'high',
+      },
     ]
   }
 
@@ -550,11 +552,7 @@ ${input.originalApplication.claims}
 
   private extractKeyArguments(content: string): string[] {
     // 简化版实现
-    return [
-      '与对比文件存在实质性差异',
-      '具备突出的实质性特点',
-      '具备显著的进步'
-    ]
+    return ['与对比文件存在实质性差异', '具备突出的实质性特点', '具备显著的进步']
   }
 
   private extractSuggestedAmendments(content: string): Array<{
@@ -572,10 +570,7 @@ ${input.originalApplication.claims}
   }
 
   private extractRisks(content: string): string[] {
-    return [
-      '审查员可能不接受当前论点',
-      '修改可能导致保护范围缩小'
-    ]
+    return ['审查员可能不接受当前论点', '修改可能导致保护范围缩小']
   }
 
   private extractResponseLetter(content: string): string {

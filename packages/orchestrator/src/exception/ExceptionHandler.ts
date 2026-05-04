@@ -8,20 +8,13 @@
  * 4. 处理业务异常
  */
 
-import {
-  RecoveryResult,
-  OrchestratorOutput,
-  ExecutionContext
-} from '../types/index.js'
+import { RecoveryResult, OrchestratorOutput, ExecutionContext } from '../types/index.js'
 
 export class ExceptionHandler {
   /**
    * 处理异常
    */
-  async handleException(
-    error: Error,
-    context: ExecutionContext
-  ): Promise<RecoveryResult> {
+  async handleException(error: Error, context: ExecutionContext): Promise<RecoveryResult> {
     // 判断异常类型
     const errorType = this.classifyError(error)
 
@@ -50,14 +43,11 @@ export class ExceptionHandler {
   /**
    * 处理超时
    */
-  private async handleTimeout(
-    error: Error,
-    context: ExecutionContext
-  ): Promise<RecoveryResult> {
+  private async handleTimeout(error: Error, context: ExecutionContext): Promise<RecoveryResult> {
     return {
       success: false,
       strategy: 'error_message',
-      errorMessage: '操作超时，请稍后重试'
+      errorMessage: '操作超时，请稍后重试',
     }
   }
 
@@ -71,7 +61,7 @@ export class ExceptionHandler {
     return {
       success: false,
       strategy: 'error_message',
-      errorMessage: '抱歉，我不太理解您的需求，能否详细说明？'
+      errorMessage: '抱歉，我不太理解您的需求，能否详细说明？',
     }
   }
 
@@ -85,7 +75,7 @@ export class ExceptionHandler {
     return {
       success: false,
       strategy: 'retry',
-      errorMessage: '数据处理出错，正在重试...'
+      errorMessage: '数据处理出错，正在重试...',
     }
   }
 
@@ -99,7 +89,7 @@ export class ExceptionHandler {
     return {
       success: false,
       strategy: 'graceful_degradation',
-      errorMessage: `处理过程中遇到问题：${error.message}`
+      errorMessage: `处理过程中遇到问题：${error.message}`,
     }
   }
 
@@ -113,7 +103,7 @@ export class ExceptionHandler {
     return {
       success: false,
       strategy: 'error_message',
-      errorMessage: '系统出现未知错误，请联系管理员'
+      errorMessage: '系统出现未知错误，请联系管理员',
     }
   }
 }

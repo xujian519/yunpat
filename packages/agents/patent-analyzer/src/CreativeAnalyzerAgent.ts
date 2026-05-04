@@ -178,7 +178,7 @@ export class CreativeAnalyzerAgent extends Agent {
     super({
       ...config,
       name: config.name || 'creative-analyzer',
-      description: config.description || '创造性分析智能体 - 专业的专利创造性评估助手'
+      description: config.description || '创造性分析智能体 - 专业的专利创造性评估助手',
     })
     this.llm = config.llm
   }
@@ -204,13 +204,13 @@ export class CreativeAnalyzerAgent extends Agent {
       'compare-prior-art',
       'assess-creativity',
       'collect-evidence',
-      'generate-recommendations'
+      'generate-recommendations',
     ]
 
     return {
       input,
       assessmentStandard,
-      stages
+      stages,
     }
   }
 
@@ -284,7 +284,7 @@ export class CreativeAnalyzerAgent extends Agent {
       basicInfo: {
         publicationNumber: input.patent.publicationNumber,
         title: input.patent.title,
-        assessmentStandard
+        assessmentStandard,
       },
       creativityAssessment: creativityAssessment!,
       problemAnalysis: problemAnalysis!,
@@ -292,7 +292,7 @@ export class CreativeAnalyzerAgent extends Agent {
       effectAnalysis: effectAnalysis!,
       differencesFromPriorArt: differencesFromPriorArt!,
       evidence: evidence!,
-      recommendations: recommendations!
+      recommendations: recommendations!,
     }
   }
 
@@ -338,15 +338,15 @@ ${input.patent.description || '未提供'}
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利分析师，擅长技术问题分析。'
+            content: '你是一位专业的专利分析师，擅长技术问题分析。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 1000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -386,15 +386,15 @@ ${input.patent.description || input.patent.abstract}
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利分析师，擅长技术方案分析。'
+            content: '你是一位专业的专利分析师，擅长技术方案分析。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 1500,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -432,15 +432,15 @@ ${input.patent.description || '未提供'}
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利分析师，擅长技术效果分析。'
+            content: '你是一位专业的专利分析师，擅长技术效果分析。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 1000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -462,7 +462,7 @@ ${input.patent.description || '未提供'}
       return {
         distinguishingFeatures: [],
         obviousness: 'not-obvious',
-        suggestion: 'no-suggestion'
+        suggestion: 'no-suggestion',
       }
     }
 
@@ -474,7 +474,7 @@ ${input.patent.description || '未提供'}
 摘要：${input.patent.abstract}
 
 现有技术：
-${input.priorArt.map(p => `- ${p.publicationNumber}: ${p.title}\n摘要: ${p.abstract}`).join('\n\n')}
+${input.priorArt.map((p) => `- ${p.publicationNumber}: ${p.title}\n摘要: ${p.abstract}`).join('\n\n')}
 
 请分析：
 1. 区别技术特征有哪些？
@@ -487,15 +487,15 @@ ${input.priorArt.map(p => `- ${p.publicationNumber}: ${p.title}\n摘要: ${p.abs
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利分析师，擅长现有技术对比。'
+            content: '你是一位专业的专利分析师，擅长现有技术对比。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 1500,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -545,15 +545,15 @@ ${differencesFromPriorArt ? `- 区别特征: ${differencesFromPriorArt.distingui
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的专利分析师，擅长创造性评估。'
+            content: '你是一位专业的专利分析师，擅长创造性评估。',
           },
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         maxTokens: 2000,
-        temperature: 0.7
+        temperature: 0.7,
       })
 
       const content = response.content || ''
@@ -576,9 +576,9 @@ ${differencesFromPriorArt ? `- 区别特征: ${differencesFromPriorArt.distingui
     return {
       commercialSuccess: false,
       technicalBreakthrough: creativityAssessment?.level === 'inventive',
-      solvedLongstandingProblem: problemDifficulty => problemDifficulty === 'high',
+      solvedLongstandingProblem: (problemDifficulty) => problemDifficulty === 'high',
       overcameTechnicalPrejudice: false,
-      otherEvidence: []
+      otherEvidence: [],
     }
   }
 
@@ -615,7 +615,7 @@ ${differencesFromPriorArt ? `- 区别特征: ${differencesFromPriorArt.distingui
     return {
       strengthenCreativity,
       highlightContribution,
-      emphasizeEffects
+      emphasizeEffects,
     }
   }
 
@@ -625,7 +625,7 @@ ${differencesFromPriorArt ? `- 区别特征: ${differencesFromPriorArt.distingui
     return {
       solvedProblem: '技术问题描述',
       problemDifficulty: 'medium',
-      unforeseeable: false
+      unforeseeable: false,
     }
   }
 
@@ -633,7 +633,7 @@ ${differencesFromPriorArt ? `- 区别特征: ${differencesFromPriorArt.distingui
     return {
       technicalMeans: ['手段1', '手段2', '手段3'],
       featureCombination: '特征组合描述',
-      synergisticEffect: true
+      synergisticEffect: true,
     }
   }
 
@@ -641,39 +641,41 @@ ${differencesFromPriorArt ? `- 区别特征: ${differencesFromPriorArt.distingui
     return {
       technicalEffects: ['效果1', '效果2', '效果3'],
       unexpected: false,
-      quantitativeEffects: [
-        { effect: '性能提升', value: '50%', improvement: '显著' }
-      ]
+      quantitativeEffects: [{ effect: '性能提升', value: '50%', improvement: '显著' }],
     }
   }
 
-  private parseDifferencesFromPriorArt(content: string): CreativeAnalyzerOutput['differencesFromPriorArt'] {
+  private parseDifferencesFromPriorArt(
+    content: string
+  ): CreativeAnalyzerOutput['differencesFromPriorArt'] {
     return {
       distinguishingFeatures: ['区别1', '区别2', '区别3'],
       obviousness: 'not-obvious',
-      suggestion: 'no-suggestion'
+      suggestion: 'no-suggestion',
     }
   }
 
-  private parseCreativityAssessment(content: string): CreativeAnalyzerOutput['creativityAssessment'] {
+  private parseCreativityAssessment(
+    content: string
+  ): CreativeAnalyzerOutput['creativityAssessment'] {
     return {
       level: 'inventive',
       score: 75,
       dimensions: {
         substantiveCharacteristics: {
           score: 75,
-          reasoning: '具备突出的实质性特点'
+          reasoning: '具备突出的实质性特点',
         },
         significantProgress: {
           score: 75,
-          reasoning: '具有显著的进步'
+          reasoning: '具有显著的进步',
         },
         technicalContribution: {
           score: 75,
-          reasoning: '对现有技术做出了显著贡献'
-        }
+          reasoning: '对现有技术做出了显著贡献',
+        },
       },
-      reasoning: '总体具备创造性'
+      reasoning: '总体具备创造性',
     }
   }
 }

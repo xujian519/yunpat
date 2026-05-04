@@ -153,9 +153,7 @@ describe('TaskDecomposer', () => {
     })
 
     it('应该处理空智能分解结果', async () => {
-      const mockLlm = {
-        generate: vi.fn().mockResolvedValue({ subGoals: [] }),
-      }
+      const mockLlm = createMockLLM({ subGoals: [] })
 
       const decomposer = new TaskDecomposer({
         llm: mockLlm as any,

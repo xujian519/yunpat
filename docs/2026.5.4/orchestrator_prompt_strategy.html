@@ -1,0 +1,622 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.root { font-family: var(--font-sans); padding-bottom: 24px; }
+.tab-row { display: flex; gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 0; overflow-x: auto; }
+.tab { padding: 8px 14px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s; background: none; border-left: none; border-right: none; border-top: none; white-space: nowrap; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+.tab:hover:not(.active) { color: var(--color-text-primary); }
+.view { display: none; padding-top: 16px; }
+.view.active { display: block; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; margin-bottom: 10px; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.sec { font-size: 11px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-tertiary); margin: 16px 0 8px; }
+.prop-row { display: flex; gap: 12px; padding: 6px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+.prop-row:last-child { border-bottom: none; }
+.pk { color: var(--color-text-secondary); flex-shrink: 0; min-width: 110px; }
+.pv { color: var(--color-text-primary); line-height: 1.6; flex: 1; }
+.code { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; font-family: var(--font-mono); font-size: 11px; color: var(--color-text-secondary); line-height: 1.75; overflow-x: auto; white-space: pre; margin: 8px 0; }
+.badge { display: inline-flex; align-items: center; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.b-purple { background: #EEEDFE; color: #3C3489; }
+.b-teal   { background: #E1F5EE; color: #0F6E56; }
+.b-coral  { background: #FAECE7; color: #993C1D; }
+.b-amber  { background: #FAEEDA; color: #854F0B; }
+.b-gray   { background: #F1EFE8; color: #5F5E5A; }
+.b-red    { background: #FCEBEB; color: #A32D2D; }
+@media (prefers-color-scheme: dark) {
+  .b-purple { background: #26215C; color: #CECBF6; }
+  .b-teal   { background: #04342C; color: #9FE1CB; }
+  .b-coral  { background: #4A1B0C; color: #F5C4B3; }
+  .b-amber  { background: #412402; color: #FAC775; }
+  .b-gray   { background: #2C2C2A; color: #B4B2A9; }
+  .b-red    { background: #501313; color: #F7C1C1; }
+}
+.intent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.intent-chip { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; cursor: pointer; transition: border-color .15s; }
+.intent-chip:hover { border-color: var(--color-border-primary); }
+.intent-chip.selected { border-color: #534AB7; }
+.ic-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+.ic-desc { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+.intent-detail { border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 14px 16px; margin-top: 10px; display: none; }
+.intent-detail.on { display: block; }
+.prompt-box { border-left: 2px solid #7F77DD; padding: 10px 14px; background: var(--color-background-secondary); border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; font-family: var(--font-mono); font-size: 11px; line-height: 1.75; color: var(--color-text-secondary); white-space: pre-wrap; margin: 8px 0; }
+.comment { color: var(--color-text-tertiary); }
+.kw { color: #534AB7; font-weight: 500; }
+.str { color: #0F6E56; }
+.msg-u { background: var(--color-background-secondary); border-radius: var(--border-radius-lg) var(--border-radius-lg) var(--border-radius-lg) 4px; padding: 10px 13px; font-size: 13px; line-height: 1.6; margin-bottom: 6px; color: var(--color-text-primary); }
+.msg-a { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg) var(--border-radius-lg) 4px var(--border-radius-lg); padding: 10px 13px; font-size: 13px; line-height: 1.6; margin-bottom: 6px; color: var(--color-text-primary); }
+.msg-lbl { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 3px; font-weight: 500; }
+.msg-sys { border-left: 2px solid var(--color-border-secondary); padding: 8px 12px; font-size: 12px; color: var(--color-text-tertiary); font-family: var(--font-mono); white-space: pre-wrap; line-height: 1.6; margin-bottom: 8px; }
+.step-row { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.step-row:last-child { border-bottom: none; }
+.step-n { width: 20px; height: 20px; border-radius: 50%; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; flex-shrink: 0; color: var(--color-text-secondary); margin-top: 1px; }
+.step-t { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+.step-d { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+.warn-box { border: 0.5px solid #F7C1C1; background: #FCEBEB; border-radius: var(--border-radius-md); padding: 10px 13px; font-size: 12px; color: #A32D2D; line-height: 1.6; margin: 8px 0; }
+@media (prefers-color-scheme: dark) { .warn-box { border-color: #791F1F; background: #501313; color: #F7C1C1; } }
+.ok-box { border: 0.5px solid #9FE1CB; background: #E1F5EE; border-radius: var(--border-radius-md); padding: 10px 13px; font-size: 12px; color: #0F6E56; line-height: 1.6; margin: 8px 0; }
+@media (prefers-color-scheme: dark) { .ok-box { border-color: #085041; background: #04342C; color: #9FE1CB; } }
+</style>
+
+<div class="root">
+<div class="tab-row">
+  <button class="tab active" onclick="sw('overview')">设计原则</button>
+  <button class="tab" onclick="sw('system')">System Prompt</button>
+  <button class="tab" onclick="sw('intent')">意图识别</button>
+  <button class="tab" onclick="sw('context')">上下文注入</button>
+  <button class="tab" onclick="sw('hitl')">HITL 策略</button>
+  <button class="tab" onclick="sw('error')">异常降级</button>
+  <button class="tab" onclick="sw('demo')">完整示例</button>
+</div>
+
+<!-- 设计原则 -->
+<div id="v-overview" class="view active">
+  <div class="card">
+    <div class="card-title">中枢层 Prompt 的四个核心约束</div>
+    <div class="step-row">
+      <div class="step-n">1</div>
+      <div><div class="step-t">中枢不懂专利，只懂调度</div>
+      <div class="step-d">System Prompt 中严禁出现任何专利业务知识。一旦中枢开始"理解"专利，它就会越权决策，绕过专业层。所有领域知识下沉到专业层的 System Prompt 里。</div></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">2</div>
+      <div><div class="step-t">输出必须是结构化 JSON，不能是自然语言</div>
+      <div class="step-d">中枢的每次 LLM 调用，输出都是可被代码解析的 JSON。自然语言输出只用于最终展示给用户的部分，不用于内部控制流。</div></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">3</div>
+      <div><div class="step-t">Prompt 分三层，各司其职</div>
+      <div class="step-d">System（角色+规则）→ Context（动态注入当前状态）→ User（本轮输入）。三层严格分离，Context 层随对话动态变化，System 层保持稳定。</div></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">4</div>
+      <div><div class="step-t">每次调用单一职责：一次调用只做一件事</div>
+      <div class="step-d">意图识别、任务规划、结果聚合各用独立的 LLM 调用，不要在同一个 Prompt 里同时做"理解意图+生成计划+写回复"。复合 Prompt 导致输出不稳定。</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">中枢层的 LLM 调用清单</div>
+    <div class="prop-row"><span class="pk">Call 1: 意图分类</span><span class="pv">输入用户消息，输出 Intent JSON。温度 0，追求确定性。</span></div>
+    <div class="prop-row"><span class="pk">Call 2: 任务规划</span><span class="pv">输入 Intent + 上下文，输出 TaskPlan JSON（步骤列表+并行标记）。温度 0.2。</span></div>
+    <div class="prop-row"><span class="pk">Call 3: HITL 生成</span><span class="pv">将中间结果转化为用户友好的确认请求。温度 0.5，允许自然语言输出。</span></div>
+    <div class="prop-row"><span class="pk">Call 4: 结果聚合</span><span class="pv">将多个执行结果合并为最终回复。温度 0.3。</span></div>
+    <div class="prop-row"><span class="pk">Call 5: 异常降级</span><span class="pv">任务失败时生成降级方案和用户提示。温度 0.4。</span></div>
+  </div>
+
+  <div class="ok-box">关键原则：中枢层的 LLM 调用越少越好，越确定性越好。能用代码逻辑判断的，绝不交给 LLM 判断。LLM 只处理"需要理解自然语言"的部分。</div>
+</div>
+
+<!-- System Prompt -->
+<div id="v-system" class="view">
+  <div class="sec">Call 1 — 意图识别 System Prompt</div>
+  <div class="prompt-box"><span class="comment"># 角色定义</span>
+你是 YunPat 专利管理平台的任务调度器。
+你的唯一职责是理解用户意图并将其分类为标准任务类型。
+
+<span class="comment"># 严格约束</span>
+- 你不具备任何专利法律知识，不对专利内容做任何判断
+- 你不向用户提供专利建议，不解释专利概念
+- 你只输出 JSON，不输出任何自然语言解释
+- 如果意图不明确，分类为 CLARIFY，不要猜测
+
+<span class="comment"># 可用意图类型</span>
+DRAFT_FULL     : 完整专利申请文件撰写（含检索、说明书、权利要求）
+DRAFT_CLAIMS   : 仅撰写或修改权利要求
+DRAFT_SPEC     : 仅撰写说明书
+RESPOND_OA     : 审查意见答复
+SEARCH         : 现有技术检索（无需撰写）
+ANALYZE_FTO    : 自由实施分析
+ANALYZE_PORTFOLIO : 专利组合分析
+MANAGE_STATUS  : 专利状态查询或年费管理
+MONITOR_SETUP  : 设置竞争对手监控
+MULTI_INTENT   : 用户在一条消息中包含多个独立任务
+CLARIFY        : 意图不明确，需要追问
+CHITCHAT       : 闲聊、感谢、询问功能等，中枢直接回复
+
+<span class="comment"># 输出格式（严格遵守）</span>
+{
+  "intent": "INTENT_TYPE",
+  "confidence": 0.0-1.0,
+  "complexity": "simple" | "complex",
+  "extracted": {
+    "title": "发明名称（如能提取）",
+    "field": "技术领域（如能提取）",
+    "hasAttachment": true | false,
+    "urgency": "normal" | "urgent"
+  },
+  "clarifyQuestion": "仅当 intent=CLARIFY 时填写"
+}</div>
+
+  <div class="sec">Call 2 — 任务规划 System Prompt</div>
+  <div class="prompt-box"><span class="comment"># 角色定义</span>
+你是 YunPat 的任务规划器。
+给定一个已分类的用户意图，生成最优的多步执行计划。
+
+<span class="comment"># 可用智能体（执行单元）</span>
+专业层（业务策略，有状态）：
+  patent-writer    : 专利文件撰写
+  patent-responder : 审查意见答复
+  patent-manager   : 专利状态管理
+  fto-agent        : 自由实施分析
+  monitor-agent    : 竞对监控配置
+
+执行层（原子能力，无状态，可并行）：
+  search           : 专利/文献检索
+  analysis         : 技术特征分析与比对
+  quality          : 质量审查
+  knowledge        : 知识库查询
+  document         : 文档解析（PDF/Word）
+
+<span class="comment"># 规划规则</span>
+1. 优先并行：无依赖关系的步骤标记 parallel: true
+2. HITL 节点：权利要求草稿必须设置 HITL，其余酌情
+3. 最小步骤：不要拆分超过实际需要的步骤数
+4. 超时设置：执行层 15s，专业层 60s，整体 300s
+
+<span class="comment"># 输出格式</span>
+{
+  "planId": "uuid",
+  "estimatedMinutes": 3,
+  "steps": [
+    {
+      "stepId": "s1",
+      "agentId": "search",
+      "layer": "execution",
+      "parallel": false,
+      "dependsOn": [],
+      "timeout": 15000,
+      "input": { "query": "{{features}}" },
+      "hitl": false
+    }
+  ],
+  "hitlCheckpoints": ["s3", "s5"]
+}</div>
+
+  <div class="sec">Call 3 — 结果聚合 System Prompt</div>
+  <div class="prompt-box"><span class="comment"># 角色定义</span>
+你是 YunPat 的结果整合器。
+将多个智能体的执行结果整合为一个清晰、专业的用户回复。
+
+<span class="comment"># 输出规则</span>
+- 用中文回复，语气专业但不生硬
+- 结构：摘要（1-2句）→ 主要结果 → 下一步建议
+- 不要重复原始数据，只输出对用户有价值的摘要
+- 如有可下载文件，在回复末尾列出
+- 不要编造任何专利法律结论，只陈述执行结果
+
+<span class="comment"># 输出格式</span>
+{
+  "reply": "面向用户的自然语言回复（Markdown）",
+  "artifacts": [
+    { "type": "patent_draft", "filename": "专利申请_xxx.docx", "url": "..." }
+  ],
+  "suggestedNextActions": ["修改权利要求", "提交申请", "继续检索"]
+}</div>
+</div>
+
+<!-- 意图识别 -->
+<div id="v-intent" class="view">
+  <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px;line-height:1.6;">点击意图类型查看对应的 Few-shot 示例和边界处理规则。</p>
+  <div class="intent-grid" id="ig"></div>
+  <div id="intent-detail" class="intent-detail"></div>
+</div>
+
+<!-- 上下文注入 -->
+<div id="v-context" class="view">
+  <div class="card">
+    <div class="card-title">Context 层的动态注入结构</div>
+    <div class="step-d" style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px;line-height:1.6;">Context 层在 System Prompt 之后、User Message 之前注入。每轮对话都重新构建，包含当前状态的完整快照。</div>
+    <div class="prop-row"><span class="pk">对话历史</span><span class="pv">最近 N 轮压缩摘要（非全文），避免 Token 膨胀</span></div>
+    <div class="prop-row"><span class="pk">当前任务状态</span><span class="pv">如有进行中的 TaskPlan，注入当前步骤和已完成步骤的摘要</span></div>
+    <div class="prop-row"><span class="pk">用户画像</span><span class="pv">角色（代理人/律师/企业）、偏好（输出格式、详细程度）</span></div>
+    <div class="prop-row"><span class="pk">会话级知识域</span><span class="pv">本次会话激活的技术领域（影响知识库检索范围）</span></div>
+    <div class="prop-row"><span class="pk">HITL 等待状态</span><span class="pv">如有待确认节点，明确说明当前在等什么</span></div>
+  </div>
+
+  <div class="sec">Context 注入模板代码</div>
+  <div class="code"><span class="comment">// src/orchestrator/context-builder.ts</span>
+<span class="kw">function</span> buildContextBlock(ctx: OrchestratorContext): string {
+  <span class="kw">const</span> parts: string[] = []
+
+  <span class="comment">// 1. 对话历史摘要（超过 6 轮则压缩）</span>
+  <span class="kw">if</span> (ctx.history.length > 0) {
+    parts.push(<span class="str">`&lt;conversation_history&gt;
+${summarizeHistory(ctx.history, { maxTurns: 6, maxTokens: 800 })}
+&lt;/conversation_history&gt;`</span>)
+  }
+
+  <span class="comment">// 2. 当前活跃任务（如有）</span>
+  <span class="kw">if</span> (ctx.activeTask) {
+    parts.push(<span class="str">`&lt;active_task&gt;
+任务类型: ${ctx.activeTask.intent}
+当前步骤: ${ctx.activeTask.currentStep} / ${ctx.activeTask.totalSteps}
+已完成: ${ctx.activeTask.completedSteps.map(s => s.summary).join(' → ')}
+${ctx.activeTask.pendingHITL ? `等待用户确认: ${ctx.activeTask.pendingHITL.description}` : ''}
+&lt;/active_task&gt;`</span>)
+  }
+
+  <span class="comment">// 3. 用户画像</span>
+  parts.push(<span class="str">`&lt;user_profile&gt;
+角色: ${ctx.user.role}          &lt;!-- patent_agent | lawyer | enterprise_ip --&gt;
+输出偏好: ${ctx.user.outputFormat}  &lt;!-- detailed | concise --&gt;
+技术领域: ${ctx.user.domains.join(', ')}
+&lt;/user_profile&gt;`</span>)
+
+  <span class="comment">// 4. HITL 等待提示（优先级最高，放最后）</span>
+  <span class="kw">if</span> (ctx.pendingHITL) {
+    parts.push(<span class="str">`&lt;awaiting_confirmation&gt;
+你正在等待用户对以下内容的确认或修改：
+${ctx.pendingHITL.description}
+用户的下一条消息应被解读为对此的回应，而非新任务。
+&lt;/awaiting_confirmation&gt;`</span>)
+  }
+
+  <span class="kw">return</span> parts.join(<span class="str">'\n\n'</span>)
+}
+
+<span class="comment">// 历史压缩策略</span>
+<span class="kw">function</span> summarizeHistory(
+  history: Message[],
+  opts: { maxTurns: number; maxTokens: number }
+): string {
+  <span class="kw">if</span> (history.length &lt;= opts.maxTurns) {
+    <span class="kw">return</span> history.map(formatMessage).join(<span class="str">'\n'</span>)
+  }
+  <span class="comment">// 超出时：保留最近 3 轮原文 + 历史摘要</span>
+  <span class="kw">const</span> recent = history.slice(-3)
+  <span class="kw">const</span> older  = history.slice(0, -3)
+  <span class="kw">return</span> [
+    <span class="str">`[历史摘要] ${compressTurns(older)}`</span>,
+    ...recent.map(formatMessage)
+  ].join(<span class="str">'\n'</span>)
+}</div>
+
+  <div class="sec">Token 预算控制</div>
+  <div class="card">
+    <div class="prop-row"><span class="pk">System Prompt</span><span class="pv">≤ 800 tokens，固定，不随对话增长</span></div>
+    <div class="prop-row"><span class="pk">Context Block</span><span class="pv">≤ 1200 tokens，动态，超出时压缩历史</span></div>
+    <div class="prop-row"><span class="pk">User Message</span><span class="pv">≤ 2000 tokens，超出时提示用户分段</span></div>
+    <div class="prop-row"><span class="pk">总输入预算</span><span class="pv">≤ 4000 tokens（为 CoT 输出留足空间）</span></div>
+    <div class="prop-row"><span class="pk">意图识别输出</span><span class="pv">max_tokens: 300（JSON 很小）</span></div>
+    <div class="prop-row"><span class="pk">任务规划输出</span><span class="pv">max_tokens: 800</span></div>
+    <div class="prop-row"><span class="pk">结果聚合输出</span><span class="pv">max_tokens: 1500</span></div>
+  </div>
+</div>
+
+<!-- HITL 策略 -->
+<div id="v-hitl" class="view">
+  <div class="card">
+    <div class="card-title">HITL 触发规则</div>
+    <div class="prop-row"><span class="pk">必须触发</span><span class="pv">权利要求草稿完成后；修改后的权利要求超出原公开范围（检测到）；FTO 报告中发现高风险专利</span></div>
+    <div class="prop-row"><span class="pk">建议触发</span><span class="pv">完整说明书生成后（首次）；答复策略选择（修改 vs 争辩）；技术方案存在多个实施路线时</span></div>
+    <div class="prop-row"><span class="pk">不触发</span><span class="pv">纯检索任务；格式调整；状态查询；闲聊</span></div>
+  </div>
+
+  <div class="sec">HITL 请求生成 Prompt</div>
+  <div class="prompt-box"><span class="comment"># HITL 节点的用户提示生成</span>
+<span class="comment"># System Prompt（Call 3 变体）</span>
+
+你是 YunPat 的用户沟通界面。
+当前任务已完成一个关键阶段，需要用户确认后才能继续。
+
+将以下中间结果转化为一个清晰的确认请求：
+1. 用 1-2 句话说明已完成什么
+2. 展示需要确认的核心内容（权利要求/策略等）
+3. 明确告知用户可以做什么：
+   - 直接回复"确认"继续
+   - 指出具体修改意见
+   - 回复"重新生成"从头再来
+
+语气：专业、简洁。不要问多余的问题。
+
+<span class="comment"># 中间结果注入（Context 层）</span>
+&lt;checkpoint_data&gt;
+检查点类型: {{hitlType}}
+当前结果摘要: {{resultSummary}}
+待确认内容: {{pendingContent}}
+&lt;/checkpoint_data&gt;</div>
+
+  <div class="sec">HITL 响应解析 Prompt</div>
+  <div class="prompt-box"><span class="comment"># 解析用户对 HITL 请求的回复</span>
+你是 YunPat 的指令解析器。
+用户刚才回复了一个待确认的内容，解析用户的意图。
+
+可能的回复类型：
+CONFIRM      : 用户表示满意，继续执行（"好的"、"确认"、"可以"、"继续"）
+MODIFY       : 用户提出具体修改（包含修改指令）
+REGENERATE   : 用户希望重新生成（"重新来"、"不满意"）
+PARTIAL      : 用户部分确认，部分需修改
+
+输出 JSON：
+{
+  "hitlResponse": "CONFIRM | MODIFY | REGENERATE | PARTIAL",
+  "modificationInstructions": "仅 MODIFY/PARTIAL 时填写，提取用户的具体修改要求",
+  "confidence": 0.0-1.0
+}</div>
+</div>
+
+<!-- 异常降级 -->
+<div id="v-error" class="view">
+  <div class="card">
+    <div class="card-title">四类异常场景与降级策略</div>
+    <div class="step-row">
+      <div class="step-n">1</div>
+      <div><div class="step-t">执行层超时 / 工具调用失败</div>
+      <div class="step-d">策略：跳过该步骤，标记为降级完成，在最终结果中说明缺失部分。不阻塞整个任务计划。</div></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">2</div>
+      <div><div class="step-t">意图识别置信度低（< 0.7）</div>
+      <div class="step-d">策略：不猜测，输出 CLARIFY 意图，生成追问语句，提示用户补充信息。</div></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">3</div>
+      <div><div class="step-t">LLM 输出格式错误（非法 JSON）</div>
+      <div class="step-d">策略：最多重试 2 次（Prompt 末尾追加"请只输出 JSON"）。2 次失败后走规则引擎降级，记录日志。</div></div>
+    </div>
+    <div class="step-row">
+      <div class="step-n">4</div>
+      <div><div class="step-t">专业层抛出业务异常</div>
+      <div class="step-d">策略：中枢捕获，调用 Call 5（降级生成），向用户说明失败原因并提供手动操作指引。</div></div>
+    </div>
+  </div>
+
+  <div class="sec">降级 Prompt（Call 5）</div>
+  <div class="prompt-box"><span class="comment"># 异常降级回复生成</span>
+你是 YunPat 的错误处理界面。
+某个任务步骤执行失败，需要向用户说明情况并提供替代方案。
+
+规则：
+- 用简洁语言说明失败的是哪个步骤
+- 说明已完成的部分是否仍然可用
+- 提供 1-2 个替代操作选项
+- 不要暴露技术细节（堆栈、超时时间等）
+- 语气：坦诚，不回避，不过度道歉
+
+输出格式：
+{
+  "userMessage": "面向用户的说明（Markdown）",
+  "fallbackActions": [
+    { "label": "仅下载已完成部分", "action": "DOWNLOAD_PARTIAL" },
+    { "label": "重新尝试", "action": "RETRY" }
+  ],
+  "internalLog": "供开发者查看的错误摘要（不展示给用户）"
+}</div>
+
+  <div class="sec">JSON 格式修复重试模板</div>
+  <div class="code"><span class="comment">// 自动修复非法 JSON 输出</span>
+<span class="kw">async function</span> callWithRetry&lt;T&gt;(
+  prompt: string,
+  schema: ZodSchema&lt;T&gt;,
+  maxRetries = 2
+): Promise&lt;T&gt; {
+  <span class="kw">let</span> lastError: Error | null = null
+
+  <span class="kw">for</span> (<span class="kw">let</span> i = 0; i &lt;= maxRetries; i++) {
+    <span class="kw">const</span> suffix = i === 0 ? <span class="str">''</span> : <span class="str">`
+[重试 ${i}/${maxRetries}] 你的上次输出不是合法 JSON。
+请只输出 JSON 对象，不要包含任何解释文字、代码块标记（\`\`\`）或前缀。`</span>
+
+    <span class="kw">const</span> raw = <span class="kw">await</span> llm.complete(prompt + suffix)
+    <span class="kw">const</span> cleaned = raw.trim()
+      .replace(<span class="str">/^```json\s*/</span>, <span class="str">''</span>)
+      .replace(<span class="str">/```$/</span>, <span class="str">''</span>)
+
+    <span class="kw">try</span> {
+      <span class="kw">return</span> schema.parse(JSON.parse(cleaned))
+    } <span class="kw">catch</span> (e) {
+      lastError = e <span class="kw">as</span> Error
+    }
+  }
+
+  <span class="comment">// 2 次重试后走规则降级</span>
+  <span class="kw">throw new</span> OrchestratorError(<span class="str">'LLM_FORMAT_FAILURE'</span>, lastError)
+}</div>
+</div>
+
+<!-- 完整示例 -->
+<div id="v-demo" class="view">
+  <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px;line-height:1.6;">场景：用户上传技术交底书，要求完整撰写专利申请。展示完整的 Prompt 构建和 LLM 调用序列。</p>
+
+  <div class="sec">Step 1 — 意图识别调用</div>
+  <div class="msg-lbl">System</div>
+  <div class="msg-sys">你是 YunPat 的任务调度器。你的唯一职责是理解用户意图并分类...（见 System Prompt 标签）</div>
+  <div class="msg-lbl">Context</div>
+  <div class="msg-sys">&lt;user_profile&gt;
+角色: patent_agent
+输出偏好: detailed
+技术领域: 人工智能, 计算机视觉
+&lt;/user_profile&gt;</div>
+  <div class="msg-lbl">User</div>
+  <div class="msg-u">我上传了一份技术交底书，发明名称是"一种基于注意力机制的医学图像分割方法"，帮我写一份完整的专利申请文件。</div>
+  <div class="msg-lbl">LLM 输出（Call 1）</div>
+  <div class="msg-a"><span style="font-family:var(--font-mono);font-size:11px;">{
+  "intent": "DRAFT_FULL",
+  "confidence": 0.97,
+  "complexity": "complex",
+  "extracted": {
+    "title": "一种基于注意力机制的医学图像分割方法",
+    "field": "人工智能/医学影像",
+    "hasAttachment": true,
+    "urgency": "normal"
+  }
+}</span></div>
+
+  <div class="sec">Step 2 — 任务规划调用</div>
+  <div class="msg-lbl">System</div>
+  <div class="msg-sys">你是 YunPat 的任务规划器...（见 System Prompt 标签）</div>
+  <div class="msg-lbl">Context（追加意图结果）</div>
+  <div class="msg-sys">&lt;classified_intent&gt;
+意图: DRAFT_FULL | 置信度: 0.97
+发明名称: 一种基于注意力机制的医学图像分割方法
+技术领域: 人工智能/医学影像
+有附件: 是
+&lt;/classified_intent&gt;</div>
+  <div class="msg-lbl">LLM 输出（Call 2）</div>
+  <div class="msg-a"><span style="font-family:var(--font-mono);font-size:11px;">{
+  "planId": "plan-7f3a",
+  "estimatedMinutes": 8,
+  "steps": [
+    { "stepId": "s1", "agentId": "document",
+      "layer": "execution", "parallel": false,
+      "input": { "file": "{{attachment}}" }, "hitl": false },
+    { "stepId": "s2", "agentId": "search",
+      "layer": "execution", "parallel": true,
+      "dependsOn": ["s1"], "hitl": false },
+    { "stepId": "s3", "agentId": "knowledge",
+      "layer": "execution", "parallel": true,
+      "dependsOn": ["s1"], "hitl": false },
+    { "stepId": "s4", "agentId": "patent-writer",
+      "layer": "domain", "parallel": false,
+      "dependsOn": ["s2","s3"], "hitl": true,
+      "hitlDescription": "请确认权利要求草稿" },
+    { "stepId": "s5", "agentId": "patent-writer",
+      "layer": "domain", "parallel": false,
+      "dependsOn": ["s4"], "hitl": false },
+    { "stepId": "s6", "agentId": "quality",
+      "layer": "execution", "parallel": false,
+      "dependsOn": ["s5"], "hitl": false }
+  ],
+  "hitlCheckpoints": ["s4"]
+}</span></div>
+
+  <div class="sec">Step 3 — HITL 节点（s4 完成后）</div>
+  <div class="msg-lbl">LLM 输出（Call 3 — HITL 生成）</div>
+  <div class="msg-a">权利要求草稿已完成，共生成 <strong>1 项独立权利要求</strong>和 <strong>6 项从属权利要求</strong>。
+
+独立权利要求（摘要）：
+> 一种基于注意力机制的医学图像分割方法，包括：输入预处理模块、多尺度注意力编码器、跳跃连接解码器及后处理优化步骤...
+
+请确认后继续生成说明书，或告诉我需要修改的地方。</div>
+  <div class="msg-lbl">用户回复</div>
+  <div class="msg-u">第一项独立权利要求里把"跳跃连接解码器"改成"自适应特征融合解码器"，其他可以。</div>
+  <div class="msg-lbl">LLM 输出（HITL 响应解析）</div>
+  <div class="msg-a"><span style="font-family:var(--font-mono);font-size:11px;">{
+  "hitlResponse": "MODIFY",
+  "modificationInstructions": "将独立权利要求中'跳跃连接解码器'替换为'自适应特征融合解码器'",
+  "confidence": 0.99
+}</span></div>
+
+  <div class="ok-box">中枢将修改指令注入 s5 的输入，专利撰写智能体在生成说明书时采用修改后的权利要求，无需重新执行 s1-s4。</div>
+</div>
+</div>
+
+<script>
+const intentData = [
+  { id: 'draft_full', name: 'DRAFT_FULL', badge: 'b-teal', badgeText: '复杂',
+    triggers: '"帮我写专利"、"完整的申请文件"、"根据交底书写"',
+    fewshot: [
+      { u: '这是技术交底书，帮我写一份完整的专利申请', r: 'DRAFT_FULL', conf: '0.97' },
+      { u: '我有个发明想申请专利，怎么开始？', r: 'CLARIFY', conf: '0.82', note: '意图模糊，需追问' },
+    ],
+    edge: '用户说"写专利"但没有提供任何技术信息时 → CLARIFY，追问"请提供技术交底书或发明描述"',
+    clarify: '请提供发明的技术方案描述或上传技术交底书，以便开始撰写。' },
+  { id: 'respond_oa', name: 'RESPOND_OA', badge: 'b-coral', badgeText: '复杂',
+    triggers: '"审查意见"、"OA"、"office action"、"专利局通知"',
+    fewshot: [
+      { u: '收到审查意见通知书，帮我准备答复', r: 'RESPOND_OA', conf: '0.99' },
+      { u: '上传了一个 PDF，里面是审查员的意见', r: 'RESPOND_OA', conf: '0.91', note: 'hasAttachment: true' },
+    ],
+    edge: '用户上传文件但未说明类型 → 先解析文件（ExecutionAgent: document），再重新分类',
+    clarify: '' },
+  { id: 'search', name: 'SEARCH', badge: 'b-gray', badgeText: '简单',
+    triggers: '"检索"、"查一下"、"有没有相关专利"、"现有技术"',
+    fewshot: [
+      { u: '帮我检索神经网络图像识别相关的现有技术', r: 'SEARCH', conf: '0.98' },
+      { u: '查一下竞争对手最近有没有申请这方面的专利', r: 'SEARCH', conf: '0.88', note: '可建议设置 Monitor' },
+    ],
+    edge: '"查一下"单独出现时置信度会低，需要结合上下文判断',
+    clarify: '' },
+  { id: 'multi', name: 'MULTI_INTENT', badge: 'b-amber', badgeText: '需拆分',
+    triggers: '一条消息包含多个独立任务',
+    fewshot: [
+      { u: '帮我检索现有技术，顺便也开始写权利要求', r: 'MULTI_INTENT', conf: '0.94', note: '拆分为 SEARCH + DRAFT_CLAIMS' },
+    ],
+    edge: 'MULTI_INTENT 时，中枢应拆分为多个子任务按序执行，不要合并为一个 TaskPlan',
+    clarify: '' },
+  { id: 'clarify', name: 'CLARIFY', badge: 'b-red', badgeText: '需追问',
+    triggers: '意图不明确、信息不足以启动任何任务',
+    fewshot: [
+      { u: '我想保护我的技术', r: 'CLARIFY', conf: '0.91', note: '追问具体技术方案' },
+      { u: '帮我处理一下', r: 'CLARIFY', conf: '0.99', note: '完全无法判断意图' },
+    ],
+    edge: 'CLARIFY 的追问必须具体：不能只说"请描述您的需求"，要根据上下文提示用户需要提供什么',
+    clarify: '请描述您的发明技术方案，或上传技术交底书，以便我为您安排合适的任务。' },
+  { id: 'chitchat', name: 'CHITCHAT', badge: 'b-gray', badgeText: '直接回复',
+    triggers: '"谢谢"、"你能做什么"、"这是什么平台"',
+    fewshot: [
+      { u: '谢谢你！', r: 'CHITCHAT', conf: '1.0', note: '中枢直接回复，不派发任何智能体' },
+      { u: 'YunPat 支持哪些功能？', r: 'CHITCHAT', conf: '0.97' },
+    ],
+    edge: 'CHITCHAT 时中枢直接回复，无需调用任何 Domain/Execution Agent',
+    clarify: '' },
+]
+
+function renderIntentGrid() {
+  const el = document.getElementById('ig')
+  el.innerHTML = intentData.map(d => `
+    <div class="intent-chip" id="ic-${d.id}" onclick="showIntent('${d.id}')">
+      <div class="ic-name">${d.name} <span class="badge ${d.badge}" style="font-size:10px;">${d.badgeText}</span></div>
+      <div class="ic-desc">${d.triggers.split('、')[0]}...</div>
+    </div>`).join('')
+}
+
+function showIntent(id) {
+  document.querySelectorAll('.intent-chip').forEach(c => c.classList.remove('selected'))
+  document.getElementById('ic-' + id).classList.add('selected')
+  const d = intentData.find(x => x.id === id)
+  if (!d) return
+  let html = `<div class="card-title">${d.name} <span class="badge ${d.badge}">${d.badgeText}</span></div>`
+  html += `<div class="sec" style="margin-top:0;">触发词</div><div style="font-size:12px;color:var(--color-text-secondary);line-height:1.7;">${d.triggers}</div>`
+  html += `<div class="sec">Few-shot 示例</div>`
+  d.fewshot.forEach(f => {
+    html += `<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;margin-bottom:6px;">
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">用户：${f.u}</div>
+      <div style="font-size:12px;display:flex;gap:8px;align-items:center;">
+        <span class="badge b-purple">${f.r}</span>
+        <span style="color:var(--color-text-tertiary);">置信度 ${f.conf}</span>
+        ${f.note ? `<span style="color:var(--color-text-secondary);">${f.note}</span>` : ''}
+      </div>
+    </div>`
+  })
+  html += `<div class="sec">边界处理</div><div style="font-size:12px;color:var(--color-text-secondary);line-height:1.7;">${d.edge}</div>`
+  if (d.clarify) {
+    html += `<div class="sec">追问模板</div><div class="ok-box">${d.clarify}</div>`
+  }
+  const detail = document.getElementById('intent-detail')
+  detail.innerHTML = html
+  detail.classList.add('on')
+}
+
+function sw(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
+  document.querySelectorAll('.tab-row .tab').forEach(t => {
+    if (t.getAttribute('onclick') === `sw('${id}')`) t.classList.add('active')
+  })
+  document.getElementById('v-' + id).classList.add('active')
+}
+
+renderIntentGrid()
+</script>

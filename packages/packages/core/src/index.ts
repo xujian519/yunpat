@@ -573,6 +573,7 @@ export type {
 } from './tools/ToolUsageTracker.js'
 
 // ========== Skill 模板系统 ==========
+/** @deprecated 使用 @yunpat/skills 包代替 */
 export { SkillLoader, createSkillLoader } from './skills/SkillLoader.js'
 
 export type {

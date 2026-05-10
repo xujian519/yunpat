@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/technical-drawing",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "技术图纸识别智能体 - 支持化学结构、数学公式、OCR",
   "type": "module",
   "main": "dist/index.js",

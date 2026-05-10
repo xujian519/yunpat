@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-image-understanding",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "附图理解智能体 - 使用多模态模型理解专利说明书附图",
   "type": "module",
   "main": "./dist/index.js",

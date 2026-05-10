@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-patent-manager",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "专利管理智能体 - 专利全生命周期管理与监控",
   "type": "module",
   "main": "./dist/index.js",

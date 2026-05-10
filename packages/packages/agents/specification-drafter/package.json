@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-specification-drafter",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "说明书撰写智能体 - 分章节撰写专利说明书",
   "type": "module",
   "main": "dist/index.js",

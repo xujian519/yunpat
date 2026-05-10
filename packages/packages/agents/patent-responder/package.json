@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-patent-responder",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "专利答复智能体 - OA 审查意见答复与策略生成",
   "type": "module",
   "main": "./dist/index.js",

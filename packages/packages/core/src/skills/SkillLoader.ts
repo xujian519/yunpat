@@ -48,6 +48,7 @@ export interface SkillLoaderConfig {
   defaultAbVariant?: string
 }
 
+/** @deprecated 使用 @yunpat/skills 包代替 */
 export class SkillLoader {
   private baseDir: string
   private cache = new Map<string, SkillTemplate>()
@@ -461,6 +462,7 @@ export class SkillLoader {
   }
 }
 
+/** @deprecated 使用 @yunpat/skills 包代替 */
 export function createSkillLoader(config?: SkillLoaderConfig): SkillLoader {
   return new SkillLoader(config)
 }

@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/execpolicy-hook",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "执行策略 Hook - 参数级安全检查和审批门控",
   "type": "module",
   "main": "./dist/index.js",

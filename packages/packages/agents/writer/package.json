@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-writer",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "专利撰写智能体 - 集成知识库和分步加载提示词模板",
   "type": "module",
   "main": "./dist/index.js",

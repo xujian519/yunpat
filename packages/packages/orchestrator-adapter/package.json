@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/orchestrator-adapter",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Orchestrator 适配器 - 连接 Rust 网关和 Node.js 业务层",
   "type": "module",
   "main": "./dist/index.js",

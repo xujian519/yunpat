@@ -306,7 +306,8 @@ Pre-hooks → 审批门控（非 yolo 模式）→ 工具执行 → Post-hooks
 
 ## 关键技术细节
 
-- **LLM 支持**：DeepSeek（默认）、Qwen、OpenAI、Anthropic、本地 Ollama
+- **LLM 支持**：DeepSeek（默认）、OpenAI、OpenRouter、NVIDIA NIM、Novita、Fireworks、SGLang、vLLM、Ollama、智谱 GLM（zhipu）、Moonshot（kimi）、豆包（doubao）
+- **Provider 环境变量**：每个 provider 支持 `<NAME>_BASE_URL` 环境变量覆盖（如 `ZHIPU_BASE_URL`、`MOONSHOT_BASE_URL`、`DOUBAO_BASE_URL`）；API key 通过 `config.toml` 的 `[providers.<name>]` 段或 OS keyring 存储
 - **数据库**：PostgreSQL（生产）+ SQLite（Rust state 层）+ Redis（缓存，可选）
 - **构建工具**：esbuild（TS，30x 比 tsc 快）、cargo（Rust）
 - **ORM**：Drizzle ORM（TypeScript）

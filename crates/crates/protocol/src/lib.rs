@@ -225,20 +225,6 @@ pub struct PromptResponse {
     pub events: Vec<EventFrame>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum AskForApproval {
-    UnlessTrusted,
-    OnFailure,
-    OnRequest,
-    Reject {
-        sandbox_approval: bool,
-        rules: bool,
-        mcp_elicitations: bool,
-    },
-    Never,
-}
-
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ToolKind {

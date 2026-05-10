@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "YunPat 核心框架 - 智能体抽象、事件总线、生命周期管理",
   "type": "module",
   "main": "./dist/index.js",

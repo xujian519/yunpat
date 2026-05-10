@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-patent-analyzer",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "专利分析智能体 - 专利文献深度分析",
   "type": "module",
   "main": "./dist/index.js",

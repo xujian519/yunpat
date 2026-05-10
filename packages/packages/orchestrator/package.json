@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/orchestrator",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "YunPat Orchestrator Agent - 中枢层智能调度系统",
   "type": "module",
   "main": "dist/index.js",

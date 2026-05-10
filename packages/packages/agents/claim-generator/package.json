@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-claim-generator",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "权利要求生成智能体 - 基于发明理解和检索分析撰写权利要求",
   "type": "module",
   "main": "dist/index.js",

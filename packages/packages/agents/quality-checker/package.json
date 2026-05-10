@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/quality-checker",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "质量检查Agent - 评估专利申请质量",
   "type": "module",
   "main": "dist/index.js",

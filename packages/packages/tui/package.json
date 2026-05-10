@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/tui",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "deprecated": true,
   "description": "[DEPRECATED] 此包已废弃，请使用 Rust TUI (crates/tui)。参见 crates/tui 目录。",
   "type": "module",

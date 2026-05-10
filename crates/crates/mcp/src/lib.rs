@@ -7,6 +7,10 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
+pub use yunpat_protocol::{
+    McpStartupStatus, McpStartupUpdateEvent, McpStartupFailure, McpStartupCompleteEvent,
+};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpServerConfig {
     pub name: String,
@@ -32,34 +36,6 @@ pub struct McpServerDefinition {
     pub config: McpServerConfig,
     #[serde(default)]
     pub filter: ToolFilter,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum McpStartupStatus {
-    Starting,
-    Ready,
-    Failed { error: String },
-    Cancelled,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpStartupUpdateEvent {
-    pub server_name: String,
-    pub status: McpStartupStatus,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpStartupFailure {
-    pub server_name: String,
-    pub error: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpStartupCompleteEvent {
-    pub ready: Vec<String>,
-    pub failed: Vec<McpStartupFailure>,
-    pub cancelled: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

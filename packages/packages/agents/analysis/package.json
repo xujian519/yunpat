@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-analysis",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "专利分析智能体 - 现有技术深度分析、对比分析、交底书再分析",
   "type": "module",
   "main": "./dist/index.js",

@@ -99,6 +99,47 @@ impl ProviderKind {
             _ => None,
         }
     }
+
+    /// Returns the TOML table key for this provider.
+    ///
+    /// Used in `config.toml` as `[providers.<key>]` and in
+    /// `get_value`/`set_value` as `providers.<key>.api_key` etc.
+    ///
+    /// ```ignore
+    /// assert_eq!(ProviderKind::NvidiaNim.toml_key(), "nvidia_nim");
+    /// assert_eq!(ProviderKind::Zhipu.toml_key(), "zhipu");
+    /// ```
+    #[must_use]
+    pub fn toml_key(self) -> &'static str {
+        match self {
+            Self::Deepseek => "deepseek",
+            Self::NvidiaNim => "nvidia_nim",
+            Self::Openai => "openai",
+            Self::Openrouter => "openrouter",
+            Self::Novita => "novita",
+            Self::Fireworks => "fireworks",
+            Self::Sglang => "sglang",
+            Self::Vllm => "vllm",
+            Self::Ollama => "ollama",
+            Self::Zhipu => "zhipu",
+            Self::Moonshot => "moonshot",
+            Self::Doubao => "doubao",
+        }
+    }
+
+    #[must_use]
+    pub fn from_toml_key(key: &str) -> Option<Self> {
+        Self::all().find(|p| p.toml_key() == key)
+    }
+
+    pub fn all() -> impl Iterator<Item = Self> {
+        const VARIANTS: [ProviderKind; 12] = [
+            ProviderKind::Deepseek, ProviderKind::NvidiaNim, ProviderKind::Openai, ProviderKind::Openrouter,
+            ProviderKind::Novita, ProviderKind::Fireworks, ProviderKind::Sglang, ProviderKind::Vllm,
+            ProviderKind::Ollama, ProviderKind::Zhipu, ProviderKind::Moonshot, ProviderKind::Doubao,
+        ];
+        VARIANTS.into_iter()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -365,21 +406,12 @@ impl ConfigToml {
         }
 
         // Merge provider sub-tables field-by-field.
-        merge_provider_config(&mut self.providers.deepseek, &project.providers.deepseek);
-        merge_provider_config(
-            &mut self.providers.nvidia_nim,
-            &project.providers.nvidia_nim,
-        );
-        merge_provider_config(&mut self.providers.openai, &project.providers.openai);
-        merge_provider_config(
-            &mut self.providers.openrouter,
-            &project.providers.openrouter,
-        );
-        merge_provider_config(&mut self.providers.novita, &project.providers.novita);
-        merge_provider_config(&mut self.providers.fireworks, &project.providers.fireworks);
-        merge_provider_config(&mut self.providers.sglang, &project.providers.sglang);
-        merge_provider_config(&mut self.providers.vllm, &project.providers.vllm);
-        merge_provider_config(&mut self.providers.ollama, &project.providers.ollama);
+        for provider in ProviderKind::all() {
+            merge_provider_config(
+                self.providers.for_provider_mut(provider),
+                project.providers.for_provider(provider),
+            );
+        }
 
         if project.network.is_some() {
             self.network = project.network;
@@ -401,76 +433,33 @@ impl ConfigToml {
     #[must_use]
     pub fn get_value(&self, key: &str) -> Option<String> {
         match key {
-            "provider" => Some(self.provider.as_str().to_string()),
-            "api_key" => self.api_key.clone(),
-            "base_url" => self.base_url.clone(),
-            "http_headers" => serialize_http_headers(&self.http_headers),
-            "default_text_model" => self.default_text_model.clone(),
-            "model" => self.model.clone(),
-            "auth.mode" => self.auth_mode.clone(),
-            "auth.chatgpt_access_token" => self.chatgpt_access_token.clone(),
-            "auth.device_code_session" => self.device_code_session.clone(),
-            "output_mode" => self.output_mode.clone(),
-            "log_level" => self.log_level.clone(),
-            "telemetry" => self.telemetry.map(|v| v.to_string()),
-            "approval_policy" => self.approval_policy.clone(),
-            "sandbox_mode" => self.sandbox_mode.clone(),
-            "providers.deepseek.api_key" => self.providers.deepseek.api_key.clone(),
-            "providers.deepseek.base_url" => self.providers.deepseek.base_url.clone(),
-            "providers.deepseek.model" => self.providers.deepseek.model.clone(),
-            "providers.deepseek.http_headers" => {
-                serialize_http_headers(&self.providers.deepseek.http_headers)
-            }
-            "providers.nvidia_nim.api_key" => self.providers.nvidia_nim.api_key.clone(),
-            "providers.nvidia_nim.base_url" => self.providers.nvidia_nim.base_url.clone(),
-            "providers.nvidia_nim.model" => self.providers.nvidia_nim.model.clone(),
-            "providers.nvidia_nim.http_headers" => {
-                serialize_http_headers(&self.providers.nvidia_nim.http_headers)
-            }
-            "providers.openai.api_key" => self.providers.openai.api_key.clone(),
-            "providers.openai.base_url" => self.providers.openai.base_url.clone(),
-            "providers.openai.model" => self.providers.openai.model.clone(),
-            "providers.openai.http_headers" => {
-                serialize_http_headers(&self.providers.openai.http_headers)
-            }
-            "providers.openrouter.api_key" => self.providers.openrouter.api_key.clone(),
-            "providers.openrouter.base_url" => self.providers.openrouter.base_url.clone(),
-            "providers.openrouter.model" => self.providers.openrouter.model.clone(),
-            "providers.openrouter.http_headers" => {
-                serialize_http_headers(&self.providers.openrouter.http_headers)
-            }
-            "providers.novita.api_key" => self.providers.novita.api_key.clone(),
-            "providers.novita.base_url" => self.providers.novita.base_url.clone(),
-            "providers.novita.model" => self.providers.novita.model.clone(),
-            "providers.novita.http_headers" => {
-                serialize_http_headers(&self.providers.novita.http_headers)
-            }
-            "providers.fireworks.api_key" => self.providers.fireworks.api_key.clone(),
-            "providers.fireworks.base_url" => self.providers.fireworks.base_url.clone(),
-            "providers.fireworks.model" => self.providers.fireworks.model.clone(),
-            "providers.fireworks.http_headers" => {
-                serialize_http_headers(&self.providers.fireworks.http_headers)
-            }
-            "providers.sglang.api_key" => self.providers.sglang.api_key.clone(),
-            "providers.sglang.base_url" => self.providers.sglang.base_url.clone(),
-            "providers.sglang.model" => self.providers.sglang.model.clone(),
-            "providers.sglang.http_headers" => {
-                serialize_http_headers(&self.providers.sglang.http_headers)
-            }
-            "providers.vllm.api_key" => self.providers.vllm.api_key.clone(),
-            "providers.vllm.base_url" => self.providers.vllm.base_url.clone(),
-            "providers.vllm.model" => self.providers.vllm.model.clone(),
-            "providers.vllm.http_headers" => {
-                serialize_http_headers(&self.providers.vllm.http_headers)
-            }
-            "providers.ollama.api_key" => self.providers.ollama.api_key.clone(),
-            "providers.ollama.base_url" => self.providers.ollama.base_url.clone(),
-            "providers.ollama.model" => self.providers.ollama.model.clone(),
-            "providers.ollama.http_headers" => {
-                serialize_http_headers(&self.providers.ollama.http_headers)
-            }
-            _ => self.extras.get(key).map(toml::Value::to_string),
+            "provider" => return Some(self.provider.as_str().to_string()),
+            "api_key" => return self.api_key.clone(),
+            "base_url" => return self.base_url.clone(),
+            "http_headers" => return serialize_http_headers(&self.http_headers),
+            "default_text_model" => return self.default_text_model.clone(),
+            "model" => return self.model.clone(),
+            "auth.mode" => return self.auth_mode.clone(),
+            "auth.chatgpt_access_token" => return self.chatgpt_access_token.clone(),
+            "auth.device_code_session" => return self.device_code_session.clone(),
+            "output_mode" => return self.output_mode.clone(),
+            "log_level" => return self.log_level.clone(),
+            "telemetry" => return self.telemetry.map(|v| v.to_string()),
+            "approval_policy" => return self.approval_policy.clone(),
+            "sandbox_mode" => return self.sandbox_mode.clone(),
+            _ => {}
         }
+        if let Some((provider, field)) = parse_provider_key(key) {
+            let cfg = self.providers.for_provider(provider);
+            return match field {
+                "api_key" => cfg.api_key.clone(),
+                "base_url" => cfg.base_url.clone(),
+                "model" => cfg.model.clone(),
+                "http_headers" => serialize_http_headers(&cfg.http_headers),
+                _ => None,
+            };
+        }
+        self.extras.get(key).map(toml::Value::to_string)
     }
 
     pub fn set_value(&mut self, key: &str, value: &str) -> Result<()> {
@@ -494,119 +483,29 @@ impl ConfigToml {
             }
             "approval_policy" => self.approval_policy = Some(value.to_string()),
             "sandbox_mode" => self.sandbox_mode = Some(value.to_string()),
-            "providers.deepseek.api_key" => {
-                let value = value.to_string();
-                self.providers.deepseek.api_key = Some(value.clone());
-                self.api_key = Some(value);
-            }
-            "providers.deepseek.base_url" => {
-                let value = value.to_string();
-                self.providers.deepseek.base_url = Some(value.clone());
-                self.base_url = Some(value);
-            }
-            "providers.deepseek.model" => {
-                let value = value.to_string();
-                self.providers.deepseek.model = Some(value.clone());
-                self.default_text_model = Some(value);
-            }
-            "providers.deepseek.http_headers" => {
-                let headers = parse_http_headers(value)?;
-                self.providers.deepseek.http_headers = headers.clone();
-                self.http_headers = headers;
-            }
-            "providers.openai.api_key" => self.providers.openai.api_key = Some(value.to_string()),
-            "providers.openai.base_url" => self.providers.openai.base_url = Some(value.to_string()),
-            "providers.openai.model" => self.providers.openai.model = Some(value.to_string()),
-            "providers.openai.http_headers" => {
-                self.providers.openai.http_headers = parse_http_headers(value)?;
-            }
-            "providers.nvidia_nim.api_key" => {
-                self.providers.nvidia_nim.api_key = Some(value.to_string());
-            }
-            "providers.nvidia_nim.base_url" => {
-                self.providers.nvidia_nim.base_url = Some(value.to_string());
-            }
-            "providers.nvidia_nim.model" => {
-                self.providers.nvidia_nim.model = Some(value.to_string());
-            }
-            "providers.nvidia_nim.http_headers" => {
-                self.providers.nvidia_nim.http_headers = parse_http_headers(value)?;
-            }
-            "providers.openrouter.api_key" => {
-                self.providers.openrouter.api_key = Some(value.to_string());
-            }
-            "providers.openrouter.base_url" => {
-                self.providers.openrouter.base_url = Some(value.to_string());
-            }
-            "providers.openrouter.model" => {
-                self.providers.openrouter.model = Some(value.to_string());
-            }
-            "providers.openrouter.http_headers" => {
-                self.providers.openrouter.http_headers = parse_http_headers(value)?;
-            }
-            "providers.novita.api_key" => {
-                self.providers.novita.api_key = Some(value.to_string());
-            }
-            "providers.novita.base_url" => {
-                self.providers.novita.base_url = Some(value.to_string());
-            }
-            "providers.novita.model" => {
-                self.providers.novita.model = Some(value.to_string());
-            }
-            "providers.novita.http_headers" => {
-                self.providers.novita.http_headers = parse_http_headers(value)?;
-            }
-            "providers.fireworks.api_key" => {
-                self.providers.fireworks.api_key = Some(value.to_string());
-            }
-            "providers.fireworks.base_url" => {
-                self.providers.fireworks.base_url = Some(value.to_string());
-            }
-            "providers.fireworks.model" => {
-                self.providers.fireworks.model = Some(value.to_string());
-            }
-            "providers.fireworks.http_headers" => {
-                self.providers.fireworks.http_headers = parse_http_headers(value)?;
-            }
-            "providers.sglang.api_key" => {
-                self.providers.sglang.api_key = Some(value.to_string());
-            }
-            "providers.sglang.base_url" => {
-                self.providers.sglang.base_url = Some(value.to_string());
-            }
-            "providers.sglang.model" => {
-                self.providers.sglang.model = Some(value.to_string());
-            }
-            "providers.sglang.http_headers" => {
-                self.providers.sglang.http_headers = parse_http_headers(value)?;
-            }
-            "providers.vllm.api_key" => {
-                self.providers.vllm.api_key = Some(value.to_string());
-            }
-            "providers.vllm.base_url" => {
-                self.providers.vllm.base_url = Some(value.to_string());
-            }
-            "providers.vllm.model" => {
-                self.providers.vllm.model = Some(value.to_string());
-            }
-            "providers.vllm.http_headers" => {
-                self.providers.vllm.http_headers = parse_http_headers(value)?;
-            }
-            "providers.ollama.api_key" => {
-                self.providers.ollama.api_key = Some(value.to_string());
-            }
-            "providers.ollama.base_url" => {
-                self.providers.ollama.base_url = Some(value.to_string());
-            }
-            "providers.ollama.model" => {
-                self.providers.ollama.model = Some(value.to_string());
-            }
-            "providers.ollama.http_headers" => {
-                self.providers.ollama.http_headers = parse_http_headers(value)?;
-            }
             _ => {
-                self.extras
-                    .insert(key.to_string(), toml::Value::String(value.to_string()));
+                if let Some((provider, field)) = parse_provider_key(key) {
+                    let cfg = self.providers.for_provider_mut(provider);
+                    match field {
+                        "api_key" => cfg.api_key = Some(value.to_string()),
+                        "base_url" => cfg.base_url = Some(value.to_string()),
+                        "model" => cfg.model = Some(value.to_string()),
+                        "http_headers" => cfg.http_headers = parse_http_headers(value)?,
+                        _ => bail!("unknown provider field: {field}"),
+                    }
+                    if provider == ProviderKind::Deepseek {
+                        match field {
+                            "api_key" => self.api_key = Some(value.to_string()),
+                            "base_url" => self.base_url = Some(value.to_string()),
+                            "model" => self.default_text_model = Some(value.to_string()),
+                            "http_headers" => self.http_headers = parse_http_headers(value)?,
+                            _ => {}
+                        }
+                    }
+                } else {
+                    self.extras
+                        .insert(key.to_string(), toml::Value::String(value.to_string()));
+                }
             }
         }
         Ok(())
@@ -628,56 +527,28 @@ impl ConfigToml {
             "telemetry" => self.telemetry = None,
             "approval_policy" => self.approval_policy = None,
             "sandbox_mode" => self.sandbox_mode = None,
-            "providers.deepseek.api_key" => {
-                self.providers.deepseek.api_key = None;
-                self.api_key = None;
-            }
-            "providers.deepseek.base_url" => {
-                self.providers.deepseek.base_url = None;
-                self.base_url = None;
-            }
-            "providers.deepseek.model" => {
-                self.providers.deepseek.model = None;
-                self.default_text_model = None;
-            }
-            "providers.deepseek.http_headers" => {
-                self.providers.deepseek.http_headers.clear();
-                self.http_headers.clear();
-            }
-            "providers.openai.api_key" => self.providers.openai.api_key = None,
-            "providers.openai.base_url" => self.providers.openai.base_url = None,
-            "providers.openai.model" => self.providers.openai.model = None,
-            "providers.openai.http_headers" => self.providers.openai.http_headers.clear(),
-            "providers.nvidia_nim.api_key" => self.providers.nvidia_nim.api_key = None,
-            "providers.nvidia_nim.base_url" => self.providers.nvidia_nim.base_url = None,
-            "providers.nvidia_nim.model" => self.providers.nvidia_nim.model = None,
-            "providers.nvidia_nim.http_headers" => self.providers.nvidia_nim.http_headers.clear(),
-            "providers.openrouter.api_key" => self.providers.openrouter.api_key = None,
-            "providers.openrouter.base_url" => self.providers.openrouter.base_url = None,
-            "providers.openrouter.model" => self.providers.openrouter.model = None,
-            "providers.openrouter.http_headers" => self.providers.openrouter.http_headers.clear(),
-            "providers.novita.api_key" => self.providers.novita.api_key = None,
-            "providers.novita.base_url" => self.providers.novita.base_url = None,
-            "providers.novita.model" => self.providers.novita.model = None,
-            "providers.novita.http_headers" => self.providers.novita.http_headers.clear(),
-            "providers.fireworks.api_key" => self.providers.fireworks.api_key = None,
-            "providers.fireworks.base_url" => self.providers.fireworks.base_url = None,
-            "providers.fireworks.model" => self.providers.fireworks.model = None,
-            "providers.fireworks.http_headers" => self.providers.fireworks.http_headers.clear(),
-            "providers.sglang.api_key" => self.providers.sglang.api_key = None,
-            "providers.sglang.base_url" => self.providers.sglang.base_url = None,
-            "providers.sglang.model" => self.providers.sglang.model = None,
-            "providers.sglang.http_headers" => self.providers.sglang.http_headers.clear(),
-            "providers.vllm.api_key" => self.providers.vllm.api_key = None,
-            "providers.vllm.base_url" => self.providers.vllm.base_url = None,
-            "providers.vllm.model" => self.providers.vllm.model = None,
-            "providers.vllm.http_headers" => self.providers.vllm.http_headers.clear(),
-            "providers.ollama.api_key" => self.providers.ollama.api_key = None,
-            "providers.ollama.base_url" => self.providers.ollama.base_url = None,
-            "providers.ollama.model" => self.providers.ollama.model = None,
-            "providers.ollama.http_headers" => self.providers.ollama.http_headers.clear(),
             _ => {
-                self.extras.remove(key);
+                if let Some((provider, field)) = parse_provider_key(key) {
+                    let cfg = self.providers.for_provider_mut(provider);
+                    match field {
+                        "api_key" => cfg.api_key = None,
+                        "base_url" => cfg.base_url = None,
+                        "model" => cfg.model = None,
+                        "http_headers" => cfg.http_headers.clear(),
+                        _ => {}
+                    }
+                    if provider == ProviderKind::Deepseek {
+                        match field {
+                            "api_key" => self.api_key = None,
+                            "base_url" => self.base_url = None,
+                            "model" => self.default_text_model = None,
+                            "http_headers" => self.http_headers.clear(),
+                            _ => {}
+                        }
+                    }
+                } else {
+                    self.extras.remove(key);
+                }
             }
         }
         Ok(())
@@ -727,113 +598,22 @@ impl ConfigToml {
         if let Some(v) = self.sandbox_mode.as_ref() {
             out.insert("sandbox_mode".to_string(), v.clone());
         }
-        if let Some(v) = self.providers.deepseek.api_key.as_ref() {
-            out.insert("providers.deepseek.api_key".to_string(), redact_secret(v));
-        }
-        if let Some(v) = self.providers.deepseek.base_url.as_ref() {
-            out.insert("providers.deepseek.base_url".to_string(), v.clone());
-        }
-        if let Some(v) = self.providers.deepseek.model.as_ref() {
-            out.insert("providers.deepseek.model".to_string(), v.clone());
-        }
-        if let Some(v) = serialize_http_headers(&self.providers.deepseek.http_headers) {
-            out.insert("providers.deepseek.http_headers".to_string(), v);
-        }
-        if let Some(v) = self.providers.openai.api_key.as_ref() {
-            out.insert("providers.openai.api_key".to_string(), redact_secret(v));
-        }
-        if let Some(v) = self.providers.openai.base_url.as_ref() {
-            out.insert("providers.openai.base_url".to_string(), v.clone());
-        }
-        if let Some(v) = self.providers.openai.model.as_ref() {
-            out.insert("providers.openai.model".to_string(), v.clone());
-        }
-        if let Some(v) = serialize_http_headers(&self.providers.openai.http_headers) {
-            out.insert("providers.openai.http_headers".to_string(), v);
-        }
-        if let Some(v) = self.providers.nvidia_nim.api_key.as_ref() {
-            out.insert("providers.nvidia_nim.api_key".to_string(), redact_secret(v));
-        }
-        if let Some(v) = self.providers.nvidia_nim.base_url.as_ref() {
-            out.insert("providers.nvidia_nim.base_url".to_string(), v.clone());
-        }
-        if let Some(v) = self.providers.nvidia_nim.model.as_ref() {
-            out.insert("providers.nvidia_nim.model".to_string(), v.clone());
-        }
-        if let Some(v) = serialize_http_headers(&self.providers.nvidia_nim.http_headers) {
-            out.insert("providers.nvidia_nim.http_headers".to_string(), v);
-        }
-        if let Some(v) = self.providers.openrouter.api_key.as_ref() {
-            out.insert("providers.openrouter.api_key".to_string(), redact_secret(v));
-        }
-        if let Some(v) = self.providers.openrouter.base_url.as_ref() {
-            out.insert("providers.openrouter.base_url".to_string(), v.clone());
-        }
-        if let Some(v) = self.providers.openrouter.model.as_ref() {
-            out.insert("providers.openrouter.model".to_string(), v.clone());
-        }
-        if let Some(v) = serialize_http_headers(&self.providers.openrouter.http_headers) {
-            out.insert("providers.openrouter.http_headers".to_string(), v);
-        }
-        if let Some(v) = self.providers.novita.api_key.as_ref() {
-            out.insert("providers.novita.api_key".to_string(), redact_secret(v));
-        }
-        if let Some(v) = self.providers.novita.base_url.as_ref() {
-            out.insert("providers.novita.base_url".to_string(), v.clone());
-        }
-        if let Some(v) = self.providers.novita.model.as_ref() {
-            out.insert("providers.novita.model".to_string(), v.clone());
-        }
-        if let Some(v) = serialize_http_headers(&self.providers.novita.http_headers) {
-            out.insert("providers.novita.http_headers".to_string(), v);
-        }
-        if let Some(v) = self.providers.fireworks.api_key.as_ref() {
-            out.insert("providers.fireworks.api_key".to_string(), redact_secret(v));
-        }
-        if let Some(v) = self.providers.fireworks.base_url.as_ref() {
-            out.insert("providers.fireworks.base_url".to_string(), v.clone());
-        }
-        if let Some(v) = self.providers.fireworks.model.as_ref() {
-            out.insert("providers.fireworks.model".to_string(), v.clone());
-        }
-        if let Some(v) = serialize_http_headers(&self.providers.fireworks.http_headers) {
-            out.insert("providers.fireworks.http_headers".to_string(), v);
-        }
-        if let Some(v) = self.providers.sglang.api_key.as_ref() {
-            out.insert("providers.sglang.api_key".to_string(), redact_secret(v));
-        }
-        if let Some(v) = self.providers.sglang.base_url.as_ref() {
-            out.insert("providers.sglang.base_url".to_string(), v.clone());
-        }
-        if let Some(v) = self.providers.sglang.model.as_ref() {
-            out.insert("providers.sglang.model".to_string(), v.clone());
-        }
-        if let Some(v) = serialize_http_headers(&self.providers.sglang.http_headers) {
-            out.insert("providers.sglang.http_headers".to_string(), v);
-        }
-        if let Some(v) = self.providers.vllm.api_key.as_ref() {
-            out.insert("providers.vllm.api_key".to_string(), redact_secret(v));
-        }
-        if let Some(v) = self.providers.vllm.base_url.as_ref() {
-            out.insert("providers.vllm.base_url".to_string(), v.clone());
-        }
-        if let Some(v) = self.providers.vllm.model.as_ref() {
-            out.insert("providers.vllm.model".to_string(), v.clone());
-        }
-        if let Some(v) = serialize_http_headers(&self.providers.vllm.http_headers) {
-            out.insert("providers.vllm.http_headers".to_string(), v);
-        }
-        if let Some(v) = self.providers.ollama.api_key.as_ref() {
-            out.insert("providers.ollama.api_key".to_string(), redact_secret(v));
-        }
-        if let Some(v) = self.providers.ollama.base_url.as_ref() {
-            out.insert("providers.ollama.base_url".to_string(), v.clone());
-        }
-        if let Some(v) = self.providers.ollama.model.as_ref() {
-            out.insert("providers.ollama.model".to_string(), v.clone());
-        }
-        if let Some(v) = serialize_http_headers(&self.providers.ollama.http_headers) {
-            out.insert("providers.ollama.http_headers".to_string(), v);
+
+        for provider in ProviderKind::all() {
+            let toml_key = provider.toml_key();
+            let cfg = self.providers.for_provider(provider);
+            if let Some(v) = cfg.api_key.as_ref() {
+                out.insert(format!("providers.{toml_key}.api_key"), redact_secret(v));
+            }
+            if let Some(v) = cfg.base_url.as_ref() {
+                out.insert(format!("providers.{toml_key}.base_url"), v.clone());
+            }
+            if let Some(v) = cfg.model.as_ref() {
+                out.insert(format!("providers.{toml_key}.model"), v.clone());
+            }
+            if let Some(v) = serialize_http_headers(&cfg.http_headers) {
+                out.insert(format!("providers.{toml_key}.http_headers"), v);
+            }
         }
 
         for (k, v) in &self.extras {
@@ -994,6 +774,15 @@ impl ConfigToml {
             http_headers,
         }
     }
+}
+
+fn parse_provider_key(key: &str) -> Option<(ProviderKind, &str)> {
+    let rest = key.strip_prefix("providers.")?;
+    let dot = rest.find('.')?;
+    let toml_name = &rest[..dot];
+    let field = &rest[dot + 1..];
+    let provider = ProviderKind::from_toml_key(toml_name)?;
+    Some((provider, field))
 }
 
 fn merge_provider_config(target: &mut ProviderConfigToml, source: &ProviderConfigToml) {
@@ -2219,5 +2008,95 @@ mod tests {
         let resolved = ConfigToml::default().resolve_runtime_options_with_secrets(&cli, &secrets);
         assert_eq!(resolved.api_key.as_deref(), Some("cli-key"));
         assert_eq!(resolved.api_key_source, Some(RuntimeApiKeySource::Cli));
+    }
+
+    #[test]
+    fn zhipu_provider_get_set_round_trip() {
+        let mut config = ConfigToml::default();
+        config
+            .set_value("providers.zhipu.api_key", "zhipu-key")
+            .unwrap();
+        assert_eq!(
+            config.get_value("providers.zhipu.api_key"),
+            Some("zhipu-key".to_string())
+        );
+        config.unset_value("providers.zhipu.api_key").unwrap();
+        assert_eq!(config.get_value("providers.zhipu.api_key"), None);
+    }
+
+    #[test]
+    fn moonshot_provider_get_set_round_trip() {
+        let mut config = ConfigToml::default();
+        config
+            .set_value("providers.moonshot.api_key", "moonshot-key")
+            .unwrap();
+        assert_eq!(
+            config.get_value("providers.moonshot.api_key"),
+            Some("moonshot-key".to_string())
+        );
+        config.unset_value("providers.moonshot.api_key").unwrap();
+        assert_eq!(config.get_value("providers.moonshot.api_key"), None);
+    }
+
+    #[test]
+    fn doubao_provider_get_set_round_trip() {
+        let mut config = ConfigToml::default();
+        config
+            .set_value("providers.doubao.api_key", "doubao-key")
+            .unwrap();
+        assert_eq!(
+            config.get_value("providers.doubao.api_key"),
+            Some("doubao-key".to_string())
+        );
+        config.unset_value("providers.doubao.api_key").unwrap();
+        assert_eq!(config.get_value("providers.doubao.api_key"), None);
+    }
+
+    #[test]
+    fn zhipu_provider_defaults() {
+        let _lock = env_lock();
+        let _env = EnvGuard::without_yunpat_runtime_overrides();
+        let config = ConfigToml {
+            provider: ProviderKind::Zhipu,
+            ..ConfigToml::default()
+        };
+
+        let resolved = config.resolve_runtime_options(&CliRuntimeOverrides::default());
+
+        assert_eq!(resolved.provider, ProviderKind::Zhipu);
+        assert_eq!(resolved.base_url, DEFAULT_ZHIPU_BASE_URL);
+        assert_eq!(resolved.model, DEFAULT_ZHIPU_MODEL);
+    }
+
+    #[test]
+    fn moonshot_provider_defaults() {
+        let _lock = env_lock();
+        let _env = EnvGuard::without_yunpat_runtime_overrides();
+        let config = ConfigToml {
+            provider: ProviderKind::Moonshot,
+            ..ConfigToml::default()
+        };
+
+        let resolved = config.resolve_runtime_options(&CliRuntimeOverrides::default());
+
+        assert_eq!(resolved.provider, ProviderKind::Moonshot);
+        assert_eq!(resolved.base_url, DEFAULT_MOONSHOT_BASE_URL);
+        assert_eq!(resolved.model, DEFAULT_MOONSHOT_MODEL);
+    }
+
+    #[test]
+    fn doubao_provider_defaults() {
+        let _lock = env_lock();
+        let _env = EnvGuard::without_yunpat_runtime_overrides();
+        let config = ConfigToml {
+            provider: ProviderKind::Doubao,
+            ..ConfigToml::default()
+        };
+
+        let resolved = config.resolve_runtime_options(&CliRuntimeOverrides::default());
+
+        assert_eq!(resolved.provider, ProviderKind::Doubao);
+        assert_eq!(resolved.base_url, DEFAULT_DOUBAO_BASE_URL);
+        assert_eq!(resolved.model, DEFAULT_DOUBAO_MODEL);
     }
 }

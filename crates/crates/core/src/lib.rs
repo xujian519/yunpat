@@ -12,9 +12,7 @@ use yunpat_execpolicy::{
     ExecPolicyEngine,
 };
 use yunpat_hooks::{HookDispatcher, HookEvent, HookPipeline};
-use yunpat_mcp::{
-    McpManager, McpStartupCompleteEvent, McpStartupStatus as McpManagerStartupStatus,
-};
+use yunpat_mcp::{McpManager, McpStartupCompleteEvent, McpStartupUpdateEvent};
 use yunpat_protocol::{
     AppResponse, EventFrame, ExecApprovalRequestEvent, PromptRequest, PromptResponse,
     ReviewDecision, Thread, ThreadForkParams, ThreadListParams, ThreadReadParams, ThreadRequest,
@@ -1212,45 +1210,21 @@ impl Runtime {
     }
 
     pub async fn mcp_startup(&self) -> McpStartupCompleteEvent {
-        let mut updates = Vec::new();
+        let mut updates: Vec<McpStartupUpdateEvent> = Vec::new();
         let summary = self.mcp_manager.start_all(|update| {
             updates.push(update);
         });
         for update in updates {
-            let status = match update.status {
-                McpManagerStartupStatus::Starting => yunpat_protocol::McpStartupStatus::Starting,
-                McpManagerStartupStatus::Ready => yunpat_protocol::McpStartupStatus::Ready,
-                McpManagerStartupStatus::Failed { error } => {
-                    yunpat_protocol::McpStartupStatus::Failed { error }
-                }
-                McpManagerStartupStatus::Cancelled => yunpat_protocol::McpStartupStatus::Cancelled,
-            };
             self.hooks
                 .emit(HookEvent::GenericEventFrame {
-                    frame: EventFrame::McpStartupUpdate {
-                        update: yunpat_protocol::McpStartupUpdateEvent {
-                            server_name: update.server_name,
-                            status,
-                        },
-                    },
+                    frame: EventFrame::McpStartupUpdate { update },
                 })
                 .await;
         }
         self.hooks
             .emit(HookEvent::GenericEventFrame {
                 frame: EventFrame::McpStartupComplete {
-                    summary: yunpat_protocol::McpStartupCompleteEvent {
-                        ready: summary.ready.clone(),
-                        failed: summary
-                            .failed
-                            .iter()
-                            .map(|f| yunpat_protocol::McpStartupFailure {
-                                server_name: f.server_name.clone(),
-                                error: f.error.clone(),
-                            })
-                            .collect(),
-                        cancelled: summary.cancelled.clone(),
-                    },
+                    summary: summary.clone(),
                 },
             })
             .await;

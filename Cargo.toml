@@ -1,46 +1,40 @@
-[package]
-name = "yunpat-agent"
-version = "0.0.1"
-codename = "云熙"
-authors = ["徐健 <xujian519@gmail.com>"]
+[workspace]
+members = [
+    "crates/crates/agent",
+    "crates/crates/app-server",
+    "crates/crates/cli",
+    "crates/crates/config",
+    "crates/crates/core",
+    "crates/crates/execpolicy",
+    "crates/crates/hooks",
+    "crates/crates/mcp",
+    "crates/crates/protocol",
+    "crates/crates/secrets",
+    "crates/crates/state",
+    "crates/crates/tools",
+    "crates/crates/tui",
+    "crates/crates/yunpat-agents",
+    "crates/crates/yunpat-models",
+    "crates/crates/yunpat-mcp-bridge",
+    "crates/crates/yunpat-router",
+]
+default-members = ["crates/crates/cli", "crates/crates/app-server", "crates/crates/tui"]
+resolver = "2"
+
+[workspace.package]
+version = "0.8.15"
 edition = "2024"
+# Rust 1.88 stabilized `let_chains` in `if`/`while` conditions, which the
+# codebase relies on extensively. Cargo enforces this so users on older
+# toolchains get a clear "package requires rustc 1.88+" error instead of a
+# confusing E0658 from rustc.
+rust-version = "1.88"
 license = "MIT"
 repository = "https://github.com/xujian519/yunpat-agent"
 homepage = "https://github.com/xujian519/yunpat-agent"
 description = "云熙知识产权智能体 - 知识产权全生命周期智能体操作系统"
 keywords = ["patent", "ip", "ai", "agent", "llm"]
 categories = ["development-tools", "command-line-utilities"]
-
-[workspace]
-members = [
-    "crates/agent",
-    "crates/app-server",
-    "crates/cli",
-    "crates/config",
-    "crates/core",
-    "crates/execpolicy",
-    "crates/hooks",
-    "crates/mcp",
-    "crates/protocol",
-    "crates/secrets",
-    "crates/state",
-    "crates/tools",
-    "crates/tui",
-    "crates/tui-core",
-    "crates/yunpat-agents",
-    "crates/yunpat-models",
-    "crates/yunpat-mcp-bridge",
-    "crates/yunpat-router",
-]
-default-members = ["crates/cli", "crates/app-server", "crates/tui"]
-resolver = "2"
-
-[workspace.package]
-version = "0.0.1"
-edition = "2024"
-rust-version = "1.88"
-license = "MIT"
-repository = "https://github.com/xujian519/yunpat-agent"
 authors = ["徐健 <xujian519@gmail.com>"]
 
 [workspace.dependencies]

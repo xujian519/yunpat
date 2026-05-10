@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/agent-legal-qa",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "法律知识问答智能体 - 基于法律世界模型的三库联动问答",
   "type": "module",
   "main": "./dist/index.js",

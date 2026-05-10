@@ -1,6 +1,6 @@
 {
   "name": "@yunpat/patent-knowledge",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "专利知识库桥接 - Obsidian知识库集成",
   "type": "module",
   "main": "./dist/index.js",

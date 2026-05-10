@@ -10,3 +10,4 @@ description = "MCP server lifecycle and tool proxy compatibility for YunPat TUI 
 anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+yunpat-protocol = { path = "../protocol" }

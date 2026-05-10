@@ -3459,6 +3459,11 @@ async fn execute_patent_intent(
     let workspace = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     let mut ctx = crate::tools::spec::ToolContext::new(workspace);
 
+    // 注入 MCP Pool，使 PatentWorkflowTool 能走 MCP-first 路径
+    if let Ok(pool) = app.ensure_mcp_pool().await {
+        ctx.mcp_pool = Some(pool);
+    }
+
     if let Ok(client) = crate::client::DeepSeekClient::new(config) {
         let adapter = crate::llm_client::adapter::LlmClientAdapter::new(
             std::sync::Arc::new(client) as std::sync::Arc<dyn crate::llm_client::LlmClient>,
@@ -4635,6 +4640,11 @@ async fn apply_command_result(
                 });
                 let workspace = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
                 let mut ctx = crate::tools::spec::ToolContext::new(workspace);
+
+                // 注入 MCP Pool，使 PatentWorkflowTool 能走 MCP-first 路径
+                if let Ok(pool) = app.ensure_mcp_pool().await {
+                    ctx.mcp_pool = Some(pool);
+                }
 
                 if let Ok(client) = crate::client::DeepSeekClient::new(config) {
                     let adapter = crate::llm_client::adapter::LlmClientAdapter::new(

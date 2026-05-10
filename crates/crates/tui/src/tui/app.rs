@@ -824,6 +824,9 @@ pub struct App {
     pub mcp_configured_count: usize,
     /// Set after in-TUI MCP config edits because the engine caches its MCP pool.
     pub mcp_restart_required: bool,
+    /// MCP connection pool for patent workflow tools.
+    /// Lazily initialized from `mcp_config_path` on first access via `ensure_mcp_pool()`.
+    pub mcp_pool: Option<std::sync::Arc<tokio::sync::Mutex<crate::mcp::McpPool>>>,
     /// Tool execution log
     pub tool_log: Vec<String>,
     /// Active skill to apply to next user message
@@ -1384,6 +1387,7 @@ impl App {
                 .map(|cfg| cfg.servers.len())
                 .unwrap_or(0),
             mcp_restart_required: false,
+            mcp_pool: None,
             tool_log: Vec::new(),
             active_skill: None,
             cached_skills,
@@ -3702,6 +3706,30 @@ impl App {
     /// engine has its own copy to mutate per-session.
     pub fn cycle_config(&self) -> CycleConfig {
         self.cycle.clone()
+    }
+
+    /// Lazily initialize and return the MCP connection pool.
+    /// On first call, reads `mcp_config_path`, spawns MCP server subprocesses,
+    /// and connects via stdio. Subsequent calls return the cached pool.
+    pub async fn ensure_mcp_pool(
+        &mut self,
+    ) -> anyhow::Result<std::sync::Arc<tokio::sync::Mutex<crate::mcp::McpPool>>> {
+        if let Some(pool) = self.mcp_pool.as_ref() {
+            return Ok(std::sync::Arc::clone(pool));
+        }
+        let mut pool = crate::mcp::McpPool::from_config_path(&self.mcp_config_path)?;
+        let errors = pool.connect_all().await;
+        if !errors.is_empty() {
+            for (name, err) in &errors {
+                eprintln!(
+                    "[WARN] MCP server '{}' connection failed: {}",
+                    name, err
+                );
+            }
+        }
+        let pool = std::sync::Arc::new(tokio::sync::Mutex::new(pool));
+        self.mcp_pool = Some(std::sync::Arc::clone(&pool));
+        Ok(pool)
     }
 }
 

@@ -27,6 +27,8 @@ import type {
   IndivisibilityTestResult,
   SynergyTestResult,
 } from './types.js'
+import { detectSchemeType, extractRawFeatures, extractFeatureName } from './featureExtractor.js'
+import { runSynergyTests, applySynergyResults, extractKeywords } from './synergyAnalyzer.js'
 
 export class MinimumTechUnitAgent extends ProfessionalAgent<
   TechUnitExtractInput,
@@ -36,7 +38,7 @@ export class MinimumTechUnitAgent extends ProfessionalAgent<
     input: TechUnitExtractInput,
     _context: ExtendedExecutionContext
   ): Promise<TechUnitPlan> {
-    const schemeType = input.schemeType ?? this.detectSchemeType(input.claimText)
+    const schemeType = input.schemeType ?? detectSchemeType(input.claimText)
 
     return {
       input,
@@ -57,7 +59,7 @@ export class MinimumTechUnitAgent extends ProfessionalAgent<
   ): Promise<TechUnitExtractOutput> {
     const { input, schemeType } = plan
 
-    const rawFeatures = this.extractRawFeatures(input.claimText, schemeType)
+    const rawFeatures = extractRawFeatures(input.claimText, schemeType)
 
     const llmEnhancedFeatures = await this.enhanceFeaturesWithLLM(
       rawFeatures,
@@ -70,9 +72,9 @@ export class MinimumTechUnitAgent extends ProfessionalAgent<
 
     const units = this.applyIndivisibilityResults(llmEnhancedFeatures, indivisibilityTests)
 
-    const synergyTests = this.runSynergyTests(units, input)
+    const synergyTests = runSynergyTests(units, input.technicalProblem)
 
-    const finalUnits = this.applySynergyResults(units, synergyTests)
+    const finalUnits = applySynergyResults(units, synergyTests)
 
     const selfCheckResults = this.runSelfCheck(finalUnits, input, schemeType)
 
@@ -88,165 +90,6 @@ export class MinimumTechUnitAgent extends ProfessionalAgent<
       selfCheckResults,
       summary,
     }
-  }
-
-  private detectSchemeType(claimText: string): TechnicalSchemeType {
-    const methodKeywords = [
-      '方法',
-      '步骤',
-      '工艺',
-      '流程',
-      '包括以下步骤',
-      '其特征在于，所述方法',
-      '制备',
-      '检测',
-      '处理方法',
-    ]
-    const productKeywords = [
-      '装置',
-      '系统',
-      '设备',
-      '结构',
-      '包括',
-      '设置有',
-      '连接',
-      '包含',
-      '由...组成',
-    ]
-
-    const lower = claimText.toLowerCase()
-    const methodScore = methodKeywords.filter((k) => lower.includes(k)).length
-    const productScore = productKeywords.filter((k) => lower.includes(k)).length
-
-    if (methodScore > productScore) return 'method'
-    if (lower.includes('一种') && lower.includes('方法')) return 'method'
-
-    return 'product'
-  }
-
-  private extractRawFeatures(
-    claimText: string,
-    schemeType: TechnicalSchemeType
-  ): Array<Partial<MinimumTechUnit>> {
-    const features: Array<Partial<MinimumTechUnit>> = []
-
-    const cleanText = claimText
-      .replace(/^\d+\.\s*/, '')
-      .replace(/^一种/, '')
-      .trim()
-
-    if (schemeType === 'product') {
-      return this.extractProductFeatures(cleanText)
-    }
-    return this.extractMethodFeatures(cleanText)
-  }
-
-  private extractProductFeatures(text: string): Array<Partial<MinimumTechUnit>> {
-    const features: Array<Partial<MinimumTechUnit>> = []
-    let id = 0
-
-    const commaPattern = /[,，]/
-    const segments = text
-      .split(commaPattern)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
-
-    const compoundSegments = this.mergeRelatedSegments(segments, text)
-
-    for (const segment of compoundSegments) {
-      const startPos = text.indexOf(segment)
-      features.push({
-        id: `TU-${String(++id).padStart(3, '0')}`,
-        name: this.extractFeatureName(segment),
-        description: segment,
-        sourceText: segment,
-        position: startPos >= 0 ? { start: startPos, end: startPos + segment.length } : undefined,
-        confidence: 0.6,
-      })
-    }
-
-    return features
-  }
-
-  private extractMethodFeatures(text: string): Array<Partial<MinimumTechUnit>> {
-    const features: Array<Partial<MinimumTechUnit>> = []
-    let id = 0
-
-    const stepPatterns = [
-      /步骤[一二三四五六七八九十\d]+[：:]\s*([^步骤]+?)(?=步骤|$)/g,
-      /S\d+[：:]\s*([^S\d]+?)(?=S\d+|$)/g,
-      /第一步[：:]?\s*([^第]+?)(?=第[二三四五六七八九十]步|$)/g,
-    ]
-
-    let matched = false
-    for (const pattern of stepPatterns) {
-      let match
-      while ((match = pattern.exec(text)) !== null) {
-        matched = true
-        const stepText = match[1].trim()
-        features.push({
-          id: `TU-${String(++id).padStart(3, '0')}`,
-          name: this.extractFeatureName(stepText),
-          description: stepText,
-          sourceText: match[0].trim(),
-          confidence: 0.7,
-        })
-      }
-      if (matched) break
-    }
-
-    if (!matched) {
-      const commaPattern = /[，,]/
-      const segments = text
-        .split(commaPattern)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 2)
-
-      for (const segment of segments) {
-        features.push({
-          id: `TU-${String(++id).padStart(3, '0')}`,
-          name: this.extractFeatureName(segment),
-          description: segment,
-          sourceText: segment,
-          confidence: 0.5,
-        })
-      }
-    }
-
-    return features
-  }
-
-  private mergeRelatedSegments(segments: string[], _fullText: string): string[] {
-    const merged: string[] = []
-    let i = 0
-
-    while (i < segments.length) {
-      const current = segments[i]
-      const next = segments[i + 1]
-
-      if (next && this.areSegmentsRelated(current, next)) {
-        merged.push(`${current}，${next}`)
-        i += 2
-      } else {
-        merged.push(current)
-        i += 1
-      }
-    }
-
-    return merged
-  }
-
-  private areSegmentsRelated(first: string, second: string): boolean {
-    const connectionKeywords = ['其', '所述', '该', '其中', '以及']
-    return connectionKeywords.some((kw) => second.startsWith(kw))
-  }
-
-  private extractFeatureName(text: string): string {
-    const cleaned = text.replace(/^(包括|包含|设有|具有|其特征在于)[，,]?\s*/, '').trim()
-    if (cleaned.length > 30) {
-      return cleaned.slice(0, 28) + '...'
-    }
-    return cleaned
   }
 
   private async enhanceFeaturesWithLLM(
@@ -450,7 +293,7 @@ ${featureDescriptions}
           counter++
           result.push({
             id: `TU-${String(counter).padStart(3, '0')}`,
-            name: this.extractFeatureName(part.text),
+            name: extractFeatureName(part.text),
             description: part.text,
             sourceText: part.text,
             technicalFunction: '',
@@ -477,153 +320,6 @@ ${featureDescriptions}
     }
 
     return result.map((u, i) => ({ ...u, id: `TU-${String(i + 1).padStart(3, '0')}` }))
-  }
-
-  private runSynergyTests(
-    units: MinimumTechUnit[],
-    input: TechUnitExtractInput
-  ): SynergyTestResult[] {
-    const results: SynergyTestResult[] = []
-
-    for (let i = 0; i < units.length; i++) {
-      for (let j = i + 1; j < units.length; j++) {
-        const a = units[i]
-        const b = units[j]
-
-        const sameProblem = this.checkSameProblem(a, b, input.technicalProblem)
-        const synergistic = this.checkSynergisticEffect(a, b)
-        const dependent = this.checkMutualDependence(a, b)
-
-        const shouldMerge = sameProblem && synergistic && dependent
-
-        results.push({
-          shouldMerge,
-          conditions: {
-            sameTechnicalProblem: sameProblem,
-            synergisticEffect: synergistic,
-            mutuallyDependent: dependent,
-          },
-          conclusion: shouldMerge ? 'merge' : 'keep_separate',
-          reasoning: shouldMerge
-            ? `"${a.name}"与"${b.name}"共同解决同一技术问题，产生协同效果，缺一不可，应合并为一个最小技术单元`
-            : `"${a.name}"与"${b.name}"不满足全部合并条件（共同问题:${sameProblem} 协同效果:${synergistic} 相互依存:${dependent}），保持独立`,
-        })
-      }
-    }
-
-    return results
-  }
-
-  private checkSameProblem(a: MinimumTechUnit, b: MinimumTechUnit, _problem?: string): boolean {
-    const sharedKeywords = this.extractKeywords(a.sourceText).filter((kw) =>
-      this.extractKeywords(b.sourceText).includes(kw)
-    )
-    return sharedKeywords.length >= 1
-  }
-
-  private checkSynergisticEffect(a: MinimumTechUnit, b: MinimumTechUnit): boolean {
-    if (a.technicalEffect && b.technicalEffect) {
-      const effectsA = this.extractKeywords(a.technicalEffect)
-      const effectsB = this.extractKeywords(b.technicalEffect)
-      return effectsA.some((e) => effectsB.includes(e))
-    }
-    return false
-  }
-
-  private checkMutualDependence(a: MinimumTechUnit, b: MinimumTechUnit): boolean {
-    const referencePatterns = ['所述', '该', '其', '上述']
-    return referencePatterns.some(
-      (p) => b.sourceText.includes(p) && b.sourceText.includes(a.name.slice(0, 4))
-    )
-  }
-
-  private extractKeywords(text: string): string[] {
-    const stopwords = new Set([
-      '的',
-      '了',
-      '在',
-      '是',
-      '和',
-      '与',
-      '或',
-      '中',
-      '为',
-      '对',
-      '等',
-      '及',
-      '以',
-      '到',
-      '可',
-      '能',
-      '将',
-      '由',
-      '被',
-      '从',
-      '上',
-      '下',
-      '一种',
-      '包括',
-      '具有',
-      '所述',
-      '其中',
-      '特征在于',
-    ])
-    return text
-      .split(/[\s,，。；：:、/\\（）()\[\]【】「」""''""]+/)
-      .filter((w) => w.length >= 2 && !stopwords.has(w))
-  }
-
-  private applySynergyResults(
-    units: MinimumTechUnit[],
-    tests: SynergyTestResult[]
-  ): MinimumTechUnit[] {
-    const mergeGroups = new Map<number, number[]>()
-
-    for (let t = 0, i = 0; i < units.length; i++) {
-      for (let j = i + 1; j < units.length; j++, t++) {
-        if (t < tests.length && tests[t].conclusion === 'merge') {
-          if (!mergeGroups.has(i)) mergeGroups.set(i, [i])
-          mergeGroups.get(i)!.push(j)
-        }
-      }
-    }
-
-    const merged = new Set<number>()
-    const result: MinimumTechUnit[] = []
-    let counter = 0
-
-    for (let i = 0; i < units.length; i++) {
-      if (merged.has(i)) continue
-
-      const group = mergeGroups.get(i)
-      if (group && group.length > 1) {
-        const groupUnits = group.map((idx) => units[idx])
-        group.slice(1).forEach((idx) => merged.add(idx))
-
-        counter++
-        result.push({
-          id: `TU-${String(counter).padStart(3, '0')}`,
-          name: groupUnits.map((u) => u.name).join(' + '),
-          description: groupUnits.map((u) => u.description).join('；'),
-          sourceText: groupUnits.map((u) => u.sourceText).join('，'),
-          technicalFunction: groupUnits.map((u) => u.technicalFunction).join('；'),
-          technicalEffect: groupUnits.map((u) => u.technicalEffect).join('；'),
-          criteria: {
-            hasIndependentFunction: true,
-            hasIndependentEffect: true,
-            isIndivisible: true,
-            reasoning: `通过"协同不可分"测试合并：${groupUnits.map((u) => u.name).join('、')}共同解决同一技术问题`,
-          },
-          subFeatures: groupUnits.map((u) => u.id),
-          confidence: Math.max(...groupUnits.map((u) => u.confidence)) * 0.9,
-        })
-      } else {
-        counter++
-        result.push({ ...units[i], id: `TU-${String(counter).padStart(3, '0')}` })
-      }
-    }
-
-    return result
   }
 
   private runSelfCheck(
@@ -684,8 +380,8 @@ ${featureDescriptions}
       checks.push({
         rule: '技术单元应与发明目的相关',
         passed: units.some((u) => {
-          const problemKeywords = this.extractKeywords(input.technicalProblem!)
-          const unitKeywords = this.extractKeywords(u.sourceText)
+          const problemKeywords = extractKeywords(input.technicalProblem!)
+          const unitKeywords = extractKeywords(u.sourceText)
           return problemKeywords.some((pk) =>
             unitKeywords.some((uk) => uk.includes(pk) || pk.includes(uk))
           )

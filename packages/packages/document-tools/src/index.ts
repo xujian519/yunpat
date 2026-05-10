@@ -66,13 +66,10 @@ export {
 } from './tools/OfficialDocParserV2.js'
 
 // 专利文档生成工具
-export {
-  PatentApplicationGeneratorTool,
-  PatentClaimsGeneratorTool,
-  ResponseStatementGeneratorTool,
-  PatentApplicationData,
-  ResponseStatementData,
-} from './tools/PatentDocxGenerator.js'
+export { PatentApplicationData, ResponseStatementData } from './tools/docx/shared.js'
+export { PatentApplicationGeneratorTool } from './tools/docx/PatentApplicationGenerator.js'
+export { PatentClaimsGeneratorTool } from './tools/docx/PatentClaimsGenerator.js'
+export { ResponseStatementGeneratorTool } from './tools/docx/ResponseStatementGenerator.js'
 
 // PPTX 演示文稿工具
 export {

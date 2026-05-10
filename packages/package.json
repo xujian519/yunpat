@@ -33,7 +33,6 @@
     "dev:stop": "bash scripts/dev-stop.sh",
     "dev:gateway": "bash scripts/dev-start.sh --gateway",
     "dev:adapter": "bash scripts/dev-start.sh --adapter",
-    "dev:tui": "bash scripts/dev-start.sh --tui",
     "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules",
     "prepare": "husky",
     "deploy": "bash scripts/deploy-local.sh development deploy",
@@ -49,8 +48,6 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "tui": "pnpm --filter @yunpat/tui start",
-    "tui:build": "pnpm --filter @yunpat/tui --filter @yunpat/orchestrator-adapter build",
     "skills:keygen": "npx tsx scripts/seal-skills.ts --keygen",
     "skills:seal": "npx tsx scripts/seal-skills.ts"
   },

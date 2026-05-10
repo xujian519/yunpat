@@ -135,3 +135,126 @@ pub(crate) fn filter_tool_call_delta(delta: &str, in_tool_call: &mut bool) -> St
 
     output
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn contains_fake_tool_wrapper_detects_all_markers() {
+        assert!(contains_fake_tool_wrapper("[TOOL_CALL]something"));
+        assert!(contains_fake_tool_wrapper("<deepseek:tool_call id='1'>"));
+        assert!(contains_fake_tool_wrapper("<tool_call name='read_file'>"));
+        assert!(contains_fake_tool_wrapper("<invoke name='bash'>"));
+        assert!(contains_fake_tool_wrapper("<function_calls>"));
+    }
+
+    #[test]
+    fn contains_fake_tool_wrapper_rejects_clean_text() {
+        assert!(!contains_fake_tool_wrapper("Hello, this is normal text"));
+        assert!(!contains_fake_tool_wrapper("tool_call is just a word here"));
+        assert!(!contains_fake_tool_wrapper(""));
+    }
+
+    #[test]
+    fn filter_strips_single_wrapper() {
+        let mut in_call = false;
+        let result = filter_tool_call_delta(
+            "before[TOOL_CALL]{\"name\":\"read_file\"}[/TOOL_CALL]after",
+            &mut in_call,
+        );
+        assert_eq!(result, "beforeafter");
+        assert!(!in_call);
+    }
+
+    #[test]
+    fn filter_strips_deepseek_wrapper() {
+        let mut in_call = false;
+        let result = filter_tool_call_delta(
+            "text<deepseek:tool_call>{\"name\":\"bash\"}</deepseek:tool_call>more",
+            &mut in_call,
+        );
+        assert_eq!(result, "textmore");
+        assert!(!in_call);
+    }
+
+    #[test]
+    fn filter_strips_xml_style_wrapper() {
+        let mut in_call = false;
+        let result = filter_tool_call_delta(
+            "prefix<function_calls><tool>read</tool></function_calls>suffix",
+            &mut in_call,
+        );
+        assert_eq!(result, "prefixsuffix");
+        assert!(!in_call);
+    }
+
+    #[test]
+    fn filter_handles_nested_markers() {
+        let mut in_call = false;
+        let result = filter_tool_call_delta(
+            "a[TOOL_CALL]inner[/TOOL_CALL]b[TOOL_CALL]inner2[/TOOL_CALL]c",
+            &mut in_call,
+        );
+        assert_eq!(result, "abc");
+        assert!(!in_call);
+    }
+
+    #[test]
+    fn filter_handles_unclosed_marker() {
+        let mut in_call = false;
+        let result = filter_tool_call_delta(
+            "before[TOOL_CALL]this never closes",
+            &mut in_call,
+        );
+        assert_eq!(result, "before");
+        assert!(in_call);
+    }
+
+    #[test]
+    fn filter_preserves_state_across_calls() {
+        let mut in_call = false;
+
+        // First delta opens but doesn't close.
+        let r1 = filter_tool_call_delta("before[TOOL_CALL]partial", &mut in_call);
+        assert_eq!(r1, "before");
+        assert!(in_call);
+
+        // Second delta closes.
+        let r2 = filter_tool_call_delta("content[/TOOL_CALL]after", &mut in_call);
+        assert_eq!(r2, "after");
+        assert!(!in_call);
+    }
+
+    #[test]
+    fn filter_empty_input() {
+        let mut in_call = false;
+        let result = filter_tool_call_delta("", &mut in_call);
+        assert_eq!(result, "");
+        assert!(!in_call);
+    }
+
+    #[test]
+    fn filter_no_markers() {
+        let mut in_call = false;
+        let result = filter_tool_call_delta("clean text without any markers", &mut in_call);
+        assert_eq!(result, "clean text without any markers");
+        assert!(!in_call);
+    }
+
+    #[test]
+    fn should_retry_conditions() {
+        // No content, budget remaining, not cancelled → retry.
+        assert!(should_transparently_retry_stream(false, 0, false));
+        assert!(should_transparently_retry_stream(false, 1, false));
+
+        // Content received → no retry (double-billing risk).
+        assert!(!should_transparently_retry_stream(true, 0, false));
+
+        // Budget exhausted → no retry.
+        assert!(!should_transparently_retry_stream(false, 2, false));
+
+        // Cancelled → no retry.
+        assert!(!should_transparently_retry_stream(false, 0, true));
+    }
+}

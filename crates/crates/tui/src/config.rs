@@ -589,6 +589,12 @@ pub struct RetryPolicy {
 }
 
 /// Capacity-controller config loaded from config files/environment.
+///
+/// Enable in `~/.deepseek/config.toml`:
+/// ```toml
+/// [capacity]
+/// enabled = true
+/// ```
 #[derive(Debug, Clone, Deserialize)]
 pub struct CapacityConfig {
     pub enabled: Option<bool>,

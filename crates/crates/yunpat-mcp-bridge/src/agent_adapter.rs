@@ -4,12 +4,15 @@ use anyhow::Result;
 use async_trait::async_trait;
 use futures_core::Stream;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use std::pin::Pin;
 use yunpat_agents::agent::PatentAgent;
 use yunpat_agents::types::*;
 
+use crate::bridge::{MCPBridge, ServerHandle};
+
 /// Configuration for an MCP-backed agent.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct McpAgentConfig {
     /// The agent ID to register.
     pub agent_id: String,
@@ -24,6 +27,9 @@ pub struct McpAgentConfig {
     /// Keywords for intent matching.
     #[serde(default)]
     pub keywords: Vec<String>,
+    /// Tool call timeout in seconds. Defaults to 60s if unset.
+    #[serde(default)]
+    pub timeout_secs: Option<u64>,
 }
 
 /// Adapter that wraps an MCP server tool as a `PatentAgent`.
@@ -34,6 +40,7 @@ pub struct McpAgentConfig {
 /// - Converts the MCP tool result into `StageOutput` items
 pub struct McpAgentAdapter {
     config: McpAgentConfig,
+    server_handle: Option<Arc<ServerHandle>>,
     initialized: bool,
 }
 
@@ -41,21 +48,23 @@ impl McpAgentAdapter {
     pub fn new(config: McpAgentConfig) -> Self {
         Self {
             config,
+            server_handle: None,
             initialized: false,
         }
+    }
+
+    /// Inject a live MCP server handle for real tool calls.
+    pub fn set_server_handle(&mut self, handle: Arc<ServerHandle>) {
+        self.server_handle = Some(handle);
     }
 }
 
 #[async_trait]
 impl PatentAgent for McpAgentAdapter {
     fn id(&self) -> &AgentId {
-        #[expect(dead_code)]
-        static ID: std::sync::OnceLock<AgentId> = std::sync::OnceLock::new();
-        // We can't use OnceLock with dynamic data. Use a different approach.
-        // This is a known limitation — the agent_id is stored in config.
-        // The PatentAgent trait requires returning a reference, so we use
-        // a pattern where the ID is embedded in the config struct.
-        unreachable!("use id_from_config() instead")
+        // McpAgentAdapter is not meant to be used directly as PatentAgent.
+        // Use McpAgentAdapterWithId which stores AgentId inline.
+        panic!("McpAgentAdapter::id() called — use McpAgentAdapterWithId instead")
     }
 
     fn name(&self) -> &str {
@@ -103,6 +112,10 @@ impl PatentAgent for McpAgentAdapter {
     fn execute(&mut self, input: AgentInput) -> Pin<Box<dyn Stream<Item = StageOutput> + Send>> {
         let tool_name = self.config.tool_name.clone();
         let stages = self.config.stages.clone();
+        let server_handle = self.server_handle.clone();
+        let timeout_secs = self.config.timeout_secs.unwrap_or(60);
+        let raw_input = input.intent.raw_input.clone();
+        let extra = input.extra.clone();
 
         Box::pin(async_stream::stream! {
             // Emit progress stage.
@@ -118,16 +131,32 @@ impl PatentAgent for McpAgentAdapter {
                 metadata: Default::default(),
             };
 
-            // Note: actual MCP call requires a ServerHandle which is not
-            // available in this context. The real implementation will need
-            // the bridge handle passed through AgentContext or similar.
-            // For now, emit a placeholder result indicating the MCP call
-            // would happen here.
-            let result_content = format!(
-                "MCP 工具 '{}' 调用（输入: {}）— 等待 MCP Bridge 连接",
-                tool_name,
-                input.intent.raw_input.chars().take(50).collect::<String>()
-            );
+            let result_content = if let Some(handle) = server_handle {
+                // Real MCP call via bridge.
+                let mcp_input = serde_json::json!({
+                    "raw_input": raw_input,
+                    "extra": extra,
+                });
+                let timeout = Some(std::time::Duration::from_secs(timeout_secs));
+                match MCPBridge::invoke(&handle, &tool_name, mcp_input, timeout).await {
+                    Ok(tool_result) => {
+                        if tool_result.is_error {
+                            format!("MCP 工具 '{}' 返回错误: {}", tool_name, serde_json::to_string_pretty(&tool_result.content).unwrap_or_else(|_| tool_result.content.to_string()))
+                        } else {
+                            serde_json::to_string_pretty(&tool_result.content)
+                                .unwrap_or_else(|_| tool_result.content.to_string())
+                        }
+                    }
+                    Err(e) => format!("MCP 工具 '{}' 调用失败: {}", tool_name, e),
+                }
+            } else {
+                // Fallback: no server handle injected yet.
+                format!(
+                    "MCP 工具 '{}' 调用（输入: {}）— 等待 MCP Bridge 连接",
+                    tool_name,
+                    raw_input.chars().take(50).collect::<String>()
+                )
+            };
 
             yield StageOutput {
                 stage_id: "result".to_string(),
@@ -196,6 +225,11 @@ impl McpAgentAdapterWithId {
             agent_id,
         }
     }
+
+    /// Forward server handle injection to inner adapter.
+    pub fn set_server_handle(&mut self, handle: Arc<ServerHandle>) {
+        self.inner.set_server_handle(handle);
+    }
 }
 
 #[async_trait]
@@ -262,6 +296,7 @@ mod tests {
                 },
             ],
             keywords: vec!["审查意见".to_string(), "答辩".to_string()],
+            timeout_secs: None,
         }
     }
 

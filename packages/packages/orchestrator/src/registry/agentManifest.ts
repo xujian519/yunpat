@@ -302,4 +302,32 @@ export const agentManifest: AgentManifestEntry[] = [
     defaultTimeout: 30000,
     hitlCapable: false,
   },
+
+  // ===== 技术特征分析 =====
+  {
+    agentId: 'tech-unit',
+    packageName: '@yunpat/agent-tech-unit',
+    className: 'MinimumTechUnitAgent',
+    defaultName: 'tech-unit',
+    defaultDescription: '最小技术单元识别智能体',
+    capabilities: ['tech-unit', 'extract', 'infringement'],
+    triggerKeywords: ['技术特征', '技术单元', '侵权分析', '最小技术单元'],
+    layer: 'execution',
+    defaultTimeout: 35000,
+    hitlCapable: false,
+  },
+
+  // ===== 法律问答 =====
+  {
+    agentId: 'legal-qa',
+    packageName: '@yunpat/agent-legal-qa',
+    className: 'LegalQAAgent',
+    defaultName: 'legal-qa',
+    defaultDescription: '法律知识问答智能体（三库联动）',
+    capabilities: ['legal', 'qa', 'knowledge'],
+    triggerKeywords: ['法律问答', '法条', '法律知识', '三库联动'],
+    layer: 'domain',
+    defaultTimeout: 30000,
+    hitlCapable: false,
+  },
 ]

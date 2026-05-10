@@ -156,12 +156,12 @@ impl LlmProvider for LlmClientAdapter {
                 Ok(mut stream) => {
                     while let Some(event) = stream.next().await {
                         match event {
-                            Ok(crate::models::StreamEvent::ContentBlockDelta { delta, .. }) => {
-                                if let crate::models::Delta::TextDelta { text } = &delta {
-                                    if !text.is_empty() && tx.send(Ok(text.clone())).await.is_err()
-                                    {
-                                        break;
-                                    }
+                            Ok(crate::models::StreamEvent::ContentBlockDelta {
+                                delta: crate::models::Delta::TextDelta { text },
+                                ..
+                            }) => {
+                                if !text.is_empty() && tx.send(Ok(text.clone())).await.is_err() {
+                                    break;
                                 }
                             }
                             Ok(crate::models::StreamEvent::MessageStop) => break,

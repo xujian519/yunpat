@@ -37,11 +37,7 @@ import {
 } from './ReflectionAssessors.js'
 
 // Re-export types
-export {
-  ReflectionDimension,
-  QualityLevel,
-  ImprovementPriority,
-} from './ReflectionTypes.js'
+export { ReflectionDimension, QualityLevel, ImprovementPriority } from './ReflectionTypes.js'
 export type {
   DimensionAssessment,
   Improvement,
@@ -221,7 +217,14 @@ export class EnhancedReflection {
       }
     }
 
-    return { iterationCount, success, result: currentResult, reports, appliedImprovements, duration }
+    return {
+      iterationCount,
+      success,
+      result: currentResult,
+      reports,
+      appliedImprovements,
+      duration,
+    }
   }
 
   getReflectionHistory(limit?: number): ReflectionRecord[] {

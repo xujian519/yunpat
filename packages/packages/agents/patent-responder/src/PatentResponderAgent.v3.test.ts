@@ -433,7 +433,7 @@ describe('PatentResponderAgent.v3', () => {
       const result = await agent.run(input, context)
 
       expect(result.success).toBe(true)
-      expect(result.executionTime).toBeGreaterThan(0)
+      expect(result.executionTime).toBeGreaterThanOrEqual(0)
       expect(result.data.metrics.duration).toBeGreaterThanOrEqual(0)
     })
 

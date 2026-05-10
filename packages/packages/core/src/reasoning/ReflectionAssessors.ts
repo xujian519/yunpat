@@ -5,15 +5,8 @@
  */
 
 import type { ExecutionContext } from '../lifecycle/Lifecycle.js'
-import {
-  ReflectionDimension,
-  QualityLevel,
-  ImprovementPriority,
-} from './ReflectionTypes.js'
-import type {
-  DimensionAssessment,
-  Improvement,
-} from './ReflectionTypes.js'
+import { ReflectionDimension, QualityLevel, ImprovementPriority } from './ReflectionTypes.js'
+import type { DimensionAssessment, Improvement } from './ReflectionTypes.js'
 
 export function scoreToLevel(score: number): QualityLevel {
   if (score >= 0.9) return QualityLevel.EXCELLENT

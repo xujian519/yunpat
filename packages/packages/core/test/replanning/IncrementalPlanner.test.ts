@@ -564,9 +564,9 @@ describe('IncrementalPlanner', () => {
   })
 
   describe('getPriorityValue', () => {
-    it('应该返回未知优先级的值', () => {
-      const planner = new IncrementalPlanner()
-      expect(planner['getPriorityValue']('unknown' as any)).toBe(0)
+    it('应该返回未知优先级的值', async () => {
+      const { getPriorityValue } = await import('../../src/replanning/PlanCalculations.js')
+      expect(getPriorityValue('unknown')).toBe(0)
     })
   })
 })

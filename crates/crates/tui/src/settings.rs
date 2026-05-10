@@ -827,9 +827,10 @@ mod tests {
 
     /// Serialise tests that mutate `DEEPSEEK_CONFIG_PATH` through this guard
     /// so the parallel test runner doesn't observe interleaved env values.
+    /// Delegates to the process-wide `lock_test_env` so settings tests are
+    /// mutually exclusive with config tests that also touch the env var.
     fn config_path_test_guard() -> std::sync::MutexGuard<'static, ()> {
-        static GUARD: std::sync::Mutex<()> = std::sync::Mutex::new(());
-        GUARD.lock().unwrap_or_else(|e| e.into_inner())
+        crate::test_support::lock_test_env()
     }
 
     #[test]

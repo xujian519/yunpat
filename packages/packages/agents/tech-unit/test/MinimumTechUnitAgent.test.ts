@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { MinimumTechUnitAgent } from '../src/MinimumTechUnitAgent.js'
+import { detectSchemeType, extractRawFeatures } from '../src/featureExtractor.js'
 import type { TechUnitExtractInput } from '../src/types.js'
 
 function createMockLLM() {
@@ -29,16 +30,14 @@ function createAgent(): MinimumTechUnitAgent {
 describe('MinimumTechUnitAgent', () => {
   describe('detectSchemeType', () => {
     it('应检测方法权利要求', () => {
-      const agent = createAgent()
-      const plan = agent['detectSchemeType'](
+      const plan = detectSchemeType(
         '一种数据处理方法，其特征在于，包括以下步骤：步骤一：获取原始数据；步骤二：对原始数据进行预处理。'
       )
       expect(plan).toBe('method')
     })
 
     it('应检测产品权利要求', () => {
-      const agent = createAgent()
-      const plan = agent['detectSchemeType'](
+      const plan = detectSchemeType(
         '一种电缆管道分隔装置，包括框形保持架，所述框形保持架设置有左L形框板和右L形框板。'
       )
       expect(plan).toBe('product')
@@ -47,10 +46,9 @@ describe('MinimumTechUnitAgent', () => {
 
   describe('extractRawFeatures - 产品权利要求', () => {
     it('应从产品权利要求中提取特征', () => {
-      const agent = createAgent()
       const claim =
         '一种电缆管道分隔装置，包括框形保持架，左L形框板与右L形框板卡接，左套管套接在圆柱管外圆周表面'
-      const features = agent['extractRawFeatures'](claim, 'product')
+      const features = extractRawFeatures(claim, 'product')
 
       expect(features.length).toBeGreaterThanOrEqual(2)
       features.forEach((f) => {
@@ -62,10 +60,9 @@ describe('MinimumTechUnitAgent', () => {
 
   describe('extractRawFeatures - 方法权利要求', () => {
     it('应从带步骤标记的方法权利要求中提取特征', () => {
-      const agent = createAgent()
       const claim =
         '一种二元酸精制方法，步骤一：将粗品二元酸溶解于溶剂中；步骤二：加入活性炭进行脱色处理；步骤三：过滤并收集滤液。'
-      const features = agent['extractRawFeatures'](claim, 'method')
+      const features = extractRawFeatures(claim, 'method')
 
       expect(features.length).toBeGreaterThanOrEqual(2)
     })

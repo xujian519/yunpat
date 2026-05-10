@@ -381,6 +381,7 @@ ${input.originalApplication.claims}
     strategy: ResponseStrategy,
     context: ExecutionContext
   ): Promise<ResponseDocument> {
+    const docStartTime = Date.now()
     const systemPrompt = `你是一位专业的专利答复文档撰写专家。
 
 请根据审查意见和答复策略，撰写专业的答复文档。
@@ -478,7 +479,7 @@ ${input.originalApplication.description.substring(0, 3000)}...
     })
 
     const parsed = this.parseResponseDocument(response.message.content)
-    const generationTime = Date.now()
+    const generationTime = Date.now() - docStartTime
 
     return {
       ...parsed,
@@ -704,10 +705,6 @@ ${strategy.risks.map((risk) => `- ${risk}`).join('\n')}
       },
     }
   }
-
-  /**
-   * 统一的格式生成方法
-   */
 
   /**
    * 统一的格式生成方法

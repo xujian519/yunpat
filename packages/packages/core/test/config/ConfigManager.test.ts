@@ -3,11 +3,16 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import * as os from 'os'
+import * as path from 'path'
+import * as fs from 'fs'
 import {
   ConfigManager,
   getConfigManager,
   resetConfigManager,
 } from '../../src/config/ConfigManager.js'
+
+const tmpDir = os.tmpdir()
 
 describe('ConfigManager', () => {
   beforeEach(() => {
@@ -40,8 +45,8 @@ describe('ConfigManager', () => {
     })
 
     it('应使用自定义配置路径', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/test-config.yaml' })
-      expect(mgr.getConfigPath()).toBe('/tmp/test-config.yaml')
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'test-config.yaml') })
+      expect(mgr.getConfigPath()).toBe(path.join(tmpDir, 'test-config.yaml'))
     })
 
     it('应检测默认环境为 development', () => {
@@ -79,7 +84,7 @@ describe('ConfigManager', () => {
   describe('load（无配置文件）', () => {
     it('应返回默认配置', () => {
       const mgr = new ConfigManager({
-        configPath: '/tmp/nonexistent-config.yaml',
+        configPath: path.join(tmpDir, 'nonexistent-config.yaml'),
         environment: 'development',
       })
       const config = mgr.load()
@@ -92,7 +97,7 @@ describe('ConfigManager', () => {
     })
 
     it('应缓存已加载的配置', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       const first = mgr.load()
       const second = mgr.load()
       expect(first).toBe(second)
@@ -101,7 +106,7 @@ describe('ConfigManager', () => {
 
   describe('reload', () => {
     it('应重新加载配置', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       const first = mgr.load()
       const reloaded = mgr.reload()
       expect(first).not.toBe(reloaded)
@@ -110,19 +115,19 @@ describe('ConfigManager', () => {
 
   describe('get', () => {
     it('应通过点号路径获取配置值', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       expect(mgr.get('llm.primary.provider')).toBe('deepseek')
     })
 
     it('不存在的路径应返回 undefined', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       expect(mgr.get('nonexistent.path')).toBeUndefined()
     })
   })
 
   describe('set', () => {
     it('应设置配置值', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       mgr.load()
       mgr.set('logLevel', 'debug')
 
@@ -130,7 +135,7 @@ describe('ConfigManager', () => {
     })
 
     it('应支持嵌套路径设置', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       mgr.load()
       mgr.set('memory.checkpointInterval', 20)
 
@@ -140,7 +145,7 @@ describe('ConfigManager', () => {
 
   describe('getLLMConfig', () => {
     it('应返回 LLM 配置', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       const llmConfig = mgr.getLLMConfig()
 
       expect(llmConfig.primary).toBeDefined()
@@ -150,7 +155,7 @@ describe('ConfigManager', () => {
 
   describe('getPrimaryLLMConfig', () => {
     it('应返回主 LLM 配置', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       const primary = mgr.getPrimaryLLMConfig()
 
       expect(primary.provider).toBe('deepseek')
@@ -160,7 +165,7 @@ describe('ConfigManager', () => {
 
   describe('getFallbackLLMConfig', () => {
     it('应返回备用 LLM 配置（或 undefined）', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       const fallback = mgr.getFallbackLLMConfig()
       expect(fallback).toBeUndefined()
     })
@@ -170,7 +175,7 @@ describe('ConfigManager', () => {
     it('应加载带环境变量的配置', () => {
       process.env.TEST_API_KEY = 'test-key-123'
       const mgr = new ConfigManager({
-        configPath: '/tmp/test-config-with-env.yaml',
+        configPath: path.join(tmpDir, 'test-config-with-env.yaml'),
         environment: 'test',
       })
       const config = mgr.load()
@@ -179,8 +184,7 @@ describe('ConfigManager', () => {
     })
 
     it('应在配置无效时抛出错误', () => {
-      const fs = require('fs')
-      const testPath = '/tmp/test-invalid-config.yaml'
+      const testPath = path.join(tmpDir, 'test-invalid-config.yaml')
       fs.writeFileSync(testPath, 'invalid: yaml: : :')
 
       const mgr = new ConfigManager({ configPath: testPath })
@@ -190,8 +194,7 @@ describe('ConfigManager', () => {
     })
 
     it('应加载旧格式配置', () => {
-      const fs = require('fs')
-      const testPath = '/tmp/test-old-format.yaml'
+      const testPath = path.join(tmpDir, 'test-old-format.yaml')
       fs.writeFileSync(
         testPath,
         `
@@ -210,8 +213,7 @@ llm:
     })
 
     it('应加载新格式配置', () => {
-      const fs = require('fs')
-      const testPath = '/tmp/test-new-format.yaml'
+      const testPath = path.join(tmpDir, 'test-new-format.yaml')
       fs.writeFileSync(
         testPath,
         `
@@ -233,8 +235,7 @@ test:
     })
 
     it('应处理缺少 default 的配置', () => {
-      const fs = require('fs')
-      const testPath = '/tmp/test-no-default.yaml'
+      const testPath = path.join(tmpDir, 'test-no-default.yaml')
       fs.writeFileSync(testPath, 'invalid: true')
 
       const mgr = new ConfigManager({ configPath: testPath })
@@ -243,8 +244,7 @@ test:
     })
 
     it('应处理缺少 llm 的配置', () => {
-      const fs = require('fs')
-      const testPath = '/tmp/test-no-llm.yaml'
+      const testPath = path.join(tmpDir, 'test-no-llm.yaml')
       fs.writeFileSync(testPath, 'default: {}')
 
       const mgr = new ConfigManager({ configPath: testPath })
@@ -253,8 +253,7 @@ test:
     })
 
     it('应处理缺少 primary 的 llm 配置', () => {
-      const fs = require('fs')
-      const testPath = '/tmp/test-no-primary.yaml'
+      const testPath = path.join(tmpDir, 'test-no-primary.yaml')
       fs.writeFileSync(
         testPath,
         `
@@ -272,8 +271,7 @@ default:
 
     it('应替换环境变量', () => {
       process.env.TEST_VAR = 'test-value'
-      const fs = require('fs')
-      const testPath = '/tmp/test-env-var.yaml'
+      const testPath = path.join(tmpDir, 'test-env-var.yaml')
       fs.writeFileSync(
         testPath,
         `
@@ -294,8 +292,7 @@ default:
     })
 
     it('应替换带默认值的环境变量', () => {
-      const fs = require('fs')
-      const testPath = '/tmp/test-env-default.yaml'
+      const testPath = path.join(tmpDir, 'test-env-default.yaml')
       fs.writeFileSync(
         testPath,
         `
@@ -316,8 +313,7 @@ default:
 
     it('应处理 disableEnvVar', () => {
       process.env.TEST_VAR2 = 'test-value'
-      const fs = require('fs')
-      const testPath = '/tmp/test-no-env.yaml'
+      const testPath = path.join(tmpDir, 'test-no-env.yaml')
       fs.writeFileSync(
         testPath,
         `
@@ -340,40 +336,35 @@ default:
 
   describe('createExampleConfig', () => {
     it('应创建示例配置文件', () => {
-      const testPath = '/tmp/test-example-config.yaml'
+      const testPath = path.join(tmpDir, 'test-example-config.yaml')
       ConfigManager.createExampleConfig(testPath)
-      const fs = require('fs')
       expect(fs.existsSync(testPath)).toBe(true)
       fs.unlinkSync(testPath)
     })
 
     it('应使用默认路径创建示例配置', () => {
-      const testPath = '/tmp/.yunpat/config.yaml'
-      const fs = require('fs')
-      try {
-        fs.unlinkSync(testPath)
-      } catch {}
-      try {
-        fs.rmdirSync('/tmp/.yunpat')
-      } catch {}
+      const testDir = path.join(tmpDir, '.yunpat')
+      const testPath = path.join(testDir, 'config.yaml')
+      try { fs.unlinkSync(testPath) } catch {}
+      try { fs.rmdirSync(testDir) } catch {}
 
       ConfigManager.createExampleConfig(testPath)
       expect(fs.existsSync(testPath)).toBe(true)
       fs.unlinkSync(testPath)
-      fs.rmdirSync('/tmp/.yunpat')
+      fs.rmdirSync(testDir)
     })
   })
 
   describe('set', () => {
     it('应设置嵌套配置值', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       mgr.load()
       mgr.set('custom.nested.value', 'test')
       expect(mgr.get('custom.nested.value')).toBe('test')
     })
 
     it('应创建中间对象', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       mgr.load()
       mgr.set('a.b.c.d', 'deep')
       expect(mgr.get('a.b.c.d')).toBe('deep')
@@ -382,12 +373,12 @@ default:
 
   describe('get', () => {
     it('应返回 undefined（不存在路径）', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       expect(mgr.get('nonexistent.path.deep')).toBeUndefined()
     })
 
     it('应在非对象值上返回 undefined', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       mgr.load()
       mgr.set('stringValue', 'test')
       expect(mgr.get('stringValue.subpath')).toBeUndefined()
@@ -396,7 +387,7 @@ default:
 
   describe('reload', () => {
     it('应重新加载配置', () => {
-      const mgr = new ConfigManager({ configPath: '/tmp/nonexistent-config.yaml' })
+      const mgr = new ConfigManager({ configPath: path.join(tmpDir, 'nonexistent-config.yaml') })
       const first = mgr.load()
       mgr.set('custom', 'value')
       const reloaded = mgr.reload()

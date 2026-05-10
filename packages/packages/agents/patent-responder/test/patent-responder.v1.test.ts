@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { EventBus, ShortTermMemory, ToolRegistry } from '@yunpat/core'
-import { PatentResponderAgent } from '../src/PatentResponderAgent.js'
+import { PatentResponderAgent } from '../src/PatentResponderAgent.v1.js'
 
 describe('PatentResponderAgent', () => {
   const createAgent = () => {
@@ -36,7 +36,7 @@ describe('PatentResponderAgent', () => {
           relevance: '用于评价创造性',
         },
       ],
-      rejectionTypes: ['inventiveness'],
+      rejectionTypes: ['inventiveness'] as ('novelty' | 'inventiveness' | 'support' | 'clarity' | 'other')[],
     },
     originalApplication: {
       title: '测试专利',
@@ -184,7 +184,7 @@ describe('PatentResponderAgent', () => {
 
       const input = {
         ...createValidInput(),
-        documentType: 'pct',
+        documentType: 'pct' as const,
       }
       const executeResult = await agent.execute(input)
 
@@ -200,7 +200,7 @@ describe('PatentResponderAgent', () => {
 
       const input = {
         ...createValidInput(),
-        documentType: 'us',
+        documentType: 'us' as const,
       }
       const executeResult = await agent.execute(input)
 

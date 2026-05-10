@@ -12,7 +12,7 @@ import {
   PatentResponderAgent,
   type PatentResponderInput,
   type PatentResponderOutput,
-} from './PatentResponderAgent.js'
+} from './PatentResponderAgent.v1.js'
 import type { PatentDatabaseAdapter, PatentRecord } from '@yunpat/patent-database'
 import {
   PostgreSQLClient,
@@ -26,7 +26,7 @@ import {
 export interface PatentResponderInputV2 extends PatentResponderInput {
   /** 是否启用先例检索 */
   enablePrecedentSearch?: boolean
-  /** 检索选项 */
+  /** 搜索选项 */
   searchOptions?: {
     /** 关键词列表（可选，自动提取） */
     keywords?: string[]
@@ -37,6 +37,10 @@ export interface PatentResponderInputV2 extends PatentResponderInput {
   }
   /** 是否启用法律知识库检索 */
   enableLegalKnowledge?: boolean
+  /** 审查意见内容文本（用于 OA 解析） */
+  officeActionText?: string
+  /** 原始申请文件文本（用于对比分析） */
+  originalApplicationText?: string
 }
 
 /**

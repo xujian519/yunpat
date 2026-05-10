@@ -456,12 +456,15 @@ export class HttpApprovalServer {
    * 启动服务器
    */
   start(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const host = this.config.host || '0.0.0.0'
       this.server = this.app.listen(this.config.port, host, () => {
-        console.log(`[HTTP Approval] Server started on http://${host}:${this.config.port}`)
+        const addr = this.server?.address()
+        const actualPort = typeof addr === 'object' && addr ? addr.port : this.config.port
+        console.log(`[HTTP Approval] Server started on http://${host}:${actualPort}`)
         resolve()
       })
+      this.server?.on('error', (err) => reject(err))
     })
   }
 
@@ -479,6 +482,18 @@ export class HttpApprovalServer {
         resolve()
       }
     })
+  }
+
+  /**
+   * 获取服务器监听地址
+   */
+  getAddress(): { host: string; port: number } | null {
+    if (!this.server) return null
+    const addr = this.server.address()
+    if (typeof addr === 'object' && addr) {
+      return { host: addr.address, port: addr.port }
+    }
+    return null
   }
 
   /**

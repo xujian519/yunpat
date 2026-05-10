@@ -326,9 +326,8 @@ describe('HttpApprovalServer', () => {
         apiPrefix: '/api/v1',
       })
       await testServer.start()
-      const address = testServer['server']?.address()
-      const port = typeof address === 'object' ? address?.port : 9995
-      baseUrl = `http://127.0.0.1:${port}`
+      const addr = testServer.getAddress()
+      baseUrl = `http://127.0.0.1:${addr?.port ?? 0}`
     })
 
     afterEach(async () => {
@@ -366,9 +365,8 @@ describe('HttpApprovalServer', () => {
         apiKey: 'secret-key',
       })
       await testServer.start()
-      const address = testServer['server']?.address()
-      const port = typeof address === 'object' ? address?.port : 9994
-      baseUrl = `http://127.0.0.1:${port}`
+      const addr = testServer.getAddress()
+      baseUrl = `http://127.0.0.1:${addr?.port ?? 0}`
     })
 
     afterEach(async () => {
@@ -411,9 +409,8 @@ describe('HttpApprovalServer', () => {
         apiPrefix: '/api/v1',
       })
       await testServer.start()
-      const address = testServer['server']?.address()
-      const port = typeof address === 'object' ? address?.port : 9993
-      baseUrl = `http://127.0.0.1:${port}`
+      const addr = testServer.getAddress()
+      baseUrl = `http://127.0.0.1:${addr?.port ?? 0}`
 
       const response = await fetch(`${baseUrl}/api/v1/health`)
       expect(response.status).toBe(200)
@@ -427,9 +424,8 @@ describe('HttpApprovalServer', () => {
         corsOrigin: 'http://localhost:3000',
       })
       await testServer.start()
-      const address = testServer['server']?.address()
-      const port = typeof address === 'object' ? address?.port : 9992
-      baseUrl = `http://127.0.0.1:${port}`
+      const addr = testServer.getAddress()
+      baseUrl = `http://127.0.0.1:${addr?.port ?? 0}`
 
       const response = await fetch(`${baseUrl}/api/v1/health`)
       expect(response.status).toBe(200)
@@ -449,9 +445,8 @@ describe('HttpApprovalServer', () => {
         corsOrigin: ['http://localhost:3000', 'http://localhost:3001'],
       })
       await testServer.start()
-      const address = testServer['server']?.address()
-      const port = typeof address === 'object' ? address?.port : 9991
-      baseUrl = `http://127.0.0.1:${port}`
+      const addr = testServer.getAddress()
+      baseUrl = `http://127.0.0.1:${addr?.port ?? 0}`
 
       const response = await fetch(`${baseUrl}/api/v1/health`)
       expect(response.status).toBe(200)
@@ -465,9 +460,8 @@ describe('HttpApprovalServer', () => {
         corsOrigin: 'http://localhost:3000',
       })
       await testServer.start()
-      const address = testServer['server']?.address()
-      const port = typeof address === 'object' ? address?.port : 9990
-      baseUrl = `http://127.0.0.1:${port}`
+      const addr = testServer.getAddress()
+      baseUrl = `http://127.0.0.1:${addr?.port ?? 0}`
 
       const response = await fetch(`${baseUrl}/api/v1/health`, {
         method: 'OPTIONS',
@@ -487,9 +481,8 @@ describe('HttpApprovalServer', () => {
         apiPrefix: '/api/v1',
       })
       await testServer.start()
-      const address = testServer['server']?.address()
-      const port = typeof address === 'object' ? address?.port : 9989
-      baseUrl = `http://127.0.0.1:${port}`
+      const addr = testServer.getAddress()
+      baseUrl = `http://127.0.0.1:${addr?.port ?? 0}`
 
       const request = {
         requestId: 'test-wait',
@@ -581,9 +574,8 @@ describe('HttpApprovalServer', () => {
         apiPrefix: '/api/v1',
       })
       await testServer.start()
-      const address = testServer['server']?.address()
-      const port = typeof address === 'object' ? address?.port : 9988
-      baseUrl = `http://127.0.0.1:${port}`
+      const addr = testServer.getAddress()
+      baseUrl = `http://127.0.0.1:${addr?.port ?? 0}`
     })
 
     afterEach(async () => {

@@ -14,11 +14,11 @@ export default defineConfig({
       '**/*.perf.test.ts',
       '**/performance/**',
     ],
-    // 真实 LLM API 需要更长超时
-    testTimeout: 120000,
+    // 真实 LLM API 需要更长超时 - 优化后增加到 3 分钟
+    testTimeout: 180000,
     hookTimeout: 60000,
-    // 并发控制，避免 API 速率限制
-    maxConcurrency: 2,
+    // 并发控制 - 降低为 1 以避免 API 速率限制
+    maxConcurrency: 1,
     fileParallelism: true,
     // 禁用 source map 以避免 esbuild 构建产物的 sourcemap 引用问题
     deps: {

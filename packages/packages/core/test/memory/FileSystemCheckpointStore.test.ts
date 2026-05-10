@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
+import * as os from 'os'
+import * as path from 'path'
 import { FileSystemCheckpointStore } from '../../src/memory/FileSystemCheckpointStore.js'
+
+const tmpDir = os.tmpdir()
 
 describe('FileSystemCheckpointStore', () => {
   describe('constructor', () => {
@@ -20,7 +24,7 @@ describe('FileSystemCheckpointStore', () => {
   describe('save', () => {
     it('应保存检查点', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await store.save({
@@ -36,7 +40,7 @@ describe('FileSystemCheckpointStore', () => {
   describe('load', () => {
     it('应加载检查点', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await store.save({
@@ -54,7 +58,7 @@ describe('FileSystemCheckpointStore', () => {
 
     it('应处理不存在的检查点', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await expect(store.load('nonexistent', 'exec-1')).rejects.toThrow()
@@ -62,7 +66,7 @@ describe('FileSystemCheckpointStore', () => {
 
     it('应处理无效的检查点ID', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await expect(store.load('invalid-id')).rejects.toThrow()
@@ -72,7 +76,7 @@ describe('FileSystemCheckpointStore', () => {
   describe('listCheckpoints', () => {
     it('应列出检查点', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await store.save({
@@ -91,7 +95,7 @@ describe('FileSystemCheckpointStore', () => {
 
     it('应处理不存在的执行', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       const checkpoints = await store.listCheckpoints('nonexistent')
@@ -102,7 +106,7 @@ describe('FileSystemCheckpointStore', () => {
   describe('delete', () => {
     it('应删除检查点', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await store.save({
@@ -121,7 +125,7 @@ describe('FileSystemCheckpointStore', () => {
   describe('deleteExecution', () => {
     it('应删除执行', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await store.save({
@@ -140,7 +144,7 @@ describe('FileSystemCheckpointStore', () => {
   describe('clear', () => {
     it('应清空所有检查点', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await store.save({
@@ -159,7 +163,7 @@ describe('FileSystemCheckpointStore', () => {
   describe('listResumableExecutions', () => {
     it('应列出可恢复的执行', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await store.save({
@@ -180,7 +184,7 @@ describe('FileSystemCheckpointStore', () => {
   describe('getStats', () => {
     it('应获取统计信息', async () => {
       const store = new FileSystemCheckpointStore({
-        rootDir: '/tmp/test-checkpoints-' + Date.now(),
+        rootDir: path.join(tmpDir, 'test-checkpoints-' + Date.now()),
       })
 
       await store.save({

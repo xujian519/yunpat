@@ -7,6 +7,15 @@
 // 导出所有类型定义
 export * from './types/index.js'
 
+// 导出 v1 基础版（旧版兼容）
+export { PatentResponderAgent as PatentResponderAgentV1 } from './PatentResponderAgent.v1.js'
+export type {
+  PatentResponderInput,
+  PatentResponderOutput,
+  ResponseStrategy,
+  ResponseDocument,
+} from './PatentResponderAgent.v1.js'
+
 // 导出 v4.0 增强版（默认）
 export { PatentResponderAgent } from './PatentResponderAgent.v4.js'
 export type { PatentResponderConfig, ResponsePlan } from './PatentResponderAgent.v4.js'
@@ -15,7 +24,6 @@ export type { PatentResponderConfig, ResponsePlan } from './PatentResponderAgent
 export { PatentResponderAgentV5 } from './PatentResponderAgentV5.js'
 export type {
   PatentResponderInputV2,
-  PatentResponderOutputV2,
   PatentResponderOutputV3,
   PrecedentCase,
   LegalPrecedent,
@@ -27,6 +35,3 @@ export * from './strategy/index.js'
 export * from './template/index.js'
 export * from './prediction/index.js'
 export * from './learning/index.js'
-
-// 保留旧版本导出（向后兼容）
-export { PatentResponderAgent as PatentResponderAgentV3 } from './PatentResponderAgent.v3.js'

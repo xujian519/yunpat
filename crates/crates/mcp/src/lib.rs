@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 pub use yunpat_protocol::{
-    McpStartupStatus, McpStartupUpdateEvent, McpStartupFailure, McpStartupCompleteEvent,
+    McpStartupCompleteEvent, McpStartupFailure, McpStartupStatus, McpStartupUpdateEvent,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

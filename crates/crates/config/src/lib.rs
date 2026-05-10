@@ -134,9 +134,18 @@ impl ProviderKind {
 
     pub fn all() -> impl Iterator<Item = Self> {
         const VARIANTS: [ProviderKind; 12] = [
-            ProviderKind::Deepseek, ProviderKind::NvidiaNim, ProviderKind::Openai, ProviderKind::Openrouter,
-            ProviderKind::Novita, ProviderKind::Fireworks, ProviderKind::Sglang, ProviderKind::Vllm,
-            ProviderKind::Ollama, ProviderKind::Zhipu, ProviderKind::Moonshot, ProviderKind::Doubao,
+            ProviderKind::Deepseek,
+            ProviderKind::NvidiaNim,
+            ProviderKind::Openai,
+            ProviderKind::Openrouter,
+            ProviderKind::Novita,
+            ProviderKind::Fireworks,
+            ProviderKind::Sglang,
+            ProviderKind::Vllm,
+            ProviderKind::Ollama,
+            ProviderKind::Zhipu,
+            ProviderKind::Moonshot,
+            ProviderKind::Doubao,
         ];
         VARIANTS.into_iter()
     }

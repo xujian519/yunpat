@@ -9,8 +9,7 @@
  * const userPrompt = builder.buildUserPrompt(input, knowledge)
  */
 
-import type { InventionUnderstandingInput } from './InventionUnderstandingAgent.js'
-import type { KnowledgeRetrievalResult } from './InventionUnderstandingAgent.js'
+import type { InventionUnderstandingInput, KnowledgeRetrievalResult } from './types.js'
 
 /**
  * Prompt 构建器配置

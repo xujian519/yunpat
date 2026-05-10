@@ -84,8 +84,17 @@ export interface ProjectScanOutput {
 // ─── 路径安全 ─────────────────────────────────────────────────
 
 const BLOCKED_PATH_PREFIXES = [
-  '/etc', '/proc', '/sys', '/dev', '/boot', '/root', '/var/run', '/var/log',
-  '/System', '/Library', '/Applications',
+  '/etc',
+  '/proc',
+  '/sys',
+  '/dev',
+  '/boot',
+  '/root',
+  '/var/run',
+  '/var/log',
+  '/System',
+  '/Library',
+  '/Applications',
 ]
 
 export function isBlockedPath(resolvedPath: string): boolean {
@@ -99,14 +108,33 @@ export const MAX_ALL_CONTENT_SIZE = 50_000
 // ─── 扩展名分类 ───────────────────────────────────────────────
 
 const EXTENSION_MAP: Record<string, FileBucket> = {
-  '.pdf': 'text_extractable', '.doc': 'text_extractable', '.docx': 'text_extractable',
-  '.txt': 'text_extractable', '.md': 'text_extractable', '.rtf': 'text_extractable',
-  '.png': 'image', '.jpg': 'image', '.jpeg': 'image', '.bmp': 'image',
-  '.gif': 'image', '.tiff': 'image', '.tif': 'image',
-  '.mp3': 'audio', '.wav': 'audio', '.m4a': 'audio', '.flac': 'audio',
-  '.mp4': 'video', '.mov': 'video', '.avi': 'video', '.mkv': 'video',
-  '.zip': 'archive', '.rar': 'archive', '.7z': 'archive',
-  '.tar': 'archive', '.gz': 'archive', '.bz2': 'archive',
+  '.pdf': 'text_extractable',
+  '.doc': 'text_extractable',
+  '.docx': 'text_extractable',
+  '.txt': 'text_extractable',
+  '.md': 'text_extractable',
+  '.rtf': 'text_extractable',
+  '.png': 'image',
+  '.jpg': 'image',
+  '.jpeg': 'image',
+  '.bmp': 'image',
+  '.gif': 'image',
+  '.tiff': 'image',
+  '.tif': 'image',
+  '.mp3': 'audio',
+  '.wav': 'audio',
+  '.m4a': 'audio',
+  '.flac': 'audio',
+  '.mp4': 'video',
+  '.mov': 'video',
+  '.avi': 'video',
+  '.mkv': 'video',
+  '.zip': 'archive',
+  '.rar': 'archive',
+  '.7z': 'archive',
+  '.tar': 'archive',
+  '.gz': 'archive',
+  '.bz2': 'archive',
 }
 
 export function classifyByExtension(ext: string): FileBucket {
@@ -211,9 +239,21 @@ export function detectOfficialDoc(
 // ─── 非官文分类 ───────────────────────────────────────────────
 
 const TECHNICAL_DISCLOSURE_KEYWORDS = [
-  '技术交底书', '发明人', '技术方案', '技术问题', '技术效果',
-  '实施例', '实验数据', '测试结果', '发明内容', '具体实施方式',
-  '技术领域', '背景技术', '有益效果', '创新点', '核心技术',
+  '技术交底书',
+  '发明人',
+  '技术方案',
+  '技术问题',
+  '技术效果',
+  '实施例',
+  '实验数据',
+  '测试结果',
+  '发明内容',
+  '具体实施方式',
+  '技术领域',
+  '背景技术',
+  '有益效果',
+  '创新点',
+  '核心技术',
 ]
 const RESPONSE_DRAFT_KEYWORDS = ['答复', '意见陈述', '申请人认为', '答辩意见']
 const COMPARISON_DOC_KEYWORDS = ['对比文件', '对比分析', '特征对比', '区别技术特征']
@@ -253,7 +293,10 @@ export function inferCaseType(allContent: string): CaseType {
   return 'invention'
 }
 
-export function inferPhase(documents: ScannedDocument[]): { phase: ProjectPhase; confidence: number } {
+export function inferPhase(documents: ScannedDocument[]): {
+  phase: ProjectPhase
+  confidence: number
+} {
   const officialDocs = documents.filter((d) => d.category === 'official_doc' && d.officialDocType)
 
   if (officialDocs.length > 0) {
@@ -289,14 +332,24 @@ export function generateSystemPromptContext(
   lines.push(`工作目录: ${directory}`)
 
   const caseTypeLabels: Record<CaseType, string> = {
-    invention: '发明专利', utility_model: '实用新型', design: '外观设计',
-    trademark: '商标', unknown: '未确定',
+    invention: '发明专利',
+    utility_model: '实用新型',
+    design: '外观设计',
+    trademark: '商标',
+    unknown: '未确定',
   }
-  lines.push(`案件类型: ${caseTypeLabels[profile.caseType]} (置信度: ${profile.confidence.toFixed(1)})`)
+  lines.push(
+    `案件类型: ${caseTypeLabels[profile.caseType]} (置信度: ${profile.confidence.toFixed(1)})`
+  )
 
   const phaseLabels: Record<ProjectPhase, string> = {
-    filing: '申请准备', examination: '审查阶段', response: '审查意见答复',
-    grant: '授权登记', reexamination: '复审', invalidation: '无效宣告', unknown: '未知阶段',
+    filing: '申请准备',
+    examination: '审查阶段',
+    response: '审查意见答复',
+    grant: '授权登记',
+    reexamination: '复审',
+    invalidation: '无效宣告',
+    unknown: '未知阶段',
   }
   lines.push(`当前阶段: ${phaseLabels[profile.phase]}`)
 
@@ -334,7 +387,10 @@ export function generateSystemPromptContext(
   return lines.join('\n')
 }
 
-export function generateSuggestions(profile: ProjectProfile, documents: ScannedDocument[]): string[] {
+export function generateSuggestions(
+  profile: ProjectProfile,
+  documents: ScannedDocument[]
+): string[] {
   const suggestions: string[] = []
 
   switch (profile.phase) {

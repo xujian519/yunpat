@@ -3721,10 +3721,7 @@ impl App {
         let errors = pool.connect_all().await;
         if !errors.is_empty() {
             for (name, err) in &errors {
-                eprintln!(
-                    "[WARN] MCP server '{}' connection failed: {}",
-                    name, err
-                );
+                eprintln!("[WARN] MCP server '{}' connection failed: {}", name, err);
             }
         }
         let pool = std::sync::Arc::new(tokio::sync::Mutex::new(pool));

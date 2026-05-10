@@ -345,8 +345,12 @@ default:
     it('应使用默认路径创建示例配置', () => {
       const testDir = path.join(tmpDir, '.yunpat')
       const testPath = path.join(testDir, 'config.yaml')
-      try { fs.unlinkSync(testPath) } catch {}
-      try { fs.rmdirSync(testDir) } catch {}
+      try {
+        fs.unlinkSync(testPath)
+      } catch {}
+      try {
+        fs.rmdirSync(testDir)
+      } catch {}
 
       ConfigManager.createExampleConfig(testPath)
       expect(fs.existsSync(testPath)).toBe(true)

@@ -4,8 +4,8 @@ use anyhow::Result;
 use async_trait::async_trait;
 use futures_core::Stream;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use std::pin::Pin;
+use std::sync::Arc;
 use yunpat_agents::agent::PatentAgent;
 use yunpat_agents::types::*;
 

@@ -203,10 +203,7 @@ mod tests {
     #[test]
     fn filter_handles_unclosed_marker() {
         let mut in_call = false;
-        let result = filter_tool_call_delta(
-            "before[TOOL_CALL]this never closes",
-            &mut in_call,
-        );
+        let result = filter_tool_call_delta("before[TOOL_CALL]this never closes", &mut in_call);
         assert_eq!(result, "before");
         assert!(in_call);
     }

@@ -36,7 +36,13 @@ describe('PatentResponderAgent', () => {
           relevance: '用于评价创造性',
         },
       ],
-      rejectionTypes: ['inventiveness'] as ('novelty' | 'inventiveness' | 'support' | 'clarity' | 'other')[],
+      rejectionTypes: ['inventiveness'] as (
+        | 'novelty'
+        | 'inventiveness'
+        | 'support'
+        | 'clarity'
+        | 'other'
+      )[],
     },
     originalApplication: {
       title: '测试专利',

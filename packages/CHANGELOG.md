@@ -93,6 +93,7 @@
 ### TypeScript 业务层精简 — 阶段 3：大文件拆分 (2026-05-10)
 
 10 个 >700 行文件拆分为 facade + 独立模块（22 个新文件），所有文件 < 450 行，公开 API 不变：
+
 - `core/reasoning/ReActLoop.ts` → PlanAndSolveStrategy.ts（删除 307 行死代码）
 - `core/reasoning/EnhancedReflection.ts` → ReflectionTypes.ts + ReflectionAssessors.ts
 - `core/replanning/IncrementalPlanner.ts` → PlanCalculations.ts

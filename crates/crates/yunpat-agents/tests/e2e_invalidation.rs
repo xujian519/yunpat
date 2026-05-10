@@ -22,8 +22,7 @@ impl DeepSeekLlmProvider {
         let api_key = std::env::var("DEEPSEEK_API_KEY").ok()?;
         let base_url = std::env::var("DEEPSEEK_BASE_URL")
             .unwrap_or_else(|_| "https://api.deepseek.com/v1".to_string());
-        let model = std::env::var("LLM_MODEL")
-            .unwrap_or_else(|_| "deepseek-chat".to_string());
+        let model = std::env::var("LLM_MODEL").unwrap_or_else(|_| "deepseek-chat".to_string());
         Some(Self {
             api_key,
             base_url,
@@ -121,7 +120,8 @@ async fn test_invalidation_workflow_end_to_end() {
         .unwrap()
         .join("tests/manual/无效");
     let yunpat_md = std::fs::read_to_string(case_dir.join("yunpat.md")).unwrap();
-    let petition_md = std::fs::read_to_string(case_dir.join("无效宣告请求书_CN204762379U.md")).unwrap();
+    let petition_md =
+        std::fs::read_to_string(case_dir.join("无效宣告请求书_CN204762379U.md")).unwrap();
 
     println!("========================================");
     println!("  YunPat Invalidation E2E Test (REAL LLM)");
@@ -133,7 +133,10 @@ async fn test_invalidation_workflow_end_to_end() {
 
     // Inject real LLM provider if available.
     let has_llm = if let Some(provider) = DeepSeekLlmProvider::from_env() {
-        println!("🤖 Using live DeepSeek LLM provider (model: {})\n", provider.model);
+        println!(
+            "🤖 Using live DeepSeek LLM provider (model: {})\n",
+            provider.model
+        );
         agent.set_llm_provider(Box::new(provider));
         true
     } else {
@@ -177,9 +180,7 @@ async fn test_invalidation_workflow_end_to_end() {
                 let suffix = if has_llm { "_real" } else { "" };
                 let artifact_file = case_dir.join(format!(
                     "output_step{}_{}{}.md",
-                    step,
-                    artifact.artifact_type,
-                    suffix
+                    step, artifact.artifact_type, suffix
                 ));
                 std::fs::write(&artifact_file, &artifact.content).unwrap();
                 println!("    → saved to {}", artifact_file.display());
@@ -193,12 +194,20 @@ async fn test_invalidation_workflow_end_to_end() {
                     let default = if opt.is_default { " (default)" } else { "" };
                     println!("  [{}] {}{}", opt.value, opt.label, default);
                 }
-                let default = req.options.iter().find(|o| o.is_default).map(|o| o.value.clone()).unwrap_or_else(|| "continue".to_string());
+                let default = req
+                    .options
+                    .iter()
+                    .find(|o| o.is_default)
+                    .map(|o| o.value.clone())
+                    .unwrap_or_else(|| "continue".to_string());
                 println!("  → Auto-approved: {}", default);
             }
         }
 
-        println!("\n[Metadata] duration: {:?} ms", output.metadata.duration_ms);
+        println!(
+            "\n[Metadata] duration: {:?} ms",
+            output.metadata.duration_ms
+        );
     }
 
     agent.terminate().await.unwrap();
@@ -209,7 +218,11 @@ async fn test_invalidation_workflow_end_to_end() {
     println!("========================================");
 
     let expected_steps = 5;
-    assert_eq!(step, expected_steps, "Expected {} steps, got {}", expected_steps, step);
+    assert_eq!(
+        step, expected_steps,
+        "Expected {} steps, got {}",
+        expected_steps, step
+    );
     println!("✅ All {} steps executed", expected_steps);
 
     for i in 1..=expected_steps {
@@ -222,13 +235,26 @@ async fn test_invalidation_workflow_end_to_end() {
                     .starts_with(&format!("output_step{}_", i))
             })
             .collect::<Vec<_>>();
-        assert!(!entries.is_empty(), "Step {} should have produced at least one artifact file", i);
+        assert!(
+            !entries.is_empty(),
+            "Step {} should have produced at least one artifact file",
+            i
+        );
         println!("✅ Step {} artifact file(s) created", i);
     }
 
-    assert!(petition_md.contains("专利法第22条第3款"), "Petition should cite A22.3");
-    assert!(petition_md.contains("创造性"), "Petition should mention inventiveness");
-    assert!(petition_md.contains("CN 201107937 Y"), "Petition should cite evidence 1");
+    assert!(
+        petition_md.contains("专利法第22条第3款"),
+        "Petition should cite A22.3"
+    );
+    assert!(
+        petition_md.contains("创造性"),
+        "Petition should mention inventiveness"
+    );
+    assert!(
+        petition_md.contains("CN 201107937 Y"),
+        "Petition should cite evidence 1"
+    );
     println!("✅ Pre-existing petition contains expected legal grounds and evidence");
 
     if has_llm {

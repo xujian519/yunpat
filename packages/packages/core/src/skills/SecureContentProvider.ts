@@ -19,10 +19,10 @@ interface SealedFile {
   algorithm: string
   kdf: string
   kdfIterations: number
-  salt: string   // base64
-  iv: string     // base64
-  tag: string    // base64
-  data: string   // base64
+  salt: string // base64
+  iv: string // base64
+  tag: string // base64
+  data: string // base64
   originalPath: string
   sealedAt: string
 }
@@ -122,7 +122,9 @@ export class SecureContentProvider {
       const sealed: SealedFile = JSON.parse(raw)
 
       if (sealed.version !== 1 || sealed.algorithm !== 'aes-256-gcm') {
-        console.warn(`[SecureContentProvider] 不支持的加密格式: version=${sealed.version}, algo=${sealed.algorithm}`)
+        console.warn(
+          `[SecureContentProvider] 不支持的加密格式: version=${sealed.version}, algo=${sealed.algorithm}`
+        )
         return null
       }
 
@@ -196,10 +198,7 @@ export class SecureContentProvider {
     const decipher = createDecipheriv('aes-256-gcm', derivedKey, iv)
     decipher.setAuthTag(tag)
 
-    const decrypted = Buffer.concat([
-      decipher.update(data),
-      decipher.final(),
-    ])
+    const decrypted = Buffer.concat([decipher.update(data), decipher.final()])
 
     return decrypted.toString('utf-8')
   }
@@ -223,19 +222,10 @@ export function sealContent(options: SealOptions): SealedFile {
   const salt = randomBytes(16)
   const iv = randomBytes(12)
 
-  const derivedKey = pbkdf2Sync(
-    Buffer.from(masterKey, 'hex'),
-    salt,
-    kdfIterations,
-    32,
-    'sha256'
-  )
+  const derivedKey = pbkdf2Sync(Buffer.from(masterKey, 'hex'), salt, kdfIterations, 32, 'sha256')
 
   const cipher = createCipheriv('aes-256-gcm', derivedKey, iv)
-  const encrypted = Buffer.concat([
-    cipher.update(content, 'utf-8'),
-    cipher.final(),
-  ])
+  const encrypted = Buffer.concat([cipher.update(content, 'utf-8'), cipher.final()])
   const tag = cipher.getAuthTag()
 
   return {

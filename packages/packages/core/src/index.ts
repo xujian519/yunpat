@@ -584,10 +584,7 @@ export type {
 } from './skills/SkillLoader.js'
 
 // 安全内容提供者（提示词加密保护）
-export {
-  SecureContentProvider,
-  sealContent,
-} from './skills/SecureContentProvider.js'
+export { SecureContentProvider, sealContent } from './skills/SecureContentProvider.js'
 
 export type {
   SecureContentProviderConfig,

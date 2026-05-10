@@ -725,9 +725,8 @@ async fn run_via_executor(
 
     let boxed_provider: Option<Box<dyn yunpat_agents::context::LlmProvider>> =
         llm_provider.map(|arc| {
-            Box::new(
-                crate::llm_client::adapter::ArcLlmProviderWrapper(arc),
-            ) as Box<dyn yunpat_agents::context::LlmProvider>
+            Box::new(crate::llm_client::adapter::ArcLlmProviderWrapper(arc))
+                as Box<dyn yunpat_agents::context::LlmProvider>
         });
 
     let rx = executor

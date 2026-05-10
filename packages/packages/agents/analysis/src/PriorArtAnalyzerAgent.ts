@@ -308,7 +308,11 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
     if (this.skillLoader) {
       try {
         const template = await this.skillLoader.load('user-prompt')
-        const typeLabels: Record<string, string> = { patent: '专利文献', paper: '学术论文', report: '调研报告' }
+        const typeLabels: Record<string, string> = {
+          patent: '专利文献',
+          paper: '学术论文',
+          report: '调研报告',
+        }
         return this.skillLoader.render(template, {
           docType: typeLabels[doc.type] || doc.type,
           docTitle: doc.title,

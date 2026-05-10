@@ -124,7 +124,9 @@ export function identifyIncludedUnnecessaryFeatures(
     if (isFeatureCoveredInClaim(item.feature, claimText)) {
       result.push({
         feature: item.feature,
-        reason: item.reason || `特征"${item.feature}"被判定为非必要（去除后仍能解决技术问题），但出现在独立权利要求中，应移至从属权利要求`,
+        reason:
+          item.reason ||
+          `特征"${item.feature}"被判定为非必要（去除后仍能解决技术问题），但出现在独立权利要求中，应移至从属权利要求`,
       })
     }
   }

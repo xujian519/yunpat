@@ -364,7 +364,6 @@ impl PatentAgent for ResearchAgent {
         })
     }
 
-
     fn set_llm_provider(&mut self, provider: Box<dyn LlmProvider>) {
         self.llm_provider = Some(provider);
     }

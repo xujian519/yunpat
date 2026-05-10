@@ -1395,7 +1395,8 @@ ${input.inventors ? `发明人：${input.inventors.join(', ')}` : ''}
     }
 
     // 提取权利要求中的组件（如"1. 一种...，其特征在于..."）
-    const claimComponentPattern = /权利要求\s*\d+[^。]*?(?:包括|具有|包含|设有)[^。]*?(?:的)?([^，。；\n]{2,30})/g
+    const claimComponentPattern =
+      /权利要求\s*\d+[^。]*?(?:包括|具有|包含|设有)[^。]*?(?:的)?([^，。；\n]{2,30})/g
     let compMatch
     while ((compMatch = claimComponentPattern.exec(cleanedDisclosure)) !== null) {
       const feature = compMatch[1].trim()

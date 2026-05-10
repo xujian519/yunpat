@@ -52,9 +52,7 @@ impl LlmProvider for ModelProviderAdapter<'_> {
 
         let stream = self.provider.chat(request);
 
-        let mapped = stream.map(|chunk| {
-            chunk.map(|c| c.delta_content.unwrap_or_default())
-        });
+        let mapped = stream.map(|chunk| chunk.map(|c| c.delta_content.unwrap_or_default()));
 
         Box::pin(mapped)
     }
@@ -160,8 +158,7 @@ impl LlmProvider for LlmClientAdapter {
                         match event {
                             Ok(crate::models::StreamEvent::ContentBlockDelta { delta, .. }) => {
                                 if let crate::models::Delta::TextDelta { text } = &delta {
-                                    if !text.is_empty()
-                                        && tx.send(Ok(text.clone())).await.is_err()
+                                    if !text.is_empty() && tx.send(Ok(text.clone())).await.is_err()
                                     {
                                         break;
                                     }
@@ -256,17 +253,11 @@ mod tests {
             unimplemented!()
         }
 
-        fn with_provider(
-            &self,
-            _provider_id: &str,
-        ) -> yunpat_models::provider::ProviderView<'_> {
+        fn with_provider(&self, _provider_id: &str) -> yunpat_models::provider::ProviderView<'_> {
             unimplemented!()
         }
 
-        fn with_model(
-            &self,
-            _model_id: &str,
-        ) -> yunpat_models::provider::ProviderView<'_> {
+        fn with_model(&self, _model_id: &str) -> yunpat_models::provider::ProviderView<'_> {
             unimplemented!()
         }
 

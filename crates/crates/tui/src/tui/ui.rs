@@ -4638,12 +4638,15 @@ async fn apply_command_result(
 
                 if let Ok(client) = crate::client::DeepSeekClient::new(config) {
                     let adapter = crate::llm_client::adapter::LlmClientAdapter::new(
-                        std::sync::Arc::new(client) as std::sync::Arc<dyn crate::llm_client::LlmClient>,
+                        std::sync::Arc::new(client)
+                            as std::sync::Arc<dyn crate::llm_client::LlmClient>,
                         &app.model,
                     );
                     ctx.llm_provider = Some(std::sync::Arc::new(adapter));
                 } else {
-                    eprintln!("[WARN] DeepSeekClient 创建失败 — 专利智能体将使用模板模式（无真实 LLM 生成）");
+                    eprintln!(
+                        "[WARN] DeepSeekClient 创建失败 — 专利智能体将使用模板模式（无真实 LLM 生成）"
+                    );
                 }
 
                 match tool.execute(tool_input, &ctx).await {

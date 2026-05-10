@@ -44,15 +44,12 @@ describe('SecureContentProvider', () => {
       // 写入加密文件
       const sealedFileDir = join(SEALED_DIR, 'patent-drafting')
       mkdirSync(sealedFileDir, { recursive: true })
-      writeFileSync(
-        join(sealedFileDir, 'claims-core.sealed'),
-        JSON.stringify(sealed)
-      )
+      writeFileSync(join(sealedFileDir, 'claims-core.sealed'), JSON.stringify(sealed))
 
       // 解密
       const provider = new SecureContentProvider({
         sealedDir: SEALED_DIR,
-        keyEnvVar: 'TEST_KEY_NONE',  // 不用环境变量
+        keyEnvVar: 'TEST_KEY_NONE', // 不用环境变量
       })
 
       // 模拟密钥文件

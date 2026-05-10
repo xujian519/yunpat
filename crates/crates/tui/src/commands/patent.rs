@@ -43,52 +43,76 @@ pub fn draft(_app: &mut App, arg: Option<&str>) -> CommandResult {
     )
 }
 
-/// `/oa [--case <id>]` — Start an OA (Office Action) response workflow.
+/// `/oa <topic> [--case <id>]` — Start an OA (Office Action) response workflow.
 pub fn oa(_app: &mut App, arg: Option<&str>) -> CommandResult {
-    let case_id = parse_case_arg(arg);
+    let (topic, case_id) = parse_topic_and_case(arg);
+
+    if topic.is_empty() {
+        return CommandResult::error(
+            "Usage: /oa <topic> [--case <id>]\n\n\
+             Start an Office Action response workflow.\n\
+             Example: /oa \"审查意见通知书\" --case CASE-001",
+        );
+    }
 
     CommandResult::with_message_and_action(
         case_id
             .as_deref()
             .map(|id| format!("Starting OA response workflow for case: {}", id))
-            .unwrap_or_else(|| "Starting OA response workflow".to_string()),
+            .unwrap_or_else(|| format!("Starting OA response workflow for: {}", topic)),
         AppAction::PatentWorkflow {
             agent_id: "oa-response".to_string(),
-            topic: None,
+            topic: Some(topic),
             case_id,
         },
     )
 }
 
-/// `/reexam [--case <id>]` — Start a reexamination workflow.
+/// `/reexam <topic> [--case <id>]` — Start a reexamination workflow.
 pub fn reexam(_app: &mut App, arg: Option<&str>) -> CommandResult {
-    let case_id = parse_case_arg(arg);
+    let (topic, case_id) = parse_topic_and_case(arg);
+
+    if topic.is_empty() {
+        return CommandResult::error(
+            "Usage: /reexam <topic> [--case <id>]\n\n\
+             Start a reexamination workflow.\n\
+             Example: /reexam \"驳回决定\" --case CASE-001",
+        );
+    }
 
     CommandResult::with_message_and_action(
         case_id
             .as_deref()
             .map(|id| format!("Starting reexamination workflow for case: {}", id))
-            .unwrap_or_else(|| "Starting reexamination workflow".to_string()),
+            .unwrap_or_else(|| format!("Starting reexamination workflow for: {}", topic)),
         AppAction::PatentWorkflow {
             agent_id: "reexamination".to_string(),
-            topic: None,
+            topic: Some(topic),
             case_id,
         },
     )
 }
 
-/// `/invalid [--case <id>]` — Start an invalidation workflow.
+/// `/invalid <topic> [--case <id>]` — Start an invalidation workflow.
 pub fn invalid(_app: &mut App, arg: Option<&str>) -> CommandResult {
-    let case_id = parse_case_arg(arg);
+    let (topic, case_id) = parse_topic_and_case(arg);
+
+    if topic.is_empty() {
+        return CommandResult::error(
+            "Usage: /invalid <topic> [--case <id>]\n\n\
+             Start a patent invalidation workflow.\n\
+             Example: /invalid \"CN204762379U 人形瓜果蔬菜生长定型塑料模具\"",
+        );
+    }
 
     CommandResult::with_message_and_action(
         case_id
             .as_deref()
             .map(|id| format!("Starting invalidation workflow for case: {}", id))
-            .unwrap_or_else(|| "Starting invalidation workflow".to_string()),
+            .unwrap_or_else(|| format!("Starting invalidation workflow for: {}", topic)),
         AppAction::PatentWorkflow {
             agent_id: "invalidation".to_string(),
-            topic: None,
+            topic: Some(topic),
             case_id,
         },
     )
@@ -319,6 +343,33 @@ pub fn docx_command(_app: &mut App, arg: Option<&str>) -> CommandResult {
 }
 
 /// Parse `--case <id>` from a command argument string.
+fn parse_topic_and_case(arg: Option<&str>) -> (String, Option<String>) {
+    let arg = match arg {
+        Some(a) if !a.trim().is_empty() => a,
+        _ => return (String::new(), None),
+    };
+    let parts: Vec<&str> = arg.split_whitespace().collect();
+    let mut topic_parts = Vec::new();
+    let mut case_id = None;
+    let mut i = 0;
+    while i < parts.len() {
+        if parts[i] == "--case" {
+            if let Some(id) = parts.get(i + 1) {
+                case_id = Some(id.to_string());
+            }
+            i += 2;
+        } else {
+            topic_parts.push(parts[i]);
+            i += 1;
+        }
+    }
+    let topic = topic_parts.join(" ");
+    // 去除用户输入中残留的引号（TUI 层面可能保留引号字符）
+    let topic = topic.trim_matches('"').trim_matches('\'').to_string();
+    (topic, case_id)
+}
+
+#[cfg(test)]
 fn parse_case_arg(arg: Option<&str>) -> Option<String> {
     let arg = arg?;
     let parts: Vec<&str> = arg.split_whitespace().collect();

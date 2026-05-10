@@ -158,6 +158,7 @@ impl ToolSpec for PatentWorkflowTool {
             &topic,
             case_id.as_deref(),
             context.mcp_pool.clone(),
+            context.llm_provider.clone(),
         )
         .await;
 
@@ -265,11 +266,37 @@ fn map_agent_to_mcp_tool(
             })
         })),
         "oa-response" => Some(("mcp_yunpat_patent_analyzer", |topic, _case_id| {
-            // patent_analyzer 当前未实现，映射为占位
             json!({
                 "inventionTitle": topic,
                 "claims": [],
                 "specification": {},
+            })
+        })),
+        "invalidation" => Some(("mcp_yunpat_invalid_decision_search", |topic, _case_id| {
+            json!({
+                "inventionTitle": topic,
+                "technicalField": "通用技术领域",
+                "technicalProblem": "无效宣告分析",
+                "technicalSolution": topic,
+                "keyFeatures": [topic],
+            })
+        })),
+        "drafting" => Some(("mcp_yunpat_patent_writer", |topic, _case_id| {
+            json!({
+                "inventionTitle": topic,
+                "technicalField": "通用技术领域",
+                "technicalProblem": "专利撰写",
+                "technicalSolution": topic,
+                "keyFeatures": [topic],
+            })
+        })),
+        "creativity" => Some(("mcp_yunpat_patent_compare", |topic, _case_id| {
+            json!({
+                "inventionTitle": topic,
+                "technicalField": "通用技术领域",
+                "technicalProblem": "创造性分析",
+                "technicalSolution": topic,
+                "keyFeatures": [topic],
             })
         })),
         _ => None,
@@ -291,6 +318,7 @@ async fn execute_agent_locally(
     topic: &str,
     case_id: Option<&str>,
     mcp_pool: Option<std::sync::Arc<tokio::sync::Mutex<crate::mcp::McpPool>>>,
+    llm_provider: Option<std::sync::Arc<dyn yunpat_agents::context::LlmProvider>>,
 ) -> Result<Vec<StageOutput>, String> {
     // === Step 1: 尝试 MCP 工具调用 ===
     if let Some(pool) = &mcp_pool {
@@ -326,7 +354,7 @@ async fn execute_agent_locally(
     }
 
     // === Step 2: 本地 Agent 执行 ===
-    execute_local_agent(agent_id, topic, case_id).await
+    execute_local_agent(agent_id, topic, case_id, llm_provider).await
 }
 
 /// 格式化 MCP 工具结果为字符串
@@ -357,6 +385,7 @@ async fn execute_local_agent(
     agent_id: &str,
     topic: &str,
     case_id: Option<&str>,
+    llm_provider: Option<std::sync::Arc<dyn yunpat_agents::context::LlmProvider>>,
 ) -> Result<Vec<StageOutput>, String> {
     // Try AgentExecutor for agents that implement PatentAgent.
     let input = AgentInput {
@@ -373,32 +402,32 @@ async fn execute_local_agent(
 
     let agent_result: Option<Result<Vec<StageOutput>, String>> = match agent_id {
         "research" => match yunpat_agents::research::ResearchAgent::with_default_kb() {
-            Ok(agent) => Some(run_via_executor(agent, input).await),
+            Ok(agent) => Some(run_via_executor(agent, input, llm_provider.clone()).await),
             Err(e) => Some(Err(format!("Failed to create ResearchAgent: {}", e))),
         },
         "oa-response" => {
             let agent = yunpat_agents::oa_response::OAResponseAgent::new();
-            Some(run_via_executor(agent, input).await)
+            Some(run_via_executor(agent, input, llm_provider.clone()).await)
         }
         "drafting" => {
             let agent = yunpat_agents::drafting::DraftingAgent::new();
-            Some(run_via_executor(agent, input).await)
+            Some(run_via_executor(agent, input, llm_provider.clone()).await)
         }
         "trademark" => {
             let agent = yunpat_agents::trademark::TrademarkAgent::new();
-            Some(run_via_executor(agent, input).await)
+            Some(run_via_executor(agent, input, llm_provider.clone()).await)
         }
         "creativity" => {
             let agent = yunpat_agents::creativity::CreativityAgent::new();
-            Some(run_via_executor(agent, input).await)
+            Some(run_via_executor(agent, input, llm_provider.clone()).await)
         }
         "reexamination" => {
             let agent = yunpat_agents::reexamination::ReexaminationAgent::new();
-            Some(run_via_executor(agent, input).await)
+            Some(run_via_executor(agent, input, llm_provider.clone()).await)
         }
         "invalidation" => {
             let agent = yunpat_agents::invalidation::InvalidationAgent::new();
-            Some(run_via_executor(agent, input).await)
+            Some(run_via_executor(agent, input, llm_provider.clone()).await)
         }
         _ => None,
     };
@@ -682,6 +711,7 @@ async fn execute_local_agent(
 async fn run_via_executor(
     agent: impl yunpat_agents::agent::PatentAgent + 'static,
     input: AgentInput,
+    llm_provider: Option<std::sync::Arc<dyn yunpat_agents::context::LlmProvider>>,
 ) -> Result<Vec<StageOutput>, String> {
     use std::sync::Arc;
     use tokio::sync::RwLock;
@@ -693,8 +723,15 @@ async fn run_via_executor(
 
     let executor = crate::core::agent_executor::AgentExecutor::new(Arc::new(RwLock::new(registry)));
 
+    let boxed_provider: Option<Box<dyn yunpat_agents::context::LlmProvider>> =
+        llm_provider.map(|arc| {
+            Box::new(
+                crate::llm_client::adapter::ArcLlmProviderWrapper(arc),
+            ) as Box<dyn yunpat_agents::context::LlmProvider>
+        });
+
     let rx = executor
-        .execute(agent_id, input, None)
+        .execute(agent_id, input, boxed_provider)
         .await
         .map_err(|e| format!("AgentExecutor failed: {}", e))?;
 

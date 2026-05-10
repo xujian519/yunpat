@@ -2466,7 +2466,7 @@ async fn run_event_loop(
                                 return Ok(());
                             }
                         } else if let Some((agent_id, topic)) = check_patent_intent(app, &input) {
-                            execute_patent_intent(app, &agent_id, topic).await?;
+                            execute_patent_intent(app, config, &agent_id, topic).await?;
                             return Ok(());
                         } else {
                             let queued = if let Some(mut draft) = app.queued_draft.take() {
@@ -2532,7 +2532,7 @@ async fn run_event_loop(
                                 return Ok(());
                             }
                         } else if let Some((agent_id, topic)) = check_patent_intent(app, &input) {
-                            execute_patent_intent(app, &agent_id, topic).await?;
+                            execute_patent_intent(app, config, &agent_id, topic).await?;
                             return Ok(());
                         } else {
                             let queued = if let Some(mut draft) = app.queued_draft.take() {
@@ -3445,6 +3445,7 @@ fn check_patent_intent(app: &mut App, input: &str) -> Option<(String, Option<Str
 /// Execute a patent workflow agent and add results to app history.
 async fn execute_patent_intent(
     app: &mut App,
+    config: &crate::config::Config,
     agent_id: &str,
     topic: Option<String>,
 ) -> anyhow::Result<()> {
@@ -3456,7 +3457,17 @@ async fn execute_patent_intent(
         "topic": topic.clone().unwrap_or_default(),
     });
     let workspace = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    let ctx = crate::tools::spec::ToolContext::new(workspace);
+    let mut ctx = crate::tools::spec::ToolContext::new(workspace);
+
+    if let Ok(client) = crate::client::DeepSeekClient::new(config) {
+        let adapter = crate::llm_client::adapter::LlmClientAdapter::new(
+            std::sync::Arc::new(client) as std::sync::Arc<dyn crate::llm_client::LlmClient>,
+            &app.model,
+        );
+        ctx.llm_provider = Some(std::sync::Arc::new(adapter));
+    } else {
+        eprintln!("[WARN] DeepSeekClient 创建失败 — 专利智能体将使用模板模式（无真实 LLM 生成）");
+    }
 
     match tool.execute(tool_input, &ctx).await {
         Ok(result) => {
@@ -4623,7 +4634,17 @@ async fn apply_command_result(
                     "topic": topic_str,
                 });
                 let workspace = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-                let ctx = crate::tools::spec::ToolContext::new(workspace);
+                let mut ctx = crate::tools::spec::ToolContext::new(workspace);
+
+                if let Ok(client) = crate::client::DeepSeekClient::new(config) {
+                    let adapter = crate::llm_client::adapter::LlmClientAdapter::new(
+                        std::sync::Arc::new(client) as std::sync::Arc<dyn crate::llm_client::LlmClient>,
+                        &app.model,
+                    );
+                    ctx.llm_provider = Some(std::sync::Arc::new(adapter));
+                } else {
+                    eprintln!("[WARN] DeepSeekClient 创建失败 — 专利智能体将使用模板模式（无真实 LLM 生成）");
+                }
 
                 match tool.execute(tool_input, &ctx).await {
                     Ok(result) => {

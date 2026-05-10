@@ -364,6 +364,11 @@ impl PatentAgent for ResearchAgent {
         })
     }
 
+
+    fn set_llm_provider(&mut self, provider: Box<dyn LlmProvider>) {
+        self.llm_provider = Some(provider);
+    }
+
     async fn terminate(&mut self) -> Result<()> {
         self.initialized = false;
         Ok(())

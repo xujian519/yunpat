@@ -1,5 +1,6 @@
 //! Core agent traits.
 
+use crate::context::LlmProvider;
 use crate::types::{AgentId, AgentInput, Confidence, StageDefinition, StageOutput, UserIntent};
 use anyhow::Result;
 use async_trait::async_trait;
@@ -23,6 +24,8 @@ pub trait PatentAgent: Send + Sync {
     async fn initialize(&mut self) -> Result<()>;
     fn execute(&mut self, input: AgentInput) -> Pin<Box<dyn Stream<Item = StageOutput> + Send>>;
     async fn terminate(&mut self) -> Result<()>;
+
+    fn set_llm_provider(&mut self, _provider: Box<dyn LlmProvider>) {}
 }
 
 /// Extended trait for orchestration agents that drive multi-step flows.

@@ -498,19 +498,19 @@ pub const COMMANDS: &[CommandInfo] = &[
     CommandInfo {
         name: "oa",
         aliases: &[],
-        usage: "/oa [--case <id>]",
+        usage: "/oa <topic> [--case <id>]",
         description_id: MessageId::CmdOaDescription,
     },
     CommandInfo {
         name: "reexam",
         aliases: &[],
-        usage: "/reexam [--case <id>]",
+        usage: "/reexam <topic> [--case <id>]",
         description_id: MessageId::CmdReexamDescription,
     },
     CommandInfo {
         name: "invalid",
         aliases: &[],
-        usage: "/invalid [--case <id>]",
+        usage: "/invalid <topic> [--case <id>]",
         description_id: MessageId::CmdInvalidDescription,
     },
     CommandInfo {

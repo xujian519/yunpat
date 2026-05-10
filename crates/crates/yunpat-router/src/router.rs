@@ -109,13 +109,31 @@ impl IntentRecognizer {
             // Reexamination
             KeywordRule {
                 required: vec![],
-                any_of: vec!["复审".into(), "驳回决定".into(), "复审请求".into()],
-                agent_id: AGENT_REEXAMINATION.into(),
+                any_of: vec![
+                    "无效".into(),
+                    "无效宣告".into(),
+                    "无效请求".into(),
+                    "宣告无效".into(),
+                    "提出无效".into(),
+                    "请求宣告无效".into(),
+                    "专利无效".into(),
+                ],
+                agent_id: AGENT_INVALIDATION.into(),
             },
             // Invalidation
             KeywordRule {
                 required: vec![],
-                any_of: vec!["无效".into(), "无效宣告".into(), "无效请求".into()],
+                any_of: vec![
+                    "无效".into(),
+                    "无效宣告".into(),
+                    "无效请求".into(),
+                    "提无效".into(),
+                    "宣告无效".into(),
+                    "请求宣告无效".into(),
+                    "专利无效".into(),
+                    "无效理由".into(),
+                    "无效证据".into(),
+                ],
                 agent_id: AGENT_INVALIDATION.into(),
             },
             // Patent Search

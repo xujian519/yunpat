@@ -30,6 +30,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::time::{Duration, Instant};
 
+pub mod adapter;
 #[cfg(test)]
 pub mod mock;
 

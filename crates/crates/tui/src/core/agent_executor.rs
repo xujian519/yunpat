@@ -20,7 +20,7 @@ impl AgentExecutor {
         &self,
         agent_id: AgentId,
         input: AgentInput,
-        _llm_provider: Option<Box<dyn LlmProvider>>,
+        llm_provider: Option<Box<dyn LlmProvider>>,
     ) -> anyhow::Result<mpsc::Receiver<StageOutput>> {
         let (tx, rx) = mpsc::channel::<StageOutput>(100);
 
@@ -50,6 +50,10 @@ impl AgentExecutor {
             drop(reg);
 
             let mut agent = handler.write().await;
+
+            if let Some(provider) = llm_provider {
+                agent.set_llm_provider(provider);
+            }
 
             if let Err(e) = agent.initialize().await {
                 let _ = tx

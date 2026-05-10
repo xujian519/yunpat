@@ -540,6 +540,10 @@ impl PatentAgent for CreativityAgent {
         })
     }
 
+    fn set_llm_provider(&mut self, provider: Box<dyn LlmProvider>) {
+        self.base.llm_provider = Some(provider);
+    }
+
     async fn terminate(&mut self) -> Result<()> {
         self.base.initialized = false;
         Ok(())

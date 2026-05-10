@@ -139,6 +139,10 @@ pub struct ToolContext {
     /// MCP connection pool for calling MCP server tools (e.g. patent_analyzer).
     /// `None` in test contexts or when MCP is not configured.
     pub mcp_pool: Option<std::sync::Arc<tokio::sync::Mutex<crate::mcp::McpPool>>>,
+
+    /// LLM provider for patent agents (bridges TUI's async LlmClient to
+    /// the agent framework's sync LlmProvider trait).
+    pub llm_provider: Option<std::sync::Arc<dyn yunpat_agents::context::LlmProvider>>,
 }
 
 impl ToolContext {
@@ -170,6 +174,7 @@ impl ToolContext {
             large_output_router: None,
             workshop_vars: None,
             mcp_pool: None,
+            llm_provider: None,
         }
     }
 
@@ -204,6 +209,7 @@ impl ToolContext {
             large_output_router: None,
             workshop_vars: None,
             mcp_pool: None,
+            llm_provider: None,
         }
     }
 
@@ -238,6 +244,7 @@ impl ToolContext {
             large_output_router: None,
             workshop_vars: None,
             mcp_pool: None,
+            llm_provider: None,
         }
     }
 

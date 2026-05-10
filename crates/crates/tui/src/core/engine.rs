@@ -1542,6 +1542,14 @@ impl Engine {
             ctx = ctx.with_sandbox_backend(std::sync::Arc::clone(backend));
         }
 
+        if let Some(client) = self.yunpat_client.as_ref() {
+            let adapter = crate::llm_client::adapter::LlmClientAdapter::new(
+                client.clone(),
+                &self.config.model,
+            );
+            ctx.llm_provider = Some(std::sync::Arc::new(adapter));
+        }
+
         match mode {
             // Plan mode is read-only investigation; the shell tool is not
             // registered, so leaving the sandbox policy at the seatbelt-strict

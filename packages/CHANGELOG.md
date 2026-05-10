@@ -7,11 +7,11 @@
 
 ## [Unreleased]
 
-### 当前状态 (2026-05-08)
+### 当前状态 (2026-05-10)
 
 **总体完成度**: ~77%
 
-**项目规模**: 20 个顶层包 + 30 个 Agent 子包，489 个 TS 源文件，237 个测试文件，核心包约 63,000 行代码，知识库 4,382 个 Markdown 文件，文档 371 个文件。
+**项目规模**: 20 个顶层包 + 30 个 Agent 子包，511 个 TS 源文件，237 个测试文件，核心包约 56,000 行代码，知识库 4,382 个 Markdown 文件，文档 371 个文件。
 
 #### 核心框架 (packages/core) - 95% 完成
 
@@ -89,6 +89,25 @@
 ---
 
 ## 已完成里程碑
+
+### TypeScript 业务层精简 — 阶段 3：大文件拆分 (2026-05-10)
+
+10 个 >700 行文件拆分为 facade + 独立模块（22 个新文件），所有文件 < 450 行，公开 API 不变：
+- `core/reasoning/ReActLoop.ts` → PlanAndSolveStrategy.ts（删除 307 行死代码）
+- `core/reasoning/EnhancedReflection.ts` → ReflectionTypes.ts + ReflectionAssessors.ts
+- `core/replanning/IncrementalPlanner.ts` → PlanCalculations.ts
+- `core/gateway/Gateway.ts` → GatewayTypes.ts + GatewayAuth.ts
+- `core/validation/ResultValidator.ts` → ResultValidatorTypes.ts + QualityChecker.ts + ConsistencyDetector.ts
+- `mcp-server/ProjectScanTool.ts` → ProjectScanHelpers.ts
+- `patent-responder/SuccessPredictor.ts` → predictionTypes.ts + predictionUtils.ts
+- `patent-responder/OAParser.ts` → OAParserPatterns.ts + OAParserHelpers.ts
+- `tech-unit/MinimumTechUnitAgent.ts` → featureExtractor.ts + synergyAnalyzer.ts
+- `unified-knowledge-graph/PostgreSQLClient.ts` → PostgreSQLTypes.ts + PostgreSQLQueryRunner.ts
+
+### TypeScript 业务层精简 — 阶段 1+2：死代码清除 + 上帝文件拆分 (2026-05-09)
+
+- 阶段 1：清除 ~7,000 行死代码（废弃 TUI、mock 数据、未使用的模块）
+- 阶段 2：10 个上帝文件拆分为 25+ 文件（AllTools、PatentDocxGenerator、KnowledgeBase 等）
 
 ### TODO 清单实现与智能体增强 (2026-05-08)
 

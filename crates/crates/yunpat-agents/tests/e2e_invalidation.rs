@@ -109,6 +109,7 @@ impl yunpat_agents::context::LlmProvider for DeepSeekLlmProvider {
 }
 
 #[tokio::test]
+#[ignore = "需要本地测试文件 tests/manual/无效/"]
 async fn test_invalidation_workflow_end_to_end() {
     // Real test data from the manual test directory.
     let case_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -187,21 +188,21 @@ async fn test_invalidation_workflow_end_to_end() {
             }
         }
 
-        if output.requires_approval {
-            if let Some(ref req) = output.approval_request {
-                println!("\n[Approval Gate] {}", req.prompt);
-                for opt in &req.options {
-                    let default = if opt.is_default { " (default)" } else { "" };
-                    println!("  [{}] {}{}", opt.value, opt.label, default);
-                }
-                let default = req
-                    .options
-                    .iter()
-                    .find(|o| o.is_default)
-                    .map(|o| o.value.clone())
-                    .unwrap_or_else(|| "continue".to_string());
-                println!("  → Auto-approved: {}", default);
+        if output.requires_approval
+            && let Some(ref req) = output.approval_request
+        {
+            println!("\n[Approval Gate] {}", req.prompt);
+            for opt in &req.options {
+                let default = if opt.is_default { " (default)" } else { "" };
+                println!("  [{}] {}{}", opt.value, opt.label, default);
             }
+            let default = req
+                .options
+                .iter()
+                .find(|o| o.is_default)
+                .map(|o| o.value.clone())
+                .unwrap_or_else(|| "continue".to_string());
+            println!("  → Auto-approved: {}", default);
         }
 
         println!(

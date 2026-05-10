@@ -2,7 +2,7 @@
 
 > 云熙知识产权智能体（YunPat Agent）系统架构文档
 >
-> 最后更新：2026-05-09
+> 最后更新：2026-05-11
 
 ## 目录
 
@@ -28,10 +28,9 @@
 
 | 维度 | 数据 |
 |------|------|
-| Rust 代码 | ~200K 行，18 个 crate |
-| TypeScript 代码 | ~188K 行，20 个基础设施包 |
+| Rust 代码 | ~208K 行，18 个 crate |
+| TypeScript 代码 | ~196K 行，16 个基础设施包 |
 | 专业 Agent | 24 个 |
-| 总文件数 | ~6,700 个 |
 | 构建系统 | Cargo（Rust）+ pnpm workspace（TypeScript） |
 
 ### 1.3 设计哲学
@@ -149,7 +148,6 @@ PostgreSQL 用于生产数据持久化，Redis 用于缓存，SQLite 用于 Rust
 | `yunpat-models` | ~1.2K | 多提供商 ModelProvider 接口（SSE、OpenAI 兼容） |
 | `config` | ~2K | 配置加载、profiles、环境变量优先级管理 |
 | `secrets` | ~800 | OS keyring API key 安全存储 |
-| `tui-core` | ~200 | 事件驱动 TUI 状态机骨架 |
 
 ### 3.2 核心运行时结构
 
@@ -193,9 +191,9 @@ Pre-hooks → 审批门控（非 yolo 模式）→ 工具执行 → Post-hooks
                     │   cli   │
                     └────┬────┘
                          ↓
-┌─────────┐         ┌─────────┐         ┌─────────────┐
-│app-server│         │   tui   │         │  tui-core   │
-└────┬────┘         └────┬────┘         └─────────────┘
+┌─────────┐         ┌─────────┐
+│app-server│         │   tui   │
+└────┬────┘         └────┬────┘
      │                   │
      └───────────────────┘
                          ↓
@@ -627,7 +625,6 @@ make format
 | `tools` | `crates/tools/` | 工具生命周期、Schema 验证、并行调度 |
 | `protocol` | `crates/protocol/` | 协议类型 |
 | `yunpat-router` | `crates/yunpat-router/` | 意图路由、命令分发 |
-| `tui-core` | `crates/tui-core/` | TUI 状态机 |
 
 ### 附录 B：TypeScript 包详细列表
 

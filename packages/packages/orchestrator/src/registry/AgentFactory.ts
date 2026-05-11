@@ -10,8 +10,7 @@
  * - 所有 Agent 基类（Agent → KnowledgeEnhancedAgent → ProfessionalAgent）都接受此格式
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
+import type { LLMAdapter, EventBus, MemoryStore, ToolRegistry } from '@yunpat/core'
 import { AgentRegistry, type ExecutableAgent } from './AgentRegistry.js'
 import { agentManifest, type AgentManifestEntry } from './agentManifest.js'
 import { fileURLToPath } from 'url'
@@ -21,10 +20,10 @@ import { dirname, resolve } from 'path'
  * Agent 共享依赖
  */
 export interface AgentSharedDeps {
-  llm: any
-  eventBus: any
-  memory: any
-  tools: any
+  llm: LLMAdapter
+  eventBus: EventBus
+  memory: MemoryStore
+  tools: ToolRegistry
 }
 
 export class AgentFactory {
@@ -88,7 +87,7 @@ export class AgentFactory {
    * 使用 dynamic import() 按需加载，agent 包不可用时优雅跳过。
    */
   private async createAgent(entry: AgentManifestEntry): Promise<ExecutableAgent | null> {
-    let module: any
+    let module: Record<string, unknown>
 
     try {
       if (this.isDev) {
@@ -120,7 +119,7 @@ export class AgentFactory {
     }
 
     const AgentClass = module[entry.className]
-    if (!AgentClass) {
+    if (typeof AgentClass !== 'function') {
       console.warn(`[AgentFactory] Class "${entry.className}" not found in "${entry.packageName}"`)
       return null
     }
@@ -135,9 +134,9 @@ export class AgentFactory {
       tools: this.deps.tools,
     }
 
-    // 实例化（大部分 Agent 接受 config 对象，部分用 any 兼容）
-    const agent = new AgentClass(config)
-    return agent as ExecutableAgent
+    // 实例化（大部分 Agent 接受 config 对象）
+    const agent = new (AgentClass as new (...args: unknown[]) => ExecutableAgent)(config)
+    return agent
   }
 
   /**

@@ -9,7 +9,7 @@
  * 5. 知识库缓存
  */
 
-import { KnowledgeEnhancedAgent, type ExecutionContext, SkillLoader } from '@yunpat/core'
+import { KnowledgeEnhancedAgent, type ExecutionContext, type AgentConfig, SkillLoader } from '@yunpat/core'
 import { join } from 'path'
 import {
   type InventionUnderstandingInput,
@@ -41,6 +41,10 @@ import {
   extractTerminologyMappings,
 } from './OutputProcessor.js'
 
+interface InventionUnderstandingConfig extends AgentConfig {
+  skillLoader?: SkillLoader
+}
+
 export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
   InventionUnderstandingInput,
   InventionUnderstandingOutput
@@ -49,7 +53,7 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
   private skillLoader?: SkillLoader
   private readonly terminologyMap = new Map(TERMINOLOGY_MAP_ENTRIES)
 
-  constructor(config: any = {}) {
+  constructor(config: InventionUnderstandingConfig = {} as InventionUnderstandingConfig) {
     super(config)
     this.skillLoader =
       config.skillLoader ||
@@ -181,7 +185,7 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
   private async retrieveMethodology(): Promise<KnowledgeRetrievalResult['methodology']> {
     const cacheKey = this.buildCacheKey(RetrievalScenario.METHODOLOGY, {})
     const cached = await this.cache.get(cacheKey)
-    if (cached) return cached as unknown as KnowledgeRetrievalResult['methodology']
+    if (cached) return cached as KnowledgeRetrievalResult['methodology']
 
     const [problemItems, featureItems, effectItems, tripletItems] = await Promise.all([
       this.queryKnowledgeWithFallback(
@@ -218,14 +222,14 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
       triplet: tripletItems.map((item) => item.content),
     }
 
-    await this.cache.set(cacheKey, methodology as unknown as any[])
+    await this.cache.set(cacheKey, methodology)
     return methodology
   }
 
   private async retrieveTerminology(field: string): Promise<Map<string, string>> {
     const cacheKey = this.buildCacheKey(RetrievalScenario.TERMINOLOGY, { field })
     const cached = await this.cache.get(cacheKey)
-    if (cached) return new Map(cached)
+    if (cached) return new Map(cached as Iterable<readonly [string, string]>)
 
     const [generalResults, domainResults] = await Promise.all([
       this.queryKnowledgeWithFallback(['权利要求-清楚的要求', '技术特征的认定', '专利术语标准'], 2),
@@ -248,7 +252,7 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
   ): Promise<KnowledgeRetrievalResult['domainKnowledge']> {
     const cacheKey = this.buildCacheKey(RetrievalScenario.DOMAIN, { field })
     const cached = await this.cache.get(cacheKey)
-    if (cached) return cached as unknown as KnowledgeRetrievalResult['domainKnowledge']
+    if (cached) return cached as KnowledgeRetrievalResult['domainKnowledge']
 
     const domainInfo = FIELD_GUIDE_MAP[field]
     const domainKnowledge: KnowledgeRetrievalResult['domainKnowledge'] = {}
@@ -278,7 +282,7 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
       }
     }
 
-    await this.cache.set(cacheKey, domainKnowledge as unknown as any[])
+    await this.cache.set(cacheKey, domainKnowledge)
     return domainKnowledge
   }
 
@@ -516,7 +520,7 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
     }
   }
 
-  private buildCacheKey(scenario: RetrievalScenario, params: Record<string, any>): string {
+  private buildCacheKey(scenario: RetrievalScenario, params: Record<string, string>): string {
     return [scenario, params.field || 'general', params.query?.substring(0, 20) || ''].join(':')
   }
 

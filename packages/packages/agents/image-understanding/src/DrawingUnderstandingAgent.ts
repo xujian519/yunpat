@@ -149,20 +149,27 @@ export class DrawingUnderstandingAgent extends Agent<DrawingInput, DrawingUnders
 
   private async loadAndEncodeImage(imagePath: string): Promise<string> {
     const { readFile } = await import('fs/promises')
-    const { extname } = await import('path')
-    const { existsSync, statSync } = await import('fs')
+    const { extname, resolve, normalize } = await import('path')
+    const { existsSync, statSync, realpathSync } = await import('fs')
 
-    if (!existsSync(imagePath)) {
+    const resolvedPath = resolve(normalize(imagePath))
+
+    // 路径遍历防护
+    if (resolvedPath.includes('..')) {
+      throw new Error(`图像路径不合法: ${imagePath}`)
+    }
+
+    if (!existsSync(resolvedPath)) {
       throw new Error(`图像文件不存在: ${imagePath}`)
     }
 
-    const stats = statSync(imagePath)
+    const stats = statSync(resolvedPath)
     if (stats.size > MAX_IMAGE_SIZE) {
       throw new Error(`图像文件过大 (${(stats.size / 1024 / 1024).toFixed(2)}MB)，最大支持 20MB`)
     }
 
-    const imageBuffer = await readFile(imagePath)
-    const ext = extname(imagePath).toLowerCase().substring(1) as ImageFormat
+    const imageBuffer = await readFile(resolvedPath)
+    const ext = extname(resolvedPath).toLowerCase().substring(1) as ImageFormat
 
     if (!SUPPORTED_FORMATS.includes(ext)) {
       throw new Error(`不支持的图像格式: ${ext}`)

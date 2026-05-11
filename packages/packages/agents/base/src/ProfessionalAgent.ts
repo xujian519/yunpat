@@ -23,34 +23,15 @@ import {
   PromptAssemblyPipeline,
   type AgentDefinition,
   agentDefinitionLoader,
-  sectionRegistry,
-  registerSection,
-  PERSONA_LIBRARY,
-  registerDefaultPromptSections as registerCoreDefaultPromptSections,
   // Phase 1: Token 预算与压缩
   TokenBudgetManager,
   type TokenBudgetConfig,
   DocumentSegmentLoader,
+  estimateMessagesTokens,
   microCompact,
 } from '@yunpat/core'
 
-/**
- * Agent执行结果
- */
-export interface AgentResult {
-  /** 是否成功 */
-  success: boolean
-  /** 数据 */
-  data: unknown
-  /** 错误信息（失败时） */
-  error?: Error
-  /** 执行时间（毫秒） */
-  executionTime: number
-  /** 是否需要HITL */
-  requiresHITL?: boolean
-  /** HITL检查点（requiresHITL=true时） */
-  hitlCheckpoint?: string
-}
+import { type AgentResult, errorToAgentError } from './types.js'
 
 /**
  * 执行上下文（扩展版）
@@ -187,7 +168,7 @@ export abstract class ProfessionalAgent<TInput = any, TOutput = any> extends Kno
   /**
    * run方法：适配OrchestratorAgent调用
    */
-  async run(input: TInput, context: ExtendedExecutionContext): Promise<AgentResult> {
+  async run(input: TInput, context: ExtendedExecutionContext): Promise<AgentResult<TOutput>> {
     const startTime = Date.now()
 
     try {
@@ -214,16 +195,21 @@ export abstract class ProfessionalAgent<TInput = any, TOutput = any> extends Kno
         executionTime: Date.now() - startTime,
       }
     } catch (error) {
+      const agentError = errorToAgentError(
+        error instanceof Error ? error : new Error(String(error))
+      )
+
       context.logger?.error(`[${this.name}] 执行失败`, {
-        error: error instanceof Error ? error.message : String(error),
+        error: agentError.message,
+        code: agentError.code,
         duration: Date.now() - startTime,
       })
 
       return {
         success: false,
-        error: error instanceof Error ? error : new Error(String(error)),
+        error: agentError,
         executionTime: Date.now() - startTime,
-        data: undefined,
+        data: undefined as unknown as TOutput,
       }
     }
   }
@@ -287,7 +273,6 @@ export abstract class ProfessionalAgent<TInput = any, TOutput = any> extends Kno
       return messages
     }
 
-    const { estimateMessagesTokens } = await import('@yunpat/core')
     const currentTokens = estimateMessagesTokens(messages)
 
     if (this.tokenBudgetManager.shouldAutoCompact(currentTokens)) {
@@ -381,14 +366,4 @@ export abstract class ProfessionalAgent<TInput = any, TOutput = any> extends Kno
     const message = error instanceof Error ? error.message : String(error)
     return `[${this.name}] ${context}: ${message}`
   }
-}
-
-/**
- * 初始化默认 Prompt Sections
- *
- * 在应用启动时调用一次，注册所有 Agent 共享的默认 Section。
- * @deprecated 请使用 `@yunpat/core` 中的 `registerDefaultPromptSections()`
- */
-export function registerDefaultPromptSections(): void {
-  registerCoreDefaultPromptSections()
 }

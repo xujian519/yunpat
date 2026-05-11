@@ -24,6 +24,7 @@ import type {
   PatentManagerInput,
   PatentManagerOutput,
   PortfolioStatistics,
+  NotificationEvent,
 } from './types/PatentTypes.js'
 
 /**
@@ -137,7 +138,7 @@ export class PatentManagerAgent extends Agent<PatentManagerInput, PatentManagerO
     const { input, operation } = plan
     const startTime = Date.now()
 
-    let data: any
+    let data: unknown
     let success = true
     let error: string | undefined
 
@@ -370,7 +371,8 @@ export class PatentManagerAgent extends Agent<PatentManagerInput, PatentManagerO
       status: input.query?.status,
       patentType: input.query?.patentType,
       dateRange: input.query?.dateRange,
-      pagination: input.query as any,
+      // input.query 的结构与 PatentQuery.pagination 存在设计偏差，需类型断言
+      pagination: input.query as PatentQuery['pagination'],
     }
 
     console.log(`   列出专利（条件: ${JSON.stringify(query)})`)
@@ -656,11 +658,11 @@ ${portfolio.riskAlerts.map((alert) => `- ${alert}`).join('\n')}
    * 发送通知
    */
   private async sendNotification(
-    event: any,
+    event: NotificationEvent,
     data: {
       applicationNumber: string
       title: string
-      event: string
+      event: NotificationEvent
       newStatus?: string
       deadlineDate?: Date
       amount?: number
@@ -668,7 +670,7 @@ ${portfolio.riskAlerts.map((alert) => `- ${alert}`).join('\n')}
     }
   ): Promise<void> {
     try {
-      await this.notificationService.sendNotification(event, data as any)
+      await this.notificationService.sendNotification(event, data)
     } catch (error) {
       console.error('[PatentManager] 发送通知失败:', error)
       // 不抛出错误，避免影响主流程

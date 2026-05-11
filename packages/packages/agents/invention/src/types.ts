@@ -121,11 +121,11 @@ interface CacheItem {
  * 知识缓存
  */
 export class KnowledgeCache {
-  private L1 = new Map<string, any[]>()
+  private L1 = new Map<string, unknown>()
   private L2 = new Map<string, CacheItem>()
   private readonly TTL = 3600000
 
-  async get(key: string): Promise<any[] | null> {
+  async get(key: string): Promise<unknown | null> {
     if (this.L1.has(key)) {
       return this.L1.get(key)!
     }
@@ -139,9 +139,9 @@ export class KnowledgeCache {
     return null
   }
 
-  async set(key: string, results: any[]): Promise<void> {
+  async set(key: string, results: unknown): Promise<void> {
     this.L1.set(key, results)
-    this.L2.set(key, { results, timestamp: Date.now() })
+    this.L2.set(key, { results: results as unknown[], timestamp: Date.now() })
   }
 
   private isExpired(data: CacheItem): boolean {

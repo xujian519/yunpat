@@ -1,3 +1,8 @@
+/**
+ * @deprecated 使用 PatentSearchAgent.v2.ts（ProfessionalAgent 版本）或 PatentSearchAgent.v3.ts（真实数据库版本）
+ * 此文件不再从 index.ts 导出，仅保留作为参考
+ */
+
 import {
   Agent,
   type ExecutionContext,

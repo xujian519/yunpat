@@ -1,3 +1,11 @@
+/**
+ * 对比报告生成智能体（知识图谱增强版）
+ *
+ * 注意：此 Agent 也有独立包实现 @yunpat/comparison-report-generator（纯算法版）。
+ * 两个版本接口不同，本版本使用 KnowledgeEnhancedAgent 支持知识图谱检索。
+ * 编排层通过 agentId 'comparison-report-generator' 调用独立包版本。
+ */
+
 import { KnowledgeEnhancedAgent, SkillLoader, type ExecutionContext } from '@yunpat/core'
 import { join } from 'path'
 

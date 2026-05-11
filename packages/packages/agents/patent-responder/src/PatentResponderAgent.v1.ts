@@ -1,5 +1,9 @@
 /**
- * 专利答复智能体
+ * 专利答复智能体 v1（旧版兼容）
+ *
+ * @deprecated 使用 PatentResponderAgent.v4.ts（ProfessionalAgent 增强版）或 PatentResponderAgentV5.ts（数据库集成版）
+ *
+ * 专业的 OA 审查意见答复智能体，提供：
  *
  * 专业的 OA 审查意见答复智能体，提供：
  * 1. 审查意见分析

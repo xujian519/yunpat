@@ -9,3 +9,10 @@ export type {
   CreativityAssessment,
   RiskAssessment,
 } from './ComparisonAnalyzerAgent.js'
+
+export { CreativeAnalyzerAgent } from './CreativeAnalyzerAgent.js'
+
+export type {
+  CreativeAnalyzerInput,
+  CreativeAnalyzerOutput,
+} from './CreativeAnalyzerAgent.js'

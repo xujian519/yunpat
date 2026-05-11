@@ -8,7 +8,6 @@ export { ProfessionalAgent } from './ProfessionalAgent.js'
 export { SkillsProfessionalAgent } from './SkillsProfessionalAgent.js'
 export type {
   ProfessionalAgentConfig,
-  AgentResult as LegacyAgentResult,
   ExtendedExecutionContext,
   LLMCallParams,
   LLMResponse,

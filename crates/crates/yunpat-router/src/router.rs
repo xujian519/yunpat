@@ -11,6 +11,22 @@ pub const AGENT_REEXAMINATION: &str = "reexamination";
 pub const AGENT_INVALIDATION: &str = "invalidation";
 pub const AGENT_SEARCH: &str = "search";
 pub const AGENT_ANALYSIS: &str = "analysis";
+// 新增 Agent 常量
+pub const AGENT_INVENTION: &str = "invention";
+pub const AGENT_PRIOR_ART_SEARCH: &str = "prior-art-search";
+pub const AGENT_SPEC_DRAFTER: &str = "spec-drafter";
+pub const AGENT_ABSTRACT_DRAFTER: &str = "abstract-drafter";
+pub const AGENT_COMPARISON_REPORT: &str = "comparison-report";
+pub const AGENT_FORMAT_CONVERT: &str = "format-convert";
+pub const AGENT_IMAGE_UNDERSTANDING: &str = "image-understanding";
+pub const AGENT_TECHNICAL_DRAWING: &str = "technical-drawing";
+pub const AGENT_SUBJECT_MATTER: &str = "subject-matter";
+pub const AGENT_UNITY_CHECK: &str = "unity-check";
+pub const AGENT_SPEC_FORMALITY: &str = "spec-formality";
+pub const AGENT_TECH_UNIT: &str = "tech-unit";
+pub const AGENT_RESEARCHER: &str = "researcher";
+pub const AGENT_WRITER: &str = "writer";
+pub const AGENT_PATENT_MANAGER: &str = "patent-manager";
 
 /// Result of routing a user input to an agent.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -167,6 +183,83 @@ impl IntentRecognizer {
                 ],
                 agent_id: AGENT_ANALYSIS.into(),
             },
+            // Invention Understanding
+            KeywordRule {
+                required: vec![],
+                any_of: vec![
+                    "交底书".into(),
+                    "交底书分析".into(),
+                    "发明理解".into(),
+                    "技术方案分析".into(),
+                    "发明构思".into(),
+                ],
+                agent_id: AGENT_INVENTION.into(),
+            },
+            // Prior Art Search
+            KeywordRule {
+                required: vec![],
+                any_of: vec![
+                    "查新检索".into(),
+                    "现有技术检索".into(),
+                    "先导技术".into(),
+                    "对比文件检索".into(),
+                ],
+                agent_id: AGENT_PRIOR_ART_SEARCH.into(),
+            },
+            // Specification Drafter
+            KeywordRule {
+                required: vec![],
+                any_of: vec![
+                    "写说明书".into(),
+                    "撰写说明书".into(),
+                    "说明书撰写".into(),
+                    "生成说明书".into(),
+                ],
+                agent_id: AGENT_SPEC_DRAFTER.into(),
+            },
+            // Subject Matter Check
+            KeywordRule {
+                required: vec![],
+                any_of: vec![
+                    "保护客体".into(),
+                    "客体检查".into(),
+                    "可专利性".into(),
+                    "专利法第二条".into(),
+                    "专利法第25条".into(),
+                ],
+                agent_id: AGENT_SUBJECT_MATTER.into(),
+            },
+            // Unity Check
+            KeywordRule {
+                required: vec![],
+                any_of: vec![
+                    "单一性".into(),
+                    "单一性检查".into(),
+                    "缺乏单一性".into(),
+                ],
+                agent_id: AGENT_UNITY_CHECK.into(),
+            },
+            // Format Check
+            KeywordRule {
+                required: vec![],
+                any_of: vec![
+                    "格式检查".into(),
+                    "形式审查".into(),
+                    "格式合规".into(),
+                    "说明书格式".into(),
+                ],
+                agent_id: AGENT_SPEC_FORMALITY.into(),
+            },
+            // Tech Unit
+            KeywordRule {
+                required: vec![],
+                any_of: vec![
+                    "技术单元".into(),
+                    "最小技术单元".into(),
+                    "技术特征划分".into(),
+                ],
+                agent_id: AGENT_TECH_UNIT.into(),
+            },
         ];
 
         Self { rules }
@@ -244,6 +337,22 @@ impl Router {
         command_map.insert("invalid", AGENT_INVALIDATION);
         command_map.insert("search", AGENT_SEARCH);
         command_map.insert("analysis", AGENT_ANALYSIS);
+        // 新增 slash 命令映射
+        command_map.insert("invention", AGENT_INVENTION);
+        command_map.insert("prior-art", AGENT_PRIOR_ART_SEARCH);
+        command_map.insert("spec", AGENT_SPEC_DRAFTER);
+        command_map.insert("abstract", AGENT_ABSTRACT_DRAFTER);
+        command_map.insert("compare", AGENT_COMPARISON_REPORT);
+        command_map.insert("convert", AGENT_FORMAT_CONVERT);
+        command_map.insert("image", AGENT_IMAGE_UNDERSTANDING);
+        command_map.insert("drawing", AGENT_TECHNICAL_DRAWING);
+        command_map.insert("subject", AGENT_SUBJECT_MATTER);
+        command_map.insert("unity", AGENT_UNITY_CHECK);
+        command_map.insert("formality", AGENT_SPEC_FORMALITY);
+        command_map.insert("techunit", AGENT_TECH_UNIT);
+        command_map.insert("researcher", AGENT_RESEARCHER);
+        command_map.insert("write", AGENT_WRITER);
+        command_map.insert("manage", AGENT_PATENT_MANAGER);
 
         Self {
             recognizer: IntentRecognizer::new(),

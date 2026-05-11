@@ -39,6 +39,23 @@ import {
   PatentDispatchTool,
   PatentWriterTool,
   PatentCompareTool,
+  // 新增工具
+  InventionUnderstandingTool,
+  PriorArtAnalyzerTool,
+  SpecificationDrafterTool,
+  AbstractDrafterTool,
+  WriterTool,
+  SubjectMatterCheckerTool,
+  UnityCheckerTool,
+  SpecFormalityCheckerTool,
+  TechUnitExtractorTool,
+  PriorArtSearchTool,
+  ComparisonReportTool,
+  ResearcherTool,
+  FormatConverterTool,
+  PatentManagerTool,
+  ImageUnderstandingTool,
+  TechnicalDrawingTool,
 } from './tools/index.js'
 
 import type { McpToolContext } from './types.js'
@@ -54,7 +71,7 @@ function createServer() {
   const memory = new ShortTermMemory()
   const tools = new ToolRegistry(eventBus)
 
-  // 创建工具实例
+  // 创建工具实例 — 原有工具
   const patentSearchTool = new PatentSearchTool()
   const claimsGeneratorTool = new ClaimsGeneratorTool()
   const qualityCheckerTool = new QualityCheckerTool()
@@ -66,8 +83,27 @@ function createServer() {
   const patentWriterTool = new PatentWriterTool()
   const patentCompareTool = new PatentCompareTool()
 
-  // 所有工具列表
+  // 创建工具实例 — 新增工具（覆盖全部 24 个 Agent）
+  const inventionUnderstandingTool = new InventionUnderstandingTool()
+  const priorArtAnalyzerTool = new PriorArtAnalyzerTool()
+  const specificationDrafterTool = new SpecificationDrafterTool()
+  const abstractDrafterTool = new AbstractDrafterTool()
+  const writerTool = new WriterTool()
+  const subjectMatterCheckerTool = new SubjectMatterCheckerTool()
+  const unityCheckerTool = new UnityCheckerTool()
+  const specFormalityCheckerTool = new SpecFormalityCheckerTool()
+  const techUnitExtractorTool = new TechUnitExtractorTool()
+  const priorArtSearchTool = new PriorArtSearchTool()
+  const comparisonReportTool = new ComparisonReportTool()
+  const researcherTool = new ResearcherTool()
+  const formatConverterTool = new FormatConverterTool()
+  const patentManagerTool = new PatentManagerTool()
+  const imageUnderstandingTool = new ImageUnderstandingTool()
+  const technicalDrawingTool = new TechnicalDrawingTool()
+
+  // 所有工具列表（共 26 个工具）
   const toolsList = [
+    // 原有工具
     patentSearchTool,
     claimsGeneratorTool,
     qualityCheckerTool,
@@ -78,6 +114,23 @@ function createServer() {
     patentDispatchTool,
     patentWriterTool,
     patentCompareTool,
+    // 新增工具
+    inventionUnderstandingTool,
+    priorArtAnalyzerTool,
+    specificationDrafterTool,
+    abstractDrafterTool,
+    writerTool,
+    subjectMatterCheckerTool,
+    unityCheckerTool,
+    specFormalityCheckerTool,
+    techUnitExtractorTool,
+    priorArtSearchTool,
+    comparisonReportTool,
+    researcherTool,
+    formatConverterTool,
+    patentManagerTool,
+    imageUnderstandingTool,
+    technicalDrawingTool,
   ]
 
   // 构建工具名称 → 实例的查找 Map

@@ -618,6 +618,23 @@ impl ToolRegistryBuilder {
             .with_tool(Arc::new(PatentWorkflowTool::new("paper_search")))
             .with_tool(Arc::new(PatentWorkflowTool::new("patent_db")))
             .with_tool(Arc::new(PatentWorkflowTool::new("legal_search")))
+            // 新增：覆盖全部 23 个 Agent（不含 base 基类）
+            .with_tool(Arc::new(PatentWorkflowTool::new("invention")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("prior-art-search")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("spec-drafter")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("abstract-drafter")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("analysis")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("comparison-report")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("format-convert")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("image-understanding")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("technical-drawing")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("subject-matter")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("unity-check")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("spec-formality")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("tech-unit")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("researcher")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("writer")))
+            .with_tool(Arc::new(PatentWorkflowTool::new("patent-manager")))
     }
 
     /// Include all agent tools (file tools + shell + note + search + patch).

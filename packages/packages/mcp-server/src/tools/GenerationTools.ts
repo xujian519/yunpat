@@ -323,7 +323,7 @@ export class PatentWriterTool extends BaseMcpTool<any, any> {
     }),
   } satisfies import('./BaseMcpTool.js').McpToolMetadata
 
-  protected async executeInternal(input: any, context: McpToolContext) {
+  protected async executeInternal(input: any, context: McpToolContext): Promise<any> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification-drafter')

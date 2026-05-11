@@ -48,6 +48,18 @@
     "@yunpat/agent-legal-qa": "workspace:*",
     "@yunpat/unified-knowledge-graph": "workspace:*",
     "@yunpat/document-tools": "workspace:*",
+    "@yunpat/agent-analysis": "workspace:*",
+    "@yunpat/agent-abstract-drafter": "workspace:*",
+    "@yunpat/agent-writer": "workspace:*",
+    "@yunpat/subject-matter-checker": "workspace:*",
+    "@yunpat/unity-checker": "workspace:*",
+    "@yunpat/spec-formality-checker": "workspace:*",
+    "@yunpat/agent-tech-unit": "workspace:*",
+    "@yunpat/agent-researcher": "workspace:*",
+    "@yunpat/format-converter": "workspace:*",
+    "@yunpat/agent-patent-manager": "workspace:*",
+    "@yunpat/agent-image-understanding": "workspace:*",
+    "@yunpat/technical-drawing": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {

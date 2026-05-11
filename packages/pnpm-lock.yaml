@@ -893,9 +893,18 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.4
         version: 1.29.0(zod@3.25.76)
+      '@yunpat/agent-abstract-drafter':
+        specifier: workspace:*
+        version: link:../agents/abstract-drafter
+      '@yunpat/agent-analysis':
+        specifier: workspace:*
+        version: link:../agents/analysis
       '@yunpat/agent-claim-generator':
         specifier: workspace:*
         version: link:../agents/claim-generator
+      '@yunpat/agent-image-understanding':
+        specifier: workspace:*
+        version: link:../agents/image-understanding
       '@yunpat/agent-invention':
         specifier: workspace:*
         version: link:../agents/invention
@@ -905,6 +914,9 @@ importers:
       '@yunpat/agent-patent-analyzer':
         specifier: workspace:*
         version: link:../agents/patent-analyzer
+      '@yunpat/agent-patent-manager':
+        specifier: workspace:*
+        version: link:../agents/patent-manager
       '@yunpat/agent-patent-responder':
         specifier: workspace:*
         version: link:../agents/patent-responder
@@ -914,12 +926,21 @@ importers:
       '@yunpat/agent-quality':
         specifier: workspace:*
         version: link:../agents/quality
+      '@yunpat/agent-researcher':
+        specifier: workspace:*
+        version: link:../agents/researcher
       '@yunpat/agent-search':
         specifier: workspace:*
         version: link:../agents/search
       '@yunpat/agent-specification-drafter':
         specifier: workspace:*
         version: link:../agents/specification-drafter
+      '@yunpat/agent-tech-unit':
+        specifier: workspace:*
+        version: link:../agents/tech-unit
+      '@yunpat/agent-writer':
+        specifier: workspace:*
+        version: link:../agents/writer
       '@yunpat/comparison-report-generator':
         specifier: workspace:*
         version: link:../agents/comparison-report-generator
@@ -929,9 +950,24 @@ importers:
       '@yunpat/document-tools':
         specifier: workspace:*
         version: link:../document-tools
+      '@yunpat/format-converter':
+        specifier: workspace:*
+        version: link:../agents/format-converter
+      '@yunpat/spec-formality-checker':
+        specifier: workspace:*
+        version: link:../agents/spec-formality-checker
+      '@yunpat/subject-matter-checker':
+        specifier: workspace:*
+        version: link:../agents/subject-matter-checker
+      '@yunpat/technical-drawing':
+        specifier: workspace:*
+        version: link:../agents/technical-drawing
       '@yunpat/unified-knowledge-graph':
         specifier: workspace:*
         version: link:../unified-knowledge-graph
+      '@yunpat/unity-checker':
+        specifier: workspace:*
+        version: link:../agents/unity-checker
       zod:
         specifier: ^3.25.76
         version: 3.25.76

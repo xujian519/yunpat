@@ -2,10 +2,10 @@
  * DrawingUnderstandingAgent 单元测试
  */
 
-import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest'
+import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest'
 import { DrawingUnderstandingAgent } from '../src/DrawingUnderstandingAgent.js'
 import { EventBus } from '@yunpat/core'
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir, rm } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join } from 'path'
 
@@ -94,8 +94,8 @@ async function createTestImage(outputPath: string): Promise<void> {
   await writeFile(outputPath, minimalPng)
 }
 
-// 测试图像路径
-const TEST_IMAGE_PATH = '/tmp/test-drawing-agent.png'
+// 测试图像路径 — 必须在 cwd 内，路径安全检查会拒绝外部路径
+const TEST_IMAGE_PATH = join(process.cwd(), '.tmp-test-drawing-agent.png')
 
 // Mock LLM
 const createMockLLM = () => ({
@@ -150,6 +150,13 @@ describe('DrawingUnderstandingAgent', () => {
   beforeAll(async () => {
     // 创建测试图像
     await createTestImage(TEST_IMAGE_PATH)
+  })
+
+  afterAll(async () => {
+    // 清理测试图像
+    if (existsSync(TEST_IMAGE_PATH)) {
+      await rm(TEST_IMAGE_PATH).catch(() => {})
+    }
   })
 
   beforeEach(() => {

@@ -86,13 +86,13 @@ export class ToolRegistry implements IToolRegistry {
       throw new Error(`Tool not found: ${name}`)
     }
 
-    // 发布工具调用事件
+    // 发布工具调用事件（脱敏：不包含完整输入数据）
     this.eventBus.publish({
       type: 'tool:called',
       source: 'ToolRegistry',
       data: {
         toolName: name,
-        input,
+        inputSize: typeof input === 'string' ? input.length : JSON.stringify(input).length,
       },
       timestamp: new Date(),
     })
@@ -101,13 +101,13 @@ export class ToolRegistry implements IToolRegistry {
       // 执行工具
       const result = await tool.execute(input, context)
 
-      // 发布工具成功事件
+      // 发布工具成功事件（脱敏：不包含完整输出数据）
       this.eventBus.publish({
         type: 'tool:success',
         source: 'ToolRegistry',
         data: {
           toolName: name,
-          result,
+          resultSize: typeof result === 'string' ? result.length : JSON.stringify(result).length,
         },
         timestamp: new Date(),
       })

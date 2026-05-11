@@ -149,14 +149,16 @@ export class DrawingUnderstandingAgent extends Agent<DrawingInput, DrawingUnders
 
   private async loadAndEncodeImage(imagePath: string): Promise<string> {
     const { readFile } = await import('fs/promises')
-    const { extname, resolve, normalize } = await import('path')
-    const { existsSync, statSync, realpathSync } = await import('fs')
+    const { extname, resolve, normalize, relative, isAbsolute } = await import('path')
+    const { existsSync, statSync } = await import('fs')
 
     const resolvedPath = resolve(normalize(imagePath))
 
-    // 路径遍历防护
-    if (resolvedPath.includes('..')) {
-      throw new Error(`图像路径不合法: ${imagePath}`)
+    // 路径遍历防护：确保解析后的路径在 cwd 或其子目录内
+    const cwd = resolve(process.cwd())
+    const rel = relative(cwd, resolvedPath)
+    if (isAbsolute(rel) || rel.startsWith('..')) {
+      throw new Error(`图像路径不在允许的目录内: ${imagePath}`)
     }
 
     if (!existsSync(resolvedPath)) {

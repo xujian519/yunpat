@@ -208,6 +208,15 @@ pub async fn run_tui(config: &Config, options: TuiOptions) -> Result<()> {
     if use_bracketed_paste {
         execute!(stdout, EnableBracketedPaste)?;
     }
+
+    // RAII guard: if we panic after this point, the terminal gets restored.
+    let mut _terminal_guard = super::terminal_guard::TerminalGuard::new(
+        super::terminal_guard::TerminalFlags {
+            alt_screen: use_alt_screen,
+            mouse_capture: use_mouse_capture,
+            bracketed_paste: use_bracketed_paste,
+        },
+    );
     // #442: opt into the Kitty keyboard protocol's escape-code
     // disambiguation so terminals that support it (Kitty, Ghostty,
     // Alacritty 0.13+, WezTerm, recent Konsole, recent xterm) report
@@ -454,6 +463,9 @@ pub async fn run_tui(config: &Config, options: TuiOptions) -> Result<()> {
     }
     terminal.show_cursor()?;
     drop(terminal);
+
+    // Normal cleanup complete — disarm the panic guard so it doesn't double-restore.
+    _terminal_guard.disarm();
 
     if result.is_ok()
         && let Some(hint) = format_resume_hint(app.current_session_id.as_deref())

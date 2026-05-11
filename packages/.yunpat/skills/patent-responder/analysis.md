@@ -60,8 +60,8 @@ optionalVariables: [examiner, notificationDate, deadline, citedReferences, rejec
 1. **法条全文检索**：识别 OA 中引用的法条编号后，调用 `PostgreSQLClient.searchLawArticles()` 获取法条全文，确保对法条的理解准确
 2. **类似无效决定检索**：根据技术领域和审查意见类型，调用 `PostgreSQLClient.queryInvalidDecisions()` 搜索相似案例，参考成功答复先例
 3. **推理模式匹配**：根据审查意见类型匹配对应的推理模式：
-   - 创造性驳回 → 参考「推理模式-创造性-*」系列
-   - 新颖性驳回 → 参考「推理模式-新颖性-*」系列
+   - 创造性驳回 → 参考「推理模式-创造性-\*」系列
+   - 新颖性驳回 → 参考「推理模式-新颖性-\*」系列
    - 权利要求不支持 → 参考「推理模式-权利要求-不支持认定」
 
 {{#if lawArticles}}

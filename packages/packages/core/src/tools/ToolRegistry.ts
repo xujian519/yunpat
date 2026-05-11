@@ -79,7 +79,7 @@ export class ToolRegistry implements IToolRegistry {
    * @param input 输入参数
    * @returns 输出结果
    */
-  async call(name: string, input: unknown): Promise<unknown> {
+  async call(name: string, input: unknown, context?: unknown): Promise<unknown> {
     const tool = this.tools.get(name)
 
     if (!tool) {
@@ -99,7 +99,7 @@ export class ToolRegistry implements IToolRegistry {
 
     try {
       // 执行工具
-      const result = await tool.execute(input)
+      const result = await tool.execute(input, context)
 
       // 发布工具成功事件
       this.eventBus.publish({
@@ -175,7 +175,7 @@ export abstract class BaseTool implements Tool {
   abstract readonly description: string
   readonly inputSchema?: unknown
 
-  abstract execute(input: unknown): Promise<unknown>
+  abstract execute(input: unknown, context?: unknown): Promise<unknown>
 }
 
 /**
@@ -188,12 +188,12 @@ export class ToolWrapper extends BaseTool {
   readonly description: string
   readonly inputSchema?: unknown
 
-  private executor: (input: unknown) => Promise<unknown>
+  private executor: (input: unknown, context?: unknown) => Promise<unknown>
 
   constructor(
     name: string,
     description: string,
-    executor: (input: unknown) => Promise<unknown>,
+    executor: (input: unknown, context?: unknown) => Promise<unknown>,
     inputSchema?: unknown
   ) {
     super()
@@ -203,7 +203,7 @@ export class ToolWrapper extends BaseTool {
     this.inputSchema = inputSchema
   }
 
-  async execute(input: unknown): Promise<unknown> {
-    return this.executor(input)
+  async execute(input: unknown, context?: unknown): Promise<unknown> {
+    return this.executor(input, context)
   }
 }

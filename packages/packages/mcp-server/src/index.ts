@@ -80,6 +80,20 @@ function createServer() {
     patentCompareTool,
   ]
 
+  // 构建工具名称 → 实例的查找 Map
+  const toolMap = new Map(toolsList.map((t) => [t.metadata.name, t] as const))
+
+  // 注册到 ToolRegistry（激活事件发布）
+  for (const mcpTool of toolsList) {
+    tools.register({
+      name: mcpTool.metadata.name,
+      description: mcpTool.metadata.description,
+      inputSchema: mcpTool.metadata.inputSchema,
+      execute: (input: unknown, context?: unknown) =>
+        mcpTool.execute(input, context as McpToolContext),
+    })
+  }
+
   // 创建 MCP 服务器
   const server = new Server(
     {
@@ -148,62 +162,22 @@ function createServer() {
       }
 
       // 根据工具名称分发
-      let result
-
-      switch (name) {
-        case 'patent_search':
-          result = await patentSearchTool.execute(args, context)
-          break
-
-        case 'claims_generator':
-          result = await claimsGeneratorTool.execute(args, context)
-          break
-
-        case 'quality_checker':
-          result = await qualityCheckerTool.execute(args, context)
-          break
-
-        case 'legal_knowledge_search':
-          result = await legalKnowledgeTool.execute(args, context)
-          break
-
-        case 'invalid_decision_search':
-          result = await invalidDecisionTool.execute(args, context)
-          break
-
-        case 'patent_rule_search':
-          result = await patentRuleTool.execute(args, context)
-          break
-
-        case 'project_scan':
-          result = await projectScanTool.execute(args, context)
-          break
-
-        case 'patent_dispatch':
-          result = await patentDispatchTool.execute(args, context)
-          break
-
-        case 'patent_writer':
-          result = await patentWriterTool.execute(args, context)
-          break
-
-        case 'patent_compare':
-          result = await patentCompareTool.execute(args, context)
-          break
-
-        default:
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  error: `Unknown tool: ${name}`,
-                }),
-              },
-            ],
-            isError: true,
-          }
+      const mcpTool = toolMap.get(name)
+      if (!mcpTool) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: `Unknown tool: ${name}`,
+              }),
+            },
+          ],
+          isError: true,
+        }
       }
+
+      const result = await mcpTool.execute(args, context)
 
       // 格式化返回结果
       if (result.success) {

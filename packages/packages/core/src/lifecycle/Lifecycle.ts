@@ -216,7 +216,7 @@ export interface ToolRegistry {
   get(name: string): Tool | undefined
 
   /** 调用工具 */
-  call(name: string, input: unknown): Promise<unknown>
+  call(name: string, input: unknown, context?: unknown): Promise<unknown>
 
   /** 列出所有工具 */
   list(): Tool[]
@@ -236,7 +236,7 @@ export interface Tool {
   inputSchema?: unknown
 
   /** 执行工具 */
-  execute(input: unknown): Promise<unknown>
+  execute(input: unknown, context?: unknown): Promise<unknown>
 }
 
 /**

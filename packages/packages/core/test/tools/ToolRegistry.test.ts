@@ -121,6 +121,35 @@ describe('ToolRegistry', () => {
       await expect(registry.call('failing', {})).rejects.toThrow('exec failed')
       expect(events).toEqual(['error'])
     })
+
+    it('带 context 参数时应传递给工具', async () => {
+      let receivedContext: unknown
+      registry.register(
+        new ToolWrapper('ctx-tool', 'context test', async (_input, context) => {
+          receivedContext = context
+          return 'ok'
+        })
+      )
+
+      const ctx = { llm: 'mock', userId: 'test' }
+      await registry.call('ctx-tool', { data: 1 }, ctx)
+
+      expect(receivedContext).toEqual(ctx)
+    })
+
+    it('不带 context 参数时应向后兼容', async () => {
+      let receivedContext: unknown = 'sentinel'
+      registry.register(
+        new ToolWrapper('no-ctx', 'no context test', async (_input, context) => {
+          receivedContext = context
+          return 'ok'
+        })
+      )
+
+      await registry.call('no-ctx', { data: 1 })
+
+      expect(receivedContext).toBeUndefined()
+    })
   })
 
   describe('list', () => {

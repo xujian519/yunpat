@@ -68,6 +68,25 @@ export function createWorkflowInfrastructure(options?: WorkflowOptions): Workflo
 }
 
 /**
+ * 为 E2E 测试创建 Agent 配置
+ *
+ * 自动禁用知识图谱等需要外部服务的功能
+ */
+export function createTestAgentConfig(
+  infra: WorkflowInfrastructure,
+  overrides: { name: string; description: string }
+) {
+  return {
+    ...overrides,
+    llm: infra.llm,
+    eventBus: infra.eventBus,
+    memory: infra.memory,
+    tools: infra.tools,
+    enableKnowledgeGraph: false,
+  }
+}
+
+/**
  * 收集事件总线上的事件
  *
  * 返回一个数组和停止收集的函数
@@ -203,42 +222,43 @@ export function mockSpecificationResponse(): ChatResponse {
 
 /**
  * 权利要求撰写阶段的 mock 响应
+ *
+ * ClaimGeneratorAgent 的 normalizeOutput 在 JSON 根层查找
+ * independent_claims / dependent_claims，而非嵌套在 claimsSet 内。
  */
 export function mockClaimsResponse(): ChatResponse {
   return {
     message: {
       role: 'assistant',
       content: JSON.stringify({
-        claimsSet: {
-          independent_claims: [
-            {
-              claim_number: 1,
-              claim_type: 'device',
-              preamble: '一种基于相变材料的高效散热装置',
-              transition: '其特征在于，包括：',
-              body: '散热基板；相变材料层，设置在所述散热基板上；智能温控模块，与所述相变材料层热耦合连接。',
-              full_text:
-                '1. 一种基于相变材料的高效散热装置，其特征在于，包括：散热基板；相变材料层，设置在所述散热基板上；智能温控模块，与所述相变材料层热耦合连接。',
-              essential_features: ['散热基板', '相变材料层', '智能温控模块'],
-            },
-          ],
-          dependent_claims: [
-            {
-              claim_number: 2,
-              parent_claim: 1,
-              content: '2. 根据权利要求1所述的散热装置，其特征在于，所述相变材料层为多层复合结构。',
-              additional_features: ['多层复合结构'],
-              limitation_type: 'further_limitation' as const,
-            },
-          ],
-          layout_strategy: '先独后从，覆盖核心创新点',
-          protection_scope_analysis: '独立权利要求覆盖核心散热结构，从属权利要求保护优选实施方式',
-          quality_check: {
-            clarity: '权利要求表述清晰',
-            support: '权利要求得到说明书支持',
-            essential_features: '必要技术特征完整',
-            potential_issues: [],
+        independent_claims: [
+          {
+            claim_number: 1,
+            claim_type: 'device',
+            preamble: '一种基于相变材料的高效散热装置',
+            transition: '其特征在于，包括：',
+            body: '散热基板；相变材料层，设置在所述散热基板上；智能温控模块，与所述相变材料层热耦合连接。',
+            full_text:
+              '1. 一种基于相变材料的高效散热装置，其特征在于，包括：散热基板；相变材料层，设置在所述散热基板上；智能温控模块，与所述相变材料层热耦合连接。',
+            essential_features: ['散热基板', '相变材料层', '智能温控模块'],
           },
+        ],
+        dependent_claims: [
+          {
+            claim_number: 2,
+            parent_claim: 1,
+            content: '2. 根据权利要求1所述的散热装置，其特征在于，所述相变材料层为多层复合结构。',
+            additional_features: ['多层复合结构'],
+            limitation_type: 'further_limitation' as const,
+          },
+        ],
+        layout_strategy: '先独后从，覆盖核心创新点',
+        protection_scope_analysis: '独立权利要求覆盖核心散热结构，从属权利要求保护优选实施方式',
+        quality_check: {
+          clarity: '权利要求表述清晰',
+          support: '权利要求得到说明书支持',
+          essential_features: '必要技术特征完整',
+          potential_issues: [],
         },
         confidence: 0.85,
       }),
@@ -249,22 +269,23 @@ export function mockClaimsResponse(): ChatResponse {
 
 /**
  * 摘要撰写阶段的 mock 响应
+ *
+ * 注意：AbstractDrafterAgent 的 normalizeOutput 在 JSON 根层查找 content/wordCount/confidence，
+ * 而非嵌套在 abstract 对象内。mock 响应需匹配此格式。
  */
 export function mockAbstractResponse(): ChatResponse {
   return {
     message: {
       role: 'assistant',
       content: JSON.stringify({
-        abstract: {
-          content:
-            '本发明公开了一种基于相变材料的高效散热装置，包括散热基板、相变材料层和智能温控模块。通过采用相变材料作为散热介质，配合多层复合散热结构和智能温控调节，实现散热效率提高60%、工作温度范围扩大至-40°C至120°C、能耗降低30%的技术效果。',
-          wordCount: 120,
-          keyElements: {
-            technicalField: true,
-            technicalSolution: true,
-            beneficialEffects: true,
-            application: false,
-          },
+        content:
+          '本发明公开了一种基于相变材料的高效散热装置，包括散热基板、相变材料层和智能温控模块。通过采用相变材料作为散热介质，配合多层复合散热结构和智能温控调节，实现散热效率提高60%、工作温度范围扩大至-40°C至120°C、能耗降低30%的技术效果。',
+        wordCount: 120,
+        keyElements: {
+          technicalField: true,
+          technicalSolution: true,
+          beneficialEffects: true,
+          application: false,
         },
         confidence: 0.9,
       }),

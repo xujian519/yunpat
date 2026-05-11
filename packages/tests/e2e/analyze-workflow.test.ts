@@ -10,7 +10,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import {
   createWorkflowInfrastructure,
-  createAnalyzeWorkflowLLM,
+  createTestAgentConfig,
   collectEvents,
   mockInventionResponse,
   mockTechnicalAnalysisResponse,
@@ -41,27 +41,24 @@ describeE2E('专利分析工作流', () => {
   let infra: WorkflowInfrastructure
 
   beforeAll(() => {
-    infra = createWorkflowInfrastructure({
-      responses: [
-        mockInventionResponse(),
-        mockTechnicalAnalysisResponse(),
-        mockComparisonReportResponse(),
-      ],
-    })
+    // 共享基础设施（EventBus、Memory、Tools），每个测试使用独立 mock LLM
+    infra = createWorkflowInfrastructure()
   })
 
   describe('阶段1: 发明理解', () => {
     it('应从技术交底书中提取关键信息', async () => {
+      const testInfra = createWorkflowInfrastructure({
+        responses: [mockInventionResponse(), mockInventionResponse()],
+      })
+
       const { InventionUnderstandingAgent } = await import('@yunpat/agent-invention')
 
-      const agent = new InventionUnderstandingAgent({
-        name: 'invention-understanding',
-        description: '发明理解智能体',
-        llm: infra.llm,
-        memory: infra.memory,
-        tools: infra.tools,
-        eventBus: infra.eventBus,
-      })
+      const agent = new InventionUnderstandingAgent(
+        createTestAgentConfig(testInfra, {
+          name: 'invention-understanding',
+          description: '发明理解智能体',
+        })
+      )
 
       const result = await agent.execute({
         title: TEST_DISCLOSURE.title,
@@ -82,16 +79,18 @@ describeE2E('专利分析工作流', () => {
 
   describe('阶段2: 专利技术分析', () => {
     it('应完成专利技术分析并返回结构化结果', async () => {
+      const testInfra = createWorkflowInfrastructure({
+        responses: [mockTechnicalAnalysisResponse(), mockTechnicalAnalysisResponse()],
+      })
+
       const { PriorArtAnalyzerAgent } = await import('@yunpat/agent-analysis')
 
-      const agent = new PriorArtAnalyzerAgent({
-        name: 'prior-art-analyzer',
-        description: '对比文件分析智能体',
-        llm: infra.llm,
-        memory: infra.memory,
-        tools: infra.tools,
-        eventBus: infra.eventBus,
-      })
+      const agent = new PriorArtAnalyzerAgent(
+        createTestAgentConfig(testInfra, {
+          name: 'prior-art-analyzer',
+          description: '对比文件分析智能体',
+        })
+      )
 
       const result = await agent.execute({
         document: {
@@ -110,16 +109,18 @@ describeE2E('专利分析工作流', () => {
     })
 
     it('应支持论文类型的对比文件分析', async () => {
+      const testInfra = createWorkflowInfrastructure({
+        responses: [mockTechnicalAnalysisResponse(), mockTechnicalAnalysisResponse()],
+      })
+
       const { PriorArtAnalyzerAgent } = await import('@yunpat/agent-analysis')
 
-      const agent = new PriorArtAnalyzerAgent({
-        name: 'prior-art-analyzer',
-        description: '对比文件分析智能体',
-        llm: infra.llm,
-        memory: infra.memory,
-        tools: infra.tools,
-        eventBus: infra.eventBus,
-      })
+      const agent = new PriorArtAnalyzerAgent(
+        createTestAgentConfig(testInfra, {
+          name: 'prior-art-analyzer',
+          description: '对比文件分析智能体',
+        })
+      )
 
       const result = await agent.execute({
         document: {
@@ -138,16 +139,18 @@ describeE2E('专利分析工作流', () => {
 
   describe('阶段3: 对比分析报告生成', () => {
     it('应生成包含最接近现有技术的对比报告', async () => {
+      const testInfra = createWorkflowInfrastructure({
+        responses: [mockComparisonReportResponse(), mockComparisonReportResponse()],
+      })
+
       const { ComparisonReportGeneratorAgent } = await import('@yunpat/agent-analysis')
 
-      const agent = new ComparisonReportGeneratorAgent({
-        name: 'comparison-report-generator',
-        description: '对比分析报告生成智能体',
-        llm: infra.llm,
-        memory: infra.memory,
-        tools: infra.tools,
-        eventBus: infra.eventBus,
-      })
+      const agent = new ComparisonReportGeneratorAgent(
+        createTestAgentConfig(testInfra, {
+          name: 'comparison-report-generator',
+          description: '对比分析报告生成智能体',
+        })
+      )
 
       const result = await agent.execute({
         inventionUnderstanding: {
@@ -200,16 +203,18 @@ describeE2E('专利分析工作流', () => {
     })
 
     it('应在缺少现有技术分析时抛出错误', async () => {
+      const testInfra = createWorkflowInfrastructure({
+        responses: [mockComparisonReportResponse()],
+      })
+
       const { ComparisonReportGeneratorAgent } = await import('@yunpat/agent-analysis')
 
-      const agent = new ComparisonReportGeneratorAgent({
-        name: 'comparison-report-generator',
-        description: '对比分析报告生成智能体',
-        llm: infra.llm,
-        memory: infra.memory,
-        tools: infra.tools,
-        eventBus: infra.eventBus,
-      })
+      const agent = new ComparisonReportGeneratorAgent(
+        createTestAgentConfig(testInfra, {
+          name: 'comparison-report-generator',
+          description: '对比分析报告生成智能体',
+        })
+      )
 
       await expect(
         agent.execute({
@@ -229,9 +234,12 @@ describeE2E('专利分析工作流', () => {
     it('应从头到尾完成整个分析工作流', async () => {
       const pipelineInfra = createWorkflowInfrastructure({
         responses: [
-          mockInventionResponse(),
-          mockTechnicalAnalysisResponse(),
-          mockComparisonReportResponse(),
+          // InventionUnderstandingAgent（可能多次调用）
+          mockInventionResponse(), mockInventionResponse(), mockInventionResponse(),
+          // PriorArtAnalyzerAgent
+          mockTechnicalAnalysisResponse(), mockTechnicalAnalysisResponse(),
+          // ComparisonReportGeneratorAgent
+          mockComparisonReportResponse(), mockComparisonReportResponse(),
         ],
       })
 
@@ -242,14 +250,12 @@ describeE2E('专利分析工作流', () => {
       const { PriorArtAnalyzerAgent, ComparisonReportGeneratorAgent } =
         await import('@yunpat/agent-analysis')
 
-      const inventionAgent = new InventionUnderstandingAgent({
-        name: 'invention-understanding',
-        description: '发明理解智能体',
-        llm: pipelineInfra.llm,
-        memory: pipelineInfra.memory,
-        tools: pipelineInfra.tools,
-        eventBus: pipelineInfra.eventBus,
-      })
+      const inventionAgent = new InventionUnderstandingAgent(
+        createTestAgentConfig(pipelineInfra, {
+          name: 'invention-understanding',
+          description: '发明理解智能体',
+        })
+      )
 
       const inventionResult = await inventionAgent.execute({
         title: TEST_DISCLOSURE.title,
@@ -261,14 +267,12 @@ describeE2E('专利分析工作流', () => {
       expect(inventionResult.keyFeatures.length).toBeGreaterThan(0)
 
       // 步骤2: 对比文件分析
-      const analyzerAgent = new PriorArtAnalyzerAgent({
-        name: 'prior-art-analyzer',
-        description: '对比文件分析智能体',
-        llm: pipelineInfra.llm,
-        memory: pipelineInfra.memory,
-        tools: pipelineInfra.tools,
-        eventBus: pipelineInfra.eventBus,
-      })
+      const analyzerAgent = new PriorArtAnalyzerAgent(
+        createTestAgentConfig(pipelineInfra, {
+          name: 'prior-art-analyzer',
+          description: '对比文件分析智能体',
+        })
+      )
 
       const analysisResult = await analyzerAgent.execute({
         document: {
@@ -284,14 +288,12 @@ describeE2E('专利分析工作流', () => {
       expect(analysisResult).toBeDefined()
 
       // 步骤3: 对比报告生成
-      const reportAgent = new ComparisonReportGeneratorAgent({
-        name: 'comparison-report-generator',
-        description: '对比分析报告生成智能体',
-        llm: pipelineInfra.llm,
-        memory: pipelineInfra.memory,
-        tools: pipelineInfra.tools,
-        eventBus: pipelineInfra.eventBus,
-      })
+      const reportAgent = new ComparisonReportGeneratorAgent(
+        createTestAgentConfig(pipelineInfra, {
+          name: 'comparison-report-generator',
+          description: '对比分析报告生成智能体',
+        })
+      )
 
       const reportResult = await reportAgent.execute({
         inventionUnderstanding: {

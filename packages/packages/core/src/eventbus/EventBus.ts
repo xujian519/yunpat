@@ -25,6 +25,9 @@ export class EventBus implements IEventBus {
   /** 订阅存储 */
   private subscriptions = new Map<string, Set<EventHandler>>()
 
+  /** 通配符正则缓存 */
+  private wildcardRegexCache = new Map<string, RegExp>()
+
   /** 请求响应存储 */
   private pendingRequests = new Map<
     string,
@@ -62,11 +65,56 @@ export class EventBus implements IEventBus {
     const sourceEvent = `${event.type}:${event.source}`
     this.emitter.emit(sourceEvent, event)
 
+    // 通配符匹配：将事件分发给匹配的通配符订阅
+    this.emitToWildcardSubscriptions(event)
+
     // 记录性能
     if (this.enableMetrics) {
       const duration = performance.now() - start
       this.metrics.recordEmit(event.type, duration)
     }
+  }
+
+  /**
+   * 将事件分发给通配符订阅
+   *
+   * eventemitter3 只支持精确匹配，这里手动实现通配符模式匹配。
+   * 仅对包含 "*" 或 "?" 的 pattern 执行匹配。
+   */
+  private emitToWildcardSubscriptions(event: AgentEvent): void {
+    for (const [pattern, handlers] of this.subscriptions) {
+      // 跳过精确匹配（已由 emitter.emit 处理）和无通配符的 pattern
+      if (pattern === event.type || !pattern.includes('*')) continue
+
+      if (this.matchWildcardPattern(pattern, event.type)) {
+        for (const handler of handlers) {
+          handler(event)
+        }
+      }
+    }
+  }
+
+  /**
+   * 通配符模式匹配（带正则缓存）
+   *
+   * 将 "*" 转为 `[^:]+` 匹配单个段。特殊处理：
+   * - `"*"` 匹配所有事件类型（含冒号）
+   * - `"agent:*"` 匹配 agent:started、agent:completed 等
+   */
+  private matchWildcardPattern(pattern: string, eventType: string): boolean {
+    let regex = this.wildcardRegexCache.get(pattern)
+    if (!regex) {
+      const regexStr =
+        pattern === '*'
+          ? '.+' // "*" 匹配任意事件类型
+          : pattern
+              .split('*')
+              .map((seg) => seg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+              .join('[^:]+')
+      regex = new RegExp(`^${regexStr}$`)
+      this.wildcardRegexCache.set(pattern, regex)
+    }
+    return regex.test(eventType)
   }
 
   /**
@@ -90,8 +138,10 @@ export class EventBus implements IEventBus {
     }
     this.subscriptions.get(pattern)!.add(handler)
 
-    // 绑定事件监听
-    this.emitter.on(pattern, handler)
+    // 仅非通配符 pattern 注册到 eventemitter3（通配符由 publish 手动分发）
+    if (!pattern.includes('*')) {
+      this.emitter.on(pattern, handler)
+    }
 
     // 创建订阅对象
     const subscription: Subscription = {
@@ -121,8 +171,10 @@ export class EventBus implements IEventBus {
       }
     }
 
-    // 移除事件监听
-    this.emitter.off(pattern, handler)
+    // 移除事件监听（仅非通配符需要从 eventemitter3 移除）
+    if (!pattern.includes('*')) {
+      this.emitter.off(pattern, handler)
+    }
   }
 
   /**
@@ -227,7 +279,8 @@ export class EventBus implements IEventBus {
    */
   clear(): void {
     this.subscriptions.clear()
+    this.wildcardRegexCache.clear()
     this.emitter.removeAllListeners()
-    this.metrics.clear() // 同时清除性能指标
+    this.metrics.clear()
   }
 }

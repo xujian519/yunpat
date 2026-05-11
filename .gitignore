@@ -72,3 +72,5 @@ packages/.yunpat/skills/patent-drafting/claims-domain-*.md
 # 密钥文件
 .yunpat/.skills-key
 skills-key
+docs/planning/yunpat_agent_next_steps.svg
+.omc/state/hud-stdin-cache.json

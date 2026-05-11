@@ -1,0 +1,6 @@
+{
+  "applicationNumber": "CN202310000001.0",
+  "patentTitle": "一种基于相变材料的高效散热装置",
+  "oaContent": "第一次审查意见通知书\n\n申请号：CN202310000001.0\n发明名称：一种基于相变材料的高效散热装置\n\n审查意见：\n\n一、关于创造性\n权利要求1相对于D1（CN1234567A）结合D2（CN2345678A）不具备创造性。\n\n二、关于说明书充分公开\n未提供实验数据证明散热效率提高60%的技术效果。\n\n请申请人四个月内答复。",
+  "expectedRejectionTypes": ["inventiveness", "disclosure"]
+}

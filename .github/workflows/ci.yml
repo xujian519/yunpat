@@ -90,8 +90,13 @@ jobs:
       - name: Build TypeScript
         run: cd packages && pnpm build
 
-      - name: Test TypeScript
+      - name: Test TypeScript (Unit + Mock)
         run: cd packages && pnpm test:mock
+
+      - name: E2E Mock Tests
+        run: cd packages && MOCK_TESTS=true pnpm test:e2e
+        env:
+          NODE_ENV: test
 
   # =============================================================================
   # Integration Tests
@@ -130,15 +135,31 @@ jobs:
           cd crates && cargo build --workspace --release
           cd ../packages && pnpm build
 
-      - name: MCP Integration Test
-        run: |
-          echo "Testing MCP connectivity..."
-          # TODO: Add MCP integration tests
+      - name: Start Docker Services
+        run: docker compose -f packages/docker-compose.yml up -d postgres redis
 
-      - name: End-to-End Test
+      - name: Wait for Services
         run: |
-          echo "Running E2E tests..."
-          # TODO: Add E2E tests
+          for i in $(seq 1 30); do
+            if docker compose -f packages/docker-compose.yml exec -T postgres pg_isready -U yunpat 2>/dev/null; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: MCP Integration Test
+        run: cd packages && pnpm test:mcp-integration
+        env:
+          TEST_DATABASE_URL: postgresql://yunpat:yunpat123@localhost:5432/yunpat_test
+          REDIS_URL: redis://localhost:6379
+          RUN_INTEGRATION_TESTS: 'true'
+
+      - name: Cross-Language Integration Test
+        run: cd packages && RUN_INTEGRATION_TESTS=true pnpm test:integration
+        env:
+          RUN_INTEGRATION_TESTS: 'true'
 
   # =============================================================================
   # Release

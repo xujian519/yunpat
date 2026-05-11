@@ -25,7 +25,6 @@ use crate::settings::Settings;
 use crate::tools::plan::{SharedPlanState, new_shared_plan_state};
 use crate::tools::shell::new_shared_shell_manager;
 use crate::tools::spec::RuntimeToolServices;
-use crate::tools::subagent::SubAgentResult;
 use crate::tools::todo::{SharedTodoList, new_shared_todo_list};
 use crate::tui::active_cell::ActiveCell;
 use crate::tui::approval::ApprovalMode;
@@ -742,25 +741,8 @@ pub struct App {
     pub max_input_history: usize,
     pub allow_shell: bool,
     pub max_subagents: usize,
-    /// Cached sub-agent snapshots for UI views.
-    pub subagent_cache: Vec<SubAgentResult>,
-    /// Last known per-agent progress text for running sub-agents.
-    pub agent_progress: HashMap<String, String>,
-    /// In-transcript sub-agent card index by `agent_id` (issue #128).
-    /// Maps each live sub-agent to the `HistoryCell::SubAgent` it renders
-    /// into, so successive mailbox envelopes mutate the same cell rather
-    /// than spawning duplicates.
-    pub subagent_card_index: HashMap<String, usize>,
-    /// History index of the most recent FanoutCard. Sibling sub-agents
-    /// spawned by the same `rlm` invocation route into this card; reset
-    /// when a fresh fanout-family tool call starts.
-    pub last_fanout_card_index: Option<usize>,
-    /// Most recently observed sub-agent dispatch tool name (set on
-    /// `ToolCallStarted` for `agent_spawn` / `rlm` / etc., cleared
-    /// after the first `Started` mailbox envelope routes through it).
-    pub pending_subagent_dispatch: Option<String>,
-    /// Animation anchor for status-strip active sub-agent spinner.
-    pub agent_activity_started_at: Option<Instant>,
+    /// Sub-agent tracking state (extracted from App for maintainability).
+    pub subagent: super::app_state::SubagentState,
     pub ui_theme: UiTheme,
     /// Current palette mode (dark/light) — toggled at runtime via F2.
     pub theme_mode: crate::palette::PaletteMode,
@@ -1330,12 +1312,7 @@ impl App {
             max_input_history,
             allow_shell,
             max_subagents,
-            subagent_cache: Vec::new(),
-            agent_progress: HashMap::new(),
-            subagent_card_index: HashMap::new(),
-            last_fanout_card_index: None,
-            pending_subagent_dispatch: None,
-            agent_activity_started_at: None,
+            subagent: super::app_state::SubagentState::default(),
             ui_theme,
             theme_mode,
             onboarding,
@@ -1802,7 +1779,7 @@ impl App {
         self.rebuild_session_context_references();
 
         // subagent_card_index
-        self.subagent_card_index.retain(|_, idx| {
+        self.subagent.card_index.retain(|_, idx| {
             if *idx >= n {
                 *idx -= n;
                 true
@@ -1812,11 +1789,11 @@ impl App {
         });
 
         // last_fanout_card_index
-        if let Some(ref mut idx) = self.last_fanout_card_index {
+        if let Some(ref mut idx) = self.subagent.last_fanout_card_index {
             if *idx >= n {
                 *idx -= n;
             } else {
-                self.last_fanout_card_index = None;
+                self.subagent.last_fanout_card_index = None;
             }
         }
 
@@ -1958,12 +1935,13 @@ impl App {
         self.context_references_by_cell
             .retain(|idx, _| *idx < new_len);
         self.rebuild_session_context_references();
-        self.subagent_card_index.retain(|_, idx| *idx < new_len);
+        self.subagent.card_index.retain(|_, idx| *idx < new_len);
         if self
+            .subagent
             .last_fanout_card_index
             .is_some_and(|idx| idx >= new_len)
         {
-            self.last_fanout_card_index = None;
+            self.subagent.last_fanout_card_index = None;
         }
         // Drop collapsed cells that reference indices past the new tail.
         self.collapsed_cells.retain(|idx| *idx < new_len);

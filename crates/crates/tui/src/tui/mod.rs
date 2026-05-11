@@ -4,6 +4,7 @@
 
 pub mod active_cell;
 pub mod app;
+pub mod app_state;
 pub mod approval;
 pub mod backtrack;
 pub mod clipboard;

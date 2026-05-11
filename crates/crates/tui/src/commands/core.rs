@@ -141,7 +141,7 @@ pub fn models(_app: &mut App) -> CommandResult {
 pub fn subagents(app: &mut App) -> CommandResult {
     if app.view_stack.top_kind() != Some(ModalKind::SubAgents) {
         app.view_stack
-            .push(SubAgentsView::new(app.subagent_cache.clone()));
+            .push(SubAgentsView::new(app.subagent.cache.clone()));
     }
     app.status_message = Some(tr(app.ui_locale, MessageId::SubagentsFetching).to_string());
     CommandResult::action(AppAction::ListSubAgents)
@@ -236,7 +236,7 @@ pub fn home_dashboard(app: &mut App) -> CommandResult {
     }
 
     // Sub-agents
-    let subagent_count = app.subagent_cache.len();
+    let subagent_count = app.subagent.cache.len();
     if subagent_count > 0 {
         let _ = writeln!(
             stats,

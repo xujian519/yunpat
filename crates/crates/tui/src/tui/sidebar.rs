@@ -65,8 +65,8 @@ fn render_sidebar_auto(f: &mut Frame, area: Rect, app: &App) {
         .map(|todos| todos.snapshot().items.is_empty())
         .unwrap_or(false); // assume non-empty when locked so we don't hide updating data
     let tasks_empty = app.runtime_turn_id.is_none() && app.task_panel.is_empty();
-    let agents_empty = app.subagent_cache.is_empty()
-        && app.agent_progress.is_empty()
+    let agents_empty = app.subagent.cache.is_empty()
+        && app.subagent.progress.is_empty()
         && active_fanout_counts(app).is_none()
         && !foreground_rlm_running(app);
 
@@ -463,22 +463,25 @@ fn render_sidebar_subagents(f: &mut Frame, area: Rect, app: &App) {
     // shows just count + role-mix so the user can scan parallel work at a
     // glance and scroll to the matching transcript card for detail.
     let cached_ids: std::collections::HashSet<&str> = app
-        .subagent_cache
+        .subagent
+        .cache
         .iter()
         .map(|agent| agent.agent_id.as_str())
         .collect();
     let progress_only_count = app
-        .agent_progress
+        .subagent
+        .progress
         .keys()
         .filter(|id| !cached_ids.contains(id.as_str()))
         .count();
     let cached_running = app
-        .subagent_cache
+        .subagent
+        .cache
         .iter()
         .filter(|agent| matches!(agent.status, SubAgentStatus::Running))
         .count();
     let role_counts: std::collections::BTreeMap<String, usize> =
-        app.subagent_cache
+        app.subagent.cache
             .iter()
             .fold(std::collections::BTreeMap::new(), |mut acc, agent| {
                 *acc.entry(agent.agent_type.as_str().to_string())
@@ -491,7 +494,7 @@ fn render_sidebar_subagents(f: &mut Frame, area: Rect, app: &App) {
     let foreground_rlm_running = foreground_rlm_running(app);
 
     let summary = SidebarSubagentSummary {
-        cached_total: app.subagent_cache.len(),
+        cached_total: app.subagent.cache.len(),
         cached_running,
         progress_only_count,
         fanout_total,

@@ -899,11 +899,11 @@ fn sort_subagents_orders_running_before_terminal_statuses() {
 #[test]
 fn running_agent_count_unions_cache_and_progress() {
     let mut app = create_test_app();
-    app.subagent_cache = vec![
+    app.subagent.cache = vec![
         make_subagent("agent_a", crate::tools::subagent::SubAgentStatus::Running),
         make_subagent("agent_b", crate::tools::subagent::SubAgentStatus::Completed),
     ];
-    app.agent_progress
+    app.subagent.progress
         .insert("agent_c".to_string(), "planning".to_string());
 
     assert_eq!(running_agent_count(&app), 2);
@@ -912,22 +912,22 @@ fn running_agent_count_unions_cache_and_progress() {
 #[test]
 fn reconcile_subagent_activity_state_trims_stale_progress_and_sets_anchor() {
     let mut app = create_test_app();
-    app.subagent_cache = vec![
+    app.subagent.cache = vec![
         make_subagent("agent_a", crate::tools::subagent::SubAgentStatus::Running),
         make_subagent("agent_b", crate::tools::subagent::SubAgentStatus::Completed),
     ];
-    app.agent_progress
+    app.subagent.progress
         .insert("agent_stale".to_string(), "old".to_string());
 
     reconcile_subagent_activity_state(&mut app);
-    assert!(app.agent_progress.contains_key("agent_a"));
-    assert!(!app.agent_progress.contains_key("agent_stale"));
-    assert!(app.agent_activity_started_at.is_some());
+    assert!(app.subagent.progress.contains_key("agent_a"));
+    assert!(!app.subagent.progress.contains_key("agent_stale"));
+    assert!(app.subagent.activity_started_at.is_some());
 
-    app.subagent_cache.clear();
+    app.subagent.cache.clear();
     reconcile_subagent_activity_state(&mut app);
-    assert!(app.agent_progress.is_empty());
-    assert!(app.agent_activity_started_at.is_none());
+    assert!(app.subagent.progress.is_empty());
+    assert!(app.subagent.activity_started_at.is_none());
 }
 
 #[test]
@@ -2892,7 +2892,7 @@ fn non_fanout_tool_does_not_populate_prompts() {
 #[test]
 fn noisy_subagent_progress_keeps_existing_objective_summary() {
     let mut app = create_test_app();
-    app.agent_progress.insert(
+    app.subagent.progress.insert(
         "agent_live".to_string(),
         "starting: inspect release state".to_string(),
     );

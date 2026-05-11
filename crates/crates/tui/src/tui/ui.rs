@@ -800,12 +800,12 @@ async fn run_event_loop(
                         // mailbox envelope routes into the right card kind
                         // (delegate vs fanout).
                         if matches!(name.as_str(), "agent_spawn" | "rlm" | "delegate") {
-                            app.pending_subagent_dispatch = Some(name.clone());
+                            app.subagent.pending_dispatch = Some(name.clone());
                             if name == "rlm" {
                                 // New fanout invocation — children should
                                 // group under a fresh card, not the
                                 // previous fanout's leftover.
-                                app.last_fanout_card_index = None;
+                                app.subagent.last_fanout_card_index = None;
                             }
                         }
                         handle_tool_call_started(app, &id, &name, &input);
@@ -1151,10 +1151,10 @@ async fn run_event_loop(
                     }
                     EngineEvent::AgentSpawned { id, prompt } => {
                         let prompt_summary = summarize_tool_output(&prompt);
-                        app.agent_progress
+                        app.subagent.progress
                             .insert(id.clone(), format!("starting: {prompt_summary}"));
-                        if app.agent_activity_started_at.is_none() {
-                            app.agent_activity_started_at = Some(Instant::now());
+                        if app.subagent.activity_started_at.is_none() {
+                            app.subagent.activity_started_at = Some(Instant::now());
                         }
                         app.status_message =
                             Some(format!("Sub-agent {id} starting: {prompt_summary}"));
@@ -1163,19 +1163,19 @@ async fn run_event_loop(
                     EngineEvent::AgentProgress { id, status } => {
                         let display = friendly_subagent_progress(app, &id, &status);
                         if is_noisy_subagent_progress(&status) {
-                            app.agent_progress
+                            app.subagent.progress
                                 .entry(id.clone())
                                 .or_insert_with(|| display.clone());
                         } else {
-                            app.agent_progress.insert(id.clone(), display.clone());
+                            app.subagent.progress.insert(id.clone(), display.clone());
                         }
-                        if app.agent_activity_started_at.is_none() {
-                            app.agent_activity_started_at = Some(Instant::now());
+                        if app.subagent.activity_started_at.is_none() {
+                            app.subagent.activity_started_at = Some(Instant::now());
                         }
                         app.status_message = Some(format!("Sub-agent {id}: {display}"));
                     }
                     EngineEvent::AgentComplete { id, result } => {
-                        app.agent_progress.remove(&id);
+                        app.subagent.progress.remove(&id);
                         app.status_message = Some(format!(
                             "Sub-agent {id} completed: {}",
                             summarize_tool_output(&result)
@@ -1186,7 +1186,7 @@ async fn run_event_loop(
                         let mut sorted = agents.clone();
                         sort_subagents_in_place(&mut sorted);
                         sorted.retain(|a| !a.from_prior_session);
-                        app.subagent_cache = sorted.clone();
+                        app.subagent.cache = sorted.clone();
                         reconcile_subagent_activity_state(app);
                         if app.view_stack.update_subagents(&sorted) {
                             app.status_message =
@@ -6423,7 +6423,7 @@ fn is_noisy_subagent_progress(status: &str) -> bool {
 }
 
 fn subagent_objective_summary(app: &App, id: &str) -> Option<String> {
-    app.subagent_cache
+    app.subagent.cache
         .iter()
         .find(|agent| agent.agent_id == id)
         .map(|agent| summarize_tool_output(&agent.assignment.objective))
@@ -6438,7 +6438,7 @@ fn friendly_subagent_progress(app: &App, id: &str, status: &str) -> String {
     if let Some(summary) = subagent_objective_summary(app, id) {
         return format!("working on {summary}");
     }
-    if let Some(existing) = app.agent_progress.get(id)
+    if let Some(existing) = app.subagent.progress.get(id)
         && !is_noisy_subagent_progress(existing)
         && existing != "working"
     {
@@ -6462,13 +6462,14 @@ fn active_subagent_status_label(app: &App) -> Option<String> {
         (running, running)
     };
     let detail = app
-        .subagent_cache
+        .subagent
+        .cache
         .iter()
         .find(|agent| matches!(agent.status, SubAgentStatus::Running))
         .map(|agent| summarize_tool_output(&agent.assignment.objective))
         .filter(|summary| !summary.is_empty())
         .or_else(|| {
-            app.agent_progress
+            app.subagent.progress
                 .values()
                 .find(|value| !is_noisy_subagent_progress(value) && value.as_str() != "working")
                 .cloned()
@@ -6476,7 +6477,8 @@ fn active_subagent_status_label(app: &App) -> Option<String> {
         .unwrap_or_else(|| "working".to_string());
     let detail = truncate_line_to_width(&detail, 34);
     let elapsed = app
-        .agent_activity_started_at
+        .subagent
+        .activity_started_at
         .or(app.turn_started_at)
         .map(|started| format!("{}s", started.elapsed().as_secs()));
 

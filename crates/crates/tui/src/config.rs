@@ -393,6 +393,14 @@ pub struct SnapshotsConfig {
     /// Prune side-git snapshots older than this many days at session boot.
     #[serde(default = "default_snapshot_max_age_days")]
     pub max_age_days: u64,
+    /// Maximum number of snapshots to retain per project.
+    /// Oldest snapshots are pruned first when the limit is exceeded.
+    #[serde(default = "default_snapshot_max_count")]
+    pub max_count: usize,
+}
+
+fn default_snapshot_max_count() -> usize {
+    10
 }
 
 impl Default for SnapshotsConfig {
@@ -400,6 +408,7 @@ impl Default for SnapshotsConfig {
         Self {
             enabled: default_snapshots_enabled(),
             max_age_days: default_snapshot_max_age_days(),
+            max_count: default_snapshot_max_count(),
         }
     }
 }

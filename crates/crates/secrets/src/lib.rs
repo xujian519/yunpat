@@ -49,7 +49,7 @@ pub enum SecretsError {
 }
 
 /// Abstract secret store; concrete implementations may use the OS
-/// keyring, a JSON file under `~/.deepseek/secrets/`, or an in-memory
+/// keyring, a JSON file under `~/.yunpat/secrets/`, or an in-memory
 /// map (tests).
 pub trait KeyringStore: Send + Sync {
     /// Read a secret. Returns `Ok(None)` if no entry exists.
@@ -184,7 +184,7 @@ impl KeyringStore for InMemoryKeyringStore {
 }
 
 /// JSON-on-disk fallback for headless environments without a Secret
-/// Service / dbus. Stored at `<home>/.deepseek/secrets/secrets.json`
+/// Service / dbus. Stored at `<home>/.yunpat/secrets/secrets.json`
 /// with mode `0600`.
 #[derive(Debug, Clone)]
 pub struct FileKeyringStore {
@@ -205,7 +205,7 @@ impl FileKeyringStore {
         Self { path: path.into() }
     }
 
-    /// Default path: `<home>/.deepseek/secrets/secrets.json`. Honours
+    /// Default path: `<home>/.yunpat/secrets/secrets.json`. Honours
     /// `HOME` (Unix) and `USERPROFILE` (Windows) via the `dirs` crate.
     pub fn default_path() -> Result<PathBuf, SecretsError> {
         let home = dirs::home_dir().ok_or_else(|| {
@@ -214,7 +214,7 @@ impl FileKeyringStore {
                 "could not resolve home directory for FileKeyringStore",
             ))
         })?;
-        Ok(home.join(".deepseek").join("secrets").join("secrets.json"))
+        Ok(home.join(".yunpat").join("secrets").join("secrets.json"))
     }
 
     /// Path used for storage.
@@ -308,7 +308,7 @@ impl KeyringStore for FileKeyringStore {
     }
 
     fn backend_name(&self) -> &'static str {
-        "file-based (~/.deepseek/secrets/)"
+        "file-based (~/.yunpat/secrets/)"
     }
 }
 
@@ -359,7 +359,7 @@ impl Secrets {
     /// Construct the platform-appropriate default backend. On platforms
     /// where an OS keyring backend is reachable this returns
     /// [`DefaultKeyringStore`]; otherwise it falls back to
-    /// [`FileKeyringStore`] under `~/.deepseek/secrets/`.
+    /// [`FileKeyringStore`] under `~/.yunpat/secrets/`.
     pub fn auto_detect() -> Self {
         let default_store = DefaultKeyringStore::default();
         match default_store.probe() {
@@ -369,7 +369,7 @@ impl Secrets {
                     "OS keyring unavailable ({err}); falling back to file-backed secret store"
                 );
                 let path = FileKeyringStore::default_path()
-                    .unwrap_or_else(|_| PathBuf::from(".deepseek-secrets.json"));
+                    .unwrap_or_else(|_| PathBuf::from(".yunpat-secrets.json"));
                 Self::new(Arc::new(FileKeyringStore::new(path)))
             }
         }
@@ -765,7 +765,7 @@ mod tests {
     #[test]
     fn file_store_default_path_uses_home() {
         // We don't override HOME here (other tests do); we just check the
-        // shape of the path is `<home>/.deepseek/secrets/secrets.json`.
+        // shape of the path is `<home>/.yunpat/secrets/secrets.json`.
         let path = FileKeyringStore::default_path().unwrap();
         assert!(
             path.ends_with("secrets/secrets.json") || path.ends_with("secrets\\secrets.json"),

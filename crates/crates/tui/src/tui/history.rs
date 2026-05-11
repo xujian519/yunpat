@@ -8,7 +8,7 @@ use ratatui::text::{Line, Span};
 use serde_json::Value;
 use unicode_width::UnicodeWidthStr;
 
-use crate::deepseek_theme::active_theme;
+use crate::yunpat_theme::active_theme;
 use crate::models::{ContentBlock, Message};
 use crate::palette;
 use crate::tools::review::ReviewOutput;
@@ -2049,15 +2049,10 @@ fn render_thinking(
 ) -> Vec<Line<'static>> {
     let state = thinking_visual_state(streaming, duration_secs);
     let style = thinking_style();
-    // 12% reasoning surface tint over the app ink — the only deliberately
-    // warm element in the transcript. Dropped on Ansi-16 terminals where the
-    // tint would distort the named palette.
-    let depth = cached_color_depth();
-    let body_bg = palette::reasoning_surface_tint(depth);
-    let body_style = match body_bg {
-        Some(bg) => style.italic().bg(bg),
-        None => style.italic(),
-    };
+    // Reasoning body uses italic style without background tint.
+    // Previously applied a 12% warm tint (≈RGB 16,24,37 ≈ black) that
+    // rendered as solid black blocks on many terminals, obscuring text.
+    let body_style = style.italic();
     let mut lines = Vec::new();
 
     // Header: `…` opener (replaces the spinner; reasoning isn't a tool, it's
@@ -2946,16 +2941,6 @@ fn thinking_state_accent(state: ThinkingVisualState) -> Color {
     }
 }
 
-// === Cached colour depth ===
-
-/// Once-initialised colour depth for the terminal session. Avoids re-reading
-/// `COLORTERM` / `TERM` env vars on every frame.
-static COLOR_DEPTH: std::sync::OnceLock<palette::ColorDepth> = std::sync::OnceLock::new();
-
-fn cached_color_depth() -> palette::ColorDepth {
-    *COLOR_DEPTH.get_or_init(palette::ColorDepth::detect)
-}
-
 /// Parse `path:line` patterns from `text` and open the file at the given line
 /// in the user's preferred editor (`$VISUAL` / `$EDITOR` / `vim`).
 ///
@@ -3077,7 +3062,7 @@ mod tests {
         assistant_label_style_for, extract_reasoning_summary, render_thinking,
         running_status_label_with_elapsed,
     };
-    use crate::deepseek_theme::Theme;
+    use crate::yunpat_theme::Theme;
     use crate::models::{ContentBlock, Message};
     use crate::palette;
     use ratatui::style::Modifier;
@@ -3877,7 +3862,7 @@ mod tests {
     // === Theme parity tests ===
     //
     // These lock the visible color/style choices for one plan cell and one
-    // tool cell against `deepseek_theme::Theme::dark()`. The render path is
+    // tool cell against `yunpat_theme::Theme::dark()`. The render path is
     // unchanged in shape; the assertions just guarantee a future skin swap
     // (or accidental drift) is caught here instead of at runtime.
 

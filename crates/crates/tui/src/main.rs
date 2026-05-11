@@ -30,7 +30,7 @@ mod config_ui;
 mod core;
 mod cost_status;
 mod cycle_manager;
-mod deepseek_theme;
+mod yunpat_theme;
 mod error_taxonomy;
 mod eval;
 mod execpolicy;
@@ -423,7 +423,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
 
     // Version info
     println!("{}", "Version Information:".bold());
-    println!("  deepseek-tui: {}", env!("CARGO_PKG_VERSION"));
+    println!("  yunpat-agent: {}", env!("CARGO_PKG_VERSION"));
     println!("  rust: {}", rustc_version());
     println!();
 
@@ -1428,7 +1428,7 @@ fn list_sessions(limit: usize, search: Option<String>) -> Result<()> {
     Ok(())
 }
 
-/// Initialize a new project with AGENTS.md
+/// Initialize a new project with yunpat.md
 fn init_project() -> Result<()> {
     use crate::palette;
     use colored::Colorize;
@@ -1439,13 +1439,13 @@ fn init_project() -> Result<()> {
     let (red_r, red_g, red_b) = palette::DEEPSEEK_RED_RGB;
 
     let workspace = std::env::current_dir()?;
-    let agents_path = workspace.join("AGENTS.md");
+    let doc_path = workspace.join("yunpat.md");
 
-    if agents_path.exists() {
+    if doc_path.exists() {
         println!(
-            "{} AGENTS.md already exists at {}",
+            "{} yunpat.md already exists at {}",
             "!".truecolor(sky_r, sky_g, sky_b),
-            agents_path.display()
+            doc_path.display()
         );
         return Ok(());
     }
@@ -2726,6 +2726,9 @@ async fn run_interactive(
     let snapshots = config.snapshots_config();
     if snapshots.enabled {
         session_manager::prune_workspace_snapshots(&workspace, snapshots.max_age());
+        // Also cap the total number of snapshots per project to prevent
+        // unbounded disk growth (e.g. 16 snapshots × 6.6GB = 100GB+).
+        session_manager::prune_workspace_snapshots_to_count(&workspace, snapshots.max_count);
     }
 
     // Prune stale tool-output spillover files (#422). Non-fatal: home

@@ -8,7 +8,7 @@ use crate::palette;
 pub fn lines() -> Vec<Line<'static>> {
     vec![
         Line::from(Span::styled(
-            "DeepSeek TUI",
+            "YunPat Agent",
             Style::default()
                 .fg(palette::DEEPSEEK_BLUE)
                 .add_modifier(Modifier::BOLD),
@@ -19,24 +19,24 @@ pub fn lines() -> Vec<Line<'static>> {
         )),
         Line::from(""),
         Line::from(Span::styled(
-            "A focused terminal workspace for longer model sessions.",
+            "知识产权全生命周期智能体操作系统",
             Style::default().fg(palette::TEXT_PRIMARY),
         )),
         Line::from(Span::styled(
-            "You'll add an API key, review trust for this directory, and then land in the chat.",
+            "接下来需要配置 API 密钥、设置工作目录信任，然后进入对话界面。",
             Style::default().fg(palette::TEXT_MUTED),
         )),
         Line::from(Span::styled(
-            "The main composer is multi-line, so you can write full prompts instead of squeezing everything into one line.",
+            "Composer 支持多行输入，无需将所有内容挤在一行中。",
             Style::default().fg(palette::TEXT_MUTED),
         )),
         Line::from(""),
         Line::from(Span::styled(
-            "Press Enter to continue.",
+            "按 Enter 继续。",
             Style::default().fg(palette::TEXT_PRIMARY),
         )),
         Line::from(Span::styled(
-            "Ctrl+C exits at any point.",
+            "Ctrl+C 随时退出。",
             Style::default().fg(palette::TEXT_MUTED),
         )),
     ]

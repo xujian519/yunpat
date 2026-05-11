@@ -500,7 +500,7 @@ pub fn default_sessions_dir() -> std::io::Result<PathBuf> {
     let home = dirs::home_dir().ok_or_else(|| {
         std::io::Error::new(std::io::ErrorKind::NotFound, "Home directory not found")
     })?;
-    Ok(home.join(".deepseek").join("sessions"))
+    Ok(home.join(".yunpat").join("sessions"))
 }
 
 /// Prune snapshots older than `max_age` for `workspace`.
@@ -515,6 +515,19 @@ pub fn prune_workspace_snapshots(workspace: &Path, max_age: std::time::Duration)
         }
         Err(e) => {
             tracing::warn!(target: "snapshot", "boot prune failed: {e}");
+        }
+    }
+}
+
+/// Prune oldest snapshots so at most `max_count` remain.
+pub fn prune_workspace_snapshots_to_count(workspace: &Path, max_count: usize) {
+    match crate::snapshot::prune_to_count(workspace, max_count) {
+        Ok(0) => {}
+        Ok(n) => {
+            tracing::debug!(target: "snapshot", "count prune removed {n} snapshot(s)");
+        }
+        Err(e) => {
+            tracing::warn!(target: "snapshot", "count prune failed: {e}");
         }
     }
 }

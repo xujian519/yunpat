@@ -2,9 +2,9 @@
 //! a human-readable usage rollup.
 //!
 //! Data sources:
-//! - `~/.deepseek/audit.log`   — one JSON line per event (approvals, credentials)
-//! - `~/.deepseek/sessions/`   — saved session JSON files (tool call history)
-//! - `~/.deepseek/tasks/runtime/events/` — runtime thread JSONL event streams
+//! - `~/.yunpat/audit.log`   — one JSON line per event (approvals, credentials)
+//! - `~/.yunpat/sessions/`   — saved session JSON files (tool call history)
+//! - `~/.yunpat/tasks/runtime/events/` — runtime thread JSONL event streams
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -823,7 +823,7 @@ fn print_human(rollup: &Rollup) {
 // ──────────────────────────────────────────────────────────────────────────────
 
 fn yunpat_home() -> PathBuf {
-    // Respect DEEPSEEK_HOME env override; fall back to ~/.deepseek.
+    // Respect DEEPSEEK_HOME env override; fall back to ~/.yunpat.
     if let Ok(v) = std::env::var("DEEPSEEK_HOME")
         && !v.is_empty()
     {
@@ -831,7 +831,7 @@ fn yunpat_home() -> PathBuf {
     }
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".deepseek")
+        .join(".yunpat")
 }
 
 /// Parse a timestamp from a JSON value field (tries RFC3339).

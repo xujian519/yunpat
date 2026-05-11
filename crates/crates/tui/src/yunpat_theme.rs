@@ -1,4 +1,4 @@
-//! Whale/DeepSeek terminal theme tokens.
+//! YunPat terminal theme tokens.
 //!
 //! A small, deliberately flat module that names the color, border, and
 //! padding choices the TUI is already making. All values match the dark

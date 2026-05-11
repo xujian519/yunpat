@@ -2,7 +2,7 @@
  * RustCheckpointBridge — HITL checkpoint 跨语言持久化桥
  *
  * 在 TypeScript 侧读写 Rust StateStore 使用的同一个 SQLite 数据库
- * (~/.deepseek/state.db)，确保 JSON 格式与 Rust 的 UnifiedCheckpoint
+ * (~/.yunpat/state.db)，确保 JSON 格式与 Rust 的 UnifiedCheckpoint
  * serde 序列化完全兼容（snake_case 字段名）。
  *
  * Phase 2C.2: HITL checkpoint cross-language persistence
@@ -64,7 +64,7 @@ export class RustCheckpointBridge {
   constructor(dbPath?: string) {
     const resolved = dbPath
       ? resolve(dbPath.replace(/^~/, homedir()))
-      : resolve(homedir(), '.deepseek', 'state.db')
+      : resolve(homedir(), '.yunpat', 'state.db')
 
     // 确保目录存在
     mkdirSync(dirname(resolved), { recursive: true })

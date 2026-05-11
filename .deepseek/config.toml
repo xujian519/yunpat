@@ -1,6 +1,6 @@
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                    YunPat Agent - Project Config                            ║
-# ║  DeepSeek TUI 项目级配置，知识产权智能体系统                                 ║
+# ║  YunPat Agent 项目级配置，知识产权智能体系统                                   ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ approval_policy = "suggest"
 # yunpat.md 不在 instructions 中，由 LLM 在会话开始时调用 project_scan 工具自动生成和读取。
 # AGENTS.md: 可用智能体列表
 instructions = [
-  ".deepseek/yunpat-system.md",
+  ".yunpat/yunpat-system.md",
   "packages/AGENTS.md",
 ]
 
@@ -72,4 +72,4 @@ enabled = true
 [[hooks.hooks]]
 name = "exception-hook"
 event = "on_error"
-command = "bash .deepseek/hooks/exception-handler.sh"
+command = "bash .yunpat/hooks/exception-handler.sh"

@@ -2,7 +2,7 @@
 //!
 //! Automations are local-first recurring jobs that enqueue standard background
 //! tasks. This module stores automation definitions and run history under
-//! `~/.deepseek/automations` (or `DEEPSEEK_AUTOMATIONS_DIR` override).
+//! `~/.yunpat/automations` (or `DEEPSEEK_AUTOMATIONS_DIR` override).
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -795,8 +795,8 @@ pub fn default_automations_dir() -> PathBuf {
         }
     }
     dirs::home_dir()
-        .map(|home| home.join(".deepseek").join("automations"))
-        .unwrap_or_else(|| PathBuf::from(".deepseek").join("automations"))
+        .map(|home| home.join(".yunpat").join("automations"))
+        .unwrap_or_else(|| PathBuf::from(".yunpat").join("automations"))
 }
 
 pub type SharedAutomationManager = Arc<Mutex<AutomationManager>>;

@@ -1,4 +1,4 @@
-//! /init command - Generate AGENTS.md for project
+//! /init command - Generate project context file
 
 use std::fmt::Write;
 use std::path::Path;
@@ -7,26 +7,28 @@ use crate::tui::app::App;
 
 use super::CommandResult;
 
-/// Generate an AGENTS.md file for the current project
+/// Project context filename — YunPat convention.
+const PROJECT_DOC_FILENAME: &str = "yunpat.md";
+
+/// Generate a project context file for the current project
 pub fn init(app: &mut App) -> CommandResult {
     let workspace = &app.workspace;
 
-    // Check if AGENTS.md already exists
-    let agents_path = workspace.join("AGENTS.md");
-    if agents_path.exists() {
-        return CommandResult::error("AGENTS.md already exists. Delete it first to reinitialize.");
+    let doc_path = workspace.join(PROJECT_DOC_FILENAME);
+    if doc_path.exists() {
+        return CommandResult::error(format!(
+            "{PROJECT_DOC_FILENAME} already exists. Delete it first to reinitialize."
+        ));
     }
 
-    // Detect project type and generate appropriate content
     let content = generate_project_doc(workspace);
 
-    // Write the file
-    match std::fs::write(&agents_path, &content) {
+    match std::fs::write(&doc_path, &content) {
         Ok(()) => CommandResult::message(format!(
-            "Created AGENTS.md at {}\n\nEdit this file to customize agent behavior for your project.",
-            agents_path.display()
+            "Created {PROJECT_DOC_FILENAME} at {}\n\nEdit this file to customize agent behavior for your project.",
+            doc_path.display()
         )),
-        Err(e) => CommandResult::error(format!("Failed to create AGENTS.md: {e}")),
+        Err(e) => CommandResult::error(format!("Failed to create {PROJECT_DOC_FILENAME}: {e}")),
     }
 }
 
@@ -185,15 +187,15 @@ mod tests {
     }
 
     #[test]
-    fn test_init_creates_agents_md() {
+    fn test_init_creates_yunpat_md() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
         let result = init(&mut app);
         assert!(result.message.is_some());
         let msg = result.message.unwrap();
-        assert!(msg.contains("Created AGENTS.md"));
-        let agents_path = tmpdir.path().join("AGENTS.md");
-        assert!(agents_path.exists());
+        assert!(msg.contains("Created yunpat.md"));
+        let doc_path = tmpdir.path().join("yunpat.md");
+        assert!(doc_path.exists());
     }
 
     #[test]
@@ -201,7 +203,7 @@ mod tests {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
         // Create file first
-        std::fs::write(tmpdir.path().join("AGENTS.md"), "existing").unwrap();
+        std::fs::write(tmpdir.path().join("yunpat.md"), "existing").unwrap();
         let result = init(&mut app);
         assert!(result.message.is_some());
         assert!(result.message.unwrap().contains("already exists"));

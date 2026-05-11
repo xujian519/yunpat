@@ -14,6 +14,10 @@ use super::repo::SnapshotRepo;
 /// Default snapshot retention window: 7 days.
 pub const DEFAULT_MAX_AGE: Duration = Duration::from_secs(7 * 24 * 60 * 60);
 
+/// Default maximum snapshots per project.
+#[allow(dead_code)] // re-exported via snapshot::DEFAULT_MAX_COUNT
+pub const DEFAULT_MAX_COUNT: usize = 10;
+
 /// Prune snapshots older than `max_age` for the given workspace.
 ///
 /// If no snapshot repo exists yet (first run) this is a cheap no-op.
@@ -25,6 +29,17 @@ pub fn prune_older_than(workspace: &Path, max_age: Duration) -> io::Result<usize
     }
     let repo = SnapshotRepo::open_or_init(workspace)?;
     repo.prune_older_than(max_age)
+}
+
+/// Prune oldest snapshots so at most `max_count` remain.
+/// Returns the number of snapshots removed.
+pub fn prune_to_count(workspace: &Path, max_count: usize) -> io::Result<usize> {
+    let git_dir = snapshot_git_dir(workspace);
+    if !git_dir.exists() {
+        return Ok(0);
+    }
+    let repo = SnapshotRepo::open_or_init(workspace)?;
+    repo.prune_to_count(max_count)
 }
 
 #[cfg(test)]

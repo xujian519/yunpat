@@ -15,7 +15,7 @@ use ratatui::{
     widgets::{Block, Paragraph, Wrap},
 };
 
-use crate::deepseek_theme::active_theme;
+use crate::yunpat_theme::active_theme;
 use crate::palette;
 use crate::tools::plan::StepStatus;
 use crate::tools::subagent::SubAgentStatus;

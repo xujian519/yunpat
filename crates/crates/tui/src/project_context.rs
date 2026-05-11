@@ -18,6 +18,7 @@ use thiserror::Error;
 
 /// Names of project context files to look for, in priority order.
 const PROJECT_CONTEXT_FILES: &[&str] = &[
+    "yunpat.md",
     "AGENTS.md",
     ".claude/instructions.md",
     "CLAUDE.md",
@@ -208,9 +209,9 @@ fn check_trust_status(workspace: &Path) -> bool {
     false
 }
 
-/// Create a default AGENTS.md file for a project
+/// Create a default yunpat.md file for a project
 pub fn create_default_agents_md(workspace: &Path) -> std::io::Result<PathBuf> {
-    let agents_path = workspace.join("AGENTS.md");
+    let agents_path = workspace.join("yunpat.md");
 
     let default_content = r#"# Project Agent Instructions
 

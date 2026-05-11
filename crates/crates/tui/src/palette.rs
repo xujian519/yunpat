@@ -228,7 +228,7 @@ pub struct UiTheme {
 }
 
 pub const UI_THEME: UiTheme = UiTheme {
-    name: "whale",
+    name: "yunpat",
     mode: PaletteMode::Dark,
     surface_bg: DEEPSEEK_INK,
     panel_bg: DEEPSEEK_SLATE,
@@ -252,7 +252,7 @@ pub const UI_THEME: UiTheme = UiTheme {
 };
 
 pub const LIGHT_UI_THEME: UiTheme = UiTheme {
-    name: "whale-light",
+    name: "yunpat-light",
     mode: PaletteMode::Light,
     surface_bg: LIGHT_SURFACE,
     panel_bg: LIGHT_PANEL,
@@ -445,6 +445,7 @@ pub fn adapt_bg(color: Color, depth: ColorDepth) -> Color {
 /// RGB falls back to `fg` — there's no meaningful alpha blend on a named
 /// palette entry.
 #[must_use]
+#[allow(dead_code)] // kept for palette tests
 pub fn blend(fg: Color, bg: Color, alpha: f32) -> Color {
     let alpha = alpha.clamp(0.0, 1.0);
     match (fg, bg) {
@@ -461,10 +462,10 @@ pub fn blend(fg: Color, bg: Color, alpha: f32) -> Color {
 }
 
 /// Return the reasoning surface color tinted at 12% over the app background.
-/// This is the headline reasoning treatment in v0.6.6; a 12% blend keeps the
-/// warm bias subtle without competing with body text. Returns `None` when the
-/// terminal can't render the bg faithfully.
+/// Kept for palette tests; no longer applied to thinking blocks (caused black
+/// overlay on many terminals).
 #[must_use]
+#[allow(dead_code)]
 pub fn reasoning_surface_tint(depth: ColorDepth) -> Option<Color> {
     match depth {
         ColorDepth::Ansi16 => None,

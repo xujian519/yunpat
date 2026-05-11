@@ -3,7 +3,7 @@
 //! `SnapshotRepo` shells out to the system `git` binary (we deliberately
 //! avoid `git2` to dodge its LGPL surface). The two paths that matter:
 //!
-//! - `git_dir`  → `~/.deepseek/snapshots/<project_hash>/<worktree_hash>/.git`
+//! - `git_dir`  → `~/.yunpat/snapshots/<project_hash>/<worktree_hash>/.git`
 //! - `work_tree` → the user's actual workspace
 //!
 //! Every git invocation passes both `--git-dir` AND `--work-tree`. That is
@@ -49,7 +49,7 @@ pub struct SnapshotRepo {
 }
 
 const BUILTIN_EXCLUDES: &str = "\
-# DeepSeek TUI built-in snapshot exclusions
+# YunPat Agent built-in snapshot exclusions
 node_modules/
 target/
 dist/
@@ -469,6 +469,51 @@ impl SnapshotRepo {
     #[allow(dead_code)]
     pub fn work_tree(&self) -> &Path {
         &self.work_tree
+    }
+
+    /// Drop oldest snapshots so at most `max_count` remain.
+    /// Reuses the same reset + gc strategy as [`prune_older_than`].
+    /// Returns the number of snapshots removed.
+    pub fn prune_to_count(&self, max_count: usize) -> io::Result<usize> {
+        if max_count == 0 {
+            // Treat 0 as "wipe all" — delegate to prune_older_than with zero age.
+            return self.prune_older_than(Duration::ZERO);
+        }
+
+        let snapshots = self.list(usize::MAX)?;
+        if snapshots.len() <= max_count {
+            return Ok(0);
+        }
+
+        // Snapshots are newest-first. Keep the first `max_count`, prune the rest.
+        let survivor = &snapshots[max_count - 1];
+        let removed = snapshots.len() - max_count;
+
+        let reset = run_git(
+            &self.git_dir,
+            &self.work_tree,
+            &["update-ref", "HEAD", survivor.id.as_str()],
+        )?;
+        if !reset.status.success() {
+            return Err(io_other(format!(
+                "git update-ref failed: {}",
+                String::from_utf8_lossy(&reset.stderr).trim()
+            )));
+        }
+
+        // Reclaim space.
+        let _ = run_git(
+            &self.git_dir,
+            &self.work_tree,
+            &["reflog", "expire", "--expire=now", "--all"],
+        );
+        let _ = run_git(
+            &self.git_dir,
+            &self.work_tree,
+            &["gc", "--prune=now", "--quiet"],
+        );
+
+        Ok(removed)
     }
 }
 

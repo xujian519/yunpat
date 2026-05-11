@@ -1,6 +1,6 @@
 /**
  * @file 任务规划注入器
- * @description 调用 TaskPlanner 生成任务规划并写入 .deepseek/current-plan.md
+ * @description 调用 TaskPlanner 生成任务规划并写入 .yunpat/current-plan.md
  *
  * 用途：intent-hook 识别专利任务后，生成详细的执行计划
  */
@@ -115,14 +115,14 @@ export async function generatePlan(taskDescription: string, sessionId?: string):
 
     log('plan-injector', `任务规划生成成功: ${plan.planId}, ${plan.steps.length} 个步骤`)
 
-    // 确保 .deepseek 目录存在
-    const deepseekDir = path.join(homedir(), '.deepseek')
-    if (!fs.existsSync(deepseekDir)) {
-      fs.mkdirSync(deepseekDir, { recursive: true })
+    // 确保 .yunpat 目录存在
+    const yunpatDir = path.join(homedir(), '.yunpat')
+    if (!fs.existsSync(yunpatDir)) {
+      fs.mkdirSync(yunpatDir, { recursive: true })
     }
 
     // 写入 current-plan.md
-    const planFilePath = path.join(deepseekDir, 'current-plan.md')
+    const planFilePath = path.join(yunpatDir, 'current-plan.md')
     const markdown = taskPlanToMarkdown(plan)
     fs.writeFileSync(planFilePath, markdown, 'utf-8')
 

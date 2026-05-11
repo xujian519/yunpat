@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 
 /// Document filenames to search for (in priority order)
 pub const DOC_FILENAMES: &[&str] = &[
+    "yunpat.md",
     "AGENTS.md",
     ".claude/instructions.md",
     "CLAUDE.md",

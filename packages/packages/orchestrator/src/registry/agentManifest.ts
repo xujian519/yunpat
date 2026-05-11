@@ -330,4 +330,46 @@ export const agentManifest: AgentManifestEntry[] = [
     defaultTimeout: 30000,
     hitlCapable: false,
   },
+
+  // ===== 创新性评估 =====
+  {
+    agentId: 'innovation-evaluator',
+    packageName: '@yunpat/agent-innovation-evaluator',
+    className: 'InnovationEvaluatorAgent',
+    defaultName: 'innovation-evaluator',
+    defaultDescription: '创新性综合评估智能体（A/B/C/D评级）',
+    capabilities: ['evaluate', 'innovation', 'novelty', 'creativity', 'rating'],
+    triggerKeywords: ['创新评估', '是否值得申请', '创新性', '可专利性评估', '评级'],
+    layer: 'domain',
+    defaultTimeout: 60000,
+    hitlCapable: false,
+  },
+
+  // ===== 侵权分析 =====
+  {
+    agentId: 'patent-infringement-analyzer',
+    packageName: '@yunpat/agent-patent-infringement-analyzer',
+    className: 'PatentInfringementAnalyzerAgent',
+    defaultName: 'patent-infringement-analyzer',
+    defaultDescription: '专利侵权分析智能体（全面覆盖+等同侵权）',
+    capabilities: ['analyze', 'infringement', 'comparison', 'risk'],
+    triggerKeywords: ['侵权分析', '侵权判定', '全面覆盖', '等同侵权', '技术特征对比'],
+    layer: 'domain',
+    defaultTimeout: 60000,
+    hitlCapable: false,
+  },
+
+  // ===== 商标分析 =====
+  {
+    agentId: 'trademark-analyzer',
+    packageName: '@yunpat/agent-trademark-analyzer',
+    className: 'TrademarkAnalyzerAgent',
+    defaultName: 'trademark-analyzer',
+    defaultDescription: '商标分析智能体（可注册性+近似判断）',
+    capabilities: ['analyze', 'trademark', 'registration', 'similarity'],
+    triggerKeywords: ['商标分析', '商标注册', '近似判断', '显著性', '驳回复审'],
+    layer: 'domain',
+    defaultTimeout: 45000,
+    hitlCapable: false,
+  },
 ]

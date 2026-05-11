@@ -18,6 +18,10 @@ export interface TemplateLoadStrategy {
 export interface KnowledgeBridge {
   queryByConcept(concept: string): Promise<string[]>
   readWikiPage(page: string): Promise<string>
+  vectorSearchLaw?(query: string, topK?: number): Promise<string[]>
+  searchInvalidDecisions?(query: string, topK?: number): Promise<string[]>
+  searchPatentRules?(query: string, topK?: number): Promise<string[]>
+  queryKnowledgeGraph?(query: string, options?: Record<string, unknown>): Promise<string[]>
 }
 
 export class PromptTemplateManager {

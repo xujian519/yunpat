@@ -656,7 +656,7 @@ export const PatentIntentConfig: IntentDomainConfig = {
       },
     }),
 
-    ANALYZE_INFRINGEMENT: (intent: IntentRecognitionResult): TaskPlan => ({
+    ANALYZE_INFRINGEMENT: (_intent: IntentRecognitionResult): TaskPlan => ({
       planId: `plan-infringement-${Date.now()}`,
       intent: 'ANALYZE_INFRINGEMENT',
       estimatedMinutes: 30,

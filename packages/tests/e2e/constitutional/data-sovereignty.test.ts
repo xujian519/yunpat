@@ -146,13 +146,7 @@ describeE2E('数据主权检测 (CON-01/CON-01B)', () => {
   // ========== T-063: 审计日志条目生成 ==========
 
   it('T-063: 审计日志条目应包含所有必需字段', () => {
-    const entry = createAuditEntry(
-      'CON-01',
-      'technical_disclosure',
-      'external',
-      'local',
-      true
-    )
+    const entry = createAuditEntry('CON-01', 'technical_disclosure', 'external', 'local', true)
 
     // 必需字段存在性检查
     expect(entry).toHaveProperty('event', 'data_sovereignty_check')

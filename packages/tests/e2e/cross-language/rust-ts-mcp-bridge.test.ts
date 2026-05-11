@@ -92,9 +92,24 @@ describeE2E('Rust↔TS MCP 桥接', () => {
     it('应支持流式 chunk 传输', () => {
       // 模拟流式 MCP 响应
       const chunks = [
-        { jsonrpc: '2.0', id: 3, method: 'notifications/progress', params: { progress: 0.3, message: '正在检索专利...' } },
-        { jsonrpc: '2.0', id: 3, method: 'notifications/progress', params: { progress: 0.6, message: '正在分析结果...' } },
-        { jsonrpc: '2.0', id: 3, method: 'notifications/progress', params: { progress: 0.9, message: '正在生成报告...' } },
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'notifications/progress',
+          params: { progress: 0.3, message: '正在检索专利...' },
+        },
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'notifications/progress',
+          params: { progress: 0.6, message: '正在分析结果...' },
+        },
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'notifications/progress',
+          params: { progress: 0.9, message: '正在生成报告...' },
+        },
         {
           jsonrpc: '2.0',
           id: 3,
@@ -123,9 +138,24 @@ describeE2E('Rust↔TS MCP 桥接', () => {
     it('并发请求的响应应正确匹配', async () => {
       // 模拟并发请求
       const requests = [
-        { jsonrpc: '2.0', id: 10, method: 'tools/call', params: { name: 'patent_search', arguments: { query: '散热' } } },
-        { jsonrpc: '2.0', id: 11, method: 'tools/call', params: { name: 'claims_generator', arguments: { title: '散热器' } } },
-        { jsonrpc: '2.0', id: 12, method: 'tools/call', params: { name: 'quality_checker', arguments: { claims: [] } } },
+        {
+          jsonrpc: '2.0',
+          id: 10,
+          method: 'tools/call',
+          params: { name: 'patent_search', arguments: { query: '散热' } },
+        },
+        {
+          jsonrpc: '2.0',
+          id: 11,
+          method: 'tools/call',
+          params: { name: 'claims_generator', arguments: { title: '散热器' } },
+        },
+        {
+          jsonrpc: '2.0',
+          id: 12,
+          method: 'tools/call',
+          params: { name: 'quality_checker', arguments: { claims: [] } },
+        },
       ]
 
       // 验证每个请求有唯一 ID

@@ -87,17 +87,13 @@ describeE2E('Constitutional 范围检查 (CON-01/CON-02)', () => {
     expect(report.overallCompliant).toBe(false)
 
     // 应检测到支持性原则违规
-    const supportViolations = report.violations.filter(
-      (v: any) => v.principleId === 'support'
-    )
+    const supportViolations = report.violations.filter((v: any) => v.principleId === 'support')
     expect(supportViolations.length).toBeGreaterThan(0)
 
     // 验证检测到的宽泛表述
     const broadTerms = supportViolations.map((v: any) => v.location?.text)
     const expectedBroad = ['任意类型', '所有类型', '任意方式']
-    const found = expectedBroad.filter((term) =>
-      broadTerms.some((t: string) => t?.includes(term))
-    )
+    const found = expectedBroad.filter((term) => broadTerms.some((t: string) => t?.includes(term)))
     expect(found.length).toBeGreaterThanOrEqual(1)
   })
 
@@ -153,9 +149,7 @@ describeE2E('Constitutional 范围检查 (CON-01/CON-02)', () => {
     expect(report.duration).toBeGreaterThanOrEqual(0)
 
     // 报告应包含清楚性和确定性原则的违规
-    const clarityViolations = report.violations.filter(
-      (v: any) => v.principleId === 'clarity'
-    )
+    const clarityViolations = report.violations.filter((v: any) => v.principleId === 'clarity')
     const definitenessViolations = report.violations.filter(
       (v: any) => v.principleId === 'definiteness'
     )

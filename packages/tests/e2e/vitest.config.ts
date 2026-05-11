@@ -31,27 +31,92 @@ export default defineConfig({
         replacement: new URL('../../packages/core/src/llm/tokenization', import.meta.url).pathname,
       },
       // 基础设施包
-      { find: '@yunpat/core', replacement: new URL('../../packages/core/src', import.meta.url).pathname },
-      { find: '@yunpat/orchestrator', replacement: new URL('../../packages/orchestrator/src', import.meta.url).pathname },
-      { find: '@yunpat/orchestrator-adapter', replacement: new URL('../../packages/orchestrator-adapter/src', import.meta.url).pathname },
-      { find: '@yunpat/mcp-server', replacement: new URL('../../packages/mcp-server/src', import.meta.url).pathname },
-      { find: '@yunpat/document-tools', replacement: new URL('../../packages/document-tools/src', import.meta.url).pathname },
-      { find: '@yunpat/patent-tools', replacement: new URL('../../packages/patent-tools/src', import.meta.url).pathname },
-      { find: '@yunpat/unified-knowledge-graph', replacement: new URL('../../packages/unified-knowledge-graph/src', import.meta.url).pathname },
-      { find: '@yunpat/patent-database', replacement: new URL('../../packages/patent-database/src', import.meta.url).pathname },
-      { find: '@yunpat/skills', replacement: new URL('../../packages/skills/src', import.meta.url).pathname },
+      {
+        find: '@yunpat/core',
+        replacement: new URL('../../packages/core/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/orchestrator',
+        replacement: new URL('../../packages/orchestrator/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/orchestrator-adapter',
+        replacement: new URL('../../packages/orchestrator-adapter/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/mcp-server',
+        replacement: new URL('../../packages/mcp-server/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/document-tools',
+        replacement: new URL('../../packages/document-tools/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/patent-tools',
+        replacement: new URL('../../packages/patent-tools/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/unified-knowledge-graph',
+        replacement: new URL('../../packages/unified-knowledge-graph/src', import.meta.url)
+          .pathname,
+      },
+      {
+        find: '@yunpat/patent-database',
+        replacement: new URL('../../packages/patent-database/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/skills',
+        replacement: new URL('../../packages/skills/src', import.meta.url).pathname,
+      },
       // Agent 包
-      { find: '@yunpat/agent-invention', replacement: new URL('../../packages/agents/invention/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-prior-art-search', replacement: new URL('../../packages/agents/prior-art-search/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-specification-drafter', replacement: new URL('../../packages/agents/specification-drafter/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-claim-generator', replacement: new URL('../../packages/agents/claim-generator/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-abstract-drafter', replacement: new URL('../../packages/agents/abstract-drafter/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-quality', replacement: new URL('../../packages/agents/quality/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-analysis', replacement: new URL('../../packages/agents/analysis/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-patent-responder', replacement: new URL('../../packages/agents/patent-responder/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-patent-analyzer', replacement: new URL('../../packages/agents/patent-analyzer/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-search', replacement: new URL('../../packages/agents/search/src', import.meta.url).pathname },
-      { find: '@yunpat/agent-base', replacement: new URL('../../packages/agents/base/src', import.meta.url).pathname },
+      {
+        find: '@yunpat/agent-invention',
+        replacement: new URL('../../packages/agents/invention/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/agent-prior-art-search',
+        replacement: new URL('../../packages/agents/prior-art-search/src', import.meta.url)
+          .pathname,
+      },
+      {
+        find: '@yunpat/agent-specification-drafter',
+        replacement: new URL('../../packages/agents/specification-drafter/src', import.meta.url)
+          .pathname,
+      },
+      {
+        find: '@yunpat/agent-claim-generator',
+        replacement: new URL('../../packages/agents/claim-generator/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/agent-abstract-drafter',
+        replacement: new URL('../../packages/agents/abstract-drafter/src', import.meta.url)
+          .pathname,
+      },
+      {
+        find: '@yunpat/agent-quality',
+        replacement: new URL('../../packages/agents/quality/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/agent-analysis',
+        replacement: new URL('../../packages/agents/analysis/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/agent-patent-responder',
+        replacement: new URL('../../packages/agents/patent-responder/src', import.meta.url)
+          .pathname,
+      },
+      {
+        find: '@yunpat/agent-patent-analyzer',
+        replacement: new URL('../../packages/agents/patent-analyzer/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/agent-search',
+        replacement: new URL('../../packages/agents/search/src', import.meta.url).pathname,
+      },
+      {
+        find: '@yunpat/agent-base',
+        replacement: new URL('../../packages/agents/base/src', import.meta.url).pathname,
+      },
     ],
   },
 })

@@ -74,8 +74,7 @@ export async function waitForHealthy(
 export function getConnectionString(service: 'postgres' | 'redis'): string {
   if (service === 'postgres') {
     return (
-      process.env.TEST_DATABASE_URL ||
-      'postgresql://yunpat:yunpat123@localhost:5432/yunpat_test'
+      process.env.TEST_DATABASE_URL || 'postgresql://yunpat:yunpat123@localhost:5432/yunpat_test'
     )
   }
   return process.env.REDIS_URL || 'redis://localhost:6379'

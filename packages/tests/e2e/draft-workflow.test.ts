@@ -442,17 +442,24 @@ describeE2E('专利撰写工作流', () => {
       const pipelineInfra = createWorkflowInfrastructure({
         responses: [
           // InventionUnderstandingAgent（可能多次调用）
-          mockInventionResponse(), mockInventionResponse(), mockInventionResponse(),
+          mockInventionResponse(),
+          mockInventionResponse(),
+          mockInventionResponse(),
           // PriorArtSearchAgent
-          mockPriorArtSearchResponse(), mockPriorArtSearchResponse(),
+          mockPriorArtSearchResponse(),
+          mockPriorArtSearchResponse(),
           // SpecificationDrafterAgent
-          mockSpecificationResponse(), mockSpecificationResponse(),
+          mockSpecificationResponse(),
+          mockSpecificationResponse(),
           // ClaimGeneratorAgent
-          mockClaimsResponse(), mockClaimsResponse(),
+          mockClaimsResponse(),
+          mockClaimsResponse(),
           // AbstractDrafterAgent
-          mockAbstractResponse(), mockAbstractResponse(),
+          mockAbstractResponse(),
+          mockAbstractResponse(),
           // QualityCheckerAgent
-          mockQualityCheckResponse(), mockQualityCheckResponse(),
+          mockQualityCheckResponse(),
+          mockQualityCheckResponse(),
         ],
       })
 

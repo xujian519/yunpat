@@ -27,9 +27,7 @@ describeE2E('专利检索工作流', () => {
   describe('T-022: 完整检索流水线', () => {
     it('应执行检索并返回结构化结果', async () => {
       try {
-        const { PatentSearchTool } = await import(
-          '@yunpat/mcp-server/tools/PatentSearchTool.js'
-        )
+        const { PatentSearchTool } = await import('@yunpat/mcp-server/tools/PatentSearchTool.js')
         const tool = new PatentSearchTool()
 
         const result = await tool.execute(TEST_SEARCH_INPUT, { llm: null })
@@ -54,9 +52,7 @@ describeE2E('专利检索工作流', () => {
   describe('T-023: 检索策略包含 IPC 分类号', () => {
     it('应在检索策略中包含 IPC 分类号', async () => {
       try {
-        const { PatentSearchTool } = await import(
-          '@yunpat/mcp-server/tools/PatentSearchTool.js'
-        )
+        const { PatentSearchTool } = await import('@yunpat/mcp-server/tools/PatentSearchTool.js')
         const tool = new PatentSearchTool()
 
         const result = await tool.execute(TEST_SEARCH_INPUT, { llm: null })
@@ -64,9 +60,7 @@ describeE2E('专利检索工作流', () => {
         if (result.success && result.data?.searchStrategy) {
           const strategy = result.data.searchStrategy
           // 检索策略应包含 IPC 分类号或关键词
-          expect(
-            Array.isArray(strategy) || typeof strategy === 'string'
-          ).toBe(true)
+          expect(Array.isArray(strategy) || typeof strategy === 'string').toBe(true)
         }
       } catch (error: any) {
         if (error.message?.includes('Cannot find module')) {
@@ -80,9 +74,7 @@ describeE2E('专利检索工作流', () => {
   describe('T-024: 检索结果来源追踪', () => {
     it('每个检索结果应包含来源标识', async () => {
       try {
-        const { PatentSearchTool } = await import(
-          '@yunpat/mcp-server/tools/PatentSearchTool.js'
-        )
+        const { PatentSearchTool } = await import('@yunpat/mcp-server/tools/PatentSearchTool.js')
         const tool = new PatentSearchTool()
 
         const result = await tool.execute(TEST_SEARCH_INPUT, { llm: null })
@@ -90,9 +82,7 @@ describeE2E('专利检索工作流', () => {
         if (result.success && result.data?.results) {
           for (const item of result.data.results) {
             // 每个结果应有来源标识（patentId 或其他标识）
-            expect(
-              item.source || item.patentId || item.id
-            ).toBeDefined()
+            expect(item.source || item.patentId || item.id).toBeDefined()
           }
         }
       } catch (error: any) {
@@ -107,9 +97,7 @@ describeE2E('专利检索工作流', () => {
   describe('T-025: 无 API 密钥时的回退模式', () => {
     it('应在无 LLM 时返回基于规则的结果', async () => {
       try {
-        const { PatentSearchTool } = await import(
-          '@yunpat/mcp-server/tools/PatentSearchTool.js'
-        )
+        const { PatentSearchTool } = await import('@yunpat/mcp-server/tools/PatentSearchTool.js')
         const tool = new PatentSearchTool()
 
         // 无 LLM 密钥时执行

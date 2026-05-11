@@ -110,8 +110,12 @@ describeE2E('OA 审查意见答复工作流', () => {
     it('应解析审查意见并识别驳回理由', async () => {
       const testInfra = createWorkflowInfrastructure({
         responses: [
-          mockOAParseResponse(), mockStrategyResponse(), mockResponseDocumentResponse(),
-          mockOAParseResponse(), mockStrategyResponse(), mockResponseDocumentResponse(),
+          mockOAParseResponse(),
+          mockStrategyResponse(),
+          mockResponseDocumentResponse(),
+          mockOAParseResponse(),
+          mockStrategyResponse(),
+          mockResponseDocumentResponse(),
         ],
       })
 
@@ -144,8 +148,12 @@ describeE2E('OA 审查意见答复工作流', () => {
     it('应推荐合适的答复策略', async () => {
       const testInfra = createWorkflowInfrastructure({
         responses: [
-          mockOAParseResponse(), mockStrategyResponse(), mockResponseDocumentResponse(),
-          mockOAParseResponse(), mockStrategyResponse(), mockResponseDocumentResponse(),
+          mockOAParseResponse(),
+          mockStrategyResponse(),
+          mockResponseDocumentResponse(),
+          mockOAParseResponse(),
+          mockStrategyResponse(),
+          mockResponseDocumentResponse(),
         ],
       })
 
@@ -208,8 +216,12 @@ describeE2E('OA 审查意见答复工作流', () => {
     it('应生成完整的答复文档', async () => {
       const testInfra = createWorkflowInfrastructure({
         responses: [
-          mockOAParseResponse(), mockStrategyResponse(), mockResponseDocumentResponse(),
-          mockOAParseResponse(), mockStrategyResponse(), mockResponseDocumentResponse(),
+          mockOAParseResponse(),
+          mockStrategyResponse(),
+          mockResponseDocumentResponse(),
+          mockOAParseResponse(),
+          mockStrategyResponse(),
+          mockResponseDocumentResponse(),
         ],
       })
 

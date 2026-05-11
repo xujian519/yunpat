@@ -12,9 +12,7 @@ describeE2E('知识图谱集成', () => {
   describe('T-076: 实体提取与存储', () => {
     it('应从专利文本中提取实体', async () => {
       try {
-        const kg = await import(
-          '@yunpat/unified-knowledge-graph'
-        )
+        const kg = await import('@yunpat/unified-knowledge-graph')
 
         // 验证知识图谱模块可加载
         expect(kg).toBeDefined()
@@ -30,9 +28,7 @@ describeE2E('知识图谱集成', () => {
   describe('T-077: 知识图谱查询', () => {
     it('应返回相关的上下文信息', async () => {
       try {
-        const mod = await import(
-          '@yunpat/unified-knowledge-graph'
-        )
+        const mod = await import('@yunpat/unified-knowledge-graph')
 
         // 验证知识图谱模块导出核心类
         expect(mod).toBeDefined()
@@ -56,9 +52,7 @@ describeE2E('知识图谱集成', () => {
           { name: '相变材料', type: 'technology', description: 'Phase Change Material' },
           { name: '散热效率', type: 'metric', description: 'Heat dissipation efficiency' },
         ],
-        relations: [
-          { source: '相变材料', target: '散热效率', type: 'improves' },
-        ],
+        relations: [{ source: '相变材料', target: '散热效率', type: 'improves' }],
       }
 
       // 验证上下文可序列化

@@ -6,13 +6,8 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import {
-  createSampleDisclosure,
-  createSampleOfficeAction,
-} from '../helpers/test-data-factory.js'
-import {
-  assertValidInventionConcepts,
-} from '../helpers/assertion-helpers.js'
+import { createSampleDisclosure, createSampleOfficeAction } from '../helpers/test-data-factory.js'
+import { assertValidInventionConcepts } from '../helpers/assertion-helpers.js'
 
 const describeRealLLM = process.env.RUN_REAL_LLM_TESTS === 'true' ? describe : describe.skip
 
@@ -75,9 +70,8 @@ describeRealLLM('真实 LLM E2E 测试', () => {
 
         try {
           const { PatentResponderAgent } = await import('@yunpat/agent-patent-responder')
-          const { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } = await import(
-            '@yunpat/core'
-          )
+          const { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } =
+            await import('@yunpat/core')
 
           const llm = createDeepSeekModel({
             apiKey: process.env.DEEPSEEK_API_KEY,
@@ -128,9 +122,8 @@ describeRealLLM('真实 LLM E2E 测试', () => {
 
         try {
           const { PatentAnalyzerAgent } = await import('@yunpat/agent-patent-analyzer')
-          const { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } = await import(
-            '@yunpat/core'
-          )
+          const { EventBus, ShortTermMemory, ToolRegistry, createDeepSeekModel } =
+            await import('@yunpat/core')
 
           const llm = createDeepSeekModel({
             apiKey: process.env.DEEPSEEK_API_KEY,

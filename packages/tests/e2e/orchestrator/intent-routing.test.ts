@@ -5,10 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import {
-  createDraftIntent,
-  createAmbiguousIntent,
-} from '../helpers/test-data-factory.js'
+import { createDraftIntent, createAmbiguousIntent } from '../helpers/test-data-factory.js'
 
 const describeE2E = process.env.MOCK_TESTS === 'true' ? describe : describe.skip
 
@@ -49,9 +46,7 @@ describeE2E('意图路由', () => {
   describe('T-038: Agent 注册表查找', () => {
     it('应能加载 Agent 清单', async () => {
       try {
-        const { agentManifest } = await import(
-          '@yunpat/orchestrator/registry/agentManifest.js'
-        )
+        const { agentManifest } = await import('@yunpat/orchestrator/registry/agentManifest.js')
 
         expect(agentManifest).toBeDefined()
         expect(Array.isArray(agentManifest)).toBe(true)
@@ -80,9 +75,7 @@ describeE2E('意图路由', () => {
     it('应支持专利领域的意图配置', async () => {
       try {
         // 尝试加载意图配置
-        const configModule = await import(
-          '@yunpat/orchestrator-adapter/intent-hook.js'
-        )
+        const configModule = await import('@yunpat/orchestrator-adapter/intent-hook.js')
 
         // 验证模块导出
         expect(configModule).toBeDefined()

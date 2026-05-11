@@ -235,11 +235,15 @@ describeE2E('专利分析工作流', () => {
       const pipelineInfra = createWorkflowInfrastructure({
         responses: [
           // InventionUnderstandingAgent（可能多次调用）
-          mockInventionResponse(), mockInventionResponse(), mockInventionResponse(),
+          mockInventionResponse(),
+          mockInventionResponse(),
+          mockInventionResponse(),
           // PriorArtAnalyzerAgent
-          mockTechnicalAnalysisResponse(), mockTechnicalAnalysisResponse(),
+          mockTechnicalAnalysisResponse(),
+          mockTechnicalAnalysisResponse(),
           // ComparisonReportGeneratorAgent
-          mockComparisonReportResponse(), mockComparisonReportResponse(),
+          mockComparisonReportResponse(),
+          mockComparisonReportResponse(),
         ],
       })
 

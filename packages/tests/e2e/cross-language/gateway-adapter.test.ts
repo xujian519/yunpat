@@ -8,8 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { spawn, ChildProcess } from 'child_process'
 
-const describeIntegration =
-  process.env.RUN_INTEGRATION_TESTS === 'true' ? describe : describe.skip
+const describeIntegration = process.env.RUN_INTEGRATION_TESTS === 'true' ? describe : describe.skip
 
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:8080'
 const ADAPTER_URL = process.env.ADAPTER_URL || 'http://localhost:3001'
@@ -115,9 +114,7 @@ describeIntegration('Rust Gateway + TS Adapter 集成', () => {
         // 注意：WebSocket 测试需要 ws 包
         try {
           const { WebSocket } = await import('ws')
-          const ws = new WebSocket(
-            `ws://localhost:8080/api/v1/sessions/${session.id}/events`
-          )
+          const ws = new WebSocket(`ws://localhost:8080/api/v1/sessions/${session.id}/events`)
 
           const events: unknown[] = await new Promise((resolve, reject) => {
             const collected: unknown[] = []
@@ -224,9 +221,7 @@ describeIntegration('Rust Gateway + TS Adapter 集成', () => {
         const session = (await createResponse.json()) as any
 
         // 检索会话状态
-        const stateResponse = await fetch(
-          `${GATEWAY_URL}/api/v1/sessions/${session.id}`
-        )
+        const stateResponse = await fetch(`${GATEWAY_URL}/api/v1/sessions/${session.id}`)
 
         if (stateResponse.ok) {
           const state = (await stateResponse.json()) as any

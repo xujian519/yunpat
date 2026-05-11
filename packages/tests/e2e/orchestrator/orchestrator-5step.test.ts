@@ -20,11 +20,7 @@ import {
 } from '../helpers/test-data-factory.js'
 import { createWorkflowInfrastructure } from '../helpers/workflow-setup.js'
 import { assertValidOrchestratorOutput } from '../helpers/assertion-helpers.js'
-import type {
-  OrchestratorAgentConfig,
-  IntentType,
-  FileSignal,
-} from '@yunpat/orchestrator'
+import type { OrchestratorAgentConfig, IntentType, FileSignal } from '@yunpat/orchestrator'
 
 // 跳过条件：未设置 MOCK_TESTS
 const describeE2E = process.env.MOCK_TESTS === 'true' ? describe : describe.skip
@@ -219,7 +215,7 @@ function mockIntentSearch(): MockLLMCall {
   return {
     content: JSON.stringify({
       intent: 'SEARCH',
-      confidence: 0.90,
+      confidence: 0.9,
       complexity: 'simple',
       extracted: {
         hasAttachment: false,
@@ -292,7 +288,8 @@ function mockTaskPlan(): MockLLMCall {
 function mockAggregationResponse(): MockLLMCall {
   return {
     content: JSON.stringify({
-      markdown: '# 专利撰写结果\n\n## 发明理解\n已完成发明构思提取。\n\n## 现有技术分析\n检索到3篇相关专利。\n\n## 说明书\n已生成完整说明书草稿。',
+      markdown:
+        '# 专利撰写结果\n\n## 发明理解\n已完成发明构思提取。\n\n## 现有技术分析\n检索到3篇相关专利。\n\n## 说明书\n已生成完整说明书草稿。',
       attachments: [],
       suggestedActions: ['查看说明书全文', '修改权利要求', '提交质量检查'],
       metadata: { wordCount: 500 },
@@ -318,7 +315,11 @@ describeE2E('Orchestrator 5-step 流程', () => {
       try {
         const { OrchestratorAgent } = await importOrchestratorAgent()
 
-        const mockLLM = createMockLLMClient([mockIntentDraftFull(), mockTaskPlan(), mockAggregationResponse()])
+        const mockLLM = createMockLLMClient([
+          mockIntentDraftFull(),
+          mockTaskPlan(),
+          mockAggregationResponse(),
+        ])
         const config = createTestConfig(mockLLM)
         const orchestrator = new OrchestratorAgent(config)
         registerMockAgents(orchestrator)
@@ -343,7 +344,11 @@ describeE2E('Orchestrator 5-step 流程', () => {
       try {
         const { OrchestratorAgent } = await importOrchestratorAgent()
 
-        const mockLLM = createMockLLMClient([mockIntentRespondOA(), mockTaskPlan(), mockAggregationResponse()])
+        const mockLLM = createMockLLMClient([
+          mockIntentRespondOA(),
+          mockTaskPlan(),
+          mockAggregationResponse(),
+        ])
         const config = createTestConfig(mockLLM)
         const orchestrator = new OrchestratorAgent(config)
         registerMockAgents(orchestrator)
@@ -392,7 +397,11 @@ describeE2E('Orchestrator 5-step 流程', () => {
         const { OrchestratorAgent } = await importOrchestratorAgent()
 
         // Call 1: 意图识别 (complex), Call 2: 任务规划
-        const mockLLM = createMockLLMClient([mockIntentDraftFull(), mockTaskPlan(), mockAggregationResponse()])
+        const mockLLM = createMockLLMClient([
+          mockIntentDraftFull(),
+          mockTaskPlan(),
+          mockAggregationResponse(),
+        ])
         const config = createTestConfig(mockLLM)
         const orchestrator = new OrchestratorAgent(config)
         registerMockAgents(orchestrator)
@@ -510,9 +519,9 @@ describeE2E('Orchestrator 5-step 流程', () => {
 
         // 按 Call 顺序准备所有 mock 响应
         const mockLLM = createMockLLMClient([
-          mockIntentDraftFull(),     // Call 1: 意图识别
-          mockTaskPlan(),             // Call 2: 任务规划
-          mockAggregationResponse(),  // Call 4: 结果聚合
+          mockIntentDraftFull(), // Call 1: 意图识别
+          mockTaskPlan(), // Call 2: 任务规划
+          mockAggregationResponse(), // Call 4: 结果聚合
         ])
         const config = createTestConfig(mockLLM)
         const orchestrator = new OrchestratorAgent(config)
@@ -541,10 +550,7 @@ describeE2E('Orchestrator 5-step 流程', () => {
         const { OrchestratorAgent } = await importOrchestratorAgent()
 
         // 只需要 Call 2 和后续的响应，Call 1 被跳过
-        const mockLLM = createMockLLMClient([
-          mockTaskPlan(),
-          mockAggregationResponse(),
-        ])
+        const mockLLM = createMockLLMClient([mockTaskPlan(), mockAggregationResponse()])
         const config = createTestConfig(mockLLM)
         const orchestrator = new OrchestratorAgent(config)
         registerMockAgents(orchestrator)
@@ -575,10 +581,7 @@ describeE2E('Orchestrator 5-step 流程', () => {
 
         // fileSignals 的高置信度信号会跳过 Call 1，
         // 但如果是 complex intent 仍需后续 Call
-        const mockLLM = createMockLLMClient([
-          mockTaskPlan(),
-          mockAggregationResponse(),
-        ])
+        const mockLLM = createMockLLMClient([mockTaskPlan(), mockAggregationResponse()])
         const config = createTestConfig(mockLLM)
         const orchestrator = new OrchestratorAgent(config)
         registerMockAgents(orchestrator)
@@ -617,7 +620,7 @@ describeE2E('Orchestrator 5-step 流程', () => {
 
         // 低置信度信号 → 回退到 Call 1 LLM
         const mockLLM = createMockLLMClient([
-          mockIntentSearch(),  // Call 1: 回退到 LLM 识别
+          mockIntentSearch(), // Call 1: 回退到 LLM 识别
           mockAggregationResponse(),
         ])
         const config = createTestConfig(mockLLM)
@@ -630,7 +633,7 @@ describeE2E('Orchestrator 5-step 流程', () => {
             extension: '.docx',
             mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             signalType: 'reference_document',
-            confidence: 0.50, // 低于 0.85 阈值
+            confidence: 0.5, // 低于 0.85 阈值
           },
         ]
 

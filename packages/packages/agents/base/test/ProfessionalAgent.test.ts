@@ -243,25 +243,23 @@ describe('ProfessionalAgent', () => {
     it('null 字段抛出错误', () => {
       const agent = new TestableAgent(createBaseConfig())
 
-      expect(() =>
-        (agent as any).validateInput({ name: null, age: 25 }, ['name'])
-      ).toThrow('name不能为空')
+      expect(() => (agent as any).validateInput({ name: null, age: 25 }, ['name'])).toThrow(
+        'name不能为空'
+      )
     })
 
     it('undefined 字段抛出错误', () => {
       const agent = new TestableAgent(createBaseConfig())
 
-      expect(() =>
-        (agent as any).validateInput({ name: undefined }, ['name'])
-      ).toThrow('name不能为空')
+      expect(() => (agent as any).validateInput({ name: undefined }, ['name'])).toThrow(
+        'name不能为空'
+      )
     })
 
     it('空字符串字段抛出错误', () => {
       const agent = new TestableAgent(createBaseConfig())
 
-      expect(() =>
-        (agent as any).validateInput({ name: '' }, ['name'])
-      ).toThrow('name不能为空')
+      expect(() => (agent as any).validateInput({ name: '' }, ['name'])).toThrow('name不能为空')
     })
 
     it('有效字段不抛出', () => {

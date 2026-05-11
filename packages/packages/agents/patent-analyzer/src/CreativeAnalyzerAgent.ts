@@ -209,7 +209,11 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
     }
   }
 
-  private async callLLM(systemPrompt: string, userPrompt: string, maxTokens = 1000): Promise<string> {
+  private async callLLM(
+    systemPrompt: string,
+    userPrompt: string,
+    maxTokens = 1000
+  ): Promise<string> {
     const response = await this.agentLlm.chat({
       messages: [
         { role: 'system', content: systemPrompt },
@@ -254,7 +258,11 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
 请分析：1. 采用了哪些技术手段？2. 技术特征的组合方式？3. 是否存在协同效应？`
 
     try {
-      const content = await this.callLLM('你是一位专业的专利分析师，擅长技术方案分析。', prompt, 1500)
+      const content = await this.callLLM(
+        '你是一位专业的专利分析师，擅长技术方案分析。',
+        prompt,
+        1500
+      )
       return this.parseSolutionAnalysis(content)
     } catch {
       return { technicalMeans: [], featureCombination: '分析失败', synergisticEffect: false }
@@ -301,7 +309,11 @@ ${input.priorArt.map((p) => `- ${p.publicationNumber}: ${p.title}\n摘要: ${p.a
 请分析：1. 区别技术特征有哪些？2. 这些区别是否显而易见？3. 现有技术是否有启示？`
 
     try {
-      const content = await this.callLLM('你是一位专业的专利分析师，擅长现有技术对比。', prompt, 1500)
+      const content = await this.callLLM(
+        '你是一位专业的专利分析师，擅长现有技术对比。',
+        prompt,
+        1500
+      )
       return this.parseDifferencesFromPriorArt(content)
     } catch {
       return { distinguishingFeatures: [], obviousness: 'not-obvious', suggestion: 'no-suggestion' }
@@ -381,22 +393,38 @@ ${input.priorArt.map((p) => `- ${p.publicationNumber}: ${p.title}\n摘要: ${p.a
   }
 
   private parseProblemAnalysis(content: string): CreativeAnalyzerOutput['problemAnalysis'] {
-    return { solvedProblem: content.substring(0, 200), problemDifficulty: 'medium', unforeseeable: false }
+    return {
+      solvedProblem: content.substring(0, 200),
+      problemDifficulty: 'medium',
+      unforeseeable: false,
+    }
   }
 
   private parseSolutionAnalysis(content: string): CreativeAnalyzerOutput['solutionAnalysis'] {
-    return { technicalMeans: [content.substring(0, 100)], featureCombination: content.substring(0, 200), synergisticEffect: true }
+    return {
+      technicalMeans: [content.substring(0, 100)],
+      featureCombination: content.substring(0, 200),
+      synergisticEffect: true,
+    }
   }
 
   private parseEffectAnalysis(content: string): CreativeAnalyzerOutput['effectAnalysis'] {
     return { technicalEffects: [content.substring(0, 100)], unexpected: false }
   }
 
-  private parseDifferencesFromPriorArt(content: string): CreativeAnalyzerOutput['differencesFromPriorArt'] {
-    return { distinguishingFeatures: [content.substring(0, 100)], obviousness: 'not-obvious', suggestion: 'no-suggestion' }
+  private parseDifferencesFromPriorArt(
+    content: string
+  ): CreativeAnalyzerOutput['differencesFromPriorArt'] {
+    return {
+      distinguishingFeatures: [content.substring(0, 100)],
+      obviousness: 'not-obvious',
+      suggestion: 'no-suggestion',
+    }
   }
 
-  private parseCreativityAssessment(content: string): CreativeAnalyzerOutput['creativityAssessment'] {
+  private parseCreativityAssessment(
+    content: string
+  ): CreativeAnalyzerOutput['creativityAssessment'] {
     return {
       level: 'inventive',
       score: 75,

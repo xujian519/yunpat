@@ -12,7 +12,4 @@ export type {
 
 export { CreativeAnalyzerAgent } from './CreativeAnalyzerAgent.js'
 
-export type {
-  CreativeAnalyzerInput,
-  CreativeAnalyzerOutput,
-} from './CreativeAnalyzerAgent.js'
+export type { CreativeAnalyzerInput, CreativeAnalyzerOutput } from './CreativeAnalyzerAgent.js'

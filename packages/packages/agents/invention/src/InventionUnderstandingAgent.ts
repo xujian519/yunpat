@@ -9,7 +9,12 @@
  * 5. 知识库缓存
  */
 
-import { KnowledgeEnhancedAgent, type ExecutionContext, type AgentConfig, SkillLoader } from '@yunpat/core'
+import {
+  KnowledgeEnhancedAgent,
+  type ExecutionContext,
+  type AgentConfig,
+  SkillLoader,
+} from '@yunpat/core'
 import { join } from 'path'
 import {
   type InventionUnderstandingInput,

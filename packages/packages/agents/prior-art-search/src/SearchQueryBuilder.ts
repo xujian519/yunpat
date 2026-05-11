@@ -74,7 +74,9 @@ export class SearchQueryBuilder {
 
     const allKeywords = [...keywords]
     if (technicalProblem) {
-      const problemWords = technicalProblem.split(/[，,；;、\s]+/).filter((w) => w.length >= MIN_PROBLEM_WORD_LENGTH)
+      const problemWords = technicalProblem
+        .split(/[，,；;、\s]+/)
+        .filter((w) => w.length >= MIN_PROBLEM_WORD_LENGTH)
       allKeywords.push(...problemWords.slice(0, MAX_PROBLEM_WORDS))
     }
 
@@ -98,7 +100,10 @@ export class SearchQueryBuilder {
     const { keywords, domainStrategy } = config
 
     const domainKeywords = this.getDomainSpecificTerms(domainStrategy || 'general')
-    const combinedKeywords = [...keywords.slice(0, MAX_SUPPLEMENTARY_KEYWORDS), ...domainKeywords.slice(0, MAX_SUPPLEMENTARY_KEYWORDS)]
+    const combinedKeywords = [
+      ...keywords.slice(0, MAX_SUPPLEMENTARY_KEYWORDS),
+      ...domainKeywords.slice(0, MAX_SUPPLEMENTARY_KEYWORDS),
+    ]
 
     const query = combinedKeywords.map((k) => `"${k}"`).join(' OR ')
 

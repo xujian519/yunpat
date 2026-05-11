@@ -11,11 +11,7 @@ type PgRecord = Record<string, unknown>
 
 export interface PostgreSQLKnowledgeBridgeConfig {
   pgClient: {
-    vectorSearch(
-      queryText: string,
-      topK: number,
-      table?: string
-    ): Promise<PgRecord[]>
+    vectorSearch(queryText: string, topK: number, table?: string): Promise<PgRecord[]>
     queryInvalidDecisions(query: string, topK: number): Promise<PgRecord[]>
     searchPatentRules(params: {
       query?: string
@@ -108,10 +104,7 @@ export class PostgreSQLKnowledgeBridge implements KnowledgeBridge {
     }
   }
 
-  async queryKnowledgeGraph(
-    query: string,
-    _options?: Record<string, unknown>
-  ): Promise<string[]> {
+  async queryKnowledgeGraph(query: string, _options?: Record<string, unknown>): Promise<string[]> {
     try {
       const results = await this.pgClient.structuredSearch(query, 5, true)
       return results.map((r) => {

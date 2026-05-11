@@ -137,6 +137,7 @@ tags: [patent-drafting, domain, chemistry, software, biology, mechanical, electr
 ```
 
 **辅助判断因素**：
+
 - 人们一直渴望解决但始终未获成功的技术难题 → 支持创造性
 - 克服了技术偏见 → 支持创造性
 - 产生了预料不到的技术效果 → 支持创造性

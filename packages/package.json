@@ -20,6 +20,7 @@
     "test:mock": "MOCK_TESTS=true pnpm --filter @yunpat/core test -- --run",
     "test:watch": "pnpm --filter @yunpat/core test -- --watch",
     "test:coverage": "pnpm --filter @yunpat/core test -- --coverage",
+    "test:e2e": "npx vitest run --root tests/e2e",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r --filter './packages/*' --filter './packages/agents/*' exec eslint --fix src --ext .ts",
     "lint:fix:all": "pnpm -r --filter './packages/*' --filter './packages/agents/*' exec eslint --fix src --ext .ts --max-warnings 1000",

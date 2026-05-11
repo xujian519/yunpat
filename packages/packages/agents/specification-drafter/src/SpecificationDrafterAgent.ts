@@ -550,7 +550,9 @@ ${contextInfo}
 
     const keyFeatures = specification.invention_content.technical_solution
     if (keyFeatures.length > 100) {
-      suggestions.push('技术方案描述较详细，建议提取必要技术特征构建独立权利要求，附加特征作为从属权利要求')
+      suggestions.push(
+        '技术方案描述较详细，建议提取必要技术特征构建独立权利要求，附加特征作为从属权利要求'
+      )
     }
 
     if (specification.embodiments.embodiment_list.length >= 2) {

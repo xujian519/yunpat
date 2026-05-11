@@ -5,7 +5,18 @@ import type {
 } from './SpecTypes.js'
 
 // 禁止用语词库
-const COMMERCIAL_TERMS = ['最佳', '最优', '最好', '革命性', '颠覆性', '突破性', '世界领先', '国内首创', '首创', '独特']
+const COMMERCIAL_TERMS = [
+  '最佳',
+  '最优',
+  '最好',
+  '革命性',
+  '颠覆性',
+  '突破性',
+  '世界领先',
+  '国内首创',
+  '首创',
+  '独特',
+]
 const UNCERTAIN_TERMS = ['厚', '薄', '强', '弱', '高温', '高压', '很宽范围', '很大', '很小']
 const VAGUE_RANGE_TERMS = ['例如', '最好是', '尤其是', '必要时', '约', '接近', '或类似物']
 const REFERENCE_PHRASES = [/如权利要求\d+所述/, /如上述权利要求所述/, /如前述权利要求所述/]
@@ -249,7 +260,9 @@ export function calculateQualityScore(
     drawingsQuality * 0.1
 
   const prohibitedCheck = checkProhibitedTerms(specification)
-  const penalty = prohibitedCheck.passed ? 0 : Math.min(prohibitedCheck.violations.length * 0.05, 0.2)
+  const penalty = prohibitedCheck.passed
+    ? 0
+    : Math.min(prohibitedCheck.violations.length * 0.05, 0.2)
 
   return {
     overall: Math.max(0, baseOverall - penalty),

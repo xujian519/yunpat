@@ -382,12 +382,14 @@ function parseRiskWarnings(data: unknown): RiskWarning[] {
     }
     const obj = item as Record<string, unknown>
     return {
-      category: (['enablement', 'support', 'formality', 'citation', 'prohibited_terms'] as const).includes(
-        obj.category as RiskWarning['category']
-      )
+      category: (
+        ['enablement', 'support', 'formality', 'citation', 'prohibited_terms'] as const
+      ).includes(obj.category as RiskWarning['category'])
         ? (obj.category as RiskWarning['category'])
         : 'formality',
-      severity: (['high', 'medium', 'low'] as const).includes(obj.severity as RiskWarning['severity'])
+      severity: (['high', 'medium', 'low'] as const).includes(
+        obj.severity as RiskWarning['severity']
+      )
         ? (obj.severity as RiskWarning['severity'])
         : 'medium',
       message: typeof obj.message === 'string' ? obj.message : '',

@@ -99,6 +99,16 @@ export interface SpecificationDrafterInput {
 }
 
 /**
+ * 风险警告
+ */
+export interface RiskWarning {
+  category: 'enablement' | 'support' | 'formality' | 'citation' | 'prohibited_terms'
+  severity: 'high' | 'medium' | 'low'
+  message: string
+  suggestion?: string
+}
+
+/**
  * 说明书撰写输出
  */
 export interface SpecificationDrafterOutput {
@@ -110,6 +120,9 @@ export interface SpecificationDrafterOutput {
     coherenceCheck: boolean
     enablementCheck: boolean
     supportCheck: boolean
+    prohibitedTermsPassed: boolean
+    citationComplete: boolean
+    embodimentSufficient: boolean
   }
   qualityScore: {
     overall: number
@@ -118,6 +131,9 @@ export interface SpecificationDrafterOutput {
     consistency: number
   }
   confidence: number
+  draftingNotes: string
+  riskWarnings: RiskWarning[]
+  claimSuggestions: string
   metadata: {
     draftMode: string
     timestamp: number

@@ -3,6 +3,7 @@ import type {
   SpecificationContent,
   SpecificationDrafterInput,
   SpecificationDrafterOutput,
+  RiskWarning,
   Embodiment,
   DrawingDescription,
 } from './SpecTypes.js'
@@ -79,6 +80,9 @@ export function normalizeOutput(
       coherenceCheck: true,
       enablementCheck: true,
       supportCheck: true,
+      prohibitedTermsPassed: true,
+      citationComplete: true,
+      embodimentSufficient: true,
     },
     qualityScore: {
       overall: 0.8,
@@ -87,6 +91,9 @@ export function normalizeOutput(
       consistency: 0.8,
     },
     confidence: getNumber('confidence', 0.85),
+    draftingNotes: getString('draftingNotes'),
+    riskWarnings: parseRiskWarnings(parsed.riskWarnings),
+    claimSuggestions: getString('claimSuggestions'),
     metadata: {
       draftMode,
       timestamp: Date.now(),
@@ -328,6 +335,9 @@ export function createFallbackOutput(input: SpecificationDrafterInput): Specific
       coherenceCheck: false,
       enablementCheck: false,
       supportCheck: false,
+      prohibitedTermsPassed: false,
+      citationComplete: false,
+      embodimentSufficient: false,
     },
     qualityScore: {
       overall: 0.5,
@@ -336,6 +346,9 @@ export function createFallbackOutput(input: SpecificationDrafterInput): Specific
       consistency: 0.5,
     },
     confidence: 0.5,
+    draftingNotes: '',
+    riskWarnings: [],
+    claimSuggestions: '',
     metadata: {
       draftMode: input.draftMode || 'standard',
       timestamp: Date.now(),
@@ -358,4 +371,27 @@ function getStrArray(obj: Record<string, unknown>, key: string): string[] {
   const value = obj[key]
   if (!Array.isArray(value)) return []
   return value.filter((v): v is string => typeof v === 'string')
+}
+
+function parseRiskWarnings(data: unknown): RiskWarning[] {
+  if (!Array.isArray(data)) return []
+
+  return data.map((item: unknown): RiskWarning => {
+    if (typeof item !== 'object' || item === null) {
+      return { category: 'formality', severity: 'medium', message: String(item) }
+    }
+    const obj = item as Record<string, unknown>
+    return {
+      category: (['enablement', 'support', 'formality', 'citation', 'prohibited_terms'] as const).includes(
+        obj.category as RiskWarning['category']
+      )
+        ? (obj.category as RiskWarning['category'])
+        : 'formality',
+      severity: (['high', 'medium', 'low'] as const).includes(obj.severity as RiskWarning['severity'])
+        ? (obj.severity as RiskWarning['severity'])
+        : 'medium',
+      message: typeof obj.message === 'string' ? obj.message : '',
+      suggestion: typeof obj.suggestion === 'string' ? obj.suggestion : undefined,
+    }
+  })
 }

@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@yunpat/agent-claim-generator": "workspace:*",
+    "@yunpat/agent-invention": "workspace:*",
+    "@yunpat/agent-specification-drafter": "workspace:*",
     "@yunpat/core": "workspace:*",
     "@yunpat/format-converter": "workspace:*",
     "@yunpat/spec-formality-checker": "workspace:*",

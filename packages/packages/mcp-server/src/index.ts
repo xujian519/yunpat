@@ -230,7 +230,15 @@ function createServer() {
         }
       }
 
-      const result = await mcpTool.execute(args, context)
+      const timeoutMs = (mcpTool.metadata as any).timeout || 600000 // 默认 10 分钟
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Tool execution timed out after ${timeoutMs}ms`))
+        }, timeoutMs)
+      })
+
+      const result = (await Promise.race([mcpTool.execute(args, context), timeoutPromise])) as any
 
       // 格式化返回结果
       if (result.success) {
@@ -301,6 +309,12 @@ function extractInputText(args: Record<string, unknown> | undefined): string {
  * 启动服务器
  */
 async function main() {
+  // 净化 stdout，将所有的 console.log 转发到 console.error，避免破坏 MCP stdio 协议
+  const originalConsoleLog = console.log
+  console.log = (...args) => {
+    console.error(...args)
+  }
+
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
 
   if (!apiKey) {

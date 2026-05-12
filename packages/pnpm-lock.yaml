@@ -84,6 +84,9 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.5(@opentelemetry/api@1.9.1)(@types/node@20.19.39)(@vitest/coverage-v8@4.1.5)(@vitest/ui@4.1.5)(vite@8.0.10(@types/node@20.19.39)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.3))
 
   packages/agents/abstract-drafter:
     dependencies:
@@ -232,6 +235,12 @@ importers:
       '@yunpat/agent-claim-generator':
         specifier: workspace:*
         version: link:../claim-generator
+      '@yunpat/agent-invention':
+        specifier: workspace:*
+        version: link:../invention
+      '@yunpat/agent-specification-drafter':
+        specifier: workspace:*
+        version: link:../specification-drafter
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -253,7 +262,7 @@ importers:
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^2.0.5
-        version: 2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0))
+        version: 2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0))
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -262,7 +271,7 @@ importers:
         version: 6.1.1(typescript@5.9.3)(vite@8.0.10(@types/node@24.12.2)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.3))
       vitest:
         specifier: ^2.0.5
-        version: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/invention:
     dependencies:
@@ -504,7 +513,7 @@ importers:
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^2.0.5
-        version: 2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0))
+        version: 2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0))
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(@swc/core@1.15.33(@swc/helpers@0.5.21))(jiti@1.21.7)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
@@ -513,7 +522,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.0.5
-        version: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/specification-drafter:
     dependencies:
@@ -548,7 +557,7 @@ importers:
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^2.0.5
-        version: 2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0))
+        version: 2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0))
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(@swc/core@1.15.33(@swc/helpers@0.5.21))(jiti@1.21.7)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
@@ -557,7 +566,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.0.5
-        version: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/tech-unit:
     dependencies:
@@ -633,7 +642,7 @@ importers:
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^2.0.5
-        version: 2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0))
+        version: 2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0))
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(@swc/core@1.15.33(@swc/helpers@0.5.21))(jiti@1.21.7)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
@@ -642,7 +651,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.0.5
-        version: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+        version: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
 
   packages/agents/writer:
     dependencies:
@@ -6531,7 +6540,7 @@ snapshots:
 
   '@ungap/structured-clone@1.3.0': {}
 
-  '@vitest/coverage-v8@2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0))':
+  '@vitest/coverage-v8@2.1.9(vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 0.2.3
@@ -6545,7 +6554,7 @@ snapshots:
       std-env: 3.10.0
       test-exclude: 7.0.2
       tinyrainbow: 1.2.0
-      vitest: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0)
+      vitest: 2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -9425,7 +9434,7 @@ snapshots:
       - supports-color
       - terser
 
-  vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5(vitest@4.1.5))(lightningcss@1.32.0):
+  vitest@2.1.9(@types/node@24.12.2)(@vitest/ui@4.1.5)(lightningcss@1.32.0):
     dependencies:
       '@vitest/expect': 2.1.9
       '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@24.12.2)(lightningcss@1.32.0))

@@ -15,6 +15,7 @@ export interface McpToolMetadata {
   outputSchema?: any
   version?: string
   author?: string
+  timeout?: number // 执行超时时间(ms)，默认 600000 (10分钟)
 }
 
 /**

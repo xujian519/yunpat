@@ -20,7 +20,7 @@
 
 ### 1.1 项目定位
 
-云熙知识产权智能体（YunPat Agent）是一个面向知识产权全生命周期的智能体操作系统。系统覆盖从专利检索、技术交底书分析、权利要求撰写、审查意见答复到专利监控的全流程，通过 24 个专业 Agent 的协同工作，为专利代理人和研发人员提供智能化辅助。
+云熙知识产权智能体（YunPat Agent）是一个面向知识产权全生命周期的智能体操作系统。系统覆盖从专利检索、技术交底书分析、权利要求撰写、审查意见答复到专利监控等流程，通过多个专业 Agent 的协同工作，为专利代理人和研发人员提供智能化辅助。
 
 系统采用双语言 Monorepo 架构：Rust 负责交互层（CLI/TUI/HTTP 运行时 API），TypeScript 负责业务层（Agent 编排、MCP Server、专利工具）。Rust 与 TypeScript 之间通过 MCP（Model Context Protocol）stdio 进行通信。
 
@@ -28,9 +28,9 @@
 
 | 维度 | 数据 |
 |------|------|
-| Rust 代码 | ~208K 行，18 个 crate |
-| TypeScript 代码 | ~196K 行，16 个基础设施包 |
-| 专业 Agent | 24 个 |
+| Rust 代码 | workspace members：17 个 crate（目录位于 `crates/crates/*`） |
+| TypeScript 代码 | 基础设施包位于 `packages/packages/*` |
+| 专业 Agent | Agent 包位于 `packages/packages/agents/*` |
 | 构建系统 | Cargo（Rust）+ pnpm workspace（TypeScript） |
 
 ### 1.3 设计哲学
@@ -115,28 +115,28 @@ PostgreSQL 用于生产数据持久化，Redis 用于缓存，SQLite 用于 Rust
 
 ### 3.1 Crate 组织
 
-18 个 crate 按职责分为三层：
+Rust workspace members 按职责分为三层：
 
-#### 入口层（3 crate）
+#### 入口层
 
-| Crate | 行数 | 职责 |
-|-------|------|------|
-| `tui` | ~170K | 主运行时。包含引擎、工具、LLM 客户端、TUI 渲染、运行时 API、任务管理器。4165 行 main.rs，50+ 内联模块 |
-| `cli` | ~4K | 入口分发器，解析命令行参数后转发到 `deepseek-tui` |
-| `app-server` | ~800 | HTTP/SSE + JSON-RPC 无头 Agent 服务，支持无 TUI 的服务器模式 |
+| Crate | 职责 |
+|-------|------|
+| `yunpat-tui` | 主运行时。包含引擎、工具、LLM 客户端、TUI 渲染、运行时 API、任务管理器 |
+| `yunpat-cli` | CLI 入口（bin: `yunpat`），部分命令会透传给 TUI 侧能力 |
+| `yunpat-app-server` | HTTP/SSE + JSON-RPC 无头 Agent 服务 |
 
-#### 核心运行时（8 crate）
+#### 核心运行时
 
-| Crate | 行数 | 职责 |
-|-------|------|------|
-| `core` | ~1.7K | 核心运行时边界：Agent 循环、会话管理、Turn 编排、容量流控 |
-| `state` | ~1.8K | SQLite 线程/会话持久化，支持断点续传 |
-| `tools` | ~500 | 工具调用生命周期、Schema 验证、并行调度器 |
-| `hooks` | ~800 | 生命周期钩子：stdout、jsonl、webhook 三种输出格式 |
-| `execpolicy` | ~1.5K | 审批/沙箱策略引擎，yolo 模式开关 |
-| `mcp` | ~900 | MCP 客户端 + stdio 传输实现 |
-| `protocol` | ~500 | 请求/响应帧和协议类型定义 |
-| `agent` | ~500 | ModelRegistry — 模型/提供商注册表 |
+| Crate | 职责 |
+|-------|------|
+| `yunpat-core` | 核心运行时边界：Agent 循环、会话管理、Turn 编排、容量流控 |
+| `yunpat-state` | SQLite 线程/会话持久化，支持断点续传 |
+| `yunpat-tools` | 工具调用生命周期、Schema 验证、并行调度器 |
+| `yunpat-hooks` | 生命周期钩子：stdout、jsonl、webhook 输出 |
+| `yunpat-execpolicy` | 审批/沙箱策略引擎，yolo 模式开关 |
+| `yunpat-mcp` | MCP 客户端 + stdio 传输实现 |
+| `yunpat-protocol` | 请求/响应帧和协议类型定义 |
+| `yunpat-agent` | ModelRegistry — 模型/提供商注册表 |
 
 #### 领域特定（7 crate）
 

@@ -12,20 +12,22 @@
 
 ```
 yunpat-agent/                          ← 统一 Monorepo
-├── crates/                            ← Rust 交互层（18 个 crate）
-│   ├── tui/                           ← TUI 主运行时（ratatui，~170K 行）
-│   ├── cli/                           ← CLI 入口分发器
-│   ├── core/                          ← 核心运行时（Agent 循环、Turn 编排）
-│   ├── config/                        ← 配置管理
-│   ├── yunpat-agents/                 ← 专利领域 Agent trait 系统
-│   ├── yunpat-router/                 ← 意图路由和命令分发
-│   ├── yunpat-mcp-bridge/             ← MCP Rust-TS 桥接
-│   └── ...                            ← execpolicy、hooks、mcp 等
+├── crates/                            ← Rust 工作区（workspace members: 17）
+│   └── crates/                        ← Rust crate 实际目录
+│       ├── tui/                       ← TUI 主运行时（crate: yunpat-tui）
+│       ├── cli/                       ← CLI 入口（crate: yunpat-cli）
+│       ├── core/                      ← 核心运行时（crate: yunpat-core）
+│       ├── app-server/                ← HTTP/SSE 无头服务（crate: yunpat-app-server）
+│       ├── config/                    ← 配置管理（crate: yunpat-config）
+│       ├── yunpat-agents/             ← 专利领域 Agent trait 系统
+│       ├── yunpat-router/             ← 意图路由和命令分发
+│       ├── yunpat-mcp-bridge/         ← MCP Rust-TS 桥接
+│       └── ...                        ← execpolicy、hooks、mcp、state、tools 等
 │
 ├── packages/packages/                 ← TypeScript 业务层
 │   ├── core/                          ← Agent 框架核心（~55K 行）
-│   ├── orchestrator/                  ← 24 个专业 Agent 中央调度
-│   ├── agents/                        ← 24 个专业 Agent 包
+│   ├── orchestrator/                  ← 专业 Agent 中央调度与编排
+│   ├── agents/                        ← 专业 Agent 包集合
 │   │   ├── patent-responder/          ← OA 审查意见答复
 │   │   ├── patent-manager/            ← 专利全生命周期管理
 │   │   ├── invention/                 ← 交底书分析与理解
@@ -39,7 +41,7 @@ yunpat-agent/                          ← 统一 Monorepo
 │   └── ...
 │
 ├── constitutional/                    ← 宪法规则引擎（YAML）
-├── knowledge-base/                    ← 专利知识库（法律法规、审查指南）
+├── knowledge-base/                    ← 专利知识库（可选：默认路径由 KNOWLEDGE_BASE_PATH 指定）
 ├── docs/                              ← 项目文档
 └── examples/                          ← 示例代码
 ```
@@ -117,16 +119,17 @@ pnpm --filter @yunpat/mcp-server dev
 
 | Crate | 说明 |
 |-------|------|
-| `tui` | TUI 主运行时（ratatui），含引擎、工具、LLM 客户端 |
-| `cli` | CLI 入口分发器 |
-| `core` | 核心运行时（会话管理、Turn 编排） |
+| `yunpat-tui` | TUI 主运行时（ratatui），含引擎、工具、LLM 客户端 |
+| `yunpat-cli` | CLI 入口 |
+| `yunpat-core` | 核心运行时（会话管理、Turn 编排） |
+| `yunpat-app-server` | HTTP/SSE + JSON-RPC 无头 Agent 服务 |
 | `yunpat-agents` | 专利领域 Agent trait 系统 |
 | `yunpat-router` | 意图路由和命令分发 |
 | `yunpat-mcp-bridge` | MCP Rust-TS 桥接 |
-| `config` | 配置管理（profiles、环境变量） |
-| `state` | SQLite 会话持久化 |
-| `execpolicy` | 审批/沙箱策略引擎 |
-| `hooks` | 生命周期钩子 |
+| `yunpat-config` | 配置管理（profiles、环境变量） |
+| `yunpat-state` | SQLite 会话持久化 |
+| `yunpat-execpolicy` | 审批/沙箱策略引擎 |
+| `yunpat-hooks` | 生命周期钩子 |
 
 ### TypeScript 层
 

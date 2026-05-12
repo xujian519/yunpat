@@ -104,11 +104,11 @@ make dev
 ### 2.5 验证安装
 
 ```bash
-# 方式一：使用已安装的 deepseek 命令
-deepseek doctor
+# 方式一：从源码运行 CLI（workspace bin: yunpat）
+cargo run --bin yunpat -- --version
 
-# 方式二：从源码运行
-cargo run --bin deepseek -- --version
+# 方式二：启动 TUI（workspace bin: yunpat-tui）
+cargo run --bin yunpat-tui
 ```
 
 ---
@@ -117,25 +117,24 @@ cargo run --bin deepseek -- --version
 
 ```
 yunpat-agent/
-├── crates/                    ← Rust 工作区（18 个 crate）
-│   ├── cli/                   ← CLI 入口（`cargo run --bin deepseek`）
-│   ├── tui/                   ← 主 TUI 运行时（ratatui 框架）
-│   ├── core/                  ← 核心运行时（会话管理、工具调度）
-│   ├── app-server/            ← HTTP/SSE 无头服务
-│   ├── config/                ← 配置加载与 profiles
-│   ├── state/                 ← SQLite 持久化
-│   ├── execpolicy/            ← 审批/沙箱策略引擎
-│   ├── mcp/                   ← MCP 协议客户端
-│   ├── tools/                 ← 工具注册表
-│   ├── hooks/                 ← 生命周期钩子
-│   ├── protocol/              ← 请求/响应协议类型
-│   ├── secrets/               ← OS keyring API key 存储
-│   ├── yunpat-agents/         ← 专利领域 Agent trait 系统
-│   ├── yunpat-models/         ← 多提供商 ModelProvider 接口
-│   ├── yunpat-mcp-bridge/     ← Rust 调用 TS/Python Agent 的桥接
-│   ├── yunpat-router/         ← 意图路由和命令分发
-│   ├── tui-core/              ← TUI 状态机骨架
-│   └── agent/                 ← ModelRegistry
+├── crates/                    ← Rust 工作区（workspace root 在仓库根目录）
+│   └── crates/                ← Rust crate 实际目录
+│       ├── cli/               ← CLI 入口（bin: yunpat）
+│       ├── tui/               ← 主 TUI 运行时（bin: yunpat-tui）
+│       ├── core/              ← 核心运行时（会话管理、工具调度）
+│       ├── app-server/        ← HTTP/SSE 无头服务
+│       ├── config/            ← 配置加载与 profiles
+│       ├── state/             ← SQLite 持久化
+│       ├── execpolicy/        ← 审批/沙箱策略引擎
+│       ├── mcp/               ← MCP 协议客户端
+│       ├── tools/             ← 工具注册表
+│       ├── hooks/             ← 生命周期钩子
+│       ├── protocol/          ← 请求/响应协议类型
+│       ├── secrets/           ← OS keyring API key 存储
+│       ├── yunpat-agents/     ← 专利领域 Agent trait 系统
+│       ├── yunpat-models/     ← 多提供商 ModelProvider 接口
+│       ├── yunpat-mcp-bridge/ ← Rust 调用 TS Agent 的桥接
+│       └── yunpat-router/     ← 意图路由和命令分发
 │
 ├── packages/                  ← TypeScript 工作区
 │   ├── packages/              ← 基础设施包（20 个）
@@ -167,7 +166,7 @@ yunpat-agent/
 │       ├── legal-qa/          ← 法律知识问答
 │       └── ...
 │
-├── knowledge-base/            ← 专利知识库（4382 个文件，不提交 git）
+├── knowledge-base/            ← 专利知识库（可选：默认由 packages/.env 的 KNOWLEDGE_BASE_PATH 指定）
 ├── constitutional/            ← 宪法规则文件（YAML）
 ├── docs/                      ← 文档
 ├── scripts/                   ← 构建脚本（CI、部署、验证）
@@ -202,7 +201,7 @@ make build-ts
 
 ```bash
 # Rust 单 crate
-cd crates && cargo build -p yunpat-agents
+cargo build -p yunpat-agents
 
 # TypeScript 单包
 pnpm --filter @yunpat/core build

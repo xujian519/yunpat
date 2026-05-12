@@ -39,7 +39,7 @@ build: build-rust build-ts
 
 build-rust:
 	@echo "🦀 构建 Rust 组件..."
-	@cd crates && cargo build --workspace --release
+	@cargo build --workspace --release
 	@echo "✅ Rust 构建完成"
 
 build-ts:
@@ -49,7 +49,7 @@ build-ts:
 
 build-rust-debug:
 	@echo "🦀 构建 Rust Debug 版本..."
-	@cd crates && cargo build --workspace
+	@cargo build --workspace
 
 # =============================================================================
 # 测试
@@ -61,7 +61,7 @@ test: test-rust test-ts
 
 test-rust:
 	@echo "🧪 运行 Rust 测试..."
-	@cd crates && cargo test --workspace --all-features
+	@cargo test --workspace --all-features
 
 test-ts:
 	@echo "🧪 运行 TypeScript 测试..."
@@ -77,17 +77,17 @@ test-ts-real:
 
 lint:
 	@echo "🔍 运行代码检查..."
-	@cd crates && cargo clippy --workspace --all-targets --all-features
+	@cargo clippy --workspace --all-targets --all-features
 	@cd packages && pnpm lint
 
 format:
 	@echo "✨ 格式化代码..."
-	@cd crates && cargo fmt --all
+	@cargo fmt --all
 	@cd packages && pnpm format
 
 format-check:
 	@echo "🔍 检查代码格式..."
-	@cd crates && cargo fmt --all -- --check
+	@cargo fmt --all -- --check
 	@cd packages && pnpm format:check
 
 # =============================================================================
@@ -101,14 +101,14 @@ dev:
 		--names "rust,tsc,mcp" \
 		--prefix-colors "cyan,magenta,green" \
 		--kill-others \
-		"cd crates && cargo watch -x 'build'" \
+		"cargo watch -x 'build'" \
 		"cd packages && pnpm build:watch" \
-		"cd packages/mcp-server && pnpm dev" \
+		"cd packages && pnpm --filter @yunpat/mcp-server dev" \
 		|| true
 
 run: build
 	@echo "🚀 启动云熙知识产权智能体..."
-	@cd crates && cargo run --bin deepseek
+	@cargo run --bin yunpat-tui --release
 
 # =============================================================================
 # 清理
@@ -116,8 +116,14 @@ run: build
 
 clean:
 	@echo "🧹 清理构建产物..."
-	@cd crates && cargo clean
-	@rm -rf packages/*/dist packages/*/node_modules node_modules
+	@cargo clean
+	@rm -rf \
+		packages/node_modules \
+		packages/packages/*/dist \
+		packages/packages/*/node_modules \
+		packages/packages/agents/*/dist \
+		packages/packages/agents/*/node_modules \
+		node_modules
 	@echo "✅ 清理完成"
 
 # =============================================================================

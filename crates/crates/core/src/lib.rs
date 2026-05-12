@@ -518,14 +518,14 @@ impl ThreadManager {
                 checkpoint_id = %cp.checkpoint_id,
                 "Found TS orchestrator checkpoint during resume"
             );
-            
+
             if let Some(state) = cp.orchestrator_state {
                 // Inject HITL context into the conversation history
                 let hitl_msg = json!({
                     "role": "system",
                     "content": format!("⚠️ [系统提示] 检测到未完成的人机协作(HITL)任务，请根据以下待审内容继续处理：\n```json\n{}\n```", serde_json::to_string_pretty(&state).unwrap_or_default())
                 });
-                
+
                 self.store.append_message(
                     &thread.id,
                     "system",

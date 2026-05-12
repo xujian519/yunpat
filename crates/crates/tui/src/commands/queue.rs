@@ -27,7 +27,7 @@ fn list_queue(app: &mut App) -> CommandResult {
     let mut lines = Vec::new();
     let queued = app.queued_message_count();
 
-    if let Some(draft) = app.queued_draft.as_ref() {
+    if let Some(draft) = app.queue.queued_draft.as_ref() {
         lines.push("Editing queued message:".to_string());
         lines.push(format!("- {}", truncate_preview(&draft.display)));
     }
@@ -40,7 +40,7 @@ fn list_queue(app: &mut App) -> CommandResult {
     }
 
     lines.push(format!("Queued messages ({queued}):"));
-    for (idx, message) in app.queued_messages.iter().enumerate() {
+    for (idx, message) in app.queue.queued_messages.iter().enumerate() {
         lines.push(format!(
             "{}. {}",
             idx + 1,
@@ -54,7 +54,7 @@ fn list_queue(app: &mut App) -> CommandResult {
 }
 
 fn edit_queue(app: &mut App, index: Option<&str>) -> CommandResult {
-    if app.queued_draft.is_some() {
+    if app.queue.queued_draft.is_some() {
         return CommandResult::error(
             "Already editing a queued message. Send it or /queue clear to discard.",
         );
@@ -70,7 +70,7 @@ fn edit_queue(app: &mut App, index: Option<&str>) -> CommandResult {
 
     app.input = message.display.clone();
     app.cursor_position = app.input.len();
-    app.queued_draft = Some(message);
+    app.queue.queued_draft = Some(message);
     app.status_message = Some(format!("Editing queued message {}", index + 1));
 
     CommandResult::message(format!(
@@ -94,8 +94,8 @@ fn drop_queue(app: &mut App, index: Option<&str>) -> CommandResult {
 
 fn clear_queue(app: &mut App) -> CommandResult {
     let queued = app.queued_message_count();
-    let had_draft = app.queued_draft.take().is_some();
-    app.queued_messages.clear();
+    let had_draft = app.queue.queued_draft.take().is_some();
+    app.queue.queued_messages.clear();
     if queued == 0 && !had_draft {
         return CommandResult::message("Queue already empty");
     }
@@ -174,9 +174,9 @@ mod tests {
     fn test_queue_list_with_messages() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(QueuedMessage::new("First message".to_string(), None));
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(QueuedMessage::new("Second message".to_string(), None));
         let result = queue(&mut app, Some("list"));
         assert!(result.message.is_some());
@@ -190,7 +190,7 @@ mod tests {
     fn test_queue_edit_missing_index() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(QueuedMessage::new("Test".to_string(), None));
         let result = queue(&mut app, Some("edit"));
         assert!(result.message.is_some());
@@ -224,9 +224,9 @@ mod tests {
     fn test_queue_edit_already_editing() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(QueuedMessage::new("First".to_string(), None));
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(QueuedMessage::new("Second".to_string(), None));
         // Start editing
         queue(&mut app, Some("edit 1"));
@@ -240,40 +240,40 @@ mod tests {
     fn test_queue_edit_success() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(QueuedMessage::new("Original message".to_string(), None));
         let result = queue(&mut app, Some("edit 1"));
         assert!(result.message.is_some());
         assert_eq!(app.input, "Original message");
         assert_eq!(app.cursor_position, app.input.len());
-        assert!(app.queued_draft.is_some());
+        assert!(app.queue.queued_draft.is_some());
     }
 
     #[test]
     fn test_queue_drop_success() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(QueuedMessage::new("To drop".to_string(), None));
-        let initial_count = app.queued_messages.len();
+        let initial_count = app.queue.queued_messages.len();
         let result = queue(&mut app, Some("drop 1"));
         assert!(result.message.is_some());
         assert!(result.message.unwrap().contains("Dropped queued message"));
-        assert_eq!(app.queued_messages.len(), initial_count - 1);
+        assert_eq!(app.queue.queued_messages.len(), initial_count - 1);
     }
 
     #[test]
     fn test_queue_clear() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(QueuedMessage::new("Message 1".to_string(), None));
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(QueuedMessage::new("Message 2".to_string(), None));
         let result = queue(&mut app, Some("clear"));
         assert!(result.message.is_some());
         assert!(result.message.unwrap().contains("Queue cleared"));
-        assert!(app.queued_messages.is_empty());
+        assert!(app.queue.queued_messages.is_empty());
     }
 
     #[test]

@@ -6,6 +6,8 @@
 
 pub mod subagent_state;
 pub mod tool_state;
+pub mod queue_state;
 
 pub use subagent_state::SubagentState;
 pub use tool_state::{ToolDetailRecord, ToolState};
+pub use queue_state::QueueState;

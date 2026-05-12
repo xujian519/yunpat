@@ -334,12 +334,12 @@ pub async fn run_tui(config: &Config, options: TuiOptions) -> Result<()> {
                 };
 
                 if should_restore {
-                    app.queued_messages = state
+                    app.queue.queued_messages = state
                         .messages
                         .into_iter()
                         .map(queued_session_to_ui)
                         .collect();
-                    app.queued_draft = state.draft.map(queued_session_to_ui);
+                    app.queue.queued_draft = state.draft.map(queued_session_to_ui);
                     if app.status_message.is_none() && app.queued_message_count() > 0 {
                         app.status_message = Some(format!(
                             "Restored {} queued message(s) from previous session — ↑ to edit, Ctrl+X to discard",
@@ -625,7 +625,7 @@ async fn run_event_loop(
 ) -> Result<()> {
     // Track streaming state
     let mut current_streaming_text = String::new();
-    let mut last_queue_state = (app.queued_messages.clone(), app.queued_draft.clone());
+    let mut last_queue_state = (app.queue.queued_messages.clone(), app.queue.queued_draft.clone());
     let mut last_task_refresh = Instant::now()
         .checked_sub(Duration::from_secs(2))
         .unwrap_or_else(Instant::now);
@@ -1009,7 +1009,7 @@ async fn run_event_loop(
                             && app.plan_tool_used_in_turn
                             && !app.plan_prompt_pending
                             && app.queued_message_count() == 0
-                            && app.queued_draft.is_none()
+                            && app.queue.queued_draft.is_none()
                         {
                             app.plan_prompt_pending = true;
                             app.add_message(HistoryCell::System {
@@ -1025,13 +1025,13 @@ async fn run_event_loop(
                         // handling keeps Esc as cancel-only, but older saved
                         // state may still carry pending steers.
                         if status == crate::core::events::TurnOutcomeStatus::Interrupted
-                            && app.submit_pending_steers_after_interrupt
+                            && app.queue.submit_pending_steers_after_interrupt
                         {
                             if let Some(merged) = merge_pending_steers(&mut *app) {
                                 queued_to_send = Some(merged);
                             }
                         } else if status == crate::core::events::TurnOutcomeStatus::Failed
-                            && !app.pending_steers.is_empty()
+                            && !app.queue.pending_steers.is_empty()
                         {
                             // Hard-fail recovery: if the engine failed before
                             // a clean Interrupted landed, demote pending
@@ -1380,7 +1380,7 @@ async fn run_event_loop(
             app.needs_redraw = true;
         }
 
-        let queue_state = (app.queued_messages.clone(), app.queued_draft.clone());
+        let queue_state = (app.queue.queued_messages.clone(), app.queue.queued_draft.clone());
         if queue_state != last_queue_state {
             persist_offline_queue_state(app);
             last_queue_state = queue_state;
@@ -2251,7 +2251,7 @@ async fn run_event_loop(
                     }
                     EscapeAction::DiscardQueuedDraft => {
                         app.backtrack.reset();
-                        app.queued_draft = None;
+                        app.queue.queued_draft = None;
                         app.status_message = Some("Stopped editing queued message".to_string());
                     }
                     EscapeAction::ClearInput => {
@@ -2330,8 +2330,8 @@ async fn run_event_loop(
                     if key.modifiers.is_empty()
                         && app.input.is_empty()
                         && app.cursor_position == 0
-                        && app.queued_draft.is_none()
-                        && !app.queued_messages.is_empty()
+                        && app.queue.queued_draft.is_none()
+                        && !app.queue.queued_messages.is_empty()
                         && !mention_menu_open
                         && !slash_menu_open
                         && app.selected_composer_attachment_index().is_none() =>
@@ -2482,7 +2482,7 @@ async fn run_event_loop(
                             execute_patent_intent(app, config, &agent_id, topic).await?;
                             return Ok(());
                         } else {
-                            let queued = if let Some(mut draft) = app.queued_draft.take() {
+                            let queued = if let Some(mut draft) = app.queue.queued_draft.take() {
                                 draft.display = input;
                                 draft
                             } else {
@@ -2548,7 +2548,7 @@ async fn run_event_loop(
                             execute_patent_intent(app, config, &agent_id, topic).await?;
                             return Ok(());
                         } else {
-                            let queued = if let Some(mut draft) = app.queued_draft.take() {
+                            let queued = if let Some(mut draft) = app.queue.queued_draft.take() {
                                 draft.display = input;
                                 draft
                             } else {
@@ -3043,17 +3043,17 @@ pub(crate) fn apply_engine_error_to_app(
 
 fn persist_offline_queue_state(app: &App) {
     if let Ok(manager) = SessionManager::default_location() {
-        if app.queued_messages.is_empty() && app.queued_draft.is_none() {
+        if app.queue.queued_messages.is_empty() && app.queue.queued_draft.is_none() {
             let _ = manager.clear_offline_queue_state();
             return;
         }
         let state = OfflineQueueState {
             messages: app
-                .queued_messages
+                .queue.queued_messages
                 .iter()
                 .map(queued_ui_to_session)
                 .collect(),
-            draft: app.queued_draft.as_ref().map(queued_ui_to_session),
+            draft: app.queue.queued_draft.as_ref().map(queued_ui_to_session),
             ..OfflineQueueState::default()
         };
         let _ = manager.save_offline_queue_state(&state, app.current_session_id.as_deref());
@@ -3308,7 +3308,7 @@ fn next_escape_action(app: &App, slash_menu_open: bool) -> EscapeAction {
         EscapeAction::CloseSlashMenu
     } else if app.is_loading {
         EscapeAction::CancelRequest
-    } else if app.queued_draft.is_some() && app.input.is_empty() {
+    } else if app.queue.queued_draft.is_some() && app.input.is_empty() {
         EscapeAction::DiscardQueuedDraft
     } else if !app.input.is_empty() {
         EscapeAction::ClearInput
@@ -3511,7 +3511,7 @@ fn queue_current_draft_for_next_turn(app: &mut App) -> bool {
     let Some(input) = app.submit_input() else {
         return false;
     };
-    let queued = if let Some(mut draft) = app.queued_draft.take() {
+    let queued = if let Some(mut draft) = app.queue.queued_draft.take() {
         draft.display = input;
         draft
     } else {
@@ -5091,9 +5091,9 @@ async fn submit_or_steer_message(
     }
 }
 
-/// Drain `app.pending_steers` into a single `QueuedMessage` ready for
+/// Drain `app.queue.pending_steers` into a single `QueuedMessage` ready for
 /// `dispatch_user_message`. Returns `None` if the queue was empty (caller
-/// then falls back to `app.queued_messages`). Skill instruction is taken
+/// then falls back to `app.queue.queued_messages`). Skill instruction is taken
 /// from the first message that supplies one — multiple steers shouldn't
 /// double-up the system framing.
 fn merge_pending_steers(app: &mut App) -> Option<QueuedMessage> {
@@ -5271,13 +5271,13 @@ fn build_pending_input_preview(app: &App) -> PendingInputPreview {
     })
     .collect();
     preview.pending_steers = app
-        .pending_steers
+        .queue.pending_steers
         .iter()
         .map(|m| m.display.clone())
         .collect();
-    preview.rejected_steers = app.rejected_steers.iter().cloned().collect();
+    preview.rejected_steers = app.queue.rejected_steers.iter().cloned().collect();
     preview.queued_messages = app
-        .queued_messages
+        .queue.queued_messages
         .iter()
         .map(|m| m.display.clone())
         .collect();
@@ -7010,7 +7010,7 @@ fn footer_state_label(app: &App) -> (&'static str, ratatui::style::Color) {
     if running_agent_count(app) > 0 {
         return ("working", app.ui_theme.status_working);
     }
-    if app.queued_draft.is_some() {
+    if app.queue.queued_draft.is_some() {
         return ("draft", app.ui_theme.text_muted);
     }
 

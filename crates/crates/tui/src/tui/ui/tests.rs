@@ -1355,7 +1355,7 @@ fn test_esc_discards_queued_draft_before_clearing_input() {
     let mut app = create_test_app();
     app.is_loading = false;
     app.input.clear();
-    app.queued_draft = Some(crate::tui::app::QueuedMessage::new(
+    app.queue.queued_draft = Some(crate::tui::app::QueuedMessage::new(
         "queued draft".to_string(),
         None,
     ));
@@ -1383,7 +1383,7 @@ fn test_esc_closes_slash_menu_before_other_actions() {
     let mut app = create_test_app();
     app.is_loading = true;
     app.input = "draft".to_string();
-    app.queued_draft = Some(crate::tui::app::QueuedMessage::new(
+    app.queue.queued_draft = Some(crate::tui::app::QueuedMessage::new(
         "queued draft".to_string(),
         None,
     ));
@@ -1450,7 +1450,7 @@ fn test_esc_priority_order_matches_cancel_stack() {
     assert_eq!(next_escape_action(&app, false), EscapeAction::ClearInput);
 
     app.input.clear();
-    app.queued_draft = Some(crate::tui::app::QueuedMessage::new(
+    app.queue.queued_draft = Some(crate::tui::app::QueuedMessage::new(
         "queued draft".to_string(),
         None,
     ));
@@ -1459,7 +1459,7 @@ fn test_esc_priority_order_matches_cancel_stack() {
         EscapeAction::DiscardQueuedDraft
     );
 
-    app.queued_draft = None;
+    app.queue.queued_draft = None;
     assert_eq!(next_escape_action(&app, false), EscapeAction::Noop);
 }
 
@@ -1612,7 +1612,7 @@ async fn dismissed_plan_prompt_leaves_non_numeric_input_for_normal_send_path() {
 
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(
-        app.queued_messages
+        app.queue.queued_messages
             .front()
             .map(crate::tui::app::QueuedMessage::content),
         Some("yolo".to_string())
@@ -1642,7 +1642,7 @@ async fn numeric_plan_choice_still_queues_follow_up_when_busy() {
     assert_eq!(app.mode, AppMode::Yolo);
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(
-        app.queued_messages
+        app.queue.queued_messages
             .front()
             .map(crate::tui::app::QueuedMessage::content),
         Some("Proceed with the accepted plan.".to_string())
@@ -3092,7 +3092,7 @@ fn tab_queues_running_turn_draft_for_next_turn() {
     assert!(app.input.is_empty());
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(
-        app.queued_messages.front().map(|msg| msg.display.as_str()),
+        app.queue.queued_messages.front().map(|msg| msg.display.as_str()),
         Some("follow up next")
     );
     assert!(
@@ -3108,24 +3108,24 @@ fn tab_queue_preserves_queued_draft_skill_instruction() {
     app.is_loading = true;
     app.input = "edited queued follow-up".to_string();
     app.cursor_position = app.input.chars().count();
-    app.queued_draft = Some(QueuedMessage::new(
+    app.queue.queued_draft = Some(QueuedMessage::new(
         "original".to_string(),
         Some("skill body".to_string()),
     ));
 
     assert!(queue_current_draft_for_next_turn(&mut app));
 
-    let queued = app.queued_messages.front().expect("queued message");
+    let queued = app.queue.queued_messages.front().expect("queued message");
     assert_eq!(queued.display, "edited queued follow-up");
     assert_eq!(queued.skill_instruction.as_deref(), Some("skill body"));
-    assert!(app.queued_draft.is_none());
+    assert!(app.queue.queued_draft.is_none());
 }
 
 #[test]
 fn merge_pending_steers_returns_none_when_empty() {
     let mut app = create_test_app();
     assert!(merge_pending_steers(&mut app).is_none());
-    assert!(!app.submit_pending_steers_after_interrupt);
+    assert!(!app.queue.submit_pending_steers_after_interrupt);
 }
 
 #[test]
@@ -3138,8 +3138,8 @@ fn merge_pending_steers_passes_through_single_message() {
     let merged = merge_pending_steers(&mut app).expect("merge yields a message");
     assert_eq!(merged.display, "lone steer");
     assert_eq!(merged.skill_instruction.as_deref(), Some("skill body"));
-    assert!(app.pending_steers.is_empty());
-    assert!(!app.submit_pending_steers_after_interrupt);
+    assert!(app.queue.pending_steers.is_empty());
+    assert!(!app.queue.submit_pending_steers_after_interrupt);
 }
 
 #[test]
@@ -3151,7 +3151,7 @@ fn merge_pending_steers_concatenates_multiple_with_blank_line() {
 
     let merged = merge_pending_steers(&mut app).expect("merge yields a message");
     assert_eq!(merged.display, "first\n\nsecond\n\nthird");
-    assert!(app.pending_steers.is_empty());
+    assert!(app.queue.pending_steers.is_empty());
 }
 
 #[test]
@@ -3174,7 +3174,7 @@ fn merge_pending_steers_keeps_first_skill_instruction_only() {
 fn build_pending_input_preview_populates_all_three_buckets() {
     let mut app = create_test_app();
     app.push_pending_steer(QueuedMessage::new("steer-msg".to_string(), None));
-    app.rejected_steers.push_back("rejected-msg".to_string());
+    app.queue.rejected_steers.push_back("rejected-msg".to_string());
     app.queue_message(QueuedMessage::new("queued-msg".to_string(), None));
 
     let preview = build_pending_input_preview(&app);

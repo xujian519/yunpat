@@ -50,8 +50,8 @@ pub fn clear(app: &mut App) -> CommandResult {
     app.api_messages.clear();
     app.system_prompt = None;
     app.viewport.transcript_selection.clear();
-    app.queued_messages.clear();
-    app.queued_draft = None;
+    app.queue.queued_messages.clear();
+    app.queue.queued_draft = None;
     app.session.total_conversation_tokens = 0;
     let todos_cleared = app.clear_todos();
     app.tool.tool_log.clear();
@@ -213,7 +213,7 @@ pub fn home_dashboard(app: &mut App) -> CommandResult {
     // Session stats
     let history_count = app.history.len();
     let total_tokens = app.session.total_conversation_tokens;
-    let queued_messages = app.queued_messages.len();
+    let queued_messages = app.queue.queued_messages.len();
     let _ = writeln!(
         stats,
         "{}    {} messages",
@@ -552,7 +552,7 @@ mod tests {
     #[test]
     fn test_home_dashboard_shows_queued_when_present() {
         let mut app = create_test_app();
-        app.queued_messages
+        app.queue.queued_messages
             .push_back(crate::tui::app::QueuedMessage::new(
                 "test".to_string(),
                 None,

@@ -835,22 +835,8 @@ pub struct App {
     pub reasoning_header: Option<String>,
     /// Last completed reasoning block
     pub last_reasoning: Option<String>,
-    /// User messages queued while a turn is running
-    pub queued_messages: VecDeque<QueuedMessage>,
-    /// Draft queued message being edited
-    pub queued_draft: Option<QueuedMessage>,
-    /// Legacy pending-steer bucket retained for session compatibility. New
-    /// in-flight input uses Enter for same-turn steering and Tab for queued
-    /// follow-ups; Esc only cancels the active turn.
-    pub pending_steers: VecDeque<QueuedMessage>,
-    /// Engine-rejected steers (e.g. a tool was already running and couldn't be
-    /// cancelled cleanly). Surfaced in the pending-input preview so the user
-    /// knows the steer was deferred to end-of-turn. Today no engine path
-    /// produces these; the field is scaffolding for a future signalling
-    /// channel and the bucket renders identically when populated.
-    pub rejected_steers: VecDeque<String>,
-    /// Legacy resend flag for pending steer recovery.
-    pub submit_pending_steers_after_interrupt: bool,
+    /// Queue and steering state (extracted from App).
+    pub queue: super::app_state::QueueState,
     /// Start time for current turn
     pub turn_started_at: Option<Instant>,
     /// Sum of completed turn durations for this `App` instance (#448
@@ -1338,11 +1324,7 @@ impl App {
             reasoning_buffer: String::new(),
             reasoning_header: None,
             last_reasoning: None,
-            queued_messages: VecDeque::new(),
-            queued_draft: None,
-            pending_steers: VecDeque::new(),
-            rejected_steers: VecDeque::new(),
-            submit_pending_steers_after_interrupt: false,
+            queue: super::app_state::QueueState::default(),
             turn_started_at: None,
             cumulative_turn_duration: std::time::Duration::ZERO,
             runtime_turn_id: None,
@@ -3416,19 +3398,19 @@ impl App {
     }
 
     pub fn queue_message(&mut self, message: QueuedMessage) {
-        self.queued_messages.push_back(message);
+        self.queue.queued_messages.push_back(message);
     }
 
     pub fn pop_queued_message(&mut self) -> Option<QueuedMessage> {
-        self.queued_messages.pop_front()
+        self.queue.queued_messages.pop_front()
     }
 
     pub fn remove_queued_message(&mut self, index: usize) -> Option<QueuedMessage> {
-        self.queued_messages.remove(index)
+        self.queue.queued_messages.remove(index)
     }
 
     pub fn queued_message_count(&self) -> usize {
-        self.queued_messages.len()
+        self.queue.queued_messages.len()
     }
 
     /// Pop the most-recently queued message back into the composer for editing
@@ -3440,16 +3422,16 @@ impl App {
     ///
     /// Returns `true` when the composer state was mutated.
     pub fn pop_last_queued_into_draft(&mut self) -> bool {
-        if !self.input.is_empty() || self.queued_draft.is_some() {
+        if !self.input.is_empty() || self.queue.queued_draft.is_some() {
             return false;
         }
-        let Some(msg) = self.queued_messages.pop_back() else {
+        let Some(msg) = self.queue.queued_messages.pop_back() else {
             return false;
         };
         self.input = msg.display.clone();
         self.cursor_position = char_count(&self.input);
         self.selected_attachment_index = None;
-        self.queued_draft = Some(msg);
+        self.queue.queued_draft = Some(msg);
         self.needs_redraw = true;
         true
     }
@@ -3458,20 +3440,20 @@ impl App {
     /// drafts through Enter (same-turn steer) or Tab (next-turn follow-up).
     #[allow(dead_code)]
     pub fn push_pending_steer(&mut self, message: QueuedMessage) {
-        self.pending_steers.push_back(message);
-        self.submit_pending_steers_after_interrupt = true;
+        self.queue.pending_steers.push_back(message);
+        self.queue.submit_pending_steers_after_interrupt = true;
         self.needs_redraw = true;
     }
 
     /// Drain the pending-steer queue and clear the resend flag. Returns the
     /// messages in submit order (oldest first).
     pub fn drain_pending_steers(&mut self) -> Vec<QueuedMessage> {
-        self.submit_pending_steers_after_interrupt = false;
-        if self.pending_steers.is_empty() {
+        self.queue.submit_pending_steers_after_interrupt = false;
+        if self.queue.pending_steers.is_empty() {
             return Vec::new();
         }
         self.needs_redraw = true;
-        self.pending_steers.drain(..).collect()
+        self.queue.pending_steers.drain(..).collect()
     }
 
     /// Decide how to route a fresh composer submit.
@@ -4013,7 +3995,7 @@ mod tests {
         let mut app = App::new(test_options(false), &Config::default());
         app.queue_message(QueuedMessage::new("test message".to_string(), None));
         assert_eq!(app.queued_message_count(), 1);
-        assert!(app.queued_messages.front().is_some());
+        assert!(app.queue.queued_messages.front().is_some());
     }
 
     #[test]
@@ -4387,7 +4369,7 @@ mod tests {
         assert_eq!(app.input, submitted);
         assert_eq!(app.composer_attachment_count(), 1);
         assert_eq!(
-            app.queued_draft
+            app.queue.queued_draft
                 .as_ref()
                 .and_then(|draft| draft.skill_instruction.as_deref()),
             Some("Use this skill")
@@ -4609,10 +4591,10 @@ mod tests {
     #[test]
     fn push_pending_steer_arms_resend_flag() {
         let mut app = App::new(test_options(false), &Config::default());
-        assert!(!app.submit_pending_steers_after_interrupt);
+        assert!(!app.queue.submit_pending_steers_after_interrupt);
         app.push_pending_steer(QueuedMessage::new("steer me".to_string(), None));
-        assert_eq!(app.pending_steers.len(), 1);
-        assert!(app.submit_pending_steers_after_interrupt);
+        assert_eq!(app.queue.pending_steers.len(), 1);
+        assert!(app.queue.submit_pending_steers_after_interrupt);
     }
 
     #[test]
@@ -4626,18 +4608,18 @@ mod tests {
         assert_eq!(drained.len(), 3);
         assert_eq!(drained[0].display, "first");
         assert_eq!(drained[2].display, "third");
-        assert!(app.pending_steers.is_empty());
-        assert!(!app.submit_pending_steers_after_interrupt);
+        assert!(app.queue.pending_steers.is_empty());
+        assert!(!app.queue.submit_pending_steers_after_interrupt);
     }
 
     #[test]
     fn drain_pending_steers_when_empty_is_safe() {
         let mut app = App::new(test_options(false), &Config::default());
         // Flag-only set (someone armed it manually): drain still clears it.
-        app.submit_pending_steers_after_interrupt = true;
+        app.queue.submit_pending_steers_after_interrupt = true;
         let drained = app.drain_pending_steers();
         assert!(drained.is_empty());
-        assert!(!app.submit_pending_steers_after_interrupt);
+        assert!(!app.queue.submit_pending_steers_after_interrupt);
     }
 
     #[test]
@@ -4645,8 +4627,8 @@ mod tests {
         let mut app = App::new(test_options(false), &Config::default());
         app.push_pending_steer(QueuedMessage::new("a".to_string(), None));
         app.push_pending_steer(QueuedMessage::new("b".to_string(), None));
-        assert!(app.submit_pending_steers_after_interrupt);
-        assert_eq!(app.pending_steers.len(), 2);
+        assert!(app.queue.submit_pending_steers_after_interrupt);
+        assert_eq!(app.queue.pending_steers.len(), 2);
     }
 
     #[test]
@@ -4664,8 +4646,8 @@ mod tests {
         assert!(app.pop_last_queued_into_draft());
         assert_eq!(app.input, "last");
         assert_eq!(app.cursor_position, "last".chars().count());
-        assert_eq!(app.queued_messages.len(), 1);
-        let draft = app.queued_draft.clone().expect("draft is set");
+        assert_eq!(app.queue.queued_messages.len(), 1);
+        let draft = app.queue.queued_draft.clone().expect("draft is set");
         assert_eq!(draft.display, "last");
         assert_eq!(draft.skill_instruction.as_deref(), Some("skill-B"));
     }
@@ -4679,20 +4661,20 @@ mod tests {
 
         assert!(!app.pop_last_queued_into_draft());
         assert_eq!(app.input, "typing");
-        assert_eq!(app.queued_messages.len(), 1);
-        assert!(app.queued_draft.is_none());
+        assert_eq!(app.queue.queued_messages.len(), 1);
+        assert!(app.queue.queued_draft.is_none());
     }
 
     #[test]
     fn pop_last_queued_into_draft_noop_when_draft_already_armed() {
         let mut app = App::new(test_options(false), &Config::default());
         app.queue_message(QueuedMessage::new("queued".to_string(), None));
-        app.queued_draft = Some(QueuedMessage::new("editing".to_string(), None));
+        app.queue.queued_draft = Some(QueuedMessage::new("editing".to_string(), None));
 
         assert!(!app.pop_last_queued_into_draft());
-        assert_eq!(app.queued_messages.len(), 1);
+        assert_eq!(app.queue.queued_messages.len(), 1);
         assert_eq!(
-            app.queued_draft.as_ref().map(|d| d.display.as_str()),
+            app.queue.queued_draft.as_ref().map(|d| d.display.as_str()),
             Some("editing")
         );
     }
@@ -4702,7 +4684,7 @@ mod tests {
         let mut app = App::new(test_options(false), &Config::default());
         assert!(!app.pop_last_queued_into_draft());
         assert!(app.input.is_empty());
-        assert!(app.queued_draft.is_none());
+        assert!(app.queue.queued_draft.is_none());
     }
 
     #[test]

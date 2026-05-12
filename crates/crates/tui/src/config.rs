@@ -1602,10 +1602,10 @@ fn effective_home_dir() -> Option<PathBuf> {
 /// 4. `~/.yunpat/` (default for new installs)
 #[must_use]
 pub fn yunpat_data_dir() -> Option<PathBuf> {
-    if let Ok(override_dir) = std::env::var("YUNPAT_DATA_DIR") {
-        if !override_dir.is_empty() {
-            return Some(PathBuf::from(override_dir));
-        }
+    if let Ok(override_dir) = std::env::var("YUNPAT_DATA_DIR")
+        && !override_dir.is_empty()
+    {
+        return Some(PathBuf::from(override_dir));
     }
     let home = effective_home_dir()?;
     let yunpat = home.join(".yunpat");

@@ -6,9 +6,11 @@ use ratatui::text::{Line, Span};
 use crate::palette;
 
 /// Line number gutter separator character.
+#[allow(dead_code)]
 const GUTTER_SEP: &str = " │ ";
 
 /// Render text lines with line number gutter and optional truncation.
+#[allow(dead_code)]
 pub fn render_text_lines(
     lines: &[String],
     total_lines: usize,
@@ -40,6 +42,7 @@ pub fn render_text_lines(
 }
 
 /// Detect line style based on simple heuristics (whitespace-only, comment-like).
+#[allow(dead_code)]
 fn text_style_for_line(line: &str) -> Style {
     let trimmed = line.trim();
     if trimmed.is_empty() {

@@ -19,6 +19,7 @@ pub struct QueueState {
     pub submit_pending_steers_after_interrupt: bool,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for QueueState {
     fn default() -> Self {
         Self {

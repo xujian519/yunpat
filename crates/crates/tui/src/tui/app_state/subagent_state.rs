@@ -29,6 +29,7 @@ pub struct SubagentState {
     pub activity_started_at: Option<Instant>,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for SubagentState {
     fn default() -> Self {
         Self {

@@ -24,7 +24,11 @@ pub enum PreviewContent {
         line_count: usize,
     },
     /// Pre-rendered Markdown lines (using ParsedMarkdown).
-    Markdown { raw: String, rendered_height: usize },
+    Markdown {
+        raw: String,
+        #[allow(dead_code)]
+        rendered_height: usize,
+    },
     /// Binary file metadata placeholder.
     Binary {
         name: String,
@@ -32,6 +36,7 @@ pub enum PreviewContent {
         mime_hint: String,
     },
     /// File is being loaded asynchronously.
+    #[allow(dead_code)]
     Loading,
     /// File read failed.
     Error(String),

@@ -44,6 +44,7 @@ pub struct ToolState {
     pub pending_tool_uses: Vec<(String, String, Value)>,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for ToolState {
     fn default() -> Self {
         Self {

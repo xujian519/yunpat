@@ -2507,7 +2507,7 @@ async fn run_event_loop(
                         )
                     {
                         // Preview the just-mentioned file
-                        if let Some(path_str) = mention_menu_entries.iter().next() {
+                        if let Some(path_str) = mention_menu_entries.first() {
                             let full_path = app.workspace.join(path_str);
                             if full_path.exists() {
                                 super::preview::load_preview(&mut app.preview, full_path);
@@ -8225,9 +8225,8 @@ fn is_preview_toggle_shortcut(key: &KeyEvent) -> bool {
 
     let has_forbidden =
         key.modifiers.contains(KeyModifiers::ALT) || key.modifiers.contains(KeyModifiers::SUPER);
-    let ctrl_shift_p = key.modifiers.contains(KeyModifiers::CONTROL) && !has_forbidden;
 
-    ctrl_shift_p
+    key.modifiers.contains(KeyModifiers::CONTROL) && !has_forbidden
 }
 
 fn details_shortcut_modifiers(modifiers: KeyModifiers) -> bool {

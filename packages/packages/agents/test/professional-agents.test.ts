@@ -8,7 +8,7 @@ import {
   PatentResponderAgent,
   type PatentResponderInput,
   type PatentResponderOutput as _PatentResponderOutput,
-} from '../patent-responder/src/PatentResponderAgent.v2.js'
+} from '../patent-responder/src/PatentResponderAgent.v4.js'
 import {
   ComparisonAnalyzerAgent,
   type ComparisonAnalyzerInput,
@@ -78,7 +78,7 @@ describe('专业层Agent单元测试', () => {
         },
       } as PatentResponderInput
 
-      await expect(agent['plan'](invalidInput, mockContext)).rejects.toThrow('申请号不能为空')
+      await expect(agent['plan'](invalidInput, mockContext)).rejects.toThrow('applicationNumber不能为空')
     })
 
     it('应该规划答复阶段', async () => {
@@ -99,8 +99,8 @@ describe('专业层Agent单元测试', () => {
       const plan = await agent['plan'](input, mockContext)
 
       expect(plan.strategyPreference).toBe('moderate')
-      expect(plan.stages).toContain('analyze-office-action')
-      expect(plan.stages).toContain('determine-strategy')
+      expect(plan.stages).toContain('parse-oa')
+      expect(plan.stages).toContain('recommend-strategy')
       expect(plan.stages).toContain('draft-response')
     })
 
@@ -125,41 +125,75 @@ describe('专业层Agent单元测试', () => {
     })
 
     it('应该生成后续建议', () => {
-      const strategy = {
-        overallStrategy: 'amend' as const,
-        successProbability: 70,
-        keyArguments: ['论点1', '论点2'],
-        suggestedAmendments: [
-          {
-            claimNumber: 1,
-            currentText: '当前文本',
-            proposedText: '修改后文本',
-            reason: '理由',
+      const output = {
+        analysis: {
+          summary: '审查意见摘要',
+          keyIssues: [],
+          overcomeProbability: 70,
+        },
+        strategy: {
+          overallStrategy: 'amend' as const,
+          successProbability: 75,
+          keyArguments: ['论点1', '论点2'],
+          suggestedAmendments: [
+            {
+              claimNumber: 1,
+              currentText: '当前文本',
+              proposedText: '修改后文本',
+              reason: '理由',
+            },
+          ],
+          additionalEvidence: ['证据1'],
+          risks: ['风险1'],
+        },
+        responseDocument: {
+          responseLetter: '答复内容',
+          metrics: {
+            wordCount: 100,
+            argumentCount: 2,
+            amendmentCount: 1,
+            generationTime: 0,
           },
-        ],
-        additionalEvidence: ['证据1'],
-        risks: ['风险1'],
+        },
+        nextSteps: [],
       }
 
-      const nextSteps = agent['generateNextSteps'](strategy)
+      const nextSteps = agent['generateNextSteps'](output, {})
 
-      expect(nextSteps).toContain('根据答复策略修改权利要求书')
-      expect(nextSteps).toContain('准备答复陈述意见')
+      expect(nextSteps.length).toBeGreaterThan(0)
+      expect(nextSteps).toContain('建议按照当前策略提交答复')
     })
 
     it('应该处理放弃策略', () => {
-      const strategy = {
-        overallStrategy: 'abandon' as const,
-        successProbability: 10,
-        keyArguments: [],
-        suggestedAmendments: [],
-        additionalEvidence: [],
-        risks: ['风险1'],
+      const output = {
+        analysis: {
+          summary: '审查意见摘要',
+          keyIssues: [],
+          overcomeProbability: 10,
+        },
+        strategy: {
+          overallStrategy: 'abandon' as const,
+          successProbability: 15,
+          keyArguments: [],
+          suggestedAmendments: [],
+          additionalEvidence: [],
+          risks: ['风险1'],
+        },
+        responseDocument: {
+          responseLetter: '答复内容',
+          metrics: {
+            wordCount: 50,
+            argumentCount: 0,
+            amendmentCount: 0,
+            generationTime: 0,
+          },
+        },
+        nextSteps: [],
       }
 
-      const nextSteps = agent['generateNextSteps'](strategy)
+      const nextSteps = agent['generateNextSteps'](output, {})
 
-      expect(nextSteps).toContain('考虑放弃本申请')
+      expect(nextSteps).toContain('建议重新评估答复策略')
     })
   })
 
@@ -377,12 +411,6 @@ describe('专业层Agent单元测试', () => {
         unforeseeable: false,
       }
 
-      const solutionAnalysis = {
-        technicalMeans: ['手段1', '手段2'],
-        featureCombination: '组合描述',
-        synergisticEffect: false,
-      }
-
       const effectAnalysis = {
         technicalEffects: ['效果1', '效果2'],
         unexpected: false,
@@ -400,12 +428,9 @@ describe('专业层Agent单元测试', () => {
       }
 
       const recommendations = agent['generateRecommendations'](
-        {} as CreativeAnalyzerInput,
         problemAnalysis,
-        solutionAnalysis,
         effectAnalysis,
         creativityAssessment,
-        mockContext
       )
 
       expect(recommendations.strengthenCreativity.length).toBeGreaterThan(0)
@@ -425,12 +450,9 @@ describe('专业层Agent单元测试', () => {
       }
 
       const recommendationsHigh = agent['generateRecommendations'](
-        {} as CreativeAnalyzerInput,
-        undefined,
         undefined,
         undefined,
         creativityAssessmentHigh,
-        mockContext
       )
 
       expect(recommendationsHigh.strengthenCreativity.length).toBe(0)

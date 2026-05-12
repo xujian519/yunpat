@@ -164,6 +164,7 @@ export class OrchestratorAgent {
       eventBus: this.config.eventBus,
       memory: this.config.memory,
       tools: this.config.tools,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
     await factory.createAll(this.agentRegistry)
   }
@@ -560,7 +561,7 @@ export class OrchestratorAgent {
     const lowerMsg = message.toLowerCase()
 
     // 1. 规则匹配：用 PatentIntentConfig 的 keywords 做简单匹配，取最高分
-    let bestMatch: { cat: typeof domainConfig.categories[0]; score: number } | null = null
+    let bestMatch: { cat: (typeof domainConfig.categories)[0]; score: number } | null = null
     for (const cat of domainConfig.categories) {
       const score = cat.keywords.filter((kw) => lowerMsg.includes(kw.toLowerCase())).length
       if (score > 0 && (!bestMatch || score > bestMatch.score)) {

@@ -93,8 +93,16 @@ impl IntentRecognizer {
                 agent_id: AGENT_RESEARCH,
                 primary_keywords: vec!["研究法规", "研究案例", "研究判例", "研究审查指南"],
                 secondary_keywords: vec![
-                    "法规", "规则", "案例", "判例", "审查指南", "法律", "司法解释",
-                    "legal research", "case study", "regulation",
+                    "法规",
+                    "规则",
+                    "案例",
+                    "判例",
+                    "审查指南",
+                    "法律",
+                    "司法解释",
+                    "legal research",
+                    "case study",
+                    "regulation",
                 ],
                 synonyms: vec![("研究", vec!["调研", "分析", "梳理", "盘点"])],
                 sensitive_to_negation: false,
@@ -105,14 +113,37 @@ impl IntentRecognizer {
                 intent_name: "drafting",
                 agent_id: AGENT_DRAFTING,
                 primary_keywords: vec![
-                    "撰写专利", "写专利", "专利撰写", "专利申请", "写一份专利", "新申请",
-                    "draft patent", "write patent", "patent application", "new patent",
-                    "prepare patent", "file patent", "全套申请文件",
+                    "撰写专利",
+                    "写专利",
+                    "专利撰写",
+                    "专利申请",
+                    "写一份专利",
+                    "新申请",
+                    "draft patent",
+                    "write patent",
+                    "patent application",
+                    "new patent",
+                    "prepare patent",
+                    "file patent",
+                    "全套申请文件",
                 ],
                 secondary_keywords: vec![
-                    "撰写", "申请", "起草", "编制", "准备", "整理", "完成",
-                    "技术交底书", "发明名称", "权利要求书", "说明书", "摘要", "附图",
-                    "申请文件", "invention", "patent",
+                    "撰写",
+                    "申请",
+                    "起草",
+                    "编制",
+                    "准备",
+                    "整理",
+                    "完成",
+                    "技术交底书",
+                    "发明名称",
+                    "权利要求书",
+                    "说明书",
+                    "摘要",
+                    "附图",
+                    "申请文件",
+                    "invention",
+                    "patent",
                 ],
                 synonyms: vec![
                     ("撰写", vec!["写", "起草", "编制", "准备", "整理", "完成"]),
@@ -126,47 +157,110 @@ impl IntentRecognizer {
                 intent_name: "draft_claims",
                 agent_id: AGENT_DRAFTING,
                 primary_keywords: vec![
-                    "权利要求", "权要", "claims", "claim", "保护范围",
-                    "独立权利要求", "从属权利要求", "权项", "修改权利要求", "增加从属",
+                    "权利要求",
+                    "权要",
+                    "claims",
+                    "claim",
+                    "保护范围",
+                    "独立权利要求",
+                    "从属权利要求",
+                    "权项",
+                    "修改权利要求",
+                    "增加从属",
                     "only claims",
                 ],
                 secondary_keywords: vec!["修改", "调整", "改动", "变更", "重写", "优化"],
                 synonyms: vec![("权利要求", vec!["权要", "权项", "claims", "claim"])],
                 sensitive_to_negation: true,
-                exclusive_phrases: vec!["仅", "只要", "只写", "only claims", "不要说明书", "只要权利要求"],
+                exclusive_phrases: vec![
+                    "仅",
+                    "只要",
+                    "只写",
+                    "only claims",
+                    "不要说明书",
+                    "只要权利要求",
+                ],
             },
             // Drafting - Specification Only
             IntentRule {
                 intent_name: "draft_spec",
                 agent_id: AGENT_SPEC_DRAFTER,
                 primary_keywords: vec![
-                    "写说明书", "撰写说明书", "说明书撰写", "生成说明书",
-                    "具体实施方式", "背景技术", "技术领域", "发明内容",
-                    "specification", "embodiment", "only specification",
+                    "写说明书",
+                    "撰写说明书",
+                    "说明书撰写",
+                    "生成说明书",
+                    "具体实施方式",
+                    "背景技术",
+                    "技术领域",
+                    "发明内容",
+                    "specification",
+                    "embodiment",
+                    "only specification",
                 ],
                 secondary_keywords: vec!["说明书", "实施例", "描述书", "详细说明"],
                 synonyms: vec![("说明书", vec!["specification", "描述书", "详细说明"])],
                 sensitive_to_negation: true,
-                exclusive_phrases: vec!["仅", "只要", "只写", "only specification", "不要权利要求", "只要说明书"],
+                exclusive_phrases: vec![
+                    "仅",
+                    "只要",
+                    "只写",
+                    "only specification",
+                    "不要权利要求",
+                    "只要说明书",
+                ],
             },
             // OA Response
             IntentRule {
                 intent_name: "oa_response",
                 agent_id: AGENT_OA_RESPONSE,
                 primary_keywords: vec![
-                    "审查意见", "答复审查", "审查意见答复", "oa答复",
-                    "第一次审查意见", "第二次审查意见", "一通", "二通",
-                    "意见陈述书", "审查通知书", "驳回决定",
-                    "respond to office action", "office action", "official action",
-                    "examination opinion", "rejection", "claim rejection",
+                    "审查意见",
+                    "答复审查",
+                    "审查意见答复",
+                    "oa答复",
+                    "第一次审查意见",
+                    "第二次审查意见",
+                    "一通",
+                    "二通",
+                    "意见陈述书",
+                    "审查通知书",
+                    "驳回决定",
+                    "respond to office action",
+                    "office action",
+                    "official action",
+                    "examination opinion",
+                    "rejection",
+                    "claim rejection",
                 ],
                 secondary_keywords: vec![
-                    "审查员", "驳回", "答复期限", "创造性", "新颖性", "实用性",
-                    "修改权利要求", "答辩", "申述", "答复OA", "审查员意见",
+                    "审查员",
+                    "驳回",
+                    "答复期限",
+                    "创造性",
+                    "新颖性",
+                    "实用性",
+                    "修改权利要求",
+                    "答辩",
+                    "申述",
+                    "答复OA",
+                    "审查员意见",
                 ],
                 synonyms: vec![
-                    ("审查意见", vec!["OA", "Office Action", "审查通知书", "审查员意见", "official action"]),
-                    ("答复", vec!["回复", "答辩", "回应", "申述", "答复审查", "答复OA"]),
+                    (
+                        "审查意见",
+                        vec![
+                            "OA",
+                            "Office Action",
+                            "审查通知书",
+                            "审查员意见",
+                            "official action",
+                        ],
+                    ),
+                    (
+                        "答复",
+                        vec!["回复", "答辩", "回应", "申述", "答复审查", "答复OA"],
+                    ),
                     ("驳回", vec!["reject", "rejection", "不予授权"]),
                 ],
                 sensitive_to_negation: false,
@@ -177,12 +271,15 @@ impl IntentRecognizer {
                 intent_name: "invalidation",
                 agent_id: AGENT_INVALIDATION,
                 primary_keywords: vec![
-                    "无效宣告", "无效请求", "宣告无效", "请求宣告无效",
-                    "专利无效", "无效理由", "无效证据",
+                    "无效宣告",
+                    "无效请求",
+                    "宣告无效",
+                    "请求宣告无效",
+                    "专利无效",
+                    "无效理由",
+                    "无效证据",
                 ],
-                secondary_keywords: vec![
-                    "无效", "提无效", "提出无效",
-                ],
+                secondary_keywords: vec!["无效", "提无效", "提出无效"],
                 synonyms: vec![],
                 sensitive_to_negation: false,
                 exclusive_phrases: vec![],
@@ -191,18 +288,37 @@ impl IntentRecognizer {
             IntentRule {
                 intent_name: "search",
                 agent_id: AGENT_SEARCH,
-                primary_keywords: vec![
-                    "专利检索", "新颖性检索", "可专利性检索", "patent search",
-                ],
+                primary_keywords: vec!["专利检索", "新颖性检索", "可专利性检索", "patent search"],
                 secondary_keywords: vec![
-                    "检索", "搜索", "查专利", "现有技术", "对比文件", "先有技术",
-                    "新颖性", "查新", "专利号", "申请号", "CN",
-                    "prior art", "查一下", "有没有类似的", "lookup", "查找", "查询",
-                    "查一下有没有", "查一下有没有类似",
+                    "检索",
+                    "搜索",
+                    "查专利",
+                    "现有技术",
+                    "对比文件",
+                    "先有技术",
+                    "新颖性",
+                    "查新",
+                    "专利号",
+                    "申请号",
+                    "CN",
+                    "prior art",
+                    "查一下",
+                    "有没有类似的",
+                    "lookup",
+                    "查找",
+                    "查询",
+                    "查一下有没有",
+                    "查一下有没有类似",
                 ],
                 synonyms: vec![
-                    ("检索", vec!["搜索", "查找", "查询", "查", "search", "look up"]),
-                    ("现有技术", vec!["prior art", "对比文件", "先有技术", "参考文献"]),
+                    (
+                        "检索",
+                        vec!["搜索", "查找", "查询", "查", "search", "look up"],
+                    ),
+                    (
+                        "现有技术",
+                        vec!["prior art", "对比文件", "先有技术", "参考文献"],
+                    ),
                     ("查新", vec!["新颖性检索", "专利性检索", "可专利性检索"]),
                 ],
                 sensitive_to_negation: false,
@@ -213,16 +329,40 @@ impl IntentRecognizer {
                 intent_name: "analysis",
                 agent_id: AGENT_ANALYSIS,
                 primary_keywords: vec![
-                    "专利组合", "专利分析", "技术布局", "专利地图",
-                    "FTO", "自由实施", "侵权分析", "侵权判定", "技术特征对比",
-                    "侵权风险", "被控侵权", "创新评估", "可专利性评估",
-                    "商标分析", "商标注册", "近似判断", "显著性分析",
-                    "值得申请", "能不能申请",
+                    "专利组合",
+                    "专利分析",
+                    "技术布局",
+                    "专利地图",
+                    "FTO",
+                    "自由实施",
+                    "侵权分析",
+                    "侵权判定",
+                    "技术特征对比",
+                    "侵权风险",
+                    "被控侵权",
+                    "创新评估",
+                    "可专利性评估",
+                    "商标分析",
+                    "商标注册",
+                    "近似判断",
+                    "显著性分析",
+                    "值得申请",
+                    "能不能申请",
                 ],
                 secondary_keywords: vec![
-                    "侵权", "分析", "评估", "技术特征", "特征对比", "保护范围",
-                    "无效分析", "组合分析", "专利价值", "技术分析", "竞争分析",
-                    "技术高度", "够不够",
+                    "侵权",
+                    "分析",
+                    "评估",
+                    "技术特征",
+                    "特征对比",
+                    "保护范围",
+                    "无效分析",
+                    "组合分析",
+                    "专利价值",
+                    "技术分析",
+                    "竞争分析",
+                    "技术高度",
+                    "够不够",
                 ],
                 synonyms: vec![
                     ("分析", vec!["评估", "研究", "梳理", "盘点"]),
@@ -235,12 +375,8 @@ impl IntentRecognizer {
             IntentRule {
                 intent_name: "invention",
                 agent_id: AGENT_INVENTION,
-                primary_keywords: vec![
-                    "交底书分析", "发明理解", "技术方案分析", "发明构思",
-                ],
-                secondary_keywords: vec![
-                    "交底书", "发明", "技术方案", "构思",
-                ],
+                primary_keywords: vec!["交底书分析", "发明理解", "技术方案分析", "发明构思"],
+                secondary_keywords: vec!["交底书", "发明", "技术方案", "构思"],
                 synonyms: vec![],
                 sensitive_to_negation: false,
                 exclusive_phrases: vec![],
@@ -249,9 +385,7 @@ impl IntentRecognizer {
             IntentRule {
                 intent_name: "prior_art_search",
                 agent_id: AGENT_PRIOR_ART_SEARCH,
-                primary_keywords: vec![
-                    "查新检索", "现有技术检索", "先导技术", "对比文件检索",
-                ],
+                primary_keywords: vec!["查新检索", "现有技术检索", "先导技术", "对比文件检索"],
                 secondary_keywords: vec!["查新", "现有技术", "对比文件"],
                 synonyms: vec![],
                 sensitive_to_negation: false,
@@ -262,25 +396,42 @@ impl IntentRecognizer {
                 intent_name: "coding",
                 agent_id: "",
                 primary_keywords: vec![
-                    "写代码", "编程", "写个函数", "function", "programming", "coding",
-                    "write code", "debug", "爬虫程序", "解析函数",
+                    "写代码",
+                    "编程",
+                    "写个函数",
+                    "function",
+                    "programming",
+                    "coding",
+                    "write code",
+                    "debug",
+                    "爬虫程序",
+                    "解析函数",
                 ],
                 secondary_keywords: vec![
-                    "代码", "开发", "实现", "bug", "调试", "接口",
-                    "implement", "pdf", "抓取数据",
+                    "代码",
+                    "开发",
+                    "实现",
+                    "bug",
+                    "调试",
+                    "接口",
+                    "implement",
+                    "pdf",
+                    "抓取数据",
                 ],
                 synonyms: vec![],
                 sensitive_to_negation: false,
                 exclusive_phrases: vec![],
             },
-
             // Subject Matter Check
             IntentRule {
                 intent_name: "subject_matter",
                 agent_id: AGENT_SUBJECT_MATTER,
                 primary_keywords: vec![
-                    "保护客体", "客体检查", "可专利性",
-                    "专利法第二条", "专利法第25条",
+                    "保护客体",
+                    "客体检查",
+                    "可专利性",
+                    "专利法第二条",
+                    "专利法第25条",
                 ],
                 secondary_keywords: vec![],
                 synonyms: vec![],
@@ -301,9 +452,7 @@ impl IntentRecognizer {
             IntentRule {
                 intent_name: "formality",
                 agent_id: AGENT_SPEC_FORMALITY,
-                primary_keywords: vec![
-                    "格式检查", "形式审查", "格式合规", "说明书格式",
-                ],
+                primary_keywords: vec!["格式检查", "形式审查", "格式合规", "说明书格式"],
                 secondary_keywords: vec![],
                 synonyms: vec![],
                 sensitive_to_negation: false,
@@ -313,9 +462,7 @@ impl IntentRecognizer {
             IntentRule {
                 intent_name: "tech_unit",
                 agent_id: AGENT_TECH_UNIT,
-                primary_keywords: vec![
-                    "技术单元", "最小技术单元", "技术特征划分",
-                ],
+                primary_keywords: vec!["技术单元", "最小技术单元", "技术特征划分"],
                 secondary_keywords: vec![],
                 synonyms: vec![],
                 sensitive_to_negation: false,
@@ -324,11 +471,27 @@ impl IntentRecognizer {
         ];
 
         let negation_words = vec![
-            "不", "没有", "别", "不要", "不是", "无需", "不必", "不需要", "没", "未",
-            "never", "not", "no", "don't", "without",
+            "不",
+            "没有",
+            "别",
+            "不要",
+            "不是",
+            "无需",
+            "不必",
+            "不需要",
+            "没",
+            "未",
+            "never",
+            "not",
+            "no",
+            "don't",
+            "without",
         ];
 
-        Self { rules, negation_words }
+        Self {
+            rules,
+            negation_words,
+        }
     }
 
     /// Recognize intent from raw user input. Returns the agent ID with the
@@ -445,10 +608,11 @@ impl IntentRecognizer {
         mut candidates: Vec<(&'a IntentRule, f32)>,
     ) -> Vec<(&'a IntentRule, f32)> {
         // Detect exclusive phrases that boost sub-intents (claims/spec) over full draft.
-        let has_exclusive = self
-            .rules
-            .iter()
-            .any(|r| r.exclusive_phrases.iter().any(|phrase| input.contains(phrase)));
+        let has_exclusive = self.rules.iter().any(|r| {
+            r.exclusive_phrases
+                .iter()
+                .any(|phrase| input.contains(phrase))
+        });
 
         if has_exclusive {
             for (rule, score) in &mut candidates {
@@ -682,7 +846,9 @@ mod tests {
     #[test]
     fn test_english_input() {
         let recognizer = IntentRecognizer::new();
-        let (agent_id, _) = recognizer.recognize("draft a patent for my invention").unwrap();
+        let (agent_id, _) = recognizer
+            .recognize("draft a patent for my invention")
+            .unwrap();
         assert_eq!(agent_id, AGENT_DRAFTING);
     }
 
@@ -715,9 +881,7 @@ mod tests {
     #[test]
     fn test_office_action_english() {
         let recognizer = IntentRecognizer::new();
-        let (agent_id, _) = recognizer
-            .recognize("respond to office action")
-            .unwrap();
+        let (agent_id, _) = recognizer.recognize("respond to office action").unwrap();
         assert_eq!(agent_id, AGENT_OA_RESPONSE);
     }
 

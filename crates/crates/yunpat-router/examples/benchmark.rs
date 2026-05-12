@@ -83,6 +83,7 @@ struct Metrics {
     latency_avg_ms: f64,
     latency_p95_ms: f64,
     by_intent: HashMap<String, IntentMetrics>,
+    #[allow(dead_code)]
     confusion: HashMap<String, HashMap<String, usize>>,
     failures: Vec<Failure>,
 }
@@ -115,14 +116,11 @@ fn main() {
         .join("../../../packages/tests/benchmark/intent/golden-seed-v1.json")
         .canonicalize()
         .expect("Failed to resolve test suite path");
-    let suite: TestSuite = serde_json::from_str(
-        &fs::read_to_string(&suite_path).expect("Failed to read test suite"),
-    )
-    .expect("Failed to parse test suite");
+    let suite: TestSuite =
+        serde_json::from_str(&fs::read_to_string(&suite_path).expect("Failed to read test suite"))
+            .expect("Failed to parse test suite");
 
-    println!(
-        "\n========================================"
-    );
+    println!("\n========================================");
     println!("  YunPat 意图识别离线基准测试");
     println!("  Router: yunpat-router v2");
     println!("========================================\n");
@@ -139,7 +137,7 @@ fn main() {
         let actual_agent = result.map(|(id, _)| id);
         let actual_intent = actual_agent
             .as_ref()
-            .map(|id| agent_id_to_intent(&id).to_string())
+            .map(|id| agent_id_to_intent(id).to_string())
             .unwrap_or_else(|| "clarify".to_string());
 
         let expected_agent = intent_to_agent_id(&test.expected_intent).to_string();
@@ -162,13 +160,9 @@ fn main() {
         let status = if matched { "✓" } else { "✗" };
         let actual_str = actual_agent.unwrap_or_else(|| "NONE".to_string());
         let display_text: String = test.text.chars().take(48).collect();
-        print!(
-            "  [{}] {} {:<50} -> {} ({}μs)\n",
-            test.id,
-            status,
-            display_text,
-            actual_str,
-            elapsed
+        println!(
+            "  [{}] {} {:<50} -> {} ({}μs)",
+            test.id, status, display_text, actual_str, elapsed
         );
     }
 
@@ -198,7 +192,9 @@ fn calculate_metrics(results: Vec<(TestCase, Option<String>, u64)>) -> Metrics {
             .or_insert(1);
 
         let expected_agent = intent_to_agent_id(&expected).to_string();
-        let actual_agent_opt = actual_opt.as_ref().map(|a| intent_to_agent_id(a).to_string());
+        let actual_agent_opt = actual_opt
+            .as_ref()
+            .map(|a| intent_to_agent_id(a).to_string());
 
         // For system intents without a dedicated agent (coding, chitchat, etc.),
         // returning NONE/clarify is considered correct since the router is not
@@ -235,7 +231,11 @@ fn calculate_metrics(results: Vec<(TestCase, Option<String>, u64)>) -> Metrics {
         let fp = metrics.fp as f64;
         let fn_count = metrics.fn_count as f64;
         metrics.precision = if tp + fp > 0.0 { tp / (tp + fp) } else { 0.0 };
-        metrics.recall = if tp + fn_count > 0.0 { tp / (tp + fn_count) } else { 0.0 };
+        metrics.recall = if tp + fn_count > 0.0 {
+            tp / (tp + fn_count)
+        } else {
+            0.0
+        };
         metrics.f1 = if metrics.precision + metrics.recall > 0.0 {
             2.0 * metrics.precision * metrics.recall / (metrics.precision + metrics.recall)
         } else {
@@ -263,7 +263,11 @@ fn calculate_metrics(results: Vec<(TestCase, Option<String>, u64)>) -> Metrics {
 fn print_report(metrics: &Metrics) {
     println!("\n--- 汇总指标 ---");
     println!("  总样本: {}", metrics.total);
-    println!("  正确:   {} ({:.1}%)", metrics.correct, metrics.accuracy * 100.0);
+    println!(
+        "  正确:   {} ({:.1}%)",
+        metrics.correct,
+        metrics.accuracy * 100.0
+    );
     println!("  失败:   {}", metrics.failures.len());
     println!(
         "  平均延迟: {:.3}ms  P95: {:.3}ms",

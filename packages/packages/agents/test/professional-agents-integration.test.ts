@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   PatentResponderAgent,
   type PatentResponderInput,
-} from '../patent-responder/src/PatentResponderAgent.v2.js'
+} from '../patent-responder/src/PatentResponderAgent.v4.js'
 import {
   ComparisonAnalyzerAgent,
   type ComparisonAnalyzerInput,
@@ -136,7 +136,7 @@ describe('专业层Agent集成测试', () => {
       }
 
       const plan = await agent['plan'](input, mockContext)
-      const result = await agent['execute'](plan, mockContext)
+      const result = await agent['act'](plan, mockContext)
 
       expect(result.analysis.summary).toBeTruthy()
       expect(result.analysis.keyIssues.length).toBeGreaterThan(0)
@@ -163,7 +163,7 @@ describe('专业层Agent集成测试', () => {
       }
 
       const plan = await agent['plan'](input, mockContext)
-      const result = await agent['execute'](plan, mockContext)
+      const result = await agent['act'](plan, mockContext)
 
       expect(result.strategy.overallStrategy).toBeDefined()
     })
@@ -336,7 +336,7 @@ describe('专业层Agent集成测试', () => {
       }
 
       const plan = await agent['plan'](input, mockContext)
-      const result = await agent['execute'](plan, mockContext)
+      const result = await agent['act'](plan, mockContext)
 
       expect(result.basicInfo.publicationNumber).toBe('CN112345678A')
       expect(result.basicInfo.assessmentStandard).toBe('cn')
@@ -365,7 +365,7 @@ describe('专业层Agent集成测试', () => {
       }
 
       const planLow = await agent['plan'](inputLow, mockContext)
-      const resultLow = await agent['execute'](planLow, mockContext)
+      const resultLow = await agent['act'](planLow, mockContext)
 
       // 如果创造性低，应该有增强建议
       if (resultLow.creativityAssessment.level === 'obvious') {
@@ -455,7 +455,7 @@ describe('专业层Agent集成测试', () => {
       }
 
       const creativePlan = await creativeAgent['plan'](creativeInput, mockContext)
-      const creativeResult = await creativeAgent['execute'](creativePlan, mockContext)
+      const creativeResult = await creativeAgent['act'](creativePlan, mockContext)
 
       expect(creativeResult.creativityAssessment.level).toBeDefined()
       expect(creativeResult.recommendations.strengthenCreativity).toBeDefined()

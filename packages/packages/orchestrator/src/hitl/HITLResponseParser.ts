@@ -99,7 +99,7 @@ export class HITLResponseParser {
   private async llmClassify(
     userMessage: string,
     originalRequest: HITLRequest,
-    sessionId?: string
+    _sessionId?: string
   ): Promise<HITLResponse> {
     const systemPrompt = `你是任务调度器的指令解析器。
 用户回复了一个待确认的内容，解析用户的意图。

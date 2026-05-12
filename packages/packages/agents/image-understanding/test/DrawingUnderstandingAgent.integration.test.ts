@@ -113,7 +113,7 @@ function createMockMultimodalLLM(responseData: any) {
 }
 
 describe('DrawingUnderstandingAgent 集成测试', () => {
-  const testImagePath = '/tmp/test-drawing.png'
+  const testImagePath = join(process.cwd(), 'test-drawing.png')
   let agent: DrawingUnderstandingAgent
 
   beforeEach(async () => {
@@ -341,7 +341,7 @@ describe('DrawingUnderstandingAgent 集成测试', () => {
     it('应该处理不存在的图像文件', async () => {
       const input = {
         figureNumber: '1',
-        imagePath: '/nonexistent/image.png',
+        imagePath: join(process.cwd(), 'nonexistent-test-image.png'),
       }
 
       await expect(agent.execute(input)).rejects.toThrow('图像文件不存在')

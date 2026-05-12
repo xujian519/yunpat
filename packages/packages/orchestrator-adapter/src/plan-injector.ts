@@ -5,7 +5,6 @@
  * 用途：intent-hook 识别专利任务后，生成详细的执行计划
  */
 
-import { TaskPlanner, LLMClient, PatentIntentConfig } from '@yunpat/orchestrator'
 import type { TaskPlan } from '@yunpat/orchestrator'
 import fs from 'fs'
 import path from 'path'
@@ -80,38 +79,32 @@ export async function generatePlan(taskDescription: string, sessionId?: string):
   try {
     log('plan-injector', `开始生成任务规划: ${taskDescription}`)
 
-    // 初始化 LLM Client
-    const llmClient = new LLMClient({
-      provider: process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai',
-      model: process.env.ANTHROPIC_API_KEY ? 'claude-3-5-sonnet-20241022' : 'deepseek-chat',
-      apiKey: process.env.ANTHROPIC_API_KEY || process.env.DEEPSEEK_API_KEY,
-    })
-
-    // 初始化 TaskPlanner
-    const planner = new TaskPlanner(
-      llmClient,
-      20, // maxSteps
-      30000, // defaultTimeout
-      true, // enableParallel
-      undefined, // agentRegistry
-      PatentIntentConfig // domainConfig
-    )
-
-    // 构造虚拟的意图识别结果
-    const mockIntentResult = {
-      intent: 'DRAFT_FULL' as const,
-      confidence: 0.8,
-      complexity: 'complex' as const,
-      extracted: {
-        title: taskDescription,
-        hasAttachment: false,
-        urgency: 'normal' as const,
-        keywords: [taskDescription],
+    // 构造简单的任务计划（TaskPlanner 已移除）
+    const plan: TaskPlan = {
+      planId: `plan-${Date.now()}`,
+      intent: 'DRAFT_FULL',
+      estimatedMinutes: 30,
+      steps: [
+        {
+          stepId: 'step-1',
+          agentId: 'search',
+          layer: 'domain',
+          input: { title: taskDescription },
+          timeout: 60000,
+          parallel: false,
+          dependsOn: [],
+          hitl: false,
+          hitlDescription: '',
+          retryOnFailure: true,
+          maxRetries: 2,
+        },
+      ],
+      hitlCheckpoints: [],
+      metadata: {
+        createdAt: new Date(),
+        parallelizable: false,
       },
     }
-
-    // 生成计划
-    const plan = await planner.generatePlan(mockIntentResult, sessionId)
 
     log('plan-injector', `任务规划生成成功: ${plan.planId}, ${plan.steps.length} 个步骤`)
 

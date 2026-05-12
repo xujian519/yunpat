@@ -26,6 +26,7 @@ coverage/
 
 *.tsbuildinfo
 .direnv/
+.claude/
 
 packages/*/node_modules/
 packages/*/dist/

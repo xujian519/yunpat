@@ -58,7 +58,8 @@ pub(super) fn reconcile_subagent_activity_state(app: &mut App) {
 
     let running_ids: std::collections::HashSet<String> =
         running_agents.iter().map(|(id, _)| id.clone()).collect();
-    app.subagent.progress
+    app.subagent
+        .progress
         .retain(|id, _| running_ids.contains(id.as_str()));
     for (id, objective) in running_agents {
         app.subagent.progress.entry(id).or_insert(objective);

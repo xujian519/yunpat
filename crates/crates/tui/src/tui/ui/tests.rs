@@ -903,7 +903,8 @@ fn running_agent_count_unions_cache_and_progress() {
         make_subagent("agent_a", crate::tools::subagent::SubAgentStatus::Running),
         make_subagent("agent_b", crate::tools::subagent::SubAgentStatus::Completed),
     ];
-    app.subagent.progress
+    app.subagent
+        .progress
         .insert("agent_c".to_string(), "planning".to_string());
 
     assert_eq!(running_agent_count(&app), 2);
@@ -916,7 +917,8 @@ fn reconcile_subagent_activity_state_trims_stale_progress_and_sets_anchor() {
         make_subagent("agent_a", crate::tools::subagent::SubAgentStatus::Running),
         make_subagent("agent_b", crate::tools::subagent::SubAgentStatus::Completed),
     ];
-    app.subagent.progress
+    app.subagent
+        .progress
         .insert("agent_stale".to_string(), "old".to_string());
 
     reconcile_subagent_activity_state(&mut app);
@@ -1551,7 +1553,8 @@ fn workspace_context_refresh_is_deferred_while_ui_is_busy() {
     refresh_workspace_context_if_needed(&mut app, now, true);
 
     let context = app
-        .workspace_ctx.context
+        .workspace_ctx
+        .context
         .as_deref()
         .expect("idle refresh should populate workspace context");
     assert!(context.contains("clean"));
@@ -1567,7 +1570,8 @@ fn workspace_context_refresh_respects_ttl_before_requerying_git() {
     let start = Instant::now();
     refresh_workspace_context_if_needed(&mut app, start, true);
     let initial = app
-        .workspace_ctx.context
+        .workspace_ctx
+        .context
         .clone()
         .expect("initial refresh should populate context");
 
@@ -1580,7 +1584,8 @@ fn workspace_context_refresh_respects_ttl_before_requerying_git() {
     let after_ttl = start + Duration::from_secs(WORKSPACE_CONTEXT_REFRESH_SECS);
     refresh_workspace_context_if_needed(&mut app, after_ttl, true);
     let refreshed = app
-        .workspace_ctx.context
+        .workspace_ctx
+        .context
         .as_deref()
         .expect("refresh after ttl should update context");
     assert!(refreshed.contains("untracked"));
@@ -1612,7 +1617,8 @@ async fn dismissed_plan_prompt_leaves_non_numeric_input_for_normal_send_path() {
 
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .front()
             .map(crate::tui::app::QueuedMessage::content),
         Some("yolo".to_string())
@@ -1642,7 +1648,8 @@ async fn numeric_plan_choice_still_queues_follow_up_when_busy() {
     assert_eq!(app.mode, AppMode::Yolo);
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .front()
             .map(crate::tui::app::QueuedMessage::content),
         Some("Proceed with the accepted plan.".to_string())
@@ -1857,7 +1864,8 @@ fn open_tool_details_pager_supports_active_virtual_tool_cell() {
         &serde_json::json!({"command": "echo hi"}),
     );
     let active_entries = app
-        .tool.active_cell
+        .tool
+        .active_cell
         .as_ref()
         .expect("active cell")
         .entries()
@@ -2332,7 +2340,11 @@ fn out_of_order_completes_finalize_one_history_cell_per_turn() {
 
     // Still nothing in history: the active cell holds everything.
     assert_eq!(app.history.len(), 0);
-    let active = app.tool.active_cell.as_ref().expect("active cell still present");
+    let active = app
+        .tool
+        .active_cell
+        .as_ref()
+        .expect("active cell still present");
     let HistoryCell::Tool(ToolCell::Exploring(explore)) = &active.entries()[0] else {
         panic!("expected exploring cell")
     };
@@ -2347,7 +2359,10 @@ fn out_of_order_completes_finalize_one_history_cell_per_turn() {
     // Flush via the explicit helper (mirrors what TurnComplete does).
     app.flush_active_cell();
 
-    assert!(app.tool.active_cell.is_none(), "active cell cleared after flush");
+    assert!(
+        app.tool.active_cell.is_none(),
+        "active cell cleared after flush"
+    );
     // The flushed group is exactly one history cell — the merged exploring
     // aggregate. This is the heart of CX#7: parallel work renders as ONE
     // finalized cell, regardless of completion order.
@@ -2431,7 +2446,8 @@ fn orphan_tool_complete_with_unknown_id_pushes_separate_cell() {
 
     // Active cell is intact.
     let active = app
-        .tool.active_cell
+        .tool
+        .active_cell
         .as_ref()
         .expect("active cell preserved after orphan");
     assert_eq!(active.entry_count(), 1);
@@ -2467,7 +2483,10 @@ fn turn_complete_flushes_active_cell_into_history() {
     // Don't complete shell-1 — simulate cancellation mid-shell.
     app.finalize_active_cell_as_interrupted();
 
-    assert!(app.tool.active_cell.is_none(), "active cell cleared on flush");
+    assert!(
+        app.tool.active_cell.is_none(),
+        "active cell cleared on flush"
+    );
     let exec_cells: Vec<_> = app
         .history
         .iter()
@@ -2539,7 +2558,8 @@ fn tool_details_survive_active_cell_flush() {
     // The exec cell is now at index 0 in history.
     assert_eq!(app.history.len(), 1);
     let detail = app
-        .tool.tool_details_by_cell
+        .tool
+        .tool_details_by_cell
         .get(&0)
         .expect("detail record migrated to flushed cell index");
     assert_eq!(detail.tool_id, "tid");
@@ -2735,7 +2755,8 @@ fn thinking_then_tools_share_active_cell_until_text_flushes() {
     );
 
     let active = app
-        .tool.active_cell
+        .tool
+        .active_cell
         .as_ref()
         .expect("active cell present mid-turn");
     assert_eq!(
@@ -2762,7 +2783,8 @@ fn thinking_then_tools_share_active_cell_until_text_flushes() {
         content,
         ..
     } = &app
-        .tool.active_cell
+        .tool
+        .active_cell
         .as_ref()
         .expect("active cell still present after thinking complete")
         .entries()[0]
@@ -2780,7 +2802,10 @@ fn thinking_then_tools_share_active_cell_until_text_flushes() {
     // 4. Assistant prose arriving (simulated by flush) drains the group into
     //    history in original order: Thinking → Tool → Tool.
     app.flush_active_cell();
-    assert!(app.tool.active_cell.is_none(), "active cell cleared after flush");
+    assert!(
+        app.tool.active_cell.is_none(),
+        "active cell cleared after flush"
+    );
     assert_eq!(
         app.history.len(),
         3,
@@ -3092,7 +3117,10 @@ fn tab_queues_running_turn_draft_for_next_turn() {
     assert!(app.input.is_empty());
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(
-        app.queue.queued_messages.front().map(|msg| msg.display.as_str()),
+        app.queue
+            .queued_messages
+            .front()
+            .map(|msg| msg.display.as_str()),
         Some("follow up next")
     );
     assert!(
@@ -3174,7 +3202,9 @@ fn merge_pending_steers_keeps_first_skill_instruction_only() {
 fn build_pending_input_preview_populates_all_three_buckets() {
     let mut app = create_test_app();
     app.push_pending_steer(QueuedMessage::new("steer-msg".to_string(), None));
-    app.queue.rejected_steers.push_back("rejected-msg".to_string());
+    app.queue
+        .rejected_steers
+        .push_back("rejected-msg".to_string());
     app.queue_message(QueuedMessage::new("queued-msg".to_string(), None));
 
     let preview = build_pending_input_preview(&app);

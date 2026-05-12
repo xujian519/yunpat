@@ -174,9 +174,11 @@ mod tests {
     fn test_queue_list_with_messages() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(QueuedMessage::new("First message".to_string(), None));
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(QueuedMessage::new("Second message".to_string(), None));
         let result = queue(&mut app, Some("list"));
         assert!(result.message.is_some());
@@ -190,7 +192,8 @@ mod tests {
     fn test_queue_edit_missing_index() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(QueuedMessage::new("Test".to_string(), None));
         let result = queue(&mut app, Some("edit"));
         assert!(result.message.is_some());
@@ -224,9 +227,11 @@ mod tests {
     fn test_queue_edit_already_editing() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(QueuedMessage::new("First".to_string(), None));
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(QueuedMessage::new("Second".to_string(), None));
         // Start editing
         queue(&mut app, Some("edit 1"));
@@ -240,7 +245,8 @@ mod tests {
     fn test_queue_edit_success() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(QueuedMessage::new("Original message".to_string(), None));
         let result = queue(&mut app, Some("edit 1"));
         assert!(result.message.is_some());
@@ -253,7 +259,8 @@ mod tests {
     fn test_queue_drop_success() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(QueuedMessage::new("To drop".to_string(), None));
         let initial_count = app.queue.queued_messages.len();
         let result = queue(&mut app, Some("drop 1"));
@@ -266,9 +273,11 @@ mod tests {
     fn test_queue_clear() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(QueuedMessage::new("Message 1".to_string(), None));
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(QueuedMessage::new("Message 2".to_string(), None));
         let result = queue(&mut app, Some("clear"));
         assert!(result.message.is_some());

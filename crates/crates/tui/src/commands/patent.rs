@@ -258,10 +258,7 @@ pub fn patent_db(_app: &mut App, arg: Option<&str>) -> CommandResult {
     }
 
     let display_msg = if let Some(query) = extra.get("query").and_then(|v| v.as_str()) {
-        format!(
-            "Searching local patent database for: {}",
-            query
-        )
+        format!("Searching local patent database for: {}", query)
     } else {
         "Searching local patent database".to_string()
     };

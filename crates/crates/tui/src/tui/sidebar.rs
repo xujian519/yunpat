@@ -15,11 +15,11 @@ use ratatui::{
     widgets::{Block, Paragraph, Wrap},
 };
 
-use crate::yunpat_theme::active_theme;
 use crate::palette;
 use crate::tools::plan::StepStatus;
 use crate::tools::subagent::SubAgentStatus;
 use crate::tools::todo::TodoStatus;
+use crate::yunpat_theme::active_theme;
 
 use super::app::{App, SidebarFocus};
 use super::history::{HistoryCell, ToolCell, ToolStatus};
@@ -481,7 +481,8 @@ fn render_sidebar_subagents(f: &mut Frame, area: Rect, app: &App) {
         .filter(|agent| matches!(agent.status, SubAgentStatus::Running))
         .count();
     let role_counts: std::collections::BTreeMap<String, usize> =
-        app.subagent.cache
+        app.subagent
+            .cache
             .iter()
             .fold(std::collections::BTreeMap::new(), |mut acc, agent| {
                 *acc.entry(agent.agent_type.as_str().to_string())

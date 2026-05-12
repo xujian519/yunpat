@@ -552,7 +552,8 @@ mod tests {
     #[test]
     fn test_home_dashboard_shows_queued_when_present() {
         let mut app = create_test_app();
-        app.queue.queued_messages
+        app.queue
+            .queued_messages
             .push_back(crate::tui::app::QueuedMessage::new(
                 "test".to_string(),
                 None,

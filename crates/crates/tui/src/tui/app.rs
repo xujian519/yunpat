@@ -1833,7 +1833,9 @@ impl App {
         // past the new tail. We keep the rest intact so unaffected tool
         // cells continue to render correctly.
         self.tool.tool_cells.retain(|_, idx| *idx < new_len);
-        self.tool.tool_details_by_cell.retain(|idx, _| *idx < new_len);
+        self.tool
+            .tool_details_by_cell
+            .retain(|idx, _| *idx < new_len);
         self.context_references_by_cell
             .retain(|idx, _| *idx < new_len);
         self.rebuild_session_context_references();
@@ -1872,7 +1874,12 @@ impl App {
     #[must_use]
     #[allow(dead_code)] // Reserved for renderers that need a unified cell count.
     pub fn virtual_cell_count(&self) -> usize {
-        self.history.len() + self.tool.active_cell.as_ref().map_or(0, ActiveCell::entry_count)
+        self.history.len()
+            + self
+                .tool
+                .active_cell
+                .as_ref()
+                .map_or(0, ActiveCell::entry_count)
     }
 
     /// The next cell index a freshly-pushed entry would occupy in the virtual
@@ -1894,7 +1901,8 @@ impl App {
             self.history.get(index)
         } else {
             let entry_idx = index - self.history.len();
-            self.tool.active_cell
+            self.tool
+                .active_cell
                 .as_ref()
                 .and_then(|active| active.entries().get(entry_idx))
         }
@@ -1907,7 +1915,8 @@ impl App {
         if let Some(detail) = self.tool.tool_details_by_cell.get(&index) {
             return Some(detail);
         }
-        self.tool.active_tool_details
+        self.tool
+            .active_tool_details
             .values()
             .find(|detail| self.tool.tool_cells.get(&detail.tool_id).copied() == Some(index))
     }
@@ -2029,7 +2038,8 @@ impl App {
             let entry_idx = index - self.history.len();
             self.tool.active_cell_revision = self.tool.active_cell_revision.wrapping_add(1);
             self.history_version = self.history_version.wrapping_add(1);
-            self.tool.active_cell
+            self.tool
+                .active_cell
                 .as_mut()
                 .and_then(|active| active.entry_mut(entry_idx))
         }
@@ -2069,8 +2079,15 @@ impl App {
 
         let mut details = std::mem::take(&mut self.tool.active_tool_details);
         for (tool_id, detail) in details.drain() {
-            self.tool.tool_details_by_cell
-                .entry(self.tool.tool_cells.get(&tool_id).copied().unwrap_or(base_index))
+            self.tool
+                .tool_details_by_cell
+                .entry(
+                    self.tool
+                        .tool_cells
+                        .get(&tool_id)
+                        .copied()
+                        .unwrap_or(base_index),
+                )
                 .or_insert(detail);
         }
 
@@ -4339,7 +4356,8 @@ mod tests {
         assert_eq!(app.input, submitted);
         assert_eq!(app.composer_attachment_count(), 1);
         assert_eq!(
-            app.queue.queued_draft
+            app.queue
+                .queued_draft
                 .as_ref()
                 .and_then(|draft| draft.skill_instruction.as_deref()),
             Some("Use this skill")

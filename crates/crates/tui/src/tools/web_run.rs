@@ -654,9 +654,7 @@ impl ToolSpec for WebRunTool {
 
 fn with_state<T>(f: impl FnOnce(&mut WebRunState) -> T) -> T {
     let lock = WEB_RUN_STATE.get_or_init(|| Mutex::new(WebRunState::default()));
-    let mut state = lock
-        .lock()
-        .unwrap_or_else(|e| e.into_inner());
+    let mut state = lock.lock().unwrap_or_else(|e| e.into_inner());
     state.cleanup();
     f(&mut state)
 }
@@ -1307,21 +1305,15 @@ fn get_block_re() -> &'static Regex {
 }
 
 fn get_script_re() -> &'static Regex {
-    SCRIPT_RE.get_or_init(|| {
-        Regex::new(r"(?is)<script[^>]*>.*?</script>").expect("script regex")
-    })
+    SCRIPT_RE.get_or_init(|| Regex::new(r"(?is)<script[^>]*>.*?</script>").expect("script regex"))
 }
 
 fn get_style_re() -> &'static Regex {
-    STYLE_RE.get_or_init(|| {
-        Regex::new(r"(?is)<style[^>]*>.*?</style>").expect("style regex")
-    })
+    STYLE_RE.get_or_init(|| Regex::new(r"(?is)<style[^>]*>.*?</style>").expect("style regex"))
 }
 
 fn get_title_re() -> &'static Regex {
-    TITLE_RE.get_or_init(|| {
-        Regex::new(r"(?is)<title[^>]*>(.*?)</title>").expect("title regex")
-    })
+    TITLE_RE.get_or_init(|| Regex::new(r"(?is)<title[^>]*>(.*?)</title>").expect("title regex"))
 }
 
 fn get_search_title_re() -> &'static Regex {

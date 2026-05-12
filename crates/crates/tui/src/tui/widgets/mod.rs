@@ -241,7 +241,10 @@ impl ChatWidget {
         let mut lines = if total_lines == 0 {
             vec![Line::from("")]
         } else {
-            app.viewport.transcript_cache.visible_lines(top, end - top).to_vec()
+            app.viewport
+                .transcript_cache
+                .visible_lines(top, end - top)
+                .to_vec()
         };
 
         // Brief flash highlight on the most recently sent user message.

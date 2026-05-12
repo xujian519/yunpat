@@ -1709,11 +1709,7 @@ fn format_agent_status(
 
     match status {
         SubAgentStatus::Running => ("running", Style::default().fg(palette::YUNPAT_SKY), None),
-        SubAgentStatus::Completed => (
-            "completed",
-            Style::default().fg(palette::YUNPAT_BLUE),
-            None,
-        ),
+        SubAgentStatus::Completed => ("completed", Style::default().fg(palette::YUNPAT_BLUE), None),
         SubAgentStatus::Interrupted(reason) => (
             "interrupted",
             Style::default().fg(palette::STATUS_WARNING),

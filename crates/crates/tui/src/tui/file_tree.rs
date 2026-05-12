@@ -16,9 +16,9 @@ use ratatui::{
     widgets::{Block, Paragraph, Wrap},
 };
 
-use crate::yunpat_theme::active_theme;
 use crate::palette;
 use crate::tui::ui::truncate_line_to_width;
+use crate::yunpat_theme::active_theme;
 
 // ---------------------------------------------------------------------------
 // Public API

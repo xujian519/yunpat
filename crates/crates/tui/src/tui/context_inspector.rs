@@ -4,9 +4,7 @@ use std::collections::HashSet;
 use std::fmt::Write;
 
 use crate::compaction::estimate_input_tokens_conservative;
-use crate::models::{
-    LEGACY_YUNPAT_CONTEXT_WINDOW_TOKENS, SystemPrompt, context_window_for_model,
-};
+use crate::models::{LEGACY_YUNPAT_CONTEXT_WINDOW_TOKENS, SystemPrompt, context_window_for_model};
 use crate::session_manager::SessionContextReference;
 use crate::tui::app::{App, ToolDetailRecord};
 use crate::tui::file_mention::ContextReferenceSource;

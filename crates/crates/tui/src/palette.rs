@@ -28,34 +28,16 @@ pub const LIGHT_SELECTION_RGB: (u8, u8, u8) = (219, 234, 254); // #DBEAFE
 // New semantic colors
 pub const BORDER_COLOR_RGB: (u8, u8, u8) = (42, 74, 127); // #2A4A7F
 
-pub const YUNPAT_BLUE: Color = Color::Rgb(
-    YUNPAT_BLUE_RGB.0,
-    YUNPAT_BLUE_RGB.1,
-    YUNPAT_BLUE_RGB.2,
-);
-pub const YUNPAT_SKY: Color =
-    Color::Rgb(YUNPAT_SKY_RGB.0, YUNPAT_SKY_RGB.1, YUNPAT_SKY_RGB.2);
+pub const YUNPAT_BLUE: Color = Color::Rgb(YUNPAT_BLUE_RGB.0, YUNPAT_BLUE_RGB.1, YUNPAT_BLUE_RGB.2);
+pub const YUNPAT_SKY: Color = Color::Rgb(YUNPAT_SKY_RGB.0, YUNPAT_SKY_RGB.1, YUNPAT_SKY_RGB.2);
 #[allow(dead_code)]
-pub const YUNPAT_AQUA: Color = Color::Rgb(
-    YUNPAT_AQUA_RGB.0,
-    YUNPAT_AQUA_RGB.1,
-    YUNPAT_AQUA_RGB.2,
-);
+pub const YUNPAT_AQUA: Color = Color::Rgb(YUNPAT_AQUA_RGB.0, YUNPAT_AQUA_RGB.1, YUNPAT_AQUA_RGB.2);
 #[allow(dead_code)]
-pub const YUNPAT_NAVY: Color = Color::Rgb(
-    YUNPAT_NAVY_RGB.0,
-    YUNPAT_NAVY_RGB.1,
-    YUNPAT_NAVY_RGB.2,
-);
-pub const YUNPAT_INK: Color =
-    Color::Rgb(YUNPAT_INK_RGB.0, YUNPAT_INK_RGB.1, YUNPAT_INK_RGB.2);
-pub const YUNPAT_SLATE: Color = Color::Rgb(
-    YUNPAT_SLATE_RGB.0,
-    YUNPAT_SLATE_RGB.1,
-    YUNPAT_SLATE_RGB.2,
-);
-pub const YUNPAT_RED: Color =
-    Color::Rgb(YUNPAT_RED_RGB.0, YUNPAT_RED_RGB.1, YUNPAT_RED_RGB.2);
+pub const YUNPAT_NAVY: Color = Color::Rgb(YUNPAT_NAVY_RGB.0, YUNPAT_NAVY_RGB.1, YUNPAT_NAVY_RGB.2);
+pub const YUNPAT_INK: Color = Color::Rgb(YUNPAT_INK_RGB.0, YUNPAT_INK_RGB.1, YUNPAT_INK_RGB.2);
+pub const YUNPAT_SLATE: Color =
+    Color::Rgb(YUNPAT_SLATE_RGB.0, YUNPAT_SLATE_RGB.1, YUNPAT_SLATE_RGB.2);
+pub const YUNPAT_RED: Color = Color::Rgb(YUNPAT_RED_RGB.0, YUNPAT_RED_RGB.1, YUNPAT_RED_RGB.2);
 
 pub const LIGHT_SURFACE: Color = Color::Rgb(
     LIGHT_SURFACE_RGB.0,
@@ -469,10 +451,7 @@ pub fn blend(fg: Color, bg: Color, alpha: f32) -> Color {
 pub fn reasoning_surface_tint(depth: ColorDepth) -> Option<Color> {
     match depth {
         ColorDepth::Ansi16 => None,
-        _ => Some(adapt_bg(
-            blend(SURFACE_REASONING, YUNPAT_INK, 0.12),
-            depth,
-        )),
+        _ => Some(adapt_bg(blend(SURFACE_REASONING, YUNPAT_INK, 0.12), depth)),
     }
 }
 
@@ -613,11 +592,11 @@ fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::{
-        ACCENT_REASONING_LIVE, ColorDepth, YUNPAT_INK, YUNPAT_RED, YUNPAT_SKY,
-        YUNPAT_SLATE, LIGHT_PANEL, LIGHT_SURFACE, LIGHT_TEXT_BODY, LIGHT_TEXT_HINT,
-        LIGHT_UI_THEME, PaletteMode, SURFACE_REASONING, TEXT_HINT, adapt_bg,
-        adapt_bg_for_palette_mode, adapt_color, adapt_fg_for_palette_mode, blend, nearest_ansi16,
-        pulse_brightness, reasoning_surface_tint, rgb_to_ansi256,
+        ACCENT_REASONING_LIVE, ColorDepth, LIGHT_PANEL, LIGHT_SURFACE, LIGHT_TEXT_BODY,
+        LIGHT_TEXT_HINT, LIGHT_UI_THEME, PaletteMode, SURFACE_REASONING, TEXT_HINT, YUNPAT_INK,
+        YUNPAT_RED, YUNPAT_SKY, YUNPAT_SLATE, adapt_bg, adapt_bg_for_palette_mode, adapt_color,
+        adapt_fg_for_palette_mode, blend, nearest_ansi16, pulse_brightness, reasoning_surface_tint,
+        rgb_to_ansi256,
     };
     use ratatui::style::Color;
 

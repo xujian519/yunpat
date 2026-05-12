@@ -34,9 +34,9 @@ pub fn classify_file(path: &std::path::Path) -> PreviewFileType {
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     match ext.to_lowercase().as_str() {
         "md" | "markdown" | "mdx" => PreviewFileType::Markdown,
-        "rs" | "toml" | "yaml" | "yml" | "json" | "xml" | "html" | "css" | "js" | "ts"
-        | "tsx" | "jsx" | "py" | "go" | "java" | "c" | "cpp" | "h" | "sh" | "bash"
-        | "sql" | "graphql" | "proto" | "zig" | "nim" => PreviewFileType::Code(ext.to_string()),
+        "rs" | "toml" | "yaml" | "yml" | "json" | "xml" | "html" | "css" | "js" | "ts" | "tsx"
+        | "jsx" | "py" | "go" | "java" | "c" | "cpp" | "h" | "sh" | "bash" | "sql" | "graphql"
+        | "proto" | "zig" | "nim" => PreviewFileType::Code(ext.to_string()),
         "png" | "jpg" | "jpeg" | "gif" | "bmp" | "ico" | "webp" | "svg" => PreviewFileType::Image,
         "zip" | "tar" | "gz" | "bz2" | "xz" | "7z" | "rar" | "exe" | "dll" | "so" | "dylib"
         | "wasm" | "pdf" | "doc" | "docx" | "xls" | "xlsx" | "ppt" | "pptx" | "odt" | "ods" => {
@@ -53,7 +53,10 @@ pub fn load_preview(state: &mut PreviewState, path: std::path::PathBuf) {
 
     let content = match metadata {
         Ok(meta) if meta.len() > MAX_PREVIEW_SIZE => PreviewContent::Binary {
-            name: path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
+            name: path
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_default(),
             size_bytes: meta.len(),
             mime_hint: format!("{:?}", file_type),
         },
@@ -67,7 +70,11 @@ pub fn load_preview(state: &mut PreviewState, path: std::path::PathBuf) {
                             rendered_height: 0,
                         },
                         _ => {
-                            let lines: Vec<String> = text.lines().take(MAX_PREVIEW_LINES).map(String::from).collect();
+                            let lines: Vec<String> = text
+                                .lines()
+                                .take(MAX_PREVIEW_LINES)
+                                .map(String::from)
+                                .collect();
                             PreviewContent::Text { lines, line_count }
                         }
                     }
@@ -75,7 +82,10 @@ pub fn load_preview(state: &mut PreviewState, path: std::path::PathBuf) {
                 Err(_) => {
                     // Binary or unreadable
                     PreviewContent::Binary {
-                        name: path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
+                        name: path
+                            .file_name()
+                            .map(|n| n.to_string_lossy().to_string())
+                            .unwrap_or_default(),
                         size_bytes: metadata.map(|m| m.len()).unwrap_or(0),
                         mime_hint: format!("{:?}", file_type),
                     }
@@ -110,12 +120,16 @@ impl Renderable for PreviewPanel<'_> {
         }
 
         let border_style = if self.focused {
-            Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
+            Style::default()
+                .fg(palette::SELECTION_TEXT)
+                .bg(palette::SELECTION_BG)
         } else {
             Style::default().fg(palette::BORDER_COLOR)
         };
 
-        let title = self.state.current_file
+        let title = self
+            .state
+            .current_file
             .as_ref()
             .and_then(|p| p.file_name())
             .map(|n| n.to_string_lossy().to_string())
@@ -144,11 +158,18 @@ impl Renderable for PreviewPanel<'_> {
             }
             PreviewContent::Error(msg) => {
                 let err_style = Style::default().fg(palette::STATUS_ERROR);
-                vec![Line::from(Span::styled(format!("  Error: {}", msg), err_style))]
+                vec![Line::from(Span::styled(
+                    format!("  Error: {}", msg),
+                    err_style,
+                ))]
             }
-            PreviewContent::Text { lines, line_count } => {
-                render_text_preview(lines, *line_count, inner.width, self.state.scroll_offset, inner.height)
-            }
+            PreviewContent::Text { lines, line_count } => render_text_preview(
+                lines,
+                *line_count,
+                inner.width,
+                self.state.scroll_offset,
+                inner.height,
+            ),
             PreviewContent::Markdown { raw, .. } => {
                 let parsed = crate::tui::markdown_render::parse(raw);
                 let rendered = crate::tui::markdown_render::render_parsed(
@@ -158,9 +179,11 @@ impl Renderable for PreviewPanel<'_> {
                 );
                 apply_scroll(rendered, self.state.scroll_offset, inner.height)
             }
-            PreviewContent::Binary { name, size_bytes, mime_hint } => {
-                render_binary_placeholder(name, *size_bytes, mime_hint, inner.width)
-            }
+            PreviewContent::Binary {
+                name,
+                size_bytes,
+                mime_hint,
+            } => render_binary_placeholder(name, *size_bytes, mime_hint, inner.width),
         };
 
         let paragraph = Paragraph::new(lines).wrap(Wrap { trim: false });
@@ -209,14 +232,23 @@ fn render_text_preview(
 }
 
 /// Apply scroll offset to rendered lines.
-fn apply_scroll(lines: Vec<Line<'static>>, scroll_offset: u16, visible_height: u16) -> Vec<Line<'static>> {
+fn apply_scroll(
+    lines: Vec<Line<'static>>,
+    scroll_offset: u16,
+    visible_height: u16,
+) -> Vec<Line<'static>> {
     let offset = scroll_offset as usize;
     let visible = visible_height as usize;
     lines.into_iter().skip(offset).take(visible).collect()
 }
 
 /// Render binary file placeholder.
-fn render_binary_placeholder(name: &str, size_bytes: u64, mime_hint: &str, _width: u16) -> Vec<Line<'static>> {
+fn render_binary_placeholder(
+    name: &str,
+    size_bytes: u64,
+    mime_hint: &str,
+    _width: u16,
+) -> Vec<Line<'static>> {
     let dim = Style::default().fg(palette::TEXT_DIM);
     let warning = Style::default().fg(palette::STATUS_WARNING);
     let size_str = if size_bytes < 1024 {

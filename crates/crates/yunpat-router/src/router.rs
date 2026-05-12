@@ -232,11 +232,7 @@ impl IntentRecognizer {
             // Unity Check
             KeywordRule {
                 required: vec![],
-                any_of: vec![
-                    "单一性".into(),
-                    "单一性检查".into(),
-                    "缺乏单一性".into(),
-                ],
+                any_of: vec!["单一性".into(), "单一性检查".into(), "缺乏单一性".into()],
                 agent_id: AGENT_UNITY_CHECK.into(),
             },
             // Format Check

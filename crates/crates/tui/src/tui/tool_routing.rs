@@ -50,7 +50,11 @@ pub(super) fn handle_tool_call_started(
         let label = exploring_label(name, input);
         // ensure_exploring + append_to_exploring keeps all parallel exploring
         // starts in a single ExploringCell entry.
-        let active = app.tool.active_cell.as_mut().expect("active_cell just ensured");
+        let active = app
+            .tool
+            .active_cell
+            .as_mut()
+            .expect("active_cell just ensured");
         let entry_idx = active.ensure_exploring();
         let inner = active
             .append_to_exploring(
@@ -63,7 +67,8 @@ pub(super) fn handle_tool_call_started(
             .map_or(0, |(_, inner)| inner);
         app.tool.exploring_cell = Some(entry_idx);
         let virtual_index = app.history.len() + entry_idx;
-        app.tool.exploring_entries
+        app.tool
+            .exploring_entries
             .insert(id.clone(), (virtual_index, inner));
         register_tool_cell(app, &id, name, input, virtual_index);
         app.mark_history_updated();
@@ -276,7 +281,11 @@ fn push_active_tool_cell(
     if app.tool.active_cell.is_none() {
         app.tool.active_cell = Some(ActiveCell::new());
     }
-    let active = app.tool.active_cell.as_mut().expect("active_cell just ensured");
+    let active = app
+        .tool
+        .active_cell
+        .as_mut()
+        .expect("active_cell just ensured");
     let entry_idx = active.push_tool(tool_id.to_string(), cell);
     let virtual_index = app.history.len() + entry_idx;
     register_tool_cell(app, tool_id, tool_name, input, virtual_index);
@@ -304,7 +313,9 @@ fn register_tool_cell(
         // until the active cell flushes. `flush_active_cell` migrates these
         // records into `tool_details_by_cell` keyed by the eventual real
         // cell index.
-        app.tool.active_tool_details.insert(tool_id.to_string(), record);
+        app.tool
+            .active_tool_details
+            .insert(tool_id.to_string(), record);
     }
 }
 

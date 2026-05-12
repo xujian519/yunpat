@@ -30,7 +30,6 @@ mod config_ui;
 mod core;
 mod cost_status;
 mod cycle_manager;
-mod yunpat_theme;
 mod error_taxonomy;
 mod eval;
 mod execpolicy;
@@ -72,6 +71,7 @@ mod tui;
 mod utils;
 mod working_set;
 mod workspace_trust;
+mod yunpat_theme;
 
 use crate::config::{Config, MAX_SUBAGENTS};
 use crate::eval::{EvalHarness, EvalHarnessConfig, ScenarioStepKind};
@@ -416,9 +416,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
 
     println!(
         "{}",
-        "YunPat TUI Doctor"
-            .truecolor(blue_r, blue_g, blue_b)
-            .bold()
+        "YunPat TUI Doctor".truecolor(blue_r, blue_g, blue_b).bold()
     );
     println!("{}", "==================".truecolor(sky_r, sky_g, sky_b));
     println!();

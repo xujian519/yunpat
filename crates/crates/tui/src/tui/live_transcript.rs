@@ -143,7 +143,12 @@ impl LiveTranscriptOverlay {
     pub fn refresh_from_app(&mut self, app: &mut App) {
         app.resync_history_revisions();
         let mut new_snapshots = Vec::with_capacity(
-            app.history.len() + app.tool.active_cell.as_ref().map_or(0, |a| a.entries().len()),
+            app.history.len()
+                + app
+                    .tool
+                    .active_cell
+                    .as_ref()
+                    .map_or(0, |a| a.entries().len()),
         );
         for (idx, cell) in app.history.iter().enumerate() {
             let rev = app.history_revisions.get(idx).copied().unwrap_or(0);

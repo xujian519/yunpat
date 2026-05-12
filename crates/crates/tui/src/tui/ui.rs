@@ -210,13 +210,12 @@ pub async fn run_tui(config: &Config, options: TuiOptions) -> Result<()> {
     }
 
     // RAII guard: if we panic after this point, the terminal gets restored.
-    let mut _terminal_guard = super::terminal_guard::TerminalGuard::new(
-        super::terminal_guard::TerminalFlags {
+    let mut _terminal_guard =
+        super::terminal_guard::TerminalGuard::new(super::terminal_guard::TerminalFlags {
             alt_screen: use_alt_screen,
             mouse_capture: use_mouse_capture,
             bracketed_paste: use_bracketed_paste,
-        },
-    );
+        });
     // #442: opt into the Kitty keyboard protocol's escape-code
     // disambiguation so terminals that support it (Kitty, Ghostty,
     // Alacritty 0.13+, WezTerm, recent Konsole, recent xterm) report
@@ -625,7 +624,10 @@ async fn run_event_loop(
 ) -> Result<()> {
     // Track streaming state
     let mut current_streaming_text = String::new();
-    let mut last_queue_state = (app.queue.queued_messages.clone(), app.queue.queued_draft.clone());
+    let mut last_queue_state = (
+        app.queue.queued_messages.clone(),
+        app.queue.queued_draft.clone(),
+    );
     let mut last_task_refresh = Instant::now()
         .checked_sub(Duration::from_secs(2))
         .unwrap_or_else(Instant::now);
@@ -767,7 +769,8 @@ async fn run_event_loop(
                         }
                         app.streaming.reasoning_buffer.push_str(&sanitized);
                         if app.streaming.reasoning_header.is_none() {
-                            app.streaming.reasoning_header = extract_reasoning_header(&app.streaming.reasoning_buffer);
+                            app.streaming.reasoning_header =
+                                extract_reasoning_header(&app.streaming.reasoning_buffer);
                         }
 
                         let entry_idx = ensure_streaming_thinking_active_entry(app);
@@ -790,12 +793,14 @@ async fn run_event_loop(
                         }
 
                         if !app.streaming.reasoning_buffer.is_empty() {
-                            app.streaming.last_reasoning = Some(app.streaming.reasoning_buffer.clone());
+                            app.streaming.last_reasoning =
+                                Some(app.streaming.reasoning_buffer.clone());
                         }
                         app.streaming.reasoning_buffer.clear();
                     }
                     EngineEvent::ToolCallStarted { id, name, input } => {
-                        app.tool.pending_tool_uses
+                        app.tool
+                            .pending_tool_uses
                             .push((id.clone(), name.clone(), input.clone()));
                         // Note this dispatch so the next sub-agent `Started`
                         // mailbox envelope routes into the right card kind
@@ -1152,7 +1157,8 @@ async fn run_event_loop(
                     }
                     EngineEvent::AgentSpawned { id, prompt } => {
                         let prompt_summary = summarize_tool_output(&prompt);
-                        app.subagent.progress
+                        app.subagent
+                            .progress
                             .insert(id.clone(), format!("starting: {prompt_summary}"));
                         if app.subagent.activity_started_at.is_none() {
                             app.subagent.activity_started_at = Some(Instant::now());
@@ -1164,7 +1170,8 @@ async fn run_event_loop(
                     EngineEvent::AgentProgress { id, status } => {
                         let display = friendly_subagent_progress(app, &id, &status);
                         if is_noisy_subagent_progress(&status) {
-                            app.subagent.progress
+                            app.subagent
+                                .progress
                                 .entry(id.clone())
                                 .or_insert_with(|| display.clone());
                         } else {
@@ -1287,9 +1294,8 @@ async fn run_event_loop(
                                     let _ = engine_handle.approve_tool_call(id.clone()).await;
                                 }
                                 super::collaboration_gate::CollaborationGate::ConfirmPlan => {
-                                    app.status_message = Some(format!(
-                                        "{}: {}", tool_name, description
-                                    ));
+                                    app.status_message =
+                                        Some(format!("{}: {}", tool_name, description));
                                     // Preview target file for write operations
                                     if let Some(path) =
                                         tool_input.get("path").and_then(serde_json::Value::as_str)
@@ -1321,7 +1327,8 @@ async fn run_event_loop(
                                     }
                                     app.view_stack.push(ApprovalView::new(request));
                                     app.status_message = Some(format!(
-                                        "Review changes: {} — {}", tool_name, description
+                                        "Review changes: {} — {}",
+                                        tool_name, description
                                     ));
                                 }
                                 super::collaboration_gate::CollaborationGate::RequirePlan => {
@@ -1341,7 +1348,8 @@ async fn run_event_loop(
                                     }
                                     app.view_stack.push(ApprovalView::new(request));
                                     app.status_message = Some(format!(
-                                        "Plan required: {} — {}", tool_name, description
+                                        "Plan required: {} — {}",
+                                        tool_name, description
                                     ));
                                 }
                             }
@@ -1444,7 +1452,10 @@ async fn run_event_loop(
             app.needs_redraw = true;
         }
 
-        let queue_state = (app.queue.queued_messages.clone(), app.queue.queued_draft.clone());
+        let queue_state = (
+            app.queue.queued_messages.clone(),
+            app.queue.queued_draft.clone(),
+        );
         if queue_state != last_queue_state {
             persist_offline_queue_state(app);
             last_queue_state = queue_state;
@@ -2029,7 +2040,8 @@ async fn run_event_loop(
                                 app.preview.visible = true;
                                 app.preview.focused = false;
                                 super::preview::load_preview(&mut app.preview, full_path);
-                                app.status_message = Some(format!("Previewing {}", rel_path.display()));
+                                app.status_message =
+                                    Some(format!("Previewing {}", rel_path.display()));
                             } else {
                                 // Directory was expanded/collapsed; rebuild.
                                 app.needs_redraw = true;
@@ -2041,7 +2053,8 @@ async fn run_event_loop(
                         // Transfer focus from file tree to preview panel.
                         if app.preview.visible {
                             app.preview.focused = true;
-                            app.status_message = Some("Preview focused: j/k scroll  Esc close".to_string());
+                            app.status_message =
+                                Some("Preview focused: j/k scroll  Esc close".to_string());
                         }
                         app.needs_redraw = true;
                         continue;
@@ -2497,10 +2510,7 @@ async fn run_event_loop(
                         if let Some(path_str) = mention_menu_entries.iter().next() {
                             let full_path = app.workspace.join(path_str);
                             if full_path.exists() {
-                                super::preview::load_preview(
-                                    &mut app.preview,
-                                    full_path,
-                                );
+                                super::preview::load_preview(&mut app.preview, full_path);
                                 app.preview.visible = true;
                             }
                         }
@@ -3180,7 +3190,8 @@ fn persist_offline_queue_state(app: &App) {
         }
         let state = OfflineQueueState {
             messages: app
-                .queue.queued_messages
+                .queue
+                .queued_messages
                 .iter()
                 .map(queued_ui_to_session)
                 .collect(),
@@ -3365,7 +3376,11 @@ fn ensure_streaming_thinking_active_entry(app: &mut App) -> usize {
     if app.tool.active_cell.is_none() {
         app.tool.active_cell = Some(ActiveCell::new());
     }
-    let active = app.tool.active_cell.as_mut().expect("active_cell just ensured");
+    let active = app
+        .tool
+        .active_cell
+        .as_mut()
+        .expect("active_cell just ensured");
     let entry_idx = active.push_thinking(HistoryCell::Thinking {
         content: String::new(),
         streaming: true,
@@ -5402,13 +5417,15 @@ fn build_pending_input_preview(app: &App) -> PendingInputPreview {
     })
     .collect();
     preview.pending_steers = app
-        .queue.pending_steers
+        .queue
+        .pending_steers
         .iter()
         .map(|m| m.display.clone())
         .collect();
     preview.rejected_steers = app.queue.rejected_steers.iter().cloned().collect();
     preview.queued_messages = app
-        .queue.queued_messages
+        .queue
+        .queued_messages
         .iter()
         .map(|m| m.display.clone())
         .collect();
@@ -5527,9 +5544,10 @@ fn render(f: &mut Frame, app: &mut App) {
 
         let mut sidebar_area = None;
         let body = chunks[1];
-        let file_tree_visible = app.sidebar.file_tree.is_some() && body.width >= SIDEBAR_VISIBLE_MIN_WIDTH;
-        let preview_visible = app.preview.visible
-            && body.width >= super::preview::PREVIEW_VISIBLE_MIN_WIDTH;
+        let file_tree_visible =
+            app.sidebar.file_tree.is_some() && body.width >= SIDEBAR_VISIBLE_MIN_WIDTH;
+        let preview_visible =
+            app.preview.visible && body.width >= super::preview::PREVIEW_VISIBLE_MIN_WIDTH;
 
         // Compute left-panes (file tree + preview) then chat area.
         let mut chat_area = if file_tree_visible && preview_visible {
@@ -5547,7 +5565,8 @@ fn render(f: &mut Frame, app: &mut App) {
                 super::file_tree::render_file_tree(f, split[0], state);
             }
 
-            let preview_panel = super::preview::PreviewPanel::new(&app.preview, app.preview.focused);
+            let preview_panel =
+                super::preview::PreviewPanel::new(&app.preview, app.preview.focused);
             preview_panel.render(split[1], f.buffer_mut());
 
             split[2]
@@ -5574,7 +5593,8 @@ fn render(f: &mut Frame, app: &mut App) {
                 ])
                 .split(body);
 
-            let preview_panel = super::preview::PreviewPanel::new(&app.preview, app.preview.focused);
+            let preview_panel =
+                super::preview::PreviewPanel::new(&app.preview, app.preview.focused);
             preview_panel.render(split[0], f.buffer_mut());
 
             split[1]
@@ -6248,13 +6268,9 @@ fn refresh_workspace_context_if_needed(app: &mut App, now: Instant, allow_refres
         app.workspace_ctx.context = Some(ctx);
     }
 
-    if app
-        .workspace_ctx
-        .refreshed_at
-        .is_some_and(|refreshed_at| {
-            now.duration_since(refreshed_at) < Duration::from_secs(WORKSPACE_CONTEXT_REFRESH_SECS)
-        })
-    {
+    if app.workspace_ctx.refreshed_at.is_some_and(|refreshed_at| {
+        now.duration_since(refreshed_at) < Duration::from_secs(WORKSPACE_CONTEXT_REFRESH_SECS)
+    }) {
         return;
     }
 
@@ -6590,7 +6606,8 @@ fn is_noisy_subagent_progress(status: &str) -> bool {
 }
 
 fn subagent_objective_summary(app: &App, id: &str) -> Option<String> {
-    app.subagent.cache
+    app.subagent
+        .cache
         .iter()
         .find(|agent| agent.agent_id == id)
         .map(|agent| summarize_tool_output(&agent.assignment.objective))
@@ -6636,7 +6653,8 @@ fn active_subagent_status_label(app: &App) -> Option<String> {
         .map(|agent| summarize_tool_output(&agent.assignment.objective))
         .filter(|summary| !summary.is_empty())
         .or_else(|| {
-            app.subagent.progress
+            app.subagent
+                .progress
                 .values()
                 .find(|value| !is_noisy_subagent_progress(value) && value.as_str() != "working")
                 .cloned()

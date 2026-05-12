@@ -9,9 +9,7 @@ use std::io;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crossterm::cursor::Show;
-use crossterm::event::{
-    DisableBracketedPaste, DisableMouseCapture, PopKeyboardEnhancementFlags,
-};
+use crossterm::event::{DisableBracketedPaste, DisableMouseCapture, PopKeyboardEnhancementFlags};
 use crossterm::execute;
 use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};
 

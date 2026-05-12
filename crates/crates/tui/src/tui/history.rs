@@ -8,13 +8,13 @@ use ratatui::text::{Line, Span};
 use serde_json::Value;
 use unicode_width::UnicodeWidthStr;
 
-use crate::yunpat_theme::active_theme;
 use crate::models::{ContentBlock, Message};
 use crate::palette;
 use crate::tools::review::ReviewOutput;
 use crate::tui::app::TranscriptSpacing;
 use crate::tui::diff_render;
 use crate::tui::markdown_render;
+use crate::yunpat_theme::active_theme;
 
 // === Constants ===
 
@@ -3062,9 +3062,9 @@ mod tests {
         assistant_label_style_for, extract_reasoning_summary, render_thinking,
         running_status_label_with_elapsed,
     };
-    use crate::yunpat_theme::Theme;
     use crate::models::{ContentBlock, Message};
     use crate::palette;
+    use crate::yunpat_theme::Theme;
     use ratatui::style::Modifier;
     use std::time::{Duration, Instant};
 

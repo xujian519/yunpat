@@ -24,10 +24,7 @@ pub enum PreviewContent {
         line_count: usize,
     },
     /// Pre-rendered Markdown lines (using ParsedMarkdown).
-    Markdown {
-        raw: String,
-        rendered_height: usize,
-    },
+    Markdown { raw: String, rendered_height: usize },
     /// Binary file metadata placeholder.
     Binary {
         name: String,

@@ -18,7 +18,12 @@ impl Engine {
     ) -> (TurnOutcomeStatus, Option<String>) {
         let client = match self.yunpat_client.clone() {
             Some(c) => c,
-            None => return (TurnOutcomeStatus::Failed, Some("No LLM client configured".into())),
+            None => {
+                return (
+                    TurnOutcomeStatus::Failed,
+                    Some("No LLM client configured".into()),
+                );
+            }
         };
 
         let mut consecutive_tool_error_steps = 0u32;
@@ -1546,7 +1551,8 @@ impl Engine {
                         )
                         .0;
                         let category = crate::tui::approval::get_tool_category(&tool_name);
-                        let risk = crate::tui::approval::classify_risk(&tool_name, category, &tool_input);
+                        let risk =
+                            crate::tui::approval::classify_risk(&tool_name, category, &tool_input);
                         let gate = crate::tui::collaboration_gate::determine_gate(category, risk);
                         let _ = self
                             .tx_event

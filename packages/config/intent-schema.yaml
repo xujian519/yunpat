@@ -1,0 +1,398 @@
+# YunPat 意图定义 Schema v2.0
+# 单一事实来源 (Single Source of Truth)
+# 用于生成 Rust Gateway / TS Orchestrator / Rust Router 的意图定义
+
+version: "2.0.0"
+domain: patent
+description: YunPat 专利智能助手意图分类体系
+
+# ============================================================================
+# 业务意图 (Business Intents)
+# ============================================================================
+intents:
+  - id: draft_full
+    label: 完整专利撰写
+    aliases: [DRAFT_FULL]
+    description: 用户要求撰写完整的专利申请文件，包括说明书、权利要求书、摘要等
+    agents: [specification-drafter, claim-generator]
+    complexity: complex
+    keywords:
+      primary:
+        - "撰写专利"
+        - "写专利"
+        - "专利申请"
+        - "写一份专利"
+        - "新申请"
+        - "draft patent"
+        - "write patent"
+        - "patent application"
+        - "new patent"
+      secondary:
+        - "技术交底书"
+        - "发明名称"
+        - "权利要求书"
+        - "说明书"
+        - "技术方案"
+        - "摘要"
+        - "附图"
+        - "申请文件"
+    synonyms:
+      "撰写": ["写", "起草", "编制", "准备", "整理", "完成"]
+      "专利": ["专利申请", "发明申请", "patent", "invention"]
+      "申请": ["申报", "提交", "办理"]
+    examples:
+      - "帮我撰写一个关于智能控制器的专利申请"
+      - "这是一个关于新能源汽车的技术方案，帮我写专利"
+      - "draft a patent for my new invention"
+
+  - id: draft_claims
+    label: 仅撰写/修改权利要求
+    aliases: [DRAFT_CLAIMS]
+    description: 明确提到权利要求相关的撰写或修改需求
+    agents: [claim-generator]
+    complexity: simple
+    keywords:
+      primary:
+        - "权利要求"
+        - "权要"
+        - "claims"
+        - "保护范围"
+        - "独立权利要求"
+        - "从属权利要求"
+      secondary:
+        - "修改权利要求"
+        - "增加从属"
+        - "权项"
+    synonyms:
+      "权利要求": ["权要", "权项", "claims", "claim"]
+      "修改": ["调整", "改动", "变更", "重写", "优化"]
+    examples:
+      - "帮我修改权利要求，增加从属权利要求"
+      - "只写权利要求部分"
+      - "优化一下 claims 的保护范围"
+
+  - id: draft_spec
+    label: 仅撰写说明书
+    aliases: [DRAFT_SPEC]
+    description: 明确提到说明书相关的撰写需求
+    agents: [specification-drafter]
+    complexity: simple
+    keywords:
+      primary:
+        - "说明书"
+        - "具体实施方式"
+        - "背景技术"
+        - "技术领域"
+        - "发明内容"
+      secondary:
+        - "写说明书"
+        - "撰写说明书"
+        - "说明书撰写"
+        - "生成说明书"
+    synonyms:
+      "说明书": ["specification", "描述书", "详细说明"]
+      "实施方式": ["实施例", "具体实施", "embodiment"]
+    examples:
+      - "只写说明书部分，不要权利要求"
+      - "帮我写一下具体实施方式"
+
+  - id: respond_oa
+    label: 审查意见答复
+    aliases: [RESPOND_OA]
+    description: 提到审查意见通知书、OA、驳回等相关答复需求
+    agents: [patent-responder]
+    complexity: complex
+    keywords:
+      primary:
+        - "审查意见"
+        - "OA"
+        - "office action"
+        - "答复审查"
+        - "审查意见答复"
+        - "第一次审查意见"
+        - "第二次审查意见"
+        - "一通"
+        - "二通"
+      secondary:
+        - "审查员"
+        - "驳回"
+        - "答复期限"
+        - "创造性感"
+        - "新颖性"
+        - "实用性"
+        - "修改权利要求"
+        - "意见陈述书"
+        - "审查通知书"
+        - "驳回决定"
+    synonyms:
+      "审查意见": ["OA", "Office Action", "审查通知书", "审查员意见", "official action"]
+      "答复": ["回复", "答辩", "回应", "申述", "答复审查", "答复OA"]
+      "驳回": ["reject", "rejection", "不予授权"]
+    examples:
+      - "我收到了审查意见，需要帮忙答复"
+      - "这个OA该怎么回复"
+      - "审查员说缺乏创造性，怎么答辩"
+
+  - id: search
+    label: 现有技术检索
+    aliases: [SEARCH]
+    description: 明确要求检索或查找相关技术、专利、对比文件
+    agents: [search, prior-art-search]
+    complexity: simple
+    keywords:
+      primary:
+        - "检索"
+        - "现有技术"
+        - "搜索专利"
+        - "专利检索"
+        - "查新"
+        - "prior art"
+        - "patent search"
+      secondary:
+        - "查一下"
+        - "有没有类似的"
+        - "对比文件"
+        - "专利号"
+        - "申请号"
+        - "CN"
+        - "新颖性检索"
+        - "侵权检索"
+    synonyms:
+      "检索": ["搜索", "查找", "查询", "查", "search", "look up"]
+      "现有技术": ["prior art", "对比文件", "先有技术", "参考文献"]
+      "查新": ["新颖性检索", "专利性检索", "可专利性检索"]
+    examples:
+      - "帮我检索一下智能控制器的现有技术"
+      - "查一下有没有类似的专利"
+      - "search prior art for transformer architecture"
+
+  - id: analyze_portfolio
+    label: 专利组合分析
+    aliases: [ANALYZE_PORTFOLIO]
+    description: 分析多个专利的组合情况、技术布局、价值评估
+    agents: [patent-analyzer]
+    complexity: complex
+    keywords:
+      primary:
+        - "专利组合"
+        - "专利分析"
+        - "技术布局"
+        - "专利地图"
+      secondary:
+        - "组合分析"
+        - "专利价值"
+        - "技术分析"
+        - "竞争分析"
+        - "FTO分析"
+    synonyms:
+      "分析": ["评估", "研究", "梳理", "盘点"]
+      "组合": ["portfolio", "集合", "系列"]
+    examples:
+      - "分析我们公司的专利组合情况"
+      - "做一个技术布局分析"
+
+  - id: evaluate_innovation
+    label: 创新性评估
+    aliases: [EVALUATE_INNOVATION]
+    description: 评估发明的创新性水平，判断是否值得申请专利
+    agents: [innovation-evaluator]
+    complexity: complex
+    keywords:
+      primary:
+        - "创新评估"
+        - "是否值得申请"
+        - "创新性"
+        - "可专利性评估"
+        - "评级"
+      secondary:
+        - "A/B/C/D"
+        - "专利性"
+        - "技术高度"
+        - "创新点"
+    synonyms:
+      "创新": ["创新性", "创造性", "技术进步", "技术贡献"]
+      "评估": ["评价", "判断", "鉴定", "评级"]
+    examples:
+      - "帮我评估一下这个发明的创新性"
+      - "这个方案值得申请专利吗"
+
+  - id: analyze_infringement
+    label: 专利侵权分析
+    aliases: [ANALYZE_INFRINGEMENT]
+    description: 分析专利侵权的可能性，包括技术特征对比和风险评级
+    agents: [patent-infringement-analyzer]
+    complexity: complex
+    keywords:
+      primary:
+        - "侵权分析"
+        - "侵权判定"
+        - "全面覆盖"
+        - "等同侵权"
+        - "技术特征对比"
+        - "被控侵权"
+      secondary:
+        - "侵权风险"
+        - "FTO"
+        - "自由实施"
+        - "权利要求对比"
+        - "技术比对"
+    synonyms:
+      "侵权": ["infringement", "侵害", "侵犯专利权"]
+      "分析": ["判定", "评估", "诊断", "鉴定"]
+    examples:
+      - "分析这件专利的侵权风险"
+      - "帮我做一个FTO分析"
+
+  - id: analyze_trademark
+    label: 商标分析
+    aliases: [ANALYZE_TRADEMARK]
+    description: 商标可注册性评估、近似判断、驳回复审策略
+    agents: [trademark-analyzer]
+    complexity: simple
+    keywords:
+      primary:
+        - "商标分析"
+        - "商标注册"
+        - "近似判断"
+        - "显著性分析"
+        - "驳回复审"
+        - "商标异议"
+      secondary:
+        - "商标查询"
+        - "商标评估"
+        - " trademark"
+    synonyms:
+      "商标": ["trademark", "brand", "标识", "牌子"]
+      "注册": ["申请", "登记", "报备"]
+    examples:
+      - "帮我分析一下这个商标能不能注册"
+
+  - id: coding
+    label: 编程开发任务
+    aliases: [CODING]
+    description: 用户要求写代码、开发功能、调试程序等编程相关任务
+    agents: []
+    complexity: simple
+    keywords:
+      primary:
+        - "写代码"
+        - "编程"
+        - "写个函数"
+        - "debug"
+        - "implement"
+      secondary:
+        - "开发"
+        - "实现一个"
+        - "bug"
+        - "调试"
+        - "部署"
+        - "接口"
+        - "function"
+        - "code"
+    synonyms:
+      "写代码": ["编程", "coding", "写程序", "开发代码"]
+      "调试": ["debug", "排错", "修复", "troubleshoot"]
+    examples:
+      - "帮我写一个PDF解析函数"
+      - "实现一个爬虫程序"
+    # 注意: CODING 意图在 Gateway 层直接回复，不路由到业务 Agent
+    direct_response: true
+
+# ============================================================================
+# 系统意图 (System Intents)
+# ============================================================================
+system_intents:
+  - id: clarify
+    label: 需要追问
+    aliases: [CLARIFY]
+    description: 意图不明确，信息不足以确定具体任务
+    agents: []
+    complexity: simple
+    keywords: []
+
+  - id: multi_intent
+    label: 多意图
+    aliases: [MULTI_INTENT]
+    description: 一条消息包含多个不同的任务需求
+    agents: []
+    complexity: complex
+    keywords:
+      primary:
+        - "先...然后..."
+        - "再帮我"
+        - "另外"
+        - "还有"
+
+  - id: init_workspace
+    label: 工作区初始化
+    aliases: [INIT_WORKSPACE]
+    description: 扫描工作区目录，检测专利相关文件并推断任务意图
+    agents: []
+    complexity: simple
+    keywords:
+      primary:
+        - "初始化"
+        - "扫描"
+        - "工作区"
+        - "目录"
+
+# ============================================================================
+# 意图冲突解决规则
+# 当多个意图匹配分数接近时，应用以下规则进行仲裁
+# ============================================================================
+conflict_resolution:
+  - description: "含限定词的撰写意图偏向子类型"
+    when: [draft_full, draft_claims]
+    prefer: draft_claims
+    if_contains: ["仅", "只要", "只写", "only claims", "不要说明书", "只要权利要求"]
+
+  - description: "含限定词的撰写意图偏向子类型"
+    when: [draft_full, draft_spec]
+    prefer: draft_spec
+    if_contains: ["仅", "只要", "只写", "only specification", "只要说明书", "不要权利要求"]
+
+  - description: "审查意见相关文件优先 OA 答复"
+    when: [respond_oa, search]
+    prefer: respond_oa
+    if_contains: ["审查意见", "OA文件", "答复期限", "通知书"]
+
+  - description: "技术交底书优先发明理解"
+    when: [draft_full, evaluate_innovation]
+    prefer: evaluate_innovation
+    if_contains: ["评估", "值得申请", "可专利性", "创新性如何"]
+
+# ============================================================================
+# 否定词列表（用于否定检测）
+# ============================================================================
+negation_keywords:
+  - "不"
+  - "没有"
+  - "别"
+  - "不要"
+  - "不是"
+  - "无需"
+  - "不必"
+  - "不需要"
+  - "没"
+  - "未"
+  - "never"
+  - "not"
+  - "no"
+  - "don't"
+  - "without"
+
+# ============================================================================
+# 修正信号词（用户纠正意图）
+# ============================================================================
+correction_signals:
+  - "不对"
+  - "错了"
+  - "不是"
+  - "改"
+  - "换成"
+  - "我要的是"
+  - "其实是"
+  - "更正"
+  - "重新"
+  - "别"
+  - "不要这个"

@@ -21,7 +21,7 @@ use crate::palette::{self, UiTheme};
 use crate::pricing::{CostCurrency, CostEstimate};
 use crate::session_manager::SessionContextReference;
 use crate::settings::Settings;
-use crate::tools::plan::{SharedPlanState, new_shared_plan_state};
+use crate::tools::plan::new_shared_plan_state;
 use crate::tools::shell::new_shared_shell_manager;
 use crate::tools::spec::RuntimeToolServices;
 use crate::tools::todo::{SharedTodoList, new_shared_todo_list};
@@ -728,14 +728,10 @@ pub struct App {
     pub composer_density: ComposerDensity,
     pub composer_border: bool,
     pub transcript_spacing: TranscriptSpacing,
-    pub sidebar_width_percent: u16,
-    pub sidebar_focus: SidebarFocus,
+    /// Sidebar and panel state (extracted from App).
+    pub sidebar: super::app_state::SidebarState,
     /// Intent router for patent workflow recognition on free-form input.
     pub router: yunpat_router::Router,
-    /// Whether the session-context panel is enabled (#504).
-    pub context_panel: bool,
-    /// File-tree pane state. `None` when hidden; `Some` when visible.
-    pub file_tree: Option<crate::tui::file_tree::FileTreeState>,
     #[allow(dead_code)]
     pub compact_threshold: usize,
     pub max_input_history: usize,
@@ -787,12 +783,8 @@ pub struct App {
     /// Project documentation (AGENTS.md or CLAUDE.md)
     #[allow(dead_code)]
     pub project_doc: Option<String>,
-    /// Plan state for tracking tasks
-    pub plan_state: SharedPlanState,
-    /// Whether a plan follow-up prompt is waiting for user input
-    pub plan_prompt_pending: bool,
-    /// Whether update_plan was called during the current turn
-    pub plan_tool_used_in_turn: bool,
+    /// Plan mode state (extracted from App).
+    pub plan: super::app_state::PlanState,
     /// Todo list for `TodoWriteTool`
     #[allow(dead_code)] // For future engine integration
     pub todos: SharedTodoList,
@@ -1253,10 +1245,12 @@ impl App {
             composer_density,
             composer_border,
             transcript_spacing,
-            sidebar_width_percent,
-            sidebar_focus,
-            context_panel: settings.context_panel,
-            file_tree: None,
+            sidebar: super::app_state::SidebarState {
+                width_percent: sidebar_width_percent,
+                focus: sidebar_focus,
+                context_panel: settings.context_panel,
+                file_tree: None,
+            },
             compact_threshold,
             max_input_history,
             allow_shell,
@@ -1295,9 +1289,11 @@ impl App {
                 .and_then(|tui| tui.status_items.clone())
                 .unwrap_or_else(crate::config::StatusItem::default_footer),
             project_doc: None,
-            plan_state,
-            plan_prompt_pending: false,
-            plan_tool_used_in_turn: false,
+            plan: super::app_state::PlanState {
+                shared: plan_state,
+                prompt_pending: false,
+                tool_used_in_turn: false,
+            },
             todos: new_shared_todo_list(),
             runtime_services: RuntimeToolServices {
                 shell_manager: Some(shell_manager),
@@ -1442,8 +1438,8 @@ impl App {
 
         self.yolo = mode == AppMode::Yolo;
         if mode != AppMode::Plan {
-            self.plan_prompt_pending = false;
-            self.plan_tool_used_in_turn = false;
+            self.plan.prompt_pending = false;
+            self.plan.tool_used_in_turn = false;
         }
 
         // Execute mode change hooks
@@ -2210,7 +2206,7 @@ impl App {
     }
 
     pub fn set_sidebar_focus(&mut self, focus: SidebarFocus) {
-        self.sidebar_focus = focus;
+        self.sidebar.focus = focus;
         self.needs_redraw = true;
     }
 
@@ -3559,7 +3555,7 @@ impl App {
     }
 
     pub fn clear_todos(&mut self) -> bool {
-        if let Ok(mut plan) = self.plan_state.try_lock() {
+        if let Ok(mut plan) = self.plan.shared.try_lock() {
             *plan = crate::tools::plan::PlanState::default();
             return true;
         }
@@ -3935,7 +3931,8 @@ mod tests {
 
         {
             let mut plan = app
-                .plan_state
+                .plan
+                .shared
                 .try_lock()
                 .expect("plan lock should be available");
             plan.update(UpdatePlanArgs {
@@ -3951,7 +3948,8 @@ mod tests {
         assert!(app.clear_todos());
 
         let plan = app
-            .plan_state
+            .plan
+            .shared
             .try_lock()
             .expect("plan lock should be available");
         assert!(plan.is_empty());

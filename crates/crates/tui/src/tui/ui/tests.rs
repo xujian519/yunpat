@@ -835,12 +835,12 @@ fn spans_text(spans: &[Span<'_>]) -> String {
 fn alt_4_focuses_agents_sidebar_without_switching_modes() {
     let mut app = create_test_app();
     app.mode = AppMode::Agent;
-    app.sidebar_focus = SidebarFocus::Auto;
+    app.sidebar.focus = SidebarFocus::Auto;
 
     apply_alt_4_shortcut(&mut app, KeyModifiers::ALT);
 
     assert_eq!(app.mode, AppMode::Agent);
-    assert_eq!(app.sidebar_focus, SidebarFocus::Agents);
+    assert_eq!(app.sidebar.focus, SidebarFocus::Agents);
     assert_eq!(app.status_message.as_deref(), Some("Sidebar focus: agents"));
 }
 
@@ -848,12 +848,12 @@ fn alt_4_focuses_agents_sidebar_without_switching_modes() {
 fn ctrl_alt_4_focuses_agents_sidebar_without_switching_modes() {
     let mut app = create_test_app();
     app.mode = AppMode::Agent;
-    app.sidebar_focus = SidebarFocus::Auto;
+    app.sidebar.focus = SidebarFocus::Auto;
 
     apply_alt_4_shortcut(&mut app, KeyModifiers::ALT | KeyModifiers::CONTROL);
 
     assert_eq!(app.mode, AppMode::Agent);
-    assert_eq!(app.sidebar_focus, SidebarFocus::Agents);
+    assert_eq!(app.sidebar.focus, SidebarFocus::Agents);
     assert_eq!(app.status_message.as_deref(), Some("Sidebar focus: agents"));
 }
 
@@ -1591,7 +1591,7 @@ fn workspace_context_refresh_respects_ttl_before_requerying_git() {
 async fn dismissed_plan_prompt_leaves_non_numeric_input_for_normal_send_path() {
     let mut app = create_test_app();
     app.mode = AppMode::Plan;
-    app.plan_prompt_pending = true;
+    app.plan.prompt_pending = true;
     app.offline_mode = true;
 
     let engine = crate::core::engine::mock_engine_handle();
@@ -1602,7 +1602,7 @@ async fn dismissed_plan_prompt_leaves_non_numeric_input_for_normal_send_path() {
         .expect("plan choice");
 
     assert!(!handled);
-    assert!(!app.plan_prompt_pending);
+    assert!(!app.plan.prompt_pending);
     assert_eq!(app.mode, AppMode::Plan);
 
     let queued = build_queued_message(&mut app, "yolo".to_string());
@@ -1627,7 +1627,7 @@ async fn dismissed_plan_prompt_leaves_non_numeric_input_for_normal_send_path() {
 async fn numeric_plan_choice_still_queues_follow_up_when_busy() {
     let mut app = create_test_app();
     app.mode = AppMode::Plan;
-    app.plan_prompt_pending = true;
+    app.plan.prompt_pending = true;
     app.is_loading = true;
 
     let engine = crate::core::engine::mock_engine_handle();
@@ -1638,7 +1638,7 @@ async fn numeric_plan_choice_still_queues_follow_up_when_busy() {
         .expect("plan choice");
 
     assert!(handled);
-    assert!(!app.plan_prompt_pending);
+    assert!(!app.plan.prompt_pending);
     assert_eq!(app.mode, AppMode::Yolo);
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(

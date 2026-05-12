@@ -566,7 +566,7 @@ fn build_engine_config(app: &App, config: &Config) -> EngineConfig {
         cycle: app.cycle_config(),
         capacity: crate::core::capacity::CapacityControllerConfig::from_app_config(config),
         todos: app.todos.clone(),
-        plan_state: app.plan_state.clone(),
+        plan_state: app.plan.shared.clone(),
         max_spawn_depth: crate::tools::subagent::DEFAULT_MAX_SPAWN_DEPTH,
         network_policy: config.network.clone().map(|toml_cfg| {
             crate::network_policy::NetworkPolicyDecider::with_default_audit(toml_cfg.into_runtime())
@@ -812,7 +812,7 @@ async fn run_event_loop(
                     }
                     EngineEvent::ToolCallComplete { id, name, result } => {
                         if name == "update_plan" {
-                            app.plan_tool_used_in_turn = true;
+                            app.plan.tool_used_in_turn = true;
                         }
                         let tool_content = match &result {
                             Ok(output) => sanitize_stream_chunk(
@@ -874,7 +874,7 @@ async fn run_event_loop(
                         app.reasoning_header = None;
                         app.last_reasoning = None;
                         app.tool.pending_tool_uses.clear();
-                        app.plan_tool_used_in_turn = false;
+                        app.plan.tool_used_in_turn = false;
                         last_status_frame = Instant::now();
                     }
                     EngineEvent::TurnComplete {
@@ -1006,12 +1006,12 @@ async fn run_event_loop(
                         persistence_actor::persist(PersistRequest::ClearCheckpoint);
 
                         if app.mode == AppMode::Plan
-                            && app.plan_tool_used_in_turn
-                            && !app.plan_prompt_pending
+                            && app.plan.tool_used_in_turn
+                            && !app.plan.prompt_pending
                             && app.queued_message_count() == 0
                             && app.queue.queued_draft.is_none()
                         {
-                            app.plan_prompt_pending = true;
+                            app.plan.prompt_pending = true;
                             app.add_message(HistoryCell::System {
                                 content: plan_next_step_prompt(),
                             });
@@ -1019,7 +1019,7 @@ async fn run_event_loop(
                                 app.view_stack.push(PlanPromptView::new());
                             }
                         }
-                        app.plan_tool_used_in_turn = false;
+                        app.plan.tool_used_in_turn = false;
 
                         // Legacy pending-steer recovery. Current keyboard
                         // handling keeps Esc as cancel-only, but older saved
@@ -1859,14 +1859,14 @@ async fn run_event_loop(
             // Shifted shortcuts toggle the file-tree pane. Keep plain Ctrl+E
             // reserved for the composer end-of-line binding used by shells.
             if is_file_tree_toggle_shortcut(&key) {
-                if let Some(_state) = app.file_tree.as_mut() {
+                if let Some(_state) = app.sidebar.file_tree.as_mut() {
                     // File tree visible → hide it.
-                    app.file_tree = None;
+                    app.sidebar.file_tree = None;
                     app.status_message = Some("File tree closed".to_string());
                 } else {
                     // Build the file tree from the current workspace.
                     let state = crate::tui::file_tree::FileTreeState::new(&app.workspace);
-                    app.file_tree = Some(state);
+                    app.sidebar.file_tree = Some(state);
                     app.status_message = Some(
                         "File tree: \u{2191}/\u{2193} navigate  Enter select  Esc close"
                             .to_string(),
@@ -1927,24 +1927,24 @@ async fn run_event_loop(
             // File-tree navigation: intercept keys when the file-tree pane is
             // visible so Up/Down/Enter/Esc operate on the tree rather than
             // falling through to composer or modal handlers.
-            if app.file_tree.is_some() {
+            if app.sidebar.file_tree.is_some() {
                 match key.code {
                     KeyCode::Up => {
-                        if let Some(state) = app.file_tree.as_mut() {
+                        if let Some(state) = app.sidebar.file_tree.as_mut() {
                             state.cursor_up();
                         }
                         app.needs_redraw = true;
                         continue;
                     }
                     KeyCode::Down => {
-                        if let Some(state) = app.file_tree.as_mut() {
+                        if let Some(state) = app.sidebar.file_tree.as_mut() {
                             state.cursor_down();
                         }
                         app.needs_redraw = true;
                         continue;
                     }
                     KeyCode::Enter => {
-                        if let Some(state) = app.file_tree.as_mut() {
+                        if let Some(state) = app.sidebar.file_tree.as_mut() {
                             if let Some(rel_path) = state.activate() {
                                 // Insert @path into the composer.
                                 let path_str = rel_path.to_string_lossy().to_string();
@@ -1958,7 +1958,7 @@ async fn run_event_loop(
                         continue;
                     }
                     KeyCode::Esc => {
-                        app.file_tree = None;
+                        app.sidebar.file_tree = None;
                         app.status_message = Some("File tree closed".to_string());
                         app.needs_redraw = true;
                         continue;
@@ -5218,12 +5218,12 @@ async fn handle_plan_choice(
     engine_handle: &EngineHandle,
     input: &str,
 ) -> Result<bool> {
-    if !app.plan_prompt_pending {
+    if !app.plan.prompt_pending {
         return Ok(false);
     }
 
     let choice = parse_plan_choice(input);
-    app.plan_prompt_pending = false;
+    app.plan.prompt_pending = false;
 
     let Some(choice) = choice else {
         return Ok(false);
@@ -5399,7 +5399,7 @@ fn render(f: &mut Frame, app: &mut App) {
         // When the file-tree pane is visible and the terminal is wide
         // enough, reserve the left ~25% for the file tree.
         let mut chat_area =
-            if app.file_tree.is_some() && chunks[1].width >= SIDEBAR_VISIBLE_MIN_WIDTH {
+            if app.sidebar.file_tree.is_some() && chunks[1].width >= SIDEBAR_VISIBLE_MIN_WIDTH {
                 let split = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints([Constraint::Percentage(25), Constraint::Percentage(75)])
@@ -5408,7 +5408,7 @@ fn render(f: &mut Frame, app: &mut App) {
                 let remaining = split[1];
 
                 // Render the file-tree pane.
-                if let Some(ref mut state) = app.file_tree {
+                if let Some(ref mut state) = app.sidebar.file_tree {
                     super::file_tree::render_file_tree(f, tree_area, state);
                 }
 
@@ -5419,7 +5419,7 @@ fn render(f: &mut Frame, app: &mut App) {
 
         if chat_area.width >= SIDEBAR_VISIBLE_MIN_WIDTH {
             let preferred_sidebar = (u32::from(chat_area.width)
-                * u32::from(app.sidebar_width_percent.clamp(10, 50))
+                * u32::from(app.sidebar.width_percent.clamp(10, 50))
                 / 100) as u16;
             let sidebar_width = preferred_sidebar
                 .max(24)
@@ -5655,8 +5655,8 @@ async fn handle_view_events(
                 });
             }
             ViewEvent::PlanPromptSelected { option } => {
-                if app.plan_prompt_pending {
-                    app.plan_prompt_pending = false;
+                if app.plan.prompt_pending {
+                    app.plan.prompt_pending = false;
                     if let Some(choice) = plan_choice_from_option(option)
                         && let Err(err) =
                             apply_plan_choice(app, config, engine_handle, choice).await
@@ -5666,7 +5666,7 @@ async fn handle_view_events(
                 }
             }
             ViewEvent::PlanPromptDismissed => {
-                app.plan_prompt_pending = true;
+                app.plan.prompt_pending = true;
                 app.status_message =
                     Some("Plan prompt closed. Type 1-4 and press Enter to choose.".to_string());
             }

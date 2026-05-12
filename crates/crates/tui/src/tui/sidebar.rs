@@ -34,7 +34,7 @@ pub fn render_sidebar(f: &mut Frame, area: Rect, app: &App) {
         return;
     }
 
-    match app.sidebar_focus {
+    match app.sidebar.focus {
         SidebarFocus::Auto => render_sidebar_auto(f, area, app),
         SidebarFocus::Plan => render_sidebar_plan(f, area, app),
         SidebarFocus::Todos => render_sidebar_todos(f, area, app),
@@ -81,7 +81,7 @@ fn render_sidebar_auto(f: &mut Frame, area: Rect, app: &App) {
     if !agents_empty {
         visible.push(Panel::Agents);
     }
-    if app.context_panel {
+    if app.sidebar.context_panel {
         visible.push(Panel::Context);
     }
 
@@ -199,7 +199,7 @@ fn render_sidebar_plan(f: &mut Frame, area: Rect, app: &App) {
         )));
     }
 
-    match app.plan_state.try_lock() {
+    match app.plan.shared.try_lock() {
         Ok(plan) => {
             if plan.is_empty() {
                 // The blunt "No active plan" placeholder used to land

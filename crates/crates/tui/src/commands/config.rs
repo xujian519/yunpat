@@ -119,8 +119,8 @@ fn show_single_setting(app: &App, key: &str) -> CommandResult {
         }
         "mode" | "default_mode" => Some(app.mode.as_setting().to_string()),
         "max_history" | "history" => Some(app.max_input_history.to_string()),
-        "sidebar_width" | "sidebar" => Some(app.sidebar_width_percent.to_string()),
-        "sidebar_focus" | "focus" => Some(app.sidebar_focus.as_setting().to_string()),
+        "sidebar_width" | "sidebar" => Some(app.sidebar.width_percent.to_string()),
+        "sidebar_focus" | "focus" => Some(app.sidebar.focus.as_setting().to_string()),
         "composer_density" | "composer" => Some(density_display(app.composer_density).to_string()),
         "composer_border" | "border" => {
             Some(if app.composer_border { "true" } else { "false" }.to_string())
@@ -415,7 +415,7 @@ pub fn set_config_value(app: &mut App, key: &str, value: &str, persist: bool) ->
             }
         }
         "sidebar_width" | "sidebar" => {
-            app.sidebar_width_percent = settings.sidebar_width_percent;
+            app.sidebar.width_percent = settings.sidebar_width_percent;
             app.mark_history_updated();
         }
         "sidebar_focus" | "focus" => {

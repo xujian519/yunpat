@@ -509,6 +509,7 @@ impl ThreadManager {
         }
 
         // Check for TS-originated checkpoints with HITL state
+        let mut _hitl_injected = false;
         if let Ok(Some(cp)) = self.store.load_unified_checkpoint(&thread.id, None)
             && matches!(cp.source, yunpat_state::CheckpointSource::TsOrchestrator)
         {
@@ -517,6 +518,22 @@ impl ThreadManager {
                 checkpoint_id = %cp.checkpoint_id,
                 "Found TS orchestrator checkpoint during resume"
             );
+            
+            if let Some(state) = cp.orchestrator_state {
+                // Inject HITL context into the conversation history
+                let hitl_msg = json!({
+                    "role": "system",
+                    "content": format!("⚠️ [系统提示] 检测到未完成的人机协作(HITL)任务，请根据以下待审内容继续处理：\n```json\n{}\n```", serde_json::to_string_pretty(&state).unwrap_or_default())
+                });
+                
+                self.store.append_message(
+                    &thread.id,
+                    "system",
+                    &hitl_msg.to_string(),
+                    Some(hitl_msg),
+                )?;
+                _hitl_injected = true;
+            }
         }
 
         self.persist_thread(&thread, None)?;

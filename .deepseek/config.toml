@@ -70,6 +70,11 @@ enabled = true
 enabled = true
 
 [[hooks.hooks]]
+name = "intent-hook"
+event = "message_submit"
+command = "bash .deepseek/hooks/intent-detect.sh"
+
+[[hooks.hooks]]
 name = "exception-hook"
 event = "on_error"
-command = "bash .yunpat/hooks/exception-handler.sh"
+command = "bash .deepseek/hooks/exception-handler.sh"

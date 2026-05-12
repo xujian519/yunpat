@@ -35,10 +35,7 @@ const formatConverterSchema = z.object({
     .describe('文档元数据'),
 })
 
-export class FormatConverterTool extends BaseMcpTool<
-  z.infer<typeof formatConverterSchema>,
-  any
-> {
+export class FormatConverterTool extends BaseMcpTool<z.infer<typeof formatConverterSchema>, any> {
   readonly metadata = {
     name: 'format_convert',
     description:
@@ -87,15 +84,20 @@ export class FormatConverterTool extends BaseMcpTool<
 
 const patentManagerSchema = z.object({
   operation: z
-    .enum(['create', 'update', 'query', 'delete', 'transition', 'check_deadlines', 'calculate_fees'])
+    .enum([
+      'create',
+      'update',
+      'query',
+      'delete',
+      'transition',
+      'check_deadlines',
+      'calculate_fees',
+    ])
     .describe('操作类型'),
   data: z.any().optional().describe('操作数据（根据操作类型不同）'),
 })
 
-export class PatentManagerTool extends BaseMcpTool<
-  z.infer<typeof patentManagerSchema>,
-  any
-> {
+export class PatentManagerTool extends BaseMcpTool<z.infer<typeof patentManagerSchema>, any> {
   readonly metadata = {
     name: 'patent_manager',
     description:

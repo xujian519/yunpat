@@ -104,17 +104,10 @@ const priorArtAnalysisSchema = z.object({
     .optional()
     .default(2)
     .describe('分析深度: 1=基础, 2=标准, 3=深度'),
-  enableKnowledgeEnhancement: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe('是否启用知识增强'),
+  enableKnowledgeEnhancement: z.boolean().optional().default(false).describe('是否启用知识增强'),
 })
 
-export class PriorArtAnalyzerTool extends BaseMcpTool<
-  z.infer<typeof priorArtAnalysisSchema>,
-  any
-> {
+export class PriorArtAnalyzerTool extends BaseMcpTool<z.infer<typeof priorArtAnalysisSchema>, any> {
   readonly metadata = {
     name: 'prior_art_analysis',
     description:

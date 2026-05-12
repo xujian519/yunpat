@@ -15,10 +15,7 @@ const imageUnderstandingSchema = z.object({
   figureNumber: z.string().describe('附图编号，如 "图1"'),
   figureTitle: z.string().optional().describe('附图标题'),
   description: z.string().optional().describe('附图说明文字'),
-  imageFormat: z
-    .enum(['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'])
-    .optional()
-    .describe('图片格式'),
+  imageFormat: z.enum(['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp']).optional().describe('图片格式'),
   technicalField: z.string().optional().describe('技术领域（辅助理解）'),
   technicalSolution: z.string().optional().describe('技术方案（辅助理解）'),
 })
@@ -77,11 +74,7 @@ export class ImageUnderstandingTool extends BaseMcpTool<
 
 const technicalDrawingSchema = z.object({
   imageData: z.string().describe('图片路径或 Base64 编码数据'),
-  imageFormat: z
-    .enum(['png', 'jpg', 'jpeg'])
-    .optional()
-    .default('png')
-    .describe('图片格式'),
+  imageFormat: z.enum(['png', 'jpg', 'jpeg']).optional().default('png').describe('图片格式'),
   drawingType: z
     .enum(['general', 'chemical', 'math', 'electrical'])
     .optional()
@@ -89,10 +82,7 @@ const technicalDrawingSchema = z.object({
   autoDetect: z.boolean().optional().default(true).describe('是否自动检测图纸类型'),
 })
 
-export class TechnicalDrawingTool extends BaseMcpTool<
-  z.infer<typeof technicalDrawingSchema>,
-  any
-> {
+export class TechnicalDrawingTool extends BaseMcpTool<z.infer<typeof technicalDrawingSchema>, any> {
   readonly metadata = {
     name: 'technical_drawing',
     description:

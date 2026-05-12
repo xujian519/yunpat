@@ -54,7 +54,9 @@ export class SubjectMatterCheckerTool extends BaseMcpTool<
   ) {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
-        const SubjectMatterChecker = (await import('@yunpat/subject-matter-checker') as any).SubjectMatterChecker || (await import('@yunpat/subject-matter-checker') as any).default
+        const SubjectMatterChecker =
+          ((await import('@yunpat/subject-matter-checker')) as any).SubjectMatterChecker ||
+          ((await import('@yunpat/subject-matter-checker')) as any).default
         const agent = new SubjectMatterChecker({
           name: 'subject-matter-checker',
           description: '保护客体检查智能体',
@@ -73,9 +75,18 @@ export class SubjectMatterCheckerTool extends BaseMcpTool<
     return {
       version: '3.0.0',
       integrationMode: 'rule_based',
-      article2Check: { passed: true, isTechnicalSolution: true, analysis: '规则模式预检', issues: [] },
+      article2Check: {
+        passed: true,
+        isTechnicalSolution: true,
+        analysis: '规则模式预检',
+        issues: [],
+      },
       article25Check: { passed: true, nonProtectableSubjects: [], issues: [] },
-      overallResult: { isProtectable: true, recommendations: ['建议使用 LLM 模式进行深度检查'], confidence: 0.3 },
+      overallResult: {
+        isProtectable: true,
+        recommendations: ['建议使用 LLM 模式进行深度检查'],
+        confidence: 0.3,
+      },
     }
   }
 }
@@ -119,7 +130,9 @@ export class UnityCheckerTool extends BaseMcpTool<z.infer<typeof unityCheckSchem
   ) {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
-        const UnityChecker = (await import('@yunpat/unity-checker') as any).UnityChecker || (await import('@yunpat/unity-checker') as any).default
+        const UnityChecker =
+          ((await import('@yunpat/unity-checker')) as any).UnityChecker ||
+          ((await import('@yunpat/unity-checker')) as any).default
         const agent = new UnityChecker({
           name: 'unity-checker',
           description: '单一性检查智能体',
@@ -141,11 +154,16 @@ export class UnityCheckerTool extends BaseMcpTool<z.infer<typeof unityCheckSchem
       integrationMode: 'rule_based',
       article43Check: {
         hasUnity: independentClaims.length <= 1,
-        unifiedGroups: independentClaims.length > 1 ? [independentClaims.map((c) => c.number)] : [[1]],
+        unifiedGroups:
+          independentClaims.length > 1 ? [independentClaims.map((c) => c.number)] : [[1]],
         nonUnifiedClaims: [],
         analysis: `共 ${independentClaims.length} 个独立权利要求`,
       },
-      overallResult: { passed: independentClaims.length <= 1, recommendations: [], confidence: 0.3 },
+      overallResult: {
+        passed: independentClaims.length <= 1,
+        recommendations: [],
+        confidence: 0.3,
+      },
     }
   }
 }
@@ -157,15 +175,7 @@ export class UnityCheckerTool extends BaseMcpTool<z.infer<typeof unityCheckSchem
 const specFormalitySchema = z.object({
   specification: z.string().describe('说明书全文'),
   checkItems: z
-    .array(
-      z.enum([
-        'section_completeness',
-        'section_order',
-        'word_count',
-        'format',
-        'terminology',
-      ])
-    )
+    .array(z.enum(['section_completeness', 'section_order', 'word_count', 'format', 'terminology']))
     .optional()
     .default(['section_completeness', 'section_order', 'word_count'])
     .describe('检查项列表'),
@@ -189,7 +199,9 @@ export class SpecFormalityCheckerTool extends BaseMcpTool<
   ) {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
-        const SpecFormalityChecker = (await import('@yunpat/spec-formality-checker') as any).SpecFormalityChecker || (await import('@yunpat/spec-formality-checker') as any).default
+        const SpecFormalityChecker =
+          ((await import('@yunpat/spec-formality-checker')) as any).SpecFormalityChecker ||
+          ((await import('@yunpat/spec-formality-checker')) as any).default
         const agent = new SpecFormalityChecker({
           name: 'spec-formality-checker',
           description: '说明书格式检查智能体',
@@ -237,10 +249,7 @@ export class TechUnitExtractorTool extends BaseMcpTool<z.infer<typeof techUnitSc
     inputSchema: techUnitSchema,
   }
 
-  protected async executeInternal(
-    input: z.infer<typeof techUnitSchema>,
-    context: McpToolContext
-  ) {
+  protected async executeInternal(input: z.infer<typeof techUnitSchema>, context: McpToolContext) {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { MinimumTechUnitAgent } = await import('@yunpat/agent-tech-unit')

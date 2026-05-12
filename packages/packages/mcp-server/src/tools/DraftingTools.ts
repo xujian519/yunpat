@@ -51,9 +51,7 @@ export class SpecificationDrafterTool extends BaseMcpTool<
   ): Promise<any> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
-        const { SpecificationDrafterAgent } = await import(
-          '@yunpat/agent-specification-drafter'
-        )
+        const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification-drafter')
         const agent = new SpecificationDrafterAgent({
           name: 'specification-drafter',
           description: '说明书撰写智能体',
@@ -113,10 +111,7 @@ const abstractDrafterSchema = z.object({
   maxWords: z.number().optional().default(300).describe('摘要最大字数'),
 })
 
-export class AbstractDrafterTool extends BaseMcpTool<
-  z.infer<typeof abstractDrafterSchema>,
-  any
-> {
+export class AbstractDrafterTool extends BaseMcpTool<z.infer<typeof abstractDrafterSchema>, any> {
   readonly metadata = {
     name: 'abstract_drafter',
     description:
@@ -181,11 +176,7 @@ const writerSchema = z.object({
     .enum(['generate', 'optimize', 'convert', 'format'])
     .describe('操作类型: generate=生成, optimize=优化, convert=转换, format=格式化'),
   topic: z.string().describe('写作主题'),
-  format: z
-    .enum(['markdown', 'html', 'pdf'])
-    .optional()
-    .default('markdown')
-    .describe('输出格式'),
+  format: z.enum(['markdown', 'html', 'pdf']).optional().default('markdown').describe('输出格式'),
   requirements: z.array(z.string()).optional().describe('写作要求列表'),
   references: z.array(z.string()).optional().describe('参考资料列表'),
 })
@@ -199,10 +190,7 @@ export class WriterTool extends BaseMcpTool<z.infer<typeof writerSchema>, any> {
     inputSchema: writerSchema,
   }
 
-  protected async executeInternal(
-    input: z.infer<typeof writerSchema>,
-    context: McpToolContext
-  ) {
+  protected async executeInternal(input: z.infer<typeof writerSchema>, context: McpToolContext) {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { WriterAgent } = await import('@yunpat/agent-writer')

@@ -41,9 +41,7 @@ const priorArtSearchSchema = z.object({
     .object({
       keywords: z.array(z.string()).optional(),
       classification: z.string().optional(),
-      dateRange: z
-        .object({ start: z.string(), end: z.string() })
-        .optional(),
+      dateRange: z.object({ start: z.string(), end: z.string() }).optional(),
       applicant: z.string().optional(),
       limit: z.number().optional().default(20),
     })
@@ -51,10 +49,7 @@ const priorArtSearchSchema = z.object({
     .describe('检索选项'),
 })
 
-export class PriorArtSearchTool extends BaseMcpTool<
-  z.infer<typeof priorArtSearchSchema>,
-  any
-> {
+export class PriorArtSearchTool extends BaseMcpTool<z.infer<typeof priorArtSearchSchema>, any> {
   readonly metadata = {
     name: 'prior_art_search',
     description:
@@ -140,10 +135,7 @@ const comparisonReportSchema = z.object({
     .describe('报告选项'),
 })
 
-export class ComparisonReportTool extends BaseMcpTool<
-  z.infer<typeof comparisonReportSchema>,
-  any
-> {
+export class ComparisonReportTool extends BaseMcpTool<z.infer<typeof comparisonReportSchema>, any> {
   readonly metadata = {
     name: 'comparison_report',
     description:
@@ -158,9 +150,8 @@ export class ComparisonReportTool extends BaseMcpTool<
   ) {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
-        const { ComparisonReportGeneratorAgent } = await import(
-          '@yunpat/comparison-report-generator'
-        )
+        const { ComparisonReportGeneratorAgent } =
+          await import('@yunpat/comparison-report-generator')
         const agent = new ComparisonReportGeneratorAgent({
           name: 'comparison-report',
           description: '对比报告生成智能体',

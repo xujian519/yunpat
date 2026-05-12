@@ -5,5 +5,7 @@
 //! access, so callers gradually migrate from `app.xxx` to `app.sub.xxx`.
 
 pub mod subagent_state;
+pub mod tool_state;
 
 pub use subagent_state::SubagentState;
+pub use tool_state::{ToolDetailRecord, ToolState};

@@ -99,6 +99,7 @@ impl ChatWidget {
         // are unaffected.
         app.resync_history_revisions();
         let active_entries: &[HistoryCell] = app
+            .tool
             .active_cell
             .as_ref()
             .map_or(&[], |active| active.entries());
@@ -112,7 +113,7 @@ impl ChatWidget {
                 Vec::with_capacity(app.history.len() + active_entries.len());
             cell_revisions.extend_from_slice(&app.history_revisions);
             if !active_entries.is_empty() {
-                let active_rev = app.active_cell_revision;
+                let active_rev = app.tool.active_cell_revision;
                 for i in 0..active_entries.len() {
                     let salt = (i as u64).wrapping_add(1);
                     cell_revisions.push(
@@ -153,7 +154,7 @@ impl ChatWidget {
             }
 
             if !active_entries.is_empty() {
-                let active_rev = app.active_cell_revision;
+                let active_rev = app.tool.active_cell_revision;
                 for (i, cell) in active_entries.iter().enumerate() {
                     let original_idx = history_len + i;
                     if app.collapsed_cells.contains(&original_idx) {

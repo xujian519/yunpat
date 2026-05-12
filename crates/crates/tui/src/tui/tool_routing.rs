@@ -42,15 +42,15 @@ pub(super) fn handle_tool_call_started(
     // mutates in place; finalized history isn't touched until flush. This
     // keeps the transcript stable while parallel completions arrive in any
     // order.
-    if app.active_cell.is_none() {
-        app.active_cell = Some(ActiveCell::new());
+    if app.tool.active_cell.is_none() {
+        app.tool.active_cell = Some(ActiveCell::new());
     }
 
     if is_exploring_tool(name) {
         let label = exploring_label(name, input);
         // ensure_exploring + append_to_exploring keeps all parallel exploring
         // starts in a single ExploringCell entry.
-        let active = app.active_cell.as_mut().expect("active_cell just ensured");
+        let active = app.tool.active_cell.as_mut().expect("active_cell just ensured");
         let entry_idx = active.ensure_exploring();
         let inner = active
             .append_to_exploring(
@@ -61,9 +61,9 @@ pub(super) fn handle_tool_call_started(
                 },
             )
             .map_or(0, |(_, inner)| inner);
-        app.exploring_cell = Some(entry_idx);
+        app.tool.exploring_cell = Some(entry_idx);
         let virtual_index = app.history.len() + entry_idx;
-        app.exploring_entries
+        app.tool.exploring_entries
             .insert(id.clone(), (virtual_index, inner));
         register_tool_cell(app, &id, name, input, virtual_index);
         app.mark_history_updated();
@@ -85,15 +85,16 @@ pub(super) fn handle_tool_call_started(
             is_wait = *wait;
             if is_wait
                 && app
+                    .tool
                     .last_exec_wait_command
                     .as_ref()
                     .is_some_and(|last| last == &command)
             {
-                app.ignored_tool_calls.insert(id);
+                app.tool.ignored_tool_calls.insert(id);
                 return;
             }
             if is_wait {
-                app.last_exec_wait_command = Some(command.clone());
+                app.tool.last_exec_wait_command = Some(command.clone());
             }
 
             push_active_tool_cell(
@@ -116,15 +117,16 @@ pub(super) fn handle_tool_call_started(
 
         if exec_is_background(input)
             && app
+                .tool
                 .last_exec_wait_command
                 .as_ref()
                 .is_some_and(|last| last == &command)
         {
-            app.ignored_tool_calls.insert(id);
+            app.tool.ignored_tool_calls.insert(id);
             return;
         }
         if exec_is_background(input) && !is_wait {
-            app.last_exec_wait_command = Some(command.clone());
+            app.tool.last_exec_wait_command = Some(command.clone());
         }
 
         push_active_tool_cell(
@@ -271,10 +273,10 @@ fn push_active_tool_cell(
     input: &serde_json::Value,
     cell: HistoryCell,
 ) {
-    if app.active_cell.is_none() {
-        app.active_cell = Some(ActiveCell::new());
+    if app.tool.active_cell.is_none() {
+        app.tool.active_cell = Some(ActiveCell::new());
     }
-    let active = app.active_cell.as_mut().expect("active_cell just ensured");
+    let active = app.tool.active_cell.as_mut().expect("active_cell just ensured");
     let entry_idx = active.push_tool(tool_id.to_string(), cell);
     let virtual_index = app.history.len() + entry_idx;
     register_tool_cell(app, tool_id, tool_name, input, virtual_index);
@@ -288,7 +290,7 @@ fn register_tool_cell(
     input: &serde_json::Value,
     cell_index: usize,
 ) {
-    app.tool_cells.insert(tool_id.to_string(), cell_index);
+    app.tool.tool_cells.insert(tool_id.to_string(), cell_index);
     let record = ToolDetailRecord {
         tool_id: tool_id.to_string(),
         tool_name: tool_name.to_string(),
@@ -296,13 +298,13 @@ fn register_tool_cell(
         output: None,
     };
     if cell_index < app.history.len() {
-        app.tool_details_by_cell.insert(cell_index, record);
+        app.tool.tool_details_by_cell.insert(cell_index, record);
     } else {
         // Active-cell entry: keep the detail record in `active_tool_details`
         // until the active cell flushes. `flush_active_cell` migrates these
         // records into `tool_details_by_cell` keyed by the eventual real
         // cell index.
-        app.active_tool_details.insert(tool_id.to_string(), record);
+        app.tool.active_tool_details.insert(tool_id.to_string(), record);
     }
 }
 
@@ -317,14 +319,14 @@ fn store_tool_detail_output(
         Err(err) => err.to_string(),
     });
     if cell_index < app.history.len()
-        && let Some(detail) = app.tool_details_by_cell.get_mut(&cell_index)
+        && let Some(detail) = app.tool.tool_details_by_cell.get_mut(&cell_index)
     {
         detail.output = payload.clone();
     }
     // Also write to the active table while the entry might still live there;
     // some callsites pre-rewrite cell_index but the active_tool_details map is
     // the canonical source for in-flight outputs.
-    if let Some(detail) = app.active_tool_details.get_mut(tool_id) {
+    if let Some(detail) = app.tool.active_tool_details.get_mut(tool_id) {
         detail.output = payload;
     }
 }
@@ -391,7 +393,7 @@ pub(super) fn handle_tool_call_complete(
     name: &str,
     result: &Result<ToolResult, ToolError>,
 ) {
-    if app.ignored_tool_calls.remove(id) {
+    if app.tool.ignored_tool_calls.remove(id) {
         return;
     }
     // Roll any child-LLM token usage the tool reports into the
@@ -402,8 +404,8 @@ pub(super) fn handle_tool_call_complete(
 
     // Exploring entries land in the per-tool map regardless of whether they
     // live in the active cell or in finalized history; the path is the same.
-    if let Some((cell_index, entry_index)) = app.exploring_entries.remove(id) {
-        app.tool_cells.remove(id);
+    if let Some((cell_index, entry_index)) = app.tool.exploring_entries.remove(id) {
+        app.tool.tool_cells.remove(id);
         store_tool_detail_output(app, id, cell_index, result);
         if let Some(HistoryCell::Tool(ToolCell::Exploring(cell))) =
             app.cell_at_virtual_index_mut(cell_index)
@@ -418,8 +420,8 @@ pub(super) fn handle_tool_call_complete(
             // revision bump so the transcript cache invalidates the synthetic
             // tail row.
             if cell_index >= app.history.len() {
-                app.active_cell_revision = app.active_cell_revision.wrapping_add(1);
-                if let Some(active) = app.active_cell.as_mut() {
+                app.tool.active_cell_revision = app.tool.active_cell_revision.wrapping_add(1);
+                if let Some(active) = app.tool.active_cell.as_mut() {
                     active.bump_revision();
                 }
             }
@@ -432,7 +434,7 @@ pub(super) fn handle_tool_call_complete(
     // a tool result arrived after the active cell was already flushed). Build
     // a finalized standalone cell from the result so the user can still see
     // the output, but DO NOT touch the active cell.
-    let Some(cell_index) = app.tool_cells.remove(id) else {
+    let Some(cell_index) = app.tool.tool_cells.remove(id) else {
         push_orphan_tool_completion(app, id, name, result);
         return;
     };
@@ -568,8 +570,8 @@ pub(super) fn handle_tool_call_complete(
     // If the mutated cell lived inside the active group, bump the active-cell
     // revision so the transcript cache re-renders the synthetic tail row.
     if in_active {
-        app.active_cell_revision = app.active_cell_revision.wrapping_add(1);
-        if let Some(active) = app.active_cell.as_mut() {
+        app.tool.active_cell_revision = app.tool.active_cell_revision.wrapping_add(1);
+        if let Some(active) = app.tool.active_cell.as_mut() {
             active.bump_revision();
         }
     }
@@ -630,7 +632,7 @@ fn push_orphan_tool_completion(
         Err(err) => Some(err.to_string()),
     };
     let history_threshold_before_push = app.history.len();
-    let active_in_flight = app.active_cell.is_some();
+    let active_in_flight = app.tool.active_cell.is_some();
     let spillover_path = result
         .as_ref()
         .ok()
@@ -647,7 +649,7 @@ fn push_orphan_tool_completion(
         spillover_path,
     })));
     let cell_index = app.history.len().saturating_sub(1);
-    app.tool_details_by_cell.insert(
+    app.tool.tool_details_by_cell.insert(
         cell_index,
         ToolDetailRecord {
             tool_id: tool_id.to_string(),
@@ -665,17 +667,17 @@ fn push_orphan_tool_completion(
     // wrong entry.
     if active_in_flight {
         let threshold = history_threshold_before_push;
-        for idx in app.tool_cells.values_mut() {
+        for idx in app.tool.tool_cells.values_mut() {
             if *idx >= threshold {
                 *idx = idx.wrapping_add(1);
             }
         }
-        for (cell_idx, _) in app.exploring_entries.values_mut() {
+        for (cell_idx, _) in app.tool.exploring_entries.values_mut() {
             if *cell_idx >= threshold {
                 *cell_idx = cell_idx.wrapping_add(1);
             }
         }
-        if let Some(idx) = app.exploring_cell.as_mut()
+        if let Some(idx) = app.tool.exploring_cell.as_mut()
             && *idx >= threshold
         {
             *idx = idx.wrapping_add(1);

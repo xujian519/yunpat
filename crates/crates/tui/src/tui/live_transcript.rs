@@ -143,7 +143,7 @@ impl LiveTranscriptOverlay {
     pub fn refresh_from_app(&mut self, app: &mut App) {
         app.resync_history_revisions();
         let mut new_snapshots = Vec::with_capacity(
-            app.history.len() + app.active_cell.as_ref().map_or(0, |a| a.entries().len()),
+            app.history.len() + app.tool.active_cell.as_ref().map_or(0, |a| a.entries().len()),
         );
         for (idx, cell) in app.history.iter().enumerate() {
             let rev = app.history_revisions.get(idx).copied().unwrap_or(0);
@@ -153,8 +153,8 @@ impl LiveTranscriptOverlay {
                 cell: cell.clone(),
             });
         }
-        if let Some(active) = app.active_cell.as_ref() {
-            let active_rev = app.active_cell_revision;
+        if let Some(active) = app.tool.active_cell.as_ref() {
+            let active_rev = app.tool.active_cell_revision;
             for (idx, cell) in active.entries().iter().enumerate() {
                 let salt = (idx as u64).wrapping_add(1);
                 // Salt mirrors the main-transcript scheme so cache keys are

@@ -360,7 +360,7 @@ pub fn set_config_value(app: &mut App, key: &str, value: &str, persist: bool) ->
             app.mark_history_updated();
         }
         "show_tool_details" | "tool_details" => {
-            app.show_tool_details = settings.show_tool_details;
+            app.tool.show_tool_details = settings.show_tool_details;
             app.mark_history_updated();
         }
         "locale" | "language" => {

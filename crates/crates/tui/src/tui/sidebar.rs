@@ -522,7 +522,7 @@ pub struct SidebarSubagentSummary {
 }
 
 fn foreground_rlm_running(app: &App) -> bool {
-    app.active_cell.as_ref().is_some_and(|active| {
+    app.tool.active_cell.as_ref().is_some_and(|active| {
         active.entries().iter().any(|entry| {
             matches!(
                 entry,

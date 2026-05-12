@@ -612,7 +612,7 @@ fn active_tool_status_label_summarizes_live_tool_group() {
             spillover_path: None,
         })),
     );
-    app.active_cell = Some(active);
+    app.tool.active_cell = Some(active);
 
     let label = active_tool_status_label(&app).expect("status label");
 
@@ -638,7 +638,7 @@ fn active_tool_status_label_counts_foreground_rlm_work() {
             spillover_path: None,
         })),
     );
-    app.active_cell = Some(active);
+    app.tool.active_cell = Some(active);
 
     let label = active_tool_status_label(&app).expect("status label");
 
@@ -1811,7 +1811,7 @@ fn detail_target_prefers_visible_tool_card() {
             spillover_path: None,
         })),
     ];
-    app.tool_details_by_cell.insert(
+    app.tool.tool_details_by_cell.insert(
         1,
         ToolDetailRecord {
             tool_id: "search-1".to_string(),
@@ -1820,7 +1820,7 @@ fn detail_target_prefers_visible_tool_card() {
             output: Some("done".to_string()),
         },
     );
-    app.tool_details_by_cell.insert(
+    app.tool.tool_details_by_cell.insert(
         3,
         ToolDetailRecord {
             tool_id: "exec-1".to_string(),
@@ -1857,7 +1857,7 @@ fn open_tool_details_pager_supports_active_virtual_tool_cell() {
         &serde_json::json!({"command": "echo hi"}),
     );
     let active_entries = app
-        .active_cell
+        .tool.active_cell
         .as_ref()
         .expect("active cell")
         .entries()
@@ -2283,7 +2283,7 @@ fn parallel_exploring_tool_starts_share_one_active_entry() {
 
     // History must remain empty: nothing flushes until the turn ends.
     assert_eq!(app.history.len(), 0, "no history cells written mid-turn");
-    let active = app.active_cell.as_ref().expect("active cell created");
+    let active = app.tool.active_cell.as_ref().expect("active cell created");
     assert_eq!(
         active.entry_count(),
         1,
@@ -2332,7 +2332,7 @@ fn out_of_order_completes_finalize_one_history_cell_per_turn() {
 
     // Still nothing in history: the active cell holds everything.
     assert_eq!(app.history.len(), 0);
-    let active = app.active_cell.as_ref().expect("active cell still present");
+    let active = app.tool.active_cell.as_ref().expect("active cell still present");
     let HistoryCell::Tool(ToolCell::Exploring(explore)) = &active.entries()[0] else {
         panic!("expected exploring cell")
     };
@@ -2347,7 +2347,7 @@ fn out_of_order_completes_finalize_one_history_cell_per_turn() {
     // Flush via the explicit helper (mirrors what TurnComplete does).
     app.flush_active_cell();
 
-    assert!(app.active_cell.is_none(), "active cell cleared after flush");
+    assert!(app.tool.active_cell.is_none(), "active cell cleared after flush");
     // The flushed group is exactly one history cell — the merged exploring
     // aggregate. This is the heart of CX#7: parallel work renders as ONE
     // finalized cell, regardless of completion order.
@@ -2388,7 +2388,7 @@ fn mixed_parallel_tools_render_in_single_active_cell() {
     );
 
     assert_eq!(app.history.len(), 0);
-    let active = app.active_cell.as_ref().expect("active cell present");
+    let active = app.tool.active_cell.as_ref().expect("active cell present");
     // 3 entries: exploring aggregate (1) + exec + generic.
     assert_eq!(active.entry_count(), 3);
 
@@ -2431,7 +2431,7 @@ fn orphan_tool_complete_with_unknown_id_pushes_separate_cell() {
 
     // Active cell is intact.
     let active = app
-        .active_cell
+        .tool.active_cell
         .as_ref()
         .expect("active cell preserved after orphan");
     assert_eq!(active.entry_count(), 1);
@@ -2467,7 +2467,7 @@ fn turn_complete_flushes_active_cell_into_history() {
     // Don't complete shell-1 — simulate cancellation mid-shell.
     app.finalize_active_cell_as_interrupted();
 
-    assert!(app.active_cell.is_none(), "active cell cleared on flush");
+    assert!(app.tool.active_cell.is_none(), "active cell cleared on flush");
     let exec_cells: Vec<_> = app
         .history
         .iter()
@@ -2503,7 +2503,7 @@ fn orphan_during_active_keeps_subsequent_completion_routed_correctly() {
     handle_tool_call_complete(&mut app, "live", "exec_shell", &ok_result("hello"));
 
     // Active cell still present (turn hasn't completed).
-    let active = app.active_cell.as_ref().expect("active cell present");
+    let active = app.tool.active_cell.as_ref().expect("active cell present");
     let HistoryCell::Tool(ToolCell::Exec(exec)) = &active.entries()[0] else {
         panic!("expected exec cell")
     };
@@ -2539,7 +2539,7 @@ fn tool_details_survive_active_cell_flush() {
     // The exec cell is now at index 0 in history.
     assert_eq!(app.history.len(), 1);
     let detail = app
-        .tool_details_by_cell
+        .tool.tool_details_by_cell
         .get(&0)
         .expect("detail record migrated to flushed cell index");
     assert_eq!(detail.tool_id, "tid");
@@ -2735,7 +2735,7 @@ fn thinking_then_tools_share_active_cell_until_text_flushes() {
     );
 
     let active = app
-        .active_cell
+        .tool.active_cell
         .as_ref()
         .expect("active cell present mid-turn");
     assert_eq!(
@@ -2762,7 +2762,7 @@ fn thinking_then_tools_share_active_cell_until_text_flushes() {
         content,
         ..
     } = &app
-        .active_cell
+        .tool.active_cell
         .as_ref()
         .expect("active cell still present after thinking complete")
         .entries()[0]
@@ -2780,7 +2780,7 @@ fn thinking_then_tools_share_active_cell_until_text_flushes() {
     // 4. Assistant prose arriving (simulated by flush) drains the group into
     //    history in original order: Thinking → Tool → Tool.
     app.flush_active_cell();
-    assert!(app.active_cell.is_none(), "active cell cleared after flush");
+    assert!(app.tool.active_cell.is_none(), "active cell cleared after flush");
     assert_eq!(
         app.history.len(),
         3,
@@ -2848,7 +2848,7 @@ fn second_thinking_block_appends_new_entry_in_same_active_cell() {
     );
     append_streaming_thinking(&mut app, second_idx, "second plan");
 
-    let active = app.active_cell.as_ref().expect("active cell present");
+    let active = app.tool.active_cell.as_ref().expect("active cell present");
     assert_eq!(active.entry_count(), 3);
     assert!(matches!(active.entries()[0], HistoryCell::Thinking { .. }));
     assert!(matches!(
@@ -2879,7 +2879,7 @@ fn non_fanout_tool_does_not_populate_prompts() {
         &serde_json::json!({ "query": "client.rs" }),
     );
 
-    let active = app.active_cell.as_ref().expect("active cell present");
+    let active = app.tool.active_cell.as_ref().expect("active cell present");
     let HistoryCell::Tool(ToolCell::Generic(generic)) = &active.entries()[0] else {
         panic!("expected GenericToolCell for file_search");
     };

@@ -54,13 +54,13 @@ pub fn clear(app: &mut App) -> CommandResult {
     app.queued_draft = None;
     app.session.total_conversation_tokens = 0;
     let todos_cleared = app.clear_todos();
-    app.tool_log.clear();
-    app.tool_cells.clear();
-    app.tool_details_by_cell.clear();
-    app.exploring_entries.clear();
-    app.ignored_tool_calls.clear();
-    app.pending_tool_uses.clear();
-    app.last_exec_wait_command = None;
+    app.tool.tool_log.clear();
+    app.tool.tool_cells.clear();
+    app.tool.tool_details_by_cell.clear();
+    app.tool.exploring_entries.clear();
+    app.tool.ignored_tool_calls.clear();
+    app.tool.pending_tool_uses.clear();
+    app.tool.last_exec_wait_command = None;
     app.session.last_prompt_tokens = None;
     app.session.last_completion_tokens = None;
     app.current_session_id = None;
@@ -409,7 +409,7 @@ mod tests {
             content: vec![],
         });
         app.session.total_conversation_tokens = 100;
-        app.tool_log.push("test".to_string());
+        app.tool.tool_log.push("test".to_string());
         app.current_session_id = Some("existing-session".to_string());
 
         let result = clear(&mut app);
@@ -417,9 +417,9 @@ mod tests {
         assert!(app.history.is_empty());
         assert!(app.api_messages.is_empty());
         assert_eq!(app.session.total_conversation_tokens, 0);
-        assert!(app.tool_log.is_empty());
-        assert!(app.tool_cells.is_empty());
-        assert!(app.tool_details_by_cell.is_empty());
+        assert!(app.tool.tool_log.is_empty());
+        assert!(app.tool.tool_cells.is_empty());
+        assert!(app.tool.tool_details_by_cell.is_empty());
         assert!(app.current_session_id.is_none());
         assert!(matches!(result.action, Some(AppAction::SyncSession { .. })));
     }

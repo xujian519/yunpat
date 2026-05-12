@@ -659,10 +659,10 @@ pub fn undo_conversation(app: &mut App) -> CommandResult {
 
     if removed_count > 0 {
         // Keep tool/index mappings consistent after truncation.
-        app.tool_cells.clear();
-        app.tool_details_by_cell.clear();
-        app.exploring_entries.clear();
-        app.ignored_tool_calls.clear();
+        app.tool.tool_cells.clear();
+        app.tool.tool_details_by_cell.clear();
+        app.tool.exploring_entries.clear();
+        app.tool.ignored_tool_calls.clear();
         app.mark_history_updated();
         CommandResult::message(format!("Removed {removed_count} message(s)"))
     } else {

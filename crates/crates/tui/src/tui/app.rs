@@ -5,7 +5,6 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use ratatui::layout::Rect;
-use serde_json::Value;
 use thiserror::Error;
 
 use crate::compaction::CompactionConfig;
@@ -722,7 +721,8 @@ pub struct App {
     #[allow(dead_code)]
     pub fancy_animations: bool,
     pub show_thinking: bool,
-    pub show_tool_details: bool,
+    /// Tool execution tracking state (extracted from App).
+    pub tool: super::app_state::ToolState,
     pub ui_locale: Locale,
     pub cost_currency: CostCurrency,
     pub composer_density: ComposerDensity,
@@ -809,49 +809,17 @@ pub struct App {
     /// MCP connection pool for patent workflow tools.
     /// Lazily initialized from `mcp_config_path` on first access via `ensure_mcp_pool()`.
     pub mcp_pool: Option<std::sync::Arc<tokio::sync::Mutex<crate::mcp::McpPool>>>,
-    /// Tool execution log
-    pub tool_log: Vec<String>,
     /// Active skill to apply to next user message
     pub active_skill: Option<String>,
     /// Cached (name, description) pairs from the skill registry.
     /// Populated once at startup and refreshed on install/uninstall so
     /// the slash menu can show skills without filesystem I/O on every keystroke.
     pub cached_skills: Vec<(String, String)>,
-    /// Tool call cells by tool id (for cells already finalized in `history`).
-    /// While a tool call is in flight inside `active_cell`, it is tracked by
-    /// `active_tool_entries` instead and migrated here at flush time.
-    pub tool_cells: HashMap<String, usize>,
-    /// Full tool input/output keyed by history cell index.
-    pub tool_details_by_cell: HashMap<usize, ToolDetailRecord>,
     /// Linked context references keyed by the visible user history cell that
     /// introduced them.
     pub context_references_by_cell: HashMap<usize, Vec<SessionContextReference>>,
     /// Session-wide context references persisted with saved sessions.
     pub session_context_references: Vec<SessionContextReference>,
-    /// In-flight tool/exec group for the current turn. Mutated in place as
-    /// parallel tool calls start and complete; flushed into `history` on
-    /// `TurnComplete`.
-    pub active_cell: Option<ActiveCell>,
-    /// Revision counter for `active_cell`. Combined with `active_cell.revision`
-    /// when feeding the transcript cache so cached lines for the synthetic
-    /// active-cell row are invalidated on every mutation.
-    pub active_cell_revision: u64,
-    /// Pending tool details for entries that live inside `active_cell`.
-    /// Keyed by tool id rather than cell index because the active cell's
-    /// virtual index can shift (orphan completions push real cells in
-    /// between). Migrated into `tool_details_by_cell` on flush.
-    pub active_tool_details: HashMap<String, ToolDetailRecord>,
-    /// Active exploring cell entry index (within `active_cell.entries`).
-    /// `None` once the active cell flushes or no exploring entry exists.
-    pub exploring_cell: Option<usize>,
-    /// Mapping of exploring tool ids to `(entry index in active_cell, entry
-    /// within ExploringCell)`. Used to update individual exploring entries
-    /// when their tools complete.
-    pub exploring_entries: HashMap<String, (usize, usize)>,
-    /// Tool calls that should be ignored by the UI
-    pub ignored_tool_calls: HashSet<String>,
-    /// Last exec wait command shown (for duplicate suppression)
-    pub last_exec_wait_command: Option<String>,
     /// Current streaming assistant cell
     pub streaming_message_index: Option<usize>,
     /// Index into `active_cell.entries` of the thinking entry currently being
@@ -867,8 +835,6 @@ pub struct App {
     pub reasoning_header: Option<String>,
     /// Last completed reasoning block
     pub last_reasoning: Option<String>,
-    /// Tool calls captured for the pending assistant message
-    pub pending_tool_uses: Vec<(String, String, Value)>,
     /// User messages queued while a turn is running
     pub queued_messages: VecDeque<QueuedMessage>,
     /// Draft queued message being edited
@@ -985,14 +951,8 @@ pub enum SubmitDisposition {
     QueueFollowUp,
 }
 
-/// Detailed tool payload attached to a history cell.
-#[derive(Debug, Clone)]
-pub struct ToolDetailRecord {
-    pub tool_id: String,
-    pub tool_name: String,
-    pub input: Value,
-    pub output: Option<String>,
-}
+/// Re-export tool detail record from app_state module.
+pub use super::app_state::ToolDetailRecord;
 
 /// Lightweight task view for sidebar rendering.
 #[derive(Debug, Clone)]
@@ -1298,7 +1258,10 @@ impl App {
             low_motion,
             fancy_animations,
             show_thinking,
-            show_tool_details,
+            tool: super::app_state::ToolState {
+                show_tool_details,
+                ..Default::default()
+            },
             ui_locale,
             cost_currency,
             composer_density,
@@ -1365,27 +1328,16 @@ impl App {
                 .unwrap_or(0),
             mcp_restart_required: false,
             mcp_pool: None,
-            tool_log: Vec::new(),
             active_skill: None,
             cached_skills,
-            tool_cells: HashMap::new(),
-            tool_details_by_cell: HashMap::new(),
             context_references_by_cell: HashMap::new(),
             session_context_references: Vec::new(),
-            active_cell: None,
-            active_cell_revision: 0,
-            active_tool_details: HashMap::new(),
-            exploring_cell: None,
-            exploring_entries: HashMap::new(),
-            ignored_tool_calls: HashSet::new(),
-            last_exec_wait_command: None,
             streaming_message_index: None,
             streaming_thinking_active_entry: None,
             streaming_state: StreamingState::new(),
             reasoning_buffer: String::new(),
             reasoning_header: None,
             last_reasoning: None,
-            pending_tool_uses: Vec::new(),
             queued_messages: VecDeque::new(),
             queued_draft: None,
             pending_steers: VecDeque::new(),
@@ -1744,7 +1696,7 @@ impl App {
     /// are dropped.
     fn shift_history_maps_down(&mut self, n: usize) {
         // tool_cells: HashMap<String, usize>
-        self.tool_cells.retain(|_, idx| {
+        self.tool.tool_cells.retain(|_, idx| {
             if *idx >= n {
                 *idx -= n;
                 true
@@ -1754,7 +1706,7 @@ impl App {
         });
 
         // tool_details_by_cell: HashMap<usize, ToolDetailRecord>
-        self.tool_details_by_cell = std::mem::take(&mut self.tool_details_by_cell)
+        self.tool.tool_details_by_cell = std::mem::take(&mut self.tool.tool_details_by_cell)
             .into_iter()
             .filter_map(|(idx, detail)| {
                 if idx >= n {
@@ -1930,8 +1882,8 @@ impl App {
         // Drop any auxiliary maps keyed on history indices that now point
         // past the new tail. We keep the rest intact so unaffected tool
         // cells continue to render correctly.
-        self.tool_cells.retain(|_, idx| *idx < new_len);
-        self.tool_details_by_cell.retain(|idx, _| *idx < new_len);
+        self.tool.tool_cells.retain(|_, idx| *idx < new_len);
+        self.tool.tool_details_by_cell.retain(|idx, _| *idx < new_len);
         self.context_references_by_cell
             .retain(|idx, _| *idx < new_len);
         self.rebuild_session_context_references();
@@ -1957,8 +1909,8 @@ impl App {
     /// produce a per-cell revision so the synthetic active-cell row can be
     /// re-rendered without invalidating committed history cells.
     pub fn bump_active_cell_revision(&mut self) {
-        self.active_cell_revision = self.active_cell_revision.wrapping_add(1);
-        if let Some(active) = self.active_cell.as_mut() {
+        self.tool.active_cell_revision = self.tool.active_cell_revision.wrapping_add(1);
+        if let Some(active) = self.tool.active_cell.as_mut() {
             active.bump_revision();
         }
         self.history_version = self.history_version.wrapping_add(1);
@@ -1970,7 +1922,7 @@ impl App {
     #[must_use]
     #[allow(dead_code)] // Reserved for renderers that need a unified cell count.
     pub fn virtual_cell_count(&self) -> usize {
-        self.history.len() + self.active_cell.as_ref().map_or(0, ActiveCell::entry_count)
+        self.history.len() + self.tool.active_cell.as_ref().map_or(0, ActiveCell::entry_count)
     }
 
     /// The next cell index a freshly-pushed entry would occupy in the virtual
@@ -1992,7 +1944,7 @@ impl App {
             self.history.get(index)
         } else {
             let entry_idx = index - self.history.len();
-            self.active_cell
+            self.tool.active_cell
                 .as_ref()
                 .and_then(|active| active.entries().get(entry_idx))
         }
@@ -2002,12 +1954,12 @@ impl App {
     /// transcript cell.
     #[must_use]
     pub fn tool_detail_record_for_cell(&self, index: usize) -> Option<&ToolDetailRecord> {
-        if let Some(detail) = self.tool_details_by_cell.get(&index) {
+        if let Some(detail) = self.tool.tool_details_by_cell.get(&index) {
             return Some(detail);
         }
-        self.active_tool_details
+        self.tool.active_tool_details
             .values()
-            .find(|detail| self.tool_cells.get(&detail.tool_id).copied() == Some(index))
+            .find(|detail| self.tool.tool_cells.get(&detail.tool_id).copied() == Some(index))
     }
 
     /// Whether a virtual transcript cell can open a meaningful Alt+V detail
@@ -2125,9 +2077,9 @@ impl App {
             self.history.get_mut(index)
         } else {
             let entry_idx = index - self.history.len();
-            self.active_cell_revision = self.active_cell_revision.wrapping_add(1);
+            self.tool.active_cell_revision = self.tool.active_cell_revision.wrapping_add(1);
             self.history_version = self.history_version.wrapping_add(1);
-            self.active_cell
+            self.tool.active_cell
                 .as_mut()
                 .and_then(|active| active.entry_mut(entry_idx))
         }
@@ -2143,14 +2095,14 @@ impl App {
     /// terminal status they want (e.g. via
     /// [`ActiveCell::mark_in_progress_as_interrupted`]).
     pub fn flush_active_cell(&mut self) {
-        let Some(mut active) = self.active_cell.take() else {
+        let Some(mut active) = self.tool.active_cell.take() else {
             self.streaming_thinking_active_entry = None;
             return;
         };
         if active.is_empty() {
-            self.exploring_cell = None;
-            self.exploring_entries.clear();
-            self.active_tool_details.clear();
+            self.tool.exploring_cell = None;
+            self.tool.exploring_entries.clear();
+            self.tool.active_tool_details.clear();
             self.streaming_thinking_active_entry = None;
             self.bump_active_cell_revision();
             return;
@@ -2165,15 +2117,15 @@ impl App {
         let drained = active.drain();
         let base_index = self.history.len();
 
-        let mut details = std::mem::take(&mut self.active_tool_details);
+        let mut details = std::mem::take(&mut self.tool.active_tool_details);
         for (tool_id, detail) in details.drain() {
-            self.tool_details_by_cell
-                .entry(self.tool_cells.get(&tool_id).copied().unwrap_or(base_index))
+            self.tool.tool_details_by_cell
+                .entry(self.tool.tool_cells.get(&tool_id).copied().unwrap_or(base_index))
                 .or_insert(detail);
         }
 
-        self.exploring_cell = None;
-        self.exploring_entries.clear();
+        self.tool.exploring_cell = None;
+        self.tool.exploring_entries.clear();
 
         for cell in drained {
             let rev = self.fresh_history_revision();
@@ -2199,7 +2151,7 @@ impl App {
     /// Mark every still-running entry in the active cell as interrupted, then
     /// flush. Convenience helper for cancellation paths.
     pub fn finalize_active_cell_as_interrupted(&mut self) {
-        if let Some(active) = self.active_cell.as_mut() {
+        if let Some(active) = self.tool.active_cell.as_mut() {
             active.mark_in_progress_as_interrupted();
         }
         self.flush_active_cell();
@@ -2426,7 +2378,7 @@ impl App {
     pub fn transcript_render_options(&self) -> TranscriptRenderOptions {
         TranscriptRenderOptions {
             show_thinking: self.show_thinking,
-            show_tool_details: self.show_tool_details,
+            show_tool_details: self.tool.show_tool_details,
             calm_mode: self.calm_mode,
             low_motion: self.low_motion,
             spacing: self.transcript_spacing,

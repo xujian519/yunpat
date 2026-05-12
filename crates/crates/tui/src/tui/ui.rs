@@ -724,7 +724,7 @@ async fn run_event_loop(
                                 cache_control: None,
                             });
                         }
-                        for (id, name, input) in app.pending_tool_uses.drain(..) {
+                        for (id, name, input) in app.tool.pending_tool_uses.drain(..) {
                             blocks.push(ContentBlock::ToolUse {
                                 id,
                                 name,
@@ -794,7 +794,7 @@ async fn run_event_loop(
                         app.reasoning_buffer.clear();
                     }
                     EngineEvent::ToolCallStarted { id, name, input } => {
-                        app.pending_tool_uses
+                        app.tool.pending_tool_uses
                             .push((id.clone(), name.clone(), input.clone()));
                         // Note this dispatch so the next sub-agent `Started`
                         // mailbox envelope routes into the right card kind
@@ -873,7 +873,7 @@ async fn run_event_loop(
                         app.reasoning_buffer.clear();
                         app.reasoning_header = None;
                         app.last_reasoning = None;
-                        app.pending_tool_uses.clear();
+                        app.tool.pending_tool_uses.clear();
                         app.plan_tool_used_in_turn = false;
                         last_status_frame = Instant::now();
                     }
@@ -1249,6 +1249,7 @@ async fn run_event_loop(
                                 Some(format!("Blocked tool '{tool_name}' (approval_mode=never)"));
                         } else {
                             let tool_input = app
+                                .tool
                                 .pending_tool_uses
                                 .iter()
                                 .find(|(tool_id, _, _)| tool_id == &id)
@@ -3230,10 +3231,10 @@ fn ensure_streaming_thinking_active_entry(app: &mut App) -> usize {
     if let Some(idx) = app.streaming_thinking_active_entry {
         return idx;
     }
-    if app.active_cell.is_none() {
-        app.active_cell = Some(ActiveCell::new());
+    if app.tool.active_cell.is_none() {
+        app.tool.active_cell = Some(ActiveCell::new());
     }
-    let active = app.active_cell.as_mut().expect("active_cell just ensured");
+    let active = app.tool.active_cell.as_mut().expect("active_cell just ensured");
     let entry_idx = active.push_thinking(HistoryCell::Thinking {
         content: String::new(),
         streaming: true,
@@ -3250,7 +3251,7 @@ fn append_streaming_thinking(app: &mut App, entry_idx: usize, text: &str) {
     if text.is_empty() {
         return;
     }
-    let mutated = if let Some(active) = app.active_cell.as_mut()
+    let mutated = if let Some(active) = app.tool.active_cell.as_mut()
         && let Some(HistoryCell::Thinking { content, .. }) = active.entry_mut(entry_idx)
     {
         content.push_str(text);
@@ -3279,7 +3280,7 @@ fn finalize_streaming_thinking_active_entry(
     if !remaining.is_empty() {
         append_streaming_thinking(app, entry_idx, remaining);
     }
-    if let Some(active) = app.active_cell.as_mut()
+    if let Some(active) = app.tool.active_cell.as_mut()
         && let Some(HistoryCell::Thinking {
             streaming,
             duration_secs,
@@ -4120,10 +4121,10 @@ fn build_file_picker_relevance(app: &App) -> crate::tui::file_picker::FilePicker
     }
 
     let mut seen_tool_paths = HashSet::new();
-    for detail in app.active_tool_details.values() {
+    for detail in app.tool.active_tool_details.values() {
         mark_tool_detail_paths(detail, &app.workspace, &mut seen_tool_paths, &mut relevance);
     }
-    let mut rows: Vec<_> = app.tool_details_by_cell.iter().collect();
+    let mut rows: Vec<_> = app.tool.tool_details_by_cell.iter().collect();
     rows.sort_by_key(|(idx, _)| std::cmp::Reverse(**idx));
     for (_, detail) in rows.into_iter().take(48) {
         mark_tool_detail_paths(detail, &app.workspace, &mut seen_tool_paths, &mut relevance);
@@ -6005,16 +6006,16 @@ async fn apply_provider_picker_api_key(
 fn apply_loaded_session(app: &mut App, session: &SavedSession) {
     app.api_messages.clone_from(&session.messages);
     app.clear_history();
-    app.tool_cells.clear();
-    app.tool_details_by_cell.clear();
-    app.active_cell = None;
-    app.active_tool_details.clear();
-    app.active_cell_revision = app.active_cell_revision.wrapping_add(1);
-    app.exploring_cell = None;
-    app.exploring_entries.clear();
-    app.ignored_tool_calls.clear();
-    app.pending_tool_uses.clear();
-    app.last_exec_wait_command = None;
+    app.tool.tool_cells.clear();
+    app.tool.tool_details_by_cell.clear();
+    app.tool.active_cell = None;
+    app.tool.active_tool_details.clear();
+    app.tool.active_cell_revision = app.tool.active_cell_revision.wrapping_add(1);
+    app.tool.exploring_cell = None;
+    app.tool.exploring_entries.clear();
+    app.tool.ignored_tool_calls.clear();
+    app.tool.pending_tool_uses.clear();
+    app.tool.last_exec_wait_command = None;
 
     let messages = app.api_messages.clone();
     let mut message_to_cell = std::collections::HashMap::new();
@@ -6526,7 +6527,7 @@ impl ActiveToolStatusSnapshot {
 }
 
 fn active_tool_status_label(app: &App) -> Option<String> {
-    let active = app.active_cell.as_ref()?;
+    let active = app.tool.active_cell.as_ref()?;
     if active.is_empty() {
         return None;
     }
@@ -6597,7 +6598,7 @@ fn request_foreground_shell_background(app: &mut App) {
 }
 
 fn active_foreground_shell_running(app: &App) -> bool {
-    app.active_cell.as_ref().is_some_and(|active| {
+    app.tool.active_cell.as_ref().is_some_and(|active| {
         active.entries().iter().any(|cell| {
             matches!(
                 cell,

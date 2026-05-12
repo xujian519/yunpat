@@ -236,6 +236,7 @@ fn push_tools(out: &mut String, app: &App) {
     let _ = writeln!(out, "------------");
 
     let mut rows: Vec<(usize, &ToolDetailRecord)> = app
+        .tool
         .tool_details_by_cell
         .iter()
         .map(|(idx, detail)| (*idx, detail))
@@ -243,7 +244,7 @@ fn push_tools(out: &mut String, app: &App) {
     rows.sort_by_key(|(idx, _)| std::cmp::Reverse(*idx));
 
     let mut rendered = 0usize;
-    for detail in app.active_tool_details.values() {
+    for detail in app.tool.active_tool_details.values() {
         push_tool_row(out, "active", detail);
         rendered += 1;
         if rendered >= MAX_TOOL_ROWS {

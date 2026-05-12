@@ -33,7 +33,10 @@ interface BenchmarkResult {
   total: number
   correct: number
   accuracy: number
-  byIntent: Record<string, { tp: number; fp: number; fn: number; precision: number; recall: number; f1: number }>
+  byIntent: Record<
+    string,
+    { tp: number; fp: number; fn: number; precision: number; recall: number; f1: number }
+  >
   latency: {
     p50: number
     p95: number
@@ -53,7 +56,10 @@ interface BenchmarkResult {
 
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:9090'
 
-async function sendMessage(sessionId: string, message: string): Promise<{ intent?: string; latencyMs: number; error?: string }> {
+async function sendMessage(
+  sessionId: string,
+  message: string
+): Promise<{ intent?: string; latencyMs: number; error?: string }> {
   const start = Date.now()
   try {
     const res = await fetch(`${GATEWAY_URL}/api/v1/sessions/${sessionId}/message`, {
@@ -83,7 +89,9 @@ function loadTestCases(): TestCase[] {
   return data.tests as TestCase[]
 }
 
-function calculateMetrics(results: Array<{ test: TestCase; actual?: string; latencyMs: number; error?: string }>): BenchmarkResult {
+function calculateMetrics(
+  results: Array<{ test: TestCase; actual?: string; latencyMs: number; error?: string }>
+): BenchmarkResult {
   const intents = new Set<string>()
   results.forEach((r) => {
     intents.add(r.test.expected_intent)

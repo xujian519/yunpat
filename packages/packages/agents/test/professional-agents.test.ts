@@ -78,7 +78,9 @@ describe('专业层Agent单元测试', () => {
         },
       } as PatentResponderInput
 
-      await expect(agent['plan'](invalidInput, mockContext)).rejects.toThrow('applicationNumber不能为空')
+      await expect(agent['plan'](invalidInput, mockContext)).rejects.toThrow(
+        'applicationNumber不能为空'
+      )
     })
 
     it('应该规划答复阶段', async () => {
@@ -430,7 +432,7 @@ describe('专业层Agent单元测试', () => {
       const recommendations = agent['generateRecommendations'](
         problemAnalysis,
         effectAnalysis,
-        creativityAssessment,
+        creativityAssessment
       )
 
       expect(recommendations.strengthenCreativity.length).toBeGreaterThan(0)
@@ -452,7 +454,7 @@ describe('专业层Agent单元测试', () => {
       const recommendationsHigh = agent['generateRecommendations'](
         undefined,
         undefined,
-        creativityAssessmentHigh,
+        creativityAssessmentHigh
       )
 
       expect(recommendationsHigh.strengthenCreativity.length).toBe(0)

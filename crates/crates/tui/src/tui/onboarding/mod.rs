@@ -43,7 +43,7 @@ pub fn render(f: &mut Frame, area: Rect, app: &App) {
     if !lines.is_empty() {
         let mut panel = Block::default()
             .title(Line::from(Span::styled(
-                " DeepSeek TUI ",
+                " 云熙 TUI ",
                 Style::default()
                     .fg(palette::YUNPAT_BLUE)
                     .add_modifier(Modifier::BOLD),

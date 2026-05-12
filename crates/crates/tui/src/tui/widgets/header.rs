@@ -250,7 +250,7 @@ impl<'a> HeaderWidget<'a> {
         let body = if !include_prefix {
             trimmed.to_string()
         } else if trimmed.eq_ignore_ascii_case("max") || trimmed.eq_ignore_ascii_case("maximum") {
-            format!("\u{1F433} {trimmed}")
+            format!("\u{1F338} {trimmed}")
         } else {
             format!("\u{00B7} {trimmed}")
         };

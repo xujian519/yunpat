@@ -72,71 +72,67 @@ const SUBAGENT_RESTART_REASON: &str = "Interrupted by process restart";
 
 const VALID_SUBAGENT_TYPES: &str = "general, explore, plan, review, implementer, verifier, custom, \
      worker, explorer, awaiter, default, implement, builder, verify, validator, tester";
-/// Whale species names rotated through `whale_nickname_for_index` to label
+/// Flower names rotated through `subagent_nickname_for_index` to label
 /// sub-agents in the UI. English and Simplified-Chinese names are interleaved
 /// so any newly spawned agent has a roughly even chance of either — the goal
 /// is friendly variety, not a strict locale match.
-pub const WHALE_NICKNAMES: &[&str] = &[
-    "Blue",
-    "蓝鲸",
-    "Humpback",
-    "座头鲸",
-    "Sperm",
-    "抹香鲸",
-    "Fin",
-    "长须鲸",
-    "Sei",
-    "塞鲸",
-    "Bryde's",
-    "布氏鲸",
-    "Minke",
-    "小须鲸",
-    "Antarctic Minke",
-    "南极小须鲸",
-    "Gray",
-    "灰鲸",
-    "Bowhead",
-    "弓头鲸",
-    "North Atlantic Right",
-    "北大西洋露脊鲸",
-    "North Pacific Right",
-    "北太平洋露脊鲸",
-    "Southern Right",
-    "南露脊鲸",
-    "Beluga",
-    "白鲸",
-    "Narwhal",
-    "独角鲸",
-    "Orca",
-    "虎鲸",
-    "Pilot",
-    "领航鲸",
-    "False Killer",
-    "伪虎鲸",
-    "Pygmy Killer",
-    "小虎鲸",
-    "Melon-headed",
-    "瓜头鲸",
-    "Beaked",
-    "喙鲸",
-    "Cuvier's Beaked",
-    "柯氏喙鲸",
-    "Baird's Beaked",
-    "贝氏喙鲸",
-    "Blainville's Beaked",
-    "柏氏喙鲸",
+pub const SUBAGENT_NICKNAMES: &[&str] = &[
+    "Sakura",
+    "樱花",
+    "Rose",
+    "玫瑰",
+    "Peony",
+    "牡丹",
+    "Lotus",
+    "荷花",
+    "Lily",
+    "百合",
+    "Orchid",
+    "兰花",
+    "Jasmine",
+    "茉莉",
+    "Camellia",
+    "山茶花",
+    "Chrysanthemum",
+    "菊花",
+    "Plum Blossom",
+    "梅花",
+    "Tulip",
+    "郁金香",
+    "Sunflower",
+    "向日葵",
+    "Lavender",
+    "薰衣草",
+    "Dahlia",
+    "大丽花",
+    "Magnolia",
+    "玉兰",
+    "Hydrangea",
+    "绣球花",
+    "Azalea",
+    "杜鹃花",
+    "Gardenia",
+    "栀子花",
+    "Osmanthus",
+    "桂花",
+    "Crape Myrtle",
+    "紫薇花",
+    "Begonia",
+    "海棠",
+    "Daffodil",
+    "水仙花",
 ];
 
 /// Removal version for deprecated tool aliases.
 const DEPRECATION_REMOVAL_VERSION: &str = "0.8.0";
 
 #[must_use]
-pub fn whale_nickname_for_index(index: usize) -> String {
-    let base = WHALE_NICKNAMES[index % WHALE_NICKNAMES.len()];
-    if index < WHALE_NICKNAMES.len() {
+pub fn subagent_nickname_for_index(index: usize) -> String {
+    let base = SUBAGENT_NICKNAMES[index % SUBAGENT_NICKNAMES.len()];
+    if index < SUBAGENT_NICKNAMES.len() {
         base.to_string()
     } else {
-        format!("{base} {}", index / WHALE_NICKNAMES.len() + 1)
+        format!("{base} {}", index / SUBAGENT_NICKNAMES.len() + 1)
     }
 }
 
@@ -1082,7 +1078,7 @@ impl SubAgentManager {
         let effective_model = runtime.model.clone();
         let nickname = options
             .nickname
-            .or_else(|| Some(whale_nickname_for_index(self.agents.len())));
+            .or_else(|| Some(subagent_nickname_for_index(self.agents.len())));
         let tools = build_allowed_tools(&agent_type, allowed_tools, runtime.allow_shell)?;
         let (input_tx, input_rx) = mpsc::unbounded_channel();
         let mut agent = SubAgent::new(

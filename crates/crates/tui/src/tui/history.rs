@@ -2062,7 +2062,7 @@ fn render_thinking(
             format!("{REASONING_OPENER} "),
             Style::default().fg(thinking_state_accent(state)),
         ),
-        Span::styled("thinking", thinking_title_style()),
+        Span::styled("思考", thinking_title_style()),
     ];
     header_spans.push(Span::styled(" ", Style::default()));
     header_spans.push(Span::styled(
@@ -2094,7 +2094,7 @@ fn render_thinking(
     if rendered.is_empty() && streaming {
         let mut spans = vec![Span::styled(REASONING_RAIL.to_string(), rail_style)];
         spans.push(Span::styled(
-            "reasoning in progress...",
+            "推理中...",
             body_style.italic(),
         ));
         if !low_motion {
@@ -2119,7 +2119,7 @@ fn render_thinking(
         lines.push(Line::from(vec![
             Span::styled(REASONING_RAIL.to_string(), rail_style),
             Span::styled(
-                "thinking collapsed; press Ctrl+O for full text",
+                "思考已折叠；按 Ctrl+O 展开全文",
                 Style::default().fg(palette::TEXT_MUTED).italic(),
             ),
         ]));
@@ -2699,7 +2699,7 @@ fn error_body_style(severity: crate::error_taxonomy::ErrorSeverity) -> Style {
 }
 
 fn thinking_style() -> Style {
-    Style::default().fg(palette::TEXT_TOOL_OUTPUT)
+    Style::default().fg(palette::TEXT_PRIMARY)
 }
 
 fn render_tool_header(
@@ -2909,9 +2909,9 @@ fn thinking_visual_state(streaming: bool, duration_secs: Option<f32>) -> Thinkin
 
 fn thinking_status_label(state: ThinkingVisualState) -> &'static str {
     match state {
-        ThinkingVisualState::Live => "live",
-        ThinkingVisualState::Done => "done",
-        ThinkingVisualState::Idle => "idle",
+        ThinkingVisualState::Live => "进行中",
+        ThinkingVisualState::Done => "完成",
+        ThinkingVisualState::Idle => "空闲",
     }
 }
 
@@ -3543,8 +3543,8 @@ mod tests {
             .iter()
             .flat_map(|line| line.spans.iter().map(|span| span.content.as_ref()))
             .collect::<String>();
-        assert!(text.contains("thinking collapsed; press Ctrl+O for full text"));
-        assert!(text.contains("thinking"));
+        assert!(text.contains("思考已折叠；按 Ctrl+O 展开全文"));
+        assert!(text.contains("思考"));
     }
 
     #[test]
@@ -4074,11 +4074,11 @@ mod tests {
             "live thinking must drop the tail when collapsed"
         );
         assert!(
-            live_text.contains("press Ctrl+O for full text"),
+            live_text.contains("按 Ctrl+O 展开全文"),
             "live thinking must offer the pager affordance"
         );
         assert!(
-            !transcript_text.contains("press Ctrl+O for full text"),
+            !transcript_text.contains("按 Ctrl+O 展开全文"),
             "transcript thinking must not include the live affordance"
         );
     }

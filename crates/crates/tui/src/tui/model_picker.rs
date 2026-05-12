@@ -34,9 +34,9 @@ use crate::tui::views::{ModalKind, ModalView, ViewAction, ViewEvent};
 /// Models the picker exposes by default. Kept short on purpose — power
 /// users can still type `/model <id>` for anything else.
 const PICKER_MODELS: &[(&str, &str)] = &[
-    ("auto", "select per turn"),
-    ("deepseek-v4-pro", "flagship"),
-    ("deepseek-v4-flash", "fast / cheap"),
+    ("auto", "每轮自动选择"),
+    ("deepseek-v4-pro", "旗舰"),
+    ("deepseek-v4-flash", "快速/经济"),
 ];
 
 /// Thinking-effort rows shown in the picker, in the order DeepSeek
@@ -311,12 +311,12 @@ impl ModalView for ModelPickerView {
             .map(|(id, hint)| ((*id).to_string(), (*hint).to_string()))
             .collect();
         if self.show_custom_model_row {
-            model_rows.push((self.initial_model.clone(), "current (custom)".to_string()));
+            model_rows.push((self.initial_model.clone(), "当前（自定义）".to_string()));
         }
         self.render_pane(
             columns[0],
             buf,
-            "Model",
+            "模型",
             model_rows,
             self.selected_model_idx,
             self.focus == Pane::Model,
@@ -327,10 +327,10 @@ impl ModalView for ModelPickerView {
             .map(|effort| {
                 let label = effort.short_label().to_string();
                 let hint = match effort {
-                    ReasoningEffort::Auto => "auto-select per turn".to_string(),
-                    ReasoningEffort::Off => "thinking disabled".to_string(),
-                    ReasoningEffort::High => "thinking enabled (default)".to_string(),
-                    ReasoningEffort::Max => "thinking enabled, max effort".to_string(),
+                    ReasoningEffort::Auto => "每轮自动选择".to_string(),
+                    ReasoningEffort::Off => "思考已关闭".to_string(),
+                    ReasoningEffort::High => "思考已开启（默认）".to_string(),
+                    ReasoningEffort::Max => "思考已开启，最大努力".to_string(),
                     _ => String::new(),
                 };
                 (label, hint)
@@ -339,7 +339,7 @@ impl ModalView for ModelPickerView {
         self.render_pane(
             columns[1],
             buf,
-            "Thinking",
+            "思考",
             effort_rows,
             self.selected_effort_idx,
             self.focus == Pane::Effort,

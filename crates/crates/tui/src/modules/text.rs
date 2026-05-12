@@ -519,7 +519,7 @@ fn handle_command_official(
 }
 
 fn print_banner(mode: &str) {
-    println!("{}", ds_blue("DeepSeek TUI").bold());
+    println!("{}", ds_blue("云熙 TUI").bold());
     println!("Mode: {mode}");
     println!("Type /help for commands. Use /exit to quit.\n");
 }

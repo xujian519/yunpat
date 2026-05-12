@@ -756,15 +756,8 @@ pub struct App {
     yolo_restore: Option<YoloRestoreState>,
     // Clipboard handler
     pub clipboard: ClipboardHandler,
-    // Tool approval session allowlist
-    pub approval_session_approved: HashSet<String>,
-    /// Approval keys (or tool names) the user has denied or aborted in
-    /// this session. Subsequent re-requests for the same approval key
-    /// auto-deny without re-prompting (#360) — the model can retry a
-    /// dangerous command after being told no, but the user shouldn't
-    /// have to keep dismissing the same dialog.
-    pub approval_session_denied: HashSet<String>,
-    pub approval_mode: ApprovalMode,
+    /// Tool approval state (extracted from App).
+    pub approval: super::app_state::ApprovalState,
     // Modal view stack (approval/help/etc.)
     pub view_stack: ViewStack,
     /// Esc-Esc backtrack state machine (#133). `Inactive` by default; first
@@ -790,17 +783,8 @@ pub struct App {
     pub todos: SharedTodoList,
     /// Durable runtime services exposed to model-visible task/automation tools.
     pub runtime_services: RuntimeToolServices,
-    /// Last MCP manager/discovery snapshot shown in the UI.
-    pub mcp_snapshot: Option<crate::mcp::McpManagerSnapshot>,
-    /// Number of MCP servers declared in the user's config at app boot.
-    /// Used by the footer chip (#502) so a count is visible even before
-    /// the user runs `/mcp` for the first time. `0` hides the chip.
-    pub mcp_configured_count: usize,
-    /// Set after in-TUI MCP config edits because the engine caches its MCP pool.
-    pub mcp_restart_required: bool,
-    /// MCP connection pool for patent workflow tools.
-    /// Lazily initialized from `mcp_config_path` on first access via `ensure_mcp_pool()`.
-    pub mcp_pool: Option<std::sync::Arc<tokio::sync::Mutex<crate::mcp::McpPool>>>,
+    /// MCP connection state (extracted from App).
+    pub mcp: super::app_state::McpState,
     /// Active skill to apply to next user message
     pub active_skill: Option<String>,
     /// Cached (name, description) pairs from the skill registry.
@@ -812,21 +796,8 @@ pub struct App {
     pub context_references_by_cell: HashMap<usize, Vec<SessionContextReference>>,
     /// Session-wide context references persisted with saved sessions.
     pub session_context_references: Vec<SessionContextReference>,
-    /// Current streaming assistant cell
-    pub streaming_message_index: Option<usize>,
-    /// Index into `active_cell.entries` of the thinking entry currently being
-    /// streamed. `None` when no thinking block is in flight. P2.3 routes
-    /// thinking into the active cell so it groups visually with tool calls
-    /// until the next assistant prose chunk flushes the group into history.
-    pub streaming_thinking_active_entry: Option<usize>,
-    /// Newline-gated streaming collector state.
-    pub streaming_state: StreamingState,
-    /// Accumulated reasoning text
-    pub reasoning_buffer: String,
-    /// Live reasoning header extracted from bold text
-    pub reasoning_header: Option<String>,
-    /// Last completed reasoning block
-    pub last_reasoning: Option<String>,
+    /// Streaming state (extracted from App).
+    pub streaming: super::app_state::StreamingApp,
     /// Queue and steering state (extracted from App).
     pub queue: super::app_state::QueueState,
     /// Start time for current turn
@@ -842,24 +813,14 @@ pub struct App {
     /// Current runtime turn status (if known).
     pub runtime_turn_status: Option<String>,
 
-    /// Cached git context snapshot for the footer.
-    pub workspace_context: Option<String>,
-    /// Shared cell for async git context updates (#399 S1).
-    pub workspace_context_cell: std::sync::Arc<std::sync::Mutex<Option<String>>>,
-    /// Timestamp for cached workspace context.
-    pub workspace_context_refreshed_at: Option<Instant>,
+    /// Workspace context state (extracted from App).
+    pub workspace_ctx: super::app_state::WorkspaceState,
     /// Cached background tasks for sidebar rendering.
     pub task_panel: Vec<TaskPanelEntry>,
     /// Whether the UI needs to be redrawn.
     pub needs_redraw: bool,
-    /// When the current thinking block started (for duration tracking).
-    pub thinking_started_at: Option<Instant>,
     /// Whether context compaction is currently in progress.
     pub is_compacting: bool,
-    /// Set when the user scrolls up/down during a streaming turn so subsequent
-    /// streamed chunks don't yank the view back to the live tail. Cleared
-    /// when the user explicitly returns to bottom or the turn completes.
-    pub user_scrolled_during_stream: bool,
     /// Plain-language session coherence state for the footer.
     pub coherence_state: CoherenceState,
     /// Timestamp of the last user message send (for brief visual feedback).
@@ -1268,16 +1229,18 @@ impl App {
             yolo: initial_mode == AppMode::Yolo,
             yolo_restore,
             clipboard: ClipboardHandler::new(),
-            approval_session_approved: HashSet::new(),
-            approval_session_denied: HashSet::new(),
-            approval_mode: if matches!(initial_mode, AppMode::Yolo) {
-                ApprovalMode::Auto
-            } else {
-                config
-                    .approval_policy
-                    .as_deref()
-                    .and_then(ApprovalMode::from_config_value)
-                    .unwrap_or_default()
+            approval: super::app_state::ApprovalState {
+                session_approved: HashSet::new(),
+                session_denied: HashSet::new(),
+                mode: if matches!(initial_mode, AppMode::Yolo) {
+                    ApprovalMode::Auto
+                } else {
+                    config
+                        .approval_policy
+                        .as_deref()
+                        .and_then(ApprovalMode::from_config_value)
+                        .unwrap_or_default()
+                },
             },
             view_stack: ViewStack::new(),
             backtrack: crate::tui::backtrack::BacktrackState::new(),
@@ -1299,40 +1262,46 @@ impl App {
                 shell_manager: Some(shell_manager),
                 ..RuntimeToolServices::default()
             },
-            mcp_snapshot: None,
             // Read the MCP config once at boot to know how many servers
             // the user has declared. The footer chip uses this even when
             // no live snapshot is available (#502). Cheap (just reads
             // the JSON file); errors fall through to zero so a missing
             // or malformed config simply hides the chip.
-            mcp_configured_count: crate::mcp::load_config(&mcp_config_path)
-                .map(|cfg| cfg.servers.len())
-                .unwrap_or(0),
-            mcp_restart_required: false,
-            mcp_pool: None,
+            mcp: super::app_state::McpState {
+                snapshot: None,
+                configured_count: crate::mcp::load_config(&mcp_config_path)
+                    .map(|cfg| cfg.servers.len())
+                    .unwrap_or(0),
+                restart_required: false,
+                pool: None,
+            },
             active_skill: None,
             cached_skills,
             context_references_by_cell: HashMap::new(),
             session_context_references: Vec::new(),
-            streaming_message_index: None,
-            streaming_thinking_active_entry: None,
-            streaming_state: StreamingState::new(),
-            reasoning_buffer: String::new(),
-            reasoning_header: None,
-            last_reasoning: None,
+            streaming: super::app_state::StreamingApp {
+                message_index: None,
+                thinking_active_entry: None,
+                state: StreamingState::new(),
+                reasoning_buffer: String::new(),
+                reasoning_header: None,
+                last_reasoning: None,
+                thinking_started_at: None,
+                user_scrolled_during_stream: false,
+            },
             queue: super::app_state::QueueState::default(),
             turn_started_at: None,
             cumulative_turn_duration: std::time::Duration::ZERO,
             runtime_turn_id: None,
             runtime_turn_status: None,
-            workspace_context: None,
-            workspace_context_cell: std::sync::Arc::new(std::sync::Mutex::new(None)),
-            workspace_context_refreshed_at: None,
+            workspace_ctx: super::app_state::WorkspaceState {
+                context: None,
+                context_cell: std::sync::Arc::new(std::sync::Mutex::new(None)),
+                refreshed_at: None,
+            },
             task_panel: Vec::new(),
             needs_redraw: true,
-            thinking_started_at: None,
             is_compacting: false,
-            user_scrolled_during_stream: false,
             coherence_state: CoherenceState::default(),
             last_send_at: None,
             quit_armed_until: None,
@@ -1425,15 +1394,15 @@ impl App {
             self.yolo_restore = Some(YoloRestoreState {
                 allow_shell: self.allow_shell,
                 trust_mode: self.trust_mode,
-                approval_mode: self.approval_mode,
+                approval_mode: self.approval.mode,
             });
             self.allow_shell = true;
             self.trust_mode = true;
-            self.approval_mode = ApprovalMode::Auto;
+            self.approval.mode = ApprovalMode::Auto;
         } else if leaving_yolo && let Some(restore) = self.yolo_restore.take() {
             self.allow_shell = restore.allow_shell;
             self.trust_mode = restore.trust_mode;
-            self.approval_mode = restore.approval_mode;
+            self.approval.mode = restore.approval_mode;
         }
 
         self.yolo = mode == AppMode::Yolo;
@@ -1529,7 +1498,7 @@ impl App {
         if self.viewport.transcript_scroll.is_at_tail()
             && !self.viewport.transcript_selection.dragging
             && !selection_has_range
-            && !self.user_scrolled_during_stream
+            && !self.streaming.user_scrolled_during_stream
         {
             self.scroll_to_bottom();
         }
@@ -2074,19 +2043,19 @@ impl App {
     /// [`ActiveCell::mark_in_progress_as_interrupted`]).
     pub fn flush_active_cell(&mut self) {
         let Some(mut active) = self.tool.active_cell.take() else {
-            self.streaming_thinking_active_entry = None;
+            self.streaming.thinking_active_entry = None;
             return;
         };
         if active.is_empty() {
             self.tool.exploring_cell = None;
             self.tool.exploring_entries.clear();
             self.tool.active_tool_details.clear();
-            self.streaming_thinking_active_entry = None;
+            self.streaming.thinking_active_entry = None;
             self.bump_active_cell_revision();
             return;
         }
 
-        if let Some(entry_idx) = self.streaming_thinking_active_entry.take()
+        if let Some(entry_idx) = self.streaming.thinking_active_entry.take()
             && let Some(HistoryCell::Thinking { streaming, .. }) = active.entry_mut(entry_idx)
         {
             *streaming = false;
@@ -2120,7 +2089,7 @@ impl App {
         if self.viewport.transcript_scroll.is_at_tail()
             && !self.viewport.transcript_selection.dragging
             && !selection_has_range
-            && !self.user_scrolled_during_stream
+            && !self.streaming.user_scrolled_during_stream
         {
             self.scroll_to_bottom();
         }
@@ -2622,7 +2591,7 @@ impl App {
         let delta = i32::try_from(amount).unwrap_or(i32::MAX);
         self.viewport.pending_scroll_delta =
             self.viewport.pending_scroll_delta.saturating_sub(delta);
-        self.user_scrolled_during_stream = true;
+        self.streaming.user_scrolled_during_stream = true;
         self.needs_redraw = true;
     }
 
@@ -2630,14 +2599,14 @@ impl App {
         let delta = i32::try_from(amount).unwrap_or(i32::MAX);
         self.viewport.pending_scroll_delta =
             self.viewport.pending_scroll_delta.saturating_add(delta);
-        self.user_scrolled_during_stream = true;
+        self.streaming.user_scrolled_during_stream = true;
         self.needs_redraw = true;
     }
 
     pub fn scroll_to_bottom(&mut self) {
         self.viewport.transcript_scroll = TranscriptScroll::to_bottom();
         self.viewport.pending_scroll_delta = 0;
-        self.user_scrolled_during_stream = false;
+        self.streaming.user_scrolled_during_stream = false;
         self.needs_redraw = true;
     }
 
@@ -3482,7 +3451,7 @@ impl App {
     /// on abort — V4 thinking is expensive and the user usually wants to see
     /// what the model produced before steering.
     pub fn finalize_streaming_assistant_as_interrupted(&mut self) {
-        let Some(index) = self.streaming_message_index.take() else {
+        let Some(index) = self.streaming.message_index.take() else {
             return;
         };
         if let Some(HistoryCell::Assistant { content, streaming }) = self.history.get_mut(index) {
@@ -3622,7 +3591,7 @@ impl App {
     pub async fn ensure_mcp_pool(
         &mut self,
     ) -> anyhow::Result<std::sync::Arc<tokio::sync::Mutex<crate::mcp::McpPool>>> {
-        if let Some(pool) = self.mcp_pool.as_ref() {
+        if let Some(pool) = self.mcp.pool.as_ref() {
             return Ok(std::sync::Arc::clone(pool));
         }
         let mut pool = crate::mcp::McpPool::from_config_path(&self.mcp_config_path)?;
@@ -3633,7 +3602,7 @@ impl App {
             }
         }
         let pool = std::sync::Arc::new(tokio::sync::Mutex::new(pool));
-        self.mcp_pool = Some(std::sync::Arc::clone(&pool));
+        self.mcp.pool = Some(std::sync::Arc::clone(&pool));
         Ok(pool)
     }
 }
@@ -4052,17 +4021,17 @@ mod tests {
         let mut app = App::new(options, &Config::default());
         app.allow_shell = false;
         app.trust_mode = false;
-        app.approval_mode = ApprovalMode::Never;
+        app.approval.mode = ApprovalMode::Never;
 
         app.set_mode(AppMode::Yolo);
         assert!(app.allow_shell);
         assert!(app.trust_mode);
-        assert_eq!(app.approval_mode, ApprovalMode::Auto);
+        assert_eq!(app.approval.mode, ApprovalMode::Auto);
 
         app.set_mode(AppMode::Agent);
         assert!(!app.allow_shell);
         assert!(!app.trust_mode);
-        assert_eq!(app.approval_mode, ApprovalMode::Never);
+        assert_eq!(app.approval.mode, ApprovalMode::Never);
     }
 
     #[test]
@@ -4076,12 +4045,12 @@ mod tests {
         assert_eq!(app.mode, AppMode::Yolo);
         assert!(app.allow_shell);
         assert!(app.trust_mode);
-        assert_eq!(app.approval_mode, ApprovalMode::Auto);
+        assert_eq!(app.approval.mode, ApprovalMode::Auto);
 
         app.set_mode(AppMode::Agent);
         assert!(!app.allow_shell);
         assert!(!app.trust_mode);
-        assert_eq!(app.approval_mode, ApprovalMode::Suggest);
+        assert_eq!(app.approval.mode, ApprovalMode::Suggest);
     }
 
     #[test]
@@ -4096,7 +4065,7 @@ mod tests {
         let app = App::new(options, &config);
 
         assert_eq!(app.mode, AppMode::Agent);
-        assert_eq!(app.approval_mode, ApprovalMode::Never);
+        assert_eq!(app.approval.mode, ApprovalMode::Never);
     }
 
     #[test]
@@ -4564,7 +4533,7 @@ mod tests {
         let mut app = App::new(test_options(false), &Config::default());
         app.is_loading = true;
         app.offline_mode = false;
-        app.streaming_message_index = Some(0);
+        app.streaming.message_index = Some(0);
         assert_eq!(app.decide_submit_disposition(), SubmitDisposition::Queue);
     }
 
@@ -4582,7 +4551,7 @@ mod tests {
         app.is_loading = true;
         app.offline_mode = true;
         // Offline mode always queues, even when streaming
-        app.streaming_message_index = Some(0);
+        app.streaming.message_index = Some(0);
         assert_eq!(app.decide_submit_disposition(), SubmitDisposition::Queue);
     }
 
@@ -4693,11 +4662,11 @@ mod tests {
             streaming: true,
         });
         let idx = app.history.len() - 1;
-        app.streaming_message_index = Some(idx);
+        app.streaming.message_index = Some(idx);
 
         app.finalize_streaming_assistant_as_interrupted();
 
-        assert!(app.streaming_message_index.is_none());
+        assert!(app.streaming.message_index.is_none());
         match &app.history[idx] {
             HistoryCell::Assistant { content, streaming } => {
                 assert!(content.starts_with("[interrupted]"), "got: {content}");
@@ -4716,7 +4685,7 @@ mod tests {
             streaming: true,
         });
         let idx = app.history.len() - 1;
-        app.streaming_message_index = Some(idx);
+        app.streaming.message_index = Some(idx);
 
         app.finalize_streaming_assistant_as_interrupted();
 
@@ -4736,7 +4705,7 @@ mod tests {
         let prev_len = app.history.len();
         app.finalize_streaming_assistant_as_interrupted();
         assert_eq!(app.history.len(), prev_len);
-        assert!(app.streaming_message_index.is_none());
+        assert!(app.streaming.message_index.is_none());
     }
 
     #[test]
@@ -4747,7 +4716,7 @@ mod tests {
             streaming: true,
         });
         let idx = app.history.len() - 1;
-        app.streaming_message_index = Some(idx);
+        app.streaming.message_index = Some(idx);
 
         app.finalize_streaming_assistant_as_interrupted();
         // Second call without resetting state must be safe.

@@ -670,9 +670,9 @@ async fn run_event_loop(
                         // assistant content always flows after work).
                         app.flush_active_cell();
                         current_streaming_text.clear();
-                        app.streaming_state.reset();
-                        app.streaming_state.start_text(0, None);
-                        app.streaming_message_index = None;
+                        app.streaming.state.reset();
+                        app.streaming.state.start_text(0, None);
+                        app.streaming.message_index = None;
                     }
                     EngineEvent::MessageDelta { content, .. } => {
                         let sanitized = sanitize_stream_chunk(&content);
@@ -682,21 +682,21 @@ async fn run_event_loop(
                         // First delta of a fresh stream has no streaming
                         // cell yet; flush active so the tool group settles
                         // before the assistant prose appears below it.
-                        if app.streaming_message_index.is_none() {
+                        if app.streaming.message_index.is_none() {
                             app.flush_active_cell();
                         }
                         current_streaming_text.push_str(&sanitized);
                         let index = ensure_streaming_assistant_history_cell(app);
-                        app.streaming_state.push_content(0, &sanitized);
-                        let committed = app.streaming_state.commit_text(0);
+                        app.streaming.state.push_content(0, &sanitized);
+                        let committed = app.streaming.state.commit_text(0);
                         if !committed.is_empty() {
                             append_streaming_text(app, index, &committed);
                             transcript_batch_updated = true;
                         }
                     }
                     EngineEvent::MessageComplete { .. } => {
-                        if let Some(index) = app.streaming_message_index.take() {
-                            let remaining = app.streaming_state.finalize_block_text(0);
+                        if let Some(index) = app.streaming.message_index.take() {
+                            let remaining = app.streaming.state.finalize_block_text(0);
                             if !remaining.is_empty() {
                                 append_streaming_text(app, index, &remaining);
                             }
@@ -714,7 +714,7 @@ async fn run_event_loop(
                         }
 
                         let mut blocks = Vec::new();
-                        let thinking = app.last_reasoning.take();
+                        let thinking = app.streaming.last_reasoning.take();
                         if let Some(thinking) = thinking {
                             blocks.push(ContentBlock::Thinking { thinking });
                         }
@@ -753,11 +753,11 @@ async fn run_event_loop(
                         // P2.3: thinking lives in the active cell so it groups
                         // visually with the tool calls that follow until the
                         // next assistant prose chunk flushes the group.
-                        app.reasoning_buffer.clear();
-                        app.reasoning_header = None;
-                        app.thinking_started_at = Some(Instant::now());
-                        app.streaming_state.reset();
-                        app.streaming_state.start_thinking(0, None);
+                        app.streaming.reasoning_buffer.clear();
+                        app.streaming.reasoning_header = None;
+                        app.streaming.thinking_started_at = Some(Instant::now());
+                        app.streaming.state.reset();
+                        app.streaming.state.start_thinking(0, None);
                         let _ = ensure_streaming_thinking_active_entry(app);
                     }
                     EngineEvent::ThinkingDelta { content, .. } => {
@@ -765,14 +765,14 @@ async fn run_event_loop(
                         if sanitized.is_empty() {
                             continue;
                         }
-                        app.reasoning_buffer.push_str(&sanitized);
-                        if app.reasoning_header.is_none() {
-                            app.reasoning_header = extract_reasoning_header(&app.reasoning_buffer);
+                        app.streaming.reasoning_buffer.push_str(&sanitized);
+                        if app.streaming.reasoning_header.is_none() {
+                            app.streaming.reasoning_header = extract_reasoning_header(&app.streaming.reasoning_buffer);
                         }
 
                         let entry_idx = ensure_streaming_thinking_active_entry(app);
-                        app.streaming_state.push_content(0, &sanitized);
-                        let committed = app.streaming_state.commit_text(0);
+                        app.streaming.state.push_content(0, &sanitized);
+                        let committed = app.streaming.state.commit_text(0);
                         if !committed.is_empty() {
                             append_streaming_thinking(app, entry_idx, &committed);
                             transcript_batch_updated = true;
@@ -780,18 +780,19 @@ async fn run_event_loop(
                     }
                     EngineEvent::ThinkingComplete { .. } => {
                         let duration = app
+                            .streaming
                             .thinking_started_at
                             .take()
-                            .map(|t| t.elapsed().as_secs_f32());
-                        let remaining = app.streaming_state.finalize_block_text(0);
+                            .map(|t: std::time::Instant| t.elapsed().as_secs_f32());
+                        let remaining = app.streaming.state.finalize_block_text(0);
                         if finalize_streaming_thinking_active_entry(app, duration, &remaining) {
                             transcript_batch_updated = true;
                         }
 
-                        if !app.reasoning_buffer.is_empty() {
-                            app.last_reasoning = Some(app.reasoning_buffer.clone());
+                        if !app.streaming.reasoning_buffer.is_empty() {
+                            app.streaming.last_reasoning = Some(app.streaming.reasoning_buffer.clone());
                         }
-                        app.reasoning_buffer.clear();
+                        app.streaming.reasoning_buffer.clear();
                     }
                     EngineEvent::ToolCallStarted { id, name, input } => {
                         app.tool.pending_tool_uses
@@ -864,15 +865,15 @@ async fn run_event_loop(
                         app.is_loading = true;
                         app.offline_mode = false;
                         current_streaming_text.clear();
-                        app.streaming_state.reset();
-                        app.streaming_message_index = None;
-                        app.streaming_thinking_active_entry = None;
+                        app.streaming.state.reset();
+                        app.streaming.message_index = None;
+                        app.streaming.thinking_active_entry = None;
                         app.turn_started_at = Some(Instant::now());
                         app.runtime_turn_id = Some(turn_id);
                         app.runtime_turn_status = Some("in_progress".to_string());
-                        app.reasoning_buffer.clear();
-                        app.reasoning_header = None;
-                        app.last_reasoning = None;
+                        app.streaming.reasoning_buffer.clear();
+                        app.streaming.reasoning_header = None;
+                        app.streaming.last_reasoning = None;
                         app.tool.pending_tool_uses.clear();
                         app.plan.tool_used_in_turn = false;
                         last_status_frame = Instant::now();
@@ -902,7 +903,7 @@ async fn run_event_loop(
                         }
                         app.is_loading = false;
                         app.offline_mode = false;
-                        app.streaming_state.reset();
+                        app.streaming.state.reset();
                         // Capture elapsed before clearing turn_started_at so
                         // notifications can use the real wall-clock duration.
                         let turn_elapsed =
@@ -918,7 +919,7 @@ async fn run_event_loop(
                         // Stream lock applies per-turn; clear it so the next
                         // turn's chunks pull the view down again until the
                         // user opts out by scrolling up.
-                        app.user_scrolled_during_stream = false;
+                        app.streaming.user_scrolled_during_stream = false;
                         app.runtime_turn_status = Some(match status {
                             crate::core::events::TurnOutcomeStatus::Completed => {
                                 "completed".to_string()
@@ -1206,10 +1207,10 @@ async fn run_event_loop(
                         approval_key,
                     } => {
                         let session_approved =
-                            app.approval_session_approved.contains(&approval_key)
-                                || app.approval_session_approved.contains(&tool_name);
-                        let session_denied = app.approval_session_denied.contains(&approval_key)
-                            || app.approval_session_denied.contains(&tool_name);
+                            app.approval.session_approved.contains(&approval_key)
+                                || app.approval.session_approved.contains(&tool_name);
+                        let session_denied = app.approval.session_denied.contains(&approval_key)
+                            || app.approval.session_denied.contains(&tool_name);
                         if session_denied {
                             // The user already said no to this exact tool /
                             // approval key in this session; auto-deny so the
@@ -1224,7 +1225,7 @@ async fn run_event_loop(
                                 }),
                             );
                             let _ = engine_handle.deny_tool_call(id.clone()).await;
-                        } else if session_approved || app.approval_mode == ApprovalMode::Auto {
+                        } else if session_approved || app.approval.mode == ApprovalMode::Auto {
                             log_sensitive_event(
                                 "tool.approval.auto_approve",
                                 serde_json::json!({
@@ -1235,7 +1236,7 @@ async fn run_event_loop(
                                 }),
                             );
                             let _ = engine_handle.approve_tool_call(id.clone()).await;
-                        } else if app.approval_mode == ApprovalMode::Never {
+                        } else if app.approval.mode == ApprovalMode::Never {
                             log_sensitive_event(
                                 "tool.approval.auto_deny",
                                 serde_json::json!({
@@ -1303,7 +1304,7 @@ async fn run_event_loop(
                         blocked_write,
                     } => {
                         // In YOLO mode, auto-elevate to full access
-                        if app.approval_mode == ApprovalMode::Auto {
+                        if app.approval.mode == ApprovalMode::Auto {
                             log_sensitive_event(
                                 "tool.sandbox.auto_elevate",
                                 serde_json::json!({
@@ -1347,14 +1348,14 @@ async fn run_event_loop(
                 }
             }
         }
-        if let Some(index) = app.streaming_message_index {
-            let committed = app.streaming_state.commit_text(0);
+        if let Some(index) = app.streaming.message_index {
+            let committed = app.streaming.state.commit_text(0);
             if !committed.is_empty() {
                 append_streaming_text(app, index, &committed);
                 transcript_batch_updated = true;
             }
-        } else if let Some(entry_idx) = app.streaming_thinking_active_entry {
-            let committed = app.streaming_state.commit_text(0);
+        } else if let Some(entry_idx) = app.streaming.thinking_active_entry {
+            let committed = app.streaming.state.commit_text(0);
             if !committed.is_empty() {
                 append_streaming_thinking(app, entry_idx, &committed);
                 transcript_batch_updated = true;
@@ -1454,7 +1455,7 @@ async fn run_event_loop(
         // chunking policy. Low-motion mode drops the frame cap to 30 FPS
         // and forces Smooth-only chunking so the display stays calm.
         frame_rate_limiter.set_low_motion(app.low_motion);
-        app.streaming_state.set_low_motion(app.low_motion);
+        app.streaming.state.set_low_motion(app.low_motion);
 
         let draw_wait = if app.needs_redraw {
             frame_rate_limiter.time_until_next_draw(now)
@@ -1851,7 +1852,7 @@ async fn run_event_loop(
                         &app.skills_dir,
                         &app.workspace,
                         &app.mcp_config_path,
-                        app.mcp_snapshot.as_ref(),
+                        app.mcp.snapshot.as_ref(),
                     )));
                 continue;
             }
@@ -2179,7 +2180,7 @@ async fn run_event_loop(
                     if app.is_loading {
                         engine_handle.cancel();
                         app.is_loading = false;
-                        app.streaming_state.reset();
+                        app.streaming.state.reset();
                         // Optimistically clear the turn-in-progress flag so
                         // the footer wave animation halts immediately —
                         // without this, the strip keeps animating until the
@@ -2231,7 +2232,7 @@ async fn run_event_loop(
                         app.backtrack.reset();
                         engine_handle.cancel();
                         app.is_loading = false;
-                        app.streaming_state.reset();
+                        app.streaming.state.reset();
                         // Optimistically halt the wave + working label —
                         // engine's TurnComplete will resync with the real
                         // outcome. Fixes #5a (wave kept animating after Esc).
@@ -2996,9 +2997,9 @@ pub(crate) fn apply_engine_error_to_app(
     let recoverable = envelope.recoverable;
     let message = envelope.message.clone();
     let severity = envelope.severity;
-    app.streaming_state.reset();
-    app.streaming_message_index = None;
-    app.streaming_thinking_active_entry = None;
+    app.streaming.state.reset();
+    app.streaming.message_index = None;
+    app.streaming.thinking_active_entry = None;
 
     // #455 (observer-only): fire `on_error` hooks so operators can
     // page on auth / billing / invalid-request failures without
@@ -3196,7 +3197,7 @@ fn notification_text_summary(text: &str) -> Option<String> {
 /// its index. Thinking cells go through `ensure_streaming_thinking_active_entry`
 /// (active cell) instead.
 fn ensure_streaming_assistant_history_cell(app: &mut App) -> usize {
-    if let Some(index) = app.streaming_message_index {
+    if let Some(index) = app.streaming.message_index {
         return index;
     }
     app.add_message(HistoryCell::Assistant {
@@ -3204,7 +3205,7 @@ fn ensure_streaming_assistant_history_cell(app: &mut App) -> usize {
         streaming: true,
     });
     let index = app.history.len().saturating_sub(1);
-    app.streaming_message_index = Some(index);
+    app.streaming.message_index = Some(index);
     index
 }
 
@@ -3228,7 +3229,7 @@ fn append_streaming_text(app: &mut App, index: usize, text: &str) {
 /// P2.3: thinking shares the active cell with subsequent tool calls so the
 /// pair render as one logical "Working…" block.
 fn ensure_streaming_thinking_active_entry(app: &mut App) -> usize {
-    if let Some(idx) = app.streaming_thinking_active_entry {
+    if let Some(idx) = app.streaming.thinking_active_entry {
         return idx;
     }
     if app.tool.active_cell.is_none() {
@@ -3240,7 +3241,7 @@ fn ensure_streaming_thinking_active_entry(app: &mut App) -> usize {
         streaming: true,
         duration_secs: None,
     });
-    app.streaming_thinking_active_entry = Some(entry_idx);
+    app.streaming.thinking_active_entry = Some(entry_idx);
     app.bump_active_cell_revision();
     entry_idx
 }
@@ -3274,7 +3275,7 @@ fn finalize_streaming_thinking_active_entry(
     duration: Option<f32>,
     remaining: &str,
 ) -> bool {
-    let Some(entry_idx) = app.streaming_thinking_active_entry.take() else {
+    let Some(entry_idx) = app.streaming.thinking_active_entry.take() else {
         return false;
     };
     if !remaining.is_empty() {
@@ -3678,7 +3679,7 @@ async fn dispatch_user_message(
             allow_shell: app.allow_shell,
             trust_mode: app.trust_mode,
             auto_approve: app.mode == AppMode::Yolo,
-            approval_mode: app.approval_mode,
+            approval_mode: app.approval.mode,
         })
         .await
     {
@@ -4513,7 +4514,7 @@ async fn apply_command_result(
                     mode: Some(task_mode_label(app.mode).to_string()),
                     allow_shell: Some(app.allow_shell),
                     trust_mode: Some(app.trust_mode),
-                    auto_approve: Some(app.approval_mode == ApprovalMode::Auto),
+                    auto_approve: Some(app.approval.mode == ApprovalMode::Auto),
                 };
                 match task_manager.add_task(request).await {
                     Ok(task) => {
@@ -4879,7 +4880,7 @@ async fn handle_mcp_ui_action(
     }
 
     if changed {
-        app.mcp_restart_required = true;
+        app.mcp.restart_required = true;
     }
     if let Some(message) = message {
         add_mcp_message(app, message);
@@ -4889,9 +4890,9 @@ async fn handle_mcp_ui_action(
         let network_policy = config.network.clone().map(|toml_cfg| {
             crate::network_policy::NetworkPolicyDecider::with_default_audit(toml_cfg.into_runtime())
         });
-        mcp::discover_manager_snapshot(&path, network_policy, app.mcp_restart_required).await
+        mcp::discover_manager_snapshot(&path, network_policy, app.mcp.restart_required).await
     } else {
-        mcp::manager_snapshot_from_config(&path, app.mcp_restart_required)
+        mcp::manager_snapshot_from_config(&path, app.mcp.restart_required)
     };
 
     match snapshot_result {
@@ -4905,8 +4906,8 @@ async fn handle_mcp_ui_action(
             // Keep the boot-time MCP-count chip in sync with the live
             // snapshot so footers and panels reflect post-/mcp edits
             // (#502).
-            app.mcp_configured_count = snapshot.servers.len();
-            app.mcp_snapshot = Some(snapshot.clone());
+            app.mcp.configured_count = snapshot.servers.len();
+            app.mcp.snapshot = Some(snapshot.clone());
             open_mcp_manager_pager(app, &snapshot);
         }
         Err(err) => add_mcp_message(app, format!("MCP snapshot failed: {err}")),
@@ -5581,8 +5582,8 @@ async fn handle_view_events(
                 if decision == ReviewDecision::ApprovedForSession {
                     // Store both the tool name (backward compat) and the
                     // approval key (fingerprint-based).
-                    app.approval_session_approved.insert(tool_name.clone());
-                    app.approval_session_approved.insert(approval_key.clone());
+                    app.approval.session_approved.insert(tool_name.clone());
+                    app.approval.session_approved.insert(approval_key.clone());
                 }
 
                 match decision {
@@ -5596,8 +5597,8 @@ async fn handle_view_events(
                         // fired) — a timeout might mean the user stepped
                         // away rather than refused.
                         if !timed_out {
-                            app.approval_session_denied.insert(tool_name.clone());
-                            app.approval_session_denied.insert(approval_key);
+                            app.approval.session_denied.insert(tool_name.clone());
+                            app.approval.session_denied.insert(approval_key);
                         }
                         let _ = engine_handle.deny_tool_call(tool_id).await;
                     }
@@ -5830,7 +5831,7 @@ async fn handle_view_events(
                 app.backtrack.reset();
                 engine_handle.cancel();
                 app.is_loading = false;
-                app.streaming_state.reset();
+                app.streaming.state.reset();
                 app.runtime_turn_status = None;
                 app.finalize_active_cell_as_interrupted();
                 app.finalize_streaming_assistant_as_interrupted();
@@ -6056,8 +6057,8 @@ fn apply_loaded_session(app: &mut App, session: &SavedSession) {
     app.session.last_prompt_cache_hit_tokens = None;
     app.session.last_prompt_cache_miss_tokens = None;
     app.current_session_id = Some(session.metadata.id.clone());
-    app.workspace_context = None;
-    app.workspace_context_refreshed_at = None;
+    app.workspace_ctx.context = None;
+    app.workspace_ctx.refreshed_at = None;
     if let Some(sp) = session.system_prompt.as_ref() {
         app.system_prompt = Some(SystemPrompt::Text(sp.clone()));
     } else {
@@ -6077,14 +6078,15 @@ fn compact_user_context_display(content: &str) -> String {
 fn refresh_workspace_context_if_needed(app: &mut App, now: Instant, allow_refresh: bool) {
     // Drain the async cell result into the live field first, so the render
     // path always reads the latest value (#399 S1).
-    if let Ok(mut cell) = app.workspace_context_cell.lock()
+    if let Ok(mut cell) = app.workspace_ctx.context_cell.lock()
         && let Some(ctx) = cell.take()
     {
-        app.workspace_context = Some(ctx);
+        app.workspace_ctx.context = Some(ctx);
     }
 
     if app
-        .workspace_context_refreshed_at
+        .workspace_ctx
+        .refreshed_at
         .is_some_and(|refreshed_at| {
             now.duration_since(refreshed_at) < Duration::from_secs(WORKSPACE_CONTEXT_REFRESH_SECS)
         })
@@ -6100,7 +6102,7 @@ fn refresh_workspace_context_if_needed(app: &mut App, now: Instant, allow_refres
     // available. Fall back to synchronous execution for tests and other
     // non-async contexts (#399 S1).
     if let Ok(handle) = tokio::runtime::Handle::try_current() {
-        let ctx = app.workspace_context_cell.clone();
+        let ctx = app.workspace_ctx.context_cell.clone();
         let workspace = app.workspace.clone();
         handle.spawn_blocking(move || {
             let result = collect_workspace_context(&workspace);
@@ -6111,9 +6113,9 @@ fn refresh_workspace_context_if_needed(app: &mut App, now: Instant, allow_refres
     } else {
         // No runtime — run synchronously so tests and one-shot callers
         // still get a result immediately.
-        app.workspace_context = collect_workspace_context(&app.workspace);
+        app.workspace_ctx.context = collect_workspace_context(&app.workspace);
     }
-    app.workspace_context_refreshed_at = Some(now);
+    app.workspace_ctx.refreshed_at = Some(now);
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -7354,7 +7356,7 @@ fn handle_mouse_event(app: &mut App, mouse: MouseEvent) -> Vec<ViewEvent> {
             let update = app.viewport.mouse_scroll.on_scroll(ScrollDirection::Up);
             app.viewport.pending_scroll_delta += update.delta_lines;
             if update.delta_lines != 0 {
-                app.user_scrolled_during_stream = true;
+                app.streaming.user_scrolled_during_stream = true;
                 app.needs_redraw = true;
             }
         }
@@ -7362,7 +7364,7 @@ fn handle_mouse_event(app: &mut App, mouse: MouseEvent) -> Vec<ViewEvent> {
             let update = app.viewport.mouse_scroll.on_scroll(ScrollDirection::Down);
             app.viewport.pending_scroll_delta += update.delta_lines;
             if update.delta_lines != 0 {
-                app.user_scrolled_during_stream = true;
+                app.streaming.user_scrolled_during_stream = true;
                 app.needs_redraw = true;
             }
         }
@@ -7558,7 +7560,7 @@ fn handle_context_menu_action(app: &mut App, action: ContextMenuAction) {
                     &app.skills_dir,
                     &app.workspace,
                     &app.mcp_config_path,
-                    app.mcp_snapshot.as_ref(),
+                    app.mcp.snapshot.as_ref(),
                 )));
         }
         ContextMenuAction::OpenContextInspector => {

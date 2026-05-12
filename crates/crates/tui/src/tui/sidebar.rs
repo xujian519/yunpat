@@ -640,7 +640,7 @@ fn render_context_panel(f: &mut Frame, area: Rect, app: &App) {
             Style::default().fg(palette::DEEPSEEK_SKY).bold(),
         ),
         Span::styled(
-            format!("  {}", app.workspace_context.as_deref().unwrap_or("")),
+            format!("  {}", app.workspace_ctx.context.as_deref().unwrap_or("")),
             Style::default().fg(palette::TEXT_DIM),
         ),
     ]));
@@ -686,8 +686,8 @@ fn render_context_panel(f: &mut Frame, area: Rect, app: &App) {
     )));
 
     // ── MCP servers ──────────────────────────────────────────────
-    if app.mcp_configured_count > 0 {
-        let restart_hint = if app.mcp_restart_required {
+    if app.mcp.configured_count > 0 {
+        let restart_hint = if app.mcp.restart_required {
             " (restart needed)"
         } else {
             ""
@@ -695,7 +695,7 @@ fn render_context_panel(f: &mut Frame, area: Rect, app: &App) {
         lines.push(Line::from(Span::styled(
             format!(
                 "mcp: {} server(s){}",
-                app.mcp_configured_count, restart_hint
+                app.mcp.configured_count, restart_hint
             ),
             Style::default().fg(palette::TEXT_MUTED),
         )));

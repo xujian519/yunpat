@@ -251,9 +251,10 @@ impl FooterProps {
         // MCP chip (#502) — passive, derived from the user's existing
         // snapshot. `connected` is `None` until the user runs `/mcp`,
         // which is the same trigger the issue spec accepts for now.
-        let mcp_configured = app.mcp_configured_count;
+        let mcp_configured = app.mcp.configured_count;
         let mcp_connected = app
-            .mcp_snapshot
+            .mcp
+            .snapshot
             .as_ref()
             .map(|s| s.servers.iter().filter(|server| server.connected).count());
         let mcp = footer_mcp_chip(mcp_connected, mcp_configured);

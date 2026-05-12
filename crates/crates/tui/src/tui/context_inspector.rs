@@ -53,7 +53,8 @@ pub fn build_context_inspector_text(app: &App) -> String {
     let _ = writeln!(
         out,
         "Workspace status: {}",
-        app.workspace_context
+        app.workspace_ctx
+            .context
             .as_deref()
             .unwrap_or("not sampled yet")
     );

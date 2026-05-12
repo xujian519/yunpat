@@ -579,7 +579,7 @@ impl ConfigView {
             ConfigRow {
                 section: ConfigSection::Permissions,
                 key: "approval_mode".to_string(),
-                value: app.approval_mode.label().to_string(),
+                value: app.approval.mode.label().to_string(),
                 editable: true,
                 scope: ConfigScope::Session,
             },

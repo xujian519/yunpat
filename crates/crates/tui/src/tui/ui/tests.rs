@@ -1545,17 +1545,17 @@ fn workspace_context_refresh_is_deferred_while_ui_is_busy() {
     let now = Instant::now();
     refresh_workspace_context_if_needed(&mut app, now, false);
 
-    assert!(app.workspace_context.is_none());
-    assert!(app.workspace_context_refreshed_at.is_none());
+    assert!(app.workspace_ctx.context.is_none());
+    assert!(app.workspace_ctx.refreshed_at.is_none());
 
     refresh_workspace_context_if_needed(&mut app, now, true);
 
     let context = app
-        .workspace_context
+        .workspace_ctx.context
         .as_deref()
         .expect("idle refresh should populate workspace context");
     assert!(context.contains("clean"));
-    assert_eq!(app.workspace_context_refreshed_at, Some(now));
+    assert_eq!(app.workspace_ctx.refreshed_at, Some(now));
 }
 
 #[test]
@@ -1567,7 +1567,7 @@ fn workspace_context_refresh_respects_ttl_before_requerying_git() {
     let start = Instant::now();
     refresh_workspace_context_if_needed(&mut app, start, true);
     let initial = app
-        .workspace_context
+        .workspace_ctx.context
         .clone()
         .expect("initial refresh should populate context");
 
@@ -1575,12 +1575,12 @@ fn workspace_context_refresh_respects_ttl_before_requerying_git() {
 
     let before_ttl = start + Duration::from_secs(WORKSPACE_CONTEXT_REFRESH_SECS - 1);
     refresh_workspace_context_if_needed(&mut app, before_ttl, true);
-    assert_eq!(app.workspace_context.as_deref(), Some(initial.as_str()));
+    assert_eq!(app.workspace_ctx.context.as_deref(), Some(initial.as_str()));
 
     let after_ttl = start + Duration::from_secs(WORKSPACE_CONTEXT_REFRESH_SECS);
     refresh_workspace_context_if_needed(&mut app, after_ttl, true);
     let refreshed = app
-        .workspace_context
+        .workspace_ctx.context
         .as_deref()
         .expect("refresh after ttl should update context");
     assert!(refreshed.contains("untracked"));
@@ -2605,7 +2605,7 @@ fn add_message_does_not_scroll_when_user_scrolled_away() {
     let mut app = create_test_app();
     // Pre-condition: user was following the tail, then scrolled up.
     app.viewport.transcript_scroll = TranscriptScroll::at_line(7);
-    app.user_scrolled_during_stream = true;
+    app.streaming.user_scrolled_during_stream = true;
 
     app.add_message(HistoryCell::User {
         content: "fresh user message".to_string(),
@@ -2623,7 +2623,7 @@ fn add_message_pins_to_tail_when_user_was_following() {
 
     let mut app = create_test_app();
     app.viewport.transcript_scroll = TranscriptScroll::to_bottom();
-    app.user_scrolled_during_stream = false;
+    app.streaming.user_scrolled_during_stream = false;
 
     app.add_message(HistoryCell::User {
         content: "fresh user message".to_string(),
@@ -2643,7 +2643,7 @@ fn tool_call_started_does_not_scroll_when_user_scrolled_away() {
 
     let mut app = create_test_app();
     app.viewport.transcript_scroll = TranscriptScroll::at_line(7);
-    app.user_scrolled_during_stream = true;
+    app.streaming.user_scrolled_during_stream = true;
 
     handle_tool_call_started(
         &mut app,
@@ -2672,7 +2672,7 @@ fn tool_call_complete_does_not_scroll_when_user_scrolled_away() {
 
     // After start, user scrolls up.
     app.viewport.transcript_scroll = TranscriptScroll::at_line(7);
-    app.user_scrolled_during_stream = true;
+    app.streaming.user_scrolled_during_stream = true;
 
     handle_tool_call_complete(&mut app, "tid", "exec_shell", &ok_result("output"));
 
@@ -2691,7 +2691,7 @@ fn mark_history_updated_does_not_call_scroll_to_bottom() {
 
     let mut app = create_test_app();
     app.viewport.transcript_scroll = TranscriptScroll::at_line(3);
-    app.user_scrolled_during_stream = true;
+    app.streaming.user_scrolled_during_stream = true;
 
     app.mark_history_updated();
 
@@ -2773,7 +2773,7 @@ fn thinking_then_tools_share_active_cell_until_text_flushes() {
     assert_eq!(*duration_secs, Some(1.5));
     assert_eq!(content, "planning the read");
     assert!(
-        app.streaming_thinking_active_entry.is_none(),
+        app.streaming.thinking_active_entry.is_none(),
         "stream pointer cleared after finalize"
     );
 
@@ -2817,7 +2817,7 @@ fn flush_active_cell_finalizes_unclosed_thinking_block() {
         "flush must stop the spinner even without ThinkingComplete"
     );
     assert!(
-        app.streaming_thinking_active_entry.is_none(),
+        app.streaming.thinking_active_entry.is_none(),
         "stream pointer cleared by flush"
     );
 }

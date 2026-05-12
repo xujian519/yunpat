@@ -225,7 +225,7 @@ impl ChatWidget {
         // and clearing here would yank the user back to bottom on the
         // next chunk even though they explicitly scrolled up.
         if was_explicit_tail && total_lines > visible_lines {
-            app.user_scrolled_during_stream = false;
+            app.streaming.user_scrolled_during_stream = false;
         }
 
         app.viewport.last_transcript_area = Some(content_area);

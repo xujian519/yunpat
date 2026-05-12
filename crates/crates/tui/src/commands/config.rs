@@ -108,7 +108,7 @@ fn show_single_setting(app: &App, key: &str) -> CommandResult {
                 Some(app.model.clone())
             }
         }
-        "approval_mode" | "approval" => Some(app.approval_mode.label().to_string()),
+        "approval_mode" | "approval" => Some(app.approval.mode.label().to_string()),
         "locale" | "language" => Some(locale_display(app.ui_locale).to_string()),
         "auto_compact" | "compact" => {
             Some(if app.auto_compact { "true" } else { "false" }.to_string())
@@ -292,7 +292,7 @@ pub fn set_config_value(app: &mut App, key: &str, value: &str, persist: bool) ->
             let mode = ApprovalMode::from_config_value(value);
             return match mode {
                 Some(m) => {
-                    app.approval_mode = m;
+                    app.approval.mode = m;
                     CommandResult::message(format!("approval_mode = {}", m.label()))
                 }
                 None => CommandResult::error(
@@ -305,7 +305,7 @@ pub fn set_config_value(app: &mut App, key: &str, value: &str, persist: bool) ->
                 return CommandResult::error("mcp_config_path cannot be empty");
             }
             app.mcp_config_path = PathBuf::from(expand_tilde(value));
-            app.mcp_restart_required = true;
+            app.mcp.restart_required = true;
             let message = if persist {
                 match persist_root_string_key("mcp_config_path", value) {
                     Ok(path) => format!(
@@ -1052,7 +1052,7 @@ mod tests {
         assert!(app.allow_shell);
         assert!(app.trust_mode);
         assert!(app.yolo);
-        assert_eq!(app.approval_mode, ApprovalMode::Auto);
+        assert_eq!(app.approval.mode, ApprovalMode::Auto);
         assert_eq!(app.mode, AppMode::Yolo);
     }
 
@@ -1223,17 +1223,17 @@ mod tests {
         // Test auto
         let result = set_config(&mut app, Some("approval_mode auto"));
         assert!(result.message.is_some());
-        assert_eq!(app.approval_mode, ApprovalMode::Auto);
+        assert_eq!(app.approval.mode, ApprovalMode::Auto);
 
         // Test suggest
         let result = set_config(&mut app, Some("approval_mode suggest"));
         assert!(result.message.is_some());
-        assert_eq!(app.approval_mode, ApprovalMode::Suggest);
+        assert_eq!(app.approval.mode, ApprovalMode::Suggest);
 
         // Test never
         let result = set_config(&mut app, Some("approval_mode never"));
         assert!(result.message.is_some());
-        assert_eq!(app.approval_mode, ApprovalMode::Never);
+        assert_eq!(app.approval.mode, ApprovalMode::Never);
     }
 
     #[test]

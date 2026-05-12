@@ -249,7 +249,7 @@ pub fn build_document(app: &App, config: &Config) -> Result<ConfigUiDocument> {
     Ok(ConfigUiDocument {
         runtime: RuntimeSection {
             model: app.model.clone(),
-            approval_mode: app.approval_mode.into(),
+            approval_mode: app.approval.mode.into(),
         },
         settings: SettingsSection {
             auto_compact: settings.auto_compact,
@@ -570,7 +570,7 @@ fn reload_runtime_config(app: &mut App, config: &mut Config) -> Result<()> {
 fn config_reload_notes(app: &App, config: &Config) -> Vec<String> {
     let mut notes = Vec::new();
     notes.push("Config saved and reloaded".to_string());
-    if app.mcp_restart_required {
+    if app.mcp.restart_required {
         notes.push(format!(
             "MCP tool pool still requires restart after {}",
             config.mcp_config_path().display()

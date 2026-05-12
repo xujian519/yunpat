@@ -12,7 +12,7 @@ use tokio::runtime::Runtime;
 use uuid::Uuid;
 
 use crate::client::DeepSeekClient;
-use crate::config::Config;
+use crate::config::{Config, yunpat_data_dir};
 use crate::llm_client::LlmClient;
 use crate::models::{ContentBlock, Message, MessageRequest};
 use crate::session_manager::SessionManager;
@@ -381,7 +381,7 @@ impl McpServer {
         let messages = if internal_name == "deepseek" {
             vec![user_message]
         } else {
-            let thread = self.threads.lock().unwrap();
+            let thread = self.threads.lock().unwrap_or_else(|e| e.into_inner());
             let mut existing = thread.get(&thread_id).cloned().ok_or_else(|| RpcError {
                 code: -32602,
                 message: format!("Thread not found: {thread_id}"),
@@ -431,7 +431,7 @@ impl McpServer {
 
         // Store the assistant response in the thread
         {
-            let mut thread = self.threads.lock().unwrap();
+            let mut thread = self.threads.lock().unwrap_or_else(|e| e.into_inner());
             let convo = thread.entry(thread_id.clone()).or_default();
             // If deepseek, we already have just the user message; if deepseek-reply,
             // the user message was appended to the cloned messages above but we need
@@ -498,7 +498,7 @@ impl McpServer {
 }
 
 fn default_config_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|home| home.join(".deepseek").join("mcp_server.toml"))
+    yunpat_data_dir().map(|dir| dir.join("mcp_server.toml"))
 }
 
 fn default_expose_tools() -> Vec<String> {
@@ -561,7 +561,7 @@ fn initialize_response() -> Value {
     json!({
         "protocolVersion": "2024-11-05",
         "serverInfo": {
-            "name": "deepseek-mcp-server",
+            "name": "yunpat-mcp-server",
             "version": env!("CARGO_PKG_VERSION"),
         },
         "capabilities": {

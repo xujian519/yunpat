@@ -599,7 +599,7 @@ mod tests {
     fn compose_prompt_includes_all_layers() {
         let prompt = compose_prompt(AppMode::Agent, Personality::Calm);
         // Base layer
-        assert!(prompt.contains("You are DeepSeek TUI"));
+        assert!(prompt.contains("You are YunPat Agent"));
         // Personality layer
         assert!(prompt.contains("Personality: Calm"));
         // Mode layer
@@ -611,7 +611,7 @@ mod tests {
     #[test]
     fn compose_prompt_deterministic_order() {
         let prompt = compose_prompt(AppMode::Yolo, Personality::Calm);
-        let base_pos = prompt.find("You are DeepSeek TUI").unwrap();
+        let base_pos = prompt.find("You are YunPat Agent").unwrap();
         let personality_pos = prompt.find("Personality: Calm").unwrap();
         let mode_pos = prompt.find("Mode: YOLO").unwrap();
         let approval_pos = prompt.find("Approval Policy: Auto").unwrap();

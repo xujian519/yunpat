@@ -37,7 +37,7 @@ use crate::mcp::McpPool;
 #[cfg(test)]
 use crate::models::ToolCaller;
 use crate::models::{
-    ContentBlock, ContentBlockStart, Delta, LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS, Message,
+    ContentBlock, ContentBlockStart, Delta, LEGACY_YUNPAT_CONTEXT_WINDOW_TOKENS, Message,
     MessageRequest, StreamEvent, SystemPrompt, Tool, Usage,
 };
 use crate::prompts;

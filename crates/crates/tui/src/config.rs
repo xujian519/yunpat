@@ -20,7 +20,7 @@ use crate::hooks::HooksConfig;
 pub const DEFAULT_MAX_SUBAGENTS: usize = 10;
 pub const MAX_SUBAGENTS: usize = 20;
 pub const DEFAULT_TEXT_MODEL: &str = "deepseek-v4-pro";
-pub const DEFAULT_DEEPSEEK_BASE_URL: &str = "https://api.deepseek.com/beta";
+pub const DEFAULT_YUNPAT_BASE_URL: &str = "https://api.deepseek.com/beta";
 pub const DEFAULT_NVIDIA_NIM_MODEL: &str = "deepseek-ai/deepseek-v4-pro";
 pub const DEFAULT_NVIDIA_NIM_FLASH_MODEL: &str = "deepseek-ai/deepseek-v4-flash";
 pub const DEFAULT_NVIDIA_NIM_BASE_URL: &str = "https://integrate.api.nvidia.com/v1";
@@ -42,7 +42,7 @@ pub const DEFAULT_OLLAMA_MODEL: &str = "deepseek-coder:1.3b";
 pub const DEFAULT_OLLAMA_BASE_URL: &str = "http://localhost:11434/v1";
 pub const DEFAULT_DEEPSEEKCN_BASE_URL: &str = "https://api.deepseeki.com";
 const API_KEYRING_SENTINEL: &str = "__KEYRING__";
-pub const COMMON_DEEPSEEK_MODELS: &[&str] = &[
+pub const COMMON_YUNPAT_MODELS: &[&str] = &[
     "deepseek-v4-pro",
     "deepseek-v4-flash",
     "deepseek-ai/deepseek-v4-pro",
@@ -197,10 +197,10 @@ pub fn provider_capability(provider: ApiProvider, resolved_model: &str) -> Provi
     // Context window: V4-class models get 1M, everything else falls through
     // to the model's own lookup or a default.
     let context_window = if is_v4_pro || is_v4_flash {
-        crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+        crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
     } else {
         crate::models::context_window_for_model(resolved_model)
-            .unwrap_or(crate::models::LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS)
+            .unwrap_or(crate::models::LEGACY_YUNPAT_CONTEXT_WINDOW_TOKENS)
     };
 
     // Max output tokens: official DeepSeek V4 API metadata lists 384K;
@@ -304,7 +304,7 @@ pub struct TuiConfig {
     /// empty `Some(vec![])` means "show nothing in the footer".
     ///
     /// Edited interactively via `/statusline`; persisted to `tui.status_items`
-    /// in `~/.deepseek/config.toml`.
+    /// in `config.toml (in data dir)`.
     pub status_items: Option<Vec<StatusItem>>,
     /// Emit OSC 8 hyperlink escape sequences around URLs in the transcript so
     /// supporting terminals (iTerm2, Terminal.app 13+, Ghostty, Kitty,
@@ -599,7 +599,7 @@ pub struct RetryPolicy {
 
 /// Capacity-controller config loaded from config files/environment.
 ///
-/// Enable in `~/.deepseek/config.toml`:
+/// Enable in `config.toml (in data dir)`:
 /// ```toml
 /// [capacity]
 /// enabled = true
@@ -1254,7 +1254,7 @@ impl Config {
         };
         let base = provider_base.or(root_base).unwrap_or_else(|| {
             match provider {
-                ApiProvider::Deepseek => DEFAULT_DEEPSEEK_BASE_URL,
+                ApiProvider::Deepseek => DEFAULT_YUNPAT_BASE_URL,
                 ApiProvider::DeepseekCN => DEFAULT_DEEPSEEKCN_BASE_URL,
                 ApiProvider::NvidiaNim => DEFAULT_NVIDIA_NIM_BASE_URL,
                 ApiProvider::Openrouter => DEFAULT_OPENROUTER_BASE_URL,
@@ -1329,24 +1329,24 @@ impl Config {
                    • export DEEPSEEK_API_KEY=<your-key>      (current shell only;\n\
                      also note: zsh users — exports in ~/.zshrc only reach interactive\n\
                      shells, prefer ~/.zshenv for everything)\n\
-                   • api_key = \"<your-key>\"  in ~/.deepseek/config.toml"
+                   • api_key = \"<your-key>\"  in config.toml (in data dir)"
             ),
             ApiProvider::NvidiaNim => anyhow::bail!(
                 "NVIDIA NIM API key not found. Run 'deepseek auth set --provider nvidia-nim', \
-                 set NVIDIA_API_KEY/NVIDIA_NIM_API_KEY, or save api_key in ~/.deepseek/config.toml \
+                 set NVIDIA_API_KEY/NVIDIA_NIM_API_KEY, or save api_key in config.toml (in data dir) \
                  with provider = \"nvidia-nim\"."
             ),
             ApiProvider::Openrouter => anyhow::bail!(
                 "OpenRouter API key not found. Run 'deepseek auth set --provider openrouter', \
-                 set OPENROUTER_API_KEY, or add [providers.openrouter] api_key in ~/.deepseek/config.toml."
+                 set OPENROUTER_API_KEY, or add [providers.openrouter] api_key in config.toml (in data dir)."
             ),
             ApiProvider::Novita => anyhow::bail!(
                 "Novita API key not found. Run 'deepseek auth set --provider novita', \
-                 set NOVITA_API_KEY, or add [providers.novita] api_key in ~/.deepseek/config.toml."
+                 set NOVITA_API_KEY, or add [providers.novita] api_key in config.toml (in data dir)."
             ),
             ApiProvider::Fireworks => anyhow::bail!(
                 "Fireworks AI API key not found. Run 'deepseek auth set --provider fireworks', \
-                 set FIREWORKS_API_KEY, or add [providers.fireworks] api_key in ~/.deepseek/config.toml."
+                 set FIREWORKS_API_KEY, or add [providers.fireworks] api_key in config.toml (in data dir)."
             ),
             // Self-hosted deployments commonly run without auth on localhost.
             // Return an empty key and let the client omit the Authorization header.
@@ -1593,8 +1593,34 @@ fn effective_home_dir() -> Option<PathBuf> {
     dirs::home_dir()
 }
 
+/// Return the base data directory for YunPat configuration.
+///
+/// Resolution order:
+/// 1. `YUNPAT_DATA_DIR` env var (explicit override)
+/// 2. `~/.yunpat/` (if exists)
+/// 3. `~/.deepseek/` (backward compat for existing users)
+/// 4. `~/.yunpat/` (default for new installs)
+#[must_use]
+pub fn yunpat_data_dir() -> Option<PathBuf> {
+    if let Ok(override_dir) = std::env::var("YUNPAT_DATA_DIR") {
+        if !override_dir.is_empty() {
+            return Some(PathBuf::from(override_dir));
+        }
+    }
+    let home = effective_home_dir()?;
+    let yunpat = home.join(".yunpat");
+    let deepseek = home.join(".deepseek");
+    if yunpat.exists() {
+        Some(yunpat)
+    } else if deepseek.exists() {
+        Some(deepseek)
+    } else {
+        Some(yunpat)
+    }
+}
+
 fn home_config_path() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("config.toml"))
+    yunpat_data_dir().map(|dir| dir.join("config.toml"))
 }
 
 #[must_use]
@@ -1754,22 +1780,22 @@ reasoning_effort = "auto"
 fn default_managed_config_path() -> Option<PathBuf> {
     #[cfg(unix)]
     {
-        Some(PathBuf::from("/etc/deepseek/managed_config.toml"))
+        Some(PathBuf::from("/etc/yunpat/managed_config.toml"))
     }
     #[cfg(not(unix))]
     {
-        effective_home_dir().map(|home| home.join(".deepseek").join("managed_config.toml"))
+        yunpat_data_dir().map(|dir| dir.join("managed_config.toml"))
     }
 }
 
 fn default_requirements_path() -> Option<PathBuf> {
     #[cfg(unix)]
     {
-        Some(PathBuf::from("/etc/deepseek/requirements.toml"))
+        Some(PathBuf::from("/etc/yunpat/requirements.toml"))
     }
     #[cfg(not(unix))]
     {
-        effective_home_dir().map(|home| home.join(".deepseek").join("requirements.toml"))
+        yunpat_data_dir().map(|dir| dir.join("requirements.toml"))
     }
 }
 
@@ -1790,19 +1816,19 @@ pub(crate) fn expand_path(path: &str) -> PathBuf {
 }
 
 fn default_skills_dir() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("skills"))
+    yunpat_data_dir().map(|dir| dir.join("skills"))
 }
 
 fn default_mcp_config_path() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("mcp.json"))
+    yunpat_data_dir().map(|dir| dir.join("mcp.json"))
 }
 
 fn default_notes_path() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("notes.txt"))
+    yunpat_data_dir().map(|dir| dir.join("notes.txt"))
 }
 
 fn default_memory_path() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("memory.md"))
+    yunpat_data_dir().map(|dir| dir.join("memory.md"))
 }
 
 // === Environment Overrides ===
@@ -2541,7 +2567,7 @@ pub enum SavedCredential {
     /// install hide the freshly-entered key (#593). The `backend`
     /// label is the value of [`yunpat_secrets::Secrets::backend_name`]
     /// at write time so the toast text can name the actual backend
-    /// (`"system keyring"`, `"file-based (~/.deepseek/secrets/)"`).
+    /// (`"system keyring"`, `"file-based (secrets dir)"`).
     KeyringAndConfigFile {
         /// `Secrets::backend_name()` at write time.
         backend: String,
@@ -2570,7 +2596,7 @@ impl SavedCredential {
 
 /// Save the active provider's API key.
 ///
-/// **Dual-write strategy (#593):** writes to `~/.deepseek/config.toml`
+/// **Dual-write strategy (#593):** writes to `config.toml (in data dir)`
 /// (always) and to the OS keyring via [`yunpat_secrets::Secrets`]
 /// (when a backend is reachable). The runtime resolves credentials in
 /// `keyring → env → config-file` order; writing to the config file
@@ -2717,7 +2743,7 @@ reasoning_effort = "max"
 /// Platform credential stores are intentionally not queried here.
 /// Startup/onboarding checks must be cheap and prompt-free, so v0.8.8
 /// keeps the default auth path to environment variables and
-/// `~/.deepseek/config.toml`.
+/// `config.toml (in data dir)`.
 ///
 /// Used by [`crate::tui::app::App::new`] to decide whether to gate
 /// the user behind the in-TUI api-key onboarding screen — getting
@@ -2838,7 +2864,7 @@ pub fn has_api_key_for(config: &Config, provider: ApiProvider) -> bool {
 
 /// Save an API key to the appropriate place for the given provider.
 /// DeepSeek goes through [`save_api_key`]. Other providers write
-/// `[providers.<name>] api_key = "..."` to `~/.deepseek/config.toml`.
+/// `[providers.<name>] api_key = "..."` to `config.toml (in data dir)`.
 /// Returns the config file path.
 pub fn save_api_key_for(provider: ApiProvider, api_key: &str) -> Result<PathBuf> {
     if matches!(provider, ApiProvider::Deepseek | ApiProvider::DeepseekCN) {
@@ -3948,7 +3974,7 @@ api_key = "old-openrouter-key"
         let config = Config::default();
 
         assert_eq!(config.api_provider(), ApiProvider::Deepseek);
-        assert_eq!(config.yunpat_base_url(), DEFAULT_DEEPSEEK_BASE_URL);
+        assert_eq!(config.yunpat_base_url(), DEFAULT_YUNPAT_BASE_URL);
     }
 
     #[test]
@@ -4793,7 +4819,7 @@ model = "deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Deepseek, "deepseek-v4-pro");
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -4809,7 +4835,7 @@ model = "deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Deepseek, "deepseek-v4-flash");
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -4821,7 +4847,7 @@ model = "deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::NvidiaNim, DEFAULT_NVIDIA_NIM_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -4837,7 +4863,7 @@ model = "deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::NvidiaNim, DEFAULT_NVIDIA_NIM_FLASH_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -4849,7 +4875,7 @@ model = "deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Openrouter, DEFAULT_OPENROUTER_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -4866,7 +4892,7 @@ model = "deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Novita, DEFAULT_NOVITA_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -4878,7 +4904,7 @@ model = "deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Fireworks, DEFAULT_FIREWORKS_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -4890,7 +4916,7 @@ model = "deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Sglang, DEFAULT_SGLANG_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -4915,7 +4941,7 @@ model = "deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Deepseek, "deepseek-coder");
         assert_eq!(
             cap.context_window,
-            crate::models::LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS
+            crate::models::LEGACY_YUNPAT_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 4096);
         assert!(!cap.thinking_supported);

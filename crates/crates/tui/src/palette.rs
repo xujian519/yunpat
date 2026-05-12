@@ -1,16 +1,16 @@
-//! DeepSeek color palette and semantic roles.
+//! YunPat color palette and semantic roles.
 
 use ratatui::style::Color;
 
-pub const DEEPSEEK_BLUE_RGB: (u8, u8, u8) = (53, 120, 229); // #3578E5
-pub const DEEPSEEK_SKY_RGB: (u8, u8, u8) = (106, 174, 242);
+pub const YUNPAT_BLUE_RGB: (u8, u8, u8) = (53, 120, 229); // #3578E5
+pub const YUNPAT_SKY_RGB: (u8, u8, u8) = (106, 174, 242);
 #[allow(dead_code)]
-pub const DEEPSEEK_AQUA_RGB: (u8, u8, u8) = (54, 187, 212);
+pub const YUNPAT_AQUA_RGB: (u8, u8, u8) = (54, 187, 212);
 #[allow(dead_code)]
-pub const DEEPSEEK_NAVY_RGB: (u8, u8, u8) = (24, 63, 138);
-pub const DEEPSEEK_INK_RGB: (u8, u8, u8) = (11, 21, 38);
-pub const DEEPSEEK_SLATE_RGB: (u8, u8, u8) = (18, 28, 46);
-pub const DEEPSEEK_RED_RGB: (u8, u8, u8) = (226, 80, 96);
+pub const YUNPAT_NAVY_RGB: (u8, u8, u8) = (24, 63, 138);
+pub const YUNPAT_INK_RGB: (u8, u8, u8) = (11, 21, 38);
+pub const YUNPAT_SLATE_RGB: (u8, u8, u8) = (18, 28, 46);
+pub const YUNPAT_RED_RGB: (u8, u8, u8) = (226, 80, 96);
 
 pub const LIGHT_SURFACE_RGB: (u8, u8, u8) = (248, 250, 252); // #F8FAFC
 pub const LIGHT_PANEL_RGB: (u8, u8, u8) = (241, 245, 249); // #F1F5F9
@@ -28,34 +28,34 @@ pub const LIGHT_SELECTION_RGB: (u8, u8, u8) = (219, 234, 254); // #DBEAFE
 // New semantic colors
 pub const BORDER_COLOR_RGB: (u8, u8, u8) = (42, 74, 127); // #2A4A7F
 
-pub const DEEPSEEK_BLUE: Color = Color::Rgb(
-    DEEPSEEK_BLUE_RGB.0,
-    DEEPSEEK_BLUE_RGB.1,
-    DEEPSEEK_BLUE_RGB.2,
+pub const YUNPAT_BLUE: Color = Color::Rgb(
+    YUNPAT_BLUE_RGB.0,
+    YUNPAT_BLUE_RGB.1,
+    YUNPAT_BLUE_RGB.2,
 );
-pub const DEEPSEEK_SKY: Color =
-    Color::Rgb(DEEPSEEK_SKY_RGB.0, DEEPSEEK_SKY_RGB.1, DEEPSEEK_SKY_RGB.2);
+pub const YUNPAT_SKY: Color =
+    Color::Rgb(YUNPAT_SKY_RGB.0, YUNPAT_SKY_RGB.1, YUNPAT_SKY_RGB.2);
 #[allow(dead_code)]
-pub const DEEPSEEK_AQUA: Color = Color::Rgb(
-    DEEPSEEK_AQUA_RGB.0,
-    DEEPSEEK_AQUA_RGB.1,
-    DEEPSEEK_AQUA_RGB.2,
+pub const YUNPAT_AQUA: Color = Color::Rgb(
+    YUNPAT_AQUA_RGB.0,
+    YUNPAT_AQUA_RGB.1,
+    YUNPAT_AQUA_RGB.2,
 );
 #[allow(dead_code)]
-pub const DEEPSEEK_NAVY: Color = Color::Rgb(
-    DEEPSEEK_NAVY_RGB.0,
-    DEEPSEEK_NAVY_RGB.1,
-    DEEPSEEK_NAVY_RGB.2,
+pub const YUNPAT_NAVY: Color = Color::Rgb(
+    YUNPAT_NAVY_RGB.0,
+    YUNPAT_NAVY_RGB.1,
+    YUNPAT_NAVY_RGB.2,
 );
-pub const DEEPSEEK_INK: Color =
-    Color::Rgb(DEEPSEEK_INK_RGB.0, DEEPSEEK_INK_RGB.1, DEEPSEEK_INK_RGB.2);
-pub const DEEPSEEK_SLATE: Color = Color::Rgb(
-    DEEPSEEK_SLATE_RGB.0,
-    DEEPSEEK_SLATE_RGB.1,
-    DEEPSEEK_SLATE_RGB.2,
+pub const YUNPAT_INK: Color =
+    Color::Rgb(YUNPAT_INK_RGB.0, YUNPAT_INK_RGB.1, YUNPAT_INK_RGB.2);
+pub const YUNPAT_SLATE: Color = Color::Rgb(
+    YUNPAT_SLATE_RGB.0,
+    YUNPAT_SLATE_RGB.1,
+    YUNPAT_SLATE_RGB.2,
 );
-pub const DEEPSEEK_RED: Color =
-    Color::Rgb(DEEPSEEK_RED_RGB.0, DEEPSEEK_RED_RGB.1, DEEPSEEK_RED_RGB.2);
+pub const YUNPAT_RED: Color =
+    Color::Rgb(YUNPAT_RED_RGB.0, YUNPAT_RED_RGB.1, YUNPAT_RED_RGB.2);
 
 pub const LIGHT_SURFACE: Color = Color::Rgb(
     LIGHT_SURFACE_RGB.0,
@@ -110,7 +110,7 @@ pub const LIGHT_SELECTION_BG: Color = Color::Rgb(
 pub const TEXT_BODY: Color = Color::White;
 pub const TEXT_SECONDARY: Color = Color::Rgb(192, 192, 192); // #C0C0C0
 pub const TEXT_HINT: Color = Color::Rgb(160, 160, 160); // #A0A0A0
-pub const TEXT_ACCENT: Color = DEEPSEEK_SKY;
+pub const TEXT_ACCENT: Color = YUNPAT_SKY;
 pub const SELECTION_TEXT: Color = Color::White;
 pub const TEXT_SOFT: Color = Color::Rgb(214, 223, 235); // #D6DFEB
 
@@ -123,7 +123,7 @@ pub const TEXT_DIM: Color = TEXT_HINT;
 pub const BORDER_COLOR: Color =
     Color::Rgb(BORDER_COLOR_RGB.0, BORDER_COLOR_RGB.1, BORDER_COLOR_RGB.2);
 #[allow(dead_code)]
-pub const ACCENT_PRIMARY: Color = DEEPSEEK_BLUE; // #3578E5
+pub const ACCENT_PRIMARY: Color = YUNPAT_BLUE; // #3578E5
 #[allow(dead_code)]
 pub const ACCENT_SECONDARY: Color = TEXT_ACCENT; // #6AAEF2
 #[allow(dead_code)]
@@ -154,11 +154,11 @@ pub const ACCENT_TOOL_ISSUE: Color = Color::Rgb(192, 143, 153); // #C08F99
 pub const TEXT_TOOL_OUTPUT: Color = Color::Rgb(205, 216, 228); // #CDD8E4
 
 // Legacy status colors - keep for backward compatibility
-pub const STATUS_SUCCESS: Color = DEEPSEEK_SKY;
+pub const STATUS_SUCCESS: Color = YUNPAT_SKY;
 pub const STATUS_WARNING: Color = Color::Rgb(255, 170, 60); // Amber
-pub const STATUS_ERROR: Color = DEEPSEEK_RED;
+pub const STATUS_ERROR: Color = YUNPAT_RED;
 #[allow(dead_code)]
-pub const STATUS_INFO: Color = DEEPSEEK_BLUE;
+pub const STATUS_INFO: Color = YUNPAT_BLUE;
 
 // Mode-specific accent colors for mode badges
 pub const MODE_AGENT: Color = Color::Rgb(80, 150, 255); // Bright blue
@@ -167,7 +167,7 @@ pub const MODE_PLAN: Color = Color::Rgb(255, 170, 60); // Orange
 
 pub const SELECTION_BG: Color = Color::Rgb(26, 44, 74);
 #[allow(dead_code)]
-pub const COMPOSER_BG: Color = DEEPSEEK_SLATE;
+pub const COMPOSER_BG: Color = YUNPAT_SLATE;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PaletteMode {
@@ -230,18 +230,18 @@ pub struct UiTheme {
 pub const UI_THEME: UiTheme = UiTheme {
     name: "yunpat",
     mode: PaletteMode::Dark,
-    surface_bg: DEEPSEEK_INK,
-    panel_bg: DEEPSEEK_SLATE,
+    surface_bg: YUNPAT_INK,
+    panel_bg: YUNPAT_SLATE,
     elevated_bg: SURFACE_ELEVATED,
-    composer_bg: DEEPSEEK_SLATE,
+    composer_bg: YUNPAT_SLATE,
     selection_bg: SELECTION_BG,
-    header_bg: DEEPSEEK_INK,
-    footer_bg: DEEPSEEK_INK,
+    header_bg: YUNPAT_INK,
+    footer_bg: YUNPAT_INK,
     mode_agent: MODE_AGENT,
     mode_yolo: MODE_YOLO,
     mode_plan: MODE_PLAN,
     status_ready: TEXT_MUTED,
-    status_working: DEEPSEEK_SKY,
+    status_working: YUNPAT_SKY,
     status_warning: STATUS_WARNING,
     text_dim: TEXT_DIM,
     text_hint: TEXT_HINT,
@@ -261,11 +261,11 @@ pub const LIGHT_UI_THEME: UiTheme = UiTheme {
     selection_bg: LIGHT_SELECTION_BG,
     header_bg: LIGHT_SURFACE,
     footer_bg: LIGHT_SURFACE,
-    mode_agent: DEEPSEEK_BLUE,
-    mode_yolo: DEEPSEEK_RED,
+    mode_agent: YUNPAT_BLUE,
+    mode_yolo: YUNPAT_RED,
     mode_plan: Color::Rgb(180, 83, 9),
     status_ready: LIGHT_TEXT_MUTED,
-    status_working: DEEPSEEK_BLUE,
+    status_working: YUNPAT_BLUE,
     status_warning: Color::Rgb(180, 83, 9),
     text_dim: LIGHT_TEXT_HINT,
     text_hint: LIGHT_TEXT_HINT,
@@ -307,8 +307,8 @@ pub fn adapt_fg_for_palette_mode(color: Color, _bg: Color, mode: PaletteMode) ->
         LIGHT_TEXT_SOFT
     } else if color == BORDER_COLOR {
         LIGHT_BORDER
-    } else if color == TEXT_ACCENT || color == DEEPSEEK_SKY || color == ACCENT_TOOL_LIVE {
-        DEEPSEEK_BLUE
+    } else if color == TEXT_ACCENT || color == YUNPAT_SKY || color == ACCENT_TOOL_LIVE {
+        YUNPAT_BLUE
     } else if color == ACCENT_REASONING_LIVE {
         Color::Rgb(146, 64, 14)
     } else if color == ACCENT_TOOL_ISSUE {
@@ -326,9 +326,9 @@ pub fn adapt_bg_for_palette_mode(color: Color, mode: PaletteMode) -> Color {
         return color;
     }
 
-    if color == DEEPSEEK_INK || color == BACKGROUND_DARK {
+    if color == YUNPAT_INK || color == BACKGROUND_DARK {
         LIGHT_SURFACE
-    } else if color == DEEPSEEK_SLATE
+    } else if color == YUNPAT_SLATE
         || color == COMPOSER_BG
         || color == SURFACE_PANEL
         || color == SURFACE_TOOL
@@ -470,7 +470,7 @@ pub fn reasoning_surface_tint(depth: ColorDepth) -> Option<Color> {
     match depth {
         ColorDepth::Ansi16 => None,
         _ => Some(adapt_bg(
-            blend(SURFACE_REASONING, DEEPSEEK_INK, 0.12),
+            blend(SURFACE_REASONING, YUNPAT_INK, 0.12),
             depth,
         )),
     }
@@ -613,8 +613,8 @@ fn rgb_to_ansi256(r: u8, g: u8, b: u8) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::{
-        ACCENT_REASONING_LIVE, ColorDepth, DEEPSEEK_INK, DEEPSEEK_RED, DEEPSEEK_SKY,
-        DEEPSEEK_SLATE, LIGHT_PANEL, LIGHT_SURFACE, LIGHT_TEXT_BODY, LIGHT_TEXT_HINT,
+        ACCENT_REASONING_LIVE, ColorDepth, YUNPAT_INK, YUNPAT_RED, YUNPAT_SKY,
+        YUNPAT_SLATE, LIGHT_PANEL, LIGHT_SURFACE, LIGHT_TEXT_BODY, LIGHT_TEXT_HINT,
         LIGHT_UI_THEME, PaletteMode, SURFACE_REASONING, TEXT_HINT, adapt_bg,
         adapt_bg_for_palette_mode, adapt_color, adapt_fg_for_palette_mode, blend, nearest_ansi16,
         pulse_brightness, reasoning_surface_tint, rgb_to_ansi256,
@@ -646,11 +646,11 @@ mod tests {
     #[test]
     fn light_palette_maps_dark_surfaces_and_text() {
         assert_eq!(
-            adapt_bg_for_palette_mode(DEEPSEEK_INK, PaletteMode::Light),
+            adapt_bg_for_palette_mode(YUNPAT_INK, PaletteMode::Light),
             LIGHT_SURFACE
         );
         assert_eq!(
-            adapt_bg_for_palette_mode(DEEPSEEK_SLATE, PaletteMode::Light),
+            adapt_bg_for_palette_mode(YUNPAT_SLATE, PaletteMode::Light),
             LIGHT_PANEL
         );
         assert_eq!(
@@ -690,11 +690,11 @@ mod tests {
     fn adapt_color_drops_to_named_on_ansi16() {
         // Sky: blue-dominant and bright → LightBlue, not terminal cyan.
         assert_eq!(
-            adapt_color(DEEPSEEK_SKY, ColorDepth::Ansi16),
+            adapt_color(YUNPAT_SKY, ColorDepth::Ansi16),
             Color::LightBlue
         );
         // Red: red-dominant, mid lum → Red (not the bright variant).
-        assert_eq!(adapt_color(DEEPSEEK_RED, ColorDepth::Ansi16), Color::Red);
+        assert_eq!(adapt_color(YUNPAT_RED, ColorDepth::Ansi16), Color::Red);
     }
 
     #[test]
@@ -784,6 +784,6 @@ mod tests {
         // Don't try to pin the result — env may be anything in CI. Just
         // exercise the path so a panic would surface.
         let _ = ColorDepth::detect();
-        let _ = adapt_color(DEEPSEEK_INK, ColorDepth::detect());
+        let _ = adapt_color(YUNPAT_INK, ColorDepth::detect());
     }
 }

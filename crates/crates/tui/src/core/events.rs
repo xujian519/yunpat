@@ -224,6 +224,8 @@ pub enum Event {
         description: String,
         /// Fingerprint key for per‑call approval caching (§5.A).
         approval_key: String,
+        /// Collaboration gate level for this tool call.
+        gate: crate::tui::collaboration_gate::CollaborationGate,
     },
 
     /// Request user input for a tool call

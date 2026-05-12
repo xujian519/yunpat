@@ -575,17 +575,17 @@ fn print_stats(stats: &SessionStats) {
 }
 
 fn ds_blue(text: &str) -> ColoredString {
-    let (r, g, b) = palette::DEEPSEEK_BLUE_RGB;
+    let (r, g, b) = palette::YUNPAT_BLUE_RGB;
     text.truecolor(r, g, b)
 }
 
 fn ds_sky(text: &str) -> ColoredString {
-    let (r, g, b) = palette::DEEPSEEK_SKY_RGB;
+    let (r, g, b) = palette::YUNPAT_SKY_RGB;
     text.truecolor(r, g, b)
 }
 
 fn ds_red(text: &str) -> ColoredString {
-    let (r, g, b) = palette::DEEPSEEK_RED_RGB;
+    let (r, g, b) = palette::YUNPAT_RED_RGB;
     text.truecolor(r, g, b)
 }
 

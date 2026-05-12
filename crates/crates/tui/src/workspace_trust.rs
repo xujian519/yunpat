@@ -19,6 +19,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
+use crate::config::yunpat_data_dir;
+
 use crate::utils::write_atomic;
 
 const TRUST_FILE_NAME: &str = "workspace-trust.json";
@@ -158,7 +160,7 @@ fn canonicalize_or_keep(path: &Path) -> PathBuf {
 }
 
 fn trust_file_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|home| home.join(".deepseek").join(TRUST_FILE_NAME))
+    yunpat_data_dir().map(|dir| dir.join(TRUST_FILE_NAME))
 }
 
 fn read_trust_file_at(path: &Path) -> Result<TrustFile> {

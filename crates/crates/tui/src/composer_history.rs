@@ -1,6 +1,6 @@
 //! Cross-session composer input history (#366).
 //!
-//! Persists user-typed prompts to `~/.deepseek/composer_history.txt` so
+//! Persists user-typed prompts to the data dir's `composer_history.txt` so
 //! pressing Up-arrow at the composer recalls submissions from previous
 //! sessions, not just the current one. One entry per line, oldest first,
 //! capped at [`MAX_HISTORY_ENTRIES`] entries (older entries are pruned
@@ -14,6 +14,8 @@ use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
+use crate::config::yunpat_data_dir;
+
 /// Hard cap on persisted history. Keeps the file small (typical entries
 /// are < 200 chars, so 1000 entries ≈ 200 KB) and bounds startup load
 /// time.
@@ -22,7 +24,7 @@ pub const MAX_HISTORY_ENTRIES: usize = 1000;
 const HISTORY_FILE_NAME: &str = "composer_history.txt";
 
 fn default_history_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|home| home.join(".deepseek").join(HISTORY_FILE_NAME))
+    yunpat_data_dir().map(|dir| dir.join(HISTORY_FILE_NAME))
 }
 
 /// Read the persisted history into memory. Returns an empty vec if the

@@ -128,7 +128,7 @@ fn case_doc(arg: Option<&str>) -> CommandResult {
             return CommandResult::error("File path is required after --type <value>");
         }
     } else {
-        rest_parts.last().unwrap().to_string()
+        rest_parts.last().copied().unwrap_or("").to_string()
     };
 
     CommandResult::with_message_and_action(

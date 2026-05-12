@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use super::CommandResult;
 use crate::client::DeepSeekClient;
-use crate::config::{COMMON_DEEPSEEK_MODELS, clear_api_key, normalize_model_name};
+use crate::config::{COMMON_YUNPAT_MODELS, clear_api_key, normalize_model_name};
 use crate::config_ui::{ConfigUiMode, parse_mode};
 use crate::llm_client::LlmClient;
 use crate::localization::resolve_locale;
@@ -276,7 +276,7 @@ pub fn set_config_value(app: &mut App, key: &str, value: &str, persist: bool) ->
             let Some(model) = normalize_model_name(value) else {
                 return CommandResult::error(format!(
                     "Invalid model '{value}'. Expected a DeepSeek model ID. Common models: {}",
-                    COMMON_DEEPSEEK_MODELS.join(", ")
+                    COMMON_YUNPAT_MODELS.join(", ")
                 ));
             };
             app.model = model.clone();

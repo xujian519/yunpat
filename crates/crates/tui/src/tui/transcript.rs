@@ -299,6 +299,54 @@ impl TranscriptViewCache {
     pub fn total_lines(&self) -> usize {
         self.lines.len()
     }
+
+    /// Return a viewport-clipped slice of lines for the visible area.
+    ///
+    /// Avoids exposing the full `lines` Vec when the caller only needs a
+    /// contiguous window (e.g. the visible transcript area). For a 10K-line
+    /// transcript with a 50-line viewport this means the render path only
+    /// iterates 50 lines instead of 10K.
+    #[must_use]
+    pub fn visible_lines(&self, offset: usize, height: usize) -> &[Line<'static>] {
+        if offset >= self.lines.len() {
+            return &[];
+        }
+        let end = (offset + height).min(self.lines.len());
+        &self.lines[offset..end]
+    }
+
+    /// Return line metadata for the same range as [`visible_lines`].
+    #[must_use]
+    #[allow(dead_code)]
+    pub fn visible_line_meta(&self, offset: usize, height: usize) -> &[TranscriptLineMeta] {
+        if offset >= self.line_meta.len() {
+            return &[];
+        }
+        let end = (offset + height).min(self.line_meta.len());
+        &self.line_meta[offset..end]
+    }
+
+    /// Find the cell index that owns the line at `line_offset`.
+    ///
+    /// Used to optimize cell-boundary-aware operations (e.g. selecting which
+    /// cell a click landed on) without scanning the full metadata array.
+    #[must_use]
+    #[allow(dead_code)]
+    pub fn cell_at_line(&self, line_offset: usize) -> Option<usize> {
+        let meta = self.line_meta.get(line_offset)?;
+        match meta {
+            TranscriptLineMeta::CellLine { cell_index, .. } => Some(*cell_index),
+            TranscriptLineMeta::Spacer => {
+                // Walk backwards to find the preceding CellLine.
+                for i in (0..line_offset).rev() {
+                    if let TranscriptLineMeta::CellLine { cell_index, .. } = &self.line_meta[i] {
+                        return Some(*cell_index);
+                    }
+                }
+                None
+            }
+        }
+    }
 }
 
 fn spacer_rows_between(

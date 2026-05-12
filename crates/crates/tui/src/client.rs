@@ -1,6 +1,6 @@
-//! HTTP client for DeepSeek's OpenAI-compatible Chat Completions API.
+//! HTTP client for YunPat's OpenAI-compatible Chat Completions API.
 //!
-//! DeepSeek documents `/chat/completions` as the primary endpoint, and this
+//! The API documents `/chat/completions` as the primary endpoint, and this
 //! client now routes all normal traffic through that surface.
 
 use std::collections::HashMap;

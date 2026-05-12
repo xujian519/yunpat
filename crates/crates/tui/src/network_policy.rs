@@ -49,6 +49,14 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+#[cfg(not(test))]
+use crate::config::yunpat_data_dir;
+
+#[cfg(test)]
+fn yunpat_data_dir() -> Option<std::path::PathBuf> {
+    dirs::home_dir().map(|home| home.join(".yunpat"))
+}
+
 /// What the policy decided about an outbound network call.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Decision {
@@ -250,12 +258,12 @@ impl NetworkAuditor {
         Self { path, enabled }
     }
 
-    /// Auditor pointing at `~/.deepseek/audit.log`. Returns `None` if the
-    /// home directory can't be resolved.
+    /// Auditor pointing at the data dir's `audit.log`. Returns `None` if the
+    /// data directory can't be resolved.
     #[must_use]
     pub fn default_path(enabled: bool) -> Option<Self> {
-        let home = dirs::home_dir()?;
-        Some(Self::new(home.join(".deepseek").join("audit.log"), enabled))
+        let dir = yunpat_data_dir()?;
+        Some(Self::new(dir.join("audit.log"), enabled))
     }
 
     /// Append one line. Best-effort: errors are logged via `eprintln!` but

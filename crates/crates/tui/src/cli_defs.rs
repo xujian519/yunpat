@@ -13,8 +13,8 @@ use clap_complete::Shell;
     name = "deepseek",
     author,
     version,
-    about = "DeepSeek TUI/CLI for DeepSeek models",
-    long_about = "Terminal-native TUI and CLI for DeepSeek models.\n\nRun 'deepseek' to start.\n\nNot affiliated with DeepSeek Inc."
+    about = "YunPat TUI/CLI for YunPat models",
+    long_about = "Terminal-native TUI and CLI for YunPat models.\n\nRun 'yunpat' to start.\n\nPowered by YunPat."
 )]
 pub struct Cli {
     /// Subcommand to run

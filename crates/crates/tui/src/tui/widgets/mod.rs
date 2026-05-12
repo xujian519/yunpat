@@ -29,7 +29,7 @@ use crate::tui::approval::{
 };
 use crate::tui::history::HistoryCell;
 use crate::tui::scrolling::TranscriptLineMeta;
-use crate::{commands, config::COMMON_DEEPSEEK_MODELS};
+use crate::{commands, config::COMMON_YUNPAT_MODELS};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
@@ -241,7 +241,7 @@ impl ChatWidget {
         let mut lines = if total_lines == 0 {
             vec![Line::from("")]
         } else {
-            app.viewport.transcript_cache.lines()[top..end].to_vec()
+            app.viewport.transcript_cache.visible_lines(top, end - top).to_vec()
         };
 
         // Brief flash highlight on the most recently sent user message.
@@ -307,11 +307,11 @@ impl Renderable for ChatWidget {
         // gray on most user setups; an explicit ink fill keeps the chat
         // area on-brand.
         Block::default()
-            .style(Style::default().bg(palette::DEEPSEEK_INK))
+            .style(Style::default().bg(palette::YUNPAT_INK))
             .render(area, buf);
 
         let paragraph =
-            Paragraph::new(self.lines.clone()).style(Style::default().bg(palette::DEEPSEEK_INK));
+            Paragraph::new(self.lines.clone()).style(Style::default().bg(palette::YUNPAT_INK));
         paragraph.render(area, buf);
 
         if let Some(scrollbar) = self.scrollbar {
@@ -325,7 +325,7 @@ impl Renderable for ChatWidget {
                 .track_symbol(Some("│"))
                 .track_style(Style::default().fg(palette::BORDER_COLOR))
                 .thumb_symbol("┃")
-                .thumb_style(Style::default().fg(palette::DEEPSEEK_SKY))
+                .thumb_style(Style::default().fg(palette::YUNPAT_SKY))
                 .render(area, buf, &mut state);
         }
     }
@@ -495,7 +495,7 @@ impl Renderable for ComposerWidget<'_> {
                         if queue_count > 0 {
                             (
                                 Some(format!("↵ send ({} queued)", queue_count)),
-                                palette::DEEPSEEK_SKY,
+                                palette::YUNPAT_SKY,
                             )
                         } else {
                             (None, palette::TEXT_MUTED)
@@ -516,7 +516,7 @@ impl Renderable for ComposerWidget<'_> {
                     // Steer and QueueFollowUp are now only reached via Ctrl+Enter override.
                     SubmitDisposition::Steer => (
                         Some("↵ steering (Ctrl+Enter)".to_string()),
-                        palette::DEEPSEEK_SKY,
+                        palette::YUNPAT_SKY,
                     ),
                     SubmitDisposition::QueueFollowUp => (
                         Some("↵ queued (Ctrl+Enter to steer)".to_string()),
@@ -553,7 +553,7 @@ impl Renderable for ComposerWidget<'_> {
             if self.app.composer.vim_enabled {
                 let color = match self.app.composer.vim_mode {
                     VimMode::Normal => palette::TEXT_MUTED,
-                    VimMode::Insert => palette::DEEPSEEK_SKY,
+                    VimMode::Insert => palette::YUNPAT_SKY,
                     VimMode::Visual => palette::MODE_PLAN,
                 };
                 let label = self.app.composer.vim_mode.label();
@@ -767,7 +767,7 @@ impl Renderable for ComposerWidget<'_> {
 
                 // Name column
                 let name_style = if entry.is_skill && !is_selected {
-                    Style::default().fg(palette::DEEPSEEK_SKY)
+                    Style::default().fg(palette::YUNPAT_SKY)
                 } else {
                     sel_style
                 };
@@ -955,7 +955,7 @@ impl Renderable for ApprovalWidget<'_> {
             Span::styled(
                 format!(" {} ", risk_badge_text(risk)),
                 Style::default()
-                    .fg(palette::DEEPSEEK_INK)
+                    .fg(palette::YUNPAT_INK)
                     .bg(palette_colors.accent)
                     .add_modifier(Modifier::BOLD),
             ),
@@ -963,7 +963,7 @@ impl Renderable for ApprovalWidget<'_> {
             Span::styled(
                 self.request.tool_name.clone(),
                 Style::default()
-                    .fg(palette::DEEPSEEK_SKY)
+                    .fg(palette::YUNPAT_SKY)
                     .add_modifier(Modifier::BOLD),
             ),
         ]));
@@ -1098,7 +1098,7 @@ impl Renderable for ApprovalWidget<'_> {
                     Span::styled(
                         again_key.to_string(),
                         Style::default()
-                            .fg(palette::DEEPSEEK_INK)
+                            .fg(palette::YUNPAT_INK)
                             .bg(palette_colors.accent)
                             .add_modifier(Modifier::BOLD),
                     ),
@@ -1138,7 +1138,7 @@ impl Renderable for ApprovalWidget<'_> {
             .title(title)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(palette_colors.border))
-            .style(Style::default().bg(palette::DEEPSEEK_INK))
+            .style(Style::default().bg(palette::YUNPAT_INK))
             .padding(Padding::uniform(1));
 
         // Render the card body inside the block, then paint the warm
@@ -1192,7 +1192,7 @@ fn paint_left_rail(card: Rect, buf: &mut Buffer, color: Color) {
         }
         let cell = &mut buf[(rail_x, y)];
         cell.set_char('\u{2503}'); // ┃ — heavy bar so the warning reads at a glance
-        cell.set_style(Style::default().fg(color).bg(palette::DEEPSEEK_INK));
+        cell.set_style(Style::default().fg(color).bg(palette::YUNPAT_INK));
     }
 }
 
@@ -1207,12 +1207,12 @@ fn approval_palette(risk: RiskLevel) -> ApprovalColors {
     match risk {
         RiskLevel::Benign => ApprovalColors {
             border: palette::BORDER_COLOR,
-            accent: palette::DEEPSEEK_SKY,
-            shortcut: palette::DEEPSEEK_SKY,
+            accent: palette::YUNPAT_SKY,
+            shortcut: palette::YUNPAT_SKY,
         },
         RiskLevel::Destructive => ApprovalColors {
-            border: palette::DEEPSEEK_RED,
-            accent: palette::DEEPSEEK_RED,
+            border: palette::YUNPAT_RED,
+            accent: palette::YUNPAT_RED,
             shortcut: palette::STATUS_WARNING,
         },
     }
@@ -1231,7 +1231,7 @@ fn category_label_for(category: ToolCategory) -> (&'static str, Color) {
         ToolCategory::FileWrite => ("File Write", palette::STATUS_WARNING),
         ToolCategory::Shell => ("Shell Command", palette::STATUS_ERROR),
         ToolCategory::Network => ("Network", palette::STATUS_WARNING),
-        ToolCategory::McpRead => ("MCP Read", palette::DEEPSEEK_SKY),
+        ToolCategory::McpRead => ("MCP Read", palette::YUNPAT_SKY),
         ToolCategory::McpAction => ("MCP Action", palette::STATUS_WARNING),
         ToolCategory::Unknown => ("Unknown", palette::STATUS_ERROR),
     }
@@ -1313,7 +1313,7 @@ impl Renderable for ElevationWidget<'_> {
                 Span::styled(
                     &self.request.tool_name,
                     Style::default()
-                        .fg(palette::DEEPSEEK_SKY)
+                        .fg(palette::YUNPAT_SKY)
                         .add_modifier(Modifier::BOLD),
                 ),
             ]),
@@ -1421,7 +1421,7 @@ impl Renderable for ElevationWidget<'_> {
             .title(title)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(palette::BORDER_COLOR))
-            .style(Style::default().bg(palette::DEEPSEEK_INK))
+            .style(Style::default().bg(palette::YUNPAT_INK))
             .padding(Padding::uniform(1));
 
         let paragraph = Paragraph::new(lines)
@@ -1628,7 +1628,7 @@ fn build_empty_state_lines(app: &App, area: Rect) -> Vec<Line<'static>> {
     let body = vec![
         Line::from(Span::styled(
             format!("{inset}DeepSeek TUI"),
-            Style::default().fg(palette::DEEPSEEK_BLUE).bold(),
+            Style::default().fg(palette::YUNPAT_BLUE).bold(),
         )),
         Line::from(Span::styled(
             format!("{inset}{workspace_name}  ·  {}", app.model),
@@ -1782,7 +1782,7 @@ pub(crate) fn slash_completion_hints(
 
     // Special: /model <name> completions when only /model matches
     if entries.iter().any(|e| e.name == "/model") && prefix_lower.eq_ignore_ascii_case("model") {
-        for model_name in COMMON_DEEPSEEK_MODELS {
+        for model_name in COMMON_YUNPAT_MODELS {
             entries.push(SlashMenuEntry {
                 name: format!("/model {model_name}"),
                 description: String::from("Switch to this model"),

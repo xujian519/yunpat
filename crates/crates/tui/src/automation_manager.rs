@@ -17,6 +17,7 @@ use tokio::time::sleep;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
+use crate::config::yunpat_data_dir;
 use crate::task_manager::{NewTaskRequest, SharedTaskManager, TaskStatus};
 use crate::utils::spawn_supervised;
 
@@ -794,8 +795,8 @@ pub fn default_automations_dir() -> PathBuf {
             return PathBuf::from(trimmed);
         }
     }
-    dirs::home_dir()
-        .map(|home| home.join(".yunpat").join("automations"))
+    yunpat_data_dir()
+        .map(|dir| dir.join("automations"))
         .unwrap_or_else(|| PathBuf::from(".yunpat").join("automations"))
 }
 

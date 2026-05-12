@@ -6,9 +6,10 @@ use std::path::PathBuf;
 use chrono::Utc;
 use serde_json::{Value, json};
 
+use crate::config::yunpat_data_dir;
 use crate::utils::{flush_and_sync, open_append};
 
-/// Append an audit event to `~/.deepseek/audit.log`.
+/// Append an audit event to the data dir's `audit.log`.
 ///
 /// This helper is best-effort by design: callers should not fail critical flows
 /// if audit persistence fails.
@@ -40,6 +41,6 @@ fn append_event(event: &str, details: Value) -> anyhow::Result<()> {
 }
 
 fn default_audit_path() -> anyhow::Result<PathBuf> {
-    let home = dirs::home_dir().ok_or_else(|| anyhow::anyhow!("home directory not found"))?;
-    Ok(home.join(".deepseek").join("audit.log"))
+    let dir = yunpat_data_dir().ok_or_else(|| anyhow::anyhow!("data directory not found"))?;
+    Ok(dir.join("audit.log"))
 }

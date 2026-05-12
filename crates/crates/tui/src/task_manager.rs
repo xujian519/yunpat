@@ -22,7 +22,7 @@ use tokio::time::sleep;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
-use crate::config::{Config, DEFAULT_TEXT_MODEL, MAX_SUBAGENTS};
+use crate::config::{Config, DEFAULT_TEXT_MODEL, MAX_SUBAGENTS, yunpat_data_dir};
 use crate::runtime_threads::{
     CreateThreadRequest, RuntimeThreadManager, RuntimeThreadManagerConfig, RuntimeTurnStatus,
     SharedRuntimeThreadManager, StartTurnRequest,
@@ -1624,7 +1624,7 @@ fn default_auto_approve() -> bool {
     true
 }
 
-/// Default task persistence location (`~/.deepseek/tasks`).
+/// Default task persistence location (data dir `/tasks`).
 #[must_use]
 pub fn default_tasks_dir() -> PathBuf {
     if let Ok(path) = std::env::var("DEEPSEEK_TASKS_DIR")
@@ -1632,10 +1632,10 @@ pub fn default_tasks_dir() -> PathBuf {
     {
         return PathBuf::from(path);
     }
-    if let Some(home) = dirs::home_dir() {
-        return home.join(".deepseek").join("tasks");
+    if let Some(dir) = yunpat_data_dir() {
+        return dir.join("tasks");
     }
-    PathBuf::from(".deepseek").join("tasks")
+    PathBuf::from(".yunpat").join("tasks")
 }
 
 /// Wait for a task to reach a terminal status (tests and API helpers).

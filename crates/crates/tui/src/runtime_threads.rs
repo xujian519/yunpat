@@ -683,7 +683,11 @@ pub struct RuntimeThreadManager {
     event_tx: broadcast::Sender<RuntimeEventRecord>,
     manager_cfg: RuntimeThreadManagerConfig,
     cancel_token: CancellationToken,
+    /// Task manager shared state. Uses `std::sync::Mutex` (not tokio) because
+    /// this field is never held across `.await` points — all accesses are
+    /// short, synchronous reads/writes within non-async helper functions.
     task_manager: Arc<StdMutex<Option<crate::task_manager::SharedTaskManager>>>,
+    /// Automation manager shared state. Same rationale as `task_manager`.
     automations: Arc<StdMutex<Option<crate::automation_manager::SharedAutomationManager>>>,
 }
 
@@ -3835,6 +3839,7 @@ mod tests {
                 id: "tool_stale".to_string(),
                 tool_name: "exec_command".to_string(),
                 description: "stale approval".to_string(),
+                gate: crate::tui::collaboration_gate::CollaborationGate::RequirePlan,
             })
             .await?;
 

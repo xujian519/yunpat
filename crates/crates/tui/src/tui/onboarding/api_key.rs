@@ -11,7 +11,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
         Line::from(Span::styled(
             "Connect your DeepSeek API key",
             Style::default()
-                .fg(palette::DEEPSEEK_SKY)
+                .fg(palette::YUNPAT_SKY)
                 .add_modifier(Modifier::BOLD),
         )),
         Line::from(""),

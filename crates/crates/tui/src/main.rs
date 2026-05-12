@@ -1,4 +1,4 @@
-//! CLI entry point for the `DeepSeek` client.
+//! CLI entry point for the `YunPat` client.
 
 use std::io::{self, IsTerminal, Read, Write};
 use std::path::{Path, PathBuf};
@@ -87,6 +87,8 @@ fn configure_windows_console_utf8() {
     use windows::Win32::System::Console::{SetConsoleCP, SetConsoleOutputCP};
 
     const CP_UTF8: u32 = 65001;
+    // SAFETY: SetConsoleCP/SetConsoleOutputCP are thread-safe Windows API calls
+    // that only modify the current console's code page. CP_UTF8 is a valid constant.
     unsafe {
         let _ = SetConsoleCP(CP_UTF8);
         let _ = SetConsoleOutputCP(CP_UTF8);
@@ -407,14 +409,14 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
     use crate::palette;
     use colored::Colorize;
 
-    let (blue_r, blue_g, blue_b) = palette::DEEPSEEK_BLUE_RGB;
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
-    let (red_r, red_g, red_b) = palette::DEEPSEEK_RED_RGB;
+    let (blue_r, blue_g, blue_b) = palette::YUNPAT_BLUE_RGB;
+    let (sky_r, sky_g, sky_b) = palette::YUNPAT_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::YUNPAT_SKY_RGB;
+    let (red_r, red_g, red_b) = palette::YUNPAT_RED_RGB;
 
     println!(
         "{}",
-        "DeepSeek TUI Doctor"
+        "YunPat TUI Doctor"
             .truecolor(blue_r, blue_g, blue_b)
             .bold()
     );
@@ -1368,9 +1370,9 @@ fn list_sessions(limit: usize, search: Option<String>) -> Result<()> {
     use colored::Colorize;
     use session_manager::{SessionManager, format_session_line};
 
-    let (blue_r, blue_g, blue_b) = palette::DEEPSEEK_BLUE_RGB;
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
+    let (blue_r, blue_g, blue_b) = palette::YUNPAT_BLUE_RGB;
+    let (sky_r, sky_g, sky_b) = palette::YUNPAT_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::YUNPAT_SKY_RGB;
 
     let manager = SessionManager::default_location()?;
 
@@ -1384,7 +1386,7 @@ fn list_sessions(limit: usize, search: Option<String>) -> Result<()> {
         println!("{}", "No sessions found.".truecolor(sky_r, sky_g, sky_b));
         println!(
             "Start a new session with: {}",
-            "deepseek".truecolor(blue_r, blue_g, blue_b)
+            "yunpat".truecolor(blue_r, blue_g, blue_b)
         );
         return Ok(());
     }
@@ -1417,12 +1419,12 @@ fn list_sessions(limit: usize, search: Option<String>) -> Result<()> {
     println!();
     println!(
         "Resume with: {} {}",
-        "deepseek --resume".truecolor(blue_r, blue_g, blue_b),
+        "yunpat --resume".truecolor(blue_r, blue_g, blue_b),
         "<session-id>".dimmed()
     );
     println!(
         "Continue latest in this workspace: {}",
-        "deepseek --continue".truecolor(blue_r, blue_g, blue_b)
+        "yunpat --continue".truecolor(blue_r, blue_g, blue_b)
     );
 
     Ok(())
@@ -1434,9 +1436,9 @@ fn init_project() -> Result<()> {
     use colored::Colorize;
     use project_context::create_default_agents_md;
 
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
-    let (red_r, red_g, red_b) = palette::DEEPSEEK_RED_RGB;
+    let (sky_r, sky_g, sky_b) = palette::YUNPAT_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::YUNPAT_SKY_RGB;
+    let (red_r, red_g, red_b) = palette::YUNPAT_RED_RGB;
 
     let workspace = std::env::current_dir()?;
     let doc_path = workspace.join("yunpat.md");
@@ -3170,7 +3172,7 @@ mod doctor_endpoint_tests {
         let target = doctor_api_target(&config);
 
         assert_eq!(target.provider, "deepseek");
-        assert_eq!(target.base_url, crate::config::DEFAULT_DEEPSEEK_BASE_URL);
+        assert_eq!(target.base_url, crate::config::DEFAULT_YUNPAT_BASE_URL);
         assert_eq!(target.model, crate::config::DEFAULT_TEXT_MODEL);
     }
 

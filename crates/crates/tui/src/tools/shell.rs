@@ -126,6 +126,9 @@ fn kill_child_process_group(child: &mut Child) -> std::io::Result<()> {
         return child.kill();
     }
 
+    // SAFETY: pgid is validated to be > 0 above, so -pgid is a valid process
+    // group ID. libc::kill sends a signal to the entire process group without
+    // touching memory in the caller's address space.
     let result = unsafe { libc::kill(-pgid, libc::SIGKILL) };
     if result == 0 {
         Ok(())

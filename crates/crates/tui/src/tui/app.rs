@@ -785,6 +785,8 @@ pub struct App {
     pub runtime_services: RuntimeToolServices,
     /// MCP connection state (extracted from App).
     pub mcp: super::app_state::McpState,
+    /// File preview panel state (extracted from App).
+    pub preview: super::app_state::PreviewState,
     /// Active skill to apply to next user message
     pub active_skill: Option<String>,
     /// Cached (name, description) pairs from the skill registry.
@@ -1276,6 +1278,7 @@ impl App {
                 pool: None,
             },
             active_skill: None,
+            preview: super::app_state::PreviewState::default(),
             cached_skills,
             context_references_by_cell: HashMap::new(),
             session_context_references: Vec::new(),

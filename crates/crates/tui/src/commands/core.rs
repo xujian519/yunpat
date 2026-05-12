@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::config::{COMMON_DEEPSEEK_MODELS, normalize_model_name};
+use crate::config::{COMMON_YUNPAT_MODELS, normalize_model_name};
 use crate::localization::{MessageId, tr};
 use crate::tui::app::{App, AppAction, AppMode, ReasoningEffort};
 use crate::tui::views::{HelpView, ModalKind, SubAgentsView};
@@ -111,7 +111,7 @@ pub fn model(app: &mut App, model_name: Option<&str>) -> CommandResult {
         let Some(model_id) = normalize_model_name(name) else {
             return CommandResult::error(format!(
                 "Invalid model '{name}'. Expected auto or a DeepSeek model ID. Common models: {}",
-                COMMON_DEEPSEEK_MODELS.join(", ")
+                COMMON_YUNPAT_MODELS.join(", ")
             ));
         };
         let old_model = app.model_display_label();

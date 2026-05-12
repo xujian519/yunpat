@@ -376,7 +376,7 @@ fn render_sidebar_tasks(f: &mut Frame, area: Rect, app: &App) {
                 &format!("turn {} ({status})", truncate_line_to_width(turn_id, 12)),
                 content_width.max(1),
             ),
-            Style::default().fg(palette::DEEPSEEK_SKY),
+            Style::default().fg(palette::YUNPAT_SKY),
         )));
     }
 
@@ -398,7 +398,7 @@ fn render_sidebar_tasks(f: &mut Frame, area: Rect, app: &App) {
                 } else {
                     format!("{} active", app.task_panel.len())
                 },
-                Style::default().fg(palette::DEEPSEEK_SKY).bold(),
+                Style::default().fg(palette::YUNPAT_SKY).bold(),
             ),
             Span::styled(
                 if running == app.task_panel.len() {
@@ -567,7 +567,7 @@ pub fn subagent_navigator_lines(
         vec![
             Span::styled(
                 format!("{live_running} running"),
-                Style::default().fg(palette::DEEPSEEK_SKY).bold(),
+                Style::default().fg(palette::YUNPAT_SKY).bold(),
             ),
             Span::styled(
                 format!(" / {total}"),
@@ -597,7 +597,7 @@ pub fn subagent_navigator_lines(
 
     if summary.foreground_rlm_running {
         lines.push(Line::from(vec![
-            Span::styled("RLM", Style::default().fg(palette::DEEPSEEK_SKY).bold()),
+            Span::styled("RLM", Style::default().fg(palette::YUNPAT_SKY).bold()),
             Span::styled(
                 " foreground work active",
                 Style::default().fg(palette::TEXT_DIM),
@@ -637,7 +637,7 @@ fn render_context_panel(f: &mut Frame, area: Rect, app: &App) {
     lines.push(Line::from(vec![
         Span::styled(
             truncate_line_to_width(&ws_name, content_width.max(1)),
-            Style::default().fg(palette::DEEPSEEK_SKY).bold(),
+            Style::default().fg(palette::YUNPAT_SKY).bold(),
         ),
         Span::styled(
             format!("  {}", app.workspace_ctx.context.as_deref().unwrap_or("")),

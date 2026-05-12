@@ -456,7 +456,7 @@ impl ModalView for ShellControlView {
                 Block::default()
                     .title(Line::from(vec![Span::styled(
                         " Shell command ",
-                        Style::default().fg(palette::DEEPSEEK_BLUE).bold(),
+                        Style::default().fg(palette::YUNPAT_BLUE).bold(),
                     )]))
                     .title_bottom(Line::from(Span::styled(
                         " Enter select | Esc close ",
@@ -464,7 +464,7 @@ impl ModalView for ShellControlView {
                     )))
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(palette::BORDER_COLOR))
-                    .style(Style::default().bg(palette::DEEPSEEK_INK))
+                    .style(Style::default().bg(palette::YUNPAT_INK))
                     .padding(Padding::uniform(1)),
             )
             .style(Style::default().fg(palette::TEXT_PRIMARY));
@@ -1027,8 +1027,8 @@ fn render_config_editor_value_line(edit: &ConfigEdit) -> ratatui::text::Line<'st
     ));
 
     let cursor_style = Style::default()
-        .fg(palette::DEEPSEEK_INK)
-        .bg(palette::DEEPSEEK_SKY)
+        .fg(palette::YUNPAT_INK)
+        .bg(palette::YUNPAT_SKY)
         .bold();
     let selected_style = Style::default()
         .fg(palette::SELECTION_TEXT)
@@ -1193,7 +1193,7 @@ impl ModalView for ConfigView {
         let base_block = Block::default()
             .borders(Borders::ALL)
             .border_style(Style::default().fg(palette::BORDER_COLOR))
-            .style(Style::default().bg(palette::DEEPSEEK_INK))
+            .style(Style::default().bg(palette::YUNPAT_INK))
             .padding(Padding::uniform(1));
 
         let inner = base_block.inner(popup_area);
@@ -1201,7 +1201,7 @@ impl ModalView for ConfigView {
             let mut lines: Vec<Line> = Vec::new();
             lines.push(Line::from(vec![Span::styled(
                 format!("Edit {}", edit.key),
-                Style::default().fg(palette::DEEPSEEK_SKY).bold(),
+                Style::default().fg(palette::YUNPAT_SKY).bold(),
             )]));
             lines.push(Line::from(""));
             lines.push(Line::from(vec![
@@ -1250,7 +1250,7 @@ impl ModalView for ConfigView {
             let mut lines: Vec<Line> = vec![
                 Line::from(vec![Span::styled(
                     self.tr(MessageId::ConfigTitle),
-                    Style::default().fg(palette::DEEPSEEK_BLUE).bold(),
+                    Style::default().fg(palette::YUNPAT_BLUE).bold(),
                 )]),
                 Line::from(vec![
                     Span::styled("  Search: ", Style::default().fg(palette::TEXT_MUTED)),
@@ -1271,7 +1271,7 @@ impl ModalView for ConfigView {
                     ConfigListItem::Section(section) => {
                         lines.push(Line::from(Span::styled(
                             format!("  {}", section.label()),
-                            Style::default().fg(palette::DEEPSEEK_SKY).bold(),
+                            Style::default().fg(palette::YUNPAT_SKY).bold(),
                         )));
                     }
                     ConfigListItem::Row(idx) => {
@@ -1284,7 +1284,7 @@ impl ModalView for ConfigView {
                         let style = if selected {
                             Style::default()
                                 .fg(ratatui::style::Color::White)
-                                .bg(palette::DEEPSEEK_BLUE)
+                                .bg(palette::YUNPAT_BLUE)
                                 .add_modifier(ratatui::style::Modifier::BOLD)
                         } else {
                             Style::default().fg(palette::TEXT_PRIMARY)
@@ -1355,7 +1355,7 @@ impl ModalView for ConfigView {
         let block = Block::default()
             .title(Line::from(vec![Span::styled(
                 self.tr(MessageId::ConfigModalTitle),
-                Style::default().fg(palette::DEEPSEEK_BLUE).bold(),
+                Style::default().fg(palette::YUNPAT_BLUE).bold(),
             )]))
             .title_bottom(Line::from(Span::styled(
                 footer,
@@ -1363,7 +1363,7 @@ impl ModalView for ConfigView {
             )))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(palette::BORDER_COLOR))
-            .style(Style::default().bg(palette::DEEPSEEK_INK))
+            .style(Style::default().bg(palette::YUNPAT_INK))
             .padding(Padding::uniform(1));
 
         let inner = block.inner(popup_area);
@@ -1474,13 +1474,13 @@ impl ModalView for SubAgentsView {
                 ("Running", running.len(), palette::STATUS_WARNING),
                 ("Completed", completed.len(), palette::STATUS_SUCCESS),
                 ("Interrupted", interrupted.len(), palette::STATUS_WARNING),
-                ("Failed", failed.len(), palette::DEEPSEEK_RED),
+                ("Failed", failed.len(), palette::YUNPAT_RED),
                 ("Cancelled", cancelled.len(), palette::TEXT_MUTED),
             ];
 
             lines.push(Line::from(Span::styled(
                 "Sub-agents",
-                Style::default().fg(palette::DEEPSEEK_SKY).bold(),
+                Style::default().fg(palette::YUNPAT_SKY).bold(),
             )));
 
             let mut summary_parts = Vec::new();
@@ -1549,7 +1549,7 @@ impl ModalView for SubAgentsView {
             append_subagent_group(
                 &mut lines,
                 "Failed",
-                palette::DEEPSEEK_RED.into(),
+                palette::YUNPAT_RED.into(),
                 &failed,
                 content_width,
             );
@@ -1578,16 +1578,16 @@ impl ModalView for SubAgentsView {
                 Block::default()
                     .title(Line::from(vec![Span::styled(
                         " Sub-agents ",
-                        Style::default().fg(palette::DEEPSEEK_BLUE).bold(),
+                        Style::default().fg(palette::YUNPAT_BLUE).bold(),
                     )]))
                     .title_bottom(Line::from(vec![
                         Span::styled(" Esc to close ", Style::default().fg(palette::TEXT_MUTED)),
                         Span::styled(" R to refresh ", Style::default().fg(palette::TEXT_MUTED)),
-                        Span::styled(scroll_indicator, Style::default().fg(palette::DEEPSEEK_SKY)),
+                        Span::styled(scroll_indicator, Style::default().fg(palette::YUNPAT_SKY)),
                     ]))
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(palette::BORDER_COLOR))
-                    .style(Style::default().bg(palette::DEEPSEEK_INK))
+                    .style(Style::default().bg(palette::YUNPAT_INK))
                     .padding(Padding::uniform(1)),
             )
             .scroll((scroll as u16, 0));
@@ -1651,7 +1651,7 @@ fn append_subagent_group(
             let detail = truncate_view_text(detail, max_len);
             lines.push(Line::from(vec![
                 Span::styled("    reason: ", Style::default().fg(palette::TEXT_MUTED)),
-                Span::styled(detail, Style::default().fg(palette::DEEPSEEK_RED)),
+                Span::styled(detail, Style::default().fg(palette::YUNPAT_RED)),
             ]));
         }
 
@@ -1660,7 +1660,7 @@ fn append_subagent_group(
             let role = truncate_view_text(role, max_len);
             lines.push(Line::from(vec![
                 Span::styled("    role: ", Style::default().fg(palette::TEXT_MUTED)),
-                Span::styled(role, Style::default().fg(palette::DEEPSEEK_SKY)),
+                Span::styled(role, Style::default().fg(palette::YUNPAT_SKY)),
             ]));
         }
 
@@ -1708,10 +1708,10 @@ fn format_agent_status(
     use ratatui::style::Style;
 
     match status {
-        SubAgentStatus::Running => ("running", Style::default().fg(palette::DEEPSEEK_SKY), None),
+        SubAgentStatus::Running => ("running", Style::default().fg(palette::YUNPAT_SKY), None),
         SubAgentStatus::Completed => (
             "completed",
-            Style::default().fg(palette::DEEPSEEK_BLUE),
+            Style::default().fg(palette::YUNPAT_BLUE),
             None,
         ),
         SubAgentStatus::Interrupted(reason) => (
@@ -1722,7 +1722,7 @@ fn format_agent_status(
         SubAgentStatus::Cancelled => ("cancelled", Style::default().fg(palette::TEXT_MUTED), None),
         SubAgentStatus::Failed(reason) => (
             "failed",
-            Style::default().fg(palette::DEEPSEEK_RED),
+            Style::default().fg(palette::YUNPAT_RED),
             Some(reason.as_str()),
         ),
     }

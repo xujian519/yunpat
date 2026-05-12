@@ -2,7 +2,7 @@
 //!
 //! This intentionally starts with the ACP baseline: initialize, new session,
 //! prompt, and cancel. It keeps stdout protocol-clean for editor clients and
-//! routes prompts through the same configured DeepSeek client as one-shot CLI
+//! routes prompts through the same configured YunPat client as one-shot CLI
 //! mode.
 
 use std::collections::HashMap;
@@ -285,8 +285,8 @@ fn initialize_result(client_protocol_version: Option<u64>) -> Value {
             "sessionCapabilities": {}
         },
         "agentInfo": {
-            "name": "deepseek",
-            "title": "DeepSeek TUI",
+            "name": "yunpat",
+            "title": "YunPat TUI",
             "version": env!("CARGO_PKG_VERSION")
         },
         "authMethods": []
@@ -413,7 +413,7 @@ mod tests {
         let result = initialize_result(Some(1));
 
         assert_eq!(result["protocolVersion"], 1);
-        assert_eq!(result["agentInfo"]["name"], "deepseek");
+        assert_eq!(result["agentInfo"]["name"], "yunpat");
         assert_eq!(result["agentCapabilities"]["loadSession"], false);
         assert_eq!(
             result["agentCapabilities"]["promptCapabilities"]["embeddedContext"],

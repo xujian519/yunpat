@@ -1205,6 +1205,7 @@ async fn run_event_loop(
                         tool_name,
                         description,
                         approval_key,
+                        gate,
                     } => {
                         let session_approved =
                             app.approval.session_approved.contains(&approval_key)
@@ -1261,7 +1262,7 @@ async fn run_event_loop(
                                 maybe_add_patch_preview(app, &tool_input);
                             }
 
-                            // Create approval request and show overlay
+                            // Create approval request
                             let request = ApprovalRequest::new(
                                 &id,
                                 &tool_name,
@@ -1276,12 +1277,74 @@ async fn run_event_loop(
                                     "description": description,
                                     "session_id": app.current_session_id,
                                     "mode": app.mode.label(),
+                                    "gate": format!("{:?}", gate),
                                 }),
                             );
-                            app.view_stack.push(ApprovalView::new(request));
-                            app.status_message = Some(format!(
-                                "Approval required for '{tool_name}': {description}"
-                            ));
+
+                            // Route based on collaboration gate level
+                            match gate {
+                                super::collaboration_gate::CollaborationGate::None => {
+                                    let _ = engine_handle.approve_tool_call(id.clone()).await;
+                                }
+                                super::collaboration_gate::CollaborationGate::ConfirmPlan => {
+                                    app.status_message = Some(format!(
+                                        "{}: {}", tool_name, description
+                                    ));
+                                    // Preview target file for write operations
+                                    if let Some(path) =
+                                        tool_input.get("path").and_then(serde_json::Value::as_str)
+                                    {
+                                        let full_path = app.workspace.join(path);
+                                        if full_path.exists() {
+                                            super::preview::load_preview(
+                                                &mut app.preview,
+                                                full_path,
+                                            );
+                                            app.preview.visible = true;
+                                        }
+                                    }
+                                    app.view_stack.push(ApprovalView::new(request));
+                                }
+                                super::collaboration_gate::CollaborationGate::ReviewDiff => {
+                                    // Preview panel for diff + approval
+                                    if let Some(path) =
+                                        tool_input.get("path").and_then(serde_json::Value::as_str)
+                                    {
+                                        let full_path = app.workspace.join(path);
+                                        if full_path.exists() {
+                                            super::preview::load_preview(
+                                                &mut app.preview,
+                                                full_path,
+                                            );
+                                            app.preview.visible = true;
+                                        }
+                                    }
+                                    app.view_stack.push(ApprovalView::new(request));
+                                    app.status_message = Some(format!(
+                                        "Review changes: {} — {}", tool_name, description
+                                    ));
+                                }
+                                super::collaboration_gate::CollaborationGate::RequirePlan => {
+                                    // Sidebar auto-switch to Plan + preview target file
+                                    app.sidebar.focus = SidebarFocus::Plan;
+                                    if let Some(path) =
+                                        tool_input.get("path").and_then(serde_json::Value::as_str)
+                                    {
+                                        let full_path = app.workspace.join(path);
+                                        if full_path.exists() {
+                                            super::preview::load_preview(
+                                                &mut app.preview,
+                                                full_path,
+                                            );
+                                            app.preview.visible = true;
+                                        }
+                                    }
+                                    app.view_stack.push(ApprovalView::new(request));
+                                    app.status_message = Some(format!(
+                                        "Plan required: {} — {}", tool_name, description
+                                    ));
+                                }
+                            }
                         }
                     }
                     EngineEvent::UserInputRequired { id, request } => {
@@ -1877,6 +1940,20 @@ async fn run_event_loop(
                 continue;
             }
 
+            // Ctrl+Shift+P toggles the preview panel.
+            if is_preview_toggle_shortcut(&key) {
+                app.preview.visible = !app.preview.visible;
+                if !app.preview.visible {
+                    app.preview.focused = false;
+                    app.preview.clear();
+                    app.status_message = Some("Preview panel closed".to_string());
+                } else {
+                    app.status_message = Some("Preview panel opened".to_string());
+                }
+                app.needs_redraw = true;
+                continue;
+            }
+
             // Ctrl+P opens the fuzzy file-picker overlay. Bound only when the
             // composer is focused (no other modal on top of the stack) and the
             // engine is not actively streaming a turn.
@@ -1947,10 +2024,12 @@ async fn run_event_loop(
                     KeyCode::Enter => {
                         if let Some(state) = app.sidebar.file_tree.as_mut() {
                             if let Some(rel_path) = state.activate() {
-                                // Insert @path into the composer.
-                                let path_str = rel_path.to_string_lossy().to_string();
-                                app.status_message = Some(format!("Attached @{path_str}"));
-                                app.insert_str(&format!("@{} ", path_str));
+                                // Open preview panel and load file content.
+                                let full_path = app.workspace.join(&rel_path);
+                                app.preview.visible = true;
+                                app.preview.focused = false;
+                                super::preview::load_preview(&mut app.preview, full_path);
+                                app.status_message = Some(format!("Previewing {}", rel_path.display()));
                             } else {
                                 // Directory was expanded/collapsed; rebuild.
                                 app.needs_redraw = true;
@@ -1958,9 +2037,49 @@ async fn run_event_loop(
                         }
                         continue;
                     }
+                    KeyCode::Tab => {
+                        // Transfer focus from file tree to preview panel.
+                        if app.preview.visible {
+                            app.preview.focused = true;
+                            app.status_message = Some("Preview focused: j/k scroll  Esc close".to_string());
+                        }
+                        app.needs_redraw = true;
+                        continue;
+                    }
                     KeyCode::Esc => {
                         app.sidebar.file_tree = None;
                         app.status_message = Some("File tree closed".to_string());
+                        app.needs_redraw = true;
+                        continue;
+                    }
+                    _ => {}
+                }
+            }
+
+            // Preview panel navigation: j/k scroll, Esc close.
+            if app.preview.focused && app.preview.visible {
+                match key.code {
+                    KeyCode::Char('j') | KeyCode::Down => {
+                        app.preview.scroll_offset = app.preview.scroll_offset.saturating_add(1);
+                        app.needs_redraw = true;
+                        continue;
+                    }
+                    KeyCode::Char('k') | KeyCode::Up => {
+                        app.preview.scroll_offset = app.preview.scroll_offset.saturating_sub(1);
+                        app.needs_redraw = true;
+                        continue;
+                    }
+                    KeyCode::Tab => {
+                        // Transfer focus back to file tree or release.
+                        app.preview.focused = false;
+                        app.needs_redraw = true;
+                        continue;
+                    }
+                    KeyCode::Esc => {
+                        app.preview.focused = false;
+                        app.preview.visible = false;
+                        app.preview.clear();
+                        app.status_message = Some("Preview panel closed".to_string());
                         app.needs_redraw = true;
                         continue;
                     }
@@ -2374,6 +2493,17 @@ async fn run_event_loop(
                             &mention_menu_entries,
                         )
                     {
+                        // Preview the just-mentioned file
+                        if let Some(path_str) = mention_menu_entries.iter().next() {
+                            let full_path = app.workspace.join(path_str);
+                            if full_path.exists() {
+                                super::preview::load_preview(
+                                    &mut app.preview,
+                                    full_path,
+                                );
+                                app.preview.visible = true;
+                            }
+                        }
                         continue;
                     }
                     if slash_menu_open && apply_slash_menu_selection(app, &slash_menu_entries, true)
@@ -5387,7 +5517,7 @@ fn render(f: &mut Frame, app: &mut App) {
         header_widget.render(chunks[0], buf);
     }
 
-    // Render chat + sidebar + optional file-tree pane
+    // Render chat + sidebar + optional file-tree pane + preview panel
     {
         // Defensive backstop (#400): fill the entire body area with ink
         // background before any sub-widgets render, so cells that end up
@@ -5396,27 +5526,61 @@ fn render(f: &mut Frame, app: &mut App) {
         Block::default().render(chunks[1], f.buffer_mut());
 
         let mut sidebar_area = None;
+        let body = chunks[1];
+        let file_tree_visible = app.sidebar.file_tree.is_some() && body.width >= SIDEBAR_VISIBLE_MIN_WIDTH;
+        let preview_visible = app.preview.visible
+            && body.width >= super::preview::PREVIEW_VISIBLE_MIN_WIDTH;
 
-        // When the file-tree pane is visible and the terminal is wide
-        // enough, reserve the left ~25% for the file tree.
-        let mut chat_area =
-            if app.sidebar.file_tree.is_some() && chunks[1].width >= SIDEBAR_VISIBLE_MIN_WIDTH {
-                let split = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([Constraint::Percentage(25), Constraint::Percentage(75)])
-                    .split(chunks[1]);
-                let tree_area = split[0];
-                let remaining = split[1];
+        // Compute left-panes (file tree + preview) then chat area.
+        let mut chat_area = if file_tree_visible && preview_visible {
+            // Three-panel: file tree 20% | preview 30% | remaining
+            let split = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(super::preview::PREVIEW_WIDTH_PERCENT),
+                    Constraint::Min(1),
+                ])
+                .split(body);
 
-                // Render the file-tree pane.
-                if let Some(ref mut state) = app.sidebar.file_tree {
-                    super::file_tree::render_file_tree(f, tree_area, state);
-                }
+            if let Some(ref mut state) = app.sidebar.file_tree {
+                super::file_tree::render_file_tree(f, split[0], state);
+            }
 
-                remaining
-            } else {
-                chunks[1]
-            };
+            let preview_panel = super::preview::PreviewPanel::new(&app.preview, app.preview.focused);
+            preview_panel.render(split[1], f.buffer_mut());
+
+            split[2]
+        } else if file_tree_visible {
+            // File tree only (preview hidden)
+            let split = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(25), Constraint::Percentage(75)])
+                .split(body);
+            let tree_area = split[0];
+
+            if let Some(ref mut state) = app.sidebar.file_tree {
+                super::file_tree::render_file_tree(f, tree_area, state);
+            }
+
+            split[1]
+        } else if preview_visible {
+            // Preview only (file tree hidden)
+            let split = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([
+                    Constraint::Percentage(super::preview::PREVIEW_WIDTH_PERCENT),
+                    Constraint::Min(1),
+                ])
+                .split(body);
+
+            let preview_panel = super::preview::PreviewPanel::new(&app.preview, app.preview.focused);
+            preview_panel.render(split[0], f.buffer_mut());
+
+            split[1]
+        } else {
+            body
+        };
 
         if chat_area.width >= SIDEBAR_VISIBLE_MIN_WIDTH {
             let preferred_sidebar = (u32::from(chat_area.width)
@@ -6273,7 +6437,7 @@ fn resume_terminal(
 
 fn status_color(level: StatusToastLevel) -> ratatui::style::Color {
     match level {
-        StatusToastLevel::Info => palette::DEEPSEEK_SKY,
+        StatusToastLevel::Info => palette::YUNPAT_SKY,
         StatusToastLevel::Success => palette::STATUS_SUCCESS,
         StatusToastLevel::Warning => palette::STATUS_WARNING,
         StatusToastLevel::Error => palette::STATUS_ERROR,
@@ -6386,7 +6550,7 @@ fn render_footer(f: &mut Frame, area: Rect, app: &mut App) {
         props.state_label = active_subagent_status_label(app)
             .or_else(|| active_tool_status_label(app))
             .unwrap_or_else(|| crate::tui::widgets::footer_working_label(dot_frame, app.ui_locale));
-        props.state_color = palette::DEEPSEEK_SKY;
+        props.state_color = palette::YUNPAT_SKY;
 
         // Spout drift: only animate when low_motion is off. The textual
         // `working...` pulse stays even in low-motion mode so the user still
@@ -6871,7 +7035,7 @@ fn footer_coherence_spans(app: &App) -> Vec<Span<'static>> {
     let (label, color) = match app.coherence_state {
         CoherenceState::Healthy | CoherenceState::GettingCrowded => return Vec::new(),
         CoherenceState::RefreshingContext => ("refreshing context", palette::STATUS_WARNING),
-        CoherenceState::VerifyingRecentWork => ("verifying", palette::DEEPSEEK_SKY),
+        CoherenceState::VerifyingRecentWork => ("verifying", palette::YUNPAT_SKY),
         CoherenceState::ResettingPlan => ("resetting plan", palette::STATUS_ERROR),
     };
 
@@ -8032,6 +8196,20 @@ fn is_file_tree_toggle_shortcut(key: &KeyEvent) -> bool {
         && !key.modifiers.contains(KeyModifiers::ALT);
 
     ctrl_shift_e || cmd_shift_e
+}
+
+fn is_preview_toggle_shortcut(key: &KeyEvent) -> bool {
+    let is_shifted_p = matches!(key.code, KeyCode::Char('P'))
+        || (matches!(key.code, KeyCode::Char('p')) && key.modifiers.contains(KeyModifiers::SHIFT));
+    if !is_shifted_p {
+        return false;
+    }
+
+    let has_forbidden =
+        key.modifiers.contains(KeyModifiers::ALT) || key.modifiers.contains(KeyModifiers::SUPER);
+    let ctrl_shift_p = key.modifiers.contains(KeyModifiers::CONTROL) && !has_forbidden;
+
+    ctrl_shift_p
 }
 
 fn details_shortcut_modifiers(modifiers: KeyModifiers) -> bool {

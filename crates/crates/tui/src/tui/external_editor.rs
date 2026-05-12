@@ -187,6 +187,9 @@ mod tests {
     impl Drop for EnvGuard {
         fn drop(&mut self) {
             for (k, v) in &self.keys {
+                // SAFETY: Restoring previously captured env vars during Drop.
+                // Single-threaded context — no concurrent access to the process
+                // environment from this TUI session.
                 match v {
                     Some(val) => unsafe { env::set_var(k, val) },
                     None => unsafe { env::remove_var(k) },

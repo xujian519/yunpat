@@ -6,6 +6,7 @@
 //! - Resuming sessions by ID
 //! - Managing session lifecycle
 
+use crate::config::yunpat_data_dir;
 use crate::models::{ContentBlock, Message, SystemPrompt};
 use crate::tui::file_mention::ContextReference;
 use crate::utils::write_atomic;
@@ -495,12 +496,13 @@ fn find_git_root(path: &Path) -> Option<PathBuf> {
     }
 }
 
-/// Resolve the default session directory path (`~/.deepseek/sessions`).
+/// Resolve the default session directory path (data dir `/sessions`).
 pub fn default_sessions_dir() -> std::io::Result<PathBuf> {
-    let home = dirs::home_dir().ok_or_else(|| {
-        std::io::Error::new(std::io::ErrorKind::NotFound, "Home directory not found")
-    })?;
-    Ok(home.join(".yunpat").join("sessions"))
+    yunpat_data_dir()
+        .map(|dir| dir.join("sessions"))
+        .ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::NotFound, "Data directory not found")
+        })
 }
 
 /// Prune snapshots older than `max_age` for `workspace`.

@@ -16,10 +16,10 @@ impl Engine {
         mode: AppMode,
         force_update_plan_first: bool,
     ) -> (TurnOutcomeStatus, Option<String>) {
-        let client = self
-            .yunpat_client
-            .clone()
-            .expect("DeepSeek client should be configured");
+        let client = match self.yunpat_client.clone() {
+            Some(c) => c,
+            None => return (TurnOutcomeStatus::Failed, Some("No LLM client configured".into())),
+        };
 
         let mut consecutive_tool_error_steps = 0u32;
         let mut turn_error: Option<String> = None;
@@ -1545,6 +1545,9 @@ impl Engine {
                             &tool_input,
                         )
                         .0;
+                        let category = crate::tui::approval::get_tool_category(&tool_name);
+                        let risk = crate::tui::approval::classify_risk(&tool_name, category, &tool_input);
+                        let gate = crate::tui::collaboration_gate::determine_gate(category, risk);
                         let _ = self
                             .tx_event
                             .send(Event::ApprovalRequired {
@@ -1552,6 +1555,7 @@ impl Engine {
                                 tool_name: tool_name.clone(),
                                 description: plan.approval_description.clone(),
                                 approval_key,
+                                gate,
                             })
                             .await;
 

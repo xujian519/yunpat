@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::config::{expand_path, normalize_model_name};
+use crate::config::{expand_path, normalize_model_name, yunpat_data_dir};
 use crate::localization::normalize_configured_locale;
 
 // ============================================================================
@@ -87,11 +87,11 @@ pub struct KeybindPrefs {
 #[allow(dead_code)] // see TuiPrefs note above; deferred to a later settings pass (#657).
 impl TuiPrefs {
     /// Return the canonical path of the TUI preferences file:
-    /// `~/.deepseek/tui.toml`.
+    /// `<data-dir>/tui.toml`.
     ///
     /// Tests may override the home directory through the
     /// `DEEPSEEK_CONFIG_PATH` environment variable (the parent directory of
-    /// the pointed-to config is used instead of `~/.deepseek`).
+    /// the pointed-to config is used instead of the data dir).
     pub fn path() -> Result<PathBuf> {
         // Honour the same env-var escape hatch used by Settings::path so that
         // integration tests can redirect all config I/O to a temp directory.
@@ -105,12 +105,12 @@ impl TuiPrefs {
             }
         }
 
-        let home = dirs::home_dir()
-            .context("Failed to resolve home directory: cannot determine tui.toml path.")?;
-        Ok(home.join(".deepseek").join("tui.toml"))
+        let dir = yunpat_data_dir()
+            .context("Failed to resolve data directory: cannot determine tui.toml path.")?;
+        Ok(dir.join("tui.toml"))
     }
 
-    /// Load TUI preferences from `~/.deepseek/tui.toml`.
+    /// Load TUI preferences from the data dir's `tui.toml`.
     ///
     /// If the file does not exist the struct defaults are returned — no error
     /// is produced. Parse errors surface as `Err` so the caller can warn the
@@ -961,10 +961,10 @@ mod tests {
     fn tui_prefs_path_uses_home_yunpat_subdir_by_default() {
         let _g = config_path_test_guard();
         // Without DEEPSEEK_CONFIG_PATH the path should end with
-        // .deepseek/tui.toml relative to the home directory.
+        // .yunpat/tui.toml relative to the home directory.
         // We skip this check if home_dir() is unavailable (CI without HOME).
         if let Some(home) = dirs::home_dir() {
-            let expected = home.join(".deepseek").join("tui.toml");
+            let expected = home.join(".yunpat").join("tui.toml");
             // Only compare when no env override is active.
             if std::env::var("DEEPSEEK_CONFIG_PATH").is_err() {
                 let got = TuiPrefs::path().expect("path should resolve");

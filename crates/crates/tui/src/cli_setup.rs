@@ -279,8 +279,8 @@ pub fn run_setup(config: &Config, workspace: &Path, args: SetupArgs) -> Result<(
 
     use crate::palette;
 
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::YUNPAT_SKY_RGB;
+    let (sky_r, sky_g, sky_b) = palette::YUNPAT_SKY_RGB;
 
     let any_explicit = args.mcp || args.skills || args.tools || args.plugins;
     let run_mcp = args.mcp || args.all || !any_explicit;
@@ -452,9 +452,9 @@ pub fn skills_count_for(dir: &Path) -> usize {
 fn run_setup_status(config: &Config, workspace: &Path) -> Result<()> {
     use crate::palette;
 
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
-    let (red_r, red_g, red_b) = palette::DEEPSEEK_RED_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::YUNPAT_SKY_RGB;
+    let (sky_r, sky_g, sky_b) = palette::YUNPAT_SKY_RGB;
+    let (red_r, red_g, red_b) = palette::YUNPAT_RED_RGB;
 
     println!(
         "{}",

@@ -19,7 +19,7 @@ use crate::palette;
 use crate::tui::app::{App, OnboardingState};
 
 pub fn render(f: &mut Frame, area: Rect, app: &App) {
-    let block = Block::default().style(Style::default().bg(palette::DEEPSEEK_INK));
+    let block = Block::default().style(Style::default().bg(palette::YUNPAT_INK));
     f.render_widget(block, area);
 
     let content_width = 76.min(area.width.saturating_sub(4));
@@ -45,12 +45,12 @@ pub fn render(f: &mut Frame, area: Rect, app: &App) {
             .title(Line::from(Span::styled(
                 " DeepSeek TUI ",
                 Style::default()
-                    .fg(palette::DEEPSEEK_BLUE)
+                    .fg(palette::YUNPAT_BLUE)
                     .add_modifier(Modifier::BOLD),
             )))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(palette::BORDER_COLOR))
-            .style(Style::default().bg(palette::DEEPSEEK_SLATE))
+            .style(Style::default().bg(palette::YUNPAT_SLATE))
             .padding(Padding::new(2, 2, 1, 1));
         if !app.onboarding_workspace_trust_gate {
             let (step, total) = onboarding_step(app);
@@ -102,7 +102,7 @@ pub fn tips_lines() -> Vec<ratatui::text::Line<'static>> {
         Line::from(Span::styled(
             "Start Simple",
             Style::default()
-                .fg(palette::DEEPSEEK_SKY)
+                .fg(palette::YUNPAT_SKY)
                 .add_modifier(Modifier::BOLD),
         )),
         Line::from(""),

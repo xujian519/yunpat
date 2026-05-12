@@ -209,7 +209,7 @@ fn modal_block() -> Block<'static> {
     Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(palette::BORDER_COLOR))
-        .style(Style::default().bg(palette::DEEPSEEK_INK))
+        .style(Style::default().bg(palette::YUNPAT_INK))
         .padding(Padding::uniform(1))
 }
 
@@ -318,7 +318,7 @@ impl ModalView for HelpView {
         lines.push(Line::from(Span::styled(
             query_label,
             Style::default()
-                .fg(palette::DEEPSEEK_SKY)
+                .fg(palette::YUNPAT_SKY)
                 .add_modifier(Modifier::BOLD),
         )));
 
@@ -390,7 +390,7 @@ impl ModalView for HelpView {
                     lines.push(Line::from(Span::styled(
                         format!("  {} ({})", entry.section.label(self.locale), count),
                         Style::default()
-                            .fg(palette::DEEPSEEK_BLUE)
+                            .fg(palette::YUNPAT_BLUE)
                             .add_modifier(Modifier::BOLD),
                     )));
                     rendered_rows += 1;
@@ -421,7 +421,7 @@ impl ModalView for HelpView {
             .title(Line::from(vec![Span::styled(
                 format!(" {} ", self.tr(MessageId::HelpTitle)),
                 Style::default()
-                    .fg(palette::DEEPSEEK_BLUE)
+                    .fg(palette::YUNPAT_BLUE)
                     .add_modifier(Modifier::BOLD),
             )]))
             .title_bottom(Line::from(vec![

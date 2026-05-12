@@ -41,9 +41,9 @@ pub enum Method {
 /// API directly to produce the standard notification sound.
 #[cfg(target_os = "windows")]
 fn windows_bell() {
-    // MB_OK = 0x00000000 — plays the default system sound. Best-effort: a
-    // failed beep is not worth surfacing to the caller, so the Result is
-    // discarded.
+    // SAFETY: MessageBeep is a thread-safe Win32 API that only plays a system
+    // sound. The MB_OK argument (0) is a valid constant. No memory is accessed
+    // through pointers; the return value is safely discarded.
     unsafe {
         let _ = MessageBeep(MESSAGEBOX_STYLE(0));
     }

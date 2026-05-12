@@ -29,7 +29,8 @@ pub fn is_available() -> bool {
     {
         // Try to create a minimal ruleset to test availability
         // Landlock ABI version check
-        // Safety: syscall uses a null ruleset pointer for ABI probing and does not dereference it.
+        // SAFETY: syscall uses a null ruleset pointer for ABI probing and does
+        // not dereference it. All other arguments are constants.
         unsafe {
             let result = libc::syscall(
                 libc::SYS_landlock_create_ruleset,

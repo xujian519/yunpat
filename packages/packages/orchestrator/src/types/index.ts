@@ -49,7 +49,6 @@ export interface ExecutionContext {
  * 系统意图（3个）：
  * - MULTI_INTENT: 一条消息包含多个任务
  * - CLARIFY: 意图不明确，需要追问
- * - CHITCHAT: 闲聊、感谢、询问功能
  */
 export type IntentType =
   | 'DRAFT_FULL'
@@ -64,7 +63,6 @@ export type IntentType =
   | 'CODING'
   | 'MULTI_INTENT'
   | 'CLARIFY'
-  | 'CHITCHAT'
   | 'INIT_WORKSPACE'
 
 /**
@@ -87,7 +85,7 @@ export interface IntentCategoryConfig {
   keywords: string[]
   /** 复杂度 */
   complexity: IntentComplexity
-  /** 是否为系统意图（CLARIFY/CHITCHAT/MULTI_INTENT 等） */
+  /** 是否为系统意图（CLARIFY/MULTI_INTENT 等） */
   isSystemIntent?: boolean
 }
 
@@ -381,15 +379,13 @@ export interface TaskExecutionResult {
  */
 export interface RoutingDecision {
   /** 路由类型 */
-  type: 'direct' | 'orchestrated' | 'clarify' | 'chitchat'
+  type: 'direct' | 'orchestrated' | 'clarify'
   /** 目标Agent（type=direct时） */
   targetAgent?: string
   /** 任务计划（type=orchestrated时） */
   taskPlan?: TaskPlan
   /** 追问问题（type=clarify时） */
   clarifyQuestion?: string
-  /** 闲聊回复（type=chitchat时） */
-  chitchatResponse?: string
 }
 
 // ============================================================================
@@ -502,7 +498,7 @@ export interface OrchestratorAgentConfig extends AgentConfig {
   llmClient?: any
   /** 意图领域配置（不传则使用默认的专利意图配置） */
   domainConfig?: IntentDomainConfig
-  /** 问候语（CHITCHAT 时使用） */
+  /** 默认问候语 */
   greetingMessage?: string
 }
 

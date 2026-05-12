@@ -120,6 +120,14 @@ impl SessionManager {
         }
     }
 
+    /// 通用 session 更新（Phase 2: 支持 intent_history 等扩展字段更新）
+    pub fn update_session<F>(&self, session_id: &str, f: F) -> Option<crate::models::Session>
+    where
+        F: FnOnce(&mut crate::models::Session),
+    {
+        self.store.update(session_id, f)
+    }
+
     fn emit_event(&self, _event_type: &str, payload: serde_json::Value) {
         let event = crate::models::GatewayEvent::new(
             "system".to_string(),

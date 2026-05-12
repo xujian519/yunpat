@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import { OrchestratorAgent } from '../../src/OrchestratorAgent.js'
 import type { OrchestratorAgentConfig, OrchestratorInput } from '../../src/types/index.js'
-import { MockLLMClient, createChitchatResponse } from '../mocks/MockLLMClient.js'
+import { MockLLMClient, createClarifyResponse } from '../mocks/MockLLMClient.js'
 
 // Mock EventBus
 const mockEventBus = {
@@ -40,8 +40,8 @@ describe('简化MockLLMClient集成测试', () => {
     // 创建新的MockLLMClient
     const mockLLMClient = new MockLLMClient()
 
-    // 设置一个CHITCHAT响应
-    mockLLMClient.enqueueResponse(createChitchatResponse())
+    // 设置一个CLARIFY响应
+    mockLLMClient.enqueueResponse(createClarifyResponse())
 
     // 创建OrchestratorAgent配置
     const config: OrchestratorAgentConfig = {
@@ -83,14 +83,14 @@ describe('简化MockLLMClient集成测试', () => {
     const input: OrchestratorInput = {
       sessionId: 'test-mock-1',
       userId: 'user-1',
-      message: '你好',
+      message: '测试消息',
     }
 
     const result = await orchestrator.execute(input)
 
     // 验证结果
     expect(result).toBeDefined()
-    expect(result.metadata.intent).toBe('CHITCHAT')
+    expect(result.metadata.intent).toBe('CLARIFY')
     expect(mockLLMClient.getCallCount()).toBeGreaterThan(0)
 
     console.log('✅ MockLLMClient被正确调用')
@@ -154,7 +154,7 @@ describe('简化MockLLMClient集成测试', () => {
       return new OrchestratorAgent(config)
     }
 
-    const orchestrator1 = createOrchestrator('CHITCHAT')
+    const orchestrator1 = createOrchestrator('CLARIFY')
     const orchestrator2 = createOrchestrator('CLARIFY')
     const orchestrator3 = createOrchestrator('DRAFT_FULL')
 
@@ -181,7 +181,7 @@ describe('简化MockLLMClient集成测试', () => {
     const result3 = await orchestrator3.execute(input3)
 
     // 验证返回了不同意图
-    expect(result1.metadata.intent).toBe('CHITCHAT')
+    expect(result1.metadata.intent).toBe('CLARIFY')
     expect(result2.metadata.intent).toBe('CLARIFY')
     expect(result3.metadata.intent).toBe('DRAFT_FULL')
 
@@ -238,9 +238,9 @@ describe('简化MockLLMClient集成测试', () => {
 
     const result = await orchestrator.execute(input)
 
-    // 应该返回默认的CHITCHAT响应
+    // 应该返回默认的CLARIFY响应
     expect(result).toBeDefined()
-    expect(result.metadata.intent).toBe('CHITCHAT')
+    expect(result.metadata.intent).toBe('CLARIFY')
 
     console.log('✅ 默认响应机制工作正常')
   })

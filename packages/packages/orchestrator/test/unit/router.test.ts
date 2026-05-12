@@ -15,25 +15,6 @@ describe('Router', () => {
   })
 
   describe('路由决策', () => {
-    it('应该将CHITCHAT路由到闲聊回复', () => {
-      const intent: IntentRecognitionResult = {
-        intent: 'CHITCHAT',
-        confidence: 0.95,
-        complexity: 'simple',
-        extracted: {
-          hasAttachment: false,
-          urgency: 'normal',
-          keywords: ['你好'],
-        },
-      }
-
-      const decision = router.route(intent)
-
-      expect(decision.type).toBe('chitchat')
-      expect(decision.chitchatResponse).toBeDefined()
-      expect(decision.chitchatResponse!.length).toBeGreaterThan(0)
-    })
-
     it('应该将CLARIFY路由到追问', () => {
       const intent: IntentRecognitionResult = {
         intent: 'CLARIFY',
@@ -192,19 +173,6 @@ describe('Router', () => {
       }
 
       expect(router.needsTaskPlanning(complexIntent)).toBe(true)
-
-      const chitchatIntent: IntentRecognitionResult = {
-        intent: 'CHITCHAT',
-        confidence: 0.95,
-        complexity: 'simple',
-        extracted: {
-          hasAttachment: false,
-          urgency: 'normal',
-          keywords: [],
-        },
-      }
-
-      expect(router.needsTaskPlanning(chitchatIntent)).toBe(false)
     })
 
     it('应该正确判断是否可以直接路由', () => {

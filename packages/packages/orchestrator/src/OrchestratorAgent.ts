@@ -25,21 +25,17 @@ import {
   HITLRequest,
   AgentResult,
   AggregatedResult,
+  Attachment,
   FileSignal,
 } from './types/index.js'
 
 import { errorToAgentError } from '@yunpat/agent-base'
 
 import { ContextManager } from './context/ContextManager.js'
-import { ContextBuilder } from './context/ContextBuilder.js'
-import { IntentRecognizer } from './intent/IntentRecognizer.js'
 import { PatentIntentConfig } from './intent/PatentIntentConfig.js'
-import { TaskPlanner } from './planning/TaskPlanner.js'
 import { TaskExecutor } from './executor/TaskExecutor.js'
 import { HITLManager } from './hitl/HITLManager.js'
 import { HITLResponseParser } from './hitl/HITLResponseParser.js'
-import { ResultAggregator } from './aggregation/ResultAggregator.js'
-import { ExceptionHandler } from './exception/ExceptionHandler.js'
 import { Router } from './router/Router.js'
 import { LLMClient } from './llm/LLMClient.js'
 
@@ -90,14 +86,9 @@ interface ExecutionStats {
 export class OrchestratorAgent {
   private config: OrchestratorAgentConfig
   private contextManager: ContextManager
-  private contextBuilder: ContextBuilder
-  private intentRecognizer: IntentRecognizer
-  private taskPlanner: TaskPlanner
   private taskExecutor: TaskExecutor
   private hitlManager: HITLManager
   private hitlResponseParser: HITLResponseParser
-  private resultAggregator: ResultAggregator
-  private exceptionHandler: ExceptionHandler
   private router: Router
   private llmClient: LLMClient
 
@@ -145,36 +136,13 @@ export class OrchestratorAgent {
     // 初始化 Agent 注册表
     this.agentRegistry = new AgentRegistry()
 
-    // 初始化 ContextBuilder（三层 Prompt 的 Context 层）
-    this.contextBuilder = new ContextBuilder(this.contextManager, this.agentRegistry)
-
-    // 初始化识别器和规划器（支持配置化领域意图）
-    const domainConfig = config.domainConfig ?? PatentIntentConfig
-    this.intentRecognizer = new IntentRecognizer(
-      this.llmClient,
-      config.intentConfig.confidenceThreshold,
-      domainConfig,
-      this.contextBuilder
-    )
-    this.taskPlanner = new TaskPlanner(
-      this.llmClient,
-      config.planningConfig.maxSteps,
-      config.planningConfig.defaultTimeout,
-      config.planningConfig.enableParallel,
-      this.agentRegistry,
-      domainConfig,
-      this.contextBuilder
-    )
-
     // 初始化执行器和管理器
     this.taskExecutor = new TaskExecutor(this.agentRegistry)
     this.hitlManager = new HITLManager(this.llmClient, config.planningConfig.defaultTimeout)
-    this.hitlResponseParser = new HITLResponseParser(this.llmClient, this.contextBuilder)
-    this.resultAggregator = new ResultAggregator(this.llmClient, this.contextBuilder)
-    this.exceptionHandler = new ExceptionHandler(this.llmClient, this.contextBuilder)
-
+    this.hitlResponseParser = new HITLResponseParser(this.llmClient)
     // HITL 跨语言持久化桥（懒初始化，首次使用时创建）
     this._hitlBridge = null
+    const domainConfig = config.domainConfig ?? PatentIntentConfig
     this.router = new Router(this.agentRegistry, {
       greetingMessage: config.greetingMessage,
       domainConfig: domainConfig,
@@ -188,12 +156,15 @@ export class OrchestratorAgent {
    * 异步初始化所有 Agent
    */
   private async initializeAgents(): Promise<void> {
+    // NOTE: as any 是因为 AgentConfig 的 EventBus/ToolRegistry 接口类型
+    // 与 AgentSharedDeps 期望的具体类存在 structural mismatch，
+    // 运行时实例是兼容的，仅编译期类型不匹配。
     const factory = new AgentFactory({
       llm: this.config.llm,
       eventBus: this.config.eventBus,
       memory: this.config.memory,
       tools: this.config.tools,
-    })
+    } as any)
     await factory.createAll(this.agentRegistry)
   }
 
@@ -268,6 +239,30 @@ export class OrchestratorAgent {
         intentResult = await this.call1_IntentRecognition(input)
         metrics.intentRecognitionDuration = Date.now() - intentStartTime
         metrics.llmCallsCount++
+      }
+
+      // CODING 意图防御性拦截（不应到达此处，Gateway 层应已拦截）
+      if (intentResult.intent === 'CODING') {
+        metrics.totalDuration = Date.now() - startTime
+        return {
+          response:
+            'YunPat 是专利智能助手，专注于专利撰写、审查答复和检索分析，暂不支持直接执行编程任务。\n\n' +
+            '如果您需要的是：\n' +
+            '• 专利相关功能开发 → 请详细描述需求，我们可以讨论技术方案\n' +
+            '• 自动化流程集成 → 请使用 YunPat CLI 或 SDK\n' +
+            '• 其他编程帮助 → 建议使用通用编程 AI 工具\n\n' +
+            '您也可以尝试以下专利相关命令：\n' +
+            '/draft 撰写专利  /oa 答复审查意见  /search 专利检索  /analyze 专利分析',
+          requiresHITL: false,
+          metadata: {
+            intent: intentResult.intent,
+            confidence: intentResult.confidence,
+            executionTime: metrics.totalDuration,
+            stepsExecuted: 0,
+            metrics,
+            stats,
+          },
+        }
       }
 
       // Call 2: 任务规划（仅复杂意图）
@@ -411,21 +406,6 @@ export class OrchestratorAgent {
         )
       }
 
-      if (routingDecision.type === 'chitchat') {
-        return {
-          response: routingDecision.chitchatResponse || this.generateDefaultResponse(),
-          requiresHITL: false,
-          metadata: {
-            intent: intentResult.intent,
-            confidence: intentResult.confidence,
-            executionTime: metrics.totalDuration,
-            stepsExecuted: 0,
-            metrics,
-            stats,
-          },
-        }
-      }
-
       if (routingDecision.type === 'clarify') {
         return {
           response: routingDecision.clarifyQuestion || '请问您能详细说明一下需求吗？',
@@ -468,7 +448,7 @@ export class OrchestratorAgent {
         response: recovery.errorMessage || '系统出现错误，请稍后重试',
         requiresHITL: false,
         metadata: {
-          intent: 'CHITCHAT',
+          intent: 'CLARIFY',
           confidence: 0,
           executionTime: metrics.totalDuration,
           stepsExecuted: 0,
@@ -560,12 +540,72 @@ export class OrchestratorAgent {
   }
 
   /**
-   * Call 1: 意图识别
+   * Call 1: 意图识别（简化版 —— 规则匹配 + 轻量 LLM 兜底）
    */
   protected async call1_IntentRecognition(
     input: OrchestratorInput
   ): Promise<IntentRecognitionResult> {
-    return await this.intentRecognizer.recognize(input)
+    const message = input.message?.trim() || ''
+    if (!message) {
+      return {
+        intent: 'CLARIFY',
+        confidence: 0.3,
+        complexity: 'simple',
+        extracted: { hasAttachment: false, urgency: 'normal', keywords: [] },
+        clarifyQuestion: '请描述您的需求，我将为您匹配合适的服务。',
+      }
+    }
+
+    const domainConfig = this.config.domainConfig ?? PatentIntentConfig
+    const lowerMsg = message.toLowerCase()
+
+    // 1. 规则匹配：用 PatentIntentConfig 的 keywords 做简单匹配，取最高分
+    let bestMatch: { cat: typeof domainConfig.categories[0]; score: number } | null = null
+    for (const cat of domainConfig.categories) {
+      const score = cat.keywords.filter((kw) => lowerMsg.includes(kw.toLowerCase())).length
+      if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+        bestMatch = { cat, score }
+      }
+    }
+    if (bestMatch && bestMatch.score >= 1) {
+      const confidence = Math.min(0.5 + bestMatch.score * 0.15, 0.95)
+      return {
+        intent: bestMatch.cat.intentId as IntentType,
+        confidence,
+        complexity: bestMatch.cat.complexity as 'simple' | 'complex',
+        extracted: {
+          hasAttachment: !!(input.attachments && input.attachments.length > 0),
+          urgency: 'normal',
+          keywords: bestMatch.cat.keywords.filter((kw) => lowerMsg.includes(kw.toLowerCase())),
+        },
+      }
+    }
+
+    // 2. 规则未命中，轻量 LLM 识别（无 few-shot，单层 prompt）
+    try {
+      const prompt = `分析用户意图，返回 JSON：{"intent":"DRAFT_FULL|DRAFT_CLAIMS|DRAFT_SPEC|RESPOND_OA|SEARCH|ANALYZE_PORTFOLIO|CODING|CLARIFY","confidence":0.0-1.0,"complexity":"simple|complex"}
+用户输入：${message}`
+      const response = await this.llmClient.chat([{ role: 'user', content: prompt }])
+      const responseText = typeof response === 'string' ? response : response.content || ''
+      const parsed = JSON.parse(responseText)
+      return {
+        intent: parsed.intent as IntentType,
+        confidence: parsed.confidence ?? 0.5,
+        complexity: parsed.complexity ?? 'simple',
+        extracted: {
+          hasAttachment: !!(input.attachments && input.attachments.length > 0),
+          urgency: 'normal',
+          keywords: [],
+        },
+      }
+    } catch {
+      return {
+        intent: 'CLARIFY',
+        confidence: 0.5,
+        complexity: 'simple',
+        extracted: { hasAttachment: false, urgency: 'normal', keywords: [] },
+      }
+    }
   }
 
   /**
@@ -602,13 +642,68 @@ export class OrchestratorAgent {
   }
 
   /**
-   * Call 2: 任务规划
+   * Call 2: 任务规划（简化版 —— 从配置读取预定义计划，无 LLM 规划）
    */
   protected async call2_TaskPlanning(
     intent: IntentRecognitionResult,
-    sessionId?: string
+    _sessionId?: string
   ): Promise<TaskPlan> {
-    return await this.taskPlanner.generatePlan(intent, sessionId)
+    const domainConfig = this.config.domainConfig ?? PatentIntentConfig
+
+    // 简单意图：单步直达
+    if (intent.complexity === 'simple') {
+      const agentId = domainConfig.directRoutes?.[intent.intent] || 'specification-drafter'
+      return {
+        planId: `plan-${Date.now()}`,
+        intent: intent.intent,
+        estimatedMinutes: 5,
+        steps: [
+          {
+            stepId: 'step-1',
+            agentId,
+            layer: 'domain',
+            parallel: false,
+            dependsOn: [],
+            timeout: 30000,
+            input: { message: intent.extracted },
+            hitl: false,
+            retryOnFailure: true,
+            maxRetries: 2,
+          },
+        ],
+        hitlCheckpoints: [],
+        metadata: { createdAt: new Date(), parallelizable: false },
+      }
+    }
+
+    // 复杂意图：从 defaultPlans 读取预定义计划
+    const planFactory = domainConfig.defaultPlans?.[intent.intent]
+    if (planFactory) {
+      return planFactory(intent)
+    }
+
+    // 兜底：单步计划
+    return {
+      planId: `plan-${Date.now()}`,
+      intent: intent.intent,
+      estimatedMinutes: 10,
+      steps: [
+        {
+          stepId: 'step-1',
+          agentId: domainConfig.directRoutes?.[intent.intent] || 'specification-drafter',
+          layer: 'domain',
+          parallel: false,
+          dependsOn: [],
+          timeout: 60000,
+          input: { message: intent.extracted },
+          hitl: false,
+          retryOnFailure: true,
+          maxRetries: 2,
+        },
+      ],
+      hitlCheckpoints: [],
+      metadata: { createdAt: new Date(), parallelizable: false },
+    }
   }
 
   /**
@@ -637,47 +732,55 @@ export class OrchestratorAgent {
   }
 
   /**
-   * Call 4: 结果聚合
+   * Call 4: 结果聚合（简化版 —— 规则聚合替代 LLM 聚合）
    */
   protected async call4_ResultAggregation(
     results: Map<string, AgentResult>,
-    sessionId?: string
+    _sessionId?: string
   ): Promise<AggregatedResult> {
-    return await this.resultAggregator.aggregate(results, sessionId)
-  }
-
-  /**
-   * Call 5: 异常降级
-   */
-  protected async call5_ExceptionHandling(
-    error: Error,
-    input: OrchestratorInput
-  ): Promise<{ success: boolean; result?: OrchestratorOutput; errorMessage?: string }> {
-    const recovery = await this.exceptionHandler.handleException(error, {
-      sessionId: input.sessionId,
-      userId: input.userId,
-      message: input.message,
-    })
-
-    if (recovery.success) {
+    if (results.size === 0) {
       return {
-        success: true,
-        result: {
-          response: recovery.recoveryMessage || '已恢复正常',
-          requiresHITL: false,
-          metadata: {
-            intent: 'CHITCHAT',
-            confidence: 1,
-            executionTime: 0,
-            stepsExecuted: 0,
-          },
-        },
+        markdown: '任务已完成，但没有生成结果。',
+        attachments: [],
+        suggestedActions: [],
+        metadata: { resultsCount: 0, successfulResults: 0 },
+      }
+    }
+
+    const parts: string[] = []
+    const attachments: Attachment[] = []
+    for (const [stepId, result] of results) {
+      if (result.success) {
+        const data = result.data || {}
+        const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+        parts.push(`## ${stepId}\n\n${content}`)
+        if (data.attachments) {
+          attachments.push(...(Array.isArray(data.attachments) ? data.attachments : []))
+        }
+      } else {
+        parts.push(`## ${stepId}\n\n⚠️ 执行失败: ${result.error?.message || '未知错误'}`)
       }
     }
 
     return {
+      markdown: parts.join('\n\n---\n\n'),
+      attachments,
+      suggestedActions: [],
+      metadata: { resultsCount: results.size, successfulResults: results.size },
+    }
+  }
+
+  /**
+   * Call 5: 异常降级（简化版 —— 直接返回错误信息）
+   */
+  protected async call5_ExceptionHandling(
+    error: Error,
+    _input: OrchestratorInput
+  ): Promise<{ success: boolean; result?: OrchestratorOutput; errorMessage?: string }> {
+    console.error('[OrchestratorAgent] 执行异常:', error)
+    return {
       success: false,
-      errorMessage: recovery.errorMessage || '系统出现错误',
+      errorMessage: `系统出现错误: ${error.message}`,
     }
   }
 
@@ -803,7 +906,7 @@ export class OrchestratorAgent {
       requiresHITL: false,
       metadata: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        intent: (state.taskPlan as any).intent || 'CHITCHAT',
+        intent: (state.taskPlan as any).intent || 'CLARIFY',
         confidence: 1,
         executionTime: state.metrics.totalDuration,
         stepsExecuted: state.stats.stepsExecuted,

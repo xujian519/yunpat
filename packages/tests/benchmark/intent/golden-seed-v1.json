@@ -1,0 +1,506 @@
+{
+  "version": "1.0.0",
+  "description": "YunPat 意图识别黄金测试集 - 种子数据 (50条)",
+  "created_at": "2026-05-12",
+  "total": 42,
+  "categories": {
+    "core": 30,
+    "edge": 10,
+    "adversarial": 5,
+    "multi_turn": 5
+  },
+  "tests": [
+    {
+      "id": "core-001",
+      "text": "帮我撰写一个关于智能控制器的专利申请",
+      "expected_intent": "draft_full",
+      "confidence": "high",
+      "tags": [
+        "标准表达",
+        "含技术领域"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-002",
+      "text": "写一份专利，主题是新能源汽车电池管理",
+      "expected_intent": "draft_full",
+      "confidence": "high",
+      "tags": [
+        "口语化",
+        "含主题"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-003",
+      "text": "draft a patent application for my machine learning algorithm",
+      "expected_intent": "draft_full",
+      "confidence": "high",
+      "tags": [
+        "英文",
+        "技术术语"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-004",
+      "text": "我想申请一个发明专利，麻烦帮我准备全套文件",
+      "expected_intent": "draft_full",
+      "confidence": "high",
+      "tags": [
+        "委婉表达",
+        "全套文件暗示完整撰写"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-005",
+      "text": "帮我修改权利要求，增加从属权利要求",
+      "expected_intent": "draft_claims",
+      "confidence": "high",
+      "tags": [
+        "明确意图",
+        "修改场景"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-006",
+      "text": "只写权利要求部分，说明书不用",
+      "expected_intent": "draft_claims",
+      "confidence": "high",
+      "tags": [
+        "限定词",
+        "否定排除"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-007",
+      "text": "优化一下claims的保护范围",
+      "expected_intent": "draft_claims",
+      "confidence": "high",
+      "tags": [
+        "英文混合",
+        "专业术语"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-008",
+      "text": "只写说明书部分，不要权利要求",
+      "expected_intent": "draft_spec",
+      "confidence": "high",
+      "tags": [
+        "限定词",
+        "否定排除"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-009",
+      "text": "帮我写一下具体实施方式和技术领域部分",
+      "expected_intent": "draft_spec",
+      "confidence": "high",
+      "tags": [
+        "专业术语",
+        "子部分明确"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-010",
+      "text": "我收到了审查意见，需要帮忙答复",
+      "expected_intent": "respond_oa",
+      "confidence": "high",
+      "tags": [
+        "标准表达",
+        "口语化"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-011",
+      "text": "这个OA该怎么回复，审查员说缺乏创造性",
+      "expected_intent": "respond_oa",
+      "confidence": "high",
+      "tags": [
+        "英文缩写",
+        "含具体问题"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-012",
+      "text": "收到一通通知书了，帮我看看怎么答辩",
+      "expected_intent": "respond_oa",
+      "confidence": "high",
+      "tags": [
+        "行业黑话",
+        "一通"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-013",
+      "text": "审查员下了驳回决定，还有救吗",
+      "expected_intent": "respond_oa",
+      "confidence": "high",
+      "tags": [
+        "口语化",
+        "极端场景"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-014",
+      "text": "respond to office action regarding claim 1 rejection",
+      "expected_intent": "respond_oa",
+      "confidence": "high",
+      "tags": [
+        "英文",
+        "正式表达"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-015",
+      "text": "帮我检索一下智能控制器的现有技术",
+      "expected_intent": "search",
+      "confidence": "high",
+      "tags": [
+        "标准表达",
+        "含对象"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-016",
+      "text": "查一下有没有类似的专利，看看新颖性",
+      "expected_intent": "search",
+      "confidence": "high",
+      "tags": [
+        "口语化",
+        "多意图倾向"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-017",
+      "text": "search prior art for transformer architecture",
+      "expected_intent": "search",
+      "confidence": "high",
+      "tags": [
+        "英文",
+        "技术术语"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-018",
+      "text": "查新检索，看看这个方案能不能申请",
+      "expected_intent": "search",
+      "confidence": "high",
+      "tags": [
+        "行业术语",
+        "查新"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-019",
+      "text": "分析我们公司的专利组合情况",
+      "expected_intent": "analyze_portfolio",
+      "confidence": "high",
+      "tags": [
+        "标准表达",
+        "企业场景"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-020",
+      "text": "做一下技术布局分析，看看竞争对手",
+      "expected_intent": "analyze_portfolio",
+      "confidence": "high",
+      "tags": [
+        "竞争场景",
+        "FTO倾向"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-021",
+      "text": "帮我评估一下这个发明的创新性",
+      "expected_intent": "evaluate_innovation",
+      "confidence": "high",
+      "tags": [
+        "评估场景"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-022",
+      "text": "这个方案技术高度够吗，值得申请专利吗",
+      "expected_intent": "evaluate_innovation",
+      "confidence": "high",
+      "tags": [
+        "疑问句",
+        "价值判断"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-023",
+      "text": "分析这件专利的侵权风险",
+      "expected_intent": "analyze_infringement",
+      "confidence": "high",
+      "tags": [
+        "风险场景"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-024",
+      "text": "帮我做一个FTO分析，看看能不能自由实施",
+      "expected_intent": "analyze_infringement",
+      "confidence": "high",
+      "tags": [
+        "行业缩写",
+        "FTO"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-025",
+      "text": "帮我分析一下这个商标能不能注册",
+      "expected_intent": "analyze_trademark",
+      "confidence": "high",
+      "tags": [
+        "商标场景"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-026",
+      "text": "帮我写一个PDF解析函数",
+      "expected_intent": "coding",
+      "confidence": "high",
+      "tags": [
+        "编程场景"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "core-027",
+      "text": "实现一个爬虫程序抓取专利数据",
+      "expected_intent": "coding",
+      "confidence": "high",
+      "tags": [
+        "编程场景",
+        "数据抓取"
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": "edge-001",
+      "text": "先帮我检索现有技术，然后撰写完整的专利申请",
+      "expected_intent": "multi_intent",
+      "confidence": "high",
+      "tags": [
+        "多意图",
+        "顺序表达"
+      ],
+      "source": "synthetic",
+      "note": "明确包含两个独立任务"
+    },
+    {
+      "id": "edge-002",
+      "text": "帮我处理一下这个专利的事情",
+      "expected_intent": "clarify",
+      "confidence": "high",
+      "tags": [
+        "模糊",
+        "无具体动作"
+      ],
+      "source": "synthetic",
+      "note": "过于模糊，无法确定具体意图"
+    },
+    {
+      "id": "edge-003",
+      "text": "不要写权利要求，只要说明书",
+      "expected_intent": "draft_spec",
+      "confidence": "high",
+      "tags": [
+        "否定",
+        "限定"
+      ],
+      "source": "synthetic",
+      "note": "否定词排除 draft_claims，限定词确定 draft_spec"
+    },
+    {
+      "id": "edge-004",
+      "text": "这个审查意见文件帮我查一下有没有对比文件",
+      "expected_intent": "respond_oa",
+      "confidence": "medium",
+      "tags": [
+        "歧义",
+        "含检索动作"
+      ],
+      "source": "synthetic",
+      "note": "虽然提到查，但上下文是审查意见文件，优先 OA 答复"
+    },
+    {
+      "id": "edge-005",
+      "text": "写个专利相关的代码",
+      "expected_intent": "coding",
+      "confidence": "medium",
+      "tags": [
+        "歧义",
+        "专利+代码"
+      ],
+      "source": "synthetic",
+      "note": "关键词'代码'优先于'专利'，但存在歧义"
+    },
+    {
+      "id": "edge-006",
+      "text": "帮我看看这个技术方案能不能写专利",
+      "expected_intent": "evaluate_innovation",
+      "confidence": "high",
+      "tags": [
+        "评估倾向",
+        "价值判断"
+      ],
+      "source": "synthetic",
+      "note": "'能不能'暗示评估，不是直接撰写"
+    },
+    {
+      "id": "edge-007",
+      "text": "专利号CN123456789的分析",
+      "expected_intent": "search",
+      "confidence": "medium",
+      "tags": [
+        "省略动词",
+        "仅对象"
+      ],
+      "source": "synthetic",
+      "note": "无明确动作词，根据'专利号'倾向于检索"
+    },
+    {
+      "id": "edge-008",
+      "text": "审查意见答复的检索策略",
+      "expected_intent": "respond_oa",
+      "confidence": "medium",
+      "tags": [
+        "复合名词",
+        "检索+OA"
+      ],
+      "source": "synthetic",
+      "note": "主题词是'答复策略'，检索只是修饰"
+    },
+    {
+      "id": "edge-009",
+      "text": "帮我写个专利，但不要申请",
+      "expected_intent": "draft_full",
+      "confidence": "medium",
+      "tags": [
+        "否定",
+        "矛盾"
+      ],
+      "source": "synthetic",
+      "note": "'不要申请'否定的是申请动作，不是撰写动作"
+    },
+    {
+      "id": "adv-005",
+      "text": "写专利写专利写专利写专利写专利写专利",
+      "expected_intent": "draft_full",
+      "confidence": "medium",
+      "tags": [
+        "重复噪音",
+        "鲁棒性测试"
+      ],
+      "source": "adversarial",
+      "note": "应能抵抗重复噪音，正常识别意图"
+    },
+    {
+      "id": "mt-001",
+      "text": "帮我写专利",
+      "expected_intent": "draft_full",
+      "confidence": "high",
+      "tags": [
+        "多轮-第1轮",
+        "发起任务"
+      ],
+      "source": "multi_turn",
+      "session_context": null
+    },
+    {
+      "id": "mt-002",
+      "text": "要关于人工智能的",
+      "expected_intent": "draft_full",
+      "confidence": "high",
+      "tags": [
+        "多轮-第2轮",
+        "省略主语",
+        "意图继承"
+      ],
+      "source": "multi_turn",
+      "session_context": {
+        "previous_intent": "draft_full",
+        "previous_text": "帮我写专利"
+      },
+      "note": "省略主语'帮我写专利'，应继承上一轮的 draft_full 意图"
+    },
+    {
+      "id": "mt-003",
+      "text": "不对，我要先检索",
+      "expected_intent": "search",
+      "confidence": "high",
+      "tags": [
+        "多轮-第3轮",
+        "意图修正",
+        "否定信号"
+      ],
+      "source": "multi_turn",
+      "session_context": {
+        "previous_intent": "draft_full",
+        "previous_text": "要关于人工智能的"
+      },
+      "note": "含修正信号'不对'，应从 draft_full 切换到 search"
+    },
+    {
+      "id": "mt-004",
+      "text": "查一下Transformer的现有技术",
+      "expected_intent": "search",
+      "confidence": "high",
+      "tags": [
+        "多轮-第4轮",
+        "延续当前意图"
+      ],
+      "source": "multi_turn",
+      "session_context": {
+        "previous_intent": "search",
+        "previous_text": "不对，我要先检索"
+      },
+      "note": "上一轮已修正为 search，此轮延续 search 意图"
+    },
+    {
+      "id": "mt-005",
+      "text": "好了，现在可以写专利了",
+      "expected_intent": "draft_full",
+      "confidence": "high",
+      "tags": [
+        "多轮-第5轮",
+        "意图切换",
+        "恢复主任务"
+      ],
+      "source": "multi_turn",
+      "session_context": {
+        "previous_intent": "search",
+        "previous_text": "查一下Transformer的现有技术"
+      },
+      "note": "'现在可以写了'暗示完成检索，切换回 draft_full"
+    }
+  ]
+}

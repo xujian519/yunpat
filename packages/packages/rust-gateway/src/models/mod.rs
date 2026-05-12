@@ -7,4 +7,4 @@ pub mod session;
 
 pub use event::{EventType, GatewayEvent};
 pub use hitl::{HITLRequest, HITLResponse};
-pub use session::{MessageRole, Session, SessionMessage, SessionStatus};
+pub use session::{IntentFrame, MessageRole, Session, SessionMessage, SessionStatus};

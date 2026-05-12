@@ -7,15 +7,12 @@
 
 import type { HITLRequest, HITLResponse } from '../types/index.js'
 import type { LLMClient, LLMMessage } from '../llm/LLMClient.js'
-import type { ContextBuilder } from '../context/ContextBuilder.js'
 
 export class HITLResponseParser {
   private llmClient: LLMClient
-  private contextBuilder?: ContextBuilder
 
-  constructor(llmClient: LLMClient, contextBuilder?: ContextBuilder) {
+  constructor(llmClient: LLMClient) {
     this.llmClient = llmClient
-    this.contextBuilder = contextBuilder
   }
 
   /**
@@ -121,19 +118,10 @@ export class HITLResponseParser {
 
 请分类并提取修改要求。`
 
-    let messages: LLMMessage[]
-    if (this.contextBuilder && sessionId) {
-      messages = await this.contextBuilder.buildThreeLayerMessages(
-        systemPrompt,
-        { sessionId, pendingHITLDescription: originalRequest.description },
-        userInput
-      )
-    } else {
-      messages = [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userInput },
-      ]
-    }
+    const messages: LLMMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userInput },
+    ]
 
     const result = await this.llmClient.chatWithSchema<{
       hitlResponse: 'CONFIRM' | 'MODIFY' | 'REJECT' | 'PARTIAL'

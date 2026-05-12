@@ -67,19 +67,19 @@ describe('MockLLMClient单元测试', () => {
 
       expect(result1.content).toBe('队列响应')
       expect(result2.content).toBe(
-        '{"intent": "CHITCHAT", "confidence": 0.95, "complexity": "simple", "extracted": {"title": "问候", "field": "通用", "hasAttachment": false, "urgency": "normal", "keywords": ["你好"]}}'
+        '{"intent": "CLARIFY", "confidence": 0.95, "complexity": "simple", "extracted": {"title": "问候", "field": "通用", "hasAttachment": false, "urgency": "normal", "keywords": ["你好"]}}'
       )
     })
   })
 
   describe('辅助函数测试', () => {
     it('应该创建正确的意图识别响应', () => {
-      const response = createChitchatResponse()
+      const response = createClarifyResponse()
 
       expect(response.content).toBeDefined()
       const parsed = JSON.parse(response.content)
-      expect(parsed.intent).toBe('CHITCHAT')
-      expect(parsed.confidence).toBe(0.95)
+      expect(parsed.intent).toBe('CLARIFY')
+      expect(parsed.confidence).toBe(0.6)
     })
 
     it('应该创建正确的CLARIFY响应', () => {
@@ -159,7 +159,7 @@ describe('MockLLMClient单元测试', () => {
       expect(mockClient.getCallCount()).toBe(0)
       // 清除后应该返回默认响应
       const result = await mockClient.chat([])
-      expect(result.content).toContain('CHITCHAT')
+      expect(result.content).toContain('CLARIFY')
     })
   })
 

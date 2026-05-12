@@ -5,6 +5,18 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+/// 意图帧：记录单轮对话的意图识别结果
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IntentFrame {
+    pub intent: String,
+    pub confidence: f64,
+    pub timestamp: i64,
+    /// 是否被用户明确修正
+    pub corrected: bool,
+    /// 原始用户输入
+    pub user_input: String,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Session {
     pub id: String,
@@ -13,6 +25,8 @@ pub struct Session {
     pub updated_at: i64,
     pub status: SessionStatus,
     pub messages: Vec<SessionMessage>,
+    /// Phase 2: 意图历史栈（多轮状态追踪）
+    pub intent_history: Vec<IntentFrame>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -56,6 +70,7 @@ impl Session {
             updated_at: now,
             status: SessionStatus::Idle,
             messages: Vec::new(),
+            intent_history: Vec::new(),
         }
     }
 

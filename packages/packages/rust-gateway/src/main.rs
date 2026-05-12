@@ -14,13 +14,14 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use metrics_exporter_prometheus::PrometheusBuilder;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use services::{
-    Broadcaster, HITLManager, IntentRouter, OrchestratorClient, SessionManager, SessionStore,
+    Broadcaster, FeedbackStore, HITLManager, IntentRouter, OrchestratorClient, SessionManager, SessionStore,
 };
 
 /// 应用状态
@@ -31,6 +32,7 @@ pub struct AppState {
     pub broadcaster: Arc<Broadcaster>,
     pub orchestrator_client: Arc<OrchestratorClient>,
     pub intent_router: Arc<IntentRouter>,
+    pub feedback_store: Arc<FeedbackStore>,
 }
 
 #[tokio::main]
@@ -46,6 +48,12 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("Starting YunPat Gateway v{}", env!("CARGO_PKG_VERSION"));
 
+    // 初始化 Prometheus metrics exporter
+    let recorder = PrometheusBuilder::new().build_recorder();
+    let metrics_handle = recorder.handle();
+    metrics::set_global_recorder(recorder).expect("Failed to install Prometheus recorder");
+    tracing::info!("Prometheus metrics exporter initialized");
+
     // 初始化服务
     let broadcaster = Arc::new(Broadcaster::new());
     let session_store = SessionStore::new();
@@ -58,6 +66,11 @@ async fn main() -> anyhow::Result<()> {
 
     // 意图路由器（从环境变量加载 LLM 配置）
     let intent_router = Arc::new(IntentRouter::from_env());
+    let feedback_capacity = std::env::var("FEEDBACK_BUFFER_CAPACITY")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(10000);
+    let feedback_store = Arc::new(FeedbackStore::new(feedback_capacity));
 
     // 创建会话管理器（使用 Broadcaster 共享的 broadcast channel）
     let session_manager = Arc::new(SessionManager::new(
@@ -90,6 +103,7 @@ async fn main() -> anyhow::Result<()> {
         broadcaster,
         orchestrator_client,
         intent_router,
+        feedback_store,
     };
 
     // 构建路由
@@ -110,6 +124,10 @@ async fn main() -> anyhow::Result<()> {
             get(routes::events::events_stream),
         )
         .route(
+            "/api/v1/sessions/{id}/feedback",
+            post(routes::sessions::submit_feedback),
+        )
+        .route(
             "/api/v1/sessions/{id}/hitl",
             post(routes::hitl::submit_hitl_response),
         )
@@ -120,6 +138,7 @@ async fn main() -> anyhow::Result<()> {
         // 内部 API
         .route("/internal/events", post(routes::internal::emit_event))
         .route("/internal/health", get(routes::internal::health_check))
+        .route("/internal/metrics", get(move || async move { metrics_handle.render() }))
         // 状态
         .with_state(state)
         // 中间件

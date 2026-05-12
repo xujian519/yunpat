@@ -24,7 +24,7 @@ export class MockLLMClient {
     this.responseQueue = []
     this.defaultResponse = {
       content:
-        '{"intent": "CHITCHAT", "confidence": 0.95, "complexity": "simple", "extracted": {"title": "问候", "field": "通用", "hasAttachment": false, "urgency": "normal", "keywords": ["你好"]}}',
+        '{"intent": "CLARIFY", "confidence": 0.95, "complexity": "simple", "extracted": {"title": "问候", "field": "通用", "hasAttachment": false, "urgency": "normal", "keywords": ["你好"]}}',
       usage: {
         inputTokens: 100,
         outputTokens: 50,

@@ -13,6 +13,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use crate::models::{EventType, GatewayEvent, MessageRole, SessionMessage};
+use crate::services::session_state::{analyze_multi_turn, push_intent_frame};
 use crate::AppState;
 
 #[derive(Deserialize)]
@@ -93,8 +94,26 @@ pub async fn send_message(
         },
     );
 
-    // 2. 意图路由
-    let decision = if let Some(ref intent_str) = req.intent_override {
+    // 2. 多轮状态分析（Phase 2）
+    let multi_turn = if let Some(session) = state.session_manager.get_session(&id) {
+        analyze_multi_turn(&content, &session.intent_history)
+    } else {
+        crate::services::session_state::MultiTurnAnalysis {
+            is_correction: false,
+            inherited_intent: None,
+            is_ellipsis: false,
+        }
+    };
+
+    if multi_turn.is_correction {
+        tracing::info!("Multi-turn: correction detected");
+    }
+    if let Some(ref inherited) = multi_turn.inherited_intent {
+        tracing::info!(inherited_intent = %inherited, "Multi-turn: ellipsis intent inheritance");
+    }
+
+    // 3. 意图路由
+    let mut decision = if let Some(ref intent_str) = req.intent_override {
         // TUI/CLI 已知意图，直接使用
         tracing::info!(intent = %intent_str, source = "override", "意图：客户端预设");
         crate::services::intent_router::RoutingDecision {
@@ -103,25 +122,65 @@ pub async fn send_message(
             needs_llm: false,
             direct_response: None,
         }
+    } else if let Some(ref inherited) = multi_turn.inherited_intent {
+        // 多轮省略继承：使用上一轮意图，跳过重新识别
+        tracing::info!(inherited_intent = %inherited, source = "multi_turn", "意图：省略继承");
+        crate::services::intent_router::RoutingDecision {
+            skip_intent_recognition: true,
+            intent_override: Some(inherited.clone().into()),
+            needs_llm: false,
+            direct_response: None,
+        }
     } else {
         // Gateway 意图路由器判断
         state.intent_router.route(&content).await
     };
 
-    // 3. 发送意图识别事件给前端
+    // 修正信号：如果用户明确修正，且当前路由结果与上一轮相同，强制降级为 CLARIFY
+    if multi_turn.is_correction {
+        if let Some(ref intent) = decision.intent_override {
+            if let Some(session) = state.session_manager.get_session(&id) {
+                if let Some(last) = session.intent_history.last() {
+                    if last.intent == intent.to_string() && !last.corrected {
+                        tracing::warn!("Multi-turn: user corrected but same intent returned, forcing CLARIFY");
+                        decision.intent_override = Some(crate::services::intent_router::IntentType::Clarify);
+                    }
+                }
+            }
+        }
+    }
+
+    // 3.5 更新意图历史栈（Phase 2: 多轮状态追踪）
+    if let Some(ref intent) = decision.intent_override {
+        let _ = state.session_manager.update_session(&id, |session| {
+            push_intent_frame(
+                &mut session.intent_history,
+                intent.to_string(),
+                0.85, // Gateway 层默认置信度
+                content.clone(),
+                multi_turn.is_correction,
+            );
+        });
+    }
+
+    // 4. 发送意图识别事件给前端
     if let Some(ref intent) = decision.intent_override {
         state.broadcaster.publish(GatewayEvent::new(
             id.clone(),
             EventType::Intent,
             serde_json::json!({
                 "intent": intent.to_string(),
-                "source": if decision.needs_llm { "llm" } else if decision.direct_response.is_some() { "chitchat" } else { "gateway" },
+                "source": if decision.needs_llm { "llm" } else { "gateway" },
                 "skip_call1": decision.skip_intent_recognition,
+                "multi_turn": {
+                    "is_correction": multi_turn.is_correction,
+                    "is_ellipsis": multi_turn.is_ellipsis,
+                }
             }),
         ));
     }
 
-    // 4. 处理直接回复（闲聊/帮助）
+    // 5. 处理直接回复（CODING 等系统意图的提示信息）
     if let Some(ref response) = decision.direct_response {
         state.session_manager.add_message(
             &id,
@@ -305,4 +364,93 @@ pub async fn send_message(
         }
     }
     } // end else (non-INIT_WORKSPACE)
+}
+
+// ============================================================================
+// 用户反馈闭环（Phase 2）
+// ============================================================================
+
+use crate::services::feedback::{FeedbackRecord, FeedbackType};
+
+#[derive(Deserialize)]
+pub struct FeedbackRequest {
+    pub message_index: usize,
+    pub feedback_type: String,
+    pub corrected_intent: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct FeedbackResponse {
+    pub success: bool,
+    pub message: String,
+}
+
+pub async fn submit_feedback(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(req): Json<FeedbackRequest>,
+) -> impl IntoResponse {
+    let session = match state.session_manager.get_session(&id) {
+        Some(s) => s,
+        None => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(FeedbackResponse {
+                    success: false,
+                    message: "Session not found".to_string(),
+                }),
+            )
+                .into_response();
+        }
+    };
+
+    let user_input = session
+        .messages
+        .get(req.message_index)
+        .map(|m| m.content.clone())
+        .unwrap_or_default();
+
+    let routed_intent = session
+        .intent_history
+        .get(req.message_index)
+        .map(|f| f.intent.clone())
+        .unwrap_or_default();
+
+    let feedback_type = match req.feedback_type.as_str() {
+        "correct" => FeedbackType::Correct,
+        "wrong" => FeedbackType::Wrong,
+        "corrected" => FeedbackType::Corrected,
+        _ => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(FeedbackResponse {
+                    success: false,
+                    message: "Invalid feedback_type. Use: correct, wrong, corrected".to_string(),
+                }),
+            )
+                .into_response();
+        }
+    };
+
+    let record = FeedbackRecord {
+        session_id: id.clone(),
+        message_index: req.message_index,
+        user_input,
+        routed_intent,
+        feedback_type,
+        corrected_intent: req.corrected_intent,
+        timestamp: chrono::Utc::now().timestamp(),
+        metadata: None,
+    };
+
+    state.feedback_store.submit(record);
+
+    (
+        StatusCode::OK,
+        Json(FeedbackResponse {
+            success: true,
+            message: "Feedback recorded".to_string(),
+        }),
+    )
+        .into_response()
 }

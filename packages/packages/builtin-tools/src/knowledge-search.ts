@@ -125,7 +125,7 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
     const basePath =
       knowledgeBasePath ||
       process.env.KNOWLEDGE_BASE_PATH ||
-      '/Users/xujian/projects/YunPat/knowledge-base'
+      path.join(process.cwd(), 'knowledge-base')
     this.knowledgeBasePath = basePath
     this.indexPath = indexPath || `${basePath}/card-index.json`
   }

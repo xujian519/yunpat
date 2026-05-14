@@ -43,7 +43,7 @@ export class YunPatAdapter {
     this.knowledgeBasePath =
       knowledgeBasePath ||
       process.env.KNOWLEDGE_BASE_PATH ||
-      '/Users/xujian/projects/YunPat/knowledge-base'
+      join(process.cwd(), 'knowledge-base')
 
     this.bridge = new ObsidianKnowledgeBridge(this.knowledgeBasePath)
   }
@@ -158,7 +158,12 @@ export class YunPatAdapter {
    */
   private async parseConceptHierarchy(): Promise<void> {
     const hierarchyPath = join(this.knowledgeBasePath, 'Concept-Hierarchy.md')
-    const content = await readFile(hierarchyPath, 'utf-8')
+    let content = ''
+    try {
+      content = await readFile(hierarchyPath, 'utf-8')
+    } catch {
+      return
+    }
 
     const lines = content.split('\n')
     let currentLevel1 = ''
@@ -224,7 +229,12 @@ export class YunPatAdapter {
    */
   private async parseConceptIndex(): Promise<void> {
     const indexPath = join(this.knowledgeBasePath, 'Concept-Index.md')
-    const content = await readFile(indexPath, 'utf-8')
+    let content = ''
+    try {
+      content = await readFile(indexPath, 'utf-8')
+    } catch {
+      return
+    }
 
     const lines = content.split('\n')
     let currentConcept = ''

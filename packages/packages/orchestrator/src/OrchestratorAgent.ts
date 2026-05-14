@@ -559,6 +559,7 @@ export class OrchestratorAgent {
 
     const domainConfig = this.config.domainConfig ?? PatentIntentConfig
     const lowerMsg = message.toLowerCase()
+    const confidenceThreshold = this.config.intentConfig?.confidenceThreshold ?? 0.7
 
     // 1. 规则匹配：用 PatentIntentConfig 的 keywords 做简单匹配，取最高分
     let bestMatch: { cat: (typeof domainConfig.categories)[0]; score: number } | null = null
@@ -570,7 +571,7 @@ export class OrchestratorAgent {
     }
     if (bestMatch && bestMatch.score >= 1) {
       const confidence = Math.min(0.5 + bestMatch.score * 0.15, 0.95)
-      return {
+      const ruleResult: IntentRecognitionResult = {
         intent: bestMatch.cat.intentId as IntentType,
         confidence,
         complexity: bestMatch.cat.complexity as 'simple' | 'complex',
@@ -580,24 +581,88 @@ export class OrchestratorAgent {
           keywords: bestMatch.cat.keywords.filter((kw) => lowerMsg.includes(kw.toLowerCase())),
         },
       }
+      if (ruleResult.confidence >= confidenceThreshold) {
+        return ruleResult
+      }
+      try {
+        const schema = {
+          type: 'object',
+          properties: {
+            intent: { type: 'string' },
+            confidence: { type: 'number' },
+            complexity: { type: 'string' },
+            extracted: { type: 'object' },
+            clarifyQuestion: { type: 'string' },
+          },
+          required: ['intent', 'confidence', 'complexity'],
+        }
+        const messages = [
+          {
+            role: 'system' as const,
+            content:
+              '你是专利代理AI助手。请识别用户意图并输出严格的 JSON，不要输出 markdown 代码块。',
+          },
+          {
+            role: 'user' as const,
+            content: `用户输入：${message}\n\n只输出 JSON：{"intent":"...","confidence":0-1,"complexity":"simple|complex","extracted":{...}}`,
+          },
+        ]
+        const parsed = await this.llmClient.chatWithSchema<IntentRecognitionResult>(messages, schema)
+        return {
+          intent: parsed.intent as IntentType,
+          confidence: typeof parsed.confidence === 'number' ? parsed.confidence : ruleResult.confidence,
+          complexity: parsed.complexity ?? ruleResult.complexity,
+          extracted:
+            parsed.extracted ??
+            ({
+              hasAttachment: !!(input.attachments && input.attachments.length > 0),
+              urgency: 'normal',
+              keywords: [],
+            } as any),
+          clarifyQuestion: parsed.clarifyQuestion,
+        }
+      } catch {
+        return ruleResult
+      }
     }
 
     // 2. 规则未命中，轻量 LLM 识别（无 few-shot，单层 prompt）
     try {
-      const prompt = `分析用户意图，返回 JSON：{"intent":"DRAFT_FULL|DRAFT_CLAIMS|DRAFT_SPEC|RESPOND_OA|SEARCH|ANALYZE_PORTFOLIO|CODING|CLARIFY","confidence":0.0-1.0,"complexity":"simple|complex"}
-用户输入：${message}`
-      const response = await this.llmClient.chat([{ role: 'user', content: prompt }])
-      const responseText = typeof response === 'string' ? response : response.content || ''
-      const parsed = JSON.parse(responseText)
+      const schema = {
+        type: 'object',
+        properties: {
+          intent: { type: 'string' },
+          confidence: { type: 'number' },
+          complexity: { type: 'string' },
+          extracted: { type: 'object' },
+          clarifyQuestion: { type: 'string' },
+        },
+        required: ['intent', 'confidence', 'complexity'],
+      }
+      const messages = [
+        {
+          role: 'system' as const,
+          content:
+            '你是专利代理AI助手。请识别用户意图并输出严格的 JSON，不要输出 markdown 代码块。',
+        },
+        {
+          role: 'user' as const,
+          content: `用户输入：${message}\n\n只输出 JSON：{"intent":"...","confidence":0-1,"complexity":"simple|complex","extracted":{...}}`,
+        },
+      ]
+      const parsed = await this.llmClient.chatWithSchema<IntentRecognitionResult>(messages, schema)
       return {
         intent: parsed.intent as IntentType,
         confidence: parsed.confidence ?? 0.5,
         complexity: parsed.complexity ?? 'simple',
-        extracted: {
-          hasAttachment: !!(input.attachments && input.attachments.length > 0),
-          urgency: 'normal',
-          keywords: [],
-        },
+        extracted:
+          parsed.extracted ??
+          ({
+            hasAttachment: !!(input.attachments && input.attachments.length > 0),
+            urgency: 'normal',
+            keywords: [],
+          } as any),
+        clarifyQuestion: parsed.clarifyQuestion,
       }
     } catch {
       return {
@@ -643,13 +708,43 @@ export class OrchestratorAgent {
   }
 
   /**
-   * Call 2: 任务规划（简化版 —— 从配置读取预定义计划，无 LLM 规划）
+   * Call 2: 任务规划（LLM 优先，失败回退到预定义计划）
    */
   protected async call2_TaskPlanning(
     intent: IntentRecognitionResult,
     _sessionId?: string
   ): Promise<TaskPlan> {
     const domainConfig = this.config.domainConfig ?? PatentIntentConfig
+    try {
+      const schema = {
+        type: 'object',
+        properties: {
+          planId: { type: 'string' },
+          intent: { type: 'string' },
+          estimatedMinutes: { type: 'number' },
+          steps: { type: 'array', items: { type: 'object' } },
+          hitlCheckpoints: { type: 'array', items: { type: 'string' } },
+          metadata: { type: 'object' },
+        },
+        required: ['planId', 'intent', 'steps', 'hitlCheckpoints'],
+      }
+      const messages = [
+        {
+          role: 'system' as const,
+          content:
+            '你是任务规划器。请为用户意图生成可执行的 TaskPlan JSON（不要 markdown）。确保 stepId 唯一，dependsOn 引用存在的 stepId。',
+        },
+        {
+          role: 'user' as const,
+          content: `用户意图：${intent.intent}\n复杂度：${intent.complexity}\n已抽取信息：${JSON.stringify(intent.extracted ?? {})}\n\n请输出 TaskPlan JSON。`,
+        },
+      ]
+      const planned = await this.llmClient.chatWithSchema<TaskPlan>(messages, schema)
+      if (planned && planned.steps && Array.isArray(planned.steps)) {
+        return planned
+      }
+    } catch {
+    }
 
     // 简单意图：单步直达
     if (intent.complexity === 'simple') {

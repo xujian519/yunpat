@@ -115,7 +115,10 @@ async function verifyAgentsRuntime() {
   console.log('🚀 YunPat MVP Agent 运行时验证\n')
   console.log('='.repeat(80))
 
-  const API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-1b9f6c6ba33f4130a3fb76ea29c2ef95'
+  const API_KEY = process.env.DEEPSEEK_API_KEY
+  if (!API_KEY) {
+    throw new Error('Missing DEEPSEEK_API_KEY environment variable')
+  }
 
   // 1. 验证API连接
   console.log('\n1️⃣  验证API连接...')

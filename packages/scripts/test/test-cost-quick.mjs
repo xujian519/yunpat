@@ -9,7 +9,10 @@ import {
   TaskRouter,
 } from './packages/core/dist/index.js';
 
-const DEEPSEEK_API_KEY = 'sk-1b9f6c6ba33f4130a3fb76ea29c2ef95';
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+if (!DEEPSEEK_API_KEY) {
+  throw new Error('Missing DEEPSEEK_API_KEY environment variable');
+}
 const OMLX_BASE_URL = 'http://localhost:8009/v1';
 
 async function main() {

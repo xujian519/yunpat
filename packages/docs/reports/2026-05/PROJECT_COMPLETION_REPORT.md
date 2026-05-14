@@ -275,15 +275,15 @@ cd packages/cli && pnpm build
 # ========== oMLX 本地模型（免费） ==========
 OMLX_ENABLED=true
 OMLX_BASE_URL=http://localhost:8009/v1
-OMLX_API_KEY=xj781102@
+OMLX_API_KEY=your_omlx_api_key
 OMLX_MODEL_NAME=Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit
 
 # ========== DeepSeek 云端模型（备用） ==========
-DEEPSEEK_API_KEY=sk-1b9f6c6ba33f4130a3fb76ea29c2ef95
+DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 
 # ========== 知识库配置 ==========
-KNOWLEDGE_BASE_PATH=/Users/xujian/projects/YunPat/knowledge-base
+KNOWLEDGE_BASE_PATH=./knowledge-base
 PROMPT_TEMPLATES_DIR=./prompts/patent-drafting
 
 # ========== 数据库配置 ==========

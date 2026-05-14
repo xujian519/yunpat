@@ -19,9 +19,12 @@ import {
 import { WriterAgent } from './packages/agents/writer/dist/index.js';
 
 // ========== 测试配置 ==========
-const DEEPSEEK_API_KEY = 'sk-1b9f6c6ba33f4130a3fb76ea29c2ef95';
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+if (!DEEPSEEK_API_KEY) {
+  throw new Error('Missing DEEPSEEK_API_KEY environment variable');
+}
 const OMLX_BASE_URL = 'http://localhost:8009/v1';
-const OMLX_API_KEY = 'xj781102@';
+const OMLX_API_KEY = process.env.OMLX_API_KEY;
 
 // ========== 测试 1: ResilientLLMAdapter ==========
 async function testResilientLLM() {

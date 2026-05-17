@@ -10,7 +10,7 @@
  * - 所有 Agent 基类（Agent → KnowledgeEnhancedAgent → ProfessionalAgent）都接受此格式
  */
 
-import type { LLMAdapter, EventBus, MemoryStore, ToolRegistry, AgentConfig } from '@yunpat/core'
+import type { AgentConfig } from '@yunpat/core'
 import { AgentRegistry, type ExecutableAgent } from './AgentRegistry.js'
 import { agentManifest, type AgentManifestEntry } from './agentManifest.js'
 import { fileURLToPath } from 'url'

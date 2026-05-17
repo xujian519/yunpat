@@ -29,7 +29,7 @@ export class CritiqueLoop {
   async executeWithCritique(
     executeFn: () => Promise<AgentResult>,
     config: CritiqueConfig,
-    context: ExecutionContext
+    _context: ExecutionContext
   ): Promise<{ result: AgentResult; critique: CritiqueResult }> {
     let round = 0
     let previousFeedback: string | undefined = undefined
@@ -159,7 +159,7 @@ export class CritiqueLoop {
       // 解析评估结果
       let score = 0
       let feedback = '评估结果格式错误'
-      let evaluation: Record<string, any> | undefined = undefined
+      let evaluation: Record<string, unknown> | undefined = undefined
 
       if (evaluationResult && typeof evaluationResult === 'object') {
         // 尝试从不同字段提取评分和反馈

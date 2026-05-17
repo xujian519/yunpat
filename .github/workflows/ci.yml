@@ -300,7 +300,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ts-dist
-          path: packages/*/dist
+          path: packages/packages/*/dist
           retention-days: 7
 
   ts-test:
@@ -330,7 +330,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ts-dist
-          path: packages
+          path: packages/packages
 
       - name: Run unit tests (mock)
         run: cd packages && MOCK_TESTS=true pnpm test:mock

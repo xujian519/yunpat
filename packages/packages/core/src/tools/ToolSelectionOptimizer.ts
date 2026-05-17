@@ -65,7 +65,12 @@ export class ToolSelectionOptimizer {
     availableTools: EnhancedTool[],
     enhancedMetadata: Map<string, EnhancedToolMetadata>,
     relevantExamples: FewShotExample[],
-    recommendations: { toolName: string; confidence: number; reason: string; expectedPerformance?: { successRate: number } }[],
+    recommendations: {
+      toolName: string
+      confidence: number
+      reason: string
+      expectedPerformance?: { successRate: number }
+    }[],
     context?: Record<string, unknown>
   ): string {
     let prompt = `

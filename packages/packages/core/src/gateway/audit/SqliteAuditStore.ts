@@ -295,18 +295,18 @@ export class SqliteAuditStore implements AuditLogStore {
       LIMIT ?
     `)
 
-     const rows = stmt.all(limit) as Array<Record<string, unknown>>
- 
-     return rows.map((row) => ({
-       timestamp: new Date(row.timestamp as string),
-       userId: row.user_id as string,
-       agentName: row.agent_name as string,
-       action: row.action as string,
-       resource: row.resource as string,
-       result: row.result as string,
-       details: row.details ? JSON.parse(row.details as string) : undefined,
-       ipAddress: row.ip_address as string,
-     }))
+    const rows = stmt.all(limit) as Array<Record<string, unknown>>
+
+    return rows.map((row) => ({
+      timestamp: new Date(row.timestamp as string),
+      userId: row.user_id as string,
+      agentName: row.agent_name as string,
+      action: row.action as string,
+      resource: row.resource as string,
+      result: row.result as string,
+      details: row.details ? JSON.parse(row.details as string) : undefined,
+      ipAddress: row.ip_address as string,
+    }))
   }
 
   /**

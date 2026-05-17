@@ -33,7 +33,10 @@ const formatConverterSchema = z.object({
   content: z
     .object({
       markdown: z.string().optional().describe('Markdown 内容'),
-      structured: z.lazy(() => z.record(z.unknown())).optional().describe('结构化内容'),
+      structured: z
+        .lazy(() => z.record(z.unknown()))
+        .optional()
+        .describe('结构化内容'),
     })
     .describe('待转换内容'),
   patentOfficeFormat: z
@@ -52,7 +55,10 @@ const formatConverterSchema = z.object({
     .describe('文档元数据'),
 })
 
-export class FormatConverterTool extends BaseMcpTool<z.infer<typeof formatConverterSchema>, ToolExecutionResult> {
+export class FormatConverterTool extends BaseMcpTool<
+  z.infer<typeof formatConverterSchema>,
+  ToolExecutionResult
+> {
   readonly metadata = {
     name: 'format_convert',
     description:
@@ -121,10 +127,16 @@ const patentManagerSchema = z.object({
       'calculate_fees',
     ])
     .describe('操作类型'),
-  data: z.lazy(() => z.record(z.unknown())).optional().describe('操作数据（根据操作类型不同）'),
+  data: z
+    .lazy(() => z.record(z.unknown()))
+    .optional()
+    .describe('操作数据（根据操作类型不同）'),
 })
 
-export class PatentManagerTool extends BaseMcpTool<z.infer<typeof patentManagerSchema>, ToolExecutionResult> {
+export class PatentManagerTool extends BaseMcpTool<
+  z.infer<typeof patentManagerSchema>,
+  ToolExecutionResult
+> {
   readonly metadata = {
     name: 'patent_manager',
     description:

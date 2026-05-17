@@ -13,9 +13,7 @@ export interface BasicAuthProviderConfig {
 export class BasicAuthProvider implements UserDataProvider {
   private users = new Map<string, BasicAuthUser>()
 
-  constructor(
-    initialUsers?: Array<Omit<BasicAuthUser, 'passwordHash'> & { password?: string }>
-  ) {
+  constructor(initialUsers?: Array<Omit<BasicAuthUser, 'passwordHash'> & { password?: string }>) {
     if (initialUsers) {
       for (const user of initialUsers) {
         if (user.password) {

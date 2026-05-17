@@ -222,9 +222,7 @@ export class BatchProcessor {
    */
   private estimateSectionTokens(sectionHeading: string, plan: WritingPlan): number {
     const modelName = this.config.modelName || 'gpt-3.5-turbo'
-    const wordsPerSection = Math.round(
-      plan.targetLength / plan.structure.sections.length
-    )
+    const wordsPerSection = Math.round(plan.targetLength / plan.structure.sections.length)
 
     // 标题 Token
     const headingTokens = this.tokenCounter.estimateTokens(sectionHeading, modelName)
@@ -334,7 +332,11 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
   /**
    * 估算提示 Token 数
    */
-  private estimatePromptTokens(sections: string[], plan: WritingPlan, wordsPerSection: number): number {
+  private estimatePromptTokens(
+    sections: string[],
+    plan: WritingPlan,
+    wordsPerSection: number
+  ): number {
     const modelName = this.config.modelName || 'gpt-3.5-turbo'
 
     // 基础提示 Token
@@ -468,9 +470,7 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
    * 构建单个章节提示（用于回退模式）
    */
   private buildSectionPrompt(heading: string, plan: WritingPlan): string {
-    const wordsPerSection = Math.round(
-      plan.targetLength / plan.structure.sections.length
-    )
+    const wordsPerSection = Math.round(plan.targetLength / plan.structure.sections.length)
 
     return `请为文档"${plan.structure.title}"撰写以下章节的内容：
 

@@ -69,9 +69,22 @@ export class SubjectMatterCheckerTool extends BaseMcpTool<
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const module = await import('@yunpat/subject-matter-checker')
-        const AgentClass = 'SubjectMatterChecker' in module
-          ? (module as { SubjectMatterChecker: new (config: Record<string, unknown>) => { execute(input: unknown): Promise<unknown> } }).SubjectMatterChecker
-          : (module as { default: new (config: Record<string, unknown>) => { execute(input: unknown): Promise<unknown> } }).default
+        const AgentClass =
+          'SubjectMatterChecker' in module
+            ? (
+                module as {
+                  SubjectMatterChecker: new (config: Record<string, unknown>) => {
+                    execute(input: unknown): Promise<unknown>
+                  }
+                }
+              ).SubjectMatterChecker
+            : (
+                module as {
+                  default: new (config: Record<string, unknown>) => {
+                    execute(input: unknown): Promise<unknown>
+                  }
+                }
+              ).default
 
         const agent = new AgentClass({
           name: 'subject-matter-checker',
@@ -131,7 +144,10 @@ const unityCheckSchema = z.object({
   inventionTitle: z.string().optional().describe('发明名称'),
 })
 
-export class UnityCheckerTool extends BaseMcpTool<z.infer<typeof unityCheckSchema>, ToolExecutionResult> {
+export class UnityCheckerTool extends BaseMcpTool<
+  z.infer<typeof unityCheckSchema>,
+  ToolExecutionResult
+> {
   readonly metadata = {
     name: 'unity_check',
     description:
@@ -147,9 +163,22 @@ export class UnityCheckerTool extends BaseMcpTool<z.infer<typeof unityCheckSchem
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const module = await import('@yunpat/unity-checker')
-        const AgentClass = 'UnityChecker' in module
-          ? (module as { UnityChecker: new (config: Record<string, unknown>) => { execute(input: unknown): Promise<unknown> } }).UnityChecker
-          : (module as { default: new (config: Record<string, unknown>) => { execute(input: unknown): Promise<unknown> } }).default
+        const AgentClass =
+          'UnityChecker' in module
+            ? (
+                module as {
+                  UnityChecker: new (config: Record<string, unknown>) => {
+                    execute(input: unknown): Promise<unknown>
+                  }
+                }
+              ).UnityChecker
+            : (
+                module as {
+                  default: new (config: Record<string, unknown>) => {
+                    execute(input: unknown): Promise<unknown>
+                  }
+                }
+              ).default
 
         const agent = new AgentClass({
           name: 'unity-checker',
@@ -218,9 +247,22 @@ export class SpecFormalityCheckerTool extends BaseMcpTool<
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const module = await import('@yunpat/spec-formality-checker')
-        const AgentClass = 'SpecFormalityChecker' in module
-          ? (module as { SpecFormalityChecker: new (config: Record<string, unknown>) => { execute(input: unknown): Promise<unknown> } }).SpecFormalityChecker
-          : (module as { default: new (config: Record<string, unknown>) => { execute(input: unknown): Promise<unknown> } }).default
+        const AgentClass =
+          'SpecFormalityChecker' in module
+            ? (
+                module as {
+                  SpecFormalityChecker: new (config: Record<string, unknown>) => {
+                    execute(input: unknown): Promise<unknown>
+                  }
+                }
+              ).SpecFormalityChecker
+            : (
+                module as {
+                  default: new (config: Record<string, unknown>) => {
+                    execute(input: unknown): Promise<unknown>
+                  }
+                }
+              ).default
 
         const agent = new AgentClass({
           name: 'spec-formality-checker',
@@ -260,7 +302,10 @@ const techUnitSchema = z.object({
   technicalField: z.string().optional().describe('技术领域（可选）'),
 })
 
-export class TechUnitExtractorTool extends BaseMcpTool<z.infer<typeof techUnitSchema>, ToolExecutionResult> {
+export class TechUnitExtractorTool extends BaseMcpTool<
+  z.infer<typeof techUnitSchema>,
+  ToolExecutionResult
+> {
   readonly metadata = {
     name: 'tech_unit_extract',
     description:

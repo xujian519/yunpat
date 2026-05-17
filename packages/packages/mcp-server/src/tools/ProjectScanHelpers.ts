@@ -451,7 +451,10 @@ export async function extractText(
       try {
         const { PdfExtractTextTool } = await import('@yunpat/document-tools')
         const tool = new PdfExtractTextTool()
-        const result = await tool.execute({ filePath, includeMetadata: false }, {} as ToolExecutionContext)
+        const result = await tool.execute(
+          { filePath, includeMetadata: false },
+          {} as ToolExecutionContext
+        )
         const textResult = result as Record<string, unknown>
         return (textResult.text as string | undefined)?.slice(0, maxPreview) ?? undefined
       } catch (error) {

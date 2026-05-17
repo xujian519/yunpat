@@ -268,15 +268,8 @@ export { CardPipeline } from './knowledge/CardPipeline.js'
 export { IncrementalGenerator, type ContentDiff } from './agent/IncrementalGenerator.js'
 
 // ========== 检索系统 (Retrieval) ==========
-export {
-  SemanticChunker,
-  createSemanticChunker,
-} from './retrieval/index.js'
-export type {
-  SemanticChunkerConfig,
-  Chunk,
-  PatentDocument,
-} from './retrieval/index.js'
+export { SemanticChunker, createSemanticChunker } from './retrieval/index.js'
+export type { SemanticChunkerConfig, Chunk, PatentDocument } from './retrieval/index.js'
 
 // ========== ④ 记忆层 (Memory) ==========
 export {

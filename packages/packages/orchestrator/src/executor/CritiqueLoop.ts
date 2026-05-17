@@ -7,7 +7,12 @@
  * 设计参考：PatExpert 的 Critique Agent 双重评估机制
  */
 
-import type { CritiqueConfig, CritiqueResult, AgentResult, ExecutionContext } from '../types/index.js'
+import type {
+  CritiqueConfig,
+  CritiqueResult,
+  AgentResult,
+  ExecutionContext,
+} from '../types/index.js'
 import type { AgentRegistry } from '../registry/AgentRegistry.js'
 import { errorToAgentError } from '@yunpat/agent-base'
 
@@ -160,14 +165,23 @@ export class CritiqueLoop {
         // 尝试从不同字段提取评分和反馈
         if ('score' in evaluationResult && typeof evaluationResult.score === 'number') {
           score = evaluationResult.score
-        } else if ('qualityScore' in evaluationResult && typeof evaluationResult.qualityScore === 'number') {
+        } else if (
+          'qualityScore' in evaluationResult &&
+          typeof evaluationResult.qualityScore === 'number'
+        ) {
           score = evaluationResult.qualityScore
         }
 
         const feedbackField = config.feedbackField ?? 'feedback'
-        if (feedbackField in evaluationResult && typeof evaluationResult[feedbackField] === 'string') {
+        if (
+          feedbackField in evaluationResult &&
+          typeof evaluationResult[feedbackField] === 'string'
+        ) {
           feedback = evaluationResult[feedbackField]
-        } else if ('suggestions' in evaluationResult && typeof evaluationResult.suggestions === 'string') {
+        } else if (
+          'suggestions' in evaluationResult &&
+          typeof evaluationResult.suggestions === 'string'
+        ) {
           feedback = evaluationResult.suggestions
         }
 

@@ -86,7 +86,7 @@ export class LangChainAdapter implements ILLMAdapter {
     }))
 
     // 调用 LangChain
-    const response = await this.llm.call(messages) as LangChainMessageResponse
+    const response = (await this.llm.call(messages)) as LangChainMessageResponse
 
     return {
       message: {

@@ -346,15 +346,16 @@ export class CheckpointManager {
     if (
       this.store &&
       'listResumableExecutions' in this.store &&
-      typeof (this.store as Record<string, unknown>).listResumableExecutions ===
-        'function'
+      typeof (this.store as Record<string, unknown>).listResumableExecutions === 'function'
     ) {
       try {
-        return await (this.store as {
-          listResumableExecutions(): Promise<
-            Array<{ executionId: string; agentName: string; iteration: number; timestamp: Date }>
-          >
-        }).listResumableExecutions()
+        return await (
+          this.store as {
+            listResumableExecutions(): Promise<
+              Array<{ executionId: string; agentName: string; iteration: number; timestamp: Date }>
+            >
+          }
+        ).listResumableExecutions()
       } catch (error) {
         console.error(`[检查点管理器] 从外部存储列出执行失败: ${error}`)
       }

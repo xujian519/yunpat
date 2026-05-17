@@ -19,10 +19,7 @@ import { dirname, resolve } from 'path'
 /**
  * Agent 共享依赖 - 使用与 AgentConfig 相同的类型定义
  */
-export type AgentSharedDeps = Pick<
-  AgentConfig,
-  'llm' | 'eventBus' | 'memory' | 'tools'
->
+export type AgentSharedDeps = Pick<AgentConfig, 'llm' | 'eventBus' | 'memory' | 'tools'>
 
 export class AgentFactory {
   private deps: AgentSharedDeps

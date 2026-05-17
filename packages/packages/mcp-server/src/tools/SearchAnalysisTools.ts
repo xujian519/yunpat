@@ -65,33 +65,47 @@ export interface ReportOptions {
 
 const priorArtSearchSchema = z.object({
   inventionTitle: z.string().describe('发明名称'),
-  claims: z.array(z.object({
-    type: z.enum(['independent', 'dependent']),
-    number: z.number(),
-    content: z.string(),
-    dependsOn: z.number().optional(),
-  })).optional().describe('权利要求列表（可选）'),
-  specification: z.object({
-    technicalField: z.string().optional(),
-    backgroundArt: z.string().optional(),
-    inventionContent: z.string().optional(),
-    embodiment: z.string().optional(),
-  }).optional().describe('说明书内容（可选）'),
+  claims: z
+    .array(
+      z.object({
+        type: z.enum(['independent', 'dependent']),
+        number: z.number(),
+        content: z.string(),
+        dependsOn: z.number().optional(),
+      })
+    )
+    .optional()
+    .describe('权利要求列表（可选）'),
+  specification: z
+    .object({
+      technicalField: z.string().optional(),
+      backgroundArt: z.string().optional(),
+      inventionContent: z.string().optional(),
+      embodiment: z.string().optional(),
+    })
+    .optional()
+    .describe('说明书内容（可选）'),
   patentType: z
     .enum(['invention', 'utilityModel', 'design'])
     .optional()
     .default('invention')
     .describe('专利类型'),
-  searchOptions: z.object({
-    keywords: z.array(z.string()).optional(),
-    classification: z.string().optional(),
-    dateRange: z.object({ start: z.string(), end: z.string() }).optional(),
-    applicant: z.string().optional(),
-    limit: z.number().optional().default(20),
-  }).optional().describe('检索选项'),
+  searchOptions: z
+    .object({
+      keywords: z.array(z.string()).optional(),
+      classification: z.string().optional(),
+      dateRange: z.object({ start: z.string(), end: z.string() }).optional(),
+      applicant: z.string().optional(),
+      limit: z.number().optional().default(20),
+    })
+    .optional()
+    .describe('检索选项'),
 })
 
-export class PriorArtSearchTool extends BaseMcpTool<z.infer<typeof priorArtSearchSchema>, ToolExecutionResult> {
+export class PriorArtSearchTool extends BaseMcpTool<
+  z.infer<typeof priorArtSearchSchema>,
+  ToolExecutionResult
+> {
   readonly metadata = {
     name: 'prior_art_search',
     description:
@@ -151,27 +165,36 @@ export class PriorArtSearchTool extends BaseMcpTool<z.infer<typeof priorArtSearc
 const comparisonReportSchema = z.object({
   application: z
     .object({
-  claims: z.array(z.string()).optional().describe('权利要求列表'),
-  specification: z.string().optional().describe('说明书摘要'),
-  inventionTitle: z.string().describe('发明名称'),
-}).describe('本申请信息'),
-priorArt: z.array(
-  z.object({
-    patentId: z.string().optional(),
-    title: z.string(),
-    abstract: z.string().optional(),
-    claims: z.array(z.string()).optional(),
-    description: z.string().optional(),
-  })
-).describe('对比文件列表'),
-options: z.object({
-  format: z.enum(['markdown', 'structured']).optional().default('markdown'),
-  includeTables: z.boolean().optional().default(true),
-  language: z.enum(['zh', 'en']).optional().default('zh'),
-}).optional().describe('报告选项'),
+      claims: z.array(z.string()).optional().describe('权利要求列表'),
+      specification: z.string().optional().describe('说明书摘要'),
+      inventionTitle: z.string().describe('发明名称'),
+    })
+    .describe('本申请信息'),
+  priorArt: z
+    .array(
+      z.object({
+        patentId: z.string().optional(),
+        title: z.string(),
+        abstract: z.string().optional(),
+        claims: z.array(z.string()).optional(),
+        description: z.string().optional(),
+      })
+    )
+    .describe('对比文件列表'),
+  options: z
+    .object({
+      format: z.enum(['markdown', 'structured']).optional().default('markdown'),
+      includeTables: z.boolean().optional().default(true),
+      language: z.enum(['zh', 'en']).optional().default('zh'),
+    })
+    .optional()
+    .describe('报告选项'),
 })
 
-export class ComparisonReportTool extends BaseMcpTool<z.infer<typeof comparisonReportSchema>, ToolExecutionResult> {
+export class ComparisonReportTool extends BaseMcpTool<
+  z.infer<typeof comparisonReportSchema>,
+  ToolExecutionResult
+> {
   readonly metadata = {
     name: 'comparison_report',
     description:
@@ -245,7 +268,10 @@ const researcherSchema = z.object({
   maxResults: z.number().optional().default(20).describe('最大结果数'),
 })
 
-export class ResearcherTool extends BaseMcpTool<z.infer<typeof researcherSchema>, ToolExecutionResult> {
+export class ResearcherTool extends BaseMcpTool<
+  z.infer<typeof researcherSchema>,
+  ToolExecutionResult
+> {
   readonly metadata = {
     name: 'research',
     description:

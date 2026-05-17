@@ -60,14 +60,22 @@ export interface ToolExecutionResult {
 // ============================================================
 
 const specificationDrafterSchema = z.object({
-  inventionUnderstanding: z.object({
-    technicalField: z.string(),
-    technicalProblem: z.string(),
-    technicalSolution: z.string(),
-    keyFeatures: z.array(z.string()),
-  }).describe('发明理解结果'),
-  priorArtSearch: z.lazy(() => z.record(z.unknown())).optional().describe('现有技术检索结果（可选）'),
-  claimsSet: z.lazy(() => z.record(z.unknown())).optional().describe('权利要求集（可选）'),
+  inventionUnderstanding: z
+    .object({
+      technicalField: z.string(),
+      technicalProblem: z.string(),
+      technicalSolution: z.string(),
+      keyFeatures: z.array(z.string()),
+    })
+    .describe('发明理解结果'),
+  priorArtSearch: z
+    .lazy(() => z.record(z.unknown()))
+    .optional()
+    .describe('现有技术检索结果（可选）'),
+  claimsSet: z
+    .lazy(() => z.record(z.unknown()))
+    .optional()
+    .describe('权利要求集（可选）'),
   draftMode: z
     .enum(['standard', 'detailed', 'concise'])
     .optional()
@@ -145,18 +153,29 @@ export class SpecificationDrafterTool extends BaseMcpTool<
 // ============================================================
 
 const abstractDrafterSchema = z.object({
-  inventionUnderstanding: z.object({
-    technicalField: z.string(),
-    technicalProblem: z.string(),
-    technicalSolution: z.string(),
-    keyFeatures: z.array(z.string()),
-  }).describe('发明理解结果'),
-  specification: z.lazy(() => z.record(z.unknown())).optional().describe('说明书内容（可选）'),
-  claims: z.lazy(() => z.record(z.unknown())).optional().describe('权利要求集（可选）'),
+  inventionUnderstanding: z
+    .object({
+      technicalField: z.string(),
+      technicalProblem: z.string(),
+      technicalSolution: z.string(),
+      keyFeatures: z.array(z.string()),
+    })
+    .describe('发明理解结果'),
+  specification: z
+    .lazy(() => z.record(z.unknown()))
+    .optional()
+    .describe('说明书内容（可选）'),
+  claims: z
+    .lazy(() => z.record(z.unknown()))
+    .optional()
+    .describe('权利要求集（可选）'),
   maxWords: z.number().optional().default(300).describe('摘要最大字数'),
 })
 
-export class AbstractDrafterTool extends BaseMcpTool<z.infer<typeof abstractDrafterSchema>, ToolExecutionResult> {
+export class AbstractDrafterTool extends BaseMcpTool<
+  z.infer<typeof abstractDrafterSchema>,
+  ToolExecutionResult
+> {
   readonly metadata = {
     name: 'abstract_drafter',
     description:

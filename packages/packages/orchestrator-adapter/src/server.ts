@@ -30,14 +30,14 @@ class UniversalLLMClient {
 
   async chat(messages: Array<{ role: string; content: string }>): Promise<LLMResponse> {
     const provider = this.config.provider.toLowerCase()
-    
+
     if (provider === 'deepseek') {
       // DeepSeek API 调用
       const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.config.apiKey}`,
         },
         body: JSON.stringify({
           model: this.config.model,
@@ -54,7 +54,7 @@ class UniversalLLMClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.config.apiKey}`,
         },
         body: JSON.stringify({
           model: this.config.model,

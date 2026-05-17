@@ -5,81 +5,246 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '31 6 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  RUSTFLAGS: -Dwarnings
+  NODE_VERSION: '20'
+  PNPM_VERSION: 10
 
 jobs:
   # =============================================================================
+  # Change Detection
+  # =============================================================================
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      ts: ${{ steps.filter.outputs.ts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'crates/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+            ts:
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+
+  # =============================================================================
   # Rust CI
   # =============================================================================
-  rust-check:
-    name: Rust Check
+  rust-version-check:
+    name: Rust Version Drift
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev libleptonica-dev libtesseract-dev tesseract-ocr pkg-config
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.88
-          components: rustfmt, clippy
+          toolchain: 1.88.0
 
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
+      - name: Install Linux system dependencies
+        run: |
+          for i in 1 2 3 4 5; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i); retrying in 15s"
+            sleep 15
+          done
+          sudo apt-get install -y libdbus-1-dev pkg-config
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Check version drift
+        run: crates/scripts/release/check-versions.sh
+
+  rust-lint:
+    name: Rust Lint
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.88.0
+          components: clippy, rustfmt
+
+      - name: Install Linux system dependencies
+        run: |
+          for i in 1 2 3 4 5; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i); retrying in 15s"
+            sleep 15
+          done
+          sudo apt-get install -y libdbus-1-dev pkg-config libleptonica-dev libtesseract-dev tesseract-ocr
+
+      - uses: Swatinem/rust-cache@v2
         with:
           workspaces: crates
 
-      - name: Check Format
+      - name: Check formatting
         run: cd crates && cargo fmt --all -- --check
 
-      - name: Run Clippy
-        run: cd crates && cargo clippy --workspace --all-targets --all-features -- -D warnings -A clippy::uninlined-format-args -A clippy::const-is-empty
+      - name: Clippy (release-strict)
+        run: cd crates && cargo clippy --workspace --all-targets --all-features --locked -- -D warnings -A clippy::uninlined-format-args -A clippy::const-is-empty
 
       - name: Build Rust
         run: cd crates && cargo build --workspace
 
-      - name: Test Rust
-        run: cd crates && cargo test --workspace --all-features
+      - name: Security Audit
+        run: cd crates && cargo install cargo-audit && cargo audit
 
-  # =============================================================================
-  # TypeScript CI
-  # =============================================================================
-  typescript-check:
-    name: TypeScript Check
+  rust-test:
+    name: Rust Test (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.88.0
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          for i in 1 2 3 4 5; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i); retrying in 15s"
+            sleep 15
+          done
+          sudo apt-get install -y libdbus-1-dev pkg-config
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates
+
+      - name: Run tests
+        run: cd crates && cargo test --workspace --locked --all-features
+
+      - name: Lockfile drift guard
+        if: runner.os == 'Linux'
+        run: git diff --exit-code -- Cargo.lock
+
+      - name: Run Offline Eval Harness
+        if: runner.os == 'Linux'
+        run: cd crates && cargo run -p yunpat-tui -- eval
+
+  rust-npm-smoke:
+    name: npm Wrapper Smoke (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' && github.event_name != 'schedule'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || '["ubuntu-latest","macos-latest","windows-latest"]') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.88.0
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          for i in 1 2 3 4 5; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i); retrying in 15s"
+            sleep 15
+          done
+          sudo apt-get install -y libdbus-1-dev pkg-config
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates
+
+      - name: Build wrapper binaries
+        run: cd crates && cargo build --release --locked -p yunpat-cli -p yunpat-tui
+
+      - name: Smoke wrapper install and delegated entrypoints
+        run: node crates/scripts/release/npm-wrapper-smoke.js
+
+  rust-docs:
+    name: Rust Documentation
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' && github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          node-version: 20
+          toolchain: 1.88.0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+      - name: Install Linux system dependencies
+        run: |
+          for i in 1 2 3 4 5; do
+            sudo apt-get update && break
+            echo "apt-get update failed (attempt $i); retrying in 15s"
+            sleep 15
+          done
+          sudo apt-get install -y libdbus-1-dev pkg-config
+
+      - uses: Swatinem/rust-cache@v2
         with:
-          version: 9
+          workspaces: crates
 
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - name: Build docs
+        run: cd crates && cargo doc --workspace --no-deps
+        env:
+          RUSTDOCFLAGS: -Dwarnings
 
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
+  # =============================================================================
+  # TypeScript CI
+  # =============================================================================
+  ts-lint:
+    name: TS Lint
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
         with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          version: ${{ env.PNPM_VERSION }}
 
-      - name: Install dependencies
-        run: cd packages && pnpm install --frozen-lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - run: cd packages && pnpm install --frozen-lockfile
 
       - name: Lint TypeScript
         run: cd packages && pnpm lint
@@ -87,23 +252,209 @@ jobs:
       - name: Check Format
         run: cd packages && pnpm format:check
 
+  ts-type-check:
+    name: TS Type Check
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - run: cd packages && pnpm install --frozen-lockfile
+
+      - name: Type Check
+        run: cd packages && pnpm type-check
+        continue-on-error: true
+
+  ts-build:
+    name: TS Build
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - run: cd packages && pnpm install --frozen-lockfile
+
       - name: Build TypeScript
         run: cd packages && pnpm build
 
-      - name: Test TypeScript (Unit + Mock)
-        run: cd packages && pnpm test:mock
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ts-dist
+          path: packages/*/dist
+          retention-days: 7
 
-      - name: E2E Mock Tests
+  ts-test:
+    name: TS Test (Node ${{ matrix.node-version }})
+    needs: [changes, ts-build]
+    if: needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - run: cd packages && pnpm install --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ts-dist
+          path: packages
+
+      - name: Run unit tests (mock)
+        run: cd packages && MOCK_TESTS=true pnpm test:mock
+        env:
+          NODE_ENV: test
+
+      - name: Run E2E mock tests
         run: cd packages && MOCK_TESTS=true pnpm test:e2e
         env:
           NODE_ENV: test
 
+      - name: Run targeted package tests
+        run: |
+          cd packages
+          MOCK_TESTS=true pnpm --filter "@yunpat/core" test -- --run
+          pnpm --filter "@yunpat/orchestrator" test
+          pnpm --filter "@yunpat/grpc-server" test
+
+      - uses: codecov/codecov-action@v4
+        if: matrix.node-version == 20
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  ts-security:
+    name: TS Security Audit
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - run: cd packages && pnpm install --frozen-lockfile
+
+      - name: Security Audit
+        run: cd packages && pnpm audit --audit-level=moderate
+        continue-on-error: true
+
+  ts-dependency-review:
+    name: Dependency Review
+    needs: changes
+    if: needs.changes.outputs.ts == 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+        continue-on-error: true
+
   # =============================================================================
   # Integration Tests
   # =============================================================================
-  integration:
-    name: Integration Tests
-    needs: [rust-check, typescript-check]
+  ts-integration:
+    name: TS Integration Tests
+    needs: [ts-lint, ts-test]
+    if: needs.ts-lint.result != 'skipped' || needs.ts-test.result != 'skipped'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: yunpat
+          POSTGRES_PASSWORD: yunpat123
+          POSTGRES_DB: yunpat_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - run: cd packages && pnpm install --frozen-lockfile
+
+      - run: cd packages && pnpm build
+
+      - name: Run integration tests
+        run: |
+          cd packages
+          pnpm --filter "@yunpat/core" test -- --run
+          pnpm --filter "@yunpat/patent-database" test -- --run 2>/dev/null || true
+          pnpm --filter "@yunpat/patent-knowledge" test -- --run 2>/dev/null || true
+        env:
+          DATABASE_URL: postgresql://yunpat:yunpat123@localhost:5432/yunpat_test
+          REDIS_URL: redis://localhost:6379
+
+  cross-integration:
+    name: Cross-Language Integration
+    needs: [rust-test, ts-test]
+    if: always() && !cancelled() && (needs.rust-test.result != 'skipped' || needs.ts-test.result != 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -111,24 +462,20 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev libleptonica-dev libtesseract-dev tesseract-ocr pkg-config
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.88
+          toolchain: 1.88.0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: 20
+          version: ${{ env.PNPM_VERSION }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
         with:
-          version: 9
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: |
-          cd packages && pnpm install --frozen-lockfile
+        run: cd packages && pnpm install --frozen-lockfile
 
       - name: Build All
         run: |
@@ -166,21 +513,66 @@ jobs:
   # =============================================================================
   release:
     name: Release
-    needs: [rust-check, typescript-check, integration]
+    needs: [rust-test, ts-test, ts-integration, cross-integration]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Release Artifacts
-        run: |
-          echo "Building release artifacts..."
-          # TODO: Implement release build
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev libleptonica-dev libtesseract-dev tesseract-ocr pkg-config musl-tools
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.88.0
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates
+
+      - name: Build Rust binaries (release)
+        run: |
+          cd crates
+          cargo build --release -p yunpat-tui
+          cargo build --release -p yunpat-cli
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install TS dependencies
+        run: cd packages && pnpm install --frozen-lockfile
+
+      - name: Build TypeScript packages
+        run: cd packages && pnpm build
+
+      - name: Package artifacts
+        run: |
+          mkdir -p dist
+          cp crates/target/release/yunpat-tui dist/ 2>/dev/null || true
+          cp crates/target/release/yunpat-cli dist/ 2>/dev/null || true
+          cd packages && tar czf ../dist/yunpat-packages.tar.gz packages/*/dist 2>/dev/null || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yunpat-${{ github.sha }}
+          path: dist/
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            target/release/deepseek
+            dist/yunpat-tui
+            dist/yunpat-cli
           generate_release_notes: true

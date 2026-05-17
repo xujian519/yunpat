@@ -929,4 +929,3 @@ describe('LogicalConsistencyChecker', () => {
       expect(result.byType[LogicalInconsistencyType.CONTRADICTION]).toBe(2)
     })
   })
-})

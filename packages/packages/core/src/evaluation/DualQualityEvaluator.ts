@@ -36,11 +36,7 @@ class DualQualityEvaluator {
   private evaluatorB: LLMInterface
   private config: Required<DualEvaluatorConfig>
 
-  constructor(
-    evaluatorA: LLMInterface,
-    evaluatorB: LLMInterface,
-    config?: DualEvaluatorConfig
-  ) {
+  constructor(evaluatorA: LLMInterface, evaluatorB: LLMInterface, config?: DualEvaluatorConfig) {
     this.evaluatorA = evaluatorA
     this.evaluatorB = evaluatorB
     this.config = {
@@ -50,9 +46,7 @@ class DualQualityEvaluator {
 
     const totalWeight = this.config.absoluteWeight + this.config.relativeWeight
     if (Math.abs(totalWeight - 1) > 0.01) {
-      console.warn(
-        `权重之和不为 1 (当前: ${totalWeight})，将自动归一化`
-      )
+      console.warn(`权重之和不为 1 (当前: ${totalWeight})，将自动归一化`)
       this.config.absoluteWeight = this.config.absoluteWeight / totalWeight
       this.config.relativeWeight = this.config.relativeWeight / totalWeight
     }
@@ -64,10 +58,7 @@ class DualQualityEvaluator {
    * @param rubric 可选的评分细则
    * @returns 双重评估结果
    */
-  async evaluate(
-    content: string,
-    rubric?: string
-  ): Promise<DualEvaluationResult> {
+  async evaluate(content: string, rubric?: string): Promise<DualEvaluationResult> {
     const [absoluteResult, relativeResult] = await Promise.all([
       this.evaluateAbsolute(content, rubric),
       this.evaluateRelative(content),
@@ -87,27 +78,19 @@ class DualQualityEvaluator {
     }
   }
 
-  private async evaluateAbsolute(
-    content: string,
-    rubric?: string
-  ): Promise<EvaluationResponse> {
+  private async evaluateAbsolute(content: string, rubric?: string): Promise<EvaluationResponse> {
     const prompt = this.buildAbsolutePrompt(content, rubric)
     const response = await this.evaluatorA.generate(prompt)
     return this.parseEvaluationResponse(response)
   }
 
-  private async evaluateRelative(
-    content: string
-  ): Promise<EvaluationResponse> {
+  private async evaluateRelative(content: string): Promise<EvaluationResponse> {
     const prompt = this.buildRelativePrompt(content)
     const response = await this.evaluatorB.generate(prompt)
     return this.parseEvaluationResponse(response)
   }
 
-  private buildAbsolutePrompt(
-    content: string,
-    rubric?: string
-  ): string {
+  private buildAbsolutePrompt(content: string, rubric?: string): string {
     const rubricText =
       rubric ||
       `- 完整性（completeness）：内容是否完整覆盖所有必要要素
@@ -165,15 +148,10 @@ ${content}
 请只返回 JSON，不要包含其他说明。`
   }
 
-  private parseEvaluationResponse(
-    response: string
-  ): EvaluationResponse {
+  private parseEvaluationResponse(response: string): EvaluationResponse {
     try {
       const parsed = JSON.parse(response.trim())
-      if (
-        typeof parsed.score === 'number' &&
-        typeof parsed.feedback === 'string'
-      ) {
+      if (typeof parsed.score === 'number' && typeof parsed.feedback === 'string') {
         return {
           score: Math.max(0, Math.min(100, parsed.score)),
           feedback: parsed.feedback,
@@ -189,16 +167,10 @@ ${content}
 
   private extractWithRegex(response: string): EvaluationResponse {
     const scoreMatch = response.match(/score['"\s]*[:=]['"\s]*(\d+)/i)
-    const feedbackMatch = response.match(
-      /feedback['"\s]*[:=]['"\s]*"([^"]*)"/i
-    )
-    const score = scoreMatch
-      ? Math.max(0, Math.min(100, parseInt(scoreMatch[1], 10)))
-      : 50
+    const feedbackMatch = response.match(/feedback['"\s]*[:=]['"\s]*"([^"]*)"/i)
+    const score = scoreMatch ? Math.max(0, Math.min(100, parseInt(scoreMatch[1], 10))) : 50
     const feedback =
-      feedbackMatch?.[1] ||
-      '无法提取详细反馈，请人工复核' ||
-      response.substring(0, 200)
+      feedbackMatch?.[1] || '无法提取详细反馈，请人工复核' || response.substring(0, 200)
 
     return { score, feedback }
   }

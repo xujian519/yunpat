@@ -278,12 +278,12 @@ export class DynamicReplanner {
     if (deviationReport.hasDeviation) {
       const maxSeverity = deviationReport.deviations.reduce(
         (max, d) => (d.severity === 'severe' ? d : max),
-        {} as unknown
+        { severity: 'none' } as { severity: string }
       )
 
-      if ((maxSeverity as any).severity === 'severe') {
+      if (maxSeverity.severity === 'severe') {
         confidence -= 0.2
-      } else if ((maxSeverity as any).severity === 'moderate') {
+      } else if (maxSeverity.severity === 'moderate') {
         confidence -= 0.1
       }
     }
@@ -319,7 +319,7 @@ export class DynamicReplanner {
     }
 
     // 策略描述
-    parts.push(`选择策略: ${(strategy as any).description}`)
+    parts.push(`选择策略: ${strategy.description}`)
 
     // 调整描述
     parts.push(`应用${adjustment.modifications.length}个修改`)

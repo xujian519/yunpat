@@ -81,8 +81,7 @@ impl PolicyBuilder {
     }
 
     fn add_rule(&mut self, rule: RuleRef) {
-        self.rules_by_program
-            .insert(rule.program().to_string(), rule);
+        self.rules_by_program.insert(rule.program().to_string(), rule);
     }
 
     fn build(self) -> super::policy::Policy {
@@ -91,11 +90,8 @@ impl PolicyBuilder {
 }
 
 fn parse_pattern<'v>(pattern: UnpackList<Value<'v>>) -> Result<Vec<PatternToken>> {
-    let tokens: Vec<PatternToken> = pattern
-        .items
-        .into_iter()
-        .map(parse_pattern_token)
-        .collect::<Result<_>>()?;
+    let tokens: Vec<PatternToken> =
+        pattern.items.into_iter().map(parse_pattern_token).collect::<Result<_>>()?;
     if tokens.is_empty() {
         Err(Error::InvalidPattern("pattern cannot be empty".to_string()))
     } else {
@@ -232,10 +228,8 @@ fn policy_builtins(builder: &mut GlobalsBuilder) {
 
         let matches: Vec<Vec<String>> =
             r#match.map(parse_examples).transpose()?.unwrap_or_default();
-        let not_matches: Vec<Vec<String>> = not_match
-            .map(parse_examples)
-            .transpose()?
-            .unwrap_or_default();
+        let not_matches: Vec<Vec<String>> =
+            not_match.map(parse_examples).transpose()?.unwrap_or_default();
 
         let mut builder = policy_builder(eval);
 

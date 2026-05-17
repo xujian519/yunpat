@@ -6,6 +6,7 @@
 
 pub mod approval_state;
 pub mod mcp_state;
+pub mod patent_state;
 pub mod plan_state;
 pub mod preview_state;
 pub mod queue_state;
@@ -17,6 +18,7 @@ pub mod workspace_state;
 
 pub use approval_state::ApprovalState;
 pub use mcp_state::McpState;
+pub use patent_state::{PatentWorkflowState, StepStatus};
 pub use plan_state::PlanState;
 pub use preview_state::PreviewState;
 pub use queue_state::QueueState;

@@ -601,12 +601,10 @@ impl DeepSeekClient {
                 logging::info("Recovery probe succeeded");
             }
             Ok(resp) => {
-                self.mark_request_failure(&format!("probe status={}", resp.status()))
-                    .await;
+                self.mark_request_failure(&format!("probe status={}", resp.status())).await;
             }
             Err(err) => {
-                self.mark_request_failure(&format!("probe error={err}"))
-                    .await;
+                self.mark_request_failure(&format!("probe error={err}")).await;
             }
         }
     }
@@ -621,10 +619,8 @@ impl DeepSeekClient {
                 let request = build();
                 async move {
                     self.wait_for_rate_limit().await;
-                    let response = request
-                        .send()
-                        .await
-                        .map_err(|err| LlmError::from_reqwest(&err))?;
+                    let response =
+                        request.send().await.map_err(|err| LlmError::from_reqwest(&err))?;
                     let status = response.status();
                     if status.is_success() {
                         return Ok(response);
@@ -771,10 +767,7 @@ impl LlmClient for DeepSeekClient {
         let model = model.to_string();
         let prompt = prompt.to_string();
         let suffix = suffix.to_string();
-        Box::pin(async move {
-            this.fim_completion(&model, &prompt, &suffix, max_tokens)
-                .await
-        })
+        Box::pin(async move { this.fim_completion(&model, &prompt, &suffix, max_tokens).await })
     }
 }
 
@@ -814,11 +807,7 @@ pub(super) fn system_to_instructions(system: Option<SystemPrompt>) -> Option<Str
     match system {
         Some(SystemPrompt::Text(text)) => Some(text),
         Some(SystemPrompt::Blocks(blocks)) => {
-            let joined = blocks
-                .into_iter()
-                .map(|b| b.text)
-                .collect::<Vec<_>>()
-                .join("\n\n---\n\n");
+            let joined = blocks.into_iter().map(|b| b.text).collect::<Vec<_>>().join("\n\n---\n\n");
             if joined.trim().is_empty() {
                 None
             } else {
@@ -904,10 +893,7 @@ pub(super) fn parse_usage(usage: Option<&Value>) -> Usage {
         .and_then(Value::as_u64)
         .unwrap_or(0);
     let mut output_tokens = usage
-        .and_then(|u| {
-            u.get("output_tokens")
-                .or_else(|| u.get("completion_tokens"))
-        })
+        .and_then(|u| u.get("output_tokens").or_else(|| u.get("completion_tokens")))
         .and_then(Value::as_u64)
         .unwrap_or(0);
     let reasoning_tokens_raw = usage
@@ -936,14 +922,10 @@ pub(super) fn parse_usage(usage: Option<&Value>) -> Usage {
     let reasoning_tokens = reasoning_tokens_raw.map(|v| v as u32);
 
     let server_tool_use = usage.and_then(|u| u.get("server_tool_use")).map(|server| {
-        let code_execution_requests = server
-            .get("code_execution_requests")
-            .and_then(Value::as_u64)
-            .map(|v| v as u32);
-        let tool_search_requests = server
-            .get("tool_search_requests")
-            .and_then(Value::as_u64)
-            .map(|v| v as u32);
+        let code_execution_requests =
+            server.get("code_execution_requests").and_then(Value::as_u64).map(|v| v as u32);
+        let tool_search_requests =
+            server.get("tool_search_requests").and_then(Value::as_u64).map(|v| v as u32);
         ServerToolUsage {
             code_execution_requests,
             tool_search_requests,
@@ -977,9 +959,7 @@ impl DeepSeekClient {
             "suffix": suffix,
             "max_tokens": max_tokens,
         });
-        let response = self
-            .send_with_retry(|| self.http_client.post(&url).json(&body))
-            .await?;
+        let response = self.send_with_retry(|| self.http_client.post(&url).json(&body)).await?;
         let status = response.status();
         if !status.is_success() {
             let error_text = bounded_error_text(response, ERROR_BODY_MAX_BYTES).await;
@@ -1093,9 +1073,7 @@ mod tests {
         extra.insert("X-Model-Provider-Id".to_string(), "tongyi".to_string());
         let headers = DeepSeekClient::default_headers("sk-test", &extra).expect("headers");
         assert_eq!(
-            headers
-                .get("x-model-provider-id")
-                .and_then(|value| value.to_str().ok()),
+            headers.get("x-model-provider-id").and_then(|value| value.to_str().ok()),
             Some("tongyi")
         );
     }
@@ -1113,9 +1091,7 @@ mod tests {
         let message = Message {
             role: "assistant".to_string(),
             content: vec![
-                ContentBlock::Thinking {
-                    thinking: "plan".to_string(),
-                },
+                ContentBlock::Thinking { thinking: "plan".to_string() },
                 ContentBlock::Text {
                     text: "done".to_string(),
                     cache_control: None,
@@ -1195,9 +1171,7 @@ mod tests {
             })
             .expect("tool-call assistant message");
         assert_eq!(
-            tool_assistant
-                .get("reasoning_content")
-                .and_then(Value::as_str),
+            tool_assistant.get("reasoning_content").and_then(Value::as_str),
             Some("Need to call a tool"),
             "thinking-mode tool rounds must replay reasoning_content on later requests"
         );
@@ -1289,13 +1263,11 @@ mod tests {
         apply_reasoning_effort(&mut body, Some("max"), ApiProvider::NvidiaNim);
 
         assert_eq!(
-            body.pointer("/chat_template_kwargs/thinking")
-                .and_then(Value::as_bool),
+            body.pointer("/chat_template_kwargs/thinking").and_then(Value::as_bool),
             Some(true)
         );
         assert_eq!(
-            body.pointer("/chat_template_kwargs/reasoning_effort")
-                .and_then(Value::as_str),
+            body.pointer("/chat_template_kwargs/reasoning_effort").and_then(Value::as_str),
             Some("max")
         );
         assert!(body.get("thinking").is_none());
@@ -1308,14 +1280,10 @@ mod tests {
         apply_reasoning_effort(&mut body, Some("off"), ApiProvider::NvidiaNim);
 
         assert_eq!(
-            body.pointer("/chat_template_kwargs/thinking")
-                .and_then(Value::as_bool),
+            body.pointer("/chat_template_kwargs/thinking").and_then(Value::as_bool),
             Some(false)
         );
-        assert!(
-            body.pointer("/chat_template_kwargs/reasoning_effort")
-                .is_none()
-        );
+        assert!(body.pointer("/chat_template_kwargs/reasoning_effort").is_none());
     }
 
     #[test]
@@ -1406,9 +1374,7 @@ mod tests {
     fn chat_messages_drop_thinking_only_assistant_for_non_reasoning_model() {
         let message = Message {
             role: "assistant".to_string(),
-            content: vec![ContentBlock::Thinking {
-                thinking: "plan".to_string(),
-            }],
+            content: vec![ContentBlock::Thinking { thinking: "plan".to_string() }],
         };
         let out = build_chat_messages(None, &[message], "some-non-deepseek-model");
         assert!(
@@ -1513,10 +1479,7 @@ mod tests {
             false,
         );
 
-        let StreamEvent::MessageDelta {
-            usage: Some(usage), ..
-        } = &events[0]
-        else {
+        let StreamEvent::MessageDelta { usage: Some(usage), .. } = &events[0] else {
             panic!("expected usage delta");
         };
         assert_eq!(usage.input_tokens, 100);
@@ -1616,10 +1579,8 @@ mod tests {
             .iter()
             .find(|value| value.get("role").and_then(Value::as_str) == Some("assistant"))
             .expect("assistant message");
-        let tool_calls = assistant
-            .get("tool_calls")
-            .and_then(Value::as_array)
-            .expect("tool_calls array");
+        let tool_calls =
+            assistant.get("tool_calls").and_then(Value::as_array).expect("tool_calls array");
         let function_name = tool_calls
             .first()
             .and_then(|call| call.get("function"))
@@ -1665,8 +1626,7 @@ mod tests {
             "assistant without content/tool_calls should be removed"
         );
         assert!(
-            !out.iter()
-                .any(|v| v.get("role").and_then(Value::as_str) == Some("tool")),
+            !out.iter().any(|v| v.get("role").and_then(Value::as_str) == Some("tool")),
             "orphaned tool results should also be removed"
         );
     }
@@ -1771,16 +1731,14 @@ mod tests {
         ];
 
         let out = build_chat_messages(None, &messages, "deepseek-v4-flash");
-        let assistant = out
-            .iter()
-            .find(|v| v.get("role").and_then(Value::as_str) == Some("assistant"));
+        let assistant =
+            out.iter().find(|v| v.get("role").and_then(Value::as_str) == Some("assistant"));
         assert!(
             assistant.is_none(),
             "assistant with only partial tool_calls should be removed"
         );
         assert!(
-            !out.iter()
-                .any(|v| v.get("role").and_then(Value::as_str) == Some("tool")),
+            !out.iter().any(|v| v.get("role").and_then(Value::as_str) == Some("tool")),
             "all orphaned tool results should be removed"
         );
     }
@@ -1826,10 +1784,7 @@ mod tests {
 
         let models = parse_models_response(payload).expect("parse models");
         assert_eq!(
-            models
-                .iter()
-                .map(|model| model.id.as_str())
-                .collect::<Vec<_>>(),
+            models.iter().map(|model| model.id.as_str()).collect::<Vec<_>>(),
             vec!["deepseek-coder-v2:16b", "qwen2.5-coder:7b"]
         );
     }
@@ -1933,11 +1888,7 @@ mod tests {
         let assistant_with_reasoning: usize = messages
             .iter()
             .filter(|m| m["role"] == "assistant")
-            .filter(|m| {
-                m["reasoning_content"]
-                    .as_str()
-                    .is_some_and(|s| !s.is_empty())
-            })
+            .filter(|m| m["reasoning_content"].as_str().is_some_and(|s| !s.is_empty()))
             .count();
         assert_eq!(assistant_with_reasoning, 2);
     }
@@ -1995,9 +1946,7 @@ mod tests {
         };
 
         assert!(bucket.delay_until_available(1.0).is_none());
-        let delay = bucket
-            .delay_until_available(1.0)
-            .expect("bucket should require refill delay");
+        let delay = bucket.delay_until_available(1.0).expect("bucket should require refill delay");
         assert!(
             delay >= Duration::from_millis(400) && delay <= Duration::from_millis(600),
             "unexpected refill delay: {delay:?}"

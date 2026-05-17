@@ -46,15 +46,9 @@ impl McpServerSettings {
             let config: McpServerConfigFile = toml::from_str(&contents).with_context(|| {
                 format!("Failed to parse MCP server config: {}", path.display())
             })?;
-            let expose_tools = config
-                .server
-                .expose_tools
-                .unwrap_or_else(default_expose_tools);
+            let expose_tools = config.server.expose_tools.unwrap_or_else(default_expose_tools);
             let require_approval = config.server.require_approval.unwrap_or(false);
-            Ok(Self {
-                expose_tools,
-                require_approval,
-            })
+            Ok(Self { expose_tools, require_approval })
         } else {
             Ok(Self {
                 expose_tools: default_expose_tools(),
@@ -96,9 +90,7 @@ impl McpServer {
             internal_names.insert(tool.internal.clone());
         }
 
-        let mut builder = ToolRegistryBuilder::new()
-            .with_file_tools()
-            .with_search_tools();
+        let mut builder = ToolRegistryBuilder::new().with_file_tools().with_search_tools();
 
         if internal_names.contains("apply_patch") {
             builder = builder.with_patch_tools();
@@ -271,19 +263,13 @@ impl McpServer {
             code: -32602,
             message: "Invalid params for tools/call".to_string(),
         })?;
-        let name = params
-            .get("name")
-            .and_then(Value::as_str)
-            .ok_or_else(|| RpcError {
-                code: -32602,
-                message: "Missing tool name".to_string(),
-            })?;
+        let name = params.get("name").and_then(Value::as_str).ok_or_else(|| RpcError {
+            code: -32602,
+            message: "Missing tool name".to_string(),
+        })?;
 
         if self.require_approval
-            && !params
-                .get("approved")
-                .and_then(Value::as_bool)
-                .unwrap_or(false)
+            && !params.get("approved").and_then(Value::as_bool).unwrap_or(false)
         {
             return Err(RpcError {
                 code: -32001,
@@ -303,17 +289,11 @@ impl McpServer {
 
         // Handle deepseek and deepseek-reply natively
         if internal == "deepseek" || internal == "deepseek-reply" {
-            let arguments = params
-                .get("arguments")
-                .cloned()
-                .unwrap_or_else(|| json!({}));
+            let arguments = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
             return self.handle_yunpat_call(runtime, &internal, &arguments, request_id);
         }
 
-        let arguments = params
-            .get("arguments")
-            .cloned()
-            .unwrap_or_else(|| json!({}));
+        let arguments = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
         let result = runtime.block_on(self.registry.execute_full(&internal, arguments));
         Ok(tool_result_to_mcp(result))
     }
@@ -331,18 +311,12 @@ impl McpServer {
         arguments: &Value,
         request_id: Option<Value>,
     ) -> Result<Value, RpcError> {
-        let prompt = arguments
-            .get("prompt")
-            .and_then(Value::as_str)
-            .ok_or_else(|| RpcError {
-                code: -32602,
-                message: "Missing required argument: prompt".to_string(),
-            })?;
+        let prompt = arguments.get("prompt").and_then(Value::as_str).ok_or_else(|| RpcError {
+            code: -32602,
+            message: "Missing required argument: prompt".to_string(),
+        })?;
 
-        let model = arguments
-            .get("model")
-            .and_then(Value::as_str)
-            .unwrap_or("deepseek-v4-pro");
+        let model = arguments.get("model").and_then(Value::as_str).unwrap_or("deepseek-v4-pro");
 
         // Resolve thread_id
         let thread_id = if internal_name == "deepseek" {
@@ -406,12 +380,10 @@ impl McpServer {
             top_p: None,
         };
 
-        let response = runtime
-            .block_on(client.create_message(request))
-            .map_err(|e| RpcError {
-                code: -32000,
-                message: format!("DeepSeek API call failed: {e}"),
-            })?;
+        let response = runtime.block_on(client.create_message(request)).map_err(|e| RpcError {
+            code: -32000,
+            message: format!("DeepSeek API call failed: {e}"),
+        })?;
 
         // Extract response text from content blocks
         let response_text = response

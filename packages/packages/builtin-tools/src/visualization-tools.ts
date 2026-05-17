@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod'
-import { EnhancedBaseTool, ToolContext } from '@yunpat/core'
+import { EnhancedBaseTool, ToolCategory, ToolContext } from '@yunpat/core'
 
 /**
  * Mermaid 图表生成工具
@@ -14,7 +14,7 @@ export class MermaidChartTool extends EnhancedBaseTool<any, any> {
   readonly metadata = {
     name: 'mermaid_chart',
     description: '生成 Mermaid 图表（流程图、时序图、类图等）',
-    category: 'utility' as any,
+    category: ToolCategory.UTILITY,
     isConcurrencySafe: true,
     inputSchema: z.object({
       chartType: z
@@ -374,7 +374,7 @@ export class PatentClaimsStructureTool extends EnhancedBaseTool<
   readonly metadata = {
     name: 'patent_claims_structure',
     description: '生成专利权利要求结构图',
-    category: 'utility' as any,
+    category: ToolCategory.UTILITY,
     isConcurrencySafe: true,
     inputSchema: z.object({
       claims: z
@@ -426,7 +426,7 @@ export class PatentClaimsStructureTool extends EnhancedBaseTool<
         title: input.title || '权利要求结构',
         outputFormat: 'markdown',
       },
-      {} as any
+      {} as ToolContext
     )
 
     return {
@@ -491,7 +491,7 @@ export class PatentProcessChartTool extends EnhancedBaseTool<
   readonly metadata = {
     name: 'patent_process_chart',
     description: '生成专利申请/审查流程图',
-    category: 'utility' as any,
+    category: ToolCategory.UTILITY,
     isConcurrencySafe: true,
     inputSchema: z.object({
       steps: z
@@ -569,7 +569,7 @@ export class PatentProcessChartTool extends EnhancedBaseTool<
         title: input.title || '专利流程',
         outputFormat: 'markdown',
       },
-      {} as any
+      {} as ToolContext
     )
 
     return {

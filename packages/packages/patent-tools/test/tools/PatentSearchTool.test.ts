@@ -5,6 +5,21 @@ import {
   PatentSearchMode,
 } from '../../src/tools/PatentSearchTool.js'
 import { GooglePatentsFetchTool } from '../../src/tools/GooglePatentsTool.js'
+import type { ToolContext } from '@yunpat/core'
+
+function createMockToolContext(): ToolContext {
+  return {
+    registry: { register: vi.fn(), unregister: vi.fn(), get: vi.fn(), call: vi.fn(), list: vi.fn() } as unknown as ToolContext['registry'],
+    llm: {
+      chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    } as unknown as ToolContext['llm'],
+    memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() } as unknown as ToolContext['memory'],
+    eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() } as unknown as ToolContext['eventBus'],
+    sessionId: 'test-session',
+  }
+}
 
 describe('PatentSearchTool', () => {
   let tool: PatentSearchTool
@@ -41,7 +56,7 @@ describe('PatentSearchTool', () => {
       page: 1,
     })
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute({ query: 'neural network', limit: 2 }, context)
 
     expect(result.patents).toHaveLength(1)
@@ -73,7 +88,7 @@ describe('PatentSearchTool', () => {
       page: 1,
     })
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute(
       { query: 'neural', mode: PatentSearchMode.KEYWORD, limit: 1 },
       context
@@ -98,7 +113,7 @@ describe('PatentSearchTool', () => {
       page: 1,
     })
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute({ query: 'test' }, context)
 
     expect(result.page).toBe(1)
@@ -124,7 +139,7 @@ describe('SimilarPatentSearchTool', () => {
   })
 
   it('builds enhanced query correctly', () => {
-    const query = (tool as any).buildEnhancedQuery('neural network', ['chip', 'accelerator'])
+    const query = (tool as unknown as { buildEnhancedQuery: (t: string, f: string[]) => string }).buildEnhancedQuery('neural network', ['chip', 'accelerator'])
     expect(query).toContain('neural network')
     expect(query).toContain('chip')
     expect(query).toContain('accelerator')
@@ -132,7 +147,7 @@ describe('SimilarPatentSearchTool', () => {
   })
 
   it('calculates similarity correctly', () => {
-    const similarity = (tool as any).calculateSimilarity(
+    const similarity = (tool as unknown as { calculateSimilarity: (a: string, b: string) => number }).calculateSimilarity(
       'neural network chip',
       'neural network processor chip'
     )
@@ -141,12 +156,12 @@ describe('SimilarPatentSearchTool', () => {
   })
 
   it('returns zero similarity for completely different texts', () => {
-    const similarity = (tool as any).calculateSimilarity('abc xyz', '123 456')
+    const similarity = (tool as unknown as { calculateSimilarity: (a: string, b: string) => number }).calculateSimilarity('abc xyz', '123 456')
     expect(similarity).toBe(0)
   })
 
   it('returns zero similarity for empty query', () => {
-    const similarity = (tool as any).calculateSimilarity('', 'some content')
+    const similarity = (tool as unknown as { calculateSimilarity: (a: string, b: string) => number }).calculateSimilarity('', 'some content')
     expect(similarity).toBe(0)
   })
 
@@ -176,7 +191,7 @@ describe('SimilarPatentSearchTool', () => {
       page: 1,
     })
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute(
       { technology: 'neural network', features: ['chip'], limit: 2 },
       context

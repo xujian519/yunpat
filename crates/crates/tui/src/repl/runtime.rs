@@ -192,18 +192,11 @@ impl PythonRuntime {
             cmd.env("RLM_CONTEXT_FILE", path);
         }
 
-        let mut child = cmd
-            .spawn()
-            .map_err(|e| format!("failed to spawn python3: {e}"))?;
+        let mut child = cmd.spawn().map_err(|e| format!("failed to spawn python3: {e}"))?;
 
-        let stdin = child
-            .stdin
-            .take()
-            .ok_or_else(|| "python3 stdin pipe missing".to_string())?;
-        let raw_stdout = child
-            .stdout
-            .take()
-            .ok_or_else(|| "python3 stdout pipe missing".to_string())?;
+        let stdin = child.stdin.take().ok_or_else(|| "python3 stdin pipe missing".to_string())?;
+        let raw_stdout =
+            child.stdout.take().ok_or_else(|| "python3 stdout pipe missing".to_string())?;
         let stdout = BufReader::new(raw_stdout);
 
         let mut rt = Self {
@@ -283,10 +276,7 @@ impl PythonRuntime {
             .write_all(payload.as_bytes())
             .await
             .map_err(|e| format!("stdin write: {e}"))?;
-        self.stdin
-            .flush()
-            .await
-            .map_err(|e| format!("stdin flush: {e}"))?;
+        self.stdin.flush().await.map_err(|e| format!("stdin flush: {e}"))?;
 
         // Sentinels for this session.
         let req_prefix = format!("__RLM_REQ_{}__::", self.session_id);
@@ -392,10 +382,7 @@ impl PythonRuntime {
             .write_all(line.as_bytes())
             .await
             .map_err(|e| format!("stdin write resp: {e}"))?;
-        self.stdin
-            .flush()
-            .await
-            .map_err(|e| format!("stdin flush resp: {e}"))?;
+        self.stdin.flush().await.map_err(|e| format!("stdin flush resp: {e}"))?;
         Ok(())
     }
 
@@ -750,13 +737,8 @@ mod tests {
     #[tokio::test]
     async fn context_loads_from_file() {
         let path = write_temp_context("the quick brown fox");
-        let mut rt = PythonRuntime::spawn_with_context(&path)
-            .await
-            .expect("spawn");
-        let round = rt
-            .execute("print(len(context), context[:5])")
-            .await
-            .expect("execute");
+        let mut rt = PythonRuntime::spawn_with_context(&path).await.expect("spawn");
+        let round = rt.execute("print(len(context), context[:5])").await.expect("execute");
         assert!(round.stdout.contains("19"));
         assert!(round.stdout.contains("the q"));
         rt.shutdown().await;
@@ -765,9 +747,7 @@ mod tests {
     #[tokio::test]
     async fn ctx_alias_works() {
         let path = write_temp_context("aleph-style");
-        let mut rt = PythonRuntime::spawn_with_context(&path)
-            .await
-            .expect("spawn");
+        let mut rt = PythonRuntime::spawn_with_context(&path).await.expect("spawn");
         let round = rt.execute("print(ctx)").await.expect("execute");
         assert!(round.stdout.contains("aleph-style"));
         rt.shutdown().await;
@@ -776,10 +756,7 @@ mod tests {
     #[tokio::test]
     async fn final_is_captured() {
         let mut rt = PythonRuntime::new().await.expect("spawn");
-        let round = rt
-            .execute("FINAL('the answer is 42')")
-            .await
-            .expect("execute");
+        let round = rt.execute("FINAL('the answer is 42')").await.expect("execute");
         assert_eq!(round.final_value.as_deref(), Some("the answer is 42"));
         rt.shutdown().await;
     }
@@ -811,10 +788,7 @@ mod tests {
         let calls = Arc::clone(&bridge.calls);
 
         let mut rt = PythonRuntime::new().await.expect("spawn");
-        let round = rt
-            .run("print(llm_query('hello'))", Some(&bridge))
-            .await
-            .expect("execute");
+        let round = rt.run("print(llm_query('hello'))", Some(&bridge)).await.expect("execute");
         assert!(
             round.stdout.contains("stub#0: hello"),
             "stdout: {:?}",

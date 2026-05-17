@@ -10,9 +10,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
     let mut lines = Vec::new();
     lines.push(Line::from(Span::styled(
         "Trust Workspace",
-        Style::default()
-            .fg(palette::YUNPAT_SKY)
-            .add_modifier(Modifier::BOLD),
+        Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
     )));
     lines.push(Line::from(""));
     lines.push(Line::from(Span::styled(
@@ -44,9 +42,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
         Span::styled("Press ", Style::default().fg(palette::TEXT_MUTED)),
         Span::styled(
             "1/Y",
-            Style::default()
-                .fg(palette::TEXT_PRIMARY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::TEXT_PRIMARY).add_modifier(Modifier::BOLD),
         ),
         Span::styled(
             " to trust and continue, ",
@@ -54,9 +50,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
         ),
         Span::styled(
             "2/N",
-            Style::default()
-                .fg(palette::TEXT_PRIMARY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::TEXT_PRIMARY).add_modifier(Modifier::BOLD),
         ),
         Span::styled(" to quit", Style::default().fg(palette::TEXT_MUTED)),
     ]));

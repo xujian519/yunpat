@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/minimatch": "^6.0.0",
     "@types/node": "^20.19.39",
-    "vitest": "^2.0.5"
+    "vitest": "^4.1.5"
   },
   "peerDependencies": {
     "@yunpat/core": "workspace:*"

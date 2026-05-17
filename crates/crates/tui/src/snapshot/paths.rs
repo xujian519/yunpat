@@ -22,10 +22,7 @@ use std::path::{Path, PathBuf};
 pub fn snapshot_dir_for(workspace: &Path) -> PathBuf {
     // Prefer $HOME env var so tests can override via scoped_home().
     // dirs::home_dir() uses getpwuid on macOS and ignores $HOME.
-    let home = std::env::var("HOME")
-        .ok()
-        .map(PathBuf::from)
-        .or_else(dirs::home_dir);
+    let home = std::env::var("HOME").ok().map(PathBuf::from).or_else(dirs::home_dir);
     snapshot_dir_with_home(workspace, home)
 }
 
@@ -33,16 +30,11 @@ pub fn snapshot_dir_for(workspace: &Path) -> PathBuf {
 /// Used by tests so we never touch the user's real `~/.yunpat/`.
 pub fn snapshot_dir_with_home(workspace: &Path, home: Option<PathBuf>) -> PathBuf {
     let home = home.unwrap_or_else(|| PathBuf::from("."));
-    let canonical = workspace
-        .canonicalize()
-        .unwrap_or_else(|_| workspace.to_path_buf());
+    let canonical = workspace.canonicalize().unwrap_or_else(|_| workspace.to_path_buf());
     let project_root = strip_worktree_suffix(&canonical);
     let project_hash = stable_hex(&project_root);
     let worktree_hash = stable_hex(&canonical);
-    home.join(".yunpat")
-        .join("snapshots")
-        .join(project_hash)
-        .join(worktree_hash)
+    home.join(".yunpat").join("snapshots").join(project_hash).join(worktree_hash)
 }
 
 /// Resolve the `.git` directory inside the snapshot dir.

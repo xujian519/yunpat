@@ -130,10 +130,7 @@ pub fn is_known_feature_key(key: &str) -> bool {
 }
 
 pub fn feature_from_key(key: &str) -> Option<Feature> {
-    FEATURES
-        .iter()
-        .find(|spec| spec.key == key)
-        .map(|spec| spec.id)
+    FEATURES.iter().find(|spec| spec.key == key).map(|spec| spec.id)
 }
 
 pub fn feature_spec_by_key(key: &str) -> Option<&'static FeatureSpec> {

@@ -200,9 +200,7 @@ impl RlmBridge {
             return resp;
         }
 
-        let futures = prompts
-            .into_iter()
-            .map(|p| async move { self.dispatch_rlm(p, None).await });
+        let futures = prompts.into_iter().map(|p| async move { self.dispatch_rlm(p, None).await });
         BatchResp {
             results: join_all(futures).await,
         }
@@ -304,10 +302,7 @@ mod tests {
         assert_eq!(response.results.len(), MAX_BATCH + 2);
         assert!(response.results.iter().all(|result| {
             result.text.is_empty()
-                && result
-                    .error
-                    .as_deref()
-                    .is_some_and(|err| err.contains("batch too large"))
+                && result.error.as_deref().is_some_and(|err| err.contains("batch too large"))
         }));
     }
 
@@ -365,11 +360,8 @@ mod tests {
 
         match response {
             RpcResponse::Batch(batch) => {
-                let texts: Vec<_> = batch
-                    .results
-                    .iter()
-                    .map(|result| result.text.as_str())
-                    .collect();
+                let texts: Vec<_> =
+                    batch.results.iter().map(|result| result.text.as_str()).collect();
                 assert_eq!(texts, ["one", "two", "three"]);
                 assert!(batch.results.iter().all(|result| result.error.is_none()));
             }
@@ -378,11 +370,7 @@ mod tests {
 
         let captured = mock.captured_requests();
         assert_eq!(captured.len(), 3);
-        assert!(
-            captured
-                .iter()
-                .all(|request| request.model == "child-model")
-        );
+        assert!(captured.iter().all(|request| request.model == "child-model"));
 
         let usage = bridge.usage.lock().await;
         assert_eq!(usage.input_tokens, 9);

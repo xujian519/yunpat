@@ -115,9 +115,7 @@ mod tests {
             .filter_map(|component| component.as_os_str().to_str())
             .collect();
         assert!(
-            parts
-                .windows(2)
-                .any(|pair| pair == [".deepseek", "commands"]),
+            parts.windows(2).any(|pair| pair == [".deepseek", "commands"]),
             "expected .deepseek/commands components in path, got: {}",
             dir.display()
         );

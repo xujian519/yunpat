@@ -87,10 +87,8 @@ fn kb_list(_app: &mut App) -> CommandResult {
             }
             let mut parts = vec![format!("# 知识库文件列表\n\n共 {} 个文件：\n", files.len())];
             for (i, path) in files.iter().enumerate() {
-                let name = path
-                    .file_name()
-                    .map(|f| f.to_string_lossy().to_string())
-                    .unwrap_or_default();
+                let name =
+                    path.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default();
                 parts.push(format!("{}. {}", i + 1, name));
             }
             CommandResult::message(parts.join("\n"))

@@ -53,7 +53,7 @@ use crate::tools::subagent::{
 use crate::tools::todo::{SharedTodoList, new_shared_todo_list};
 use crate::tools::user_input::{UserInputRequest, UserInputResponse};
 use crate::tools::{ToolContext, ToolRegistryBuilder};
-use crate::tui::app::AppMode;
+use yunpat_protocol::AppMode;
 use crate::utils::spawn_supervised;
 
 use super::capacity::{
@@ -234,17 +234,13 @@ impl EngineHandle {
 
     /// Approve a pending tool call
     pub async fn approve_tool_call(&self, id: impl Into<String>) -> Result<()> {
-        self.tx_approval
-            .send(ApprovalDecision::Approved { id: id.into() })
-            .await?;
+        self.tx_approval.send(ApprovalDecision::Approved { id: id.into() }).await?;
         Ok(())
     }
 
     /// Deny a pending tool call
     pub async fn deny_tool_call(&self, id: impl Into<String>) -> Result<()> {
-        self.tx_approval
-            .send(ApprovalDecision::Denied { id: id.into() })
-            .await?;
+        self.tx_approval.send(ApprovalDecision::Denied { id: id.into() }).await?;
         Ok(())
     }
 
@@ -255,10 +251,7 @@ impl EngineHandle {
         policy: crate::sandbox::SandboxPolicy,
     ) -> Result<()> {
         self.tx_approval
-            .send(ApprovalDecision::RetryWithPolicy {
-                id: id.into(),
-                policy,
-            })
+            .send(ApprovalDecision::RetryWithPolicy { id: id.into(), policy })
             .await?;
         Ok(())
     }
@@ -270,19 +263,14 @@ impl EngineHandle {
         response: UserInputResponse,
     ) -> Result<()> {
         self.tx_user_input
-            .send(UserInputDecision::Submitted {
-                id: id.into(),
-                response,
-            })
+            .send(UserInputDecision::Submitted { id: id.into(), response })
             .await?;
         Ok(())
     }
 
     /// Cancel a request_user_input prompt.
     pub async fn cancel_user_input(&self, id: impl Into<String>) -> Result<()> {
-        self.tx_user_input
-            .send(UserInputDecision::Cancelled { id: id.into() })
-            .await?;
+        self.tx_user_input.send(UserInputDecision::Cancelled { id: id.into() }).await?;
         Ok(())
     }
 
@@ -616,10 +604,8 @@ impl Engine {
                         .await;
                 }
                 Op::DenyToolCall { id } => {
-                    let _ = self
-                        .tx_event
-                        .send(Event::status(format!("Denied tool call: {id}")))
-                        .await;
+                    let _ =
+                        self.tx_event.send(Event::status(format!("Denied tool call: {id}"))).await;
                 }
                 Op::SpawnSubAgent { prompt } => {
                     let Some(client) = self.yunpat_client.clone() else {
@@ -630,10 +616,8 @@ impl Engine {
                             .unwrap_or_else(|| {
                                 "Failed to spawn sub-agent: API client not configured".to_string()
                             });
-                        let _ = self
-                            .tx_event
-                            .send(Event::error(ErrorEnvelope::fatal(message)))
-                            .await;
+                        let _ =
+                            self.tx_event.send(Event::error(ErrorEnvelope::fatal(message))).await;
                         continue;
                     };
 
@@ -765,8 +749,7 @@ impl Engine {
                     child_model,
                     max_depth,
                 } => {
-                    self.handle_rlm(content, model, child_model, max_depth)
-                        .await;
+                    self.handle_rlm(content, model, child_model, max_depth).await;
                 }
                 Op::EditLastTurn { new_message } => {
                     // #383: /edit — remove the last user+assistant exchange
@@ -802,6 +785,9 @@ impl Engine {
                     )
                     .await;
                 }
+                Op::PatentWorkflow { agent_id, topic, case_id } => {
+                    self.handle_patent_workflow(agent_id, topic, case_id).await;
+                }
                 Op::Shutdown => {
                     break;
                 }
@@ -834,6 +820,80 @@ impl Engine {
     async fn add_session_message(&mut self, message: Message) {
         self.session.add_message(message);
         self.emit_session_updated().await;
+    }
+
+    async fn handle_patent_workflow(
+        &mut self,
+        agent_id: String,
+        topic: Option<String>,
+        case_id: Option<String>,
+    ) {
+        use crate::tools::spec::ToolSpec;
+
+        let tool = crate::tools::patent_workflow::PatentWorkflowTool::new(&agent_id);
+        let topic_str = topic.unwrap_or_default();
+        let tool_input = serde_json::json!({
+            "topic": topic_str,
+            "case_id": case_id,
+        });
+
+        let workspace = self.config.workspace.clone();
+        let mut ctx = crate::tools::spec::ToolContext::new(workspace);
+        ctx.mcp_pool = self.mcp_pool.clone();
+        ctx.progress_tx = Some(self.tx_event.clone());
+
+        if let Some(client) = &self.yunpat_client {
+            let adapter = crate::llm_client::adapter::LlmClientAdapter::new(
+                client.clone(),
+                &self.session.model,
+            );
+            ctx.llm_provider = Some(std::sync::Arc::new(adapter));
+        }
+
+        // Emit started event
+        let _ = self
+            .tx_event
+            .send(Event::PatentWorkflowStatus {
+                agent_id: agent_id.clone(),
+                status: "Starting...".to_string(),
+                progress: Some(0.0),
+                details: None,
+                completed: false,
+                error: None,
+                result: None,
+            })
+            .await;
+
+        match tool.execute(tool_input, &ctx).await {
+            Ok(result) => {
+                let _ = self
+                    .tx_event
+                    .send(Event::PatentWorkflowStatus {
+                        agent_id: agent_id.clone(),
+                        status: "Completed".to_string(),
+                        progress: Some(1.0),
+                        details: None,
+                        completed: true,
+                        error: None,
+                        result: Some(result.content),
+                    })
+                    .await;
+            }
+            Err(e) => {
+                let _ = self
+                    .tx_event
+                    .send(Event::PatentWorkflowStatus {
+                        agent_id: agent_id.clone(),
+                        status: "Failed".to_string(),
+                        progress: None,
+                        details: None,
+                        completed: true,
+                        error: Some(e.to_string()),
+                        result: None,
+                    })
+                    .await;
+            }
+        }
     }
 
     /// Handle a send message operation
@@ -874,12 +934,7 @@ impl Engine {
         }
 
         // Emit turn started event
-        let _ = self
-            .tx_event
-            .send(Event::TurnStarted {
-                turn_id: turn.id.clone(),
-            })
-            .await;
+        let _ = self.tx_event.send(Event::TurnStarted { turn_id: turn.id.clone() }).await;
 
         // A new turn means any leftover retry banner (success cleared
         // it, failure pinned it) is no longer relevant — reset to idle
@@ -909,9 +964,7 @@ impl Engine {
             return;
         }
 
-        self.session
-            .working_set
-            .observe_user_message(&content, &self.session.workspace);
+        self.session.working_set.observe_user_message(&content, &self.session.workspace);
 
         // 2A.1: Bidirectional hook pipeline — intent recognition and pre-turn processing
         let hook_event = yunpat_hooks::HookEvent::UserMessage {
@@ -921,10 +974,7 @@ impl Engine {
         if let Ok(instructions) = self.hook_pipeline.process(&hook_event).await {
             for instruction in &instructions {
                 match instruction {
-                    yunpat_hooks::HookInstruction::SetMode {
-                        mode: new_mode,
-                        reason,
-                    } => {
+                    yunpat_hooks::HookInstruction::SetMode { mode: new_mode, reason } => {
                         // Mode 切换通过上下文注入实现（mode 参数不可变）
                         let mode_ctx = Message {
                             role: "system".to_string(),
@@ -1182,8 +1232,7 @@ impl Engine {
         };
         let Some(client) = self.yunpat_client.clone() else {
             let message = "Manual compaction unavailable: API client not configured".to_string();
-            self.emit_compaction_failed(id, false, message.clone())
-                .await;
+            self.emit_compaction_failed(id, false, message.clone()).await;
             let _ = self
                 .tx_event
                 .send(Event::error(ErrorEnvelope::fatal_auth(message.clone())))
@@ -1200,8 +1249,7 @@ impl Engine {
         };
 
         let start_message = "Manual context compaction started".to_string();
-        self.emit_compaction_started(id.clone(), false, start_message)
-            .await;
+        self.emit_compaction_started(id.clone(), false, start_message).await;
 
         let compaction_pins = self
             .session
@@ -1249,16 +1297,14 @@ impl Engine {
                     .await;
                 } else {
                     let message = "Compaction skipped: produced empty result".to_string();
-                    self.emit_compaction_failed(id, false, message.clone())
-                        .await;
+                    self.emit_compaction_failed(id, false, message.clone()).await;
                     turn_status = TurnOutcomeStatus::Failed;
                     turn_error = Some(message);
                 }
             }
             Err(err) => {
                 let message = format!("Manual context compaction failed: {err}");
-                self.emit_compaction_failed(id, false, message.clone())
-                    .await;
+                self.emit_compaction_failed(id, false, message.clone()).await;
                 let _ = self.tx_event.send(Event::status(message.clone())).await;
                 turn_status = TurnOutcomeStatus::Failed;
                 turn_error = Some(message);
@@ -1306,10 +1352,7 @@ impl Engine {
             return;
         };
 
-        let _ = self
-            .tx_event
-            .send(Event::status("RLM turn started".to_string()))
-            .await;
+        let _ = self.tx_event.send(Event::status("RLM turn started".to_string())).await;
 
         let result = run_rlm_turn(
             client,
@@ -1349,10 +1392,7 @@ impl Engine {
                     content: result.answer.clone(),
                 })
                 .await;
-            let _ = self
-                .tx_event
-                .send(Event::MessageComplete { index: 0 })
-                .await;
+            let _ = self.tx_event.send(Event::MessageComplete { index: 0 }).await;
         }
 
         let _ = self
@@ -1401,8 +1441,7 @@ impl Engine {
 
         let id = format!("compact_{}", &uuid::Uuid::new_v4().to_string()[..8]);
         let start_message = format!("Emergency context compaction started ({reason})");
-        self.emit_compaction_started(id.clone(), true, start_message)
-            .await;
+        self.emit_compaction_started(id.clone(), true, start_message).await;
 
         let before_tokens = self.estimated_input_tokens();
         let before_count = self.session.messages.len();
@@ -1413,10 +1452,8 @@ impl Engine {
 
         let mut forced_config = self.config.compaction.clone();
         forced_config.enabled = true;
-        forced_config.token_threshold = forced_config
-            .token_threshold
-            .min(target_budget.saturating_sub(1))
-            .max(1);
+        forced_config.token_threshold =
+            forced_config.token_threshold.min(target_budget.saturating_sub(1)).max(1);
         // v0.8.11: forced compaction (capacity guardrail) bypasses the floor
         // because we're at a hard ceiling and have to free budget regardless
         // of cache cost.
@@ -1684,13 +1721,9 @@ impl Engine {
                 }
             }
         } else {
-            let recent: Vec<&Message> = (0..msg_range_end)
-                .filter_map(|i| self.session.messages.get(i))
-                .collect();
-            match seam_mgr
-                .recompact(&existing_seams, &recent, level, 0, msg_range_end)
-                .await
-            {
+            let recent: Vec<&Message> =
+                (0..msg_range_end).filter_map(|i| self.session.messages.get(i)).collect();
+            match seam_mgr.recompact(&existing_seams, &recent, level, 0, msg_range_end).await {
                 Ok(text) => text,
                 Err(err) => {
                     crate::logging::warn(format!("L{level} recompact failed: {err}"));
@@ -1783,10 +1816,7 @@ impl Engine {
                 .await;
                 s.to_system_block()
             };
-            match seam_mgr
-                .produce_flash_briefing(&seams, state_text.as_deref())
-                .await
-            {
+            match seam_mgr.produce_flash_briefing(&seams, state_text.as_deref()).await {
                 Ok(text) => text,
                 Err(err) => {
                     crate::logging::warn(format!(

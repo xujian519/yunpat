@@ -114,10 +114,7 @@ impl WebRunState {
 
     fn next_turn(&mut self, namespace: &str) -> u64 {
         self.touch_session(namespace);
-        let session = self
-            .sessions
-            .get_mut(namespace)
-            .expect("session should exist after touch");
+        let session = self.sessions.get_mut(namespace).expect("session should exist after touch");
         let current = session.next_turn;
         session.next_turn = session.next_turn.saturating_add(1);
         current
@@ -127,10 +124,8 @@ impl WebRunState {
         self.touch_session(namespace);
         let mut evicted_refs = Vec::new();
         {
-            let session = self
-                .sessions
-                .get_mut(namespace)
-                .expect("session should exist after touch");
+            let session =
+                self.sessions.get_mut(namespace).expect("session should exist after touch");
             if let Some(existing_idx) = session.refs.iter().position(|existing| existing == ref_id)
             {
                 session.refs.remove(existing_idx);
@@ -1500,16 +1495,9 @@ fn parse_duckduckgo_results(html: &str, max_results: usize) -> Vec<SearchEntry> 
             continue;
         }
         let url = normalize_search_url(href);
-        let snippet = snippets
-            .get(idx)
-            .map(|s| s.to_string())
-            .filter(|s| !s.is_empty());
+        let snippet = snippets.get(idx).map(|s| s.to_string()).filter(|s| !s.is_empty());
 
-        results.push(SearchEntry {
-            title,
-            url,
-            snippet,
-        });
+        results.push(SearchEntry { title, url, snippet });
     }
 
     results
@@ -1775,10 +1763,7 @@ mod tests {
         // underflow, so we skip the test in that case.
         let stale = WEB_RUN_SESSION_TTL + Duration::from_secs(1);
         let can_test = with_state(|state| {
-            let session = state
-                .sessions
-                .get_mut(namespace)
-                .expect("session should exist");
+            let session = state.sessions.get_mut(namespace).expect("session should exist");
             match Instant::now().checked_sub(stale) {
                 Some(past) => {
                     session.last_access = past;

@@ -184,12 +184,9 @@ export class PromptTemplate {
 
           // 处理数组类型
           if (key.startsWith('required') || key.startsWith('optional') || key === 'tags') {
-            ;(metadata as any)[key] = value
-              .slice(1, -1)
-              .split(',')
-              .map((v: string) => v.trim())
+            metadata[key] = value.slice(1, -1).split(',').map((v: string) => v.trim()) as string[]
           } else {
-            ;(metadata as any)[key] = value
+            metadata[key] = value
           }
         }
       }

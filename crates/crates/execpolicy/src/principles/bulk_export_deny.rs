@@ -81,10 +81,6 @@ mod tests {
 
     #[test]
     fn pass_for_normal_export() {
-        assert!(
-            BulkExportDenyPrinciple
-                .check("patent_export", &json!({"count": 10}))
-                .is_pass()
-        );
+        assert!(BulkExportDenyPrinciple.check("patent_export", &json!({"count": 10})).is_pass());
     }
 }

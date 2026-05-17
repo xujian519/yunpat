@@ -291,7 +291,8 @@ export class RecoveryStrategySelector {
    * 场景匹配
    */
   private scenarioMatches(deviation: unknown, scenario: string): boolean {
-    const deviationType = (deviation as any).type
+    const deviationType = (deviation as { type?: string }).type || ''
+    const deviationDesc = (deviation as { description?: string }).description || ''
 
     // 映射偏离类型到场景
     const scenarioMap: Record<string, string[]> = {
@@ -305,7 +306,7 @@ export class RecoveryStrategySelector {
 
     return (
       applicableScenarios.includes(scenario) ||
-      (deviation as any).description.toLowerCase().includes(scenario.replace('_', ' '))
+      deviationDesc.toLowerCase().includes(scenario.replace('_', ' '))
     )
   }
 

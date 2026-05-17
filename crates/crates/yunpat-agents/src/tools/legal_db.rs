@@ -82,10 +82,7 @@ impl LegalDatabase {
             "SELECT COUNT(*) FROM legal_articles_v2 WHERE to_tsvector('chinese', content) @@ plainto_tsquery('chinese', $1)
              OR law_title ILIKE $2 OR article_title ILIKE $2";
         let pattern = format!("%{keyword}%");
-        let row = self
-            .client
-            .query_one(count_sql, &[&keyword, &pattern])
-            .await?;
+        let row = self.client.query_one(count_sql, &[&keyword, &pattern]).await?;
         let total: i64 = row.get(0);
 
         let query_sql = "SELECT article_id, law_id, law_title, law_importance, article_number, \
@@ -124,10 +121,7 @@ impl LegalDatabase {
              WHERE title ILIKE $1 \
              ORDER BY effective_date DESC NULLS LAST \
              LIMIT $2";
-        let rows = self
-            .client
-            .query(sql, &[&pattern, &i64::from(limit)])
-            .await?;
+        let rows = self.client.query(sql, &[&pattern, &i64::from(limit)]).await?;
         Ok(rows.iter().map(Self::row_to_document).collect())
     }
 
@@ -138,10 +132,7 @@ impl LegalDatabase {
              FROM openclaw_kg_nodes \
              WHERE name ILIKE $1 OR title ILIKE $1 \
              LIMIT $2";
-        let rows = self
-            .client
-            .query(sql, &[&pattern, &i64::from(limit)])
-            .await?;
+        let rows = self.client.query(sql, &[&pattern, &i64::from(limit)]).await?;
         Ok(rows.iter().map(Self::row_to_kg_node).collect())
     }
 
@@ -173,9 +164,7 @@ impl LegalDatabase {
             law_importance: row.get("law_importance"),
             article_number: row.get("article_number"),
             article_title: row.get("article_title"),
-            content: row
-                .get::<_, Option<String>>("content")
-                .map(|c| c.chars().take(500).collect()),
+            content: row.get::<_, Option<String>>("content").map(|c| c.chars().take(500).collect()),
             category: row.get("category"),
         }
     }
@@ -200,9 +189,7 @@ impl LegalDatabase {
             node_type: row.get("node_type"),
             name: row.get("name"),
             title: row.get("title"),
-            content: row
-                .get::<_, Option<String>>("content")
-                .map(|c| c.chars().take(300).collect()),
+            content: row.get::<_, Option<String>>("content").map(|c| c.chars().take(300).collect()),
         }
     }
 }
@@ -239,7 +226,7 @@ mod tests {
         let result = db.search_all("创造性", 5, 3, 3).await;
         assert!(result.is_ok(), "搜索失败: {:?}", result.err());
 
-        let search_result = result.unwrap();
+        let search_result = result.expect("已验证 is_ok");
         println!(
             "条文: {}, 文书: {}, 知识图谱: {}",
             search_result.total_articles,

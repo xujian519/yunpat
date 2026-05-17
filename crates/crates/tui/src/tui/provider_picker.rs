@@ -47,14 +47,9 @@ pub struct ProviderPickerView {
 impl ProviderPickerView {
     #[must_use]
     pub fn new(active: ApiProvider, config: &Config) -> Self {
-        let providers: Vec<(ApiProvider, bool)> = ApiProvider::all()
-            .iter()
-            .map(|p| (*p, has_api_key_for(config, *p)))
-            .collect();
-        let selected_idx = providers
-            .iter()
-            .position(|(p, _)| *p == active)
-            .unwrap_or(0);
+        let providers: Vec<(ApiProvider, bool)> =
+            ApiProvider::all().iter().map(|p| (*p, has_api_key_for(config, *p))).collect();
+        let selected_idx = providers.iter().position(|(p, _)| *p == active).unwrap_or(0);
         Self {
             providers,
             active_provider: active,
@@ -113,9 +108,7 @@ impl ProviderPickerView {
         let outer = Block::default()
             .title(Line::from(Span::styled(
                 " Provider ",
-                Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
             )))
             .title_bottom(Line::from(vec![
                 Span::styled(" ↑↓ ", Style::default().fg(palette::TEXT_MUTED)),
@@ -146,9 +139,7 @@ impl ProviderPickerView {
                 Style::default().fg(palette::TEXT_PRIMARY)
             };
             let hint_style = if is_selected {
-                Style::default()
-                    .fg(palette::SELECTION_TEXT)
-                    .bg(palette::SELECTION_BG)
+                Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
             } else if *has_key {
                 Style::default().fg(palette::TEXT_MUTED)
             } else {
@@ -173,9 +164,7 @@ impl ProviderPickerView {
         let outer = Block::default()
             .title(Line::from(Span::styled(
                 format!(" API key — {} ", provider.display_name()),
-                Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
             )))
             .title_bottom(Line::from(vec![
                 Span::styled(" Enter ", Style::default().fg(palette::TEXT_MUTED)),
@@ -208,9 +197,7 @@ impl ProviderPickerView {
             Span::styled("Key: ", Style::default().fg(palette::TEXT_MUTED)),
             Span::styled(
                 display,
-                Style::default()
-                    .fg(palette::TEXT_PRIMARY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::TEXT_PRIMARY).add_modifier(Modifier::BOLD),
             ),
         ])];
         Paragraph::new(key_lines).render(layout[0], buf);
@@ -236,14 +223,7 @@ fn mask_key(input: &str) -> String {
     if len <= 4 {
         return "*".repeat(len);
     }
-    let visible: String = trimmed
-        .chars()
-        .rev()
-        .take(4)
-        .collect::<String>()
-        .chars()
-        .rev()
-        .collect();
+    let visible: String = trimmed.chars().rev().take(4).collect::<String>().chars().rev().collect();
     format!("{}{}", "*".repeat(len - 4), visible)
 }
 
@@ -370,11 +350,7 @@ mod tests {
     fn picker_lists_all_providers() {
         let config = Config::default();
         let picker = ProviderPickerView::new(ApiProvider::Deepseek, &config);
-        let names: Vec<_> = picker
-            .providers
-            .iter()
-            .map(|(p, _)| p.display_name())
-            .collect();
+        let names: Vec<_> = picker.providers.iter().map(|(p, _)| p.display_name()).collect();
         assert_eq!(
             names,
             vec![

@@ -48,9 +48,7 @@ fn text_style_for_line(line: &str) -> Style {
     if trimmed.is_empty() {
         Style::default().fg(palette::TEXT_DIM)
     } else if trimmed.starts_with("//") || trimmed.starts_with('#') || trimmed.starts_with("--") {
-        Style::default()
-            .fg(palette::TEXT_DIM)
-            .add_modifier(Modifier::ITALIC)
+        Style::default().fg(palette::TEXT_DIM).add_modifier(Modifier::ITALIC)
     } else {
         Style::default().fg(palette::TEXT_PRIMARY)
     }

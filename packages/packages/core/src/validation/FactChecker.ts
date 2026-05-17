@@ -5,15 +5,22 @@
  */
 
 import { LLMAdapter } from '../lifecycle/Lifecycle.js'
-import { KnowledgeBase } from '../knowledge/KnowledgeBase.js'
 import {
   Claim,
   ClaimCategory,
   FactCheckResult,
-  SourceReference,
-  SourceType,
   FactCheckerConfig,
+  FactCheckMethod,
 } from './hallucination-types.js'
+
+/**
+ * LLM 提取的声明响应
+ */
+interface LLMExtractedClaim {
+  content: string
+  category: string
+  confidence?: number
+}
 import {
   ExternalFactChecker,
   ExternalFactCheckOptions,
@@ -215,11 +222,11 @@ ${content}
 
       const parsed = JSON.parse(response.message.content)
 
-      return parsed.map((item: unknown, index: number) => ({
+      return parsed.map((item: LLMExtractedClaim, index: number) => ({
         id: `claim-llm-${index}`,
-        content: (item as any).content,
-        category: this.parseClaimCategory((item as any).category),
-        confidence: (item as any).confidence || 0.8,
+        content: item.content,
+        category: this.parseClaimCategory(item.category),
+        confidence: item.confidence || 0.8,
       }))
     } catch (error) {
       console.error('LLM声明提取失败:', error)

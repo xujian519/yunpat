@@ -17,6 +17,32 @@ import { LLMAdapter } from '../lifecycle/Lifecycle.js'
 // ==================== 类型定义 ====================
 
 /**
+ * LLM 预测结果
+ */
+export interface LLMPredictionResult {
+  /** 预测内容 */
+  result?: unknown
+  /** 输出内容 */
+  output?: unknown
+  /** 预测置信度 */
+  confidence?: number
+  /** 预测分数 */
+  score?: number
+  /** 概率分布 */
+  probabilities?: number[]
+  /** 预测方差 */
+  variance?: number
+  /** 多次预测结果（用于分布不确定性估计） */
+  multiplePredictions?: LLMPredictionResult[]
+  /** 输入内容 */
+  input?: string
+  /** 查询内容 */
+  query?: string
+  /** 提示内容 */
+  prompt?: string
+}
+
+/**
  * 样本 - 待标注或已标注的数据样本
  */
 export interface Sample {
@@ -316,7 +342,7 @@ export class ActiveLearningSystem {
    * @returns 不确定性分数
    */
   estimateUncertainty(
-    result: unknown,
+    result: LLMPredictionResult,
     method: 'entropy' | 'variance' | 'margin' | 'confidence' = 'entropy'
   ): UncertaintyScore {
     // 预测不确定性 - 基于模型输出的置信度
@@ -326,8 +352,8 @@ export class ActiveLearningSystem {
     const semantic = this.estimateSemanticUncertainty(result)
 
     // 分布不确定性 - 如果有多次预测结果
-    const distribution = (result as any).multiplePredictions
-      ? this.estimateDistributionUncertainty((result as any).multiplePredictions)
+    const distribution = result.multiplePredictions
+      ? this.estimateDistributionUncertainty(result.multiplePredictions)
       : undefined
 
     // 总体不确定性（加权平均）
@@ -345,31 +371,31 @@ export class ActiveLearningSystem {
   /**
    * 估计预测不确定性
    */
-  private estimatePredictionUncertainty(result: unknown, method: string): number {
+  private estimatePredictionUncertainty(result: LLMPredictionResult, method: string): number {
     // 从结果中提取置信度
-    const confidence = (result as any).confidence ?? (result as any).score ?? 0.5
+    const confidence = result.confidence ?? result.score ?? 0.5
 
     switch (method) {
       case 'entropy':
         // 熵不确定性：H = -sum(p * log(p))
         // 当 p = 0.5 时熵最大（最不确定）
-        if ((result as any).probabilities) {
-          return this.calculateEntropy((result as any).probabilities)
+        if (result.probabilities) {
+          return this.calculateEntropy(result.probabilities)
         }
         // 简化：使用 1 - |2*confidence - 1|
         return 1 - Math.abs(2 * confidence - 1)
 
       case 'variance':
         // 方差不确定性
-        if ((result as any).variance !== undefined) {
-          return Math.min((result as any).variance, 1)
+        if (result.variance !== undefined) {
+          return Math.min(result.variance, 1)
         }
         return 1 - confidence
 
       case 'margin':
         // 边缘不确定性：1 - (p_max - p_second_max)
-        if ((result as any).probabilities && (result as any).probabilities.length >= 2) {
-          const sorted = [...(result as any).probabilities].sort((a, b) => b - a)
+        if (result.probabilities && result.probabilities.length >= 2) {
+          const sorted = [...result.probabilities].sort((a, b) => b - a)
           return 1 - (sorted[0] - sorted[1])
         }
         return 1 - confidence
@@ -400,10 +426,10 @@ export class ActiveLearningSystem {
    *
    * 基于输入的模糊、歧义程度
    */
-  private estimateSemanticUncertainty(result: unknown): number {
+  private estimateSemanticUncertainty(result: LLMPredictionResult): number {
     let uncertainty = 0
 
-    const input = (result as any).input ?? (result as any).query ?? (result as any).prompt
+    const input = result.input ?? result.query ?? result.prompt
     if (typeof input !== 'string') {
       return 0.5 // 默认中等不确定性
     }
@@ -474,10 +500,10 @@ export class ActiveLearningSystem {
   /**
    * 比较两个预测的差异
    */
-  private comparePredictions(pred1: unknown, pred2: unknown): number {
+  private comparePredictions(pred1: LLMPredictionResult, pred2: LLMPredictionResult): number {
     // 简化实现：基于字符串相似度
-    const str1 = JSON.stringify((pred1 as any).result ?? (pred1 as any))
-    const str2 = JSON.stringify((pred2 as any).result ?? (pred2 as any))
+    const str1 = JSON.stringify(pred1.result ?? pred1)
+    const str2 = JSON.stringify(pred2.result ?? pred2)
 
     if (str1 === str2) return 0
 
@@ -915,13 +941,13 @@ export class ActiveLearningSystem {
   /**
    * 添加样本到池
    */
-  addSample(result: unknown, source: Sample['source'] = 'prediction'): Sample {
+  addSample(result: LLMPredictionResult, source: Sample['source'] = 'prediction'): Sample {
     const uncertainty = this.estimateUncertainty(result)
 
     const sample: Sample = {
       id: uuidv4(),
-      input: (result as any).input ?? (result as any).query ?? (result as any).prompt,
-      prediction: (result as any).result ?? (result as any).output,
+      input: result.input ?? result.query ?? result.prompt,
+      prediction: result.result ?? result.output,
       uncertaintyScore: uncertainty.total,
       createdAt: new Date(),
       source,
@@ -941,7 +967,7 @@ export class ActiveLearningSystem {
   /**
    * 批量添加样本
    */
-  addSamples(results: any[], source: Sample['source'] = 'prediction'): Sample[] {
+  addSamples(results: LLMPredictionResult[], source: Sample['source'] = 'prediction'): Sample[] {
     return results.map((r) => this.addSample(r, source))
   }
 

@@ -143,12 +143,7 @@ impl LiveTranscriptOverlay {
     pub fn refresh_from_app(&mut self, app: &mut App) {
         app.resync_history_revisions();
         let mut new_snapshots = Vec::with_capacity(
-            app.history.len()
-                + app
-                    .tool
-                    .active_cell
-                    .as_ref()
-                    .map_or(0, |a| a.entries().len()),
+            app.history.len() + app.tool.active_cell.as_ref().map_or(0, |a| a.entries().len()),
         );
         for (idx, cell) in app.history.iter().enumerate() {
             let rev = app.history_revisions.get(idx).copied().unwrap_or(0);
@@ -164,9 +159,7 @@ impl LiveTranscriptOverlay {
                 let salt = (idx as u64).wrapping_add(1);
                 // Salt mirrors the main-transcript scheme so cache keys are
                 // stable across the two overlays for the same active entry.
-                let revision = active_rev
-                    .wrapping_mul(0x9E37_79B9_7F4A_7C15)
-                    .wrapping_add(salt);
+                let revision = active_rev.wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(salt);
                 new_snapshots.push(CellSnapshot {
                     id: CellId::Active(idx),
                     revision,
@@ -312,9 +305,7 @@ fn decorate_highlight(mut lines: Vec<Line<'static>>) -> Vec<Line<'static>> {
     }
     let marker = Span::styled(
         "\u{25B6} ",
-        Style::default()
-            .fg(palette::TEXT_ACCENT)
-            .add_modifier(Modifier::BOLD),
+        Style::default().fg(palette::TEXT_ACCENT).add_modifier(Modifier::BOLD),
     );
     if let Some(first) = lines.first_mut() {
         first.spans.insert(0, marker);
@@ -520,9 +511,7 @@ impl ModalView for LiveTranscriptOverlay {
             .style(Style::default().bg(palette::YUNPAT_INK))
             .padding(Padding::uniform(1));
 
-        let paragraph = Paragraph::new(visible_lines)
-            .block(block)
-            .wrap(Wrap { trim: false });
+        let paragraph = Paragraph::new(visible_lines).block(block).wrap(Wrap { trim: false });
         paragraph.render(popup_area, buf);
     }
 }
@@ -533,9 +522,7 @@ mod tests {
     use crate::tui::history::HistoryCell;
 
     fn user(s: &str) -> HistoryCell {
-        HistoryCell::User {
-            content: s.to_string(),
-        }
+        HistoryCell::User { content: s.to_string() }
     }
 
     fn assistant(s: &str, streaming: bool) -> HistoryCell {

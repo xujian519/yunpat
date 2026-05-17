@@ -77,10 +77,6 @@ mod tests {
 
     #[test]
     fn pass_for_other_tools() {
-        assert!(
-            SubmissionAuditPrinciple
-                .check("patent_search", &json!({}))
-                .is_pass()
-        );
+        assert!(SubmissionAuditPrinciple.check("patent_search", &json!({})).is_pass());
     }
 }

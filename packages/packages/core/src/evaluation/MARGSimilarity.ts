@@ -160,10 +160,7 @@ export class MARGSimilarity {
   /**
    * 阶段1：领域关系分析
    */
-  private async analyzeDomainRelation(
-    patentA: PatentInfo,
-    patentB: PatentInfo
-  ): Promise<string> {
+  private async analyzeDomainRelation(patentA: PatentInfo, patentB: PatentInfo): Promise<string> {
     const codesA = [...(patentA.ipcCodes || []), ...(patentA.cpcCodes || [])]
     const codesB = [...(patentB.ipcCodes || []), ...(patentB.cpcCodes || [])]
 
@@ -262,16 +259,8 @@ export class MARGSimilarity {
     patentB: PatentInfo
   ): Promise<DimensionScore> {
     // 提取技术术语
-    const allTextA = [
-      patentA.title,
-      patentA.abstract,
-      ...(patentA.claims || []),
-    ].join(' ')
-    const allTextB = [
-      patentB.title,
-      patentB.abstract,
-      ...(patentB.claims || []),
-    ].join(' ')
+    const allTextA = [patentA.title, patentA.abstract, ...(patentA.claims || [])].join(' ')
+    const allTextB = [patentB.title, patentB.abstract, ...(patentB.claims || [])].join(' ')
 
     const termsA = this.extractTechnicalTerms(allTextA)
     const termsB = this.extractTechnicalTerms(allTextB)
@@ -359,9 +348,10 @@ export class MARGSimilarity {
     }
 
     // 综合评分
-    const score = (jaccard * 0.6 + fieldSimilarity * 0.4)
+    const score = jaccard * 0.6 + fieldSimilarity * 0.4
 
-    const reasoning = `应用场景相似度: ${(jaccard * 100).toFixed(1)}%` +
+    const reasoning =
+      `应用场景相似度: ${(jaccard * 100).toFixed(1)}%` +
       (fieldSimilarity > 0 ? `，技术领域相似度: ${(fieldSimilarity * 100).toFixed(1)}%` : '') +
       `，综合: ${(score * 100).toFixed(1)}%`
 
@@ -385,19 +375,23 @@ export class MARGSimilarity {
     const scopeB = this.analyzeClaimScope(patentB.claims || [])
 
     // 权利要求数量相似度
-    const countSimilarity = 1 - Math.abs(scopeA.count - scopeB.count) / Math.max(scopeA.count, scopeB.count, 1)
+    const countSimilarity =
+      1 - Math.abs(scopeA.count - scopeB.count) / Math.max(scopeA.count, scopeB.count, 1)
 
     // 独立权利要求比例相似度
-    const independentSimilarity =
-      1 - Math.abs(scopeA.independentRatio - scopeB.independentRatio)
+    const independentSimilarity = 1 - Math.abs(scopeA.independentRatio - scopeB.independentRatio)
 
     // 权利要求长度相似度
-    const lengthSimilarity = 1 - Math.abs(scopeA.avgLength - scopeB.avgLength) / Math.max(scopeA.avgLength, scopeB.avgLength, 1)
+    const lengthSimilarity =
+      1 -
+      Math.abs(scopeA.avgLength - scopeB.avgLength) /
+        Math.max(scopeA.avgLength, scopeB.avgLength, 1)
 
     // 综合评分
-    const score = (countSimilarity * 0.3 + independentSimilarity * 0.4 + lengthSimilarity * 0.3)
+    const score = countSimilarity * 0.3 + independentSimilarity * 0.4 + lengthSimilarity * 0.3
 
-    const reasoning = `权利要求数量相似度: ${(countSimilarity * 100).toFixed(1)}%，` +
+    const reasoning =
+      `权利要求数量相似度: ${(countSimilarity * 100).toFixed(1)}%，` +
       `独立权利要求比例相似度: ${(independentSimilarity * 100).toFixed(1)}%，` +
       `权利要求长度相似度: ${(lengthSimilarity * 100).toFixed(1)}%，` +
       `综合: ${(score * 100).toFixed(1)}%`
@@ -434,7 +428,8 @@ export class MARGSimilarity {
 
     // 检查是否有维度异常高或异常低
     if (minScore < 0.2 && maxScore > 0.6) {
-      validation += '，存在显著维度差异（' +
+      validation +=
+        '，存在显著维度差异（' +
         `技术=${(technical.score * 100).toFixed(1)}%, ` +
         `应用=${(application.score * 100).toFixed(1)}%, ` +
         `权利范围=${(claimScope.score * 100).toFixed(1)}%）`
@@ -456,10 +451,22 @@ export class MARGSimilarity {
     const chineseTerms = text.match(chinesePattern) || []
 
     // 去除常见停用词
-    const stopWords = ['的', '是', '在', '和', '与', '或', '及', '以及', '包括', '包含', '具有', '通过', '利用']
-    const filtered = chineseTerms.filter(
-      (term) => !stopWords.some((stop) => term.includes(stop))
-    )
+    const stopWords = [
+      '的',
+      '是',
+      '在',
+      '和',
+      '与',
+      '或',
+      '及',
+      '以及',
+      '包括',
+      '包含',
+      '具有',
+      '通过',
+      '利用',
+    ]
+    const filtered = chineseTerms.filter((term) => !stopWords.some((stop) => term.includes(stop)))
 
     // 英文技术术语提取
     const englishPattern = /\b[A-Z][a-z]+(?:[A-Z][a-z]+)*\b/g

@@ -224,10 +224,9 @@ impl ActiveCell {
             return idx;
         }
         let idx = self.entries.len();
-        self.entries
-            .push(HistoryCell::Tool(ToolCell::Exploring(ExploringCell {
-                entries: Vec::new(),
-            })));
+        self.entries.push(HistoryCell::Tool(ToolCell::Exploring(ExploringCell {
+            entries: Vec::new(),
+        })));
         self.exploring_entry = Some(idx);
         self.bump_revision();
         idx
@@ -269,12 +268,7 @@ impl ActiveCell {
 }
 
 fn mark_running_as_interrupted(cell: &mut HistoryCell) {
-    if let HistoryCell::Thinking {
-        streaming,
-        duration_secs,
-        ..
-    } = cell
-    {
+    if let HistoryCell::Thinking { streaming, duration_secs, .. } = cell {
         // A thinking cell stuck mid-stream should stop spinning when the turn
         // is cancelled. Leave `duration_secs` as-is if it's already populated;
         // otherwise the renderer simply omits the duration badge.

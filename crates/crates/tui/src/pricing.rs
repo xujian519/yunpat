@@ -247,10 +247,7 @@ mod tests {
 
     #[test]
     fn v4_pro_uses_limited_time_discount_before_expiry() {
-        let before_expiry = Utc
-            .with_ymd_and_hms(2026, 5, 31, 15, 58, 59)
-            .single()
-            .unwrap();
+        let before_expiry = Utc.with_ymd_and_hms(2026, 5, 31, 15, 58, 59).single().unwrap();
         let pricing = pricing_for_model_at("deepseek-v4-pro", before_expiry).unwrap();
 
         assert_eq!(pricing.usd.input_cache_hit_per_million, 0.003625);
@@ -263,10 +260,7 @@ mod tests {
 
     #[test]
     fn v4_pro_returns_to_base_rates_after_discount_expiry() {
-        let after_expiry = Utc
-            .with_ymd_and_hms(2026, 5, 31, 16, 0, 0)
-            .single()
-            .unwrap();
+        let after_expiry = Utc.with_ymd_and_hms(2026, 5, 31, 16, 0, 0).single().unwrap();
         let pricing = pricing_for_model_at("deepseek-v4-pro", after_expiry).unwrap();
 
         assert_eq!(pricing.usd.input_cache_hit_per_million, 0.0145);

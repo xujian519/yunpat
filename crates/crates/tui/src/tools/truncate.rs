@@ -111,9 +111,7 @@ pub fn prune_older_than(max_age: Duration) -> io::Result<usize> {
     if !root.exists() {
         return Ok(0);
     }
-    let cutoff = SystemTime::now()
-        .checked_sub(max_age)
-        .unwrap_or(SystemTime::UNIX_EPOCH);
+    let cutoff = SystemTime::now().checked_sub(max_age).unwrap_or(SystemTime::UNIX_EPOCH);
     let mut pruned = 0usize;
     for entry in fs::read_dir(&root)? {
         let entry = match entry {
@@ -168,10 +166,7 @@ pub fn maybe_spillover(
     let path = write_spillover(id, content)?;
     // Don't slice mid-utf8: walk back to a char boundary if needed.
     let cut = head_bytes.min(content.len());
-    let cut = (0..=cut)
-        .rev()
-        .find(|&i| content.is_char_boundary(i))
-        .unwrap_or(0);
+    let cut = (0..=cut).rev().find(|&i| content.is_char_boundary(i)).unwrap_or(0);
     Ok(Some((content[..cut].to_string(), path)))
 }
 
@@ -340,10 +335,8 @@ mod tests {
             // Compare components instead of a substring on `to_string_lossy`
             // — Windows uses `\` as the separator so a `/` substring match
             // would falsely fail there.
-            let components: Vec<&str> = path
-                .components()
-                .filter_map(|c| c.as_os_str().to_str())
-                .collect();
+            let components: Vec<&str> =
+                path.components().filter_map(|c| c.as_os_str().to_str()).collect();
             assert!(
                 components.contains(&".deepseek") && components.contains(&"tool_outputs"),
                 "spillover path missing expected `.deepseek/tool_outputs/...` segments: {path:?}"
@@ -398,15 +391,11 @@ mod tests {
             // the previous char boundary (0).
             let s = "🐳🐳🐳🐳"; // 4 × 4-byte codepoints
             assert_eq!(s.len(), 16);
-            let (head, _) = maybe_spillover("call-3", s, 1, 3)
-                .expect("ok")
-                .expect("spilled");
+            let (head, _) = maybe_spillover("call-3", s, 1, 3).expect("ok").expect("spilled");
             // 3 isn't a char boundary in this string; walk back → 0.
             assert_eq!(head, "");
             // Asking for 4 bytes lands on the first char boundary.
-            let (head, _) = maybe_spillover("call-3b", s, 1, 4)
-                .expect("ok")
-                .expect("spilled");
+            let (head, _) = maybe_spillover("call-3b", s, 1, 4).expect("ok").expect("spilled");
             assert_eq!(head, "🐳");
         });
     }
@@ -452,19 +441,11 @@ mod tests {
     /// and the per-cycle stress test lives on the Unix path.
     #[cfg(unix)]
     fn filetime_set_modified(path: &Path, when: SystemTime) {
-        let secs = when
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs() as libc::time_t;
+        let secs = when.duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default().as_secs()
+            as libc::time_t;
         let times = [
-            libc::timespec {
-                tv_sec: secs,
-                tv_nsec: 0,
-            },
-            libc::timespec {
-                tv_sec: secs,
-                tv_nsec: 0,
-            },
+            libc::timespec { tv_sec: secs, tv_nsec: 0 },
+            libc::timespec { tv_sec: secs, tv_nsec: 0 },
         ];
         let path_c = std::ffi::CString::new(path.as_os_str().as_encoded_bytes()).unwrap();
         // SAFETY: path_c is a valid CString; times is a 2-element array
@@ -560,16 +541,12 @@ mod tests {
             let metadata = result.metadata.expect("metadata present");
             // Prior keys survive.
             assert_eq!(
-                metadata
-                    .get("prior_key")
-                    .and_then(serde_json::Value::as_str),
+                metadata.get("prior_key").and_then(serde_json::Value::as_str),
                 Some("prior_value")
             );
             // New key added alongside.
             assert_eq!(
-                metadata
-                    .get("spillover_path")
-                    .and_then(serde_json::Value::as_str),
+                metadata.get("spillover_path").and_then(serde_json::Value::as_str),
                 Some(path.display().to_string().as_str())
             );
         });
@@ -603,9 +580,7 @@ mod tests {
             );
             // New key alongside.
             assert_eq!(
-                metadata
-                    .get("spillover_path")
-                    .and_then(serde_json::Value::as_str),
+                metadata.get("spillover_path").and_then(serde_json::Value::as_str),
                 Some(path.display().to_string().as_str())
             );
         });

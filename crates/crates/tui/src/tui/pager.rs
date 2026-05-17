@@ -400,9 +400,7 @@ impl ModalView for PagerView {
             let prompt = format!("/{}", self.search_input);
             visible_lines.push(Line::from(Span::styled(
                 prompt,
-                Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
             )));
         } else if !self.search_matches.is_empty() {
             let status = format!(
@@ -427,18 +425,13 @@ impl ModalView for PagerView {
             .border_style(Style::default().fg(palette::BORDER_COLOR))
             .padding(Padding::uniform(1));
 
-        let paragraph = Paragraph::new(visible_lines)
-            .block(block)
-            .wrap(Wrap { trim: false });
+        let paragraph = Paragraph::new(visible_lines).block(block).wrap(Wrap { trim: false });
         paragraph.render(popup_area, buf);
     }
 }
 
 fn line_to_string(line: &Line<'static>) -> String {
-    line.spans
-        .iter()
-        .map(|span| span.content.to_string())
-        .collect::<String>()
+    line.spans.iter().map(|span| span.content.to_string()).collect::<String>()
 }
 
 fn wrap_text(text: &str, width: usize) -> Vec<String> {
@@ -485,9 +478,8 @@ mod tests {
     use ratatui::text::Line;
 
     fn make_pager(lines: usize) -> PagerView {
-        let lines: Vec<Line<'static>> = (0..lines)
-            .map(|i| Line::from(format!("line-{i:03}")))
-            .collect();
+        let lines: Vec<Line<'static>> =
+            (0..lines).map(|i| Line::from(format!("line-{i:03}"))).collect();
         PagerView::new("T", lines)
     }
 

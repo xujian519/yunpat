@@ -19,9 +19,7 @@ pub fn task(_app: &mut App, args: Option<&str>) -> CommandResult {
             let Some(prompt) = remainder else {
                 return CommandResult::error("Usage: /task add <prompt>");
             };
-            CommandResult::action(AppAction::TaskAdd {
-                prompt: prompt.to_string(),
-            })
+            CommandResult::action(AppAction::TaskAdd { prompt: prompt.to_string() })
         }
         "list" => CommandResult::action(AppAction::TaskList),
         "show" => {

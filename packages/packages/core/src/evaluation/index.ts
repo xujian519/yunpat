@@ -20,7 +20,14 @@ export { RNDEvaluator, createRNDEvaluator } from './RNDEvaluator.js'
 export type { RNDResult, RNDOptions, NeighborInfo } from './RNDEvaluator.js'
 
 export { MARGSimilarity } from './MARGSimilarity.js'
-export type { PatentInfo, DimensionScore, MARGResult, ClaimScopeAnalysis, WeightConfig, LLMClient } from './MARGSimilarity.js'
+export type {
+  PatentInfo,
+  DimensionScore,
+  MARGResult,
+  ClaimScopeAnalysis,
+  WeightConfig,
+  LLMClient,
+} from './MARGSimilarity.js'
 
 export { SAOExtractor } from './SAOExtractor.js'
 export type { SAOTriplet } from './SAOExtractor.js'
@@ -29,10 +36,7 @@ export { SAO2VecEncoder } from './SAO2VecEncoder.js'
 export type { SAOEmbedding } from './SAO2VecEncoder.js'
 
 export { DualQualityEvaluator } from './DualQualityEvaluator.js'
-export type {
-  DualEvaluationResult,
-  DualEvaluatorConfig,
-} from './DualQualityEvaluator.js'
+export type { DualEvaluationResult, DualEvaluatorConfig } from './DualQualityEvaluator.js'
 
 export {
   EvaluationTuningConfig,

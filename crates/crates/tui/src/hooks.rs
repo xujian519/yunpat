@@ -631,10 +631,9 @@ impl HookExecutor {
                 });
                 tool_category.is_some_and(|c| c == category.as_str())
             }
-            Some(HookCondition::Mode { mode }) => context
-                .mode
-                .as_ref()
-                .is_some_and(|m| m.to_lowercase() == mode.to_lowercase()),
+            Some(HookCondition::Mode { mode }) => {
+                context.mode.as_ref().is_some_and(|m| m.to_lowercase() == mode.to_lowercase())
+            }
             Some(HookCondition::ExitCode { code }) => context.tool_exit_code == Some(*code),
             Some(HookCondition::All { conditions }) => conditions.iter().all(|c| {
                 self.matches_condition(
@@ -666,10 +665,7 @@ impl HookExecutor {
             .clone()
             .unwrap_or_else(|| self.default_working_dir.clone());
 
-        let timeout_secs = self
-            .config
-            .default_timeout_secs
-            .unwrap_or(hook.timeout_secs);
+        let timeout_secs = self.config.default_timeout_secs.unwrap_or(hook.timeout_secs);
         let timeout = Duration::from_secs(timeout_secs);
 
         let mut child = match Self::build_shell_command(&hook.command)
@@ -749,10 +745,7 @@ impl HookExecutor {
 
         // Spawn in a detached thread
         std::thread::spawn(move || {
-            let _ = HookExecutor::build_shell_command(&cmd)
-                .current_dir(&wd)
-                .envs(&env)
-                .output();
+            let _ = HookExecutor::build_shell_command(&cmd).current_dir(&wd).envs(&env).output();
         });
 
         // Return immediately with success (background execution is fire-and-forget)
@@ -885,11 +878,8 @@ NOEQUAL line dropped
 
     #[test]
     fn test_hook_condition_tool_name() {
-        let hook = Hook::new(HookEvent::ToolCallBefore, "echo test").with_condition(
-            HookCondition::ToolName {
-                name: "exec_shell".to_string(),
-            },
-        );
+        let hook = Hook::new(HookEvent::ToolCallBefore, "echo test")
+            .with_condition(HookCondition::ToolName { name: "exec_shell".to_string() });
 
         let executor = HookExecutor::disabled();
 
@@ -902,10 +892,8 @@ NOEQUAL line dropped
 
     #[test]
     fn test_hook_condition_mode() {
-        let hook =
-            Hook::new(HookEvent::ModeChange, "echo test").with_condition(HookCondition::Mode {
-                mode: "agent".to_string(),
-            });
+        let hook = Hook::new(HookEvent::ModeChange, "echo test")
+            .with_condition(HookCondition::Mode { mode: "agent".to_string() });
 
         let executor = HookExecutor::disabled();
 
@@ -953,9 +941,7 @@ NOEQUAL line dropped
             .with_name("notify_tool")
             .with_timeout(60)
             .background()
-            .with_condition(HookCondition::ToolCategory {
-                category: "shell".to_string(),
-            });
+            .with_condition(HookCondition::ToolCategory { category: "shell".to_string() });
 
         assert_eq!(hook.name, Some("notify_tool".to_string()));
         assert_eq!(hook.timeout_secs, 60);
@@ -979,12 +965,7 @@ NOEQUAL line dropped
 
         let result = executor.execute_sync(&hook, &env_vars);
         assert!(!result.success);
-        assert!(
-            result
-                .error
-                .as_ref()
-                .is_some_and(|e| e.contains("timed out"))
-        );
+        assert!(result.error.as_ref().is_some_and(|e| e.contains("timed out")));
     }
 
     #[test]

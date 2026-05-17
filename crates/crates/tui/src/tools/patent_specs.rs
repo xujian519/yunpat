@@ -986,9 +986,7 @@ mod tests {
     async fn test_spec_execute_returns_not_available() {
         let spec = PatentSearchSpec;
         let context = ToolContext::new("/tmp/test");
-        let result = spec
-            .execute(json!({"inventionTitle": "test"}), &context)
-            .await;
+        let result = spec.execute(json!({"inventionTitle": "test"}), &context).await;
         assert!(result.is_err());
         match result.unwrap_err() {
             ToolError::NotAvailable { .. } => {}

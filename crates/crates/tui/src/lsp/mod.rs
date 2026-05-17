@@ -364,9 +364,7 @@ pub(crate) mod tests {
         let dir = tempfile::tempdir().unwrap();
         let mgr = LspManager::new(LspConfig::default(), dir.path().to_path_buf());
         let path = dir.path().join("foo.rs");
-        tokio::fs::write(&path, b"let x: i32 = \"oops\";")
-            .await
-            .unwrap();
+        tokio::fs::write(&path, b"let x: i32 = \"oops\";").await.unwrap();
 
         let fake = Arc::new(FakeTransport::new(vec![Diagnostic {
             line: 1,
@@ -374,8 +372,7 @@ pub(crate) mod tests {
             severity: Severity::Error,
             message: "expected i32, found &str".to_string(),
         }]));
-        mgr.install_test_transport(Language::Rust, fake.clone())
-            .await;
+        mgr.install_test_transport(Language::Rust, fake.clone()).await;
 
         let block = mgr.diagnostics_for(&path, 1).await.expect("has block");
         let rendered = block.render();

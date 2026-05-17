@@ -148,8 +148,7 @@ fn char_boundary_at_or_before(text: &str, max_bytes: usize) -> usize {
 }
 
 fn strip_truncation_note(text: &str) -> &str {
-    text.split_once("\n\n[Output truncated at")
-        .map_or(text, |(prefix, _)| prefix)
+    text.split_once("\n\n[Output truncated at").map_or(text, |(prefix, _)| prefix)
 }
 
 fn truncate_chars(text: &str, max_chars: usize) -> String {

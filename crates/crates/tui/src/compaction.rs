@@ -227,10 +227,7 @@ fn extract_paths_from_text(text: &str, workspace: Option<&Path>) -> Vec<String> 
     path_regex()
         .captures_iter(text)
         .filter_map(|caps| {
-            let candidate = caps
-                .name("path")
-                .or_else(|| caps.name("root"))
-                .map(|m| m.as_str())?;
+            let candidate = caps.name("path").or_else(|| caps.name("root")).map(|m| m.as_str())?;
             normalize_path_candidate(candidate, workspace)
         })
         .collect()
@@ -315,11 +312,8 @@ fn derive_working_set_paths(
     let mut paths: Vec<String> = Vec::new();
     let mut seen: HashSet<String> = HashSet::new();
 
-    let mut seeds: Vec<usize> = seed_indices
-        .iter()
-        .copied()
-        .filter(|idx| *idx < messages.len())
-        .collect();
+    let mut seeds: Vec<usize> =
+        seed_indices.iter().copied().filter(|idx| *idx < messages.len()).collect();
     seeds.sort_unstable_by(|a, b| b.cmp(a));
 
     for idx in seeds {
@@ -431,9 +425,7 @@ pub fn plan_compaction(
     // Ensure tool result messages are not kept without their corresponding tool call.
     enforce_tool_call_pairs(messages, &mut pinned_indices);
 
-    let summarize_indices = (0..len)
-        .filter(|idx| !pinned_indices.contains(idx))
-        .collect();
+    let summarize_indices = (0..len).filter(|idx| !pinned_indices.contains(idx)).collect();
 
     // `working_set_paths` was used only for pinning decisions above.
     drop(working_set_paths);
@@ -552,9 +544,9 @@ fn estimate_tokens_for_message(message: &Message, include_thinking: bool) -> usi
             // Only current-turn tool-call reasoning is sent back to the API.
             ContentBlock::Thinking { thinking } if include_thinking => thinking.len() / 4,
             ContentBlock::Thinking { .. } => 0,
-            ContentBlock::ToolUse { input, .. } => serde_json::to_string(input)
-                .map(|s| s.len() / 4)
-                .unwrap_or(100),
+            ContentBlock::ToolUse { input, .. } => {
+                serde_json::to_string(input).map(|s| s.len() / 4).unwrap_or(100)
+            }
             ContentBlock::ToolResult { content, .. } => content.len() / 4,
             ContentBlock::ServerToolUse { .. }
             | ContentBlock::ToolSearchToolResult { .. }
@@ -587,10 +579,9 @@ fn estimate_text_tokens_conservative(text: &str) -> usize {
 fn estimate_system_tokens_conservative(system: Option<&SystemPrompt>) -> usize {
     match system {
         Some(SystemPrompt::Text(text)) => estimate_text_tokens_conservative(text),
-        Some(SystemPrompt::Blocks(blocks)) => blocks
-            .iter()
-            .map(|block| estimate_text_tokens_conservative(&block.text))
-            .sum(),
+        Some(SystemPrompt::Blocks(blocks)) => {
+            blocks.iter().map(|block| estimate_text_tokens_conservative(&block.text)).sum()
+        }
         None => 0,
     }
 }
@@ -604,9 +595,7 @@ pub fn estimate_input_tokens_conservative(
     let message_tokens = estimate_tokens(messages).saturating_mul(3).div_ceil(2);
     let system_tokens = estimate_system_tokens_conservative(system);
     let framing_overhead = messages.len().saturating_mul(12).saturating_add(48);
-    message_tokens
-        .saturating_add(system_tokens)
-        .saturating_add(framing_overhead)
+    message_tokens.saturating_add(system_tokens).saturating_add(framing_overhead)
 }
 
 pub fn should_compact(
@@ -626,10 +615,8 @@ pub fn should_compact(
     // little budget recovery. Manual `/compact` and the `compact_now` tool
     // bypass this floor by going through different code paths.
     if config.auto_floor_tokens > 0 {
-        let total_session_tokens: usize = messages
-            .iter()
-            .map(|m| estimate_tokens_for_message(m, false))
-            .sum();
+        let total_session_tokens: usize =
+            messages.iter().map(|m| estimate_tokens_for_message(m, false)).sum();
         if total_session_tokens < config.auto_floor_tokens {
             return false;
         }
@@ -691,10 +678,7 @@ fn tail_chars(text: &str, max_chars: usize) -> String {
         return text.to_string();
     }
     let start_char = total_chars.saturating_sub(max_chars);
-    let start_idx = text
-        .char_indices()
-        .nth(start_char)
-        .map_or(0, |(idx, _)| idx);
+    let start_idx = text.char_indices().nth(start_char).map_or(0, |(idx, _)| idx);
     text[start_idx..].to_string()
 }
 
@@ -721,10 +705,7 @@ fn collect_tool_uses(messages: &[Message]) -> HashMap<String, ToolUseInfo> {
     let mut tool_uses = HashMap::new();
     for message in messages {
         for block in &message.content {
-            if let ContentBlock::ToolUse {
-                id, name, input, ..
-            } = block
-            {
+            if let ContentBlock::ToolUse { id, name, input, .. } = block {
                 tool_uses.insert(
                     id.clone(),
                     ToolUseInfo {
@@ -767,12 +748,7 @@ pub fn prune_tool_results(messages: &mut [Message], protected_window: usize) -> 
 
     for (message_idx, message) in messages.iter().take(cutoff).enumerate() {
         for (block_idx, block) in message.content.iter().enumerate() {
-            let ContentBlock::ToolResult {
-                tool_use_id,
-                content,
-                ..
-            } = block
-            else {
+            let ContentBlock::ToolResult { tool_use_id, content, .. } = block else {
                 continue;
             };
             let Some(info) = tool_uses.get(tool_use_id) else {
@@ -811,11 +787,8 @@ pub fn prune_tool_results(messages: &mut [Message], protected_window: usize) -> 
             continue;
         }
 
-        if let ContentBlock::ToolResult {
-            content,
-            content_blocks,
-            ..
-        } = &mut messages[candidate.message_idx].content[candidate.block_idx]
+        if let ContentBlock::ToolResult { content, content_blocks, .. } =
+            &mut messages[candidate.message_idx].content[candidate.block_idx]
         {
             bytes_saved = bytes_saved.saturating_add(content.len().saturating_sub(summary.len()));
             *content = summary;
@@ -1009,11 +982,8 @@ pub async fn compact_messages(
         return Ok((messages.to_vec(), None, Vec::new()));
     }
 
-    let to_summarize: Vec<Message> = plan
-        .summarize_indices
-        .iter()
-        .map(|&idx| messages[idx].clone())
-        .collect();
+    let to_summarize: Vec<Message> =
+        plan.summarize_indices.iter().map(|&idx| messages[idx].clone()).collect();
 
     // Create a summary of the unpinned portion of the conversation
     let summary = create_summary(client, &to_summarize, &config.model).await?;
@@ -1353,10 +1323,8 @@ fn extract_workflow_context(messages: &[Message], workspace: Option<&Path>) -> S
         context.push_str("**Files Modified/Read:**\n");
         for file in &files_touched {
             if let Some(ws) = workspace {
-                let relative = Path::new(file)
-                    .strip_prefix(ws)
-                    .unwrap_or(Path::new(file))
-                    .display();
+                let relative =
+                    Path::new(file).strip_prefix(ws).unwrap_or(Path::new(file)).display();
                 context.push_str(&format!("- `{}`\n", relative));
             } else {
                 context.push_str(&format!("- `{}`\n", file));
@@ -1589,10 +1557,7 @@ mod tests {
             panic!("expected older tool result");
         };
         assert!(older.contains("tool result pruned"));
-        let ContentBlock::ToolResult {
-            content: latest, ..
-        } = &messages[3].content[0]
-        else {
+        let ContentBlock::ToolResult { content: latest, .. } = &messages[3].content[0] else {
             panic!("expected latest tool result");
         };
         assert_eq!(latest, &second);
@@ -1730,9 +1695,7 @@ mod tests {
             Message {
                 role: "assistant".to_string(),
                 content: vec![
-                    ContentBlock::Thinking {
-                        thinking: thinking.clone(),
-                    },
+                    ContentBlock::Thinking { thinking: thinking.clone() },
                     ContentBlock::ToolUse {
                         id: "tool-1".to_string(),
                         name: "read_file".to_string(),
@@ -1933,9 +1896,8 @@ mod tests {
             ..Default::default()
         };
 
-        let messages: Vec<Message> = (0..12)
-            .map(|_| msg("user", "Work on src/compaction.rs right now"))
-            .collect();
+        let messages: Vec<Message> =
+            (0..12).map(|_| msg("user", "Work on src/compaction.rs right now")).collect();
 
         assert!(!should_compact(&messages, &config, None, None, None));
     }

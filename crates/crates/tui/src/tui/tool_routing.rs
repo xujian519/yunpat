@@ -28,10 +28,7 @@ pub(super) fn handle_tool_call_started(
     // dispatch doesn't pay for context construction in the common
     // case (most users have no hooks).
     if app.hooks.has_hooks_for_event(HookEvent::ToolCallBefore) {
-        let context = app
-            .base_hook_context()
-            .with_tool_name(name)
-            .with_tool_args(input);
+        let context = app.base_hook_context().with_tool_name(name).with_tool_args(input);
         let _ = app.execute_hooks(HookEvent::ToolCallBefore, &context);
     }
 
@@ -50,11 +47,7 @@ pub(super) fn handle_tool_call_started(
         let label = exploring_label(name, input);
         // ensure_exploring + append_to_exploring keeps all parallel exploring
         // starts in a single ExploringCell entry.
-        let active = app
-            .tool
-            .active_cell
-            .as_mut()
-            .expect("active_cell just ensured");
+        let active = app.tool.active_cell.as_mut().expect("active_cell just ensured");
         let entry_idx = active.ensure_exploring();
         let inner = active
             .append_to_exploring(
@@ -67,9 +60,7 @@ pub(super) fn handle_tool_call_started(
             .map_or(0, |(_, inner)| inner);
         app.tool.exploring_cell = Some(entry_idx);
         let virtual_index = app.history.len() + entry_idx;
-        app.tool
-            .exploring_entries
-            .insert(id.clone(), (virtual_index, inner));
+        app.tool.exploring_entries.insert(id.clone(), (virtual_index, inner));
         register_tool_cell(app, &id, name, input, virtual_index);
         app.mark_history_updated();
         return;
@@ -89,11 +80,7 @@ pub(super) fn handle_tool_call_started(
         if let Some((summary, wait)) = interaction.as_ref() {
             is_wait = *wait;
             if is_wait
-                && app
-                    .tool
-                    .last_exec_wait_command
-                    .as_ref()
-                    .is_some_and(|last| last == &command)
+                && app.tool.last_exec_wait_command.as_ref().is_some_and(|last| last == &command)
             {
                 app.tool.ignored_tool_calls.insert(id);
                 return;
@@ -121,11 +108,7 @@ pub(super) fn handle_tool_call_started(
         }
 
         if exec_is_background(input)
-            && app
-                .tool
-                .last_exec_wait_command
-                .as_ref()
-                .is_some_and(|last| last == &command)
+            && app.tool.last_exec_wait_command.as_ref().is_some_and(|last| last == &command)
         {
             app.tool.ignored_tool_calls.insert(id);
             return;
@@ -221,10 +204,8 @@ pub(super) fn handle_tool_call_started(
     if is_view_image_tool(name) {
         if let Some(path) = input.get("path").and_then(|v| v.as_str()) {
             let raw_path = PathBuf::from(path);
-            let display_path = raw_path
-                .strip_prefix(&app.workspace)
-                .unwrap_or(&raw_path)
-                .to_path_buf();
+            let display_path =
+                raw_path.strip_prefix(&app.workspace).unwrap_or(&raw_path).to_path_buf();
             push_active_tool_cell(
                 app,
                 &id,
@@ -281,11 +262,7 @@ fn push_active_tool_cell(
     if app.tool.active_cell.is_none() {
         app.tool.active_cell = Some(ActiveCell::new());
     }
-    let active = app
-        .tool
-        .active_cell
-        .as_mut()
-        .expect("active_cell just ensured");
+    let active = app.tool.active_cell.as_mut().expect("active_cell just ensured");
     let entry_idx = active.push_tool(tool_id.to_string(), cell);
     let virtual_index = app.history.len() + entry_idx;
     register_tool_cell(app, tool_id, tool_name, input, virtual_index);
@@ -313,9 +290,7 @@ fn register_tool_cell(
         // until the active cell flushes. `flush_active_cell` migrates these
         // records into `tool_details_by_cell` keyed by the eventual real
         // cell index.
-        app.tool
-            .active_tool_details
-            .insert(tool_id.to_string(), record);
+        app.tool.active_tool_details.insert(tool_id.to_string(), record);
     }
 }
 
@@ -359,10 +334,7 @@ fn accrue_child_token_cost_if_any(app: &mut App, result: &Result<ToolResult, Too
     let Some(metadata) = tool_result.metadata.as_ref() else {
         return;
     };
-    let Some(model) = metadata
-        .get("child_model")
-        .and_then(serde_json::Value::as_str)
-    else {
+    let Some(model) = metadata.get("child_model").and_then(serde_json::Value::as_str) else {
         return;
     };
     let input_tokens = metadata
@@ -456,10 +428,7 @@ pub(super) fn handle_tool_call_complete(
     let status = match result.as_ref() {
         Ok(tool_result) => match tool_result.metadata.as_ref() {
             Some(meta)
-                if meta
-                    .get("status")
-                    .and_then(|v| v.as_str())
-                    .is_some_and(|s| s == "Running") =>
+                if meta.get("status").and_then(|v| v.as_str()).is_some_and(|s| s == "Running") =>
             {
                 ToolStatus::Running
             }
@@ -599,10 +568,11 @@ pub(super) fn handle_tool_call_complete(
             Ok(tool_result) => (tool_result.content.clone(), tool_result.success),
             Err(err) => (err.to_string(), false),
         };
-        let context = app
-            .base_hook_context()
-            .with_tool_name(name)
-            .with_tool_result(&result_text, success, None);
+        let context = app.base_hook_context().with_tool_name(name).with_tool_result(
+            &result_text,
+            success,
+            None,
+        );
         let _ = app.execute_hooks(HookEvent::ToolCallAfter, &context);
     }
 }
@@ -722,10 +692,8 @@ pub(super) fn exploring_label(name: &str, input: &serde_json::Value) -> String {
                 format!("Listing {path}")
             }),
         "grep_files" => {
-            let pattern = obj
-                .and_then(|o| o.get("pattern"))
-                .and_then(|v| v.as_str())
-                .unwrap_or("pattern");
+            let pattern =
+                obj.and_then(|o| o.get("pattern")).and_then(|v| v.as_str()).unwrap_or("pattern");
             format!("Searching for `{pattern}`")
         }
         "list_files" => "Listing files".to_string(),
@@ -764,21 +732,14 @@ fn web_search_query(input: &serde_json::Value) -> String {
 }
 
 fn review_target_label(input: &serde_json::Value) -> String {
-    let target = input
-        .get("target")
-        .and_then(|v| v.as_str())
-        .unwrap_or("review")
-        .trim();
+    let target = input.get("target").and_then(|v| v.as_str()).unwrap_or("review").trim();
     let kind = input
         .get("kind")
         .and_then(|v| v.as_str())
         .unwrap_or("")
         .trim()
         .to_ascii_lowercase();
-    let staged = input
-        .get("staged")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
+    let staged = input.get("staged").and_then(|v| v.as_bool()).unwrap_or(false);
     let target_lower = target.to_ascii_lowercase();
 
     if kind == "diff"
@@ -805,10 +766,7 @@ fn parse_plan_input(input: &serde_json::Value) -> (Option<String>, Vec<PlanStep>
     if let Some(items) = input.get("plan").and_then(|v| v.as_array()) {
         for item in items {
             let step = item.get("step").and_then(|v| v.as_str()).unwrap_or("");
-            let status = item
-                .get("status")
-                .and_then(|v| v.as_str())
-                .unwrap_or("pending");
+            let status = item.get("status").and_then(|v| v.as_str()).unwrap_or("pending");
             if !step.is_empty() {
                 steps.push(PlanStep {
                     step: step.to_string(),
@@ -880,10 +838,7 @@ fn extract_patch_paths(patch: &str) -> Vec<String> {
             let parts: Vec<&str> = rest.split_whitespace().collect();
             if let Some(path) = parts.get(1).or_else(|| parts.first()) {
                 let raw = path.trim();
-                let raw = raw
-                    .strip_prefix("b/")
-                    .or_else(|| raw.strip_prefix("a/"))
-                    .unwrap_or(raw);
+                let raw = raw.strip_prefix("b/").or_else(|| raw.strip_prefix("a/")).unwrap_or(raw);
                 if !paths.contains(&raw.to_string()) {
                     paths.push(raw.to_string());
                 }
@@ -918,10 +873,7 @@ pub(super) fn maybe_add_patch_preview(app: &mut App, input: &serde_json::Value) 
 fn format_changes_preview(changes: &[serde_json::Value]) -> String {
     let mut out = String::new();
     for change in changes {
-        let path = change
-            .get("path")
-            .and_then(|v| v.as_str())
-            .unwrap_or("<file>");
+        let path = change.get("path").and_then(|v| v.as_str()).unwrap_or("<file>");
         let content = change.get("content").and_then(|v| v.as_str()).unwrap_or("");
 
         out.push_str(&format!("diff --git a/{path} b/{path}\n"));
@@ -1022,8 +974,5 @@ fn summarize_interaction_input(input: &str) -> String {
 }
 
 fn exec_is_background(input: &serde_json::Value) -> bool {
-    input
-        .get("background")
-        .and_then(serde_json::Value::as_bool)
-        .unwrap_or(false)
+    input.get("background").and_then(serde_json::Value::as_bool).unwrap_or(false)
 }

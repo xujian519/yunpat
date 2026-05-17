@@ -209,12 +209,12 @@ impl ShellExitStatus {
 impl ShellChild {
     fn try_wait(&mut self) -> std::io::Result<Option<ShellExitStatus>> {
         match self {
-            ShellChild::Process(child) => child
-                .try_wait()
-                .map(|status| status.map(ShellExitStatus::from_std)),
-            ShellChild::Pty(child) => child
-                .try_wait()
-                .map(|status| status.map(ShellExitStatus::from_pty)),
+            ShellChild::Process(child) => {
+                child.try_wait().map(|status| status.map(ShellExitStatus::from_std))
+            }
+            ShellChild::Pty(child) => {
+                child.try_wait().map(|status| status.map(ShellExitStatus::from_pty))
+            }
         }
     }
 
@@ -343,9 +343,7 @@ impl BackgroundShell {
     fn write_stdin(&mut self, input: &str, close: bool) -> Result<()> {
         if let Some(stdin) = self.stdin.as_mut() {
             if !input.is_empty() {
-                stdin
-                    .write_all(input.as_bytes())
-                    .context("Failed to write to stdin")?;
+                stdin.write_all(input.as_bytes()).context("Failed to write to stdin")?;
                 stdin.flush().ok();
             }
             if close {
@@ -362,11 +360,7 @@ impl BackgroundShell {
     }
 
     fn full_output(&self) -> (String, String, usize, usize) {
-        let stdout_bytes = self
-            .stdout_buffer
-            .lock()
-            .map(|data| data.clone())
-            .unwrap_or_default();
+        let stdout_bytes = self.stdout_buffer.lock().map(|data| data.clone()).unwrap_or_default();
         let stderr_bytes = self
             .stderr_buffer
             .as_ref()
@@ -772,16 +766,13 @@ impl ShellManager {
             cmd.env(key, value);
         }
 
-        let mut child = cmd
-            .spawn()
-            .with_context(|| format!("Failed to execute: {original_command}"))?;
+        let mut child =
+            cmd.spawn().with_context(|| format!("Failed to execute: {original_command}"))?;
 
         if let Some(input) = stdin_data
             && let Some(mut stdin) = child.stdin.take()
         {
-            stdin
-                .write_all(input.as_bytes())
-                .context("Failed to write to stdin")?;
+            stdin.write_all(input.as_bytes()).context("Failed to write to stdin")?;
             stdin.flush().ok();
         }
 
@@ -910,9 +901,8 @@ impl ShellManager {
             cmd.env(key, value);
         }
 
-        let mut child = cmd
-            .spawn()
-            .with_context(|| format!("Failed to execute: {original_command}"))?;
+        let mut child =
+            cmd.spawn().with_context(|| format!("Failed to execute: {original_command}"))?;
 
         if let Some(status) = child.wait_timeout(timeout)? {
             Ok(ShellResult {
@@ -1022,15 +1012,9 @@ impl ShellManager {
                 .with_context(|| format!("Failed to spawn PTY command: {original_command}"))?;
             drop(pair.slave);
 
-            let reader = pair
-                .master
-                .try_clone_reader()
-                .context("Failed to clone PTY reader")?;
+            let reader = pair.master.try_clone_reader().context("Failed to clone PTY reader")?;
             let stdout_thread = Some(spawn_reader_thread(reader, Arc::clone(&stdout_buffer)));
-            let writer = pair
-                .master
-                .take_writer()
-                .context("Failed to take PTY writer")?;
+            let writer = pair.master.take_writer().context("Failed to take PTY writer")?;
 
             (
                 ShellChild::Pty(child),
@@ -1308,11 +1292,8 @@ impl ShellManager {
             shell.poll();
         }
 
-        let mut jobs = self
-            .processes
-            .values()
-            .map(BackgroundShell::job_snapshot)
-            .collect::<Vec<_>>();
+        let mut jobs =
+            self.processes.values().map(BackgroundShell::job_snapshot).collect::<Vec<_>>();
         jobs.extend(self.stale_jobs.values().cloned());
         jobs.sort_by(|a, b| {
             job_status_rank(&a.status, a.stale)
@@ -1466,11 +1447,7 @@ async fn execute_foreground_via_background(
 
     let deadline = Instant::now() + Duration::from_millis(timeout_ms);
     loop {
-        if context
-            .cancel_token
-            .as_ref()
-            .is_some_and(|token| token.is_cancelled())
-        {
+        if context.cancel_token.as_ref().is_some_and(|token| token.is_cancelled()) {
             let mut manager = context
                 .shell_manager
                 .lock()
@@ -1834,10 +1811,8 @@ impl ToolSpec for ExecShellTool {
                     let _ = manager.tag_linked_task(shell_id, Some(task_id));
                 }
 
-                let was_cancelled = context
-                    .cancel_token
-                    .as_ref()
-                    .is_some_and(|token| token.is_cancelled());
+                let was_cancelled =
+                    context.cancel_token.as_ref().is_some_and(|token| token.is_cancelled());
                 let task_id_str = result.task_id.clone().unwrap_or_default();
                 let stdout_summary = summarize_output(&result.stdout);
                 let stderr_summary = summarize_output(&result.stderr);
@@ -2036,11 +2011,7 @@ async fn wait_for_shell_delta_cancellable(
     let mut stderr_accum = String::new();
 
     let (result, stdout_total_len, stderr_total_len) = loop {
-        if context
-            .cancel_token
-            .as_ref()
-            .is_some_and(|token| token.is_cancelled())
-        {
+        if context.cancel_token.as_ref().is_some_and(|token| token.is_cancelled()) {
             let mut manager = context
                 .shell_manager
                 .lock()
@@ -2200,10 +2171,8 @@ impl ToolSpec for ShellCancelTool {
                 });
             }
 
-            let task_ids = results
-                .iter()
-                .filter_map(|result| result.task_id.clone())
-                .collect::<Vec<_>>();
+            let task_ids =
+                results.iter().filter_map(|result| result.task_id.clone()).collect::<Vec<_>>();
             return Ok(ToolResult {
                 content: format!(
                     "Canceled {} background shell job{}: {}",
@@ -2224,10 +2193,7 @@ impl ToolSpec for ShellCancelTool {
         let result = manager
             .kill(task_id)
             .map_err(|err| ToolError::execution_failed(err.to_string()))?;
-        let task_id = result
-            .task_id
-            .clone()
-            .unwrap_or_else(|| task_id.to_string());
+        let task_id = result.task_id.clone().unwrap_or_else(|| task_id.to_string());
         Ok(ToolResult {
             content: format!("Canceled background shell job: {task_id}"),
             success: true,
@@ -2402,11 +2368,7 @@ impl ToolSpec for ShellInteractTool {
 
         let mut elapsed = 0u64;
         loop {
-            if context
-                .cancel_token
-                .as_ref()
-                .is_some_and(|token| token.is_cancelled())
-            {
+            if context.cancel_token.as_ref().is_some_and(|token| token.is_cancelled()) {
                 let mut manager = context
                     .shell_manager
                     .lock()

@@ -107,12 +107,7 @@ quality_dimensions: []
         let flow = load_from_yaml(yaml).unwrap();
         let result = validate_flow(&flow);
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("Duplicate step_id")
-        );
+        assert!(result.unwrap_err().to_string().contains("Duplicate step_id"));
     }
 
     #[test]

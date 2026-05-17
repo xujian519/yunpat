@@ -48,10 +48,7 @@ pub fn provider(app: &mut App, args: Option<&str>) -> CommandResult {
         return CommandResult::message(format!("Already on provider: {}", target.as_str()));
     }
 
-    CommandResult::action(AppAction::SwitchProvider {
-        provider: target,
-        model,
-    })
+    CommandResult::action(AppAction::SwitchProvider { provider: target, model })
 }
 
 fn expand_model_alias(name: &str) -> String {

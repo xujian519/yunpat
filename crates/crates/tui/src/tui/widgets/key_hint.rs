@@ -26,7 +26,7 @@ use std::fmt;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
-    style::{Style, Stylize},
+    style::{Style},
     text::Span,
 };
 

@@ -73,22 +73,13 @@ pub fn summarize_project(root: &Path) -> String {
     }
 
     let mut types = Vec::new();
-    if key_files
-        .iter()
-        .any(|f| f.to_lowercase().contains("cargo.toml"))
-    {
+    if key_files.iter().any(|f| f.to_lowercase().contains("cargo.toml")) {
         types.push("Rust");
     }
-    if key_files
-        .iter()
-        .any(|f| f.to_lowercase().contains("package.json"))
-    {
+    if key_files.iter().any(|f| f.to_lowercase().contains("package.json")) {
         types.push("JavaScript/Node.js");
     }
-    if key_files
-        .iter()
-        .any(|f| f.to_lowercase().contains("requirements.txt"))
-    {
+    if key_files.iter().any(|f| f.to_lowercase().contains("requirements.txt")) {
         types.push("Python");
     }
 
@@ -111,21 +102,14 @@ pub fn project_tree(root: &Path, max_depth: usize) -> String {
     let mut entries: Vec<(PathBuf, bool)> = Vec::new();
 
     let mut builder = WalkBuilder::new(root);
-    builder
-        .hidden(false)
-        .follow_links(true)
-        .max_depth(Some(max_depth + 1));
+    builder.hidden(false).follow_links(true).max_depth(Some(max_depth + 1));
 
     for entry in builder.build().flatten() {
         let depth = entry.depth();
         if depth == 0 || depth > max_depth {
             continue;
         }
-        let rel_path = entry
-            .path()
-            .strip_prefix(root)
-            .unwrap_or(entry.path())
-            .to_path_buf();
+        let rel_path = entry.path().strip_prefix(root).unwrap_or(entry.path()).to_path_buf();
         let is_dir = entry.file_type().is_some_and(|ft| ft.is_dir());
         entries.push((rel_path, is_dir));
     }
@@ -189,10 +173,7 @@ pub fn open_append(path: &Path) -> std::io::Result<std::io::BufWriter<std::fs::F
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
+    let file = std::fs::OpenOptions::new().create(true).append(true).open(path)?;
     Ok(std::io::BufWriter::new(file))
 }
 
@@ -546,10 +527,8 @@ mod atomic_write_tests {
         let path = tmp.path().join("clean.json");
         write_atomic(&path, b"clean").expect("write_atomic");
         // List files in dir — there should be no .tmp files left
-        let entries: Vec<_> = fs::read_dir(tmp.path())
-            .expect("read_dir")
-            .filter_map(|e| e.ok())
-            .collect();
+        let entries: Vec<_> =
+            fs::read_dir(tmp.path()).expect("read_dir").filter_map(|e| e.ok()).collect();
         let tmp_files: Vec<_> = entries
             .iter()
             .filter(|e| e.file_name().to_str().is_some_and(|n| n.starts_with('.')))
@@ -645,10 +624,8 @@ mod spawn_supervised_tests {
         let location = std::panic::Location::caller();
         write_panic_dump_to(&crash_dir, "panic-fixture", location, "boom").expect("write dump");
 
-        let entries: Vec<_> = std::fs::read_dir(&crash_dir)
-            .expect("crashes dir exists")
-            .flatten()
-            .collect();
+        let entries: Vec<_> =
+            std::fs::read_dir(&crash_dir).expect("crashes dir exists").flatten().collect();
         assert_eq!(entries.len(), 1, "exactly one crash dump expected");
         let dump = std::fs::read_to_string(entries[0].path()).expect("read dump");
         assert!(
@@ -687,18 +664,9 @@ mod project_mapping_tests {
 
         let tree = project_tree(root, 1);
         let lines: Vec<&str> = tree.lines().collect();
-        let apple_pos = lines
-            .iter()
-            .position(|l| l.contains("apple.txt"))
-            .expect("apple line");
-        let mango_pos = lines
-            .iter()
-            .position(|l| l.contains("mango.txt"))
-            .expect("mango line");
-        let zebra_pos = lines
-            .iter()
-            .position(|l| l.contains("zebra.txt"))
-            .expect("zebra line");
+        let apple_pos = lines.iter().position(|l| l.contains("apple.txt")).expect("apple line");
+        let mango_pos = lines.iter().position(|l| l.contains("mango.txt")).expect("mango line");
+        let zebra_pos = lines.iter().position(|l| l.contains("zebra.txt")).expect("zebra line");
 
         assert!(apple_pos < mango_pos);
         assert!(mango_pos < zebra_pos);
@@ -754,9 +722,7 @@ mod project_mapping_tests {
             summary.starts_with("Project with key files: "),
             "expected fallback branch; got: {summary}"
         );
-        let suffix = summary
-            .strip_prefix("Project with key files: ")
-            .expect("prefix");
+        let suffix = summary.strip_prefix("Project with key files: ").expect("prefix");
         assert_eq!(suffix, "Makefile, README.md");
     }
 }

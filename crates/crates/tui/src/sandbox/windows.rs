@@ -64,10 +64,7 @@ fn windows_sandbox_available() -> bool {
     let Ok(system_root) = std::env::var("SystemRoot") else {
         return false;
     };
-    Path::new(&system_root)
-        .join("System32")
-        .join("WindowsSandbox.exe")
-        .exists()
+    Path::new(&system_root).join("System32").join("WindowsSandbox.exe").exists()
 }
 
 fn appcontainer_available() -> bool {

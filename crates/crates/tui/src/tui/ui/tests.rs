@@ -130,14 +130,10 @@ fn selection_to_text_handles_multiline_and_reversed_endpoints() {
         app.transcript_render_options(),
     );
 
-    app.viewport.transcript_selection.anchor = Some(TranscriptSelectionPoint {
-        line_index: 1,
-        column: 5,
-    });
-    app.viewport.transcript_selection.head = Some(TranscriptSelectionPoint {
-        line_index: 0,
-        column: 6,
-    });
+    app.viewport.transcript_selection.anchor =
+        Some(TranscriptSelectionPoint { line_index: 1, column: 5 });
+    app.viewport.transcript_selection.head =
+        Some(TranscriptSelectionPoint { line_index: 0, column: 6 });
 
     assert_eq!(selection_to_text(&app).as_deref(), Some("a beta\n▏ gam"));
 }
@@ -178,16 +174,10 @@ fn selection_to_text_copies_rendered_transcript_block() {
         app.transcript_render_options(),
     );
 
-    app.viewport.transcript_selection.anchor = Some(TranscriptSelectionPoint {
-        line_index: 0,
-        column: 0,
-    });
+    app.viewport.transcript_selection.anchor =
+        Some(TranscriptSelectionPoint { line_index: 0, column: 0 });
     app.viewport.transcript_selection.head = Some(TranscriptSelectionPoint {
-        line_index: app
-            .viewport
-            .transcript_cache
-            .total_lines()
-            .saturating_sub(1),
+        line_index: app.viewport.transcript_cache.total_lines().saturating_sub(1),
         column: 80,
     });
 
@@ -202,10 +192,7 @@ fn selection_to_text_copies_rendered_transcript_block() {
 #[test]
 fn selection_has_content_rejects_zero_width_selection() {
     let mut app = create_test_app();
-    let point = TranscriptSelectionPoint {
-        line_index: 0,
-        column: 3,
-    };
+    let point = TranscriptSelectionPoint { line_index: 0, column: 3 };
     app.viewport.transcript_selection.anchor = Some(point);
     app.viewport.transcript_selection.head = Some(point);
 
@@ -266,9 +253,7 @@ fn mouse_selection_autocopies_on_release_without_ctrl_c() {
 
     assert_eq!(app.status_message.as_deref(), Some("Selection copied"));
     assert!(
-        app.clipboard
-            .last_written_text()
-            .is_some_and(|text| text.contains("alpha")),
+        app.clipboard.last_written_text().is_some_and(|text| text.contains("alpha")),
         "selection should be written to clipboard"
     );
 }
@@ -313,14 +298,10 @@ fn right_click_menu_includes_selection_and_clicked_cell_actions() {
     });
     app.viewport.last_transcript_top = 0;
     app.viewport.last_transcript_total = app.viewport.transcript_cache.total_lines();
-    app.viewport.transcript_selection.anchor = Some(TranscriptSelectionPoint {
-        line_index: 0,
-        column: 0,
-    });
-    app.viewport.transcript_selection.head = Some(TranscriptSelectionPoint {
-        line_index: 0,
-        column: 5,
-    });
+    app.viewport.transcript_selection.anchor =
+        Some(TranscriptSelectionPoint { line_index: 0, column: 0 });
+    app.viewport.transcript_selection.head =
+        Some(TranscriptSelectionPoint { line_index: 0, column: 5 });
 
     let entries = build_context_menu_entries(
         &app,
@@ -331,10 +312,7 @@ fn right_click_menu_includes_selection_and_clicked_cell_actions() {
             modifiers: KeyModifiers::NONE,
         },
     );
-    let labels = entries
-        .iter()
-        .map(|entry| entry.label.as_str())
-        .collect::<Vec<_>>();
+    let labels = entries.iter().map(|entry| entry.label.as_str()).collect::<Vec<_>>();
 
     assert!(labels.contains(&"Copy selection"));
     assert!(labels.contains(&"Open selection"));
@@ -526,8 +504,7 @@ async fn drain_web_config_events_applies_draft_without_closing_session() {
     let engine = mock_engine_handle();
     let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
     let doc = config_ui::build_document(&app, &config).expect("document");
-    tx.send(WebConfigSessionEvent::Draft(doc))
-        .expect("send draft");
+    tx.send(WebConfigSessionEvent::Draft(doc)).expect("send draft");
     let mut session = Some(WebConfigSession::for_test(rx));
 
     let keep = drain_web_config_events(&mut session, &mut app, &mut config, &engine.handle).await;
@@ -543,8 +520,7 @@ async fn drain_web_config_events_closes_session_after_commit() {
     let engine = mock_engine_handle();
     let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
     let doc = config_ui::build_document(&app, &config).expect("document");
-    tx.send(WebConfigSessionEvent::Committed(doc))
-        .expect("send commit");
+    tx.send(WebConfigSessionEvent::Committed(doc)).expect("send commit");
     let mut session = Some(WebConfigSession::for_test(rx));
 
     let keep = drain_web_config_events(&mut session, &mut app, &mut config, &engine.handle).await;
@@ -556,9 +532,7 @@ async fn drain_web_config_events_closes_session_after_commit() {
 fn backtrack_prefill_rehydrates_attachment_rows() {
     let mut app = create_test_app();
     let user_text = "inspect this\n[Attached image: /tmp/pasted.png]";
-    app.add_message(HistoryCell::User {
-        content: user_text.to_string(),
-    });
+    app.add_message(HistoryCell::User { content: user_text.to_string() });
     app.api_messages.push(Message {
         role: "user".to_string(),
         content: vec![ContentBlock::Text {
@@ -669,18 +643,10 @@ fn terminal_probe_timeout_uses_tui_config_and_clamps() {
 
     assert_eq!(terminal_probe_timeout(&config), Duration::from_millis(750));
 
-    config
-        .tui
-        .as_mut()
-        .expect("tui config")
-        .terminal_probe_timeout_ms = Some(0);
+    config.tui.as_mut().expect("tui config").terminal_probe_timeout_ms = Some(0);
     assert_eq!(terminal_probe_timeout(&config), Duration::from_millis(100));
 
-    config
-        .tui
-        .as_mut()
-        .expect("tui config")
-        .terminal_probe_timeout_ms = Some(60_000);
+    config.tui.as_mut().expect("tui config").terminal_probe_timeout_ms = Some(60_000);
     assert_eq!(
         terminal_probe_timeout(&config),
         Duration::from_millis(5_000)
@@ -825,10 +791,7 @@ fn init_git_repo() -> TempDir {
 }
 
 fn spans_text(spans: &[Span<'_>]) -> String {
-    spans
-        .iter()
-        .map(|span| span.content.as_ref())
-        .collect::<String>()
+    spans.iter().map(|span| span.content.as_ref()).collect::<String>()
 }
 
 #[test]
@@ -903,9 +866,7 @@ fn running_agent_count_unions_cache_and_progress() {
         make_subagent("agent_a", crate::tools::subagent::SubAgentStatus::Running),
         make_subagent("agent_b", crate::tools::subagent::SubAgentStatus::Completed),
     ];
-    app.subagent
-        .progress
-        .insert("agent_c".to_string(), "planning".to_string());
+    app.subagent.progress.insert("agent_c".to_string(), "planning".to_string());
 
     assert_eq!(running_agent_count(&app), 2);
 }
@@ -917,9 +878,7 @@ fn reconcile_subagent_activity_state_trims_stale_progress_and_sets_anchor() {
         make_subagent("agent_a", crate::tools::subagent::SubAgentStatus::Running),
         make_subagent("agent_b", crate::tools::subagent::SubAgentStatus::Completed),
     ];
-    app.subagent
-        .progress
-        .insert("agent_stale".to_string(), "old".to_string());
+    app.subagent.progress.insert("agent_stale".to_string(), "old".to_string());
 
     reconcile_subagent_activity_state(&mut app);
     assert!(app.subagent.progress.contains_key("agent_a"));
@@ -1617,10 +1576,7 @@ async fn dismissed_plan_prompt_leaves_non_numeric_input_for_normal_send_path() {
 
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(
-        app.queue
-            .queued_messages
-            .front()
-            .map(crate::tui::app::QueuedMessage::content),
+        app.queue.queued_messages.front().map(crate::tui::app::QueuedMessage::content),
         Some("yolo".to_string())
     );
     assert_eq!(
@@ -1648,10 +1604,7 @@ async fn numeric_plan_choice_still_queues_follow_up_when_busy() {
     assert_eq!(app.mode, AppMode::Yolo);
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(
-        app.queue
-            .queued_messages
-            .front()
-            .map(crate::tui::app::QueuedMessage::content),
+        app.queue.queued_messages.front().map(crate::tui::app::QueuedMessage::content),
         Some("Proceed with the accepted plan.".to_string())
     );
 }
@@ -1726,9 +1679,7 @@ fn api_key_paste_shortcut_is_not_plain_text_input() {
 fn jump_to_adjacent_tool_cell_finds_next_and_previous() {
     let mut app = create_test_app();
     app.history = vec![
-        HistoryCell::User {
-            content: "hello".to_string(),
-        },
+        HistoryCell::User { content: "hello".to_string() },
         HistoryCell::Tool(ToolCell::Generic(GenericToolCell {
             name: "file_search".to_string(),
             status: ToolStatus::Success,
@@ -1770,11 +1721,8 @@ fn jump_to_adjacent_tool_cell_finds_next_and_previous() {
     // which under the new flat-offset model means "not at tail."
     assert!(!app.viewport.transcript_scroll.is_at_tail());
 
-    app.viewport.last_transcript_top = app
-        .viewport
-        .transcript_cache
-        .total_lines()
-        .saturating_sub(1);
+    app.viewport.last_transcript_top =
+        app.viewport.transcript_cache.total_lines().saturating_sub(1);
     assert!(jump_to_adjacent_tool_cell(
         &mut app,
         SearchDirection::Backward
@@ -1794,9 +1742,7 @@ fn first_line_for_cell(app: &App, cell_index: usize) -> usize {
 fn detail_target_prefers_visible_tool_card() {
     let mut app = create_test_app();
     app.history = vec![
-        HistoryCell::User {
-            content: "hello".to_string(),
-        },
+        HistoryCell::User { content: "hello".to_string() },
         HistoryCell::Tool(ToolCell::Generic(GenericToolCell {
             name: "file_search".to_string(),
             status: ToolStatus::Success,
@@ -1863,13 +1809,7 @@ fn open_tool_details_pager_supports_active_virtual_tool_cell() {
         "exec_shell",
         &serde_json::json!({"command": "echo hi"}),
     );
-    let active_entries = app
-        .tool
-        .active_cell
-        .as_ref()
-        .expect("active cell")
-        .entries()
-        .to_vec();
+    let active_entries = app.tool.active_cell.as_ref().expect("active cell").entries().to_vec();
     app.viewport.transcript_cache.ensure_split(
         &[&app.history, active_entries.as_slice()],
         &[1],
@@ -2162,9 +2102,7 @@ fn mention_popup_reuses_cache_when_cursor_moves_inside_same_token() {
 
     let entries_after_partial_change = visible_mention_menu_entries(&mut app, 6);
     assert!(
-        entries_after_partial_change
-            .iter()
-            .any(|e| e == "docs/beta.md"),
+        entries_after_partial_change.iter().any(|e| e == "docs/beta.md"),
         "changing the partial should invalidate the completion cache",
     );
 }
@@ -2340,19 +2278,12 @@ fn out_of_order_completes_finalize_one_history_cell_per_turn() {
 
     // Still nothing in history: the active cell holds everything.
     assert_eq!(app.history.len(), 0);
-    let active = app
-        .tool
-        .active_cell
-        .as_ref()
-        .expect("active cell still present");
+    let active = app.tool.active_cell.as_ref().expect("active cell still present");
     let HistoryCell::Tool(ToolCell::Exploring(explore)) = &active.entries()[0] else {
         panic!("expected exploring cell")
     };
     assert!(
-        explore
-            .entries
-            .iter()
-            .all(|e| e.status == ToolStatus::Success),
+        explore.entries.iter().all(|e| e.status == ToolStatus::Success),
         "all exploring entries should be Success after their tools complete"
     );
 
@@ -2366,11 +2297,7 @@ fn out_of_order_completes_finalize_one_history_cell_per_turn() {
     // The flushed group is exactly one history cell — the merged exploring
     // aggregate. This is the heart of CX#7: parallel work renders as ONE
     // finalized cell, regardless of completion order.
-    let tool_cells = app
-        .history
-        .iter()
-        .filter(|c| matches!(c, HistoryCell::Tool(_)))
-        .count();
+    let tool_cells = app.history.iter().filter(|c| matches!(c, HistoryCell::Tool(_))).count();
     assert_eq!(
         tool_cells, 1,
         "exactly one tool history cell after parallel turn"
@@ -2414,11 +2341,8 @@ fn mixed_parallel_tools_render_in_single_active_cell() {
     // After all complete, still in active until flush.
     assert_eq!(app.history.len(), 0);
     app.flush_active_cell();
-    let tool_cells: Vec<_> = app
-        .history
-        .iter()
-        .filter(|c| matches!(c, HistoryCell::Tool(_)))
-        .collect();
+    let tool_cells: Vec<_> =
+        app.history.iter().filter(|c| matches!(c, HistoryCell::Tool(_))).collect();
     assert_eq!(
         tool_cells.len(),
         3,
@@ -2445,11 +2369,7 @@ fn orphan_tool_complete_with_unknown_id_pushes_separate_cell() {
     handle_tool_call_complete(&mut app, "ghost-id", "mystery_tool", &ok_result("oops"));
 
     // Active cell is intact.
-    let active = app
-        .tool
-        .active_cell
-        .as_ref()
-        .expect("active cell preserved after orphan");
+    let active = app.tool.active_cell.as_ref().expect("active cell preserved after orphan");
     assert_eq!(active.entry_count(), 1);
 
     // The orphan rendered as a separate finalized cell pushed to history.
@@ -2754,11 +2674,7 @@ fn thinking_then_tools_share_active_cell_until_text_flushes() {
         &serde_json::json!({"command": "pwd"}),
     );
 
-    let active = app
-        .tool
-        .active_cell
-        .as_ref()
-        .expect("active cell present mid-turn");
+    let active = app.tool.active_cell.as_ref().expect("active cell present mid-turn");
     assert_eq!(
         active.entry_count(),
         3,
@@ -2985,10 +2901,7 @@ fn recoverable_engine_error_does_not_enter_offline_mode() {
     );
 
     // Sanity: the rendered cell is the categorized Error variant, not a plain System note.
-    let last = app
-        .history
-        .last()
-        .expect("recoverable engine error should push a history cell");
+    let last = app.history.last().expect("recoverable engine error should push a history cell");
     assert!(
         matches!(last, crate::tui::history::HistoryCell::Error { .. }),
         "expected HistoryCell::Error, got {last:?}"
@@ -3117,17 +3030,10 @@ fn tab_queues_running_turn_draft_for_next_turn() {
     assert!(app.input.is_empty());
     assert_eq!(app.queued_message_count(), 1);
     assert_eq!(
-        app.queue
-            .queued_messages
-            .front()
-            .map(|msg| msg.display.as_str()),
+        app.queue.queued_messages.front().map(|msg| msg.display.as_str()),
         Some("follow up next")
     );
-    assert!(
-        app.status_message
-            .as_deref()
-            .is_some_and(|msg| msg.contains("queued — ↑"))
-    );
+    assert!(app.status_message.as_deref().is_some_and(|msg| msg.contains("queued — ↑")));
 }
 
 #[test]
@@ -3202,9 +3108,7 @@ fn merge_pending_steers_keeps_first_skill_instruction_only() {
 fn build_pending_input_preview_populates_all_three_buckets() {
     let mut app = create_test_app();
     app.push_pending_steer(QueuedMessage::new("steer-msg".to_string(), None));
-    app.queue
-        .rejected_steers
-        .push_back("rejected-msg".to_string());
+    app.queue.rejected_steers.push_back("rejected-msg".to_string());
     app.queue_message(QueuedMessage::new("queued-msg".to_string(), None));
 
     let preview = build_pending_input_preview(&app);
@@ -3364,12 +3268,7 @@ fn checklist_write_renders_dedicated_card() {
     let lines = cell.lines_with_mode(80, true, crate::tui::history::RenderMode::Live);
     let text: Vec<String> = lines
         .iter()
-        .map(|line| {
-            line.spans
-                .iter()
-                .map(|span| span.content.as_ref())
-                .collect::<String>()
-        })
+        .map(|line| line.spans.iter().map(|span| span.content.as_ref()).collect::<String>())
         .collect();
     let joined = text.join("\n");
 

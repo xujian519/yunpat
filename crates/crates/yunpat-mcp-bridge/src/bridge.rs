@@ -186,17 +186,12 @@ impl MCPBridge {
         let call = handle.call("tools/call", params);
 
         let result = if let Some(dur) = timeout {
-            tokio::time::timeout(dur, call)
-                .await
-                .context("MCP tool call timed out")??
+            tokio::time::timeout(dur, call).await.context("MCP tool call timed out")??
         } else {
             call.await?
         };
 
-        let is_error = result
-            .get("isError")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
+        let is_error = result.get("isError").and_then(|v| v.as_bool()).unwrap_or(false);
         let content = result.get("content").cloned().unwrap_or(result);
 
         Ok(MCPToolResult { content, is_error })

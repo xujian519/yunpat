@@ -186,6 +186,7 @@ pub enum DefaultModeValue {
 pub enum SidebarFocusValue {
     Auto,
     Plan,
+    Patent,
     Todos,
     Tasks,
     Agents,
@@ -380,11 +381,7 @@ pub async fn start_web_editor(app: &App, config: &Config) -> Result<WebConfigSes
             }
         }
     });
-    Ok(WebConfigSession {
-        task,
-        receiver: rx,
-        addr,
-    })
+    Ok(WebConfigSession { task, receiver: rx, addr })
 }
 
 pub fn apply_document(
@@ -434,9 +431,7 @@ pub fn apply_document(
         if result.is_error {
             bail!(
                 "{}",
-                result
-                    .message
-                    .unwrap_or_else(|| "config update failed".to_string())
+                result.message.unwrap_or_else(|| "config update failed".to_string())
             );
         }
         if let Some(message) = result.message {
@@ -453,9 +448,7 @@ pub fn apply_document(
         if result.is_error {
             bail!(
                 "{}",
-                result
-                    .message
-                    .unwrap_or_else(|| "default_model update failed".to_string())
+                result.message.unwrap_or_else(|| "default_model update failed".to_string())
             );
         }
         if let Some(message) = result.message {
@@ -529,9 +522,7 @@ pub fn open_browser(url: &str) -> Result<()> {
         "browser opening is unsupported on this platform"
     ));
 
-    let status = command
-        .status()
-        .context("failed to launch browser command")?;
+    let status = command.status().context("failed to launch browser command")?;
     if !status.success() {
         bail!("browser command exited with status {status}");
     }
@@ -555,9 +546,7 @@ fn reload_runtime_config(app: &mut App, config: &mut Config) -> Result<()> {
     *config = reloaded.clone();
     app.api_provider = reloaded.api_provider();
     app.reasoning_effort = ReasoningEffort::from_setting(
-        reloaded
-            .reasoning_effort()
-            .unwrap_or_else(|| app.reasoning_effort.as_setting()),
+        reloaded.reasoning_effort().unwrap_or_else(|| app.reasoning_effort.as_setting()),
     );
     app.last_effective_reasoning_effort = None;
     app.update_model_compaction_budget();
@@ -669,6 +658,7 @@ impl SidebarFocusValue {
         match self {
             Self::Auto => "auto",
             Self::Plan => "plan",
+            Self::Patent => "patent",
             Self::Todos => "todos",
             Self::Tasks => "tasks",
             Self::Agents => "agents",
@@ -761,6 +751,7 @@ impl From<&str> for SidebarFocusValue {
         match SidebarFocus::from_setting(value) {
             SidebarFocus::Auto => Self::Auto,
             SidebarFocus::Plan => Self::Plan,
+            SidebarFocus::Patent => Self::Patent,
             SidebarFocus::Todos => Self::Todos,
             SidebarFocus::Tasks => Self::Tasks,
             SidebarFocus::Agents => Self::Agents,
@@ -888,10 +879,7 @@ mod tests {
     #[test]
     fn session_only_apply_keeps_runtime_overrides_and_skips_reload() {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("clock")
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).expect("clock").as_nanos();
         let temp_root = std::env::temp_dir().join(format!(
             "deepseek-config-ui-session-only-{}-{}",
             std::process::id(),

@@ -19,9 +19,7 @@ pub fn goal(app: &mut App, arg: Option<&str>) -> CommandResult {
             app.goal.goal_objective = Some(objective.clone());
             app.goal.goal_token_budget = budget;
             app.goal.goal_started_at = Some(std::time::Instant::now());
-            let budget_str = budget
-                .map(|b| format!(" (budget: {b} tokens)"))
-                .unwrap_or_default();
+            let budget_str = budget.map(|b| format!(" (budget: {b} tokens)")).unwrap_or_default();
             CommandResult::message(format!(
                 "Goal set: \"{}\"{} — tracking progress.",
                 objective, budget_str
@@ -65,16 +63,10 @@ pub fn goal(app: &mut App, arg: Option<&str>) -> CommandResult {
 /// Parse optional token budget from goal text: "Implement login | budget: 50000"
 fn parse_goal_budget(text: &str) -> (String, Option<u32>) {
     if let Some((obj, rest)) = text.split_once(" | budget:") {
-        let budget = rest
-            .split_whitespace()
-            .next()
-            .and_then(|s| s.parse::<u32>().ok());
+        let budget = rest.split_whitespace().next().and_then(|s| s.parse::<u32>().ok());
         (obj.trim().to_string(), budget)
     } else if let Some((obj, rest)) = text.split_once("budget:") {
-        let budget = rest
-            .split_whitespace()
-            .next()
-            .and_then(|s| s.parse::<u32>().ok());
+        let budget = rest.split_whitespace().next().and_then(|s| s.parse::<u32>().ok());
         (obj.trim().to_string(), budget)
     } else {
         (text.trim().to_string(), None)

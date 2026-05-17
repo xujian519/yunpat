@@ -386,10 +386,7 @@ impl StreamingState {
 
     /// Inspect the current chunking mode for a block (testing/observability).
     pub fn chunking_mode(&self, index: usize) -> Option<ChunkingMode> {
-        self.blocks
-            .get(index)
-            .and_then(|b| b.as_ref())
-            .map(|b| b.policy.mode())
+        self.blocks.get(index).and_then(|b| b.as_ref()).map(|b| b.policy.mode())
     }
 
     /// Whether the chunker has queued content waiting to be flushed by the
@@ -496,10 +493,10 @@ impl StreamingState {
 
     /// Check if any stream is still active
     fn check_active(&mut self) {
-        self.is_active = self.blocks.iter().any(|b| {
-            b.as_ref()
-                .is_some_and(|state| state.collector.is_streaming())
-        });
+        self.is_active = self
+            .blocks
+            .iter()
+            .any(|b| b.as_ref().is_some_and(|state| state.collector.is_streaming()));
     }
 
     /// Ensure capacity for the given index

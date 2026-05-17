@@ -25,12 +25,7 @@ pub fn env_requests_verbose_logging() -> bool {
 
 fn log_value_enables_verbose(value: &str) -> bool {
     value.split(',').any(|directive| {
-        let level = directive
-            .rsplit('=')
-            .next()
-            .unwrap_or(directive)
-            .trim()
-            .to_ascii_lowercase();
+        let level = directive.rsplit('=').next().unwrap_or(directive).trim().to_ascii_lowercase();
         matches!(level.as_str(), "trace" | "debug" | "info")
     })
 }

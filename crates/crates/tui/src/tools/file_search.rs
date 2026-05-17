@@ -141,11 +141,7 @@ fn search_files(
             continue;
         }
 
-        let rel_path = path
-            .strip_prefix(base_path)
-            .unwrap_or(path)
-            .to_string_lossy()
-            .to_string();
+        let rel_path = path.strip_prefix(base_path).unwrap_or(path).to_string_lossy().to_string();
         let name = file_name(path);
 
         let score = match score_match(&query_norm, &rel_path, &name) {
@@ -153,11 +149,7 @@ fn search_files(
             None => continue,
         };
 
-        results.push(FileSearchMatch {
-            path: rel_path,
-            name,
-            score,
-        });
+        results.push(FileSearchMatch { path: rel_path, name, score });
     }
 
     results.sort_by(compare_match);
@@ -275,10 +267,8 @@ mod tests {
 
         let ctx = ToolContext::new(root.to_path_buf());
         let tool = FileSearchTool;
-        let result = tool
-            .execute(json!({"query": "main", "limit": 5}), &ctx)
-            .await
-            .expect("execute");
+        let result =
+            tool.execute(json!({"query": "main", "limit": 5}), &ctx).await.expect("execute");
 
         assert!(result.success);
         assert!(result.content.contains("main.rs"));
@@ -294,10 +284,7 @@ mod tests {
 
         let ctx = ToolContext::new(root.to_path_buf());
         let tool = FileSearchTool;
-        let result = tool
-            .execute(json!({"query": "txt"}), &ctx)
-            .await
-            .expect("execute");
+        let result = tool.execute(json!({"query": "txt"}), &ctx).await.expect("execute");
 
         assert!(result.success);
         assert!(!result.content.contains("ignored.txt"));

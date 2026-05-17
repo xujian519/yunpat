@@ -117,12 +117,7 @@ mod tests {
 
         let result = attach(&mut app, Some("notes.txt"));
 
-        assert!(
-            result
-                .message
-                .expect("message")
-                .contains("Unsupported attachment type")
-        );
+        assert!(result.message.expect("message").contains("Unsupported attachment type"));
         assert!(app.input.is_empty());
     }
 }

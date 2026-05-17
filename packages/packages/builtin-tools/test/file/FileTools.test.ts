@@ -9,17 +9,46 @@ import {
   FileDeleteTool,
   DirectoryListTool,
 } from '../../src/file/FileTools.js'
+import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const tmpDir = path.join(__dirname, '..', '..', 'tmp-test-dir')
 
-const mockContext = {
-  registry: {} as any,
-  llm: {} as any,
-  memory: {} as any,
-  eventBus: {} as any,
+function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+  return {
+    registry: {
+      register: vi.fn(),
+      unregister: vi.fn(),
+      get: vi.fn().mockReturnValue(undefined),
+      call: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockReturnValue([]),
+    },
+    llm: {
+      chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    },
+    memory: {
+      get: vi.fn().mockResolvedValue(undefined),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      has: vi.fn().mockResolvedValue(false),
+      getAll: vi.fn().mockResolvedValue({}),
+      setAll: vi.fn().mockResolvedValue(undefined),
+      clear: vi.fn().mockResolvedValue(undefined),
+      search: vi.fn().mockResolvedValue([]),
+    },
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      unsubscribe: vi.fn(),
+      request: vi.fn().mockResolvedValue(undefined),
+    },
+  }
 }
+
+const mockContext = createMockContext()
 
 describe('FileTools', () => {
   beforeEach(async () => {

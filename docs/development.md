@@ -134,7 +134,8 @@ yunpat-agent/
 │       ├── yunpat-agents/     ← 专利领域 Agent trait 系统
 │       ├── yunpat-models/     ← 多提供商 ModelProvider 接口
 │       ├── yunpat-mcp-bridge/ ← Rust 调用 TS Agent 的桥接
-│       └── yunpat-router/     ← 意图路由和命令分发
+│       ├── yunpat-router/     ← 意图路由和命令分发
+│       └── yunpat-patent-tui/ ← 专利 TUI 模块（从 tui 提取）
 │
 ├── packages/                  ← TypeScript 工作区
 │   ├── packages/              ← 基础设施包（20 个）

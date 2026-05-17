@@ -218,9 +218,7 @@ impl SeamManager {
             return Ok(String::new());
         }
 
-        let summary = self
-            .summarize_messages(&to_summarize, level, start_idx, end_idx)
-            .await?;
+        let summary = self.summarize_messages(&to_summarize, level, start_idx, end_idx).await?;
 
         let density_label = match level {
             1 => "~2,500 tokens",

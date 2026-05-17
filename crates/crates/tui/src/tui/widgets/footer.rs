@@ -547,10 +547,8 @@ impl Renderable for FooterWidget {
         let right_spans = self.auxiliary_spans(available_width);
         let right_width = span_width(&right_spans);
         let min_gap = if right_width > 0 { 2 } else { 0 };
-        let max_left_width = available_width
-            .saturating_sub(right_width)
-            .saturating_sub(min_gap)
-            .max(1);
+        let max_left_width =
+            available_width.saturating_sub(right_width).saturating_sub(min_gap).max(1);
 
         let left_spans = if let Some(banner) = retry_banner_spans(max_left_width, &self.props) {
             // Retry banner takes precedence over toast and the regular
@@ -735,11 +733,7 @@ mod tests {
         // so 90s renders as `1m 30s`, not `1m`.)
         app.cumulative_turn_duration = std::time::Duration::from_secs(90);
         let props = idle_props_for(&app);
-        let text: String = props
-            .worked
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect::<String>();
+        let text: String = props.worked.iter().map(|s| s.content.as_ref()).collect::<String>();
         assert_eq!(text, "worked 1m 30s");
     }
 
@@ -1043,9 +1037,7 @@ mod tests {
             "active footer must visibly differ from idle one"
         );
         assert!(
-            active
-                .chars()
-                .any(|glyph| super::WAVE_GLYPHS.contains(&glyph)),
+            active.chars().any(|glyph| super::WAVE_GLYPHS.contains(&glyph)),
             "active strip must contain at least one animation glyph: {active:?}",
         );
     }
@@ -1055,11 +1047,7 @@ mod tests {
         let width = 60;
         let f0 = super::footer_working_strip_string(width, 0);
         let f80 = super::footer_working_strip_string(width, 80);
-        let changed = f0
-            .chars()
-            .zip(f80.chars())
-            .filter(|(before, after)| before != after)
-            .count();
+        let changed = f0.chars().zip(f80.chars()).filter(|(before, after)| before != after).count();
         assert!(
             changed > width / 4,
             "expected the wave to drift across one 80ms repaint; changed {changed}/{width}"

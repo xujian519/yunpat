@@ -75,6 +75,12 @@ pub struct TranscriptViewCache {
     line_meta: Vec<TranscriptLineMeta>,
 }
 
+impl Default for TranscriptViewCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TranscriptViewCache {
     /// Create an empty cache.
     #[must_use]
@@ -266,10 +272,7 @@ impl TranscriptViewCache {
                     ),
                     usize::from(self.width),
                 ));
-                self.line_meta.push(TranscriptLineMeta::CellLine {
-                    cell_index,
-                    line_in_cell,
-                });
+                self.line_meta.push(TranscriptLineMeta::CellLine { cell_index, line_in_cell });
             }
 
             if let Some(next) = self.per_cell.get(cell_index + 1) {
@@ -488,19 +491,12 @@ mod tests {
         cache
             .lines()
             .iter()
-            .map(|line| {
-                line.spans
-                    .iter()
-                    .map(|span| span.content.as_ref())
-                    .collect::<String>()
-            })
+            .map(|line| line.spans.iter().map(|span| span.content.as_ref()).collect::<String>())
             .collect()
     }
 
     fn user_cell(content: &str) -> HistoryCell {
-        HistoryCell::User {
-            content: content.to_string(),
-        }
+        HistoryCell::User { content: content.to_string() }
     }
 
     fn assistant_cell(content: &str, streaming: bool) -> HistoryCell {
@@ -598,22 +594,12 @@ mod tests {
         let cell0_lines_before = cache.per_cell[0]
             .lines
             .iter()
-            .map(|l| {
-                l.spans
-                    .iter()
-                    .map(|s| s.content.to_string())
-                    .collect::<String>()
-            })
+            .map(|l| l.spans.iter().map(|s| s.content.to_string()).collect::<String>())
             .collect::<Vec<_>>();
         let cell2_lines_before = cache.per_cell[2]
             .lines
             .iter()
-            .map(|l| {
-                l.spans
-                    .iter()
-                    .map(|s| s.content.to_string())
-                    .collect::<String>()
-            })
+            .map(|l| l.spans.iter().map(|s| s.content.to_string()).collect::<String>())
             .collect::<Vec<_>>();
 
         // Mutate cell 1 (assistant streaming delta) and bump only its rev.
@@ -630,22 +616,12 @@ mod tests {
         let cell0_lines_after = cache.per_cell[0]
             .lines
             .iter()
-            .map(|l| {
-                l.spans
-                    .iter()
-                    .map(|s| s.content.to_string())
-                    .collect::<String>()
-            })
+            .map(|l| l.spans.iter().map(|s| s.content.to_string()).collect::<String>())
             .collect::<Vec<_>>();
         let cell2_lines_after = cache.per_cell[2]
             .lines
             .iter()
-            .map(|l| {
-                l.spans
-                    .iter()
-                    .map(|s| s.content.to_string())
-                    .collect::<String>()
-            })
+            .map(|l| l.spans.iter().map(|s| s.content.to_string()).collect::<String>())
             .collect::<Vec<_>>();
         assert_eq!(cell0_lines_before, cell0_lines_after);
         assert_eq!(cell2_lines_before, cell2_lines_after);
@@ -827,9 +803,7 @@ mod tests {
         let lines = plain_lines(&cache);
 
         assert!(
-            lines
-                .first()
-                .is_some_and(|line| line.starts_with("\u{256D} ")),
+            lines.first().is_some_and(|line| line.starts_with("\u{256D} ")),
             "first tool line should open the shared rail: {lines:?}"
         );
         assert!(
@@ -837,9 +811,7 @@ mod tests {
             "middle tool lines should continue the shared rail: {lines:?}"
         );
         assert!(
-            lines
-                .last()
-                .is_some_and(|line| line.starts_with("\u{2570} ")),
+            lines.last().is_some_and(|line| line.starts_with("\u{2570} ")),
             "last tool line should close the shared rail: {lines:?}"
         );
         assert!(

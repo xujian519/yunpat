@@ -425,3 +425,43 @@ export interface DecompositionStats {
   /** 关键路径长度（任务数） */
   criticalPathLength: number
 }
+
+/**
+ * LLM 智能分解响应
+ */
+export interface LLMDecompositionResponse {
+  /** 子目标列表 */
+  subGoals: LLMSubGoal[]
+}
+
+/**
+ * LLM 子目标响应
+ */
+export interface LLMSubGoal {
+  /** 子目标标题 */
+  title: string
+  /** 子目标描述 */
+  description: string
+  /** 任务列表 */
+  tasks: LLMTask[]
+  /** 优先级 */
+  priority: string
+  /** 依赖项 */
+  dependencies?: string[]
+}
+
+/**
+ * LLM 任务响应
+ */
+export interface LLMTask {
+  /** 任务标题 */
+  title: string
+  /** 任务描述 */
+  description: string
+  /** 任务类型 */
+  type: string
+  /** 预估时长（秒） */
+  estimatedDuration: number
+  /** 预估 Token 数 */
+  estimatedTokens: number
+}

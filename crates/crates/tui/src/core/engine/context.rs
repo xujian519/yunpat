@@ -153,14 +153,8 @@ fn summarize_subagent_snapshot(snapshot: &serde_json::Value, index: usize) -> St
         );
     };
 
-    let agent_id = obj
-        .get("agent_id")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("unknown");
-    let agent_type = obj
-        .get("agent_type")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("agent");
+    let agent_id = obj.get("agent_id").and_then(serde_json::Value::as_str).unwrap_or("unknown");
+    let agent_type = obj.get("agent_type").and_then(serde_json::Value::as_str).unwrap_or("agent");
     let status = obj
         .get("status")
         .map(summarize_subagent_status)
@@ -190,12 +184,8 @@ fn summarize_subagent_snapshot(snapshot: &serde_json::Value, index: usize) -> St
         None => lines.push("  result: not available yet".to_string()),
     }
     if steps.is_some() || duration_ms.is_some() {
-        let steps = steps
-            .map(|n| n.to_string())
-            .unwrap_or_else(|| "?".to_string());
-        let duration_ms = duration_ms
-            .map(|n| n.to_string())
-            .unwrap_or_else(|| "?".to_string());
+        let steps = steps.map(|n| n.to_string()).unwrap_or_else(|| "?".to_string());
+        let duration_ms = duration_ms.map(|n| n.to_string()).unwrap_or_else(|| "?".to_string());
         lines.push(format!("  stats: steps={steps}, duration_ms={duration_ms}"));
     }
     lines.join("\n")
@@ -318,10 +308,9 @@ fn estimate_text_tokens_conservative(text: &str) -> usize {
 fn estimate_system_tokens_conservative(system: Option<&SystemPrompt>) -> usize {
     match system {
         Some(SystemPrompt::Text(text)) => estimate_text_tokens_conservative(text),
-        Some(SystemPrompt::Blocks(blocks)) => blocks
-            .iter()
-            .map(|block| estimate_text_tokens_conservative(&block.text))
-            .sum(),
+        Some(SystemPrompt::Blocks(blocks)) => {
+            blocks.iter().map(|block| estimate_text_tokens_conservative(&block.text)).sum()
+        }
         None => 0,
     }
 }
@@ -333,17 +322,13 @@ pub(super) fn estimate_input_tokens_conservative(
     let message_tokens = estimate_tokens(messages).saturating_mul(3).div_ceil(2);
     let system_tokens = estimate_system_tokens_conservative(system);
     let framing_overhead = messages.len().saturating_mul(12).saturating_add(48);
-    message_tokens
-        .saturating_add(system_tokens)
-        .saturating_add(framing_overhead)
+    message_tokens.saturating_add(system_tokens).saturating_add(framing_overhead)
 }
 
 pub(super) fn context_input_budget(model: &str, requested_output_tokens: u32) -> Option<usize> {
     let window = usize::try_from(context_window_for_model(model)?).ok()?;
     let output = usize::try_from(requested_output_tokens).ok()?;
-    window
-        .checked_sub(output)
-        .and_then(|v| v.checked_sub(CONTEXT_HEADROOM_TOKENS))
+    window.checked_sub(output).and_then(|v| v.checked_sub(CONTEXT_HEADROOM_TOKENS))
 }
 
 pub(super) fn turn_response_headroom_tokens() -> u64 {

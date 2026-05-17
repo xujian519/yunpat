@@ -26,9 +26,8 @@ impl PatentSearchTool {
     }
 
     pub async fn search(&self, query: &str, page: usize) -> anyhow::Result<PatentSearchResult> {
-        let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(30))
-            .build()?;
+        let client =
+            reqwest::Client::builder().timeout(std::time::Duration::from_secs(30)).build()?;
 
         let url = format!(
             "https://patents.google.com/xhr/query?url=q%3D{}%26page%3D{}",
@@ -62,42 +61,21 @@ impl PatentSearchTool {
             }
         }
 
-        Ok(PatentSearchResult {
-            patents,
-            total,
-            page,
-        })
+        Ok(PatentSearchResult { patents, total, page })
     }
 
     fn parse_patent(value: &serde_json::Value) -> Option<PatentRecord> {
         let patent_id = value.get("patent_number")?.as_str()?.to_string();
-        let title = value
-            .get("title")
-            .and_then(|t| t.as_str())
-            .unwrap_or("")
-            .to_string();
-        let snippet = value
-            .get("snippet")
-            .and_then(|s| s.as_str())
-            .unwrap_or("")
-            .to_string();
+        let title = value.get("title").and_then(|t| t.as_str()).unwrap_or("").to_string();
+        let snippet = value.get("snippet").and_then(|s| s.as_str()).unwrap_or("").to_string();
         let url = format!("https://patents.google.com/patent/{}", patent_id);
-        let assignee = value
-            .get("assignee")
-            .and_then(|a| a.as_str())
-            .map(|s| s.to_string());
-        let publication_date = value
-            .get("publication_date")
-            .and_then(|d| d.as_str())
-            .map(|s| s.to_string());
+        let assignee = value.get("assignee").and_then(|a| a.as_str()).map(|s| s.to_string());
+        let publication_date =
+            value.get("publication_date").and_then(|d| d.as_str()).map(|s| s.to_string());
         let ipc_codes = value
             .get("ipc_codes")
             .and_then(|i| i.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                    .collect()
-            });
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect());
 
         Some(PatentRecord {
             patent_id,

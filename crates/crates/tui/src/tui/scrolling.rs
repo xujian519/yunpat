@@ -39,10 +39,9 @@ impl TranscriptLineMeta {
     #[must_use]
     pub fn cell_line(&self) -> Option<(usize, usize)> {
         match *self {
-            TranscriptLineMeta::CellLine {
-                cell_index,
-                line_in_cell,
-            } => Some((cell_index, line_in_cell)),
+            TranscriptLineMeta::CellLine { cell_index, line_in_cell } => {
+                Some((cell_index, line_in_cell))
+            }
             TranscriptLineMeta::Spacer => None,
         }
     }
@@ -79,9 +78,7 @@ impl TranscriptScroll {
     /// State that follows the live tail (default).
     #[must_use]
     pub const fn to_bottom() -> Self {
-        Self {
-            offset: TAIL_SENTINEL,
-        }
+        Self { offset: TAIL_SENTINEL }
     }
 
     /// State pinned to a specific line index.
@@ -241,10 +238,7 @@ mod tests {
     use super::*;
 
     fn cell_line(cell_index: usize, line_in_cell: usize) -> TranscriptLineMeta {
-        TranscriptLineMeta::CellLine {
-            cell_index,
-            line_in_cell,
-        }
+        TranscriptLineMeta::CellLine { cell_index, line_in_cell }
     }
 
     /// Build a synthetic line-meta array for a transcript with `cell_count`

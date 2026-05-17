@@ -32,12 +32,7 @@ pub fn run_update() -> Result<()> {
         format!(
             "no asset found for platform {binary_name} in release {latest_tag}. \
                  Available assets: {}",
-            release
-                .assets
-                .iter()
-                .map(|a| a.name.as_str())
-                .collect::<Vec<_>>()
-                .join(", ")
+            release.assets.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(", ")
         )
     })?;
 
@@ -93,10 +88,7 @@ pub(crate) fn release_arch_for_rust_arch(arch: &str) -> &str {
 }
 
 pub(crate) fn binary_prefix_for_exe(current_exe: &Path) -> &'static str {
-    let exe_name = current_exe
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or("deepseek");
+    let exe_name = current_exe.file_name().and_then(|name| name.to_str()).unwrap_or("deepseek");
     if exe_name.contains("deepseek-tui") {
         "deepseek-tui"
     } else {

@@ -142,39 +142,23 @@ mod tests {
     #[test]
     fn verdict_severity_ordering() {
         assert!(
-            ConstitutionalVerdict::HardDeny {
-                reason: String::new()
-            }
-            .severity()
-                > ConstitutionalVerdict::RequireHuman {
-                    reason: String::new()
-                }
-                .severity()
+            ConstitutionalVerdict::HardDeny { reason: String::new() }.severity()
+                > ConstitutionalVerdict::RequireHuman { reason: String::new() }.severity()
         );
         assert!(
-            ConstitutionalVerdict::RequireHuman {
-                reason: String::new()
-            }
-            .severity()
-                > ConstitutionalVerdict::RouteToLocal {
-                    reason: String::new()
-                }
-                .severity()
+            ConstitutionalVerdict::RequireHuman { reason: String::new() }.severity()
+                > ConstitutionalVerdict::RouteToLocal { reason: String::new() }.severity()
         );
         assert!(
-            ConstitutionalVerdict::RouteToLocal {
-                reason: String::new()
-            }
-            .severity()
+            ConstitutionalVerdict::RouteToLocal { reason: String::new() }.severity()
                 > ConstitutionalVerdict::Pass.severity()
         );
     }
 
     #[test]
     fn verdict_merge_takes_stricter() {
-        let v = ConstitutionalVerdict::Pass.merge(ConstitutionalVerdict::RouteToLocal {
-            reason: "test".into(),
-        });
+        let v = ConstitutionalVerdict::Pass
+            .merge(ConstitutionalVerdict::RouteToLocal { reason: "test".into() });
         assert!(matches!(v, ConstitutionalVerdict::RouteToLocal { .. }));
 
         let v = ConstitutionalVerdict::RequireHuman { reason: "a".into() }
@@ -184,9 +168,7 @@ mod tests {
 
     #[test]
     fn verdict_serde_round_trip() {
-        let verdict = ConstitutionalVerdict::HardDeny {
-            reason: "bulk export".into(),
-        };
+        let verdict = ConstitutionalVerdict::HardDeny { reason: "bulk export".into() };
         let json = serde_json::to_string(&verdict).unwrap();
         let back: ConstitutionalVerdict = serde_json::from_str(&json).unwrap();
         assert_eq!(verdict, back);

@@ -87,10 +87,7 @@ impl SandboxBackend for OpenSandboxBackend {
             req = req.bearer_auth(api_key);
         }
 
-        let response = req
-            .send()
-            .await
-            .context("Failed to reach OpenSandbox endpoint")?;
+        let response = req.send().await.context("Failed to reach OpenSandbox endpoint")?;
 
         let status = response.status();
         if !status.is_success() {
@@ -98,10 +95,8 @@ impl SandboxBackend for OpenSandboxBackend {
             anyhow::bail!("OpenSandbox returned HTTP {}: {}", status.as_u16(), body);
         }
 
-        let parsed: SandboxRunResponse = response
-            .json()
-            .await
-            .context("Failed to parse OpenSandbox response")?;
+        let parsed: SandboxRunResponse =
+            response.json().await.context("Failed to parse OpenSandbox response")?;
 
         Ok(SandboxOutput {
             stdout: parsed.stdout,

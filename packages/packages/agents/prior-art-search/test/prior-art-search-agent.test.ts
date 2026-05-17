@@ -1,5 +1,46 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { PriorArtSearchAgent } from '../src/PriorArtSearchAgent'
+import type { ExecutionContext, LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
+
+function createMockEventBus(): IEventBus {
+  return {
+    publish: vi.fn(),
+    subscribe: vi.fn(() => ({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() })),
+    unsubscribe: vi.fn(),
+    request: vi.fn().mockResolvedValue(undefined),
+  }
+}
+
+function createMockMemory(): MemoryStore {
+  return {
+    get: vi.fn().mockResolvedValue(undefined),
+    set: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+    has: vi.fn().mockResolvedValue(false),
+    getAll: vi.fn().mockResolvedValue({}),
+    setAll: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn().mockResolvedValue(undefined),
+    search: vi.fn().mockResolvedValue([]),
+  }
+}
+
+function createMockToolRegistry(): IToolRegistry {
+  return {
+    register: vi.fn(),
+    unregister: vi.fn(),
+    get: vi.fn().mockReturnValue(undefined),
+    call: vi.fn().mockResolvedValue(undefined),
+    list: vi.fn().mockReturnValue([]),
+  }
+}
+
+function createMockLLM(): LLMAdapter {
+  return {
+    chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+    chatStream: vi.fn(),
+    embed: vi.fn(),
+  }
+}
 
 describe('PriorArtSearchAgent', () => {
   let agent: PriorArtSearchAgent
@@ -8,12 +49,10 @@ describe('PriorArtSearchAgent', () => {
     agent = new PriorArtSearchAgent({
       name: 'test-prior-art-search',
       description: '测试用先导技术检索Agent',
-      eventBus: {
-        publish: vi.fn(),
-      },
-      memory: {},
-      tools: {},
-      llm: {},
+      eventBus: createMockEventBus(),
+      memory: createMockMemory(),
+      tools: createMockToolRegistry(),
+      llm: createMockLLM(),
     })
   })
 
@@ -31,7 +70,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '智能测试装置及其测试方法',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       // 验证至少有一些关键词被提取
       expect(plan.extractedKeywords.length).toBeGreaterThan(0)
@@ -52,7 +91,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '测试装置',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       expect(plan.extractedKeywords).toContain('控制器')
       expect(plan.extractedKeywords).toContain('传感器')
@@ -74,7 +113,7 @@ describe('PriorArtSearchAgent', () => {
         },
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       // 验证至少有一些关键词被提取
       expect(plan.extractedKeywords.length).toBeGreaterThan(0)
@@ -98,7 +137,7 @@ describe('PriorArtSearchAgent', () => {
         },
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       expect(plan.extractedKeywords).toContain('深度学习')
       expect(plan.extractedKeywords).toContain('神经网络')
@@ -119,7 +158,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '智能测试装置',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       expect(plan.searchQueries.length).toBeGreaterThan(0)
       expect(plan.searchQueries.some((q) => q.includes('智能'))).toBe(true)
@@ -142,7 +181,7 @@ describe('PriorArtSearchAgent', () => {
         },
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       expect(plan.searchQueries).toContain('G01N')
       expect(plan.searchQueries).toContain('G06F')
@@ -164,7 +203,7 @@ describe('PriorArtSearchAgent', () => {
         },
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       expect(plan.searchQueries.some((q) => q.includes('assignee:'))).toBe(true)
       expect(plan.searchQueries.some((q) => q.includes('华为技术有限公司'))).toBe(true)
@@ -186,7 +225,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '测试装置',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       // 验证关键词被正确提取
       expect(plan.extractedKeywords).toContain('控制器')
@@ -347,7 +386,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       // 发明名称为空且权利要求为空时，应该没有关键词
       expect(plan.extractedKeywords.length).toBe(0)
@@ -366,7 +405,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '测试装置',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       expect(plan.extractedKeywords.length).toBeGreaterThan(0)
     })
@@ -384,7 +423,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '测试装置',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       expect(plan.extractedKeywords).toContain('控制器')
       expect(plan.extractedKeywords).toContain('传感器')
@@ -406,7 +445,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       // 即使发明名称为空，也应该能提取关键词
       expect(Array.isArray(plan.extractedKeywords)).toBe(true)
@@ -425,7 +464,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '测试装置',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       expect(Array.isArray(plan.extractedKeywords)).toBe(true)
       expect(Array.isArray(plan.searchQueries)).toBe(true)
@@ -446,7 +485,7 @@ describe('PriorArtSearchAgent', () => {
         inventionTitle: '测试装置 测试装置',
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       // 验证关键词去重
       const uniqueKeywords = new Set(plan.extractedKeywords)
@@ -471,7 +510,7 @@ describe('PriorArtSearchAgent', () => {
         },
       }
 
-      const plan = await agent.plan(input, {} as any)
+      const plan = await agent.plan(input, {} as ExecutionContext)
 
       // 验证限制参数被正确设置
       expect(input.searchOptions?.limit).toBe(10)

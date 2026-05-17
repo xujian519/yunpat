@@ -8,6 +8,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { spawn, ChildProcess } from 'child_process'
 
+interface SessionResponse { id: string; status: string; [key: string]: unknown }
+interface HealthResponse { status: string; [key: string]: unknown }
+interface StateResponse { id: string; [key: string]: unknown }
+
 const describeIntegration = process.env.RUN_INTEGRATION_TESTS === 'true' ? describe : describe.skip
 
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:8080'
@@ -86,7 +90,7 @@ describeIntegration('Rust Gateway + TS Adapter 集成', () => {
         })
 
         expect(response.ok).toBe(true)
-        const session = (await response.json()) as any
+        const session = (await response.json()) as SessionResponse
         expect(session).toHaveProperty('id')
         expect(session).toHaveProperty('status')
       },
@@ -108,7 +112,7 @@ describeIntegration('Rust Gateway + TS Adapter 集成', () => {
         })
 
         if (!sessionResponse.ok) return
-        const session = (await sessionResponse.json()) as any
+        const session = (await sessionResponse.json()) as SessionResponse
 
         // 连接 WebSocket 事件流
         // 注意：WebSocket 测试需要 ws 包
@@ -180,7 +184,7 @@ describeIntegration('Rust Gateway + TS Adapter 集成', () => {
           })
 
           if (response.ok) {
-            const health = (await response.json()) as any
+            const health = (await response.json()) as HealthResponse
             expect(health).toBeDefined()
           }
         } catch {
@@ -193,7 +197,7 @@ describeIntegration('Rust Gateway + TS Adapter 集成', () => {
           })
 
           if (response.ok) {
-            const health = (await response.json()) as any
+            const health = (await response.json()) as HealthResponse
             expect(health).toBeDefined()
           }
         } catch {
@@ -218,13 +222,13 @@ describeIntegration('Rust Gateway + TS Adapter 集成', () => {
         })
 
         if (!createResponse.ok) return
-        const session = (await createResponse.json()) as any
+        const session = (await createResponse.json()) as SessionResponse
 
         // 检索会话状态
         const stateResponse = await fetch(`${GATEWAY_URL}/api/v1/sessions/${session.id}`)
 
         if (stateResponse.ok) {
-          const state = (await stateResponse.json()) as any
+          const state = (await stateResponse.json()) as StateResponse
           expect(state.id).toBe(session.id)
         }
       },

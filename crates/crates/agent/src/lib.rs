@@ -298,10 +298,7 @@ fn normalize(value: &str) -> String {
 fn model_matches(model: &ModelInfo, requested: &str) -> bool {
     let requested = normalize(requested);
     normalize(&model.id) == requested
-        || model
-            .aliases
-            .iter()
-            .any(|alias| normalize(alias) == requested)
+        || model.aliases.iter().any(|alias| normalize(alias) == requested)
 }
 
 fn preserve_requested_model_id_case(mut model: ModelInfo, requested: &str) -> ModelInfo {

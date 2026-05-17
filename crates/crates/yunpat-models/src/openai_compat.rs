@@ -305,10 +305,8 @@ impl ModelProvider for OpenAICompatProvider {
                     .as_array()
                     .ok_or_else(|| anyhow::anyhow!("missing 'embedding' field in response item"))?;
 
-                let vec: Vec<f32> = embedding
-                    .iter()
-                    .filter_map(|v| v.as_f64().map(|f| f as f32))
-                    .collect();
+                let vec: Vec<f32> =
+                    embedding.iter().filter_map(|v| v.as_f64().map(|f| f as f32)).collect();
 
                 embeddings.push(vec);
             }
@@ -347,9 +345,6 @@ impl ModelProvider for OpenAICompatProvider {
     }
 
     fn is_provider_available(&self, provider_id: &str) -> bool {
-        self.config
-            .providers
-            .iter()
-            .any(|p| p.id == provider_id && p.enabled)
+        self.config.providers.iter().any(|p| p.id == provider_id && p.enabled)
     }
 }

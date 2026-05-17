@@ -22,9 +22,7 @@ fn modal_block(title: &str) -> Block<'static> {
     Block::default()
         .title(Line::from(vec![Span::styled(
             title.to_string(),
-            Style::default()
-                .fg(palette::YUNPAT_BLUE)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::BOLD),
         )]))
         .borders(Borders::ALL)
         .border_style(Style::default().fg(palette::BORDER_COLOR))
@@ -51,6 +49,12 @@ pub struct SessionPickerView {
     current_preview: Vec<String>,
     confirm_delete: bool,
     status: Option<String>,
+}
+
+impl Default for SessionPickerView {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SessionPickerView {
@@ -81,15 +85,13 @@ impl SessionPickerView {
     fn apply_sort_and_filter(&mut self) {
         match self.sort_mode {
             SortMode::Recent => {
-                self.sessions
-                    .sort_by_key(|s| std::cmp::Reverse(s.updated_at));
+                self.sessions.sort_by_key(|s| std::cmp::Reverse(s.updated_at));
             }
             SortMode::Name => {
                 self.sessions.sort_by(|a, b| a.title.cmp(&b.title));
             }
             SortMode::Size => {
-                self.sessions
-                    .sort_by_key(|s| std::cmp::Reverse(s.message_count));
+                self.sessions.sort_by_key(|s| std::cmp::Reverse(s.message_count));
             }
         }
 
@@ -231,8 +233,7 @@ impl SessionPickerView {
         };
 
         let preview = build_preview_lines(&saved);
-        self.preview_cache
-            .insert(session.id.clone(), preview.clone());
+        self.preview_cache.insert(session.id.clone(), preview.clone());
         self.current_preview = preview;
     }
 }
@@ -354,9 +355,8 @@ impl ModalView for SessionPickerView {
         let list_inner = modal_block(" Sessions ").inner(chunks[0]);
         let header_rows = 1 + usize::from(self.confirm_delete || self.status.is_some());
         let footer_rows = usize::from(!self.filtered.is_empty());
-        let visible_rows = usize::from(list_inner.height)
-            .saturating_sub(header_rows + footer_rows)
-            .max(1);
+        let visible_rows =
+            usize::from(list_inner.height).saturating_sub(header_rows + footer_rows).max(1);
         self.update_list_viewport(visible_rows);
         let list_scroll = self.list_scroll.get();
 
@@ -418,9 +418,7 @@ fn build_list_lines(
     if confirm_delete {
         lines.push(Line::from(Span::styled(
             "Confirm delete (y/n)",
-            Style::default()
-                .fg(palette::STATUS_WARNING)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::STATUS_WARNING).add_modifier(Modifier::BOLD),
         )));
     } else if let Some(status) = status {
         lines.push(Line::from(Span::styled(
@@ -441,9 +439,7 @@ fn build_list_lines(
         let mut line = format_session_line(session);
         line = truncate(&line, width);
         let style = if idx == selected {
-            Style::default()
-                .fg(palette::SELECTION_TEXT)
-                .bg(palette::SELECTION_BG)
+            Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
         } else {
             Style::default().fg(palette::TEXT_PRIMARY)
         };
@@ -468,11 +464,7 @@ fn build_list_lines(
 fn format_session_line(session: &SessionMetadata) -> String {
     let updated = format_relative_time(&session.updated_at);
     let title = truncate(&session.title, 32);
-    let mode = session
-        .mode
-        .as_deref()
-        .unwrap_or("unknown")
-        .to_ascii_lowercase();
+    let mode = session.mode.as_deref().unwrap_or("unknown").to_ascii_lowercase();
     format!(
         "{} | {} | {} msgs | {} | {}",
         crate::session_manager::truncate_id(&session.id),
@@ -488,11 +480,7 @@ fn build_preview_lines(session: &SavedSession) -> Vec<String> {
     out.push(format!("Title: {}", session.metadata.title));
     out.push(format!(
         "Updated: {}",
-        session
-            .metadata
-            .updated_at
-            .with_timezone(&Local)
-            .format("%Y-%m-%d %H:%M")
+        session.metadata.updated_at.with_timezone(&Local).format("%Y-%m-%d %H:%M")
     ));
     out.push(format!(
         "Messages: {} | Model: {}",

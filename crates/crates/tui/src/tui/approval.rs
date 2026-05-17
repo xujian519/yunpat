@@ -35,36 +35,15 @@ use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-/// Determines when tool executions require user approval
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ApprovalMode {
-    /// Auto-approve all tools (YOLO mode / --yolo flag)
-    Auto,
-    /// Suggest approval for non-safe tools (non-YOLO modes)
-    #[default]
-    Suggest,
-    /// Never execute tools requiring approval
-    Never,
-}
+/// Determines when tool executions require user approval.
+pub use yunpat_protocol::ApprovalMode;
 
-impl ApprovalMode {
-    pub fn label(self) -> &'static str {
-        match self {
-            ApprovalMode::Auto => "AUTO",
-            ApprovalMode::Suggest => "SUGGEST",
-            ApprovalMode::Never => "NEVER",
-        }
-    }
+// Re-export ApprovalModeExt trait if needed in the future.
+// For now ApprovalMode's methods live in yunpat_protocol.
 
-    pub fn from_config_value(value: &str) -> Option<Self> {
-        match value.trim().to_ascii_lowercase().as_str() {
-            "auto" => Some(ApprovalMode::Auto),
-            "suggest" | "suggested" | "on-request" | "untrusted" => Some(ApprovalMode::Suggest),
-            "never" | "deny" | "denied" => Some(ApprovalMode::Never),
-            _ => None,
-        }
-    }
-}
+// Placeholder to keep any future TUI-specific approval extensions here.
+// The ApprovalMode enum itself is now defined in yunpat_protocol to break
+// the core ↔ tui circular dependency.
 
 /// User's decision for a pending approval
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -79,38 +58,7 @@ pub enum ReviewDecision {
     Abort,
 }
 
-/// Categorizes tools by cost/risk level
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ToolCategory {
-    /// Free, read-only operations (`list_dir`, `read_file`, todo_*)
-    Safe,
-    /// File modifications (`write_file`, `edit_file`)
-    FileWrite,
-    /// Shell execution (`exec_shell`)
-    Shell,
-    /// Network-oriented built-in tools
-    Network,
-    /// Read-only MCP discovery and resource access
-    McpRead,
-    /// MCP actions that may change remote state
-    McpAction,
-    /// Unknown or unclassified tool surface
-    Unknown,
-}
-
-/// Stakes-based variant for the takeover modal.
-///
-/// `RiskLevel::Benign` lets a single keystroke commit the approval.
-/// `RiskLevel::Destructive` requires an explicit second confirmation
-/// keypress so muscle-memory `Enter` never lands on an irreversible op.
-///
-/// Routing rules live in [`classify_risk`] — when in doubt, route to
-/// `Destructive`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RiskLevel {
-    Benign,
-    Destructive,
-}
+pub use yunpat_protocol::{ToolCategory, RiskLevel};
 
 /// Request for user approval of a tool execution
 #[derive(Debug, Clone)]
@@ -370,10 +318,7 @@ impl ApprovalOption {
     }
 
     fn index(self) -> usize {
-        Self::ORDER
-            .iter()
-            .position(|o| *o == self)
-            .unwrap_or(Self::ORDER.len() - 1)
+        Self::ORDER.iter().position(|o| *o == self).unwrap_or(Self::ORDER.len() - 1)
     }
 
     fn decision(self) -> ReviewDecision {
@@ -575,10 +520,8 @@ fn truncate_params_value(value: &Value, max_len: usize) -> Value {
             Value::Object(truncated)
         }
         Value::Array(items) => {
-            let truncated_items = items
-                .iter()
-                .map(|val| truncate_params_value(val, max_len))
-                .collect();
+            let truncated_items =
+                items.iter().map(|val| truncate_params_value(val, max_len)).collect();
             Value::Array(truncated_items)
         }
         Value::String(text) => Value::String(truncate_string_value(text, max_len)),
@@ -730,10 +673,7 @@ pub struct ElevationView {
 
 impl ElevationView {
     pub fn new(request: ElevationRequest) -> Self {
-        Self {
-            request,
-            selected: 0,
-        }
+        Self { request, selected: 0 }
     }
 
     fn select_prev(&mut self) {
@@ -1017,18 +957,8 @@ mod tests {
         );
 
         assert_eq!(request.category, ToolCategory::Shell);
-        assert!(
-            request
-                .impacts
-                .iter()
-                .any(|line| line.contains("Executes a shell command"))
-        );
-        assert!(
-            request
-                .impacts
-                .iter()
-                .any(|line| line.contains("cargo test"))
-        );
+        assert!(request.impacts.iter().any(|line| line.contains("Executes a shell command")));
+        assert!(request.impacts.iter().any(|line| line.contains("cargo test")));
     }
 
     // ========================================================================
@@ -1434,11 +1364,7 @@ mod tests {
         let view = ApprovalView::new(benign_request());
         let lines = render_lines(&view, 120, 40);
         // Find the widest non-blank rendered row.
-        let widest = lines
-            .iter()
-            .map(|l| l.trim_end_matches(' ').len())
-            .max()
-            .unwrap_or(0);
+        let widest = lines.iter().map(|l| l.trim_end_matches(' ').len()).max().unwrap_or(0);
         assert!(
             widest >= 80,
             "takeover card too narrow: widest row = {widest} cells"
@@ -1573,21 +1499,13 @@ mod tests {
             ElevationOption::FullAccess.label(),
             "Full access (filesystem + network)"
         );
-        assert!(
-            ElevationOption::WithWriteAccess(vec![])
-                .label()
-                .contains("write")
-        );
+        assert!(ElevationOption::WithWriteAccess(vec![]).label().contains("write"));
         assert_eq!(ElevationOption::Abort.label(), "Abort");
     }
 
     #[test]
     fn test_elevation_option_descriptions() {
-        assert!(
-            ElevationOption::WithNetwork
-                .description()
-                .contains("network")
-        );
+        assert!(ElevationOption::WithNetwork.description().contains("network"));
         assert!(
             ElevationOption::FullAccess
                 .description()
@@ -1603,10 +1521,7 @@ mod tests {
         let policy = ElevationOption::WithNetwork.to_policy(&cwd);
         assert!(matches!(
             policy,
-            SandboxPolicy::WorkspaceWrite {
-                network_access: true,
-                ..
-            }
+            SandboxPolicy::WorkspaceWrite { network_access: true, .. }
         ));
 
         let policy = ElevationOption::FullAccess.to_policy(&cwd);
@@ -1635,12 +1550,7 @@ mod tests {
         assert_eq!(request.tool_name, "exec_shell");
         assert!(request.command.is_some());
         assert!(request.denial_reason.contains("network"));
-        assert!(
-            request
-                .options
-                .iter()
-                .any(|o| matches!(o, ElevationOption::WithNetwork))
-        );
+        assert!(request.options.iter().any(|o| matches!(o, ElevationOption::WithNetwork)));
     }
 
     #[test]
@@ -1649,12 +1559,7 @@ mod tests {
             ElevationRequest::for_shell("test-id", "rm -rf /tmp", "write blocked", false, true);
 
         assert_eq!(request.tool_id, "test-id");
-        assert!(
-            request
-                .options
-                .iter()
-                .any(|o| matches!(o, ElevationOption::WithWriteAccess(_)))
-        );
+        assert!(request.options.iter().any(|o| matches!(o, ElevationOption::WithWriteAccess(_))));
     }
 
     #[test]
@@ -1664,24 +1569,9 @@ mod tests {
         assert_eq!(request.tool_id, "test-id");
         assert_eq!(request.tool_name, "some_tool");
         assert!(request.command.is_none());
-        assert!(
-            request
-                .options
-                .iter()
-                .any(|o| matches!(o, ElevationOption::WithNetwork))
-        );
-        assert!(
-            request
-                .options
-                .iter()
-                .any(|o| matches!(o, ElevationOption::FullAccess))
-        );
-        assert!(
-            request
-                .options
-                .iter()
-                .any(|o| matches!(o, ElevationOption::Abort))
-        );
+        assert!(request.options.iter().any(|o| matches!(o, ElevationOption::WithNetwork)));
+        assert!(request.options.iter().any(|o| matches!(o, ElevationOption::FullAccess)));
+        assert!(request.options.iter().any(|o| matches!(o, ElevationOption::Abort)));
     }
 
     // ========================================================================

@@ -162,10 +162,7 @@ impl PaletteMode {
     /// background color. Values >= 8 conventionally indicate a light profile.
     #[must_use]
     pub fn from_colorfgbg(value: &str) -> Option<Self> {
-        let bg = value
-            .split(';')
-            .rev()
-            .find_map(|part| part.parse::<u16>().ok())?;
+        let bg = value.split(';').rev().find_map(|part| part.parse::<u16>().ok())?;
         Some(if bg >= 8 { Self::Light } else { Self::Dark })
     }
 

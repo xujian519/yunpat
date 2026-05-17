@@ -115,17 +115,12 @@ pub fn parse(content: &str) -> ParsedMarkdown {
         }
 
         if in_code_block {
-            blocks.push(Block::Code {
-                line: raw_line.to_string(),
-            });
+            blocks.push(Block::Code { line: raw_line.to_string() });
             continue;
         }
 
         if let Some((level, text)) = parse_heading(trimmed) {
-            blocks.push(Block::Heading {
-                level,
-                text: text.to_string(),
-            });
+            blocks.push(Block::Heading { level, text: text.to_string() });
             if level == 1 {
                 blocks.push(Block::HeadingRule);
             }
@@ -133,10 +128,7 @@ pub fn parse(content: &str) -> ParsedMarkdown {
         }
 
         if let Some((bullet, text)) = parse_list_item(trimmed) {
-            blocks.push(Block::ListItem {
-                bullet,
-                text: text.to_string(),
-            });
+            blocks.push(Block::ListItem { bullet, text: text.to_string() });
             continue;
         }
 
@@ -162,9 +154,7 @@ pub fn parse(content: &str) -> ParsedMarkdown {
             continue;
         }
 
-        blocks.push(Block::Paragraph {
-            text: trimmed.to_string(),
-        });
+        blocks.push(Block::Paragraph { text: trimmed.to_string() });
     }
 
     ParsedMarkdown { blocks }
@@ -206,9 +196,7 @@ pub fn render_parsed(parsed: &ParsedMarkdown, width: u16, base_style: Style) -> 
 
         match &parsed.blocks[i] {
             Block::Heading { text, .. } => {
-                let style = Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::BOLD);
+                let style = Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD);
                 out.extend(render_wrapped_line(text, width, style, false));
             }
             Block::HeadingRule => {
@@ -234,15 +222,13 @@ pub fn render_parsed(parsed: &ParsedMarkdown, width: u16, base_style: Style) -> 
                 ));
             }
             Block::Code { line } => {
-                let code_style = Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::ITALIC);
+                let code_style =
+                    Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::ITALIC);
                 out.extend(render_wrapped_line(line, width, code_style, true));
             }
             Block::Paragraph { text } => {
-                let link_style = Style::default()
-                    .fg(palette::YUNPAT_BLUE)
-                    .add_modifier(Modifier::UNDERLINED);
+                let link_style =
+                    Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::UNDERLINED);
                 out.extend(render_line_with_links(text, width, base_style, link_style));
             }
             Block::Blank => {
@@ -434,9 +420,7 @@ fn render_line_with_links(
 fn parse_inline_spans(line: &str, base_style: Style, link_style: Style) -> Vec<(String, Style)> {
     let bold_style = base_style.add_modifier(Modifier::BOLD);
     let italic_style = base_style.add_modifier(Modifier::ITALIC);
-    let code_style = base_style
-        .add_modifier(Modifier::ITALIC)
-        .bg(palette::SURFACE_ELEVATED);
+    let code_style = base_style.add_modifier(Modifier::ITALIC).bg(palette::SURFACE_ELEVATED);
     let strike_style = base_style.add_modifier(Modifier::CROSSED_OUT);
     let mut out = Vec::new();
     let mut rest = line;
@@ -717,9 +701,7 @@ fn render_table_group(blocks: &[Block], width: usize, base_style: Style) -> Vec<
 }
 
 fn link_style() -> Style {
-    Style::default()
-        .fg(palette::YUNPAT_BLUE)
-        .add_modifier(Modifier::UNDERLINED)
+    Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::UNDERLINED)
 }
 
 fn wrap_text(text: &str, width: usize) -> Vec<String> {
@@ -909,15 +891,11 @@ mod tests {
         let parsed = parse(src);
         let blocks: Vec<_> = parsed.blocks.iter().collect();
         // Should have 2 TableRow blocks (header + data) + 1 TableSeparator
-        let table_rows: Vec<_> = blocks
-            .iter()
-            .filter(|b| matches!(b, Block::TableRow(_)))
-            .collect();
+        let table_rows: Vec<_> =
+            blocks.iter().filter(|b| matches!(b, Block::TableRow(_))).collect();
         assert_eq!(table_rows.len(), 2, "expected 2 table rows: {blocks:?}");
-        let separators: Vec<_> = blocks
-            .iter()
-            .filter(|b| matches!(b, Block::TableSeparator))
-            .collect();
+        let separators: Vec<_> =
+            blocks.iter().filter(|b| matches!(b, Block::TableSeparator)).collect();
         assert_eq!(
             separators.len(),
             1,
@@ -929,10 +907,8 @@ mod tests {
     fn bold_markers_stripped_in_render() {
         let src = "这是一个 **Rust 工作区项目**，包含多个 crate。\n";
         let lines = render_markdown(src, 80, Style::default());
-        let text: String = lines
-            .iter()
-            .flat_map(|l| l.spans.iter().map(|s| s.content.as_ref()))
-            .collect();
+        let text: String =
+            lines.iter().flat_map(|l| l.spans.iter().map(|s| s.content.as_ref())).collect();
         assert!(
             !text.contains("**"),
             "bold markers leaked into output: {text:?}"
@@ -944,10 +920,8 @@ mod tests {
     fn table_renders_with_box_drawing_borders() {
         let src = "| 文件 | 改动 |\n|---|---|\n| foo.rs | 重写 |\n";
         let lines = render_markdown(src, 60, Style::default());
-        let text: String = lines
-            .iter()
-            .flat_map(|l| l.spans.iter().map(|s| s.content.as_ref()))
-            .collect();
+        let text: String =
+            lines.iter().flat_map(|l| l.spans.iter().map(|s| s.content.as_ref())).collect();
         // Column pipes still present
         assert!(text.contains('│'), "table pipe separator missing: {text:?}");
         // Separator row rendered as middle border, not raw markdown

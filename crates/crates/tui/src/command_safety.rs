@@ -745,15 +745,9 @@ const KNOWN_SAFE_CHAIN_PREFIXES: &[&str] = &[
 /// has a leading token in `KNOWN_SAFE_CHAIN_PREFIXES`. Used to permit routine
 /// build+test chains without escalating to Dangerous.
 fn all_segments_known_safe(command: &str) -> bool {
-    let normalized = command
-        .replace("&&", "\n")
-        .replace("||", "\n")
-        .replace(';', "\n");
-    let segments: Vec<&str> = normalized
-        .split('\n')
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .collect();
+    let normalized = command.replace("&&", "\n").replace("||", "\n").replace(';', "\n");
+    let segments: Vec<&str> =
+        normalized.split('\n').map(str::trim).filter(|s| !s.is_empty()).collect();
     if segments.is_empty() {
         return false;
     }
@@ -762,9 +756,7 @@ fn all_segments_known_safe(command: &str) -> bool {
             .split_whitespace()
             .find(|tok| !tok.contains('=') && *tok != "env")
             .unwrap_or("");
-        KNOWN_SAFE_CHAIN_PREFIXES
-            .iter()
-            .any(|prefix| head.eq_ignore_ascii_case(prefix))
+        KNOWN_SAFE_CHAIN_PREFIXES.iter().any(|prefix| head.eq_ignore_ascii_case(prefix))
     })
 }
 
@@ -854,9 +846,7 @@ pub fn extract_primary_command(command: &str) -> Option<&str> {
     // Handle env vars at start
     if trimmed.starts_with("env ") || trimmed.starts_with("ENV=") {
         // Skip env setup - find first token that's not an env var
-        trimmed
-            .split_whitespace()
-            .find(|s| !s.contains('=') && *s != "env")
+        trimmed.split_whitespace().find(|s| !s.contains('=') && *s != "env")
     } else {
         trimmed.split_whitespace().next()
     }

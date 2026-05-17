@@ -192,9 +192,7 @@ fn calculate_metrics(results: Vec<(TestCase, Option<String>, u64)>) -> Metrics {
             .or_insert(1);
 
         let expected_agent = intent_to_agent_id(&expected).to_string();
-        let actual_agent_opt = actual_opt
-            .as_ref()
-            .map(|a| intent_to_agent_id(a).to_string());
+        let actual_agent_opt = actual_opt.as_ref().map(|a| intent_to_agent_id(a).to_string());
 
         // For system intents without a dedicated agent (coding, chitchat, etc.),
         // returning NONE/clarify is considered correct since the router is not

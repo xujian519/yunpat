@@ -11,7 +11,7 @@ const PASTE_BURST_ACTIVE_IDLE_TIMEOUT: Duration = Duration::from_millis(8);
 const PASTE_BURST_ACTIVE_IDLE_TIMEOUT: Duration = Duration::from_millis(60);
 
 #[derive(Default)]
-pub(crate) struct PasteBurst {
+pub struct PasteBurst {
     last_plain_char_time: Option<Instant>,
     consecutive_plain_char_burst: u16,
     burst_window_until: Option<Instant>,
@@ -20,19 +20,19 @@ pub(crate) struct PasteBurst {
     pending_first_char: Option<(char, Instant)>,
 }
 
-pub(crate) enum CharDecision {
+pub enum CharDecision {
     BeginBuffer { retro_chars: u16 },
     BufferAppend,
     RetainFirstChar,
     BeginBufferFromPending,
 }
 
-pub(crate) struct RetroGrab {
+pub struct RetroGrab {
     pub start_byte: usize,
     pub grabbed: String,
 }
 
-pub(crate) enum FlushResult {
+pub enum FlushResult {
     Paste(String),
     Typed(char),
     None,
@@ -111,9 +111,7 @@ impl PasteBurst {
         } else {
             PASTE_BURST_CHAR_INTERVAL
         };
-        let timed_out = self
-            .last_plain_char_time
-            .is_some_and(|t| now.duration_since(t) > timeout);
+        let timed_out = self.last_plain_char_time.is_some_and(|t| now.duration_since(t) > timeout);
 
         if timed_out && self.is_active_internal() {
             self.active = false;
@@ -197,10 +195,7 @@ impl PasteBurst {
             grabbed.chars().any(char::is_whitespace) || grabbed.chars().count() >= 16;
         if looks_pastey {
             self.begin_with_retro_grabbed(grabbed.clone(), now);
-            Some(RetroGrab {
-                start_byte,
-                grabbed,
-            })
+            Some(RetroGrab { start_byte, grabbed })
         } else {
             None
         }
@@ -317,9 +312,7 @@ mod tests {
         let _ = burst.on_plain_char('a', t0);
 
         let almost_due = t0 + Duration::from_millis(7);
-        let remaining = burst
-            .next_flush_delay(almost_due)
-            .expect("delay should exist");
+        let remaining = burst.next_flush_delay(almost_due).expect("delay should exist");
         assert!(remaining <= Duration::from_millis(1));
 
         let due = t0 + Duration::from_millis(20);

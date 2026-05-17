@@ -531,9 +531,7 @@ fn validate_outputs(
     let edit_ok = edit_output.is_some_and(|s| !s.is_empty()) && notes.contains("edited = true");
     let patch_ok = patch_output.is_some_and(|s| !s.is_empty())
         && notes.contains("todo: offline metrics (patched)");
-    let shell_ok = shell_output
-        .map(str::trim)
-        .is_some_and(|s| s.contains(shell_expect_token));
+    let shell_ok = shell_output.map(str::trim).is_some_and(|s| s.contains(shell_expect_token));
 
     search_ok && edit_ok && patch_ok && shell_ok
 }

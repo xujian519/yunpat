@@ -182,10 +182,8 @@ impl AcpServer {
     async fn run_prompt(&self, prompt: &str, cwd: &PathBuf) -> Result<String> {
         let _cwd_guard = ScopedCurrentDir::new(cwd)?;
         let client = Arc::new(DeepSeekClient::new(&self.config)?);
-        let route = crate::resolve_cli_auto_route(&self.config, &self.model, prompt).await;
-        let reasoning_effort = route
-            .reasoning_effort
-            .map(|effort| effort.as_setting().to_string());
+        let route = crate::cli_setup::resolve_cli_auto_route(&self.config, &self.model, prompt).await;
+        let reasoning_effort = route.reasoning_effort.map(|effort| effort.as_setting().to_string());
 
         let request = MessageRequest {
             model: route.model,
@@ -297,10 +295,7 @@ fn extract_prompt_text(prompt: Option<&Value>) -> Option<String> {
     match prompt? {
         Value::String(text) => Some(text.clone()),
         Value::Array(blocks) => {
-            let parts = blocks
-                .iter()
-                .filter_map(content_block_text)
-                .collect::<Vec<_>>();
+            let parts = blocks.iter().filter_map(content_block_text).collect::<Vec<_>>();
             (!parts.is_empty()).then(|| parts.join("\n\n"))
         }
         _ => None,
@@ -309,10 +304,7 @@ fn extract_prompt_text(prompt: Option<&Value>) -> Option<String> {
 
 fn content_block_text(block: &Value) -> Option<String> {
     match block.get("type").and_then(Value::as_str)? {
-        "text" => block
-            .get("text")
-            .and_then(Value::as_str)
-            .map(str::to_string),
+        "text" => block.get("text").and_then(Value::as_str).map(str::to_string),
         "resource" => resource_text(block),
         "resource_link" | "resourceLink" => resource_link_text(block),
         _ => None,

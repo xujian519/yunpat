@@ -29,16 +29,20 @@ vi.mock('fs', async () => {
   return {
     ...actual,
     existsSync: vi.fn(() => true),
-    statSync: vi.fn(() => ({ size: 1024 }) as any),
+    statSync: vi.fn(() => ({ size: 1024 })),
     readFileSync: vi.fn(() => Buffer.from('mock')),
   }
 })
 
 const mockContext: any = {
   registry: {},
-  llm: {} as any,
-  memory: {} as any,
-  eventBus: {} as any,
+  llm: {
+      chat: vi.fn(),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    } as unknown as import('@yunpat/core').LLMAdapter,
+  memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() },
+  eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() },
 }
 
 describe('OfficialDocParserV2', () => {

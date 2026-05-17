@@ -166,9 +166,7 @@ impl McpManager {
                 let error = "client not registered".to_string();
                 emit(McpStartupUpdateEvent {
                     server_name: server_name.clone(),
-                    status: McpStartupStatus::Failed {
-                        error: error.clone(),
-                    },
+                    status: McpStartupStatus::Failed { error: error.clone() },
                 });
                 failed.push(McpStartupFailure {
                     server_name: server_name.clone(),
@@ -176,11 +174,7 @@ impl McpManager {
                 });
             }
         }
-        McpStartupCompleteEvent {
-            ready,
-            failed,
-            cancelled,
-        }
+        McpStartupCompleteEvent { ready, failed, cancelled }
     }
 
     pub fn stop_server(&mut self, server_name: &str) -> Result<()> {
@@ -439,11 +433,7 @@ pub fn run_stdio_server(
             }
         };
 
-        if request
-            .jsonrpc
-            .as_deref()
-            .is_some_and(|version| version != "2.0")
-        {
+        if request.jsonrpc.as_deref().is_some_and(|version| version != "2.0") {
             let response = jsonrpc_error(
                 request.id,
                 JsonRpcError::invalid_request("jsonrpc version must be 2.0"),
@@ -657,12 +647,7 @@ fn dispatch_stdio_request(
         }
         "tools/call" => {
             let parsed: ToolsCallParams = parse_params(params_or_object(params))?;
-            let ToolsCallParams {
-                name,
-                tool,
-                server,
-                arguments,
-            } = parsed;
+            let ToolsCallParams { name, tool, server, arguments } = parsed;
             let tool_name = name
                 .or(tool)
                 .context("missing tool name")

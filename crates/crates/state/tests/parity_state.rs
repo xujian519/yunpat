@@ -53,9 +53,7 @@ fn upsert_and_resume_thread_metadata() {
         Some(PathBuf::from("/tmp/rollout.jsonl"))
     );
 
-    store
-        .mark_archived("thread-test-1")
-        .expect("archive thread");
+    store.mark_archived("thread-test-1").expect("archive thread");
     let archived = store
         .get_thread("thread-test-1")
         .expect("read archived thread")

@@ -488,10 +488,7 @@ impl IntentRecognizer {
             "without",
         ];
 
-        Self {
-            rules,
-            negation_words,
-        }
+        Self { rules, negation_words }
     }
 
     /// Recognize intent from raw user input. Returns the agent ID with the
@@ -608,19 +605,16 @@ impl IntentRecognizer {
         mut candidates: Vec<(&'a IntentRule, f32)>,
     ) -> Vec<(&'a IntentRule, f32)> {
         // Detect exclusive phrases that boost sub-intents (claims/spec) over full draft.
-        let has_exclusive = self.rules.iter().any(|r| {
-            r.exclusive_phrases
-                .iter()
-                .any(|phrase| input.contains(phrase))
-        });
+        let has_exclusive = self
+            .rules
+            .iter()
+            .any(|r| r.exclusive_phrases.iter().any(|phrase| input.contains(phrase)));
 
         if has_exclusive {
             for (rule, score) in &mut candidates {
                 // Boost sub-intents that have matching exclusive phrases.
-                let has_matching_exclusive = rule
-                    .exclusive_phrases
-                    .iter()
-                    .any(|phrase| input.contains(phrase));
+                let has_matching_exclusive =
+                    rule.exclusive_phrases.iter().any(|phrase| input.contains(phrase));
                 if has_matching_exclusive {
                     *score = (*score + 0.3).min(1.0);
                 }
@@ -691,13 +685,11 @@ impl Router {
 
     /// Route an explicit slash command to an agent.
     pub fn route_command(&self, command: &str) -> Option<RoutingDecision> {
-        self.command_map
-            .get(command)
-            .map(|&agent_id| RoutingDecision {
-                agent_id: agent_id.to_string(),
-                source: RoutingSource::ExplicitCommand,
-                topic: None,
-            })
+        self.command_map.get(command).map(|&agent_id| RoutingDecision {
+            agent_id: agent_id.to_string(),
+            source: RoutingSource::ExplicitCommand,
+            topic: None,
+        })
     }
 
     /// Route free-form user input using intent recognition.
@@ -820,9 +812,7 @@ mod tests {
     #[test]
     fn test_intent_recognition_search() {
         let recognizer = IntentRecognizer::new();
-        let (agent_id, score) = recognizer
-            .recognize("帮我检索关于Transformer的专利")
-            .unwrap();
+        let (agent_id, score) = recognizer.recognize("帮我检索关于Transformer的专利").unwrap();
         assert_eq!(agent_id, AGENT_SEARCH);
         assert!(score > 0.0);
     }
@@ -846,9 +836,7 @@ mod tests {
     #[test]
     fn test_english_input() {
         let recognizer = IntentRecognizer::new();
-        let (agent_id, _) = recognizer
-            .recognize("draft a patent for my invention")
-            .unwrap();
+        let (agent_id, _) = recognizer.recognize("draft a patent for my invention").unwrap();
         assert_eq!(agent_id, AGENT_DRAFTING);
     }
 

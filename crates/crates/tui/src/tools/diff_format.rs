@@ -25,10 +25,7 @@ pub fn make_unified_diff(path: &str, old: &str, new: &str) -> String {
     let a = format!("a/{path}");
     let b = format!("b/{path}");
     let diff = TextDiff::from_lines(old, new);
-    diff.unified_diff()
-        .context_radius(3)
-        .header(&a, &b)
-        .to_string()
+    diff.unified_diff().context_radius(3).header(&a, &b).to_string()
 }
 
 #[cfg(test)]

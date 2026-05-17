@@ -16,365 +16,21 @@ use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use crate::audit::log_sensitive_event;
 use crate::features::{Features, FeaturesToml, is_known_feature_key};
 use crate::hooks::HooksConfig;
-
 pub const DEFAULT_MAX_SUBAGENTS: usize = 10;
 pub const MAX_SUBAGENTS: usize = 20;
-pub const DEFAULT_TEXT_MODEL: &str = "deepseek-v4-pro";
-pub const DEFAULT_YUNPAT_BASE_URL: &str = "https://api.deepseek.com/beta";
-pub const DEFAULT_NVIDIA_NIM_MODEL: &str = "deepseek-ai/deepseek-v4-pro";
-pub const DEFAULT_NVIDIA_NIM_FLASH_MODEL: &str = "deepseek-ai/deepseek-v4-flash";
-pub const DEFAULT_NVIDIA_NIM_BASE_URL: &str = "https://integrate.api.nvidia.com/v1";
-pub const DEFAULT_OPENROUTER_MODEL: &str = "deepseek/deepseek-v4-pro";
-pub const DEFAULT_OPENROUTER_FLASH_MODEL: &str = "deepseek/deepseek-v4-flash";
-pub const DEFAULT_OPENROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
-pub const DEFAULT_NOVITA_MODEL: &str = "deepseek/deepseek-v4-pro";
-pub const DEFAULT_NOVITA_FLASH_MODEL: &str = "deepseek/deepseek-v4-flash";
-pub const DEFAULT_NOVITA_BASE_URL: &str = "https://api.novita.ai/v1";
-pub const DEFAULT_FIREWORKS_MODEL: &str = "accounts/fireworks/models/deepseek-v4-pro";
-pub const DEFAULT_FIREWORKS_BASE_URL: &str = "https://api.fireworks.ai/inference/v1";
-pub const DEFAULT_SGLANG_MODEL: &str = "deepseek-ai/DeepSeek-V4-Pro";
-pub const DEFAULT_SGLANG_FLASH_MODEL: &str = "deepseek-ai/DeepSeek-V4-Flash";
-pub const DEFAULT_SGLANG_BASE_URL: &str = "http://localhost:30000/v1";
-pub const DEFAULT_VLLM_MODEL: &str = "deepseek-ai/DeepSeek-V4-Pro";
-pub const DEFAULT_VLLM_FLASH_MODEL: &str = "deepseek-ai/DeepSeek-V4-Flash";
-pub const DEFAULT_VLLM_BASE_URL: &str = "http://localhost:8000/v1";
-pub const DEFAULT_OLLAMA_MODEL: &str = "deepseek-coder:1.3b";
-pub const DEFAULT_OLLAMA_BASE_URL: &str = "http://localhost:11434/v1";
-pub const DEFAULT_DEEPSEEKCN_BASE_URL: &str = "https://api.deepseeki.com";
 const API_KEYRING_SENTINEL: &str = "__KEYRING__";
-pub const COMMON_YUNPAT_MODELS: &[&str] = &[
-    "deepseek-v4-pro",
-    "deepseek-v4-flash",
-    "deepseek-ai/deepseek-v4-pro",
-    "deepseek-ai/deepseek-v4-flash",
-    "deepseek/deepseek-v4-pro",
-    "deepseek/deepseek-v4-flash",
-];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ApiProvider {
-    Deepseek,
-    DeepseekCN,
-    NvidiaNim,
-    Openrouter,
-    Novita,
-    Fireworks,
-    Sglang,
-    Vllm,
-    Ollama,
-}
+mod providers;
+pub use providers::*;
 
-impl ApiProvider {
-    #[must_use]
-    pub fn parse(value: &str) -> Option<Self> {
-        match value.trim().to_ascii_lowercase().as_str() {
-            "deepseek" | "deep-seek" => Some(Self::Deepseek),
-            "deepseek-cn" | "yunpat_china" | "deepseekcn" | "deepseek-china" => {
-                Some(Self::DeepseekCN)
-            }
-            "nvidia" | "nvidia-nim" | "nvidia_nim" | "nim" => Some(Self::NvidiaNim),
-            "openrouter" | "open_router" => Some(Self::Openrouter),
-            "novita" => Some(Self::Novita),
-            "fireworks" | "fireworks-ai" => Some(Self::Fireworks),
-            "sglang" | "sg-lang" => Some(Self::Sglang),
-            "vllm" | "v-llm" => Some(Self::Vllm),
-            "ollama" | "ollama-local" => Some(Self::Ollama),
-            _ => None,
-        }
-    }
+mod tui;
+pub use tui::*;
 
-    #[must_use]
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Deepseek => "deepseek",
-            Self::DeepseekCN => "deepseek-cn",
-            Self::NvidiaNim => "nvidia-nim",
-            Self::Openrouter => "openrouter",
-            Self::Novita => "novita",
-            Self::Fireworks => "fireworks",
-            Self::Sglang => "sglang",
-            Self::Vllm => "vllm",
-            Self::Ollama => "ollama",
-        }
-    }
+mod capacity;
+pub use capacity::*;
 
-    /// Human-friendly label for picker UIs / status chips.
-    #[must_use]
-    pub fn display_name(self) -> &'static str {
-        match self {
-            Self::Deepseek => "DeepSeek",
-            Self::DeepseekCN => "DeepSeek (中国)",
-            Self::NvidiaNim => "NVIDIA NIM",
-            Self::Openrouter => "OpenRouter",
-            Self::Novita => "Novita AI",
-            Self::Fireworks => "Fireworks AI",
-            Self::Sglang => "SGLang",
-            Self::Vllm => "vLLM",
-            Self::Ollama => "Ollama",
-        }
-    }
-
-    /// All providers, in the order shown in the picker.
-    #[must_use]
-    pub fn all() -> &'static [Self] {
-        &[
-            Self::Deepseek,
-            Self::DeepseekCN,
-            Self::NvidiaNim,
-            Self::Openrouter,
-            Self::Novita,
-            Self::Fireworks,
-            Self::Sglang,
-            Self::Vllm,
-            Self::Ollama,
-        ]
-    }
-}
-
-// ============================================================================
-// Provider Capability Matrix
-// ============================================================================
-
-/// Known capabilities for a provider + resolved-model combination.
-///
-/// Returned by [`provider_capability`] to describe what a given provider
-/// supports for the resolved model string.  All fields are derived from
-/// static knowledge (release docs, API guides) rather than live API probes.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
-pub struct ProviderCapability {
-    /// Canonical provider identifier.
-    pub provider: ApiProvider,
-    /// Resolved model identifier that will be sent in the API payload.
-    pub resolved_model: String,
-    /// Context window in tokens (the maximum input the model can accept).
-    pub context_window: u32,
-    /// Official maximum output tokens for this combo.
-    ///
-    /// This is model metadata for diagnostics and CI policy. Normal turns use
-    /// a separate, more conservative request cap in the engine.
-    pub max_output: u32,
-    /// Whether the provider+model supports thinking/reasoning mode.
-    pub thinking_supported: bool,
-    /// Whether the provider returns prompt-cache telemetry fields.
-    pub cache_telemetry_supported: bool,
-    /// Which request-payload dialect the provider uses.
-    pub request_payload_mode: RequestPayloadMode,
-}
-
-/// Which request-payload dialect the provider speaks.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
-pub enum RequestPayloadMode {
-    /// Standard OpenAI-compatible `/v1/chat/completions` payload.
-    ChatCompletions,
-}
-
-/// Resolve the provider capability for a given [`ApiProvider`] and resolved
-/// model string.
-///
-/// The `resolved_model` should be the final model identifier that will appear
-/// in the API payload (after normalization / provider-specific mapping).
-#[must_use]
-pub fn provider_capability(provider: ApiProvider, resolved_model: &str) -> ProviderCapability {
-    if matches!(provider, ApiProvider::Ollama) {
-        return ProviderCapability {
-            provider,
-            resolved_model: resolved_model.to_string(),
-            context_window: 8192,
-            max_output: 4096,
-            thinking_supported: false,
-            cache_telemetry_supported: false,
-            request_payload_mode: RequestPayloadMode::ChatCompletions,
-        };
-    }
-
-    let model_lower = resolved_model.to_ascii_lowercase();
-    let is_v4_pro = model_lower.contains("v4-pro") || model_lower == "deepseek-v4pro";
-    let is_v4_flash = model_lower.contains("v4-flash")
-        || model_lower == "deepseek-v4flash"
-        || model_lower == "deepseek-v4";
-
-    // Context window: V4-class models get 1M, everything else falls through
-    // to the model's own lookup or a default.
-    let context_window = if is_v4_pro || is_v4_flash {
-        crate::models::YUNPAT_V4_CONTEXT_WINDOW_TOKENS
-    } else {
-        crate::models::context_window_for_model(resolved_model)
-            .unwrap_or(crate::models::LEGACY_YUNPAT_CONTEXT_WINDOW_TOKENS)
-    };
-
-    // Max output tokens: official DeepSeek V4 API metadata lists 384K;
-    // runtime request caps remain separate and more conservative.
-    let max_output = if is_v4_pro || is_v4_flash {
-        384_000
-    } else {
-        4096
-    };
-
-    // Thinking support: V4 models support thinking on all providers, but
-    // only when the model name matches the V4 family.
-    let thinking_supported = is_v4_pro || is_v4_flash;
-
-    // Cache telemetry: returned only by DeepSeek-native and NVIDIA NIM endpoints.
-    let cache_telemetry_supported = matches!(
-        provider,
-        ApiProvider::Deepseek | ApiProvider::DeepseekCN | ApiProvider::NvidiaNim
-    );
-
-    // Request payload mode: all current providers use chat completions.
-    let request_payload_mode = RequestPayloadMode::ChatCompletions;
-
-    ProviderCapability {
-        provider,
-        resolved_model: resolved_model.to_string(),
-        context_window,
-        max_output,
-        thinking_supported,
-        cache_telemetry_supported,
-        request_payload_mode,
-    }
-}
-
-/// Canonicalize compact DeepSeek model aliases to stable IDs.
-///
-/// Already-valid model IDs pass through unchanged. Only the compact
-/// `v4pro`/`v4flash` spellings are rewritten to their hyphenated forms.
-#[must_use]
-pub fn canonical_model_name(model: &str) -> Option<&'static str> {
-    match model.trim().to_ascii_lowercase().as_str() {
-        "deepseek-v4pro" => Some("deepseek-v4-pro"),
-        "deepseek-v4flash" => Some("deepseek-v4-flash"),
-        _ => None,
-    }
-}
-
-/// Normalize a configured/runtime model name.
-///
-/// Trims whitespace, preserves caller-provided case for already-valid model
-/// IDs, and only canonicalizes compact aliases like `deepseek-v4pro`.
-/// Non-DeepSeek or malformed names return `None`; DeepSeek's `/v1/models`
-/// endpoint is the authority on valid model IDs.
-#[must_use]
-pub fn normalize_model_name(model: &str) -> Option<String> {
-    let trimmed = model.trim();
-    if trimmed.is_empty() {
-        return None;
-    }
-    if let Some(canonical) = canonical_model_name(trimmed) {
-        return Some(canonical.to_string());
-    }
-
-    let normalized = trimmed.to_ascii_lowercase();
-    if !normalized.starts_with("deepseek") && !normalized.contains("/deepseek") {
-        return None;
-    }
-
-    if trimmed
-        .chars()
-        .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.' | ':' | '/'))
-    {
-        return Some(trimmed.to_string());
-    }
-
-    None
-}
-
-// === Types ===
-
-/// Raw retry configuration loaded from config files.
-#[derive(Debug, Clone, Deserialize)]
-pub struct RetryConfig {
-    pub enabled: Option<bool>,
-    pub max_retries: Option<u32>,
-    pub initial_delay: Option<f64>,
-    pub max_delay: Option<f64>,
-    pub exponential_base: Option<f64>,
-}
-
-/// UI configuration loaded from config files.
-#[derive(Debug, Clone, Deserialize, Default)]
-pub struct TuiConfig {
-    pub alternate_screen: Option<String>,
-    pub mouse_capture: Option<bool>,
-    /// Timeout for startup terminal mode/probe calls in milliseconds.
-    /// Defaults to 500ms when omitted.
-    pub terminal_probe_timeout_ms: Option<u64>,
-    /// Ordered list of footer items the user wants visible. `None` (the field
-    /// missing from `config.toml`) means "use the built-in default order"; an
-    /// empty `Some(vec![])` means "show nothing in the footer".
-    ///
-    /// Edited interactively via `/statusline`; persisted to `tui.status_items`
-    /// in `config.toml (in data dir)`.
-    pub status_items: Option<Vec<StatusItem>>,
-    /// Emit OSC 8 hyperlink escape sequences around URLs in the transcript so
-    /// supporting terminals (iTerm2, Terminal.app 13+, Ghostty, Kitty,
-    /// WezTerm, Alacritty, recent gnome-terminal/konsole) make them
-    /// Cmd+click-openable. Terminals without OSC 8 support render the plain
-    /// label and ignore the escape. Defaults to `true`; set `false` for
-    /// terminals that misrender the sequence.
-    pub osc8_links: Option<bool>,
-    /// High-level notification trigger condition. When set, overrides the
-    /// `[notifications].threshold_secs` gate from the lower-level
-    /// `[notifications]` block:
-    ///
-    /// - `Always` — fire a turn-completion notification on every successful
-    ///   turn regardless of duration. The configured `[notifications].method`
-    ///   and `include_summary` flag are still respected.
-    /// - `Never` — suppress all turn-completion notifications.
-    /// - Unset (default) — fall back to the `[notifications]` defaults.
-    pub notification_condition: Option<NotificationCondition>,
-}
-
-/// High-level notification trigger override. See
-/// [`TuiConfig::notification_condition`].
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum NotificationCondition {
-    /// Notify on every successful turn (no duration threshold).
-    Always,
-    /// Suppress notifications entirely.
-    Never,
-}
-
-/// Notification delivery method (mirrors `tui::notifications::Method`).
-#[derive(Debug, Clone, Deserialize, Default, PartialEq, Eq)]
-#[serde(rename_all = "kebab-case")]
-pub enum NotificationMethod {
-    /// Auto-detect: OSC 9 for iTerm.app / Ghostty / WezTerm; BEL on
-    /// macOS / Linux otherwise; on Windows the fallback is `Off`
-    /// because BEL maps to the system error chime there (#583).
-    #[default]
-    Auto,
-    /// OSC 9 escape.
-    Osc9,
-    /// Plain BEL character.
-    Bel,
-    /// Disable notifications.
-    Off,
-}
-
-fn default_threshold_secs() -> u64 {
-    30
-}
-
-/// Desktop-notification configuration (OSC 9 / BEL on turn completion).
-#[derive(Debug, Clone, Deserialize, Default)]
-pub struct NotificationsConfig {
-    /// Delivery method: `auto` | `osc9` | `bel` | `off`. Default: `auto`.
-    /// `auto` resolves to OSC 9 in iTerm.app / Ghostty / WezTerm; on
-    /// macOS / Linux it falls back to BEL, and on Windows it falls
-    /// back to `Off` so the post-turn notification doesn't ring the
-    /// system error chime (#583).
-    #[serde(default)]
-    pub method: NotificationMethod,
-    /// Only notify when the turn took at least this many seconds. Default: 30.
-    #[serde(default = "default_threshold_secs")]
-    pub threshold_secs: u64,
-    /// Include a short summary (elapsed time + cost) in the notification body.
-    /// Default: `false`.
-    #[serde(default)]
-    pub include_summary: bool,
-}
+mod runtime;
+pub use runtime::*;
 
 fn default_snapshots_enabled() -> bool {
     true
@@ -581,6 +237,7 @@ impl StatusItem {
 /// with defaults applied, then passed directly to `with_retry` in the LLM
 /// client layer.
 #[derive(Debug, Clone)]
+
 pub struct RetryPolicy {
     pub enabled: bool,
     pub max_retries: u32,
@@ -831,161 +488,6 @@ pub struct Config {
     pub workshop: Option<crate::tools::large_output_router::WorkshopConfig>,
 }
 
-/// `[runtime_api]` table — knobs for the local HTTP/SSE daemon.
-#[derive(Debug, Clone, Deserialize, Default)]
-pub struct RuntimeApiConfig {
-    /// Additional CORS origins to allow on top of the built-in defaults
-    /// (`http://localhost:{3000,1420}`, `http://127.0.0.1:{3000,1420}`,
-    /// `tauri://localhost`). Useful when developing a UI against a non-default
-    /// dev server port (e.g. Vite's default `:5173`).
-    ///
-    /// Resolution order (highest priority first): `--cors-origin` CLI flag,
-    /// `DEEPSEEK_CORS_ORIGINS` env var (comma-separated), this field. Whalescale#255 / #561.
-    #[serde(default)]
-    pub cors_origins: Option<Vec<String>>,
-}
-
-/// `[skills]` table — knobs for the community-skill installer.
-#[derive(Debug, Clone, Deserialize, Default)]
-pub struct SkillsConfig {
-    /// Curated registry index. `/skill install <name>` looks up the spec here.
-    /// Defaults to [`crate::skills::install::DEFAULT_REGISTRY_URL`].
-    #[serde(default)]
-    pub registry_url: Option<String>,
-    /// Per-skill maximum *uncompressed* size in bytes. Tarballs that exceed
-    /// this limit are rejected during validation. Defaults to 5 MiB.
-    #[serde(default)]
-    pub max_install_size_bytes: Option<u64>,
-}
-/// `[network]` table — mirrors `yunpat_config::NetworkPolicyToml` so the live
-/// TUI runtime can construct a [`crate::network_policy::NetworkPolicy`]
-/// without reaching into the workspace config crate. See `config.example.toml`
-/// for documentation.
-#[derive(Debug, Clone, Deserialize)]
-pub struct NetworkPolicyToml {
-    /// Decision for hosts that are not in `allow` or `deny`. One of
-    /// `"allow" | "deny" | "prompt"`. Defaults to `"prompt"`.
-    #[serde(default = "default_network_decision")]
-    pub default: String,
-    /// Hosts that are always allowed. Subdomain rules: a leading dot
-    /// (`.example.com`) matches subdomains but not the apex.
-    #[serde(default)]
-    pub allow: Vec<String>,
-    /// Hosts that are always denied. Deny entries win over allow entries.
-    #[serde(default)]
-    pub deny: Vec<String>,
-    /// Whether to record one audit-log line per outbound network call.
-    #[serde(default = "default_network_audit")]
-    pub audit: bool,
-}
-
-fn default_network_decision() -> String {
-    "prompt".to_string()
-}
-
-fn default_network_audit() -> bool {
-    true
-}
-
-impl Default for NetworkPolicyToml {
-    fn default() -> Self {
-        Self {
-            default: default_network_decision(),
-            allow: Vec::new(),
-            deny: Vec::new(),
-            audit: default_network_audit(),
-        }
-    }
-}
-
-impl NetworkPolicyToml {
-    /// Build a runtime [`crate::network_policy::NetworkPolicy`] from the
-    /// on-disk schema.
-    #[must_use]
-    pub fn into_runtime(self) -> crate::network_policy::NetworkPolicy {
-        crate::network_policy::NetworkPolicy {
-            default: crate::network_policy::Decision::parse(&self.default).into(),
-            allow: self.allow,
-            deny: self.deny,
-            audit: self.audit,
-        }
-    }
-}
-
-/// `[lsp]` table — mirrors [`crate::lsp::LspConfig`]. Documented in
-/// `config.example.toml`. When omitted, defaults from `LspConfig::default()`
-/// apply (enabled, 5 s poll, 20 diagnostics/file, errors only, no overrides).
-#[derive(Debug, Clone, Deserialize, Default)]
-pub struct LspConfigToml {
-    /// Master switch. Defaults to `true`.
-    #[serde(default)]
-    pub enabled: Option<bool>,
-    /// How long to wait for the LSP server to publish diagnostics after a
-    /// `didOpen`/`didChange`. Defaults to 5000 ms.
-    #[serde(default)]
-    pub poll_after_edit_ms: Option<u64>,
-    /// Cap on diagnostics surfaced per file. Defaults to 20.
-    #[serde(default)]
-    pub max_diagnostics_per_file: Option<usize>,
-    /// Whether to surface warnings in addition to errors. Defaults to `false`.
-    #[serde(default)]
-    pub include_warnings: Option<bool>,
-    /// Optional override for the `Language -> [cmd, ...args]` table. Keys
-    /// are language slugs (`"rust"`, `"go"`, etc.).
-    #[serde(default)]
-    pub servers: Option<HashMap<String, Vec<String>>>,
-}
-
-impl LspConfigToml {
-    /// Build a runtime [`crate::lsp::LspConfig`] from the on-disk schema,
-    /// falling back to defaults for any unset fields.
-    #[must_use]
-    pub fn into_runtime(self) -> crate::lsp::LspConfig {
-        let defaults = crate::lsp::LspConfig::default();
-        crate::lsp::LspConfig {
-            enabled: self.enabled.unwrap_or(defaults.enabled),
-            poll_after_edit_ms: self
-                .poll_after_edit_ms
-                .unwrap_or(defaults.poll_after_edit_ms),
-            max_diagnostics_per_file: self
-                .max_diagnostics_per_file
-                .unwrap_or(defaults.max_diagnostics_per_file),
-            include_warnings: self.include_warnings.unwrap_or(defaults.include_warnings),
-            servers: self.servers.unwrap_or_default(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-pub struct ProviderConfig {
-    pub api_key: Option<String>,
-    pub base_url: Option<String>,
-    pub model: Option<String>,
-    pub http_headers: Option<HashMap<String, String>>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-pub struct ProvidersConfig {
-    #[serde(default)]
-    pub deepseek: ProviderConfig,
-    #[serde(default)]
-    pub yunpat_cn: ProviderConfig,
-    #[serde(default)]
-    pub nvidia_nim: ProviderConfig,
-    #[serde(default)]
-    pub openrouter: ProviderConfig,
-    #[serde(default)]
-    pub novita: ProviderConfig,
-    #[serde(default)]
-    pub fireworks: ProviderConfig,
-    #[serde(default)]
-    pub sglang: ProviderConfig,
-    #[serde(default)]
-    pub vllm: ProviderConfig,
-    #[serde(default)]
-    pub ollama: ProviderConfig,
-}
-
 #[derive(Debug, Clone, Deserialize, Default)]
 struct ConfigFile {
     #[serde(flatten)]
@@ -1134,25 +636,22 @@ impl Config {
 
     #[must_use]
     pub fn api_provider(&self) -> ApiProvider {
-        self.provider
-            .as_deref()
-            .and_then(ApiProvider::parse)
-            .unwrap_or_else(|| {
-                self.base_url
-                    .as_deref()
-                    .filter(|base| base.contains("integrate.api.nvidia.com"))
-                    .map(|_| ApiProvider::NvidiaNim)
-                    .or_else(|| {
-                        self.base_url
-                            .as_deref()
-                            .filter(|base| base.contains("api.deepseeki.com"))
-                            .map(|_| ApiProvider::DeepseekCN)
-                    })
-                    .unwrap_or(ApiProvider::Deepseek)
-            })
+        self.provider.as_deref().and_then(ApiProvider::parse).unwrap_or_else(|| {
+            self.base_url
+                .as_deref()
+                .filter(|base| base.contains("integrate.api.nvidia.com"))
+                .map(|_| ApiProvider::NvidiaNim)
+                .or_else(|| {
+                    self.base_url
+                        .as_deref()
+                        .filter(|base| base.contains("api.deepseeki.com"))
+                        .map(|_| ApiProvider::DeepseekCN)
+                })
+                .unwrap_or(ApiProvider::Deepseek)
+        })
     }
 
-    pub(crate) fn provider_config_for(&self, provider: ApiProvider) -> Option<&ProviderConfig> {
+    pub fn provider_config_for(&self, provider: ApiProvider) -> Option<&ProviderConfig> {
         let providers = self.providers.as_ref()?;
         Some(match provider {
             ApiProvider::Deepseek => &providers.deepseek,
@@ -1174,9 +673,8 @@ impl Config {
     #[must_use]
     pub fn http_headers(&self) -> HashMap<String, String> {
         let mut headers = self.http_headers.clone().unwrap_or_default();
-        if let Some(provider_headers) = self
-            .provider_config()
-            .and_then(|provider| provider.http_headers.as_ref())
+        if let Some(provider_headers) =
+            self.provider_config().and_then(|provider| provider.http_headers.as_ref())
         {
             headers.extend(provider_headers.clone());
         }
@@ -1187,10 +685,7 @@ impl Config {
     #[must_use]
     pub fn default_model(&self) -> String {
         let provider = self.api_provider();
-        if let Some(model) = self
-            .provider_config()
-            .and_then(|provider| provider.model.as_deref())
-        {
+        if let Some(model) = self.provider_config().and_then(|provider| provider.model.as_deref()) {
             if matches!(provider, ApiProvider::Ollama) {
                 return model.trim().to_string();
             }
@@ -1301,9 +796,8 @@ impl Config {
 
         // 1. Config file (provider-scoped slot). This intentionally wins
         // over ambient env so `deepseek auth set` fixes stale shell exports.
-        if let Some(configured) = self
-            .provider_config_for(provider)
-            .and_then(|provider| provider.api_key.clone())
+        if let Some(configured) =
+            self.provider_config_for(provider).and_then(|provider| provider.api_key.clone())
             && !configured.trim().is_empty()
         {
             return Ok(configured);
@@ -1417,10 +911,7 @@ impl Config {
     /// `DEEPSEEK_MEMORY=on` is set in the environment.
     #[must_use]
     pub fn memory_enabled(&self) -> bool {
-        self.memory
-            .as_ref()
-            .and_then(|m| m.enabled)
-            .unwrap_or(false)
+        self.memory.as_ref().and_then(|m| m.enabled).unwrap_or(false)
     }
 
     /// Return whether shell execution is allowed.
@@ -1441,9 +932,7 @@ impl Config {
             return max.clamp(1, MAX_SUBAGENTS);
         }
         // Fall back to top-level max_subagents
-        self.max_subagents
-            .unwrap_or(DEFAULT_MAX_SUBAGENTS)
-            .clamp(1, MAX_SUBAGENTS)
+        self.max_subagents.unwrap_or(DEFAULT_MAX_SUBAGENTS).clamp(1, MAX_SUBAGENTS)
     }
 
     /// Raw sub-agent model override map. Values are validated at spawn time
@@ -1650,9 +1139,7 @@ pub(crate) fn save_workspace_trust(workspace: &Path) -> Result<PathBuf> {
         toml::Value::Table(toml::value::Table::new())
     };
 
-    let root = doc
-        .as_table_mut()
-        .context("Config root must be a TOML table.")?;
+    let root = doc.as_table_mut().context("Config root must be a TOML table.")?;
     let projects = root
         .entry("projects".to_string())
         .or_insert_with(|| toml::Value::Table(toml::value::Table::new()))
@@ -1691,9 +1178,7 @@ fn is_trusted_level(level: &str) -> bool {
 }
 
 fn workspace_config_key(workspace: &Path) -> String {
-    canonicalize_or_keep(workspace)
-        .to_string_lossy()
-        .into_owned()
+    canonicalize_or_keep(workspace).to_string_lossy().into_owned()
 }
 
 fn canonicalize_or_keep(path: &Path) -> PathBuf {
@@ -1875,41 +1360,26 @@ fn apply_env_overrides(config: &mut Config) {
         && let Ok(value) = std::env::var("NOVITA_BASE_URL")
         && !value.trim().is_empty()
     {
-        config
-            .providers
-            .get_or_insert_with(ProvidersConfig::default)
-            .novita
-            .base_url = Some(value);
+        config.providers.get_or_insert_with(ProvidersConfig::default).novita.base_url = Some(value);
     }
     if matches!(config.api_provider(), ApiProvider::Fireworks)
         && let Ok(value) = std::env::var("FIREWORKS_BASE_URL")
         && !value.trim().is_empty()
     {
-        config
-            .providers
-            .get_or_insert_with(ProvidersConfig::default)
-            .fireworks
-            .base_url = Some(value);
+        config.providers.get_or_insert_with(ProvidersConfig::default).fireworks.base_url =
+            Some(value);
     }
     if matches!(config.api_provider(), ApiProvider::Sglang)
         && let Ok(value) = std::env::var("SGLANG_BASE_URL")
         && !value.trim().is_empty()
     {
-        config
-            .providers
-            .get_or_insert_with(ProvidersConfig::default)
-            .sglang
-            .base_url = Some(value);
+        config.providers.get_or_insert_with(ProvidersConfig::default).sglang.base_url = Some(value);
     }
     if matches!(config.api_provider(), ApiProvider::Vllm)
         && let Ok(value) = std::env::var("VLLM_BASE_URL")
         && !value.trim().is_empty()
     {
-        config
-            .providers
-            .get_or_insert_with(ProvidersConfig::default)
-            .vllm
-            .base_url = Some(value);
+        config.providers.get_or_insert_with(ProvidersConfig::default).vllm.base_url = Some(value);
     }
     if let Ok(value) = std::env::var("DEEPSEEK_HTTP_HEADERS")
         && let Ok(headers) = parse_http_headers(&value)
@@ -1920,9 +1390,7 @@ fn apply_env_overrides(config: &mut Config) {
         config.http_headers = Some(root_headers);
 
         let provider = config.api_provider();
-        let providers = config
-            .providers
-            .get_or_insert_with(ProvidersConfig::default);
+        let providers = config.providers.get_or_insert_with(ProvidersConfig::default);
         let entry = match provider {
             ApiProvider::Deepseek => &mut providers.deepseek,
             ApiProvider::DeepseekCN => &mut providers.yunpat_cn,
@@ -1942,11 +1410,7 @@ fn apply_env_overrides(config: &mut Config) {
         && let Ok(value) = std::env::var("OLLAMA_BASE_URL")
         && !value.trim().is_empty()
     {
-        config
-            .providers
-            .get_or_insert_with(ProvidersConfig::default)
-            .ollama
-            .base_url = Some(value);
+        config.providers.get_or_insert_with(ProvidersConfig::default).ollama.base_url = Some(value);
     }
     if matches!(config.api_provider(), ApiProvider::Sglang)
         && let Ok(value) = std::env::var("SGLANG_MODEL")
@@ -1990,10 +1454,7 @@ fn apply_env_overrides(config: &mut Config) {
             value.trim().to_ascii_lowercase().as_str(),
             "1" | "on" | "true" | "yes" | "y" | "enabled"
         );
-        config
-            .memory
-            .get_or_insert_with(MemoryConfig::default)
-            .enabled = Some(on);
+        config.memory.get_or_insert_with(MemoryConfig::default).enabled = Some(on);
     }
     if let Ok(value) = std::env::var("DEEPSEEK_ALLOW_SHELL") {
         config.allow_shell = Some(value == "1" || value.eq_ignore_ascii_case("true"));
@@ -2306,9 +1767,7 @@ fn merge_config(base: Config, override_cfg: Config) -> Config {
         sandbox_backend: override_cfg.sandbox_backend.or(base.sandbox_backend),
         sandbox_url: override_cfg.sandbox_url.or(base.sandbox_url),
         sandbox_api_key: override_cfg.sandbox_api_key.or(base.sandbox_api_key),
-        managed_config_path: override_cfg
-            .managed_config_path
-            .or(base.managed_config_path),
+        managed_config_path: override_cfg.managed_config_path.or(base.managed_config_path),
         requirements_path: override_cfg.requirements_path.or(base.requirements_path),
         max_subagents: override_cfg.max_subagents.or(base.max_subagents),
         retry: override_cfg.retry.or(base.retry),
@@ -2329,22 +1788,10 @@ fn merge_config(base: Config, override_cfg: Config) -> Config {
                 .context
                 .verbatim_window_turns
                 .or(base.context.verbatim_window_turns),
-            l1_threshold: override_cfg
-                .context
-                .l1_threshold
-                .or(base.context.l1_threshold),
-            l2_threshold: override_cfg
-                .context
-                .l2_threshold
-                .or(base.context.l2_threshold),
-            l3_threshold: override_cfg
-                .context
-                .l3_threshold
-                .or(base.context.l3_threshold),
-            cycle_threshold: override_cfg
-                .context
-                .cycle_threshold
-                .or(base.context.cycle_threshold),
+            l1_threshold: override_cfg.context.l1_threshold.or(base.context.l1_threshold),
+            l2_threshold: override_cfg.context.l2_threshold.or(base.context.l2_threshold),
+            l3_threshold: override_cfg.context.l3_threshold.or(base.context.l3_threshold),
+            cycle_threshold: override_cfg.context.cycle_threshold.or(base.context.cycle_threshold),
             seam_model: override_cfg.context.seam_model.or(base.context.seam_model),
             per_model: override_cfg.context.per_model.or(base.context.per_model),
         },
@@ -2447,11 +1894,7 @@ fn apply_requirements(config: &mut Config) -> Result<()> {
         && let Some(mode) = config.sandbox_mode.as_ref()
     {
         let mode = mode.to_ascii_lowercase();
-        if !requirements
-            .allowed_sandbox_modes
-            .iter()
-            .any(|m| m.eq_ignore_ascii_case(&mode))
-        {
+        if !requirements.allowed_sandbox_modes.iter().any(|m| m.eq_ignore_ascii_case(&mode)) {
             anyhow::bail!(
                 "sandbox_mode '{mode}' is not allowed by requirements ({})",
                 requirements.allowed_sandbox_modes.join(", ")
@@ -2903,9 +2346,7 @@ pub fn save_api_key_for(provider: ApiProvider, api_key: &str) -> Result<PathBuf>
         toml::Value::Table(toml::value::Table::new())
     };
 
-    let table = doc
-        .as_table_mut()
-        .context("Config root must be a TOML table.")?;
+    let table = doc.as_table_mut().context("Config root must be a TOML table.")?;
     let providers = table
         .entry("providers".to_string())
         .or_insert_with(|| toml::Value::Table(toml::value::Table::new()))
@@ -3253,10 +2694,7 @@ mod tests {
         // pins the boring v0.8.8 setup path and avoids platform
         // credential prompts during onboarding.
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-test-{}-{}",
             std::process::id(),
@@ -3289,10 +2727,7 @@ mod tests {
     #[test]
     fn ensure_config_file_exists_creates_first_run_template() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-first-run-config-{}-{}",
             std::process::id(),
@@ -3315,10 +2750,7 @@ mod tests {
     #[test]
     fn workspace_trust_round_trips_through_global_config() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-workspace-trust-{}-{}",
             std::process::id(),
@@ -3351,10 +2783,7 @@ mod tests {
     #[test]
     fn workspace_trust_reads_existing_projects_table() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-existing-project-trust-{}-{}",
             std::process::id(),
@@ -3370,9 +2799,7 @@ mod tests {
             &config_path,
             format!(
                 "[projects.\"{}\"]\ntrust_level = \"trusted\"\n",
-                workspace_config_key(&workspace)
-                    .replace('\\', "\\\\")
-                    .replace('"', "\\\"")
+                workspace_config_key(&workspace).replace('\\', "\\\\").replace('"', "\\\"")
             ),
         )?;
 
@@ -3452,10 +2879,7 @@ mod tests {
     #[test]
     fn clear_api_key_strips_root_and_provider_scoped_keys() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-clear-{}-{}",
             std::process::id(),
@@ -3508,10 +2932,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn yunpat_api_key_prefers_explicit_in_memory_override() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-override-{}-{}",
             std::process::id(),
@@ -3524,9 +2945,7 @@ api_key = "old-openrouter-key"
             api_key: Some("freshly-typed-key".to_string()),
             ..Config::default()
         };
-        let resolved = config
-            .yunpat_api_key()
-            .expect("explicit override must resolve");
+        let resolved = config.yunpat_api_key().expect("explicit override must resolve");
         assert_eq!(resolved, "freshly-typed-key");
         Ok(())
     }
@@ -3534,10 +2953,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn yunpat_api_key_prefers_saved_config_over_stale_env() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-config-over-env-{}-{}",
             std::process::id(),
@@ -3589,10 +3005,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn yunpat_api_key_ignores_sentinel_placeholder() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-sentinel-{}-{}",
             std::process::id(),
@@ -3617,10 +3030,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn test_tilde_expansion_in_paths() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-tilde-test-{}-{}",
             std::process::id(),
@@ -3646,10 +3056,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn test_load_uses_tilde_expanded_yunpat_config_path() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-load-tilde-test-{}-{}",
             std::process::id(),
@@ -3675,10 +3082,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn test_load_falls_back_to_home_config_when_env_path_missing() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-load-fallback-test-{}-{}",
             std::process::id(),
@@ -3734,10 +3138,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn test_save_api_key_doesnt_match_similar_keys() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-api-key-test-{}-{}",
             std::process::id(),
@@ -3781,10 +3182,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn apply_env_overrides_ignores_empty_api_key() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-empty-key-{}-{}",
             std::process::id(),
@@ -3814,10 +3212,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn apply_env_overrides_does_not_copy_api_key_into_config() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-env-key-not-config-{}-{}",
             std::process::id(),
@@ -3920,11 +3315,7 @@ api_key = "old-openrouter-key"
         assert_eq!(config.context.l1_threshold.unwrap_or(192_000), 192_000);
         assert_eq!(config.context.cycle_threshold.unwrap_or(768_000), 768_000);
         assert_eq!(
-            config
-                .context
-                .seam_model
-                .as_deref()
-                .unwrap_or("deepseek-v4-flash"),
+            config.context.seam_model.as_deref().unwrap_or("deepseek-v4-flash"),
             "deepseek-v4-flash"
         );
     }
@@ -3991,10 +3382,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn yunpat_model_env_overrides_default_text_model() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-model-env-test-{}-{}",
             std::process::id(),
@@ -4020,10 +3408,7 @@ api_key = "old-openrouter-key"
     #[test]
     fn http_headers_load_from_root_config() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-http-headers-root-{}-{}",
             std::process::id(),
@@ -4044,10 +3429,7 @@ http_headers = { "X-Model-Provider-Id" = "tongyi" }
 
         let config = Config::load(None, None)?;
         assert_eq!(
-            config
-                .http_headers()
-                .get("X-Model-Provider-Id")
-                .map(String::as_str),
+            config.http_headers().get("X-Model-Provider-Id").map(String::as_str),
             Some("tongyi")
         );
         Ok(())
@@ -4084,10 +3466,7 @@ http_headers = { "X-Model-Provider-Id" = "tongyi" }
     #[test]
     fn http_headers_env_overrides_config() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-http-headers-env-{}-{}",
             std::process::id(),
@@ -4112,10 +3491,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
 
         let config = Config::load(None, None)?;
         assert_eq!(
-            config
-                .http_headers()
-                .get("X-Model-Provider-Id")
-                .map(String::as_str),
+            config.http_headers().get("X-Model-Provider-Id").map(String::as_str),
             Some("from-env")
         );
         Ok(())
@@ -4138,10 +3514,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn nvidia_nim_provider_normalizes_yunpat_v4_pro_alias() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-nim-model-alias-test-{}-{}",
             std::process::id(),
@@ -4182,10 +3555,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn nvidia_nim_env_overrides_provider_and_credentials() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-nim-env-test-{}-{}",
             std::process::id(),
@@ -4211,10 +3581,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn nvidia_nim_env_accepts_short_nim_base_url_alias() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-nim-base-url-alias-test-{}-{}",
             std::process::id(),
@@ -4238,10 +3605,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn nvidia_nim_env_accepts_facade_base_url_forwarding() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-nim-forwarded-base-url-test-{}-{}",
             std::process::id(),
@@ -4265,10 +3629,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn openrouter_provider_uses_canonical_defaults() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-or-defaults-{}-{}",
             std::process::id(),
@@ -4291,10 +3652,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn novita_provider_uses_canonical_defaults() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-novita-defaults-{}-{}",
             std::process::id(),
@@ -4317,10 +3675,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn fireworks_provider_uses_canonical_defaults() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-fireworks-defaults-{}-{}",
             std::process::id(),
@@ -4343,10 +3698,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn sglang_provider_works_without_api_key() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-sglang-defaults-{}-{}",
             std::process::id(),
@@ -4371,10 +3723,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn ollama_provider_uses_local_defaults_without_api_key() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-ollama-defaults-{}-{}",
             std::process::id(),
@@ -4399,10 +3748,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     #[test]
     fn ollama_model_is_passed_through_verbatim() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-ollama-model-test-{}-{}",
             std::process::id(),
@@ -4433,10 +3779,7 @@ model = "qwen2.5-coder:7b"
     #[test]
     fn ollama_env_overrides_base_url_and_model() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-ollama-env-test-{}-{}",
             std::process::id(),
@@ -4462,10 +3805,7 @@ model = "qwen2.5-coder:7b"
     #[test]
     fn openrouter_env_api_key_resolves_via_yunpat_api_key() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-or-env-key-{}-{}",
             std::process::id(),
@@ -4489,10 +3829,7 @@ model = "qwen2.5-coder:7b"
     #[test]
     fn novita_env_api_key_resolves_via_yunpat_api_key() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-novita-env-key-{}-{}",
             std::process::id(),
@@ -4516,10 +3853,7 @@ model = "qwen2.5-coder:7b"
     #[test]
     fn openrouter_base_url_env_overrides_default() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-or-base-url-{}-{}",
             std::process::id(),
@@ -4543,10 +3877,7 @@ model = "qwen2.5-coder:7b"
     #[test]
     fn openrouter_reads_provider_table_from_config_file() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-or-table-{}-{}",
             std::process::id(),
@@ -4577,10 +3908,7 @@ base_url = "https://or-table.example/v1"
     #[test]
     fn novita_reads_provider_table_from_config_file() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-novita-table-{}-{}",
             std::process::id(),
@@ -4610,10 +3938,7 @@ api_key = "novita-table-key"
     #[test]
     fn has_api_key_for_detects_env_and_config_per_provider() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-has-key-{}-{}",
             std::process::id(),
@@ -4655,10 +3980,7 @@ api_key = "novita-table-key"
     #[test]
     fn has_api_key_for_uses_yunpat_cn_provider_table() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-has-key-cn-{}-{}",
             std::process::id(),
@@ -4681,10 +4003,7 @@ api_key = "novita-table-key"
     #[test]
     fn save_api_key_for_openrouter_writes_provider_table() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-save-key-or-{}-{}",
             std::process::id(),
@@ -4750,10 +4069,7 @@ api_key = "novita-table-key"
     #[test]
     fn save_api_key_for_yunpat_cn_uses_root_yunpat_storage() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-save-key-cn-{}-{}",
             std::process::id(),
@@ -4776,10 +4092,7 @@ api_key = "novita-table-key"
     #[test]
     fn nvidia_nim_reads_facade_provider_table() -> Result<()> {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-nim-provider-table-test-{}-{}",
             std::process::id(),

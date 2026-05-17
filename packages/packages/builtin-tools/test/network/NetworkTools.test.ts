@@ -1,12 +1,41 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { WebFetchTool, WebSearchTool } from '../../src/network/NetworkTools.js'
+import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
-const mockContext = {
-  registry: {} as any,
-  llm: {} as any,
-  memory: {} as any,
-  eventBus: {} as any,
+function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+  return {
+    registry: {
+      register: vi.fn(),
+      unregister: vi.fn(),
+      get: vi.fn().mockReturnValue(undefined),
+      call: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockReturnValue([]),
+    },
+    llm: {
+      chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    },
+    memory: {
+      get: vi.fn().mockResolvedValue(undefined),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      has: vi.fn().mockResolvedValue(false),
+      getAll: vi.fn().mockResolvedValue({}),
+      setAll: vi.fn().mockResolvedValue(undefined),
+      clear: vi.fn().mockResolvedValue(undefined),
+      search: vi.fn().mockResolvedValue([]),
+    },
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      unsubscribe: vi.fn(),
+      request: vi.fn().mockResolvedValue(undefined),
+    },
+  }
 }
+
+const mockContext = createMockContext()
 
 describe('NetworkTools', () => {
   beforeEach(() => {
@@ -22,7 +51,7 @@ describe('NetworkTools', () => {
         text: async () => '<html>test</html>',
       }
 
-      global.fetch = vi.fn().mockResolvedValue(mockResponse as any)
+      global.fetch = vi.fn().mockResolvedValue(mockResponse as unknown as Response)
 
       const tool = new WebFetchTool()
       const result = await tool.execute({ url: 'https://example.com' }, mockContext)
@@ -41,7 +70,7 @@ describe('NetworkTools', () => {
         text: async () => '{}',
       }
 
-      global.fetch = vi.fn().mockResolvedValue(mockResponse as any)
+      global.fetch = vi.fn().mockResolvedValue(mockResponse as unknown as Response)
 
       const tool = new WebFetchTool()
       await tool.execute(
@@ -96,7 +125,7 @@ describe('NetworkTools', () => {
         }),
       }
 
-      global.fetch = vi.fn().mockResolvedValue(mockResponse as any)
+      global.fetch = vi.fn().mockResolvedValue(mockResponse as unknown as Response)
 
       const tool = new WebSearchTool()
       const result = await tool.execute({ query: 'test query' }, mockContext)
@@ -111,7 +140,7 @@ describe('NetworkTools', () => {
         json: async () => ({ RelatedTopics: [] }),
       }
 
-      global.fetch = vi.fn().mockResolvedValue(mockResponse as any)
+      global.fetch = vi.fn().mockResolvedValue(mockResponse as unknown as Response)
 
       const tool = new WebSearchTool()
       const result = await tool.execute({ query: 'test' }, mockContext)

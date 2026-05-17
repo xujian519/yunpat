@@ -10,9 +10,9 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     prelude::Widget,
-    style::{Style, Stylize},
+    style::{Style},
     text::{Line, Span},
-    widgets::{Block, Paragraph, Wrap},
+    widgets::{Block, Borders, Paragraph, Wrap},
 };
 
 use crate::palette;
@@ -37,11 +37,17 @@ pub fn render_sidebar(f: &mut Frame, area: Rect, app: &App) {
     match app.sidebar.focus {
         SidebarFocus::Auto => render_sidebar_auto(f, area, app),
         SidebarFocus::Plan => render_sidebar_plan(f, area, app),
+        SidebarFocus::Patent => render_sidebar_patent(f, area, app),
         SidebarFocus::Todos => render_sidebar_todos(f, area, app),
         SidebarFocus::Tasks => render_sidebar_tasks(f, area, app),
         SidebarFocus::Agents => render_sidebar_subagents(f, area, app),
         SidebarFocus::Context => render_context_panel(f, area, app),
     }
+}
+
+fn render_sidebar_patent(f: &mut Frame, area: Rect, app: &App) {
+    let widget = crate::tui::widgets::patent_workflow::PatentWorkflowWidget::new(&app.patent);
+    widget.render(f, area);
 }
 
 /// Build the Auto-mode panel stack. Empty panels collapse to zero height so
@@ -53,12 +59,14 @@ fn render_sidebar_auto(f: &mut Frame, area: Rect, app: &App) {
     #[derive(Clone, Copy)]
     enum Panel {
         Plan,
+        Patent,
         Todos,
         Tasks,
         Agents,
         Context,
     }
 
+    let patent_empty = !app.patent.is_active;
     let todos_empty = app
         .todos
         .try_lock()
@@ -70,8 +78,11 @@ fn render_sidebar_auto(f: &mut Frame, area: Rect, app: &App) {
         && active_fanout_counts(app).is_none()
         && !foreground_rlm_running(app);
 
-    let mut visible: Vec<Panel> = Vec::with_capacity(5);
+    let mut visible: Vec<Panel> = Vec::with_capacity(6);
     visible.push(Panel::Plan);
+    if !patent_empty {
+        visible.push(Panel::Patent);
+    }
     if !todos_empty {
         visible.push(Panel::Todos);
     }
@@ -99,11 +110,19 @@ fn render_sidebar_auto(f: &mut Frame, area: Rect, app: &App) {
             Constraint::Percentage(25),
             Constraint::Min(6),
         ],
+        5 => vec![
+            Constraint::Percentage(20),
+            Constraint::Percentage(20),
+            Constraint::Percentage(20),
+            Constraint::Percentage(20),
+            Constraint::Min(6),
+        ],
         _ => vec![
-            Constraint::Percentage(20),
-            Constraint::Percentage(20),
-            Constraint::Percentage(20),
-            Constraint::Percentage(20),
+            Constraint::Percentage(16),
+            Constraint::Percentage(16),
+            Constraint::Percentage(16),
+            Constraint::Percentage(16),
+            Constraint::Percentage(16),
             Constraint::Min(6),
         ],
     };
@@ -116,6 +135,7 @@ fn render_sidebar_auto(f: &mut Frame, area: Rect, app: &App) {
     for (panel, rect) in visible.iter().zip(sections.iter()) {
         match panel {
             Panel::Plan => render_sidebar_plan(f, *rect, app),
+            Panel::Patent => render_sidebar_patent(f, *rect, app),
             Panel::Todos => render_sidebar_todos(f, *rect, app),
             Panel::Tasks => render_sidebar_tasks(f, *rect, app),
             Panel::Agents => render_sidebar_subagents(f, *rect, app),
@@ -366,11 +386,7 @@ fn render_sidebar_tasks(f: &mut Frame, area: Rect, app: &App) {
     let mut lines: Vec<Line<'static>> = Vec::with_capacity(usize::from(area.height).max(4));
 
     if let Some(turn_id) = app.runtime_turn_id.as_ref() {
-        let status = app
-            .runtime_turn_status
-            .as_deref()
-            .unwrap_or("unknown")
-            .to_string();
+        let status = app.runtime_turn_status.as_deref().unwrap_or("unknown").to_string();
         lines.push(Line::from(Span::styled(
             truncate_line_to_width(
                 &format!("turn {} ({status})", truncate_line_to_width(turn_id, 12)),
@@ -386,11 +402,7 @@ fn render_sidebar_tasks(f: &mut Frame, area: Rect, app: &App) {
             Style::default().fg(palette::TEXT_MUTED),
         )));
     } else {
-        let running = app
-            .task_panel
-            .iter()
-            .filter(|task| task.status == "running")
-            .count();
+        let running = app.task_panel.iter().filter(|task| task.status == "running").count();
         lines.push(Line::from(vec![
             Span::styled(
                 if running == app.task_panel.len() {
@@ -462,12 +474,8 @@ fn render_sidebar_subagents(f: &mut Frame, area: Rect, app: &App) {
     // FanoutCard now carries the live action tree and dot-grid. The sidebar
     // shows just count + role-mix so the user can scan parallel work at a
     // glance and scroll to the matching transcript card for detail.
-    let cached_ids: std::collections::HashSet<&str> = app
-        .subagent
-        .cache
-        .iter()
-        .map(|agent| agent.agent_id.as_str())
-        .collect();
+    let cached_ids: std::collections::HashSet<&str> =
+        app.subagent.cache.iter().map(|agent| agent.agent_id.as_str()).collect();
     let progress_only_count = app
         .subagent
         .progress
@@ -485,8 +493,7 @@ fn render_sidebar_subagents(f: &mut Frame, area: Rect, app: &App) {
             .cache
             .iter()
             .fold(std::collections::BTreeMap::new(), |mut acc, agent| {
-                *acc.entry(agent.agent_type.as_str().to_string())
-                    .or_insert(0) += 1;
+                *acc.entry(agent.agent_type.as_str().to_string()).or_insert(0) += 1;
                 acc
             });
     let (fanout_running, fanout_total) = active_fanout_counts(app)
@@ -774,13 +781,19 @@ fn render_sidebar_section(f: &mut Frame, area: Rect, title: &str, lines: Vec<Lin
             lines
         };
 
+    let borders = if matches!(theme.variant, crate::yunpat_theme::Variant::Light) {
+        Borders::TOP | Borders::BOTTOM
+    } else {
+        theme.section_borders
+    };
+
     let section = Paragraph::new(lines).wrap(Wrap { trim: true }).block(
         Block::default()
             .title(Line::from(vec![Span::styled(
                 format!(" {display_title} "),
                 Style::default().fg(theme.section_title_color).bold(),
             )]))
-            .borders(theme.section_borders)
+            .borders(borders)
             .border_type(theme.section_border_type)
             .border_style(Style::default().fg(theme.section_border_color))
             .style(Style::default().bg(theme.section_bg))
@@ -798,12 +811,7 @@ mod tests {
     fn lines_to_text(lines: &[Line<'static>]) -> Vec<String> {
         lines
             .iter()
-            .map(|line| {
-                line.spans
-                    .iter()
-                    .map(|s| s.content.as_ref())
-                    .collect::<String>()
-            })
+            .map(|line| line.spans.iter().map(|s| s.content.as_ref()).collect::<String>())
             .collect()
     }
 
@@ -937,11 +945,7 @@ mod tests {
             role_counts,
         };
         let lines = subagent_navigator_lines(&summary, 16);
-        let role_line: &str = lines[1]
-            .spans
-            .first()
-            .map(|s| s.content.as_ref())
-            .unwrap_or("");
+        let role_line: &str = lines[1].spans.first().map(|s| s.content.as_ref()).unwrap_or("");
         assert!(
             role_line.chars().count() <= 16,
             "role line {role_line:?} exceeded content_width"
@@ -958,8 +962,7 @@ mod tests {
 
         assert!(!text[0].contains("No agents"), "header: {:?}", text);
         assert!(
-            text.iter()
-                .any(|line| line.contains("RLM foreground work active")),
+            text.iter().any(|line| line.contains("RLM foreground work active")),
             "RLM work must be visible in Agents panel: {text:?}"
         );
     }

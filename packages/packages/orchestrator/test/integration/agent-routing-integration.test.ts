@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { OrchestratorAgent } from '../../src/OrchestratorAgent.js'
 import type { OrchestratorAgentConfig } from '../../src/types/index.js'
+import type { LLMAdapter, IEventBus } from '@yunpat/core'
 
 // Mock LLM Adapter for professional agents
 const mockLLMAdapter = {
@@ -19,7 +20,9 @@ const mockLLMAdapter = {
       content: 'Mock response',
     },
   })),
-}
+  chatStream: vi.fn(),
+  embed: vi.fn(),
+} as unknown as LLMAdapter
 
 // Mock EventBus
 const mockEventBus = {
@@ -27,7 +30,9 @@ const mockEventBus = {
   on: vi.fn(),
   publish: vi.fn(),
   subscribe: vi.fn(),
-}
+  unsubscribe: vi.fn(),
+  request: vi.fn(),
+} as unknown as IEventBus
 
 // Mock Memory
 const mockMemory = {
@@ -54,7 +59,7 @@ describe('专业层Agent路由集成测试', () => {
         apiKey: 'test-key',
         maxTokens: 4096,
         temperature: 0.7,
-        adapter: mockLLMAdapter as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        adapter: mockLLMAdapter,
       },
       intentConfig: {
         confidenceThreshold: 0.7,
@@ -75,7 +80,7 @@ describe('专业层Agent路由集成测试', () => {
         patentAnalyzer: true,
         patentSearch: true,
       },
-      eventBus: mockEventBus as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      eventBus: mockEventBus,
       memory: mockMemory,
       tools: mockTools,
     }

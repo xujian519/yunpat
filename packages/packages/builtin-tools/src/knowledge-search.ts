@@ -85,7 +85,7 @@ export class KnowledgeSearchTool extends EnhancedBaseTool<
   readonly metadata = {
     name: 'knowledge_search',
     description: '从专利知识库中检索相关卡片和文档',
-    category: 'knowledge' as any,
+    category: ToolCategory.SEARCH,
     isConcurrencySafe: true,
     inputSchema: z.object({
       query: z.string().describe('检索查询（关键词或问题）'),
@@ -412,7 +412,7 @@ export class KnowledgeIndexBuilderTool extends EnhancedBaseTool<
   readonly metadata = {
     name: 'knowledge_index_builder',
     description: '构建或更新专利知识库索引',
-    category: 'knowledge' as any,
+    category: ToolCategory.SEARCH,
     isConcurrencySafe: false,
     inputSchema: z.object({
       forceRebuild: z.boolean().optional().default(false).describe('是否强制重建索引'),

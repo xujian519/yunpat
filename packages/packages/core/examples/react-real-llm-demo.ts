@@ -13,9 +13,9 @@ import { createDeepSeekModel, NativeLLMAdapter } from '../src/llm/NativeLLMAdapt
 import { EnhancedToolRegistry } from '../src/tools/EnhancedToolRegistry.js'
 import { EventBus } from '../src/eventbus/EventBus.js'
 import { ToolCategory } from '../src/tools/types.js'
-import { z } from 'zod'
 import type { ToolContext, EnhancedTool } from '../src/tools/types.js'
-import type { MemoryStore } from '../src/lifecycle/Lifecycle.js'
+import type { MemoryStore, ToolRegistry, LLMAdapter } from '../src/lifecycle/Lifecycle.js'
+import { z } from 'zod'
 
 // ============== 工具定义 ==============
 
@@ -432,8 +432,8 @@ ${availableTools.map((t: any) => `- ${t.name}: ${t.description}`).join('\n')}
 
     // 构建工具上下文
     const context: ToolContext = {
-      registry: this.toolRegistry as any,
-      llm: this.llm as any,
+      registry: this.toolRegistry as unknown as ToolRegistry,
+      llm: this.llm as unknown as LLMAdapter,
       memory: createMockMemoryStore(),
       eventBus: new EventBus(),
     }

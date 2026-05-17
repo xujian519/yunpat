@@ -322,9 +322,7 @@ async fn fetch_quote_endpoint(
         AttemptFailure::upstream(QUOTE_SOURCE, "response missing regularMarketPrice")
     })?;
     let previous_close = quote.regular_market_previous_close;
-    let change = quote
-        .regular_market_change
-        .or_else(|| compute_change(price, previous_close));
+    let change = quote.regular_market_change.or_else(|| compute_change(price, previous_close));
     let change_percent = quote
         .regular_market_change_percent
         .or_else(|| compute_change_percent(price, previous_close));
@@ -363,14 +361,9 @@ async fn fetch_chart_endpoint(
         let description = error
             .description
             .unwrap_or_else(|| "chart endpoint returned an error".to_string());
-        if error
-            .code
-            .as_deref()
-            .is_some_and(|code| code.eq_ignore_ascii_case("Not Found"))
+        if error.code.as_deref().is_some_and(|code| code.eq_ignore_ascii_case("Not Found"))
             || description.to_ascii_lowercase().contains("not found")
-            || description
-                .to_ascii_lowercase()
-                .contains("symbol may be delisted")
+            || description.to_ascii_lowercase().contains("symbol may be delisted")
         {
             return Err(AttemptFailure::not_found(CHART_SOURCE, description));
         }
@@ -420,18 +413,13 @@ async fn fetch_response_body(
     url: &str,
     endpoint: &'static str,
 ) -> Result<String, AttemptFailure> {
-    let response = client
-        .get(url)
-        .timeout(timeout)
-        .send()
-        .await
-        .map_err(|err| {
-            if err.is_timeout() {
-                AttemptFailure::timeout(endpoint)
-            } else {
-                AttemptFailure::upstream(endpoint, format!("request failed: {err}"))
-            }
-        })?;
+    let response = client.get(url).timeout(timeout).send().await.map_err(|err| {
+        if err.is_timeout() {
+            AttemptFailure::timeout(endpoint)
+        } else {
+            AttemptFailure::upstream(endpoint, format!("request failed: {err}"))
+        }
+    })?;
 
     let status = response.status();
     let body = response.text().await.map_err(|err| {
@@ -482,11 +470,7 @@ fn finalize_failure(
         };
     }
 
-    let detail = failures
-        .iter()
-        .map(AttemptFailure::summary)
-        .collect::<Vec<_>>()
-        .join("; ");
+    let detail = failures.iter().map(AttemptFailure::summary).collect::<Vec<_>>().join("; ");
     ToolError::execution_failed(format!(
         "Finance lookup failed for '{}': {}",
         request.requested_ticker, detail
@@ -873,9 +857,8 @@ mod tests {
             .and(query_param("interval", "1d"))
             .and(query_param("range", "5d"))
             .respond_with(
-                ResponseTemplate::new(200)
-                    .set_delay(Duration::from_millis(250))
-                    .set_body_json(json!({
+                ResponseTemplate::new(200).set_delay(Duration::from_millis(250)).set_body_json(
+                    json!({
                         "chart": {
                             "result": [{
                                 "meta": {
@@ -886,7 +869,8 @@ mod tests {
                             }],
                             "error": null
                         }
-                    })),
+                    }),
+                ),
             )
             .mount(&server)
             .await;
@@ -907,16 +891,16 @@ mod tests {
             .and(path("/quote"))
             .and(query_param("symbols", "AAPL"))
             .respond_with(
-                ResponseTemplate::new(200)
-                    .set_delay(Duration::from_millis(250))
-                    .set_body_json(json!({
+                ResponseTemplate::new(200).set_delay(Duration::from_millis(250)).set_body_json(
+                    json!({
                         "quoteResponse": {
                             "result": [{
                                 "symbol": "AAPL",
                                 "regularMarketPrice": 189.23
                             }]
                         }
-                    })),
+                    }),
+                ),
             )
             .mount(&server)
             .await;

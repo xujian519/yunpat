@@ -117,10 +117,7 @@ impl MockLlmClient {
 
     /// Push a canned turn onto the back of the queue.
     pub fn push_turn(&self, turn: CannedTurn) {
-        self.canned
-            .lock()
-            .expect("MockLlmClient.canned mutex poisoned")
-            .push_back(turn);
+        self.canned.lock().expect("MockLlmClient.canned mutex poisoned").push_back(turn);
     }
 
     /// Push a canned non-streaming `MessageResponse`. Consumed by
@@ -142,10 +139,7 @@ impl MockLlmClient {
     /// Number of canned turns still queued.
     #[must_use]
     pub fn remaining_turns(&self) -> usize {
-        self.canned
-            .lock()
-            .expect("MockLlmClient.canned mutex poisoned")
-            .len()
+        self.canned.lock().expect("MockLlmClient.canned mutex poisoned").len()
     }
 
     /// Snapshot of every request the mock has been asked to handle, in order.
@@ -177,10 +171,7 @@ impl MockLlmClient {
     }
 
     fn pop_turn(&self) -> Option<CannedTurn> {
-        self.canned
-            .lock()
-            .expect("MockLlmClient.canned mutex poisoned")
-            .pop_front()
+        self.canned.lock().expect("MockLlmClient.canned mutex poisoned").pop_front()
     }
 
     fn pop_message(&self) -> Option<MessageResponse> {
@@ -277,9 +268,7 @@ fn synthesize_message_response(turn: CannedTurn, model: &str) -> MessageResponse
                 ..
             } => text.push_str(&t),
             StreamEvent::MessageDelta {
-                delta: MessageDelta {
-                    stop_reason: sr, ..
-                },
+                delta: MessageDelta { stop_reason: sr, .. },
                 ..
             } => stop_reason = sr,
             _ => {}
@@ -290,10 +279,7 @@ fn synthesize_message_response(turn: CannedTurn, model: &str) -> MessageResponse
         id: "mock_msg".to_string(),
         r#type: "message".to_string(),
         role: "assistant".to_string(),
-        content: vec![ContentBlock::Text {
-            text,
-            cache_control: None,
-        }],
+        content: vec![ContentBlock::Text { text, cache_control: None }],
         model: model.to_string(),
         stop_reason: stop_reason.or_else(|| Some("end_turn".to_string())),
         stop_sequence: None,
@@ -334,9 +320,7 @@ pub mod canned {
     pub fn text_block_start(index: u32) -> StreamEvent {
         StreamEvent::ContentBlockStart {
             index,
-            content_block: ContentBlockStart::Text {
-                text: String::new(),
-            },
+            content_block: ContentBlockStart::Text { text: String::new() },
         }
     }
 
@@ -345,9 +329,7 @@ pub mod canned {
     pub fn text_delta(index: u32, text: &str) -> StreamEvent {
         StreamEvent::ContentBlockDelta {
             index,
-            delta: Delta::TextDelta {
-                text: text.to_string(),
-            },
+            delta: Delta::TextDelta { text: text.to_string() },
         }
     }
 
@@ -356,9 +338,7 @@ pub mod canned {
     pub fn thinking_delta(index: u32, thinking: &str) -> StreamEvent {
         StreamEvent::ContentBlockDelta {
             index,
-            delta: Delta::ThinkingDelta {
-                thinking: thinking.to_string(),
-            },
+            delta: Delta::ThinkingDelta { thinking: thinking.to_string() },
         }
     }
 
@@ -473,10 +453,8 @@ mod tests {
     async fn replays_canned_turn_via_stream() {
         let mock = MockLlmClient::new(vec![canned::simple_text_turn("hello world")]);
 
-        let mut stream = mock
-            .create_message_stream(empty_request())
-            .await
-            .expect("stream should open");
+        let mut stream =
+            mock.create_message_stream(empty_request()).await.expect("stream should open");
 
         let mut text = String::new();
         let mut saw_stop = false;

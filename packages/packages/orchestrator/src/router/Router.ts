@@ -96,14 +96,15 @@ export class Router {
       if (matched) return matched
     }
 
-    return this.config.defaultAgent!
+    return this.config.defaultAgent ?? 'specification-drafter'
   }
 
   /**
    * 从注册表中按意图关键词和能力匹配 Agent
    */
   private matchAgentFromRegistry(intent: string): string | null {
-    const entries = this.agentRegistry!.getManifestEntries()
+    if (!this.agentRegistry) return null
+    const entries = this.agentRegistry.getManifestEntries()
     const intentLower = intent.toLowerCase()
 
     // 按清单中的 triggerKeywords 匹配

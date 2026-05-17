@@ -244,7 +244,7 @@ mod tests {
         let result = db.search_fulltext("人工智能", 1, 5).await;
         assert!(result.is_ok(), "搜索失败: {:?}", result.err());
 
-        let search_result = result.unwrap();
+        let search_result = result.expect("已验证 is_ok");
         println!("找到 {} 条专利", search_result.total);
         assert!(search_result.total >= 0);
     }

@@ -32,9 +32,8 @@ impl PaperSearchTool {
         limit: usize,
         offset: usize,
     ) -> anyhow::Result<PaperSearchResult> {
-        let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(30))
-            .build()?;
+        let client =
+            reqwest::Client::builder().timeout(std::time::Duration::from_secs(30)).build()?;
 
         let url = format!(
             "https://api.semanticscholar.org/graph/v1/paper/search?query={}&fields=title,abstract,authors,year,venue,url,citationCount&limit={}&offset={}",
@@ -66,51 +65,26 @@ impl PaperSearchTool {
             total = t as usize;
         }
 
-        Ok(PaperSearchResult {
-            papers,
-            total,
-            offset,
-        })
+        Ok(PaperSearchResult { papers, total, offset })
     }
 
     fn parse_paper(value: &serde_json::Value) -> Option<PaperRecord> {
         let paper_id = value.get("paperId")?.as_str()?.to_string();
-        let title = value
-            .get("title")
-            .and_then(|t| t.as_str())
-            .unwrap_or("")
-            .to_string();
-        let abstract_text = value
-            .get("abstract")
-            .and_then(|a| a.as_str())
-            .map(|s| s.to_string());
+        let title = value.get("title").and_then(|t| t.as_str()).unwrap_or("").to_string();
+        let abstract_text = value.get("abstract").and_then(|a| a.as_str()).map(|s| s.to_string());
         let authors = value
             .get("authors")
             .and_then(|a| a.as_array())
             .map(|arr| {
                 arr.iter()
-                    .filter_map(|v| {
-                        v.get("name")
-                            .and_then(|n| n.as_str())
-                            .map(|s| s.to_string())
-                    })
+                    .filter_map(|v| v.get("name").and_then(|n| n.as_str()).map(|s| s.to_string()))
                     .collect()
             })
             .unwrap_or_default();
         let year = value.get("year").and_then(|y| y.as_u64()).map(|y| y as u32);
-        let venue = value
-            .get("venue")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string());
-        let url = value
-            .get("url")
-            .and_then(|u| u.as_str())
-            .unwrap_or("")
-            .to_string();
-        let citation_count = value
-            .get("citationCount")
-            .and_then(|c| c.as_u64())
-            .map(|c| c as u32);
+        let venue = value.get("venue").and_then(|v| v.as_str()).map(|s| s.to_string());
+        let url = value.get("url").and_then(|u| u.as_str()).unwrap_or("").to_string();
+        let citation_count = value.get("citationCount").and_then(|c| c.as_u64()).map(|c| c as u32);
 
         Some(PaperRecord {
             paper_id,

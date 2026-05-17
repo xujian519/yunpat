@@ -10,7 +10,10 @@
  * AUROC 达 0.78（跨领域场景下远超 LLM-as-Judge 的 0.6）
  */
 
-import type { PostgresVectorStore, SimilarityResult } from '../memory/long-term/PostgresVectorStore.js'
+import type {
+  PostgresVectorStore,
+  SimilarityResult,
+} from '../memory/long-term/PostgresVectorStore.js'
 import type { BGEM3Client } from '../memory/integration/BGEIntegration.js'
 
 /**
@@ -70,10 +73,7 @@ export class RNDEvaluator {
   private defaultK: number = 10
   private defaultSearchTopK: number = 100
 
-  constructor(
-    vectorStore: PostgresVectorStore,
-    embeddingClient: BGEM3Client
-  ) {
+  constructor(vectorStore: PostgresVectorStore, embeddingClient: BGEM3Client) {
     this.vectorStore = vectorStore
     this.embeddingClient = embeddingClient
   }
@@ -109,7 +109,8 @@ export class RNDEvaluator {
     const meta = {
       k,
       totalNeighborsChecked: neighbors.length,
-      avgDistance: similarities.length > 0 ? similarities.reduce((a, b) => a + b, 0) / similarities.length : 0,
+      avgDistance:
+        similarities.length > 0 ? similarities.reduce((a, b) => a + b, 0) / similarities.length : 0,
       minDistance: similarities.length > 0 ? Math.min(...similarities) : 0,
       maxDistance: similarities.length > 0 ? Math.max(...similarities) : 0,
     }
@@ -159,7 +160,10 @@ export class RNDEvaluator {
         const meta = {
           k,
           totalNeighborsChecked: neighbors.length,
-          avgDistance: similarities.length > 0 ? similarities.reduce((a, b) => a + b, 0) / similarities.length : 0,
+          avgDistance:
+            similarities.length > 0
+              ? similarities.reduce((a, b) => a + b, 0) / similarities.length
+              : 0,
           minDistance: similarities.length > 0 ? Math.min(...similarities) : 0,
           maxDistance: similarities.length > 0 ? Math.max(...similarities) : 0,
         }
@@ -263,7 +267,8 @@ export class RNDEvaluator {
     }
 
     // 如果领域数 > 1 且平均相似度 < 0.7，则判定为跨领域创新
-    const avgSimilarity = topKNeighbors.reduce((sum, n) => sum + n.similarity, 0) / topKNeighbors.length
+    const avgSimilarity =
+      topKNeighbors.reduce((sum, n) => sum + n.similarity, 0) / topKNeighbors.length
 
     return domains.size > 1 && avgSimilarity < 0.7
   }

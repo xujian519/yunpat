@@ -81,10 +81,7 @@ impl ToolSpec for McpToolAdapter {
     }
 
     fn description(&self) -> &str {
-        self.tool
-            .description
-            .as_deref()
-            .unwrap_or(self.tool.name.as_str())
+        self.tool.description.as_deref().unwrap_or(self.tool.name.as_str())
     }
 
     fn input_schema(&self) -> Value {
@@ -171,9 +168,7 @@ fn format_mcp_result(result: &Value) -> String {
                     // 非文本内容，返回占位符
                     Some(format!(
                         "[{} content]",
-                        item.get("type")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("unknown")
+                        item.get("type").and_then(|v| v.as_str()).unwrap_or("unknown")
                     ))
                 }
             })
@@ -359,11 +354,7 @@ mod tests {
 
         let adapter = McpToolAdapter::new("test", tool);
         assert!(adapter.capabilities().contains(&ToolCapability::Network));
-        assert!(
-            adapter
-                .capabilities()
-                .contains(&ToolCapability::RequiresApproval)
-        );
+        assert!(adapter.capabilities().contains(&ToolCapability::RequiresApproval));
     }
 
     #[test]

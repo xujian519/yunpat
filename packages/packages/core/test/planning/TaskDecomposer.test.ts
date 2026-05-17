@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { TaskDecomposer } from '../../src/planning/TaskDecomposer.js'
+import { TaskType, Priority } from '../../src/planning/types.js'
 
 /**
  * 创建完整的LLM mock对象
@@ -82,7 +83,7 @@ describe('TaskDecomposer', () => {
       const mockLlm = createMockLLM(mockResponse)
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -107,7 +108,7 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务1',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
@@ -136,7 +137,7 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务1',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
@@ -156,7 +157,7 @@ describe('TaskDecomposer', () => {
       const mockLlm = createMockLLM({ subGoals: [] })
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -174,7 +175,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -244,7 +245,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: false,
       })
 
@@ -284,7 +285,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -315,13 +316,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务1',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
                   },
                 ],
-                priority: 'high' as any,
+                priority: Priority.HIGH,
               },
             ],
           },
@@ -348,13 +349,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务1',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
                   },
                 ],
-                priority: 'medium' as any,
+                priority: Priority.MEDIUM,
               },
             ],
           },
@@ -393,7 +394,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -418,7 +419,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -443,7 +444,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -477,13 +478,13 @@ describe('TaskDecomposer', () => {
               {
                 title: '任务',
                 description: '任务描述',
-                type: 'analysis' as any,
+                type: TaskType.ANALYSIS,
                 requiredCapabilities: [],
                 estimatedTokens: 100,
                 estimatedDuration: 60,
               },
             ],
-            priority: 'medium' as any,
+            priority: Priority.MEDIUM,
           },
         ],
       })
@@ -508,13 +509,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
                   },
                 ],
-                priority: 'low' as any,
+                priority: Priority.LOW,
               },
             ],
           },
@@ -537,13 +538,13 @@ describe('TaskDecomposer', () => {
               {
                 title: '任务',
                 description: '任务描述',
-                type: 'analysis' as any,
+                type: TaskType.ANALYSIS,
                 requiredCapabilities: [],
                 estimatedTokens: 100,
                 estimatedDuration: 60,
               },
             ],
-            priority: 'high' as any,
+            priority: Priority.HIGH,
           },
         ],
       })
@@ -570,13 +571,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '第一个规则的任务',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
                   },
                 ],
-                priority: 'high' as any,
+                priority: Priority.HIGH,
               },
             ],
           },
@@ -593,13 +594,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '第二个规则的任务',
                     description: '任务描述',
-                    type: 'writing' as any,
+                    type: TaskType.WRITING,
                     requiredCapabilities: [],
                     estimatedTokens: 200,
                     estimatedDuration: 120,
                   },
                 ],
-                priority: 'medium' as any,
+                priority: Priority.MEDIUM,
               },
             ],
           },
@@ -658,13 +659,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
                   },
                 ],
-                priority: 'medium' as any,
+                priority: Priority.MEDIUM,
               },
             ],
           },
@@ -691,13 +692,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
                   },
                 ],
-                priority: 'medium' as any,
+                priority: Priority.MEDIUM,
               },
             ],
           },
@@ -724,13 +725,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
                   },
                 ],
-                priority: 'low' as any,
+                priority: Priority.LOW,
               },
             ],
           },
@@ -747,7 +748,7 @@ describe('TaskDecomposer', () => {
     it('应该在 LLM 未配置时回退到规则分解', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       const decomposer = new TaskDecomposer({
-        llm: undefined as any,
+        llm: undefined,
         enableIntelligentDecomposition: true,
       })
 
@@ -768,7 +769,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -796,7 +797,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -817,7 +818,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -843,7 +844,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -868,7 +869,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -907,7 +908,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -942,13 +943,13 @@ describe('TaskDecomposer', () => {
               {
                 title: '任务',
                 description: '任务描述',
-                type: 'analysis' as any,
+                type: TaskType.ANALYSIS,
                 requiredCapabilities: [],
                 estimatedTokens: 100,
                 estimatedDuration: 60,
               },
             ],
-            priority: 'medium' as any,
+            priority: Priority.MEDIUM,
           },
         ],
       })
@@ -975,13 +976,13 @@ describe('TaskDecomposer', () => {
               {
                 title: '任务',
                 description: '任务描述',
-                type: 'analysis' as any,
+                type: TaskType.ANALYSIS,
                 requiredCapabilities: [],
                 estimatedTokens: 100,
                 estimatedDuration: 60,
               },
             ],
-            priority: 'medium' as any,
+            priority: Priority.MEDIUM,
           },
         ],
       })
@@ -1019,7 +1020,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -1059,7 +1060,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -1098,7 +1099,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -1224,7 +1225,7 @@ describe('TaskDecomposer', () => {
       }
 
       const decomposer = new TaskDecomposer({
-        llm: mockLlm as any,
+        llm: mockLlm,
         enableIntelligentDecomposition: true,
       })
 
@@ -1250,7 +1251,7 @@ describe('TaskDecomposer', () => {
           {
             name: 'invalid-pattern-rule',
             description: '无效模式的规则',
-            matchPattern: null as any,
+            matchPattern: null as RegExp | null,
             strategy: 'sequential',
             subGoalTemplates: [
               {
@@ -1260,13 +1261,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
                   },
                 ],
-                priority: 'low' as any,
+                priority: Priority.LOW,
               },
             ],
           },
@@ -1294,13 +1295,13 @@ describe('TaskDecomposer', () => {
                   {
                     title: '任务',
                     description: '任务描述',
-                    type: 'analysis' as any,
+                    type: TaskType.ANALYSIS,
                     requiredCapabilities: [],
                     estimatedTokens: 100,
                     estimatedDuration: 60,
                   },
                 ],
-                priority: 'low' as any,
+                priority: Priority.LOW,
               },
             ],
           },
@@ -1369,13 +1370,13 @@ describe('TaskDecomposer', () => {
               {
                 title: '任务',
                 description: '任务描述',
-                type: 'analysis' as any,
+                type: TaskType.ANALYSIS,
                 requiredCapabilities: [],
                 estimatedTokens: 100,
                 estimatedDuration: 60,
               },
             ],
-            priority: 'medium' as any,
+            priority: Priority.MEDIUM,
           },
         ],
       })
@@ -1402,13 +1403,13 @@ describe('TaskDecomposer', () => {
               {
                 title: '任务',
                 description: '任务描述',
-                type: 'writing' as any,
+                type: TaskType.WRITING,
                 requiredCapabilities: [],
                 estimatedTokens: 200,
                 estimatedDuration: 120,
               },
             ],
-            priority: 'high' as any,
+            priority: Priority.HIGH,
           },
         ],
       })

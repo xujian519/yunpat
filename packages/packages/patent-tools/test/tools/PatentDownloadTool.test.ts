@@ -1,15 +1,59 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PatentDownloadTool, BatchPatentDownloadTool } from '../../src/tools/PatentDownloadTool.js'
+import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
-const mockContext = {
-  registry: {} as any,
-  llm: {} as any,
-  memory: {} as any,
-  eventBus: {} as any,
+function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+  return {
+    registry: {
+      register: vi.fn(),
+      unregister: vi.fn(),
+      get: vi.fn().mockReturnValue(undefined),
+      call: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockReturnValue([]),
+    },
+    llm: {
+      chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    },
+    memory: {
+      get: vi.fn().mockResolvedValue(undefined),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      has: vi.fn().mockResolvedValue(false),
+      getAll: vi.fn().mockResolvedValue({}),
+      setAll: vi.fn().mockResolvedValue(undefined),
+      clear: vi.fn().mockResolvedValue(undefined),
+      search: vi.fn().mockResolvedValue([]),
+    },
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      unsubscribe: vi.fn(),
+      request: vi.fn().mockResolvedValue(undefined),
+    },
+  }
 }
+
+const mockContext = createMockContext()
 
 // Mock fetch API
 global.fetch = vi.fn()
+
+type FetchResponse = {
+  ok: boolean
+  status?: number
+  statusText?: string
+  json: () => Promise<Record<string, unknown>>
+}
+
+function mockFetchOk(json: Record<string, unknown>): FetchResponse {
+  return { ok: true, json: async () => json }
+}
+
+function mockFetchError(json: Record<string, unknown>, status: number, statusText: string): FetchResponse {
+  return { ok: false, status, statusText, json: async () => json }
+}
 
 // Mock fs.mkdir
 vi.mock('fs', () => ({
@@ -47,10 +91,7 @@ describe('PatentDownloadTool', () => {
       output_path: '/path/to/downloads/US4405829A1.pdf',
     }
 
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValue(mockFetchOk(mockResponse))
 
     const result = await tool.execute(
       {
@@ -71,12 +112,7 @@ describe('PatentDownloadTool', () => {
       detail: '专利下载失败: 未找到专利',
     }
 
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      json: async () => mockErrorResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValue(mockFetchError(mockErrorResponse, 500, 'Internal Server Error'))
 
     await expect(
       tool.execute(
@@ -122,10 +158,7 @@ describe('PatentDownloadTool', () => {
       output_path: '/path/to/downloads/US4405829A1.pdf',
     }
 
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValue(mockFetchOk(mockResponse))
 
     await tool.execute(
       {
@@ -167,10 +200,7 @@ describe('BatchPatentDownloadTool', () => {
       output_path: '/path/to/downloads',
     }
 
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValue(mockFetchOk(mockResponse))
 
     const result = await tool.execute(
       {
@@ -202,12 +232,7 @@ describe('BatchPatentDownloadTool', () => {
       detail: '批量下载失败: 网络错误',
     }
 
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      json: async () => mockErrorResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValue(mockFetchError(mockErrorResponse, 500, 'Internal Server Error'))
 
     await expect(
       tool.execute(
@@ -229,10 +254,7 @@ describe('BatchPatentDownloadTool', () => {
       output_path: '/path/to/downloads',
     }
 
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValue(mockFetchOk(mockResponse))
 
     const result = await tool.execute(
       {

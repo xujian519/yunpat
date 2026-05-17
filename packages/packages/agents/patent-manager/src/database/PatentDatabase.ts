@@ -7,7 +7,7 @@
 
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { eq, and, gte, lte, desc, asc, sql } from 'drizzle-orm'
+import { eq, and, gte, lte, desc, asc, sql, type SQL, type SQLWrapper } from 'drizzle-orm'
 import * as schema from './schema.js'
 import type {
   PatentApplication,
@@ -20,6 +20,7 @@ import type {
   HistoryEventType,
   DeadlinePriority,
   NotificationEvent,
+  NotificationStatus,
 } from '../types/PatentTypes.js'
 
 // Schema 类型别名
@@ -36,6 +37,12 @@ type PatentFeeSchema = typeof schema.patentFees.$inferSelect
 type PatentHistorySchema = typeof schema.patentHistory.$inferSelect
 type NotificationConfigSchema = typeof schema.notificationConfigs.$inferSelect
 type NotificationLogSchema = typeof schema.notificationLogs.$inferSelect
+
+// Drizzle Query Builder 类型
+import type {
+  PgSelect,
+  SelectedFieldsFlat,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 数据库连接配置
@@ -272,11 +279,9 @@ export class PatentDatabase {
     }
 
     if (query.dateRange) {
+      // 使用 sql 组合两个条件，避免类型推断问题
       conditions.push(
-        and(
-          gte(patents.filingDate, query.dateRange.start),
-          lte(patents.filingDate, query.dateRange.end)
-        ) as any
+        sql`${patents.filingDate} >= ${query.dateRange.start} AND ${patents.filingDate} <= ${query.dateRange.end}`
       )
     }
 
@@ -291,22 +296,21 @@ export class PatentDatabase {
 
     const total = count
 
-    // 获取分页数据
-    let queryBuilder = this.db
-      .select()
-      .from(patents)
-      .where(whereClause)
-      .orderBy(desc(patents.filingDate))
-
-    if (query.pagination) {
-      const offset = (query.pagination.page - 1) * query.pagination.pageSize
-      queryBuilder = queryBuilder.limit(query.pagination.pageSize).offset(offset) as any
-    } else {
-      // 如果没有分页参数，添加默认的 limit 以避免返回过多数据
-      queryBuilder = queryBuilder.limit(100) as any
-    }
-
-    const results = await queryBuilder
+    // 获取分页数据 - 构建并立即执行查询
+    const results = query.pagination
+      ? await this.db
+          .select()
+          .from(patents)
+          .where(whereClause)
+          .orderBy(desc(patents.filingDate))
+          .limit(query.pagination.pageSize)
+          .offset((query.pagination.page - 1) * query.pagination.pageSize)
+      : await this.db
+          .select()
+          .from(patents)
+          .where(whereClause)
+          .orderBy(desc(patents.filingDate))
+          .limit(100)
 
     return {
       patents: results.map((r) => this.mapToPatentApplication(r)),
@@ -846,14 +850,26 @@ export class PatentDatabase {
     recipient?: string
     limit?: number
   }): Promise<NotificationLog[]> {
-    const conditions = []
+    const conditions: (SQL | SQLWrapper)[] = []
 
     if (filters?.event) {
-      conditions.push(eq(notificationLogs.event, filters.event as any))
+      // 类型守卫确保 event 是合法的 NotificationEvent
+      if (this.isValidNotificationEvent(filters.event)) {
+        conditions.push(eq(notificationLogs.event, filters.event))
+      } else {
+        // 如果不是合法的事件类型，使用 sql 模板字符串
+        conditions.push(sql`${notificationLogs.event} = ${filters.event}`)
+      }
     }
 
     if (filters?.status) {
-      conditions.push(eq(notificationLogs.status, filters.status as any))
+      // 类型守卫确保 status 是合法的 NotificationStatus
+      if (this.isValidNotificationStatus(filters.status)) {
+        conditions.push(eq(notificationLogs.status, filters.status))
+      } else {
+        // 如果不是合法的状态类型，使用 sql 模板字符串
+        conditions.push(sql`${notificationLogs.status} = ${filters.status}`)
+      }
     }
 
     if (filters?.recipient) {
@@ -862,22 +878,47 @@ export class PatentDatabase {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
-    let queryBuilder = this.db
-      .select()
-      .from(notificationLogs)
-      .where(whereClause)
-      .orderBy(desc(notificationLogs.createdAt))
-
-    if (filters?.limit) {
-      queryBuilder = queryBuilder.limit(filters.limit) as any
-    } else {
-      // 默认限制返回 100 条记录
-      queryBuilder = queryBuilder.limit(100) as any
-    }
-
-    const results = await queryBuilder
+    // 构建并立即执行查询
+    const results = filters?.limit
+      ? await this.db
+          .select()
+          .from(notificationLogs)
+          .where(whereClause)
+          .orderBy(desc(notificationLogs.createdAt))
+          .limit(filters.limit)
+      : await this.db
+          .select()
+          .from(notificationLogs)
+          .where(whereClause)
+          .orderBy(desc(notificationLogs.createdAt))
+          .limit(100)
 
     return results.map((r) => this.mapToNotificationLog(r))
+  }
+
+  /**
+   * 类型守卫：检查字符串是否为合法的 NotificationEvent
+   */
+  private isValidNotificationEvent(value: string): value is NotificationEvent {
+    const validEvents: NotificationEvent[] = [
+      'deadline_approaching',
+      'deadline_overdue',
+      'fee_due',
+      'fee_overdue',
+      'status_changed',
+      'oa_issued',
+      'patent_granted',
+      'patent_rejected',
+    ]
+    return validEvents.includes(value as NotificationEvent)
+  }
+
+  /**
+   * 类型守卫：检查字符串是否为合法的 NotificationStatus
+   */
+  private isValidNotificationStatus(value: string): value is NotificationStatus {
+    const validStatuses: NotificationStatus[] = ['pending', 'sent', 'failed', 'cancelled']
+    return validStatuses.includes(value as NotificationStatus)
   }
 
   // ==================== 映射方法 ====================

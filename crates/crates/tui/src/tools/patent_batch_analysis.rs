@@ -145,9 +145,7 @@ impl ToolSpec for PatentBatchAnalysisTool {
         let patents = input
             .get("patents")
             .and_then(|v| v.as_array())
-            .ok_or_else(|| ToolError::MissingField {
-                field: "patents".to_string(),
-            })?;
+            .ok_or_else(|| ToolError::MissingField { field: "patents".to_string() })?;
 
         if patents.is_empty() {
             return Err(ToolError::invalid_input(
@@ -202,10 +200,8 @@ impl ToolSpec for PatentBatchAnalysisTool {
         }
 
         // 解析分析类型
-        let analysis_type = input
-            .get("analysis_type")
-            .and_then(|v| v.as_str())
-            .unwrap_or("comparison");
+        let analysis_type =
+            input.get("analysis_type").and_then(|v| v.as_str()).unwrap_or("comparison");
 
         // 验证分析类型
         let valid_types = ["comparison", "trend", "quality", "infringement"];
@@ -459,10 +455,7 @@ mod tests {
     async fn rejects_empty_patents_array() {
         let t = PatentBatchAnalysisTool::new(None, "x".into());
         let ctx = ctx();
-        let res = t
-            .execute(json!({"patents": []}), &ctx)
-            .await
-            .expect_err("must error");
+        let res = t.execute(json!({"patents": []}), &ctx).await.expect_err("must error");
         assert!(matches!(
             res,
             ToolError::NotAvailable { .. } | ToolError::InvalidInput { .. }
@@ -476,10 +469,7 @@ mod tests {
         let many_patents: Vec<Value> = (0..51)
             .map(|i| json!({"patent_id": format!("P{}", i), "title": "Test", "abstract": "Test"}))
             .collect();
-        let res = t
-            .execute(json!({"patents": many_patents}), &ctx)
-            .await
-            .expect_err("must error");
+        let res = t.execute(json!({"patents": many_patents}), &ctx).await.expect_err("must error");
         assert!(matches!(
             res,
             ToolError::NotAvailable { .. } | ToolError::InvalidInput { .. }

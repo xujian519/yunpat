@@ -168,7 +168,12 @@ export class WebSearchTool extends EnhancedBaseTool<
       )}&format=json&no_html=1&skip_disambig=0`
 
       const response = await fetch(searchUrl)
-      const data = (await response.json()) as any
+      const data: {
+        RelatedTopics?: Array<{
+          Text?: string
+          FirstURL?: string
+        }>
+      } = await response.json()
 
       // DuckDuckGo API 返回格式有限，这里做简单处理
       const results: Array<{

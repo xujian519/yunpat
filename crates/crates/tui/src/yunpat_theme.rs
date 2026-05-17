@@ -11,6 +11,9 @@
 //! [`crate::tui::ui`]. All other call sites continue to use [`crate::palette`]
 //! directly until they are migrated in a later slice.
 
+use std::sync::OnceLock;
+use std::sync::atomic::{AtomicU8, Ordering};
+
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{BorderType, Borders, Padding};
 
@@ -22,6 +25,29 @@ use crate::tui::history::ToolStatus;
 pub enum Variant {
     Dark,
     Light,
+}
+
+static ACTIVE_VARIANT: OnceLock<AtomicU8> = OnceLock::new();
+
+fn active_variant() -> Variant {
+    match ACTIVE_VARIANT.get().map(|v| v.load(Ordering::Relaxed)).unwrap_or(0) {
+        1 => Variant::Light,
+        _ => Variant::Dark,
+    }
+}
+
+pub fn set_active_palette_mode(mode: crate::palette::PaletteMode) {
+    let variant = match mode {
+        crate::palette::PaletteMode::Dark => Variant::Dark,
+        crate::palette::PaletteMode::Light => Variant::Light,
+    };
+    let encoded = match variant {
+        Variant::Dark => 0,
+        Variant::Light => 1,
+    };
+    ACTIVE_VARIANT
+        .get_or_init(|| AtomicU8::new(encoded))
+        .store(encoded, Ordering::Relaxed);
 }
 
 /// Centralized visual tokens for sidebar, plan, and tool rendering.
@@ -126,9 +152,7 @@ impl Theme {
     /// Bold tool title style (e.g. "Plan", "Shell").
     #[must_use]
     pub fn tool_title_style(self) -> Style {
-        Style::default()
-            .fg(self.tool_title_color)
-            .add_modifier(Modifier::BOLD)
+        Style::default().fg(self.tool_title_color).add_modifier(Modifier::BOLD)
     }
 
     /// Right-side status text ("running", "done", "issue") style.
@@ -165,8 +189,11 @@ pub const fn theme_for_mode(mode: crate::palette::PaletteMode) -> Theme {
 /// Defaults to dark when no mode is specified. Callers that know the
 /// current palette mode should use [`theme_for_mode`] instead.
 #[must_use]
-pub const fn active_theme() -> Theme {
-    Theme::dark()
+pub fn active_theme() -> Theme {
+    match active_variant() {
+        Variant::Dark => Theme::dark(),
+        Variant::Light => Theme::light(),
+    }
 }
 
 #[cfg(test)]

@@ -10,9 +10,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
     let mut lines = vec![
         Line::from(Span::styled(
             "Connect your DeepSeek API key",
-            Style::default()
-                .fg(palette::YUNPAT_SKY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
         )),
         Line::from(""),
         Line::from(Span::styled(
@@ -45,9 +43,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
         Span::styled("Key: ", Style::default().fg(palette::TEXT_MUTED)),
         Span::styled(
             display.to_string(),
-            Style::default()
-                .fg(palette::TEXT_PRIMARY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::TEXT_PRIMARY).add_modifier(Modifier::BOLD),
         ),
     ]));
     lines.push(Line::from(""));
@@ -78,13 +74,6 @@ fn mask_key(input: &str) -> String {
     if len <= 4 {
         return "*".repeat(len);
     }
-    let visible: String = trimmed
-        .chars()
-        .rev()
-        .take(4)
-        .collect::<String>()
-        .chars()
-        .rev()
-        .collect();
+    let visible: String = trimmed.chars().rev().take(4).collect::<String>().chars().rev().collect();
     format!("{}{}", "*".repeat(len - 4), visible)
 }

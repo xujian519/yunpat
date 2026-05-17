@@ -58,10 +58,7 @@ impl StreamChunker {
             if chunk.is_empty() {
                 continue;
             }
-            self.queue.push_back(QueuedChunk {
-                text: chunk,
-                enqueued_at: now,
-            });
+            self.queue.push_back(QueuedChunk { text: chunk, enqueued_at: now });
             produced = true;
         }
         produced
@@ -74,9 +71,7 @@ impl StreamChunker {
 
     /// Age of the oldest queued chunk, if any.
     pub fn oldest_queued_age(&self, now: Instant) -> Option<Duration> {
-        self.queue
-            .front()
-            .map(|q| now.saturating_duration_since(q.enqueued_at))
+        self.queue.front().map(|q| now.saturating_duration_since(q.enqueued_at))
     }
 
     /// Whether the queue is empty AND no buffered partial line remains.

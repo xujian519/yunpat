@@ -10,9 +10,24 @@
  * 和手动 schema 遍历两种方式。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from 'zod'
 import type { EnhancedTool, ToolMetadata } from './types.js'
+
+/**
+ * Zod 内部结构访问接口
+ *
+ * Zod 的 `_def` 和 `toJSONSchema()` 不在公共类型定义中，
+ * 但在运行时稳定可用。此接口明确声明我们需要访问的内部属性。
+ */
+interface ZodInternals {
+  _def?: {
+    shape?: () => Record<string, z.ZodType>
+    description?: string
+    typeName?: string
+    [key: string]: unknown
+  }
+  toJSONSchema?: () => Record<string, unknown>
+}
 
 // ─── 类型 ─────────────────────────────────────────
 
@@ -67,10 +82,11 @@ export function toolsToLLMFunctions(tools: EnhancedTool[]): LLMFunctionDefinitio
  * 回退到手动转换。
  */
 function zodToJsonSchema(schema: z.ZodType): Record<string, unknown> {
+  const internals = schema as unknown as ZodInternals
   // Zod 3.23+ 内建方法
-  if (typeof (schema as any).toJSONSchema === 'function') {
+  if (typeof internals.toJSONSchema === 'function') {
     try {
-      const result = (schema as any).toJSONSchema()
+      const result = internals.toJSONSchema()
       return sanitizeJsonSchema(result)
     } catch {
       // 回退到手动转换
@@ -86,7 +102,8 @@ function zodToJsonSchema(schema: z.ZodType): Record<string, unknown> {
  * 覆盖常用 Zod 类型：object, string, number, enum, array, optional
  */
 function zodToJsonSchemaManual(schema: z.ZodType): JsonSchema {
-  const def = (schema as any)._def
+  const internals = schema as unknown as ZodInternals
+  const def = internals._def
 
   // ZodObject
   if (schema instanceof z.ZodObject) {
@@ -190,11 +207,13 @@ function buildToolDescription(metadata: ToolMetadata): string {
 
   // 从 inputSchema 提取参数描述
   if (metadata.inputSchema instanceof z.ZodObject) {
-    const shape = (metadata.inputSchema as any)._def.shape() as Record<string, z.ZodType>
+    const inputInternals = metadata.inputSchema as unknown as ZodInternals
+    const shape = inputInternals._def?.shape?.() as Record<string, z.ZodType>
     const paramDescriptions: string[] = []
 
     for (const [key, value] of Object.entries(shape)) {
-      const desc = (value as any)._def?.description
+      const valueInternals = value as unknown as ZodInternals
+      const desc = valueInternals._def?.description
       if (desc) {
         paramDescriptions.push(`- ${key}: ${desc}`)
       }

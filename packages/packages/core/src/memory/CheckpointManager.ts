@@ -58,7 +58,10 @@ function deepClone<T>(obj: T, hash = new WeakMap()): T {
   const cloned = {} as T
   for (const key in obj) {
     if (Object.hasOwn(obj, key)) {
-      ;(cloned as any)[key] = deepClone((obj as any)[key], hash)
+      ;(cloned as Record<string, unknown>)[key] = deepClone(
+        (obj as Record<string, unknown>)[key],
+        hash
+      )
     }
   }
 
@@ -340,9 +343,18 @@ export class CheckpointManager {
     Array<{ executionId: string; agentName: string; iteration: number; timestamp: Date }>
   > {
     // 如果配置了外部存储，使用外部存储的方法
-    if (this.store && 'listResumableExecutions' in this.store) {
+    if (
+      this.store &&
+      'listResumableExecutions' in this.store &&
+      typeof (this.store as Record<string, unknown>).listResumableExecutions ===
+        'function'
+    ) {
       try {
-        return await (this.store as any).listResumableExecutions()
+        return await (this.store as {
+          listResumableExecutions(): Promise<
+            Array<{ executionId: string; agentName: string; iteration: number; timestamp: Date }>
+          >
+        }).listResumableExecutions()
       } catch (error) {
         console.error(`[检查点管理器] 从外部存储列出执行失败: ${error}`)
       }

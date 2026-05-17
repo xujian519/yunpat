@@ -11,6 +11,32 @@ import fetch from 'node-fetch'
 const GATEWAY_URL = 'http://localhost:8080'
 const ADAPTER_URL = 'http://localhost:3001'
 
+interface SessionResponse {
+  id: string
+  status: string
+}
+
+interface EventData {
+  event_type: string
+  session_id: string
+  [key: string]: unknown
+}
+
+interface HitlResponse {
+  request_id: string
+  options: unknown[]
+}
+
+interface StatusResponse {
+  id: string
+  status: string
+  created_at: string
+}
+
+interface HealthResponse {
+  status: string
+}
+
 describe('HITL 流程集成测试', () => {
   let gatewayProcess: ChildProcess
   let adapterProcess: ChildProcess
@@ -55,7 +81,7 @@ describe('HITL 流程集成测试', () => {
 
     expect(response.ok).toBe(true)
 
-    const session = (await response.json()) as any
+    const session = (await response.json()) as SessionResponse
     expect(session).toHaveProperty('id')
     expect(session).toHaveProperty('status', 'idle')
   })
@@ -68,12 +94,12 @@ describe('HITL 流程集成测试', () => {
       body: JSON.stringify({ user_id: 'test-user' }),
     })
 
-    const session = (await sessionResponse.json()) as any
+    const session = (await sessionResponse.json()) as SessionResponse
     const sessionId = session.id
 
     // 2. 连接事件流
-    const eventsPromise = new Promise<any[]>((resolve) => {
-      const events: any[] = []
+    const eventsPromise = new Promise<EventData[]>((resolve) => {
+      const events: EventData[] = []
 
       const eventSource = new WebSocket(`ws://localhost:8080/api/v1/sessions/${sessionId}/events`)
 
@@ -98,7 +124,7 @@ describe('HITL 流程集成测试', () => {
     })
 
     // 4. 等待并验证事件
-    const events = (await eventsPromise) as any[]
+    const events = await eventsPromise
 
     expect(events.length).toBeGreaterThan(0)
     expect(events[0]).toHaveProperty('event_type')
@@ -113,7 +139,7 @@ describe('HITL 流程集成测试', () => {
       body: JSON.stringify({ user_id: 'test-user' }),
     })
 
-    const session = (await sessionResponse.json()) as any
+    const session = (await sessionResponse.json()) as SessionResponse
     const sessionId = session.id
 
     // 2. 模拟 HITL 请求（通过内部事件端点）
@@ -141,7 +167,7 @@ describe('HITL 流程集成测试', () => {
 
     // 3. 获取待处理的 HITL 请求
     const hitlResponse = await fetch(`${GATEWAY_URL}/api/v1/sessions/${sessionId}/hitl`)
-    const hitlData = (await hitlResponse.json()) as any
+    const hitlData = (await hitlResponse.json()) as HitlResponse
 
     expect(hitlData).toHaveProperty('request_id', 'test-hitl-1')
     expect(hitlData.options).toHaveLength(2)
@@ -167,12 +193,12 @@ describe('HITL 流程集成测试', () => {
       body: JSON.stringify({ user_id: 'test-user' }),
     })
 
-    const session = (await sessionResponse.json()) as any
+    const session = (await sessionResponse.json()) as SessionResponse
     const sessionId = session.id
 
     // 2. 获取会话状态
     const statusResponse = await fetch(`${GATEWAY_URL}/api/v1/sessions/${sessionId}`)
-    const status = (await statusResponse.json()) as any
+    const status = (await statusResponse.json()) as StatusResponse
 
     expect(status).toHaveProperty('id', sessionId)
     expect(status).toHaveProperty('status')
@@ -181,7 +207,7 @@ describe('HITL 流程集成测试', () => {
 
   it('健康检查端点应该返回健康状态', async () => {
     const response = await fetch(`${GATEWAY_URL}/internal/health`)
-    const health = (await response.json()) as any
+    const health = (await response.json()) as HealthResponse
 
     expect(health).toHaveProperty('status', 'healthy')
   })

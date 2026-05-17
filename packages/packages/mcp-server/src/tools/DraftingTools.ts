@@ -7,20 +7,67 @@ import { BaseMcpTool } from './BaseMcpTool.js'
 import type { McpToolContext } from '../types.js'
 
 // ============================================================
+// 类型定义
+// ============================================================
+
+/** 现有技术检索结果 */
+export interface PriorArtSearchResult {
+  patents: Array<{
+    patentId: string
+    title: string
+    abstract?: string
+    relevance: number
+  }>
+  keywords: string[]
+  searchQuery: string
+}
+
+/** 权利要求集合 */
+export interface ClaimsSet {
+  independent: Array<{
+    number: number
+    content: string
+    category?: string
+  }>
+  dependent: Array<{
+    number: number
+    content: string
+    dependsOn: number
+  }>
+}
+
+/** 说明书结构 */
+export interface Specification {
+  technicalField: string
+  backgroundArt?: string
+  inventionContent: {
+    technicalProblem: string
+    technicalSolution: string
+    beneficialEffects: string
+  }
+  embodiments: string[]
+}
+
+/** 工具执行结果 */
+export interface ToolExecutionResult {
+  version: string
+  integrationMode: 'real_agent' | 'rule_based'
+  [key: string]: unknown
+}
+
+// ============================================================
 // SpecificationDrafterTool
 // ============================================================
 
 const specificationDrafterSchema = z.object({
-  inventionUnderstanding: z
-    .object({
-      technicalField: z.string(),
-      technicalProblem: z.string(),
-      technicalSolution: z.string(),
-      keyFeatures: z.array(z.string()),
-    })
-    .describe('发明理解结果'),
-  priorArtSearch: z.any().optional().describe('现有技术检索结果（可选）'),
-  claimsSet: z.any().optional().describe('权利要求集（可选）'),
+  inventionUnderstanding: z.object({
+    technicalField: z.string(),
+    technicalProblem: z.string(),
+    technicalSolution: z.string(),
+    keyFeatures: z.array(z.string()),
+  }).describe('发明理解结果'),
+  priorArtSearch: z.lazy(() => z.record(z.unknown())).optional().describe('现有技术检索结果（可选）'),
+  claimsSet: z.lazy(() => z.record(z.unknown())).optional().describe('权利要求集（可选）'),
   draftMode: z
     .enum(['standard', 'detailed', 'concise'])
     .optional()
@@ -35,7 +82,7 @@ const specificationDrafterSchema = z.object({
 
 export class SpecificationDrafterTool extends BaseMcpTool<
   z.infer<typeof specificationDrafterSchema>,
-  any
+  ToolExecutionResult
 > {
   readonly metadata = {
     name: 'specification_drafter',
@@ -48,7 +95,7 @@ export class SpecificationDrafterTool extends BaseMcpTool<
   protected async executeInternal(
     input: z.infer<typeof specificationDrafterSchema>,
     context: McpToolContext
-  ): Promise<any> {
+  ): Promise<ToolExecutionResult> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { SpecificationDrafterAgent } = await import('@yunpat/agent-specification-drafter')
@@ -61,9 +108,9 @@ export class SpecificationDrafterTool extends BaseMcpTool<
           tools: context.registry,
         })
         const result = await agent.execute({
-          inventionUnderstanding: input.inventionUnderstanding as any,
-          priorArtSearch: input.priorArtSearch as any,
-          claimsSet: input.claimsSet as any,
+          inventionUnderstanding: input.inventionUnderstanding as Record<string, unknown>,
+          priorArtSearch: input.priorArtSearch as Record<string, unknown> | undefined,
+          claimsSet: input.claimsSet as Record<string, unknown> | undefined,
           draftMode: input.draftMode || 'standard',
           patentType: input.patentType || 'invention',
         })
@@ -98,20 +145,18 @@ export class SpecificationDrafterTool extends BaseMcpTool<
 // ============================================================
 
 const abstractDrafterSchema = z.object({
-  inventionUnderstanding: z
-    .object({
-      technicalField: z.string(),
-      technicalProblem: z.string(),
-      technicalSolution: z.string(),
-      keyFeatures: z.array(z.string()),
-    })
-    .describe('发明理解结果'),
-  specification: z.any().optional().describe('说明书内容（可选）'),
-  claims: z.any().optional().describe('权利要求集（可选）'),
+  inventionUnderstanding: z.object({
+    technicalField: z.string(),
+    technicalProblem: z.string(),
+    technicalSolution: z.string(),
+    keyFeatures: z.array(z.string()),
+  }).describe('发明理解结果'),
+  specification: z.lazy(() => z.record(z.unknown())).optional().describe('说明书内容（可选）'),
+  claims: z.lazy(() => z.record(z.unknown())).optional().describe('权利要求集（可选）'),
   maxWords: z.number().optional().default(300).describe('摘要最大字数'),
 })
 
-export class AbstractDrafterTool extends BaseMcpTool<z.infer<typeof abstractDrafterSchema>, any> {
+export class AbstractDrafterTool extends BaseMcpTool<z.infer<typeof abstractDrafterSchema>, ToolExecutionResult> {
   readonly metadata = {
     name: 'abstract_drafter',
     description:
@@ -123,7 +168,7 @@ export class AbstractDrafterTool extends BaseMcpTool<z.infer<typeof abstractDraf
   protected async executeInternal(
     input: z.infer<typeof abstractDrafterSchema>,
     context: McpToolContext
-  ) {
+  ): Promise<ToolExecutionResult> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { AbstractDrafterAgent } = await import('@yunpat/agent-abstract-drafter')
@@ -136,9 +181,9 @@ export class AbstractDrafterTool extends BaseMcpTool<z.infer<typeof abstractDraf
           tools: context.registry,
         })
         const result = await agent.execute({
-          inventionUnderstanding: input.inventionUnderstanding as any,
-          specification: input.specification as any,
-          claims: input.claims as any,
+          inventionUnderstanding: input.inventionUnderstanding as Record<string, unknown>,
+          specification: input.specification as Record<string, unknown> | undefined,
+          claims: input.claims as Record<string, unknown> | undefined,
           maxWords: input.maxWords || 300,
         })
         return { version: '3.0.0', integrationMode: 'real_agent', ...result }
@@ -181,7 +226,7 @@ const writerSchema = z.object({
   references: z.array(z.string()).optional().describe('参考资料列表'),
 })
 
-export class WriterTool extends BaseMcpTool<z.infer<typeof writerSchema>, any> {
+export class WriterTool extends BaseMcpTool<z.infer<typeof writerSchema>, ToolExecutionResult> {
   readonly metadata = {
     name: 'patent_writer_general',
     description:
@@ -190,16 +235,20 @@ export class WriterTool extends BaseMcpTool<z.infer<typeof writerSchema>, any> {
     inputSchema: writerSchema,
   }
 
-  protected async executeInternal(input: z.infer<typeof writerSchema>, context: McpToolContext) {
+  protected async executeInternal(
+    input: z.infer<typeof writerSchema>,
+    context: McpToolContext
+  ): Promise<ToolExecutionResult> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { WriterAgent } = await import('@yunpat/agent-writer')
+
         const agent = new WriterAgent({
           llm: context.llm,
           eventBus: context.eventBus,
           memory: context.memory,
           tools: context.registry,
-        } as any)
+        } satisfies Record<string, unknown>)
         const result = await agent.execute(input)
         return { version: '3.0.0', integrationMode: 'real_agent', ...result }
       } catch (error) {

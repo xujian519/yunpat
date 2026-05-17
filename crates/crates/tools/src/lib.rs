@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -8,183 +7,15 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::sync::RwLock;
-use yunpat_protocol::{ToolKind, ToolOutput, ToolPayload};
-
-/// Capabilities that a tool may have or require.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ToolCapability {
-    /// Tool only reads data, never modifies state.
-    ReadOnly,
-    /// Tool writes to the filesystem.
-    WritesFiles,
-    /// Tool executes arbitrary shell commands.
-    ExecutesCode,
-    /// Tool makes network requests.
-    Network,
-    /// Tool can be run in a sandbox.
-    Sandboxable,
-    /// Tool requires user approval before execution.
-    RequiresApproval,
-}
-
-/// Approval requirement for a tool.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ApprovalRequirement {
-    /// Never needs approval: safe read-only operations.
-    #[default]
-    Auto,
-    /// Suggest approval but allow user to skip.
-    Suggest,
-    /// Always require explicit user approval.
-    Required,
-}
-
-/// Errors that can occur during tool execution.
-#[derive(Debug, Clone)]
-pub enum ToolError {
-    InvalidInput { message: String },
-    MissingField { field: String },
-    PathEscape { path: PathBuf },
-    ExecutionFailed { message: String },
-    Timeout { seconds: u64 },
-    NotAvailable { message: String },
-    PermissionDenied { message: String },
-}
-
-impl std::fmt::Display for ToolError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::InvalidInput { message } => {
-                write!(f, "Failed to validate input: {message}")
-            }
-            Self::MissingField { field } => {
-                write!(
-                    f,
-                    "Failed to validate input: missing required field '{field}'"
-                )
-            }
-            Self::PathEscape { path } => {
-                write!(
-                    f,
-                    "Failed to resolve path '{}': path escapes workspace",
-                    path.display()
-                )
-            }
-            Self::ExecutionFailed { message } => {
-                write!(f, "Failed to execute tool: {message}")
-            }
-            Self::Timeout { seconds } => {
-                write!(
-                    f,
-                    "Failed to execute tool: operation timed out after {seconds}s"
-                )
-            }
-            Self::NotAvailable { message } => {
-                write!(f, "Failed to locate tool: {message}")
-            }
-            Self::PermissionDenied { message } => {
-                write!(f, "Failed to authorize tool execution: {message}")
-            }
-        }
-    }
-}
-
-impl std::error::Error for ToolError {}
-
-impl ToolError {
-    #[must_use]
-    pub fn invalid_input(msg: impl Into<String>) -> Self {
-        Self::InvalidInput {
-            message: msg.into(),
-        }
-    }
-
-    #[must_use]
-    pub fn missing_field(field: impl Into<String>) -> Self {
-        Self::MissingField {
-            field: field.into(),
-        }
-    }
-
-    #[must_use]
-    pub fn execution_failed(msg: impl Into<String>) -> Self {
-        Self::ExecutionFailed {
-            message: msg.into(),
-        }
-    }
-
-    #[must_use]
-    pub fn path_escape(path: impl Into<PathBuf>) -> Self {
-        Self::PathEscape { path: path.into() }
-    }
-
-    #[must_use]
-    pub fn not_available(msg: impl Into<String>) -> Self {
-        Self::NotAvailable {
-            message: msg.into(),
-        }
-    }
-
-    #[must_use]
-    pub fn permission_denied(msg: impl Into<String>) -> Self {
-        Self::PermissionDenied {
-            message: msg.into(),
-        }
-    }
-}
-
-/// Result of a tool execution.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ToolResult {
-    /// The output content, which may be JSON or plain text.
-    pub content: String,
-    /// Whether the execution was successful.
-    pub success: bool,
-    /// Optional structured metadata.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub metadata: Option<Value>,
-}
-
-impl ToolResult {
-    /// Create a successful result with content.
-    #[must_use]
-    pub fn success(content: impl Into<String>) -> Self {
-        Self {
-            content: content.into(),
-            success: true,
-            metadata: None,
-        }
-    }
-
-    /// Create an error result with message.
-    #[must_use]
-    pub fn error(message: impl Into<String>) -> Self {
-        Self {
-            content: message.into(),
-            success: false,
-            metadata: None,
-        }
-    }
-
-    /// Create a successful result from JSON.
-    pub fn json<T: Serialize>(value: &T) -> std::result::Result<Self, serde_json::Error> {
-        Ok(Self {
-            content: serde_json::to_string_pretty(value)?,
-            success: true,
-            metadata: None,
-        })
-    }
-
-    /// Add metadata to the result.
-    #[must_use]
-    pub fn with_metadata(mut self, metadata: Value) -> Self {
-        self.metadata = Some(metadata);
-        self
-    }
-}
+pub use yunpat_protocol::{
+    ApprovalRequirement, ToolCapability, ToolError, ToolResult, ToolKind, ToolOutput, ToolPayload,
+};
 
 /// Helper to extract a required string field from JSON input.
-pub fn required_str<'a>(input: &'a Value, field: &str) -> std::result::Result<&'a str, ToolError> {
+pub fn required_str<'a>(
+    input: &'a Value,
+    field: &str,
+) -> std::result::Result<&'a str, ToolError> {
     input.get(field).and_then(Value::as_str).ok_or_else(|| {
         // When the field is missing, list the fields the caller *did*
         // supply so the model can spot the mismatch without a retry.
@@ -265,10 +96,7 @@ impl ToolCall {
         match &self.payload {
             ToolPayload::LocalShell { params } => (
                 params.command.clone(),
-                params
-                    .cwd
-                    .clone()
-                    .unwrap_or_else(|| fallback_cwd.to_string()),
+                params.cwd.clone().unwrap_or_else(|| fallback_cwd.to_string()),
                 "shell",
             ),
             _ => (self.name.clone(), fallback_cwd.to_string(), "tool"),
@@ -344,26 +172,21 @@ impl ToolRegistry {
         call: ToolCall,
         allow_mutating: bool,
     ) -> std::result::Result<ToolOutput, FunctionCallError> {
-        let handler = self.handlers.get(&call.name).cloned().ok_or_else(|| {
-            FunctionCallError::ToolNotFound {
-                name: call.name.clone(),
-            }
-        })?;
-        let configured =
-            self.specs
-                .get(&call.name)
-                .cloned()
-                .ok_or_else(|| FunctionCallError::ToolNotFound {
-                    name: call.name.clone(),
-                })?;
+        let handler = self
+            .handlers
+            .get(&call.name)
+            .cloned()
+            .ok_or_else(|| FunctionCallError::ToolNotFound { name: call.name.clone() })?;
+        let configured = self
+            .specs
+            .get(&call.name)
+            .cloned()
+            .ok_or_else(|| FunctionCallError::ToolNotFound { name: call.name.clone() })?;
 
         let payload_kind = tool_payload_kind(&call.payload);
         let expected = handler.kind();
         if !handler.matches_kind(payload_kind) {
-            return Err(FunctionCallError::KindMismatch {
-                expected,
-                got: payload_kind,
-            });
+            return Err(FunctionCallError::KindMismatch { expected, got: payload_kind });
         }
         if handler.is_mutating() && !allow_mutating {
             return Err(FunctionCallError::MutatingToolRejected { name: call.name });

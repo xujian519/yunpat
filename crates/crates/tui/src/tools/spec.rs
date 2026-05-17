@@ -143,6 +143,8 @@ pub struct ToolContext {
     /// LLM provider for patent agents (bridges TUI's async LlmClient to
     /// the agent framework's sync LlmProvider trait).
     pub llm_provider: Option<std::sync::Arc<dyn yunpat_agents::context::LlmProvider>>,
+    /// Optional event sender to stream progress back to the UI.
+    pub progress_tx: Option<tokio::sync::mpsc::Sender<crate::core::events::Event>>,
 }
 
 impl ToolContext {
@@ -175,6 +177,7 @@ impl ToolContext {
             workshop_vars: None,
             mcp_pool: None,
             llm_provider: None,
+            progress_tx: None,
         }
     }
 
@@ -210,6 +213,7 @@ impl ToolContext {
             workshop_vars: None,
             mcp_pool: None,
             llm_provider: None,
+            progress_tx: None,
         }
     }
 
@@ -245,6 +249,7 @@ impl ToolContext {
             workshop_vars: None,
             mcp_pool: None,
             llm_provider: None,
+            progress_tx: None,
         }
     }
 
@@ -324,16 +329,13 @@ impl ToolContext {
         }
 
         // Try to canonicalize the workspace
-        let workspace_canonical = self
-            .workspace
-            .canonicalize()
-            .unwrap_or_else(|_| self.workspace.clone());
+        let workspace_canonical =
+            self.workspace.canonicalize().unwrap_or_else(|_| self.workspace.clone());
 
         // For the initial check, also try to canonicalize the candidate if possible
         // This handles symlinks like /var -> /private/var on macOS
-        let candidate_canonical = candidate
-            .canonicalize()
-            .unwrap_or_else(|_| normalize_path(&candidate));
+        let candidate_canonical =
+            candidate.canonicalize().unwrap_or_else(|_| normalize_path(&candidate));
         let workspace_normalized = normalize_path(&workspace_canonical);
 
         // Check if the candidate is under the workspace (comparing canonical paths)
@@ -346,9 +348,7 @@ impl ToolContext {
                 && !self.is_trusted_external_path(&candidate_canonical)
                 && !self.is_trusted_external_path(&candidate_normalized)
             {
-                return Err(ToolError::PathEscape {
-                    path: candidate_canonical,
-                });
+                return Err(ToolError::PathEscape { path: candidate_canonical });
             }
         }
 
@@ -392,9 +392,7 @@ impl ToolContext {
         }
 
         let canonical_ancestor = if existing_ancestor.exists() {
-            existing_ancestor
-                .canonicalize()
-                .unwrap_or(existing_ancestor)
+            existing_ancestor.canonicalize().unwrap_or(existing_ancestor)
         } else {
             existing_ancestor
         };
@@ -422,9 +420,7 @@ impl ToolContext {
     /// Whether `path` is under any of the user-trusted external roots. The
     /// caller should pass an already-canonicalized (or normalized) path.
     fn is_trusted_external_path(&self, path: &Path) -> bool {
-        self.trusted_external_paths
-            .iter()
-            .any(|trusted| path.starts_with(trusted))
+        self.trusted_external_paths.iter().any(|trusted| path.starts_with(trusted))
     }
 
     /// Set the trust mode.

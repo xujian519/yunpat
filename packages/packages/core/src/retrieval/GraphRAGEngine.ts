@@ -169,13 +169,15 @@ export class GraphRAGEngine extends RAGEngine {
       metadata: Record<string, any> | null
       type: string
     }>
-  ): Promise<Array<{
-    content: string
-    similarity: number
-    metadata: Record<string, any> | null
-    type: string
-    source: 'graph'
-  }>> {
+  ): Promise<
+    Array<{
+      content: string
+      similarity: number
+      metadata: Record<string, any> | null
+      type: string
+      source: 'graph'
+    }>
+  > {
     try {
       // 1. 从向量结果中提取关键实体
       const entities = this.extractEntities(vectorResults.map((r) => r.content))
@@ -410,10 +412,7 @@ export class GraphRAGEngine extends RAGEngine {
       for (let i = 0; i < entities.length; i++) {
         for (let j = i + 1; j < entities.length; j++) {
           try {
-            const inference = await this.knowledgeGraph.inferRelation(
-              entities[i],
-              entities[j]
-            )
+            const inference = await this.knowledgeGraph.inferRelation(entities[i], entities[j])
 
             if (inference.confidence > 0.5) {
               relations.push({
@@ -496,10 +495,7 @@ export class GraphRAGEngine extends RAGEngine {
       if (merged.has(key)) {
         // 已存在，合并分数
         const existing = merged.get(key)!
-        existing.similarity = Math.max(
-          existing.similarity,
-          result.similarity * this.graphWeight
-        )
+        existing.similarity = Math.max(existing.similarity, result.similarity * this.graphWeight)
         // 合并元数据
         if (result.metadata) {
           existing.metadata = {
@@ -551,10 +547,7 @@ export class GraphRAGEngine extends RAGEngine {
   /**
    * 获取文档唯一标识（用于去重）
    */
-  private getDocKey(result: {
-    content: string
-    metadata: Record<string, any> | null
-  }): string {
+  private getDocKey(result: { content: string; metadata: Record<string, any> | null }): string {
     // 简单使用内容的前 100 个字符作为 key
     // 更好的方式是使用哈希，但这里简化处理
     return result.content.slice(0, 100).trim()
@@ -566,10 +559,7 @@ export class GraphRAGEngine extends RAGEngine {
    * 使用简单的文本相似度计算
    * 如果相似度 > 阈值，视为重复
    */
-  private isDuplicate(
-    doc1: { content: string },
-    doc2: { content: string }
-  ): boolean {
+  private isDuplicate(doc1: { content: string }, doc2: { content: string }): boolean {
     const similarity = this.calculateTextSimilarity(doc1.content, doc2.content)
     return similarity > this.dedupThreshold
   }

@@ -11,13 +11,42 @@ import {
   WebExtractTextTool,
   WebScrollTool,
 } from '../../src/browser/WebTools.js'
+import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
-const mockContext = {
-  registry: {} as any,
-  llm: {} as any,
-  memory: {} as any,
-  eventBus: {} as any,
+function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+  return {
+    registry: {
+      register: vi.fn(),
+      unregister: vi.fn(),
+      get: vi.fn().mockReturnValue(undefined),
+      call: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockReturnValue([]),
+    },
+    llm: {
+      chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    },
+    memory: {
+      get: vi.fn().mockResolvedValue(undefined),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      has: vi.fn().mockResolvedValue(false),
+      getAll: vi.fn().mockResolvedValue({}),
+      setAll: vi.fn().mockResolvedValue(undefined),
+      clear: vi.fn().mockResolvedValue(undefined),
+      search: vi.fn().mockResolvedValue([]),
+    },
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      unsubscribe: vi.fn(),
+      request: vi.fn().mockResolvedValue(undefined),
+    },
+  }
 }
+
+const mockContext = createMockContext()
 
 describe('WebTools', () => {
   beforeEach(() => {
@@ -25,11 +54,18 @@ describe('WebTools', () => {
     global.fetch = vi.fn()
   })
 
-  const mockFetchSuccess = (data: any) => {
+  type FetchJsonResponse = {
+    ok: boolean
+    status?: number
+    statusText?: string
+    json: () => Promise<Record<string, unknown>>
+  }
+
+  const mockFetchSuccess = (data: Record<string, unknown>) => {
     vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
       json: async () => data,
-    } as any)
+    } as unknown as Response)
   }
 
   const mockFetchError = (status: number, statusText: string) => {
@@ -37,7 +73,7 @@ describe('WebTools', () => {
       ok: false,
       status,
       statusText,
-    } as any)
+    } as unknown as Response)
   }
 
   describe('WebNavigateTool', () => {

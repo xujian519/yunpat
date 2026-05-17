@@ -34,6 +34,7 @@ impl TodoStatus {
 
     /// Parse a string into a todo status.
     #[must_use]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(value: &str) -> Option<Self> {
         match value.trim().to_lowercase().as_str() {
             "pending" => Some(TodoStatus::Pending),
@@ -71,10 +72,7 @@ impl TodoList {
     /// Create an empty todo list.
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            items: Vec::new(),
-            next_id: 1,
-        }
+        Self { items: Vec::new(), next_id: 1 }
     }
 
     /// Return a snapshot of the list with computed metrics.
@@ -130,11 +128,8 @@ impl TodoList {
             return 0;
         }
         let total = self.items.len();
-        let completed = self
-            .items
-            .iter()
-            .filter(|item| item.status == TodoStatus::Completed)
-            .count();
+        let completed =
+            self.items.iter().filter(|item| item.status == TodoStatus::Completed).count();
         let percent = completed.saturating_mul(100);
         let percent = (percent + total / 2) / total;
         u8::try_from(percent).unwrap_or(u8::MAX)
@@ -523,10 +518,7 @@ impl ToolSpec for TodoWriteTool {
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| ToolError::invalid_input("Todo item missing 'content'"))?;
 
-            let status_str = item
-                .get("status")
-                .and_then(|v| v.as_str())
-                .unwrap_or("pending");
+            let status_str = item.get("status").and_then(|v| v.as_str()).unwrap_or("pending");
 
             let status = TodoStatus::from_str(status_str).unwrap_or(TodoStatus::Pending);
 

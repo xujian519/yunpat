@@ -236,16 +236,11 @@ fn resolve_git_context(context: &ToolContext, path: Option<&str>) -> Result<GitC
         )));
     }
 
-    Ok(GitContext {
-        working_dir,
-        pathspec,
-    })
+    Ok(GitContext { working_dir, pathspec })
 }
 
 fn canonical_or_workspace(workspace: &Path) -> PathBuf {
-    workspace
-        .canonicalize()
-        .unwrap_or_else(|_| workspace.to_path_buf())
+    workspace.canonicalize().unwrap_or_else(|_| workspace.to_path_buf())
 }
 
 fn pathspec_from(working_dir: &Path, resolved: &Path) -> PathBuf {
@@ -272,10 +267,7 @@ fn format_command(working_dir: &Path, args: &[String]) -> String {
     format!(
         "git -C {} {}",
         working_dir.display(),
-        args.iter()
-            .map(String::as_str)
-            .collect::<Vec<_>>()
-            .join(" ")
+        args.iter().map(String::as_str).collect::<Vec<_>>().join(" ")
     )
 }
 
@@ -285,10 +277,7 @@ fn truncate_with_note(text: &str, max_chars: usize) -> (String, bool, usize) {
     }
     let end = char_boundary_index(text, max_chars);
     let truncated = &text[..end];
-    let omitted_chars = text
-        .chars()
-        .count()
-        .saturating_sub(truncated.chars().count());
+    let omitted_chars = text.chars().count().saturating_sub(truncated.chars().count());
     let note = format!(
         "\n\n[output truncated to {max_chars} characters; {omitted_chars} characters omitted]"
     );
@@ -391,10 +380,7 @@ mod tests {
         let ctx = ToolContext::new(tmp.path());
         let tool = GitDiffTool;
 
-        let uncached = tool
-            .execute(json!({ "path": "src" }), &ctx)
-            .await
-            .expect("diff");
+        let uncached = tool.execute(json!({ "path": "src" }), &ctx).await.expect("diff");
         assert!(uncached.success);
         assert!(uncached.content.contains("diff --git"));
         assert!(uncached.content.contains("lib.rs"));

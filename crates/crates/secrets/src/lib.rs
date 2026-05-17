@@ -80,9 +80,7 @@ impl DefaultKeyringStore {
     /// Build a new store with the given service name.
     #[must_use]
     pub fn new(service: impl Into<String>) -> Self {
-        Self {
-            service: service.into(),
-        }
+        Self { service: service.into() }
     }
 
     /// Probe the OS keyring without writing anything. Returns `Ok(())` if
@@ -127,9 +125,7 @@ impl KeyringStore for DefaultKeyringStore {
     fn set(&self, key: &str, value: &str) -> Result<(), SecretsError> {
         let entry = keyring::Entry::new(&self.service, key)
             .map_err(|err| SecretsError::Keyring(err.to_string()))?;
-        entry
-            .set_password(value)
-            .map_err(|err| SecretsError::Keyring(err.to_string()))
+        entry.set_password(value).map_err(|err| SecretsError::Keyring(err.to_string()))
     }
 
     fn delete(&self, key: &str) -> Result<(), SecretsError> {
@@ -162,19 +158,19 @@ impl InMemoryKeyringStore {
 
 impl KeyringStore for InMemoryKeyringStore {
     fn get(&self, key: &str) -> Result<Option<String>, SecretsError> {
-        Ok(self.entries.lock().unwrap().get(key).cloned())
+        let guard = self.entries.lock().map_err(|e| SecretsError::Keyring(format!("lock poisoned: {e}")))?;
+        Ok(guard.get(key).cloned())
     }
 
     fn set(&self, key: &str, value: &str) -> Result<(), SecretsError> {
-        self.entries
-            .lock()
-            .unwrap()
-            .insert(key.to_string(), value.to_string());
+        let mut guard = self.entries.lock().map_err(|e| SecretsError::Keyring(format!("lock poisoned: {e}")))?;
+        guard.insert(key.to_string(), value.to_string());
         Ok(())
     }
 
     fn delete(&self, key: &str) -> Result<(), SecretsError> {
-        self.entries.lock().unwrap().remove(key);
+        let mut guard = self.entries.lock().map_err(|e| SecretsError::Keyring(format!("lock poisoned: {e}")))?;
+        guard.remove(key);
         Ok(())
     }
 
@@ -236,10 +232,7 @@ impl FileKeyringStore {
             let meta = fs::metadata(&self.path)?;
             let mode = meta.permissions().mode() & 0o777;
             if mode & 0o077 != 0 {
-                return Err(SecretsError::InsecurePermissions {
-                    path: self.path.clone(),
-                    mode,
-                });
+                return Err(SecretsError::InsecurePermissions { path: self.path.clone(), mode });
             }
         }
         let raw = fs::read_to_string(&self.path)?;
@@ -458,9 +451,7 @@ mod tests {
     /// `DEEPSEEK_API_KEY` etc., which is process-global.
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
         static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(()))
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
+        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap_or_else(|p| p.into_inner())
     }
 
     fn clear_known_envs() {

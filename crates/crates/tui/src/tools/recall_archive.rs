@@ -162,11 +162,7 @@ fn archive_root(session_id: &str) -> Result<PathBuf, std::io::Error> {
             "Could not resolve home directory for cycle archive root",
         )
     })?;
-    Ok(home
-        .join(".deepseek")
-        .join("sessions")
-        .join(session_id)
-        .join("cycles"))
+    Ok(home.join(".deepseek").join("sessions").join(session_id).join("cycles"))
 }
 
 /// Enumerate all archive files for a session, sorted by cycle number ascending.
@@ -539,10 +535,7 @@ mod tests {
         let workspace = TempDir::new().unwrap();
         let ctx = ctx_for_session(workspace.path(), &sid);
         let tool = RecallArchiveTool;
-        let result = tool
-            .execute(json!({"query": "anything"}), &ctx)
-            .await
-            .unwrap();
+        let result = tool.execute(json!({"query": "anything"}), &ctx).await.unwrap();
         assert!(result.content.contains("No prior cycle archives"));
     }
 
@@ -640,10 +633,8 @@ mod tests {
         archive_cycle(&sid, 1, &messages, "deepseek-v4-pro", now).unwrap();
 
         let tool = RecallArchiveTool;
-        let result = tool
-            .execute(json!({"query": "alpha", "max_results": 999}), &ctx)
-            .await
-            .unwrap();
+        let result =
+            tool.execute(json!({"query": "alpha", "max_results": 999}), &ctx).await.unwrap();
         let count = result.content.matches("\"message_index\":").count();
         assert!(count <= HARD_MAX_RESULTS, "got {count} hits");
     }
@@ -655,10 +646,7 @@ mod tests {
         let workspace = TempDir::new().unwrap();
         let ctx = ctx_for_session(workspace.path(), &sid);
         let tool = RecallArchiveTool;
-        let err = tool
-            .execute(json!({"query": "   "}), &ctx)
-            .await
-            .unwrap_err();
+        let err = tool.execute(json!({"query": "   "}), &ctx).await.unwrap_err();
         assert!(matches!(err, ToolError::InvalidInput { .. }));
     }
 

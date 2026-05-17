@@ -80,7 +80,11 @@ export class SAO2VecEncoder {
    * @param topK - 返回前 K 个最相似的结果
    * @returns 按相似度降序排列的 SAO 三元组数组
    */
-  async findSimilar(target: SAOTriplet, candidates: SAOTriplet[], topK: number): Promise<SAOTriplet[]> {
+  async findSimilar(
+    target: SAOTriplet,
+    candidates: SAOTriplet[],
+    topK: number
+  ): Promise<SAOTriplet[]> {
     if (candidates.length === 0) {
       return []
     }

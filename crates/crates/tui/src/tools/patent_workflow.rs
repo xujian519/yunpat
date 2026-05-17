@@ -35,9 +35,7 @@ pub struct PatentWorkflowTool {
 
 impl PatentWorkflowTool {
     pub fn new(agent_id: &str) -> Self {
-        Self {
-            agent_id: agent_id.to_string(),
-        }
+        Self { agent_id: agent_id.to_string() }
     }
 }
 
@@ -200,16 +198,9 @@ impl ToolSpec for PatentWorkflowTool {
     }
 
     async fn execute(&self, input: Value, context: &ToolContext) -> Result<ToolResult, ToolError> {
-        let topic = input
-            .get("topic")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string();
+        let topic = input.get("topic").and_then(|v| v.as_str()).unwrap_or("").to_string();
 
-        let case_id = input
-            .get("case_id")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string());
+        let case_id = input.get("case_id").and_then(|v| v.as_str()).map(|s| s.to_string());
 
         if topic.is_empty() {
             return Err(ToolError::InvalidInput {
@@ -225,6 +216,7 @@ impl ToolSpec for PatentWorkflowTool {
             case_id.as_deref(),
             context.mcp_pool.clone(),
             context.llm_provider.clone(),
+            context.progress_tx.clone(),
         )
         .await;
 
@@ -498,6 +490,7 @@ async fn execute_agent_locally(
     case_id: Option<&str>,
     mcp_pool: Option<std::sync::Arc<tokio::sync::Mutex<crate::mcp::McpPool>>>,
     llm_provider: Option<std::sync::Arc<dyn yunpat_agents::context::LlmProvider>>,
+    progress_tx: Option<tokio::sync::mpsc::Sender<crate::core::events::Event>>,
 ) -> Result<Vec<StageOutput>, String> {
     // === Step 1: 尝试 MCP 工具调用 ===
     if let Some(pool) = &mcp_pool {
@@ -533,7 +526,7 @@ async fn execute_agent_locally(
     }
 
     // === Step 2: 本地 Agent 执行 ===
-    execute_local_agent(agent_id, topic, case_id, llm_provider).await
+    execute_local_agent(agent_id, topic, case_id, llm_provider, progress_tx).await
 }
 
 /// 格式化 MCP 工具结果为字符串
@@ -565,6 +558,7 @@ async fn execute_local_agent(
     topic: &str,
     case_id: Option<&str>,
     llm_provider: Option<std::sync::Arc<dyn yunpat_agents::context::LlmProvider>>,
+    progress_tx: Option<tokio::sync::mpsc::Sender<crate::core::events::Event>>,
 ) -> Result<Vec<StageOutput>, String> {
     // Try AgentExecutor for agents that implement PatentAgent.
     let input = AgentInput {
@@ -581,32 +575,95 @@ async fn execute_local_agent(
 
     let agent_result: Option<Result<Vec<StageOutput>, String>> = match agent_id {
         "research" => match yunpat_agents::research::ResearchAgent::with_default_kb() {
-            Ok(agent) => Some(run_via_executor(agent, input, llm_provider.clone()).await),
+            Ok(agent) => Some(
+                run_via_executor(
+                    agent,
+                    input,
+                    llm_provider.clone(),
+                    progress_tx.clone(),
+                    agent_id.to_string(),
+                )
+                .await,
+            ),
             Err(e) => Some(Err(format!("Failed to create ResearchAgent: {}", e))),
         },
         "oa-response" => {
             let agent = yunpat_agents::oa_response::OAResponseAgent::new();
-            Some(run_via_executor(agent, input, llm_provider.clone()).await)
+            Some(
+                run_via_executor(
+                    agent,
+                    input,
+                    llm_provider.clone(),
+                    progress_tx.clone(),
+                    agent_id.to_string(),
+                )
+                .await,
+            )
         }
         "drafting" => {
             let agent = yunpat_agents::drafting::DraftingAgent::new();
-            Some(run_via_executor(agent, input, llm_provider.clone()).await)
+            Some(
+                run_via_executor(
+                    agent,
+                    input,
+                    llm_provider.clone(),
+                    progress_tx.clone(),
+                    agent_id.to_string(),
+                )
+                .await,
+            )
         }
         "trademark" => {
             let agent = yunpat_agents::trademark::TrademarkAgent::new();
-            Some(run_via_executor(agent, input, llm_provider.clone()).await)
+            Some(
+                run_via_executor(
+                    agent,
+                    input,
+                    llm_provider.clone(),
+                    progress_tx.clone(),
+                    agent_id.to_string(),
+                )
+                .await,
+            )
         }
         "creativity" => {
             let agent = yunpat_agents::creativity::CreativityAgent::new();
-            Some(run_via_executor(agent, input, llm_provider.clone()).await)
+            Some(
+                run_via_executor(
+                    agent,
+                    input,
+                    llm_provider.clone(),
+                    progress_tx.clone(),
+                    agent_id.to_string(),
+                )
+                .await,
+            )
         }
         "reexamination" => {
             let agent = yunpat_agents::reexamination::ReexaminationAgent::new();
-            Some(run_via_executor(agent, input, llm_provider.clone()).await)
+            Some(
+                run_via_executor(
+                    agent,
+                    input,
+                    llm_provider.clone(),
+                    progress_tx.clone(),
+                    agent_id.to_string(),
+                )
+                .await,
+            )
         }
         "invalidation" => {
             let agent = yunpat_agents::invalidation::InvalidationAgent::new();
-            Some(run_via_executor(agent, input, llm_provider.clone()).await)
+            Some(
+                run_via_executor(
+                    agent,
+                    input,
+                    llm_provider.clone(),
+                    progress_tx.clone(),
+                    agent_id.to_string(),
+                )
+                .await,
+            )
         }
         _ => None,
     };
@@ -934,6 +991,8 @@ async fn run_via_executor(
     agent: impl yunpat_agents::agent::PatentAgent + 'static,
     input: AgentInput,
     llm_provider: Option<std::sync::Arc<dyn yunpat_agents::context::LlmProvider>>,
+    progress_tx: Option<tokio::sync::mpsc::Sender<crate::core::events::Event>>,
+    agent_id_str: String,
 ) -> Result<Vec<StageOutput>, String> {
     use std::sync::Arc;
     use tokio::sync::RwLock;
@@ -958,7 +1017,22 @@ async fn run_via_executor(
 
     let mut stages = Vec::new();
     let mut rx = rx;
+    let mut progress: f32 = 0.0;
     while let Some(stage) = rx.recv().await {
+        progress += 0.1; // Simulated incremental progress per stage
+        if let Some(tx) = &progress_tx {
+            let _ = tx
+                .send(crate::core::events::Event::PatentWorkflowStatus {
+                    agent_id: agent_id_str.clone(),
+                    status: stage.stage_name.clone(),
+                    progress: Some(f32::min(progress, 0.99)), // Leave 1.0 for the final complete event
+                    details: Some(stage.content.clone()),
+                    completed: false,
+                    error: None,
+                    result: None,
+                })
+                .await;
+        }
         stages.push(stage);
     }
     Ok(stages)
@@ -1010,13 +1084,7 @@ mod tests {
         let tool = PatentWorkflowTool::new("research");
         let schema = tool.input_schema();
         assert_eq!(schema["type"], "object");
-        assert!(
-            schema["required"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .any(|r| r == "topic")
-        );
+        assert!(schema["required"].as_array().unwrap().iter().any(|r| r == "topic"));
     }
 
     #[tokio::test]
@@ -1029,18 +1097,14 @@ mod tests {
     #[tokio::test]
     async fn test_execute_unknown_agent() {
         let tool = PatentWorkflowTool::new("nonexistent_agent");
-        let result = tool
-            .execute(json!({ "topic": "test" }), &test_context())
-            .await;
+        let result = tool.execute(json!({ "topic": "test" }), &test_context()).await;
         assert!(result.is_err());
     }
 
     #[tokio::test]
     async fn test_execute_research_agent() {
         let tool = PatentWorkflowTool::new("research");
-        let result = tool
-            .execute(json!({ "topic": "专利创造性判断" }), &test_context())
-            .await;
+        let result = tool.execute(json!({ "topic": "专利创造性判断" }), &test_context()).await;
         assert!(result.is_ok(), "Expected success, got {:?}", result);
 
         let tool_result = result.unwrap();
@@ -1057,9 +1121,7 @@ mod tests {
     #[tokio::test]
     async fn test_execute_drafting_agent() {
         let tool = PatentWorkflowTool::new("drafting");
-        let result = tool
-            .execute(json!({ "topic": "一种新型电池技术" }), &test_context())
-            .await;
+        let result = tool.execute(json!({ "topic": "一种新型电池技术" }), &test_context()).await;
         assert!(result.is_ok(), "Expected success, got {:?}", result);
 
         let tool_result = result.unwrap();
@@ -1075,9 +1137,7 @@ mod tests {
     #[tokio::test]
     async fn test_execute_trademark_agent() {
         let tool = PatentWorkflowTool::new("trademark");
-        let result = tool
-            .execute(json!({ "topic": "云智商标" }), &test_context())
-            .await;
+        let result = tool.execute(json!({ "topic": "云智商标" }), &test_context()).await;
         assert!(result.is_ok(), "Expected success, got {:?}", result);
 
         let tool_result = result.unwrap();
@@ -1093,9 +1153,7 @@ mod tests {
     #[tokio::test]
     async fn test_execute_creativity_agent() {
         let tool = PatentWorkflowTool::new("creativity");
-        let result = tool
-            .execute(json!({ "topic": "创造性判断分析" }), &test_context())
-            .await;
+        let result = tool.execute(json!({ "topic": "创造性判断分析" }), &test_context()).await;
         assert!(result.is_ok(), "Expected success, got {:?}", result);
 
         let tool_result = result.unwrap();
@@ -1112,9 +1170,7 @@ mod tests {
     #[ignore = "需要本地 PostgreSQL 专利数据库"]
     async fn test_execute_patent_db_search() {
         let tool = PatentWorkflowTool::new("patent_db");
-        let result = tool
-            .execute(json!({ "topic": "人工智能" }), &test_context())
-            .await;
+        let result = tool.execute(json!({ "topic": "人工智能" }), &test_context()).await;
         assert!(result.is_ok(), "Expected success, got {:?}", result);
 
         let tool_result = result.unwrap();

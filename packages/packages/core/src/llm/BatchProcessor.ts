@@ -20,6 +20,23 @@ import {
 } from './tokenization/BatchProcessorOptimizer.js'
 
 /**
+ * 写作计划接口
+ */
+export interface WritingPlan {
+  /** 目标长度（词数） */
+  targetLength: number
+  /** 写作语气 */
+  tone: string
+  /** 文档结构 */
+  structure: {
+    /** 文档标题 */
+    title: string
+    /** 章节列表 */
+    sections: unknown[]
+  }
+}
+
+/**
  * 章节生成结果
  */
 export interface BatchSectionResult {
@@ -100,7 +117,7 @@ export class BatchProcessor {
    */
   async batchGenerate(
     sections: string[],
-    plan: unknown,
+    plan: WritingPlan,
     context: unknown
   ): Promise<Map<string, BatchSectionResult>> {
     // 检查是否启用批处理
@@ -139,7 +156,7 @@ export class BatchProcessor {
   /**
    * 创建批次 - 智能分批策略
    */
-  private createBatches(sections: string[], plan?: unknown): string[][] {
+  private createBatches(sections: string[], plan?: WritingPlan): string[][] {
     // 如果启用智能分批且有 Token 限制
     if (this.config.enableSmartBatching && this.batchOptimizer && plan) {
       return this.createSmartBatches(sections, plan)
@@ -172,11 +189,11 @@ export class BatchProcessor {
   /**
    * 智能分批策略（基于 Token 长度）
    */
-  private createSmartBatches(sections: string[], plan: unknown): string[][] {
+  private createSmartBatches(sections: string[], plan: WritingPlan): string[][] {
     const modelName = this.config.modelName || 'gpt-3.5-turbo'
 
     // 估算每个章节的 Token 数（基于标题和目标长度）
-    const wordsPerSection = Math.round((plan as any).targetLength / sections.length)
+    const wordsPerSection = Math.round(plan.targetLength / sections.length)
     const estimatedTokensPerSection = wordsPerSection * 1.5 // 1 词 ≈ 1.5 tokens
 
     const sectionTokens = sections.map(() => estimatedTokensPerSection)
@@ -203,10 +220,10 @@ export class BatchProcessor {
   /**
    * 估算章节的 Token 数量
    */
-  private estimateSectionTokens(sectionHeading: string, plan: unknown): number {
+  private estimateSectionTokens(sectionHeading: string, plan: WritingPlan): number {
     const modelName = this.config.modelName || 'gpt-3.5-turbo'
     const wordsPerSection = Math.round(
-      (plan as any).targetLength / (plan as any).structure.sections.length
+      plan.targetLength / plan.structure.sections.length
     )
 
     // 标题 Token
@@ -223,7 +240,7 @@ export class BatchProcessor {
    */
   private async processBatch(
     sections: string[],
-    plan: unknown,
+    plan: WritingPlan,
     context: unknown,
     batchIndex: number,
     totalBatches: number
@@ -239,7 +256,7 @@ export class BatchProcessor {
         messages: [
           {
             role: 'system',
-            content: `你是技术写作专家。语气：${(plan as any).tone}。你需要批量生成多个章节的内容。`,
+            content: `你是技术写作专家。语气：${plan.tone}。你需要批量生成多个章节的内容。`,
           },
           {
             role: 'user',
@@ -266,8 +283,8 @@ export class BatchProcessor {
   /**
    * 构建批量提示
    */
-  private buildBatchPrompt(sections: string[], plan: unknown): string {
-    const wordsPerSection = Math.round((plan as any).targetLength / sections.length)
+  private buildBatchPrompt(sections: string[], plan: WritingPlan): string {
+    const wordsPerSection = Math.round(plan.targetLength / sections.length)
 
     // 估算提示 Token 数
     const modelName = this.config.modelName || 'gpt-3.5-turbo'
@@ -283,12 +300,12 @@ export class BatchProcessor {
       )
     }
 
-    return `请为文档"${(plan as any).structure.title}"批量生成以下${sections.length}个章节的内容：
+    return `请为文档"${plan.structure.title}"批量生成以下${sections.length}个章节的内容：
 
 ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
 
 **要求**：
-1. 语气：${(plan as any).tone}
+1. 语气：${plan.tone}
 2. 目标长度：每章节约${adjustedWordsPerSection}词
 3. 内容详细、准确
 
@@ -317,12 +334,12 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
   /**
    * 估算提示 Token 数
    */
-  private estimatePromptTokens(sections: string[], plan: unknown, wordsPerSection: number): number {
+  private estimatePromptTokens(sections: string[], plan: WritingPlan, wordsPerSection: number): number {
     const modelName = this.config.modelName || 'gpt-3.5-turbo'
 
     // 基础提示 Token
     let promptTokens = this.tokenCounter.estimateTokens(
-      `请为文档"${(plan as any).structure.title}"批量生成以下${sections.length}个章节的内容`,
+      `请为文档"${plan.structure.title}"批量生成以下${sections.length}个章节的内容`,
       modelName
     )
 
@@ -371,12 +388,12 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
       }
 
       // 构建结果映射
-      parsed.sections.forEach((section: unknown) => {
-        if ((section as any).heading && (section as any).content) {
-          resultMap.set((section as any).heading, {
-            heading: (section as any).heading,
-            content: (section as any).content,
-            wordCount: (section as any).content.split(/\s+/).length,
+      parsed.sections.forEach((section: { heading: string; content: string }) => {
+        if (section.heading && section.content) {
+          resultMap.set(section.heading, {
+            heading: section.heading,
+            content: section.content,
+            wordCount: section.content.split(/\s+/).length,
           })
         }
       })
@@ -402,7 +419,7 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
    */
   private async fallbackToSequential(
     sections: string[],
-    plan: unknown,
+    plan: WritingPlan,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     context: unknown
   ): Promise<Map<string, BatchSectionResult>> {
@@ -418,7 +435,7 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
           messages: [
             {
               role: 'system',
-              content: `你是技术写作专家。语气：${(plan as any).tone}。`,
+              content: `你是技术写作专家。语气：${plan.tone}。`,
             },
             {
               role: 'user',
@@ -450,17 +467,17 @@ ${sections.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
   /**
    * 构建单个章节提示（用于回退模式）
    */
-  private buildSectionPrompt(heading: string, plan: unknown): string {
+  private buildSectionPrompt(heading: string, plan: WritingPlan): string {
     const wordsPerSection = Math.round(
-      (plan as any).targetLength / (plan as any).structure.sections.length
+      plan.targetLength / plan.structure.sections.length
     )
 
-    return `请为文档"${(plan as any).structure.title}"撰写以下章节的内容：
+    return `请为文档"${plan.structure.title}"撰写以下章节的内容：
 
 **章节标题**：${heading}
 
 **要求**：
-1. 语气：${(plan as any).tone}
+1. 语气：${plan.tone}
 2. 目标长度：约${wordsPerSection}词
 3. 内容详细、准确
 

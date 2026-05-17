@@ -132,10 +132,7 @@ impl SessionManager {
                 "Session id cannot be empty",
             ));
         }
-        if !trimmed
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
-        {
+        if !trimmed.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 format!("Invalid session id '{id}'"),
@@ -232,10 +229,7 @@ impl SessionManager {
 
     /// Load offline queue state if present.
     pub fn load_offline_queue_state(&self) -> std::io::Result<Option<OfflineQueueState>> {
-        let path = self
-            .sessions_dir
-            .join("checkpoints")
-            .join("offline_queue.json");
+        let path = self.sessions_dir.join("checkpoints").join("offline_queue.json");
         if !path.exists() {
             return Ok(None);
         }
@@ -256,10 +250,7 @@ impl SessionManager {
 
     /// Remove persisted offline queue state.
     pub fn clear_offline_queue_state(&self) -> std::io::Result<()> {
-        let path = self
-            .sessions_dir
-            .join("checkpoints")
-            .join("offline_queue.json");
+        let path = self.sessions_dir.join("checkpoints").join("offline_queue.json");
         if path.exists() {
             fs::remove_file(path)?;
         }
@@ -290,10 +281,7 @@ impl SessionManager {
     pub fn load_session_by_prefix(&self, prefix: &str) -> std::io::Result<SavedSession> {
         let sessions = self.list_sessions()?;
 
-        let matches: Vec<_> = sessions
-            .into_iter()
-            .filter(|s| s.id.starts_with(prefix))
-            .collect();
+        let matches: Vec<_> = sessions.into_iter().filter(|s| s.id.starts_with(prefix)).collect();
 
         match matches.len() {
             0 => Err(std::io::Error::new(
@@ -354,9 +342,7 @@ impl SessionManager {
         const PREFIX_BYTES: usize = 64 * 1024;
         let mut file = fs::File::open(path)?;
         let mut buf = Vec::with_capacity(PREFIX_BYTES);
-        file.by_ref()
-            .take(PREFIX_BYTES as u64)
-            .read_to_end(&mut buf)?;
+        file.by_ref().take(PREFIX_BYTES as u64).read_to_end(&mut buf)?;
 
         if let Some(metadata) = extract_top_level_metadata(&buf) {
             return Ok(metadata);
@@ -498,11 +484,9 @@ fn find_git_root(path: &Path) -> Option<PathBuf> {
 
 /// Resolve the default session directory path (data dir `/sessions`).
 pub fn default_sessions_dir() -> std::io::Result<PathBuf> {
-    yunpat_data_dir()
-        .map(|dir| dir.join("sessions"))
-        .ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::NotFound, "Data directory not found")
-        })
+    yunpat_data_dir().map(|dir| dir.join("sessions")).ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::NotFound, "Data directory not found")
+    })
 }
 
 /// Prune snapshots older than `max_age` for `workspace`.
@@ -756,13 +740,9 @@ fn extract_top_level_metadata(buf: &[u8]) -> Option<SessionMetadata> {
 fn system_prompt_to_string(system_prompt: Option<&SystemPrompt>) -> Option<String> {
     match system_prompt {
         Some(SystemPrompt::Text(text)) => Some(text.clone()),
-        Some(SystemPrompt::Blocks(blocks)) => Some(
-            blocks
-                .iter()
-                .map(|b| b.text.clone())
-                .collect::<Vec<_>>()
-                .join("\n\n---\n\n"),
-        ),
+        Some(SystemPrompt::Blocks(blocks)) => {
+            Some(blocks.iter().map(|b| b.text.clone()).collect::<Vec<_>>().join("\n\n---\n\n"))
+        }
         None => None,
     }
 }
@@ -1003,14 +983,10 @@ mod tests {
         let tmp = tempdir().expect("tempdir");
         let manager = SessionManager::new(tmp.path().join("sessions")).expect("new");
 
-        let err = manager
-            .load_session("../outside")
-            .expect_err("invalid id should fail");
+        let err = manager.load_session("../outside").expect_err("invalid id should fail");
         assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
 
-        let err = manager
-            .delete_session("sess bad")
-            .expect_err("invalid id should fail");
+        let err = manager.delete_session("sess bad").expect_err("invalid id should fail");
         assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
     }
 
@@ -1061,19 +1037,12 @@ mod tests {
         let session = create_saved_session(&messages, "test-model", tmp.path(), 12, None);
 
         manager.save_checkpoint(&session).expect("save checkpoint");
-        let loaded = manager
-            .load_checkpoint()
-            .expect("load checkpoint")
-            .expect("checkpoint exists");
+        let loaded =
+            manager.load_checkpoint().expect("load checkpoint").expect("checkpoint exists");
         assert_eq!(loaded.metadata.id, session.metadata.id);
 
         manager.clear_checkpoint().expect("clear checkpoint");
-        assert!(
-            manager
-                .load_checkpoint()
-                .expect("load checkpoint")
-                .is_none()
-        );
+        assert!(manager.load_checkpoint().expect("load checkpoint").is_none());
     }
 
     #[test]
@@ -1104,15 +1073,8 @@ mod tests {
         assert_eq!(loaded.messages[0].display, "queued message");
         assert!(loaded.draft.is_some());
 
-        manager
-            .clear_offline_queue_state()
-            .expect("clear queue state");
-        assert!(
-            manager
-                .load_offline_queue_state()
-                .expect("load queue state")
-                .is_none()
-        );
+        manager.clear_offline_queue_state().expect("clear queue state");
+        assert!(manager.load_offline_queue_state().expect("load queue state").is_none());
     }
 
     #[test]
@@ -1136,32 +1098,19 @@ mod tests {
         manager
             .save_offline_queue_state(&state, Some("session-A"))
             .expect("save with session id");
-        let loaded = manager
-            .load_offline_queue_state()
-            .expect("ok")
-            .expect("present");
+        let loaded = manager.load_offline_queue_state().expect("ok").expect("present");
         assert_eq!(loaded.session_id.as_deref(), Some("session-A"));
 
         // Re-saving with a different session id replaces the stamp.
-        manager
-            .save_offline_queue_state(&state, Some("session-B"))
-            .expect("re-save");
-        let reloaded = manager
-            .load_offline_queue_state()
-            .expect("ok")
-            .expect("present");
+        manager.save_offline_queue_state(&state, Some("session-B")).expect("re-save");
+        let reloaded = manager.load_offline_queue_state().expect("ok").expect("present");
         assert_eq!(reloaded.session_id.as_deref(), Some("session-B"));
 
         // Saving without a session id explicitly (None) clears the
         // stamp — UI's load path treats that as legacy-unscoped and
         // fails closed.
-        manager
-            .save_offline_queue_state(&state, None)
-            .expect("save without session id");
-        let unscoped = manager
-            .load_offline_queue_state()
-            .expect("ok")
-            .expect("present");
+        manager.save_offline_queue_state(&state, None).expect("save without session id");
+        let unscoped = manager.load_offline_queue_state().expect("ok").expect("present");
         assert!(
             unscoped.session_id.is_none(),
             "save with None must persist a missing session_id, got {:?}",
@@ -1195,9 +1144,7 @@ mod tests {
         });
 
         let path = manager.save_session(&session).expect("save session");
-        let loaded = manager
-            .load_session(&session.metadata.id)
-            .expect("load session");
+        let loaded = manager.load_session(&session.metadata.id).expect("load session");
         assert!(path.exists());
         assert_eq!(loaded.context_references, session.context_references);
     }
@@ -1459,9 +1406,7 @@ mod tests {
         )
         .expect("write queue");
 
-        let err = manager
-            .load_offline_queue_state()
-            .expect_err("should reject schema");
+        let err = manager.load_offline_queue_state().expect_err("should reject schema");
         assert!(
             err.to_string().contains("newer than supported"),
             "unexpected error: {err}"

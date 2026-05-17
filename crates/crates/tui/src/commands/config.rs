@@ -13,7 +13,7 @@ use crate::localization::resolve_locale;
 use crate::models::{ContentBlock, Message, MessageRequest, MessageResponse, SystemPrompt};
 use crate::settings::Settings;
 use crate::tui::app::{App, AppAction, AppMode, OnboardingState, ReasoningEffort, SidebarFocus};
-use crate::tui::approval::ApprovalMode;
+use yunpat_protocol::ApprovalMode;
 use anyhow::Result;
 
 /// Open the interactive config editor.
@@ -129,9 +129,7 @@ fn show_single_setting(app: &App, key: &str) -> CommandResult {
             Some(spacing_display(app.transcript_spacing).to_string())
         }
         _ => {
-            let known = Settings::available_settings()
-                .iter()
-                .any(|(k, _)| k == &key);
+            let known = Settings::available_settings().iter().any(|(k, _)| k == &key);
             if known {
                 Some("(see /settings for current value)".to_string())
             } else {
@@ -185,9 +183,7 @@ pub fn persist_status_items(items: &[crate::config::StatusItem]) -> anyhow::Resu
         toml::Value::Table(toml::value::Table::new())
     };
 
-    let table = doc
-        .as_table_mut()
-        .context("config.toml root must be a table")?;
+    let table = doc.as_table_mut().context("config.toml root must be a table")?;
     let tui_entry = table
         .entry("tui".to_string())
         .or_insert_with(|| toml::Value::Table(toml::value::Table::new()));
@@ -224,9 +220,7 @@ pub fn persist_root_string_key(key: &str, value: &str) -> anyhow::Result<PathBuf
     } else {
         toml::Value::Table(toml::value::Table::new())
     };
-    let table = doc
-        .as_table_mut()
-        .context("config.toml root must be a table")?;
+    let table = doc.as_table_mut().context("config.toml root must be a table")?;
     table.insert(key.to_string(), toml::Value::String(value.to_string()));
     let body = toml::to_string_pretty(&doc).context("failed to serialize config.toml")?;
     fs::write(&path, body)
@@ -942,7 +936,7 @@ mod tests {
     use crate::config::Config;
     use crate::test_support::lock_test_env;
     use crate::tui::app::{App, TuiOptions};
-    use crate::tui::approval::ApprovalMode;
+    use yunpat_protocol::ApprovalMode;
     use std::env;
     use std::ffi::OsString;
     use std::fs;
@@ -1194,10 +1188,7 @@ mod tests {
     #[test]
     fn test_set_default_mode_normal_save_reports_normalized_value() {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-default-mode-test-{}-{}",
             std::process::id(),
@@ -1297,10 +1288,7 @@ mod tests {
     #[test]
     fn test_logout_clears_api_key_state() {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-tui-logout-test-{}-{}",
             std::process::id(),
@@ -1347,10 +1335,7 @@ mod tests {
     #[test]
     fn persist_status_items_writes_tui_section_to_config_toml() {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-statusline-persist-{}-{}",
             std::process::id(),
@@ -1379,10 +1364,7 @@ mod tests {
     #[test]
     fn persist_status_items_preserves_existing_unrelated_keys() {
         let _lock = lock_test_env();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let temp_root = env::temp_dir().join(format!(
             "deepseek-statusline-preserve-{}-{}",
             std::process::id(),

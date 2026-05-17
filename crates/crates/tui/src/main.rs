@@ -13,74 +13,15 @@ use dotenvy::dotenv;
 use tempfile::NamedTempFile;
 use wait_timeout::ChildExt;
 
-mod acp_server;
-mod audit;
-mod auto_reasoning;
-mod automation_manager;
-mod cli_defs;
-mod cli_setup;
-mod client;
-mod command_safety;
-mod commands;
-mod compaction;
-mod composer_history;
-mod composer_stash;
-mod config;
-mod config_ui;
-mod core;
-mod cost_status;
-mod cycle_manager;
-mod error_taxonomy;
-mod eval;
-mod execpolicy;
-mod features;
-mod handoff;
-mod hooks;
-mod llm_client;
-mod localization;
-mod logging;
-mod lsp;
-mod mcp;
-mod mcp_server;
-mod memory;
-mod models;
-mod network_policy;
-mod palette;
-mod patent;
-mod pricing;
-mod project_context;
-mod project_doc;
-mod prompts;
-pub mod repl;
-mod retry_status;
-pub mod rlm;
-mod runtime_api;
-mod runtime_threads;
-mod sandbox;
-mod schema_migration;
-mod seam_manager;
-mod session_manager;
-mod settings;
-mod skills;
-mod snapshot;
-mod task_manager;
-#[cfg(test)]
-mod test_support;
-mod tools;
-mod tui;
-mod utils;
-mod working_set;
-mod workspace_trust;
-mod yunpat_theme;
 
-use crate::config::{Config, MAX_SUBAGENTS};
-use crate::eval::{EvalHarness, EvalHarnessConfig, ScenarioStepKind};
-use crate::features::{Feature, render_feature_table};
-use crate::llm_client::LlmClient;
-use crate::mcp::{McpConfig, McpPool, McpServerConfig};
-use crate::models::{ContentBlock, Message, MessageRequest, SystemPrompt};
-use crate::session_manager::{SessionManager, create_saved_session, truncate_id};
-use crate::tui::history::{summarize_tool_args, summarize_tool_output};
+use yunpat_tui::config::{Config, MAX_SUBAGENTS};
+use yunpat_tui::eval::{EvalHarness, EvalHarnessConfig, ScenarioStepKind};
+use yunpat_tui::features::{Feature, render_feature_table};
+use yunpat_tui::llm_client::LlmClient;
+use yunpat_tui::mcp::{McpConfig, McpPool, McpServerConfig};
+use yunpat_tui::models::{ContentBlock, Message, MessageRequest, SystemPrompt};
+use yunpat_tui::session_manager::{SessionManager, create_saved_session, truncate_id};
+use yunpat_tui::tui::history::{summarize_tool_args, summarize_tool_output};
 
 #[cfg(windows)]
 fn configure_windows_console_utf8() {
@@ -98,7 +39,7 @@ fn configure_windows_console_utf8() {
 #[cfg(not(windows))]
 fn configure_windows_console_utf8() {}
 
-use cli_defs::*;
+use yunpat_tui::cli_defs::*;
 #[tokio::main]
 async fn main() -> Result<()> {
     configure_windows_console_utf8();
@@ -154,7 +95,7 @@ async fn main() -> Result<()> {
 
     dotenv().ok();
     let cli = Cli::parse();
-    logging::set_verbose(cli.verbose || logging::env_requests_verbose_logging());
+    yunpat_tui::logging::set_verbose(cli.verbose || yunpat_tui::logging::env_requests_verbose_logging());
 
     // Handle subcommands first
     if let Some(command) = cli.command.clone() {
@@ -222,11 +163,7 @@ async fn main() -> Result<()> {
                 let config = load_config_from_cli(&cli)?;
                 run_review(&config, args).await
             }
-            Commands::Pr {
-                number,
-                repo,
-                checkout,
-            } => {
+            Commands::Pr { number, repo, checkout } => {
                 let config = load_config_from_cli(&cli)?;
                 run_pr(&cli, &config, number, repo.as_deref(), checkout).await
             }
@@ -262,14 +199,14 @@ async fn main() -> Result<()> {
                     bail!("Choose exactly one server mode: --mcp, --http, or --acp");
                 }
                 if args.mcp {
-                    mcp_server::run_mcp_server(workspace)
+                    yunpat_tui::mcp_server::run_mcp_server(workspace)
                 } else if args.http {
                     let config = load_config_from_cli(&cli)?;
                     let cors_origins = resolve_cors_origins(&config, &args.cors_origin);
-                    runtime_api::run_http_server(
+                    yunpat_tui::runtime_api::run_http_server(
                         config,
                         workspace,
-                        runtime_api::RuntimeApiOptions {
+                        yunpat_tui::runtime_api::RuntimeApiOptions {
                             host: args.host,
                             port: args.port,
                             workers: args.workers.clamp(1, 8),
@@ -281,7 +218,7 @@ async fn main() -> Result<()> {
                 } else if args.acp {
                     let config = load_config_from_cli(&cli)?;
                     let model = config.default_model();
-                    acp_server::run_acp_server(config, model, workspace).await
+                    yunpat_tui::acp_server::run_acp_server(config, model, workspace).await
                 } else {
                     unreachable!("server mode count checked above")
                 }
@@ -402,17 +339,16 @@ fn run_eval(args: EvalArgs) -> Result<()> {
     }
 }
 
-use cli_setup::*;
+use yunpat_tui::cli_setup::*;
 
 /// Run system diagnostics
 async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Option<&Path>) {
-    use crate::palette;
     use colored::Colorize;
 
-    let (blue_r, blue_g, blue_b) = palette::YUNPAT_BLUE_RGB;
-    let (sky_r, sky_g, sky_b) = palette::YUNPAT_SKY_RGB;
-    let (aqua_r, aqua_g, aqua_b) = palette::YUNPAT_SKY_RGB;
-    let (red_r, red_g, red_b) = palette::YUNPAT_RED_RGB;
+    let (blue_r, blue_g, blue_b) = yunpat_tui::palette::YUNPAT_BLUE_RGB;
+    let (sky_r, sky_g, sky_b) = yunpat_tui::palette::YUNPAT_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = yunpat_tui::palette::YUNPAT_SKY_RGB;
+    let (red_r, red_g, red_b) = yunpat_tui::palette::YUNPAT_RED_RGB;
 
     println!(
         "{}",
@@ -433,27 +369,23 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         dirs::home_dir().map_or_else(|| PathBuf::from(".deepseek"), |h| h.join(".deepseek"));
     let config_path = config_path_override
         .map(PathBuf::from)
-        .or_else(|| {
-            std::env::var("DEEPSEEK_CONFIG_PATH")
-                .ok()
-                .map(PathBuf::from)
-        })
+        .or_else(|| std::env::var("DEEPSEEK_CONFIG_PATH").ok().map(PathBuf::from))
         .unwrap_or_else(|| default_config_dir.join("config.toml"));
 
     if config_path.exists() {
         println!(
             "  {} config.toml found at {}",
             "✓".truecolor(aqua_r, aqua_g, aqua_b),
-            crate::utils::display_path(&config_path)
+            yunpat_tui::utils::display_path(&config_path)
         );
     } else {
         println!(
             "  {} config.toml not found at {} (using defaults/env)",
             "!".truecolor(sky_r, sky_g, sky_b),
-            crate::utils::display_path(&config_path)
+            yunpat_tui::utils::display_path(&config_path)
         );
     }
-    println!("  workspace: {}", crate::utils::display_path(workspace));
+    println!("  workspace: {}", yunpat_tui::utils::display_path(workspace));
 
     // Check API keys
     println!();
@@ -464,52 +396,49 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
     let dispatcher_api_key_source = std::env::var("DEEPSEEK_API_KEY_SOURCE").ok();
     for (provider, slot, env_names) in [
         (
-            crate::config::ApiProvider::Deepseek,
+            yunpat_tui::config::ApiProvider::Deepseek,
             "deepseek",
             &["DEEPSEEK_API_KEY"][..],
         ),
         (
-            crate::config::ApiProvider::NvidiaNim,
+            yunpat_tui::config::ApiProvider::NvidiaNim,
             "nvidia-nim",
             &["NVIDIA_API_KEY", "NVIDIA_NIM_API_KEY"][..],
         ),
         (
-            crate::config::ApiProvider::Openrouter,
+            yunpat_tui::config::ApiProvider::Openrouter,
             "openrouter",
             &["OPENROUTER_API_KEY"][..],
         ),
         (
-            crate::config::ApiProvider::Novita,
+            yunpat_tui::config::ApiProvider::Novita,
             "novita",
             &["NOVITA_API_KEY"][..],
         ),
         (
-            crate::config::ApiProvider::Fireworks,
+            yunpat_tui::config::ApiProvider::Fireworks,
             "fireworks",
             &["FIREWORKS_API_KEY"][..],
         ),
         (
-            crate::config::ApiProvider::Sglang,
+            yunpat_tui::config::ApiProvider::Sglang,
             "sglang",
             &["SGLANG_API_KEY"][..],
         ),
         (
-            crate::config::ApiProvider::Vllm,
+            yunpat_tui::config::ApiProvider::Vllm,
             "vllm",
             &["VLLM_API_KEY"][..],
         ),
         (
-            crate::config::ApiProvider::Ollama,
+            yunpat_tui::config::ApiProvider::Ollama,
             "ollama",
             &["OLLAMA_API_KEY"][..],
         ),
     ] {
-        let in_env = env_names.iter().any(|n| {
-            std::env::var(n)
-                .ok()
-                .filter(|v| !v.trim().is_empty())
-                .is_some()
-        });
+        let in_env = env_names
+            .iter()
+            .any(|n| std::env::var(n).ok().filter(|v| !v.trim().is_empty()).is_some());
         let injected_runtime_key = matches!(
             dispatcher_api_key_source.as_deref(),
             Some("keyring" | "env" | "cli")
@@ -517,13 +446,10 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         let in_config = config
             .provider_config_for(provider)
             .and_then(|entry| entry.api_key.as_ref())
-            .is_some_and(|v| !v.trim().is_empty())
-            || (matches!(provider, crate::config::ApiProvider::Deepseek)
+            .is_some_and(|v: &String| !v.trim().is_empty())
+            || (matches!(provider, yunpat_tui::config::ApiProvider::Deepseek)
                 && !injected_runtime_key
-                && config
-                    .api_key
-                    .as_ref()
-                    .is_some_and(|v| !v.trim().is_empty()));
+                && config.api_key.as_ref().is_some_and(|v| !v.trim().is_empty()));
         let icon = if in_env || in_config {
             "✓".truecolor(aqua_r, aqua_g, aqua_b)
         } else {
@@ -547,9 +473,9 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
             ApiKeySource::Missing
                 if matches!(
                     config.api_provider(),
-                    crate::config::ApiProvider::Sglang
-                        | crate::config::ApiProvider::Vllm
-                        | crate::config::ApiProvider::Ollama
+                    yunpat_tui::config::ApiProvider::Sglang
+                        | yunpat_tui::config::ApiProvider::Vllm
+                        | yunpat_tui::config::ApiProvider::Ollama
                 ) =>
             {
                 "optional local auth"
@@ -659,7 +585,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         println!(
             "  {} MCP config found at {}",
             "✓".truecolor(aqua_r, aqua_g, aqua_b),
-            crate::utils::display_path(&mcp_config_path)
+            yunpat_tui::utils::display_path(&mcp_config_path)
         );
         match load_mcp_config(&mcp_config_path) {
             Ok(cfg) if cfg.servers.is_empty() => {
@@ -714,7 +640,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         println!(
             "  {} MCP config not found at {}",
             "·".dimmed(),
-            crate::utils::display_path(&mcp_config_path)
+            yunpat_tui::utils::display_path(&mcp_config_path)
         );
         println!("    Run `deepseek mcp init` or `deepseek setup --mcp`.");
     }
@@ -725,7 +651,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
     let global_skills_dir = config.skills_dir();
     let agents_skills_dir = workspace.join(".agents").join("skills");
     let local_skills_dir = workspace.join("skills");
-    let agents_global_skills_dir = crate::skills::agents_global_skills_dir();
+    let agents_global_skills_dir = yunpat_tui::skills::agents_global_skills_dir();
     // #432: cross-tool skill discovery dirs. Presence is reported here
     // even though they sit lower in the precedence chain so users can
     // see at a glance whether a `.opencode/skills/`, `.claude/skills/`,
@@ -756,14 +682,14 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         println!(
             "  {} local skills dir found at {} ({} items)",
             "✓".truecolor(aqua_r, aqua_g, aqua_b),
-            crate::utils::display_path(&local_skills_dir),
+            yunpat_tui::utils::display_path(&local_skills_dir),
             describe_dir(&local_skills_dir)
         );
     } else {
         println!(
             "  {} local skills dir not found at {}",
             "·".dimmed(),
-            crate::utils::display_path(&local_skills_dir)
+            yunpat_tui::utils::display_path(&local_skills_dir)
         );
     }
 
@@ -771,14 +697,14 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         println!(
             "  {} .agents skills dir found at {} ({} items)",
             "✓".truecolor(aqua_r, aqua_g, aqua_b),
-            crate::utils::display_path(&agents_skills_dir),
+            yunpat_tui::utils::display_path(&agents_skills_dir),
             describe_dir(&agents_skills_dir)
         );
     } else {
         println!(
             "  {} .agents skills dir not found at {}",
             "·".dimmed(),
-            crate::utils::display_path(&agents_skills_dir)
+            yunpat_tui::utils::display_path(&agents_skills_dir)
         );
     }
 
@@ -787,14 +713,14 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
             println!(
                 "  {} global .agents skills dir found at {} ({} items)",
                 "✓".truecolor(aqua_r, aqua_g, aqua_b),
-                crate::utils::display_path(agents_global_skills_dir),
+                yunpat_tui::utils::display_path(agents_global_skills_dir),
                 describe_dir(agents_global_skills_dir)
             );
         } else {
             println!(
                 "  {} global .agents skills dir not found at {}",
                 "·".dimmed(),
-                crate::utils::display_path(agents_global_skills_dir)
+                yunpat_tui::utils::display_path(agents_global_skills_dir)
             );
         }
     }
@@ -803,14 +729,14 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         println!(
             "  {} global skills dir found at {} ({} items)",
             "✓".truecolor(aqua_r, aqua_g, aqua_b),
-            crate::utils::display_path(&global_skills_dir),
+            yunpat_tui::utils::display_path(&global_skills_dir),
             describe_dir(&global_skills_dir)
         );
     } else {
         println!(
             "  {} global skills dir not found at {}",
             "·".dimmed(),
-            crate::utils::display_path(&global_skills_dir)
+            yunpat_tui::utils::display_path(&global_skills_dir)
         );
     }
 
@@ -821,7 +747,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         println!(
             "  {} .opencode skills dir found at {} ({} items)",
             "✓".truecolor(aqua_r, aqua_g, aqua_b),
-            crate::utils::display_path(&opencode_skills_dir),
+            yunpat_tui::utils::display_path(&opencode_skills_dir),
             describe_dir(&opencode_skills_dir)
         );
     }
@@ -829,7 +755,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         println!(
             "  {} .claude skills dir found at {} ({} items)",
             "✓".truecolor(aqua_r, aqua_g, aqua_b),
-            crate::utils::display_path(&claude_skills_dir),
+            yunpat_tui::utils::display_path(&claude_skills_dir),
             describe_dir(&claude_skills_dir)
         );
     }
@@ -837,13 +763,11 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
     println!(
         "  {} selected skills dir: {}",
         "·".dimmed(),
-        crate::utils::display_path(&selected_skills_dir)
+        yunpat_tui::utils::display_path(&selected_skills_dir)
     );
     if !agents_skills_dir.exists()
         && !local_skills_dir.exists()
-        && !agents_global_skills_dir
-            .as_ref()
-            .is_some_and(|dir| dir.exists())
+        && !agents_global_skills_dir.as_ref().is_some_and(|dir| dir.exists())
         && !global_skills_dir.exists()
     {
         println!("    Run `deepseek setup --skills` (or add --local for ./skills).");
@@ -858,14 +782,14 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         println!(
             "  {} tools dir found at {} ({} items)",
             "✓".truecolor(aqua_r, aqua_g, aqua_b),
-            crate::utils::display_path(&tools_dir),
+            yunpat_tui::utils::display_path(&tools_dir),
             count
         );
     } else {
         println!(
             "  {} tools dir not found at {}",
             "·".dimmed(),
-            crate::utils::display_path(&tools_dir)
+            yunpat_tui::utils::display_path(&tools_dir)
         );
         println!("    Run `deepseek-tui setup --tools` to scaffold a starter dir.");
     }
@@ -879,14 +803,14 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         println!(
             "  {} plugins dir found at {} ({} items)",
             "✓".truecolor(aqua_r, aqua_g, aqua_b),
-            crate::utils::display_path(&plugins_dir),
+            yunpat_tui::utils::display_path(&plugins_dir),
             count
         );
     } else {
         println!(
             "  {} plugins dir not found at {}",
             "·".dimmed(),
-            crate::utils::display_path(&plugins_dir)
+            yunpat_tui::utils::display_path(&plugins_dir)
         );
         println!("    Run `deepseek-tui setup --plugins` to scaffold a starter dir.");
     }
@@ -894,7 +818,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
     // Storage surfaces (#422 / #440 / #500)
     println!();
     println!("{}", "Storage:".bold());
-    if let Some(spillover_root) = crate::tools::truncate::spillover_root() {
+    if let Some(spillover_root) = yunpat_tui::tools::truncate::spillover_root() {
         let (present, count) = if spillover_root.is_dir() {
             (true, count_dir_entries(&spillover_root))
         } else {
@@ -904,7 +828,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
             println!(
                 "  {} tool-output spillover at {} ({} file{})",
                 "✓".truecolor(aqua_r, aqua_g, aqua_b),
-                crate::utils::display_path(&spillover_root),
+                yunpat_tui::utils::display_path(&spillover_root),
                 count,
                 if count == 1 { "" } else { "s" }
             );
@@ -912,18 +836,18 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
             println!(
                 "  {} tool-output spillover dir not yet created at {}",
                 "·".dimmed(),
-                crate::utils::display_path(&spillover_root)
+                yunpat_tui::utils::display_path(&spillover_root)
             );
         }
     }
     let stash_path = dirs::home_dir().map(|h| h.join(".deepseek").join("composer_stash.jsonl"));
     if let Some(stash_path) = stash_path {
-        let stash_count = crate::composer_stash::load_stash().len();
+        let stash_count = yunpat_tui::composer_stash::load_stash().len();
         if stash_path.exists() {
             println!(
                 "  {} composer stash at {} ({} parked draft{})",
                 "✓".truecolor(aqua_r, aqua_g, aqua_b),
-                crate::utils::display_path(&stash_path),
+                yunpat_tui::utils::display_path(&stash_path),
                 stash_count,
                 if stash_count == 1 { "" } else { "s" }
             );
@@ -941,7 +865,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
     println!("  OS: {}", std::env::consts::OS);
     println!("  Arch: {}", std::env::consts::ARCH);
 
-    let sandbox = crate::sandbox::get_platform_sandbox();
+    let sandbox = yunpat_tui::sandbox::get_platform_sandbox();
     if let Some(kind) = sandbox {
         println!(
             "  {} sandbox available: {}",
@@ -958,9 +882,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
     println!();
     println!(
         "{}",
-        "All checks complete!"
-            .truecolor(aqua_r, aqua_g, aqua_b)
-            .bold()
+        "All checks complete!".truecolor(aqua_r, aqua_g, aqua_b).bold()
     );
 }
 
@@ -977,11 +899,7 @@ fn run_doctor_json(
         dirs::home_dir().map_or_else(|| PathBuf::from(".deepseek"), |h| h.join(".deepseek"));
     let config_path = config_path_override
         .map(PathBuf::from)
-        .or_else(|| {
-            std::env::var("DEEPSEEK_CONFIG_PATH")
-                .ok()
-                .map(PathBuf::from)
-        })
+        .or_else(|| std::env::var("DEEPSEEK_CONFIG_PATH").ok().map(PathBuf::from))
         .unwrap_or_else(|| default_config_dir.join("config.toml"));
 
     let api_key_state = match resolve_api_key_source(config) {
@@ -1030,7 +948,7 @@ fn run_doctor_json(
     let global_skills_dir = config.skills_dir();
     let agents_skills_dir = workspace.join(".agents").join("skills");
     let local_skills_dir = workspace.join("skills");
-    let agents_global_skills_dir = crate::skills::agents_global_skills_dir();
+    let agents_global_skills_dir = yunpat_tui::skills::agents_global_skills_dir();
     // #432: cross-tool skill discovery dirs surface in the JSON
     // report so external dashboards can see whether any
     // `.opencode/skills/`, `.claude/skills/`, `.cursor/skills/`, or
@@ -1149,12 +1067,12 @@ fn run_doctor_json(
         },
         "storage": {
             "spillover": {
-                "path": crate::tools::truncate::spillover_root()
+                "path": yunpat_tui::tools::truncate::spillover_root()
                     .map(|p| p.display().to_string())
                     .unwrap_or_default(),
-                "present": crate::tools::truncate::spillover_root()
+                "present": yunpat_tui::tools::truncate::spillover_root()
                     .is_some_and(|p| p.is_dir()),
-                "count": crate::tools::truncate::spillover_root()
+                "count": yunpat_tui::tools::truncate::spillover_root()
                     .filter(|p| p.is_dir())
                     .map(|p| count_dir_entries(&p))
                     .unwrap_or(0),
@@ -1166,10 +1084,10 @@ fn run_doctor_json(
                 "present": dirs::home_dir()
                     .map(|h| h.join(".deepseek").join("composer_stash.jsonl"))
                     .is_some_and(|p| p.exists()),
-                "count": crate::composer_stash::load_stash().len(),
+                "count": yunpat_tui::composer_stash::load_stash().len(),
             },
         },
-        "sandbox": match crate::sandbox::get_platform_sandbox() {
+        "sandbox": match yunpat_tui::sandbox::get_platform_sandbox() {
             Some(kind) => json!({"available": true, "kind": kind.to_string()}),
             None => json!({"available": false, "kind": null}),
         },
@@ -1199,7 +1117,7 @@ fn provider_capability_report(config: &Config) -> serde_json::Value {
     let provider = config.api_provider();
     let model = config.default_model();
 
-    let cap = crate::config::provider_capability(provider, &model);
+    let cap = yunpat_tui::config::provider_capability(provider, &model);
 
     json!({
         "resolved_provider": provider.as_str(),
@@ -1236,7 +1154,7 @@ fn doctor_timeout_recovery_lines(config: &Config) -> Vec<String> {
     )];
 
     match config.api_provider() {
-        crate::config::ApiProvider::Deepseek
+        yunpat_tui::config::ApiProvider::Deepseek
             if target.base_url.contains("api.deepseek.com")
                 && !target.base_url.contains("api.deepseeki.com") =>
         {
@@ -1245,7 +1163,7 @@ fn doctor_timeout_recovery_lines(config: &Config) -> Vec<String> {
                     .to_string(),
             );
         }
-        crate::config::ApiProvider::Deepseek | crate::config::ApiProvider::DeepseekCN => {
+        yunpat_tui::config::ApiProvider::Deepseek | yunpat_tui::config::ApiProvider::DeepseekCN => {
             lines.push(
                 "If this is a custom DeepSeek-compatible endpoint, confirm it serves `/v1/models` and `/v1/chat/completions` over HTTPS."
                     .to_string(),
@@ -1282,7 +1200,7 @@ fn run_features_command(config: &Config, command: FeaturesCli) -> Result<()> {
 }
 
 async fn run_models(config: &Config, args: ModelsArgs) -> Result<()> {
-    use crate::client::DeepSeekClient;
+    use yunpat_tui::client::DeepSeekClient;
 
     let client = Arc::new(DeepSeekClient::new(config)?);
     let mut models = client.list_models().await?;
@@ -1315,8 +1233,8 @@ async fn run_models(config: &Config, args: ModelsArgs) -> Result<()> {
 
 /// Test API connectivity by making a minimal request
 async fn test_api_connectivity(config: &Config) -> Result<String> {
-    use crate::client::DeepSeekClient;
-    use crate::models::{ContentBlock, Message, MessageRequest};
+    use yunpat_tui::client::DeepSeekClient;
+    use yunpat_tui::models::{ContentBlock, Message, MessageRequest};
 
     let client = Arc::new(DeepSeekClient::new(config)?);
     let model = client.model().to_string();
@@ -1364,13 +1282,12 @@ fn rustc_version() -> String {
 
 /// List saved sessions
 fn list_sessions(limit: usize, search: Option<String>) -> Result<()> {
-    use crate::palette;
     use colored::Colorize;
-    use session_manager::{SessionManager, format_session_line};
+    use yunpat_tui::session_manager::{SessionManager, format_session_line};
 
-    let (blue_r, blue_g, blue_b) = palette::YUNPAT_BLUE_RGB;
-    let (sky_r, sky_g, sky_b) = palette::YUNPAT_SKY_RGB;
-    let (aqua_r, aqua_g, aqua_b) = palette::YUNPAT_SKY_RGB;
+    let (blue_r, blue_g, blue_b) = yunpat_tui::palette::YUNPAT_BLUE_RGB;
+    let (sky_r, sky_g, sky_b) = yunpat_tui::palette::YUNPAT_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = yunpat_tui::palette::YUNPAT_SKY_RGB;
 
     let manager = SessionManager::default_location()?;
 
@@ -1430,13 +1347,12 @@ fn list_sessions(limit: usize, search: Option<String>) -> Result<()> {
 
 /// Initialize a new project with yunpat.md
 fn init_project() -> Result<()> {
-    use crate::palette;
     use colored::Colorize;
-    use project_context::create_default_agents_md;
+    use yunpat_tui::project_context::create_default_agents_md;
 
-    let (sky_r, sky_g, sky_b) = palette::YUNPAT_SKY_RGB;
-    let (aqua_r, aqua_g, aqua_b) = palette::YUNPAT_SKY_RGB;
-    let (red_r, red_g, red_b) = palette::YUNPAT_RED_RGB;
+    let (sky_r, sky_g, sky_b) = yunpat_tui::palette::YUNPAT_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = yunpat_tui::palette::YUNPAT_SKY_RGB;
+    let (red_r, red_g, red_b) = yunpat_tui::palette::YUNPAT_RED_RGB;
 
     let workspace = std::env::current_dir()?;
     let doc_path = workspace.join("yunpat.md");
@@ -1480,10 +1396,7 @@ fn resolve_workspace(cli: &Cli) -> PathBuf {
 }
 
 fn load_config_from_cli(cli: &Cli) -> Result<Config> {
-    let profile = cli
-        .profile
-        .clone()
-        .or_else(|| std::env::var("DEEPSEEK_PROFILE").ok());
+    let profile = cli.profile.clone().or_else(|| std::env::var("DEEPSEEK_PROFILE").ok());
     let mut config = Config::load(cli.config.clone(), profile.as_deref())?;
     cli.feature_toggles.apply(&mut config)?;
     Ok(config)
@@ -1508,13 +1421,13 @@ fn run_login(api_key: Option<String>) -> Result<()> {
         Some(key) => key,
         None => read_api_key_from_stdin()?,
     };
-    let saved = config::save_api_key(&api_key)?;
+    let saved = yunpat_tui::config::save_api_key(&api_key)?;
     println!("Saved API key to {}", saved.describe());
     Ok(())
 }
 
 fn run_logout() -> Result<()> {
-    config::clear_api_key()?;
+    yunpat_tui::config::clear_api_key()?;
     println!("Cleared saved API key.");
     Ok(())
 }
@@ -1536,9 +1449,7 @@ fn resolve_session_id(session_id: Option<String>, last: bool, workspace: &Path) 
 
 fn latest_session_id_for_workspace(workspace: &Path) -> std::io::Result<Option<String>> {
     let manager = SessionManager::default_location()?;
-    Ok(manager
-        .get_latest_session_for_workspace(workspace)?
-        .map(|session| session.id))
+    Ok(manager.get_latest_session_for_workspace(workspace)?.map(|session| session.id))
 }
 
 fn fork_session(session_id: Option<String>, last: bool, workspace: &Path) -> Result<String> {
@@ -1556,10 +1467,7 @@ fn fork_session(session_id: Option<String>, last: bool, workspace: &Path) -> Res
         manager.load_session_by_prefix(&id)?
     };
 
-    let system_prompt = saved
-        .system_prompt
-        .as_ref()
-        .map(|text| SystemPrompt::Text(text.clone()));
+    let system_prompt = saved.system_prompt.as_ref().map(|text| SystemPrompt::Text(text.clone()));
     let forked = create_saved_session(
         &saved.messages,
         &saved.metadata.model,
@@ -1604,9 +1512,7 @@ fn pick_session_id() -> Result<String> {
     if input.is_empty() {
         bail!("No session selected.");
     }
-    let idx: usize = input
-        .parse()
-        .map_err(|_| anyhow::anyhow!("Invalid input"))?;
+    let idx: usize = input.parse().map_err(|_| anyhow::anyhow!("Invalid input"))?;
     let session = sessions
         .get(idx.saturating_sub(1))
         .ok_or_else(|| anyhow::anyhow!("Selection out of range"))?;
@@ -1614,7 +1520,7 @@ fn pick_session_id() -> Result<String> {
 }
 
 async fn run_review(config: &Config, args: ReviewArgs) -> Result<()> {
-    use crate::client::DeepSeekClient;
+    use yunpat_tui::client::DeepSeekClient;
 
     let diff = collect_diff(&args)?;
     if diff.trim().is_empty() {
@@ -1625,11 +1531,9 @@ async fn run_review(config: &Config, args: ReviewArgs) -> Result<()> {
         .model
         .or_else(|| config.default_text_model.clone())
         .unwrap_or_else(|| config.default_model());
-    let route = resolve_cli_auto_route(config, &model, &diff).await;
+    let route = yunpat_tui::cli_setup::resolve_cli_auto_route(config, &model, &diff).await;
     let model = route.model;
-    let reasoning_effort = route
-        .reasoning_effort
-        .map(|effort| effort.as_setting().to_string());
+    let reasoning_effort = route.reasoning_effort.map(|effort| effort.as_setting().to_string());
 
     let system = SystemPrompt::Text(
         "You are a senior code reviewer. Focus on bugs, risks, behavioral regressions, and missing tests. \
@@ -1774,11 +1678,8 @@ fn run_gh_pr_view(number: u32, repo: Option<&str>) -> Result<GhPullRequest> {
     if let Some(r) = repo {
         cmd.arg("--repo").arg(r);
     }
-    cmd.arg("--json")
-        .arg("title,body,baseRefName,headRefName,url");
-    let output = cmd
-        .output()
-        .map_err(|e| anyhow::anyhow!("Failed to run `gh pr view`: {e}"))?;
+    cmd.arg("--json").arg("title,body,baseRefName,headRefName,url");
+    let output = cmd.output().map_err(|e| anyhow::anyhow!("Failed to run `gh pr view`: {e}"))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
         bail!("gh pr view #{number} failed: {stderr}");
@@ -1808,9 +1709,7 @@ fn run_gh_pr_diff(number: u32, repo: Option<&str>) -> Result<String> {
     if let Some(r) = repo {
         cmd.arg("--repo").arg(r);
     }
-    let output = cmd
-        .output()
-        .map_err(|e| anyhow::anyhow!("Failed to run `gh pr diff`: {e}"))?;
+    let output = cmd.output().map_err(|e| anyhow::anyhow!("Failed to run `gh pr diff`: {e}"))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
         bail!("gh pr diff #{number} failed: {stderr}");
@@ -1841,10 +1740,7 @@ fn run_gh_pr_checkout(number: u32, repo: Option<&str>) -> Result<()> {
 fn format_pr_prompt(number: u32, view: &GhPullRequest, diff: &str) -> String {
     const MAX_DIFF_BYTES: usize = 200 * 1024;
     let diff_section = if diff.len() > MAX_DIFF_BYTES {
-        let cut = (0..=MAX_DIFF_BYTES)
-            .rev()
-            .find(|&i| diff.is_char_boundary(i))
-            .unwrap_or(0);
+        let cut = (0..=MAX_DIFF_BYTES).rev().find(|&i| diff.is_char_boundary(i)).unwrap_or(0);
         format!(
             "{}\n\n[…diff truncated at {} KiB; ask me to fetch more if needed]\n",
             &diff[..cut],
@@ -1914,7 +1810,7 @@ fn collect_diff(args: &ReviewArgs) -> Result<String> {
     }
     let mut diff = String::from_utf8_lossy(&output.stdout).to_string();
     if diff.len() > args.max_chars {
-        diff = crate::utils::truncate_with_ellipsis(&diff, args.max_chars, "\n...[truncated]\n");
+        diff = yunpat_tui::utils::truncate_with_ellipsis(&diff, args.max_chars, "\n...[truncated]\n");
     }
     Ok(diff)
 }
@@ -2040,9 +1936,7 @@ async fn run_mcp_command(config: &Config, command: McpCommand) -> Result<()> {
                         println!(
                             "  - {}{}",
                             tool.name,
-                            tool.description
-                                .as_ref()
-                                .map_or(String::new(), |d| format!(": {d}"))
+                            tool.description.as_ref().map_or(String::new(), |d| format!(": {d}"))
                         );
                     }
                 }
@@ -2057,21 +1951,14 @@ async fn run_mcp_command(config: &Config, command: McpCommand) -> Result<()> {
                         println!(
                             "  - {}{}",
                             name,
-                            tool.description
-                                .as_ref()
-                                .map_or(String::new(), |d| format!(": {d}"))
+                            tool.description.as_ref().map_or(String::new(), |d| format!(": {d}"))
                         );
                     }
                 }
             }
             Ok(())
         }
-        McpCommand::Add {
-            name,
-            command,
-            url,
-            args,
-        } => {
+        McpCommand::Add { name, command, url, args } => {
             if command.is_none() && url.is_none() {
                 bail!("Provide either --command or --url for `mcp add`.");
             }
@@ -2243,10 +2130,7 @@ fn doctor_check_mcp_server(server: &McpServerConfig) -> McpServerDoctorStatus {
     }
 
     // Detect self-hosted DeepSeek server entries.
-    let is_self_hosted = server
-        .args
-        .windows(2)
-        .any(|w| w[0] == "serve" && w[1] == "--mcp");
+    let is_self_hosted = server.args.windows(2).any(|w| w[0] == "serve" && w[1] == "--mcp");
 
     let args_str = server.args.join(" ");
     if is_self_hosted {
@@ -2277,13 +2161,13 @@ fn save_mcp_config(path: &Path, cfg: &McpConfig) -> Result<()> {
     }
     let rendered = serde_json::to_string_pretty(cfg)
         .map_err(|e| anyhow!("Failed to serialize MCP config: {e}"))?;
-    crate::utils::write_atomic(path, rendered.as_bytes())
+    yunpat_tui::utils::write_atomic(path, rendered.as_bytes())
         .map_err(|e| anyhow!("Failed to write MCP config {}: {}", path.display(), e))?;
     Ok(())
 }
 
 fn run_sandbox_command(args: SandboxArgs) -> Result<()> {
-    use crate::sandbox::{CommandSpec, SandboxManager};
+    use yunpat_tui::sandbox::{CommandSpec, SandboxManager};
 
     let SandboxCommand::Run {
         policy,
@@ -2306,9 +2190,8 @@ fn run_sandbox_command(args: SandboxArgs) -> Result<()> {
     let cwd = cwd.unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
     let timeout = Duration::from_millis(timeout_ms.clamp(1000, 600_000));
 
-    let (program, args) = command
-        .split_first()
-        .ok_or_else(|| anyhow::anyhow!("Command is required"))?;
+    let (program, args) =
+        command.split_first().ok_or_else(|| anyhow::anyhow!("Command is required"))?;
     let spec =
         CommandSpec::program(program, args.to_vec(), cwd.clone(), timeout).with_policy(policy);
     let manager = SandboxManager::new();
@@ -2323,17 +2206,9 @@ fn run_sandbox_command(args: SandboxArgs) -> Result<()> {
         cmd.env(key, value);
     }
 
-    let mut child = cmd
-        .spawn()
-        .map_err(|e| anyhow::anyhow!("Failed to run command: {e}"))?;
-    let stdout_handle = child
-        .stdout
-        .take()
-        .ok_or_else(|| anyhow::anyhow!("stdout unavailable"))?;
-    let stderr_handle = child
-        .stderr
-        .take()
-        .ok_or_else(|| anyhow::anyhow!("stderr unavailable"))?;
+    let mut child = cmd.spawn().map_err(|e| anyhow::anyhow!("Failed to run command: {e}"))?;
+    let stdout_handle = child.stdout.take().ok_or_else(|| anyhow::anyhow!("stdout unavailable"))?;
+    let stderr_handle = child.stderr.take().ok_or_else(|| anyhow::anyhow!("stderr unavailable"))?;
 
     let timeout = exec_env.timeout;
     let stdout_thread = std::thread::spawn(move || {
@@ -2387,15 +2262,13 @@ fn parse_sandbox_policy(
     writable_root: Vec<PathBuf>,
     exclude_tmpdir: bool,
     exclude_slash_tmp: bool,
-) -> Result<crate::sandbox::SandboxPolicy> {
-    use crate::sandbox::SandboxPolicy;
+) -> Result<yunpat_tui::sandbox::SandboxPolicy> {
+    use yunpat_tui::sandbox::SandboxPolicy;
 
     match policy {
         "danger-full-access" => Ok(SandboxPolicy::DangerFullAccess),
         "read-only" => Ok(SandboxPolicy::ReadOnly),
-        "external-sandbox" => Ok(SandboxPolicy::ExternalSandbox {
-            network_access: network,
-        }),
+        "external-sandbox" => Ok(SandboxPolicy::ExternalSandbox { network_access: network }),
         "workspace-write" => Ok(SandboxPolicy::WorkspaceWrite {
             writable_roots: writable_root,
             network_access: network,
@@ -2489,16 +2362,13 @@ fn is_zellij() -> bool {
 /// cleared, and a notice is printed to stderr. Returns `None` if there is
 /// nothing to recover or the workspace doesn't match.
 fn try_recover_checkpoint() -> Option<String> {
-    let manager = session_manager::SessionManager::default_location().ok()?;
+    let manager = yunpat_tui::session_manager::SessionManager::default_location().ok()?;
     let session = manager.load_checkpoint().ok().flatten()?;
 
     // Verify the checkpoint file is recent (within 24 hours).
     let home = dirs::home_dir()?;
-    let checkpoint_path = home
-        .join(".deepseek")
-        .join("sessions")
-        .join("checkpoints")
-        .join("latest.json");
+    let checkpoint_path =
+        home.join(".deepseek").join("sessions").join("checkpoints").join("latest.json");
     let metadata = std::fs::metadata(&checkpoint_path).ok()?;
     let mtime = metadata.modified().ok()?;
     let age = std::time::SystemTime::now().duration_since(mtime).ok()?;
@@ -2651,7 +2521,7 @@ fn merge_project_config(config: &mut Config, workspace: &Path) {
     if let Some(v) = table.get("max_subagents").and_then(toml::Value::as_integer)
         && v > 0
     {
-        config.max_subagents = Some((v as usize).clamp(1, crate::config::MAX_SUBAGENTS));
+        config.max_subagents = Some((v as usize).clamp(1, yunpat_tui::config::MAX_SUBAGENTS));
     }
     if let Some(v) = table.get("allow_shell").and_then(toml::Value::as_bool) {
         config.allow_shell = Some(v);
@@ -2692,13 +2562,13 @@ async fn run_interactive(
     let config = &merged_config;
 
     if !cli.skip_onboarding {
-        match crate::config::ensure_config_file_exists(cli.config.clone()) {
-            Ok(Some(path)) => logging::info(format!(
+        match yunpat_tui::config::ensure_config_file_exists(cli.config.clone()) {
+            Ok(Some(path)) => yunpat_tui::logging::info(format!(
                 "Created first-run config file at {}",
                 path.display()
             )),
             Ok(None) => {}
-            Err(err) => logging::warn(format!("Failed to create first-run config file: {err}")),
+            Err(err) => yunpat_tui::logging::warn(format!("Failed to create first-run config file: {err}")),
         }
     }
 
@@ -2709,15 +2579,14 @@ async fn run_interactive(
     );
     let use_alt_screen = should_use_alt_screen(cli, config);
     let use_mouse_capture = should_use_mouse_capture(cli, config, use_alt_screen);
-    let use_bracketed_paste = crate::settings::Settings::load()
-        .map(|s| s.bracketed_paste)
-        .unwrap_or(true);
+    let use_bracketed_paste =
+        yunpat_tui::settings::Settings::load().map(|s| s.bracketed_paste).unwrap_or(true);
 
     // Auto-install bundled system skills (e.g. skill-creator) on first launch.
     // Errors are non-fatal: log a warning and continue.
     let skills_dir = config.skills_dir();
-    if let Err(e) = crate::skills::install_system_skills(&skills_dir) {
-        logging::warn(format!("Failed to install system skills: {e}"));
+    if let Err(e) = yunpat_tui::skills::install_system_skills(&skills_dir) {
+        yunpat_tui::logging::warn(format!("Failed to install system skills: {e}"));
     }
 
     // Prune stale workspace snapshots from prior sessions (7-day default).
@@ -2725,10 +2594,10 @@ async fn run_interactive(
     // never block the TUI from starting.
     let snapshots = config.snapshots_config();
     if snapshots.enabled {
-        session_manager::prune_workspace_snapshots(&workspace, snapshots.max_age());
+        yunpat_tui::session_manager::prune_workspace_snapshots(&workspace, snapshots.max_age());
         // Also cap the total number of snapshots per project to prevent
         // unbounded disk growth (e.g. 16 snapshots × 6.6GB = 100GB+).
-        session_manager::prune_workspace_snapshots_to_count(&workspace, snapshots.max_count);
+        yunpat_tui::session_manager::prune_workspace_snapshots_to_count(&workspace, snapshots.max_count);
     }
 
     // Prune stale tool-output spillover files (#422). Non-fatal: home
@@ -2736,7 +2605,7 @@ async fn run_interactive(
     // we never block startup. Runs unconditionally because the
     // spillover store is created lazily on first write — there's no
     // user-facing setting to gate.
-    match crate::tools::truncate::prune_older_than(crate::tools::truncate::SPILLOVER_MAX_AGE) {
+    match yunpat_tui::tools::truncate::prune_older_than(yunpat_tui::tools::truncate::SPILLOVER_MAX_AGE) {
         Ok(0) => {}
         Ok(n) => tracing::debug!(
             target: "spillover",
@@ -2749,9 +2618,9 @@ async fn run_interactive(
         ),
     }
 
-    tui::run_tui(
+    yunpat_tui::tui::run_tui(
         config,
-        tui::TuiOptions {
+        yunpat_tui::tui::TuiOptions {
             model,
             workspace,
             config_path: cli.config.clone(),
@@ -2776,39 +2645,14 @@ async fn run_interactive(
     .await
 }
 
-struct CliAutoRoute {
-    model: String,
-    reasoning_effort: Option<crate::tui::app::ReasoningEffort>,
-    auto_model: bool,
-}
-
-async fn resolve_cli_auto_route(config: &Config, model: &str, prompt: &str) -> CliAutoRoute {
-    if model.trim().eq_ignore_ascii_case("auto") {
-        let selection =
-            commands::resolve_auto_route_with_flash(config, prompt, "", "auto", "auto").await;
-        CliAutoRoute {
-            model: selection.model,
-            reasoning_effort: selection.reasoning_effort,
-            auto_model: true,
-        }
-    } else {
-        CliAutoRoute {
-            model: model.to_string(),
-            reasoning_effort: None,
-            auto_model: false,
-        }
-    }
-}
 
 async fn run_one_shot(config: &Config, model: &str, prompt: &str) -> Result<()> {
-    use crate::client::DeepSeekClient;
-    use crate::models::{ContentBlock, Message, MessageRequest};
+    use yunpat_tui::client::DeepSeekClient;
+    use yunpat_tui::models::{ContentBlock, Message, MessageRequest};
 
     let client = Arc::new(DeepSeekClient::new(config)?);
-    let route = resolve_cli_auto_route(config, model, prompt).await;
-    let reasoning_effort = route
-        .reasoning_effort
-        .map(|effort| effort.as_setting().to_string());
+    let route = yunpat_tui::cli_setup::resolve_cli_auto_route(config, model, prompt).await;
+    let reasoning_effort = route.reasoning_effort.map(|effort| effort.as_setting().to_string());
 
     let request = MessageRequest {
         model: route.model,
@@ -2843,15 +2687,13 @@ async fn run_one_shot(config: &Config, model: &str, prompt: &str) -> Result<()> 
 }
 
 async fn run_one_shot_json(config: &Config, model: &str, prompt: &str) -> Result<()> {
-    use crate::client::DeepSeekClient;
-    use crate::models::{ContentBlock, Message, MessageRequest, SystemPrompt};
+    use yunpat_tui::client::DeepSeekClient;
+    use yunpat_tui::models::{ContentBlock, Message, MessageRequest, SystemPrompt};
 
     let client = Arc::new(DeepSeekClient::new(config)?);
-    let route = resolve_cli_auto_route(config, model, prompt).await;
+    let route = yunpat_tui::cli_setup::resolve_cli_auto_route(config, model, prompt).await;
     let model = route.model;
-    let reasoning_effort = route
-        .reasoning_effort
-        .map(|effort| effort.as_setting().to_string());
+    let reasoning_effort = route.reasoning_effort.map(|effort| effort.as_setting().to_string());
     let request = MessageRequest {
         model: model.clone(),
         messages: vec![Message {
@@ -2905,21 +2747,20 @@ async fn run_exec_agent(
     trust_mode: bool,
     json_output: bool,
 ) -> Result<()> {
-    use crate::compaction::CompactionConfig;
-    use crate::core::engine::{EngineConfig, spawn_engine};
-    use crate::core::events::Event;
-    use crate::core::ops::Op;
-    use crate::models::compaction_threshold_for_model;
-    use crate::tools::plan::new_shared_plan_state;
-    use crate::tools::todo::new_shared_todo_list;
-    use crate::tui::app::AppMode;
+    use yunpat_tui::compaction::CompactionConfig;
+    use yunpat_tui::core::engine::{EngineConfig, spawn_engine};
+    use yunpat_tui::core::events::Event;
+    use yunpat_tui::core::ops::Op;
+    use yunpat_tui::models::compaction_threshold_for_model;
+    use yunpat_tui::tools::plan::new_shared_plan_state;
+    use yunpat_tui::tools::todo::new_shared_todo_list;
+    use yunpat_protocol::AppMode;
 
-    let route = resolve_cli_auto_route(config, model, prompt).await;
+    let route = yunpat_tui::cli_setup::resolve_cli_auto_route(config, model, prompt).await;
     let auto_model = route.auto_model;
     let effective_model = route.model;
-    let effective_reasoning_effort = route
-        .reasoning_effort
-        .map(|effort| effort.as_setting().to_string());
+    let effective_reasoning_effort =
+        route.reasoning_effort.map(|effort| effort.as_setting().to_string());
 
     // Compaction defaults to disabled in v0.6.6: the checkpoint-restart cycle
     // architecture (issue #124) handles long-context resets via fresh contexts
@@ -2934,13 +2775,10 @@ async fn run_exec_agent(
     };
 
     let network_policy = config.network.clone().map(|toml_cfg| {
-        crate::network_policy::NetworkPolicyDecider::with_default_audit(toml_cfg.into_runtime())
+        yunpat_tui::network_policy::NetworkPolicyDecider::with_default_audit(toml_cfg.into_runtime())
     });
 
-    let lsp_config = config
-        .lsp
-        .clone()
-        .map(crate::config::LspConfigToml::into_runtime);
+    let lsp_config = config.lsp.clone().map(yunpat_tui::config::LspConfigToml::into_runtime);
 
     let engine_config = EngineConfig {
         model: effective_model.clone(),
@@ -2955,22 +2793,22 @@ async fn run_exec_agent(
         max_subagents,
         features: config.features(),
         compaction,
-        cycle: crate::cycle_manager::CycleConfig::default(),
-        capacity: crate::core::capacity::CapacityControllerConfig::from_app_config(config),
+        cycle: yunpat_tui::cycle_manager::CycleConfig::default(),
+        capacity: yunpat_tui::core::capacity::CapacityControllerConfig::from_app_config(config),
         todos: new_shared_todo_list(),
         plan_state: new_shared_plan_state(),
-        max_spawn_depth: crate::tools::subagent::DEFAULT_MAX_SPAWN_DEPTH,
+        max_spawn_depth: yunpat_tui::tools::subagent::DEFAULT_MAX_SPAWN_DEPTH,
         network_policy,
         snapshots_enabled: config.snapshots_config().enabled,
         lsp_config,
-        runtime_services: crate::tools::spec::RuntimeToolServices::default(),
+        runtime_services: yunpat_tui::tools::spec::RuntimeToolServices::default(),
         subagent_model_overrides: config.subagent_model_overrides(),
         memory_enabled: config.memory_enabled(),
         memory_path: config.memory_path(),
         strict_tool_mode: config.strict_tool_mode.unwrap_or(false),
         goal_objective: None,
-        locale_tag: crate::localization::resolve_locale(
-            &crate::settings::Settings::load().unwrap_or_default().locale,
+        locale_tag: yunpat_tui::localization::resolve_locale(
+            &yunpat_tui::settings::Settings::load().unwrap_or_default().locale,
         )
         .tag()
         .to_string(),
@@ -2997,12 +2835,12 @@ async fn run_exec_agent(
             trust_mode,
             auto_approve,
             approval_mode: if auto_approve {
-                crate::tui::approval::ApprovalMode::Auto
+                yunpat_tui::tui::approval::ApprovalMode::Auto
             } else {
                 config
                     .approval_policy
                     .as_deref()
-                    .and_then(crate::tui::approval::ApprovalMode::from_config_value)
+                    .and_then(yunpat_tui::tui::approval::ApprovalMode::from_config_value)
                     .unwrap_or_default()
             },
         })
@@ -3126,17 +2964,14 @@ async fn run_exec_agent(
             } => {
                 if auto_approve {
                     eprintln!("sandbox denied {tool_name}: {denial_reason} (auto-elevating)");
-                    let policy = crate::sandbox::SandboxPolicy::DangerFullAccess;
+                    let policy = yunpat_tui::sandbox::SandboxPolicy::DangerFullAccess;
                     let _ = engine_handle.retry_tool_with_policy(tool_id, policy).await;
                 } else {
                     eprintln!("sandbox denied {tool_name}: {denial_reason}");
                     let _ = engine_handle.deny_tool_call(tool_id).await;
                 }
             }
-            Event::Error {
-                envelope,
-                recoverable: _,
-            } => {
+            Event::Error { envelope, recoverable: _ } => {
                 summary.error = Some(envelope.message.clone());
                 if !json_output {
                     eprintln!("error: {}", envelope.message);
@@ -3170,8 +3005,8 @@ mod doctor_endpoint_tests {
         let target = doctor_api_target(&config);
 
         assert_eq!(target.provider, "deepseek");
-        assert_eq!(target.base_url, crate::config::DEFAULT_YUNPAT_BASE_URL);
-        assert_eq!(target.model, crate::config::DEFAULT_TEXT_MODEL);
+        assert_eq!(target.base_url, yunpat_tui::config::DEFAULT_YUNPAT_BASE_URL);
+        assert_eq!(target.model, yunpat_tui::config::DEFAULT_TEXT_MODEL);
     }
 
     #[test]
@@ -3184,8 +3019,8 @@ mod doctor_endpoint_tests {
         let target = doctor_api_target(&config);
 
         assert_eq!(target.provider, "deepseek-cn");
-        assert_eq!(target.base_url, crate::config::DEFAULT_DEEPSEEKCN_BASE_URL);
-        assert_eq!(target.model, crate::config::DEFAULT_TEXT_MODEL);
+        assert_eq!(target.base_url, yunpat_tui::config::DEFAULT_DEEPSEEKCN_BASE_URL);
+        assert_eq!(target.model, yunpat_tui::config::DEFAULT_TEXT_MODEL);
     }
 
     #[test]
@@ -3253,7 +3088,7 @@ mod terminal_mode_tests {
     fn config_can_disable_default_mouse_capture() {
         let cli = parse_cli(&["deepseek"]);
         let config = Config {
-            tui: Some(crate::config::TuiConfig {
+            tui: Some(yunpat_tui::config::TuiConfig {
                 alternate_screen: None,
                 mouse_capture: Some(false),
                 terminal_probe_timeout_ms: None,
@@ -3279,7 +3114,7 @@ mod terminal_mode_tests {
     fn config_can_enable_mouse_capture() {
         let cli = parse_cli(&["deepseek"]);
         let config = Config {
-            tui: Some(crate::config::TuiConfig {
+            tui: Some(yunpat_tui::config::TuiConfig {
                 alternate_screen: None,
                 mouse_capture: Some(true),
                 terminal_probe_timeout_ms: None,
@@ -3353,7 +3188,7 @@ mod terminal_mode_tests {
     fn config_mouse_capture_true_overrides_jetbrains_default() {
         let cli = parse_cli(&["deepseek"]);
         let config = Config {
-            tui: Some(crate::config::TuiConfig {
+            tui: Some(yunpat_tui::config::TuiConfig {
                 alternate_screen: None,
                 mouse_capture: Some(true),
                 terminal_probe_timeout_ms: None,
@@ -3547,7 +3382,7 @@ max_subagents = 500
         merge_project_config(&mut config, tmp.path());
         assert_eq!(
             config.max_subagents,
-            Some(crate::config::MAX_SUBAGENTS),
+            Some(yunpat_tui::config::MAX_SUBAGENTS),
             "should clamp to MAX_SUBAGENTS"
         );
     }
@@ -3870,11 +3705,7 @@ mod setup_helper_tests {
         let plan = collect_clean_targets(dir);
         assert_eq!(plan.targets.len(), 2);
         assert!(plan.targets.iter().any(|p| p.ends_with("latest.json")));
-        assert!(
-            plan.targets
-                .iter()
-                .any(|p| p.ends_with("offline_queue.json"))
-        );
+        assert!(plan.targets.iter().any(|p| p.ends_with("offline_queue.json")));
         assert!(!plan.targets.iter().any(|p| p.ends_with("unrelated.json")));
     }
 
@@ -3964,7 +3795,7 @@ mod setup_helper_tests {
         }
 
         let sources = [
-            include_str!("config.rs"),
+            include_str!("config/mod.rs"),
             include_str!("logging.rs"),
             include_str!("../../config/src/lib.rs"),
             include_str!("../../cli/src/main.rs"),
@@ -3984,10 +3815,7 @@ mod setup_helper_tests {
             .lines()
             .filter_map(|line| {
                 let trimmed = line.trim();
-                let uncommented = trimmed
-                    .strip_prefix('#')
-                    .map(str::trim_start)
-                    .unwrap_or(trimmed);
+                let uncommented = trimmed.strip_prefix('#').map(str::trim_start).unwrap_or(trimmed);
                 let (key, _) = uncommented.split_once('=')?;
                 let key = key.trim();
                 let is_env_key = key

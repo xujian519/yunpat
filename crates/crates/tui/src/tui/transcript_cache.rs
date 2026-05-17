@@ -80,22 +80,14 @@ impl TranscriptCache {
     /// `None` if the cell never wrapped at this width/revision before.
     #[must_use]
     pub fn get(&self, cell: CellId, width: u16, revision: u64) -> Option<&[Line<'static>]> {
-        let key = Key {
-            cell,
-            width,
-            revision,
-        };
+        let key = Key { cell, width, revision };
         self.entries.get(&key).map(Vec::as_slice)
     }
 
     /// Cache a fresh wrap result. If the cache is at capacity the oldest
     /// inserted entry is evicted first.
     pub fn insert(&mut self, cell: CellId, width: u16, revision: u64, lines: Vec<Line<'static>>) {
-        let key = Key {
-            cell,
-            width,
-            revision,
-        };
+        let key = Key { cell, width, revision };
         // Replace an existing key in place — keep its position in the
         // insertion-order queue so we don't trigger spurious eviction.
         if self.entries.insert(key, lines).is_some() {
@@ -143,9 +135,7 @@ mod tests {
         let mut cache = TranscriptCache::new();
         let lines = vec![line("hello"), line("world")];
         cache.insert(CellId::History(0), 80, 1, lines.clone());
-        let got = cache
-            .get(CellId::History(0), 80, 1)
-            .expect("entry should be cached");
+        let got = cache.get(CellId::History(0), 80, 1).expect("entry should be cached");
         assert_eq!(got.len(), 2);
         assert_eq!(got[0].spans[0].content, "hello");
     }

@@ -156,30 +156,20 @@ export function readRetrievalConfigFromEnv(): Partial<RetrievalTuningConfig> {
     ragOverrides.defaultTopK = parseInt(process.env.YUNPAT_RAG_TOP_K, 10)
   }
   if (process.env.YUNPAT_RAG_SIMILARITY_THRESHOLD) {
-    ragOverrides.similarityThreshold = parseFloat(
-      process.env.YUNPAT_RAG_SIMILARITY_THRESHOLD
-    )
+    ragOverrides.similarityThreshold = parseFloat(process.env.YUNPAT_RAG_SIMILARITY_THRESHOLD)
   }
 
   // GraphRAG 参数
   if (process.env.YUNPAT_GRAPH_RAG_EXPANSION_DEPTH) {
-    graphRagOverrides.expansionDepth = parseInt(
-      process.env.YUNPAT_GRAPH_RAG_EXPANSION_DEPTH,
-      10
-    )
+    graphRagOverrides.expansionDepth = parseInt(process.env.YUNPAT_GRAPH_RAG_EXPANSION_DEPTH, 10)
   }
   if (process.env.YUNPAT_GRAPH_RAG_VECTOR_WEIGHT) {
-    graphRagOverrides.vectorWeight = parseFloat(
-      process.env.YUNPAT_GRAPH_RAG_VECTOR_WEIGHT
-    )
+    graphRagOverrides.vectorWeight = parseFloat(process.env.YUNPAT_GRAPH_RAG_VECTOR_WEIGHT)
   }
 
   // AgenticRAG 参数
   if (process.env.YUNPAT_AGENTIC_RAG_MAX_STEPS) {
-    agenticRagOverrides.maxSteps = parseInt(
-      process.env.YUNPAT_AGENTIC_RAG_MAX_STEPS,
-      10
-    )
+    agenticRagOverrides.maxSteps = parseInt(process.env.YUNPAT_AGENTIC_RAG_MAX_STEPS, 10)
   }
 
   // SemanticChunker 参数
@@ -192,10 +182,14 @@ export function readRetrievalConfigFromEnv(): Partial<RetrievalTuningConfig> {
 
   // 仅组装非空的子配置
   const overrides: Partial<RetrievalTuningConfig> = {}
-  if (Object.keys(ragOverrides).length > 0) overrides.rag = ragOverrides as RetrievalTuningConfig['rag']
-  if (Object.keys(graphRagOverrides).length > 0) overrides.graphRag = graphRagOverrides as RetrievalTuningConfig['graphRag']
-  if (Object.keys(agenticRagOverrides).length > 0) overrides.agenticRag = agenticRagOverrides as RetrievalTuningConfig['agenticRag']
-  if (Object.keys(chunkerOverrides).length > 0) overrides.semanticChunker = chunkerOverrides as RetrievalTuningConfig['semanticChunker']
+  if (Object.keys(ragOverrides).length > 0)
+    overrides.rag = ragOverrides as RetrievalTuningConfig['rag']
+  if (Object.keys(graphRagOverrides).length > 0)
+    overrides.graphRag = graphRagOverrides as RetrievalTuningConfig['graphRag']
+  if (Object.keys(agenticRagOverrides).length > 0)
+    overrides.agenticRag = agenticRagOverrides as RetrievalTuningConfig['agenticRag']
+  if (Object.keys(chunkerOverrides).length > 0)
+    overrides.semanticChunker = chunkerOverrides as RetrievalTuningConfig['semanticChunker']
 
   return overrides
 }

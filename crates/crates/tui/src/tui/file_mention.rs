@@ -236,9 +236,7 @@ pub fn apply_mention_menu_selection(app: &mut App, entries: &[String]) -> bool {
     else {
         return false;
     };
-    let selected_idx = app
-        .mention_menu_selected
-        .min(entries.len().saturating_sub(1));
+    let selected_idx = app.mention_menu_selected.min(entries.len().saturating_sub(1));
     let replacement = &entries[selected_idx];
     // #441: bump this path's frecency before we splice it in. The store
     // persists asynchronously, so this never blocks input handling.
@@ -384,10 +382,7 @@ pub fn context_references_from_input(
     let mut seen = std::collections::HashSet::new();
     let ws = Workspace::with_cwd(workspace.to_path_buf(), cwd);
 
-    for mention in extract_file_mentions(input)
-        .into_iter()
-        .take(MAX_FILE_MENTIONS_PER_MESSAGE)
-    {
+    for mention in extract_file_mentions(input).into_iter().take(MAX_FILE_MENTIONS_PER_MESSAGE) {
         let (path, display_path, exists) = match ws.resolve(&mention) {
             Ok(path) => {
                 let display = path.display().to_string();
@@ -525,19 +520,15 @@ pub fn media_attachment_references(input: &str) -> Vec<MediaAttachmentReference>
         let end_byte = offset + line.len();
         offset = end_byte;
         let trimmed = line.trim();
-        let Some(body) = trimmed
-            .strip_prefix("[Attached ")
-            .and_then(|value| value.strip_suffix(']'))
+        let Some(body) =
+            trimmed.strip_prefix("[Attached ").and_then(|value| value.strip_suffix(']'))
         else {
             continue;
         };
         let Some((kind, rest)) = body.split_once(": ") else {
             continue;
         };
-        let path = rest
-            .rsplit_once(" at ")
-            .map_or(rest, |(_, path)| path)
-            .trim();
+        let path = rest.rsplit_once(" at ").map_or(rest, |(_, path)| path).trim();
         if !path.is_empty() {
             out.push(MediaAttachmentReference {
                 kind: kind.trim().to_string(),
@@ -733,11 +724,7 @@ fn render_directory_mention_context(raw: &str, path: &Path, display_path: &str) 
     let mut names = entries
         .filter_map(|entry| entry.ok())
         .map(|entry| {
-            let marker = entry
-                .file_type()
-                .ok()
-                .filter(|ty| ty.is_dir())
-                .map_or("", |_| "/");
+            let marker = entry.file_type().ok().filter(|ty| ty.is_dir()).map_or("", |_| "/");
             format!("{}{}", entry.file_name().to_string_lossy(), marker)
         })
         .collect::<Vec<_>>();
@@ -755,9 +742,7 @@ fn render_directory_mention_context(raw: &str, path: &Path, display_path: &str) 
 fn read_text_prefix(path: &Path) -> std::io::Result<(String, bool)> {
     let mut file = std::fs::File::open(path)?;
     let mut buffer = Vec::new();
-    file.by_ref()
-        .take(MAX_MENTION_FILE_BYTES + 1)
-        .read_to_end(&mut buffer)?;
+    file.by_ref().take(MAX_MENTION_FILE_BYTES + 1).read_to_end(&mut buffer)?;
     let truncated = buffer.len() as u64 > MAX_MENTION_FILE_BYTES;
     if truncated {
         buffer.truncate(MAX_MENTION_FILE_BYTES as usize);
@@ -872,10 +857,7 @@ mod tests {
         // Path-separator-portable check: the resolved path's filename is the
         // most reliable cross-platform anchor (Windows mixes `/` and `\` when
         // join() preserves user-typed separators).
-        let basename = file_md
-            .file_name()
-            .and_then(|n| n.to_str())
-            .expect("file_name utf-8");
+        let basename = file_md.file_name().and_then(|n| n.to_str()).expect("file_name utf-8");
         assert!(
             content.contains(basename),
             "basename {basename} not in path; got: {content}",
@@ -950,15 +932,11 @@ mod tests {
         let previews = pending_context_previews(&input, tmp.path(), Some(tmp.path().to_path_buf()));
 
         assert!(
-            previews
-                .iter()
-                .any(|item| item.kind == "media" && !item.included),
+            previews.iter().any(|item| item.kind == "media" && !item.included),
             "at-mention media should be hint-only: {previews:?}"
         );
         assert!(
-            previews
-                .iter()
-                .any(|item| item.kind == "image" && item.included),
+            previews.iter().any(|item| item.kind == "image" && item.included),
             "/attach media should be included: {previews:?}"
         );
     }

@@ -43,9 +43,7 @@ fn thread_list_params_defaults_are_serializable() {
 
 #[test]
 fn event_frame_serialization_contains_expected_tag() {
-    let frame = EventFrame::TurnComplete {
-        turn_id: "turn-1".to_string(),
-    };
+    let frame = EventFrame::TurnComplete { turn_id: "turn-1".to_string() };
     let encoded = serde_json::to_string(&frame).expect("serialize frame");
     assert!(encoded.contains("turn_complete"));
 }

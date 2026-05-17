@@ -14,8 +14,15 @@ import { OMXLModelFactory } from '../src/llm/OMXLModelFactory.js'
 import { ChainOfThoughtStrategy } from '../src/reasoning/ChainOfThoughtStrategy.js'
 import { TreeOfThoughtsStrategy } from '../src/reasoning/TreeOfThoughtsStrategy.js'
 import { ReActLoop } from '../src/reasoning/ReActLoop.js'
-import { EnhancedReflection } from '../src/reasoning/EnhancedReflection.js'
-import type { ExecutionContext } from '../src/lifecycle/Lifecycle.js'
+import { EnhancedReflection, ReflectionDimension } from '../src/reasoning/EnhancedReflection.js'
+import {
+  LifecycleStage,
+  type ExecutionContext,
+  type MemoryStore,
+  type EventBus,
+  type ToolRegistry,
+  type LLMAdapter,
+} from '../src/lifecycle/Lifecycle.js'
 
 // ========== Mock 上下文 ==========
 
@@ -24,11 +31,37 @@ function createMockContext(agentName: string): ExecutionContext {
     executionId: `patent-omxl-${Date.now()}`,
     agentName,
     startTime: new Date(),
-    currentStage: 'act' as any,
-    memory: {} as any,
-    eventBus: {} as any,
-    tools: {} as any,
-    llm: {} as any,
+    currentStage: LifecycleStage.ACT,
+    memory: {
+      get: async () => undefined,
+      set: async () => {},
+      delete: async () => {},
+      has: async () => false,
+      getAll: async () => ({}),
+      setAll: async () => {},
+      clear: async () => {},
+      search: async () => [],
+    } satisfies MemoryStore,
+    eventBus: {
+      publish: () => {},
+      subscribe: () => ({ id: '', pattern: '', handler: () => {}, unsubscribe: () => {} }),
+      unsubscribe: () => {},
+      request: async () => undefined,
+    } satisfies EventBus,
+    tools: {
+      register: () => {},
+      unregister: () => {},
+      get: () => undefined,
+      call: async () => undefined,
+      list: () => [],
+    } satisfies ToolRegistry,
+    llm: {
+      chat: async () => ({
+        message: { role: 'assistant' as const, content: '' },
+      }),
+      chatStream: async function* () {},
+      embed: async () => [[]],
+    } satisfies LLMAdapter,
     metadata: {},
     sharedState: new Map(),
   }
@@ -137,7 +170,7 @@ async function example2_ToT_ClaimLayout() {
 
     console.log('\n📊 多维度评估结果：')
     evaluated.forEach((t, i) => {
-      const eval_ = t.evaluation as any
+      const eval_ = t.evaluation as { feasibility?: number; innovation?: number; completeness?: number; clarity?: number }
       console.log(`\n  方案${i + 1}:`)
       console.log(`    可行性: ${eval_?.feasibility || 'N/A'}/10`)
       console.log(`    创新性: ${eval_?.innovation || 'N/A'}/10`)
@@ -232,7 +265,7 @@ async function example4_Reflection_QualityCheck() {
   const reflection = new EnhancedReflection(llm, {
     maxIterations: 3,
     iterationThreshold: 0.7,
-    enabledDimensions: ['quality' as any, 'completeness' as any, 'consistency' as any],
+    enabledDimensions: [ReflectionDimension.QUALITY, ReflectionDimension.COMPLETENESS, ReflectionDimension.CONSISTENCY],
     useDeepAnalysis: true,
   })
 

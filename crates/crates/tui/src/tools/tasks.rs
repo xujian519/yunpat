@@ -476,9 +476,7 @@ impl ToolSpec for TaskShellWaitTool {
     }
 
     async fn execute(&self, input: Value, context: &ToolContext) -> Result<ToolResult, ToolError> {
-        let result = ShellWaitTool::new("exec_shell_wait")
-            .execute(input.clone(), context)
-            .await?;
+        let result = ShellWaitTool::new("exec_shell_wait").execute(input.clone(), context).await?;
         let Some(gate) = optional_str(&input, "gate") else {
             return Ok(result);
         };
@@ -610,11 +608,7 @@ impl ToolSpec for PrAttemptRecordTool {
                 .get("verification")
                 .and_then(Value::as_array)
                 .map(|items| {
-                    items
-                        .iter()
-                        .filter_map(Value::as_str)
-                        .map(ToString::to_string)
-                        .collect()
+                    items.iter().filter_map(Value::as_str).map(ToString::to_string).collect()
                 })
                 .unwrap_or_default(),
             selected: false,
@@ -695,11 +689,10 @@ impl ToolSpec for PrAttemptReadTool {
     async fn execute(&self, input: Value, context: &ToolContext) -> Result<ToolResult, ToolError> {
         let task = read_task_for_input(&input, context).await?;
         let attempt_id = required_str(&input, "attempt_id")?;
-        let attempt = task
-            .attempts
-            .iter()
-            .find(|attempt| attempt.id == attempt_id)
-            .ok_or_else(|| ToolError::invalid_input(format!("Attempt not found: {attempt_id}")))?;
+        let attempt =
+            task.attempts.iter().find(|attempt| attempt.id == attempt_id).ok_or_else(|| {
+                ToolError::invalid_input(format!("Attempt not found: {attempt_id}"))
+            })?;
         ToolResult::json(attempt).map_err(|e| ToolError::execution_failed(e.to_string()))
     }
 }
@@ -738,11 +731,10 @@ impl ToolSpec for PrAttemptPreflightTool {
             .ok_or_else(|| ToolError::not_available("TaskManager is not attached"))?;
         let task = read_task_for_input(&input, context).await?;
         let attempt_id = required_str(&input, "attempt_id")?;
-        let attempt = task
-            .attempts
-            .iter()
-            .find(|attempt| attempt.id == attempt_id)
-            .ok_or_else(|| ToolError::invalid_input(format!("Attempt not found: {attempt_id}")))?;
+        let attempt =
+            task.attempts.iter().find(|attempt| attempt.id == attempt_id).ok_or_else(|| {
+                ToolError::invalid_input(format!("Attempt not found: {attempt_id}"))
+            })?;
         let patch_ref = attempt
             .patch_path
             .as_ref()
@@ -824,10 +816,7 @@ fn write_runtime_artifact(
     std::fs::write(&absolute, content)
         .map_err(|e| ToolError::execution_failed(format!("write artifact: {e}")))?;
     Ok(Some(
-        absolute
-            .strip_prefix(data_dir)
-            .map(PathBuf::from)
-            .unwrap_or(absolute),
+        absolute.strip_prefix(data_dir).map(PathBuf::from).unwrap_or(absolute),
     ))
 }
 

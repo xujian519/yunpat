@@ -73,10 +73,7 @@ mod tests {
         unsafe {
             std::env::set_var("HOME", home);
         }
-        ScopedHome {
-            prev,
-            _guard: guard,
-        }
+        ScopedHome { prev, _guard: guard }
     }
 
     #[test]

@@ -107,9 +107,7 @@ mod tests {
             extra: serde_json::Value::Null,
         };
 
-        let rx = executor
-            .execute(AgentId("nonexistent".to_string()), input, None)
-            .await;
+        let rx = executor.execute(AgentId("nonexistent".to_string()), input, None).await;
         assert!(rx.is_ok());
     }
 }

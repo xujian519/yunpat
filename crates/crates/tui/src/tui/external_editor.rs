@@ -80,10 +80,7 @@ fn split_command(raw: &str) -> Option<Vec<String>> {
 /// The temp file is removed on every path because [`tempfile::NamedTempFile`]
 /// is dropped at the end of the function.
 pub fn run_editor_raw(seed: &str) -> io::Result<EditorOutcome> {
-    let mut tmp = Builder::new()
-        .prefix("deepseek-edit-")
-        .suffix(".md")
-        .tempfile()?;
+    let mut tmp = Builder::new().prefix("deepseek-edit-").suffix(".md").tempfile()?;
     tmp.write_all(seed.as_bytes())?;
     tmp.flush()?;
     let path = tmp.path().to_path_buf();

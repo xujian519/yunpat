@@ -28,9 +28,7 @@ fn render_modal_chrome(area: Rect, popup_area: Rect, buf: &mut Buffer) {
     let shadow_right = area.x.saturating_add(area.width);
     let shadow_bottom = area.y.saturating_add(area.height);
     let shadow_width = popup_area.width.min(shadow_right.saturating_sub(shadow_x));
-    let shadow_height = popup_area
-        .height
-        .min(shadow_bottom.saturating_sub(shadow_y));
+    let shadow_height = popup_area.height.min(shadow_bottom.saturating_sub(shadow_y));
 
     if shadow_width > 0 && shadow_height > 0 {
         Block::default().render(
@@ -55,10 +53,7 @@ fn push_option_lines(
     description: String,
 ) {
     let row_style = if selected {
-        Style::default()
-            .fg(palette::SELECTION_TEXT)
-            .bg(palette::SELECTION_BG)
-            .bold()
+        Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG).bold()
     } else {
         Style::default().fg(palette::TEXT_PRIMARY)
     };
@@ -124,9 +119,7 @@ impl UserInputView {
     fn advance_question(&mut self, answer: UserInputAnswer) -> ViewAction {
         self.answers.push(answer);
         if self.question_index + 1 >= self.request.questions.len() {
-            let response = UserInputResponse {
-                answers: self.answers.clone(),
-            };
+            let response = UserInputResponse { answers: self.answers.clone() };
             return ViewAction::EmitAndClose(ViewEvent::UserInputSubmitted {
                 tool_id: self.tool_id.clone(),
                 response,
@@ -220,9 +213,7 @@ impl UserInputView {
                 ViewAction::None
             }
             KeyCode::Char('h')
-                if key
-                    .modifiers
-                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) =>
             {
                 self.other_input.pop();
                 ViewAction::None

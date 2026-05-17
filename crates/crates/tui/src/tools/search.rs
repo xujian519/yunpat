@@ -103,11 +103,7 @@ impl ToolSpec for GrepFilesTool {
         let include_patterns: Vec<String> = input
             .get("include")
             .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str().map(String::from))
-                    .collect()
-            })
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
             .unwrap_or_default();
 
         // Parse exclude patterns
@@ -128,11 +124,7 @@ impl ToolSpec for GrepFilesTool {
                         "venv/*".to_string(),
                     ]
                 },
-                |arr| {
-                    arr.iter()
-                        .filter_map(|v| v.as_str().map(String::from))
-                        .collect()
-                },
+                |arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect(),
             );
 
         // Build regex
@@ -318,9 +310,7 @@ fn matches_glob(path: &str, pattern: &str) -> bool {
             }
             if !suffix.is_empty() {
                 return path.ends_with(suffix)
-                    || path
-                        .split('/')
-                        .any(|part| matches_simple_glob(part, suffix));
+                    || path.split('/').any(|part| matches_simple_glob(part, suffix));
             }
             return path.starts_with(prefix) || prefix.is_empty();
         }
@@ -462,10 +452,7 @@ mod tests {
         .expect("write");
 
         let tool = GrepFilesTool;
-        let result = tool
-            .execute(json!({"pattern": "fn"}), &ctx)
-            .await
-            .expect("execute");
+        let result = tool.execute(json!({"pattern": "fn"}), &ctx).await.expect("execute");
 
         assert!(result.success);
         assert!(result.content.contains("main"));
@@ -537,11 +524,7 @@ mod tests {
         let matches = parsed["matches"].as_array().unwrap();
         assert_eq!(matches.len(), 1);
         let file = matches[0]["file"].as_str().unwrap();
-        assert!(
-            file.rsplit('.')
-                .next()
-                .is_some_and(|ext| ext.eq_ignore_ascii_case("rs"))
-        );
+        assert!(file.rsplit('.').next().is_some_and(|ext| ext.eq_ignore_ascii_case("rs")));
     }
 
     #[tokio::test]

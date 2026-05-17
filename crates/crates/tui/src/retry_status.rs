@@ -55,12 +55,9 @@ impl RetryState {
     #[must_use]
     pub fn seconds_remaining(&self) -> Option<u64> {
         match self {
-            Self::Active(banner) => Some(
-                banner
-                    .deadline
-                    .saturating_duration_since(Instant::now())
-                    .as_secs(),
-            ),
+            Self::Active(banner) => {
+                Some(banner.deadline.saturating_duration_since(Instant::now()).as_secs())
+            }
             _ => None,
         }
     }

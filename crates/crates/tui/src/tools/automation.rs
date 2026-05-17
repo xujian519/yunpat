@@ -69,16 +69,9 @@ impl ToolSpec for AutomationCreateTool {
             name: required_str(&input, "name")?.to_string(),
             prompt: required_str(&input, "prompt")?.to_string(),
             rrule: required_str(&input, "rrule")?.to_string(),
-            cwds: string_array(&input, "cwds")?
-                .into_iter()
-                .map(PathBuf::from)
-                .collect(),
+            cwds: string_array(&input, "cwds")?.into_iter().map(PathBuf::from).collect(),
             status: Some(
-                if input
-                    .get("paused")
-                    .and_then(Value::as_bool)
-                    .unwrap_or(false)
-                {
+                if input.get("paused").and_then(Value::as_bool).unwrap_or(false) {
                     AutomationStatus::Paused
                 } else {
                     AutomationStatus::Active
@@ -222,12 +215,7 @@ impl ToolSpec for AutomationUpdateTool {
             prompt: optional_str(&input, "prompt").map(ToString::to_string),
             rrule: optional_str(&input, "rrule").map(ToString::to_string),
             cwds: if input.get("cwds").is_some() {
-                Some(
-                    string_array(&input, "cwds")?
-                        .into_iter()
-                        .map(PathBuf::from)
-                        .collect(),
-                )
+                Some(string_array(&input, "cwds")?.into_iter().map(PathBuf::from).collect())
             } else {
                 None
             },

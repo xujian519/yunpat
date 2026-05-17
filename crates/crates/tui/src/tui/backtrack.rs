@@ -151,11 +151,7 @@ impl BacktrackState {
     /// `Left` walks backward in time (older), `Right` walks forward (newer).
     /// Bounds-checked: `selected_idx` is clamped to `[0, total - 1]`.
     pub fn step(&mut self, dir: Direction) {
-        if let BacktrackPhase::Selecting {
-            selected_idx,
-            total,
-        } = self.phase
-        {
+        if let BacktrackPhase::Selecting { selected_idx, total } = self.phase {
             if total == 0 {
                 return;
             }
@@ -164,10 +160,7 @@ impl BacktrackState {
                 Direction::Left => selected_idx.saturating_add(1).min(last),
                 Direction::Right => selected_idx.saturating_sub(1),
             };
-            self.phase = BacktrackPhase::Selecting {
-                selected_idx: new_idx,
-                total,
-            };
+            self.phase = BacktrackPhase::Selecting { selected_idx: new_idx, total };
         }
     }
 
@@ -232,10 +225,7 @@ mod tests {
         assert_eq!(effect, EscEffect::OpenOverlay);
         assert_eq!(
             s.phase,
-            BacktrackPhase::Selecting {
-                selected_idx: 0,
-                total: 5,
-            }
+            BacktrackPhase::Selecting { selected_idx: 0, total: 5 }
         );
         assert!(s.is_selecting());
     }
@@ -255,10 +245,7 @@ mod tests {
     #[test]
     fn step_left_walks_back_in_time() {
         let mut s = BacktrackState::new();
-        s.phase = BacktrackPhase::Selecting {
-            selected_idx: 0,
-            total: 3,
-        };
+        s.phase = BacktrackPhase::Selecting { selected_idx: 0, total: 3 };
         s.step(Direction::Left);
         assert_eq!(s.selected_idx(), Some(1));
         s.step(Direction::Left);
@@ -271,10 +258,7 @@ mod tests {
     #[test]
     fn step_right_walks_forward_in_time() {
         let mut s = BacktrackState::new();
-        s.phase = BacktrackPhase::Selecting {
-            selected_idx: 2,
-            total: 3,
-        };
+        s.phase = BacktrackPhase::Selecting { selected_idx: 2, total: 3 };
         s.step(Direction::Right);
         assert_eq!(s.selected_idx(), Some(1));
         s.step(Direction::Right);
@@ -297,10 +281,7 @@ mod tests {
     #[test]
     fn step_with_total_one_clamps_at_zero() {
         let mut s = BacktrackState::new();
-        s.phase = BacktrackPhase::Selecting {
-            selected_idx: 0,
-            total: 1,
-        };
+        s.phase = BacktrackPhase::Selecting { selected_idx: 0, total: 1 };
         s.step(Direction::Left);
         assert_eq!(s.selected_idx(), Some(0));
         s.step(Direction::Right);
@@ -310,10 +291,7 @@ mod tests {
     #[test]
     fn confirm_yields_index_and_resets() {
         let mut s = BacktrackState::new();
-        s.phase = BacktrackPhase::Selecting {
-            selected_idx: 2,
-            total: 5,
-        };
+        s.phase = BacktrackPhase::Selecting { selected_idx: 2, total: 5 };
         let idx = s.confirm();
         assert_eq!(idx, Some(2));
         assert!(matches!(s.phase, BacktrackPhase::Inactive));
@@ -335,10 +313,7 @@ mod tests {
         s.reset();
         assert!(matches!(s.phase, BacktrackPhase::Inactive));
 
-        s.phase = BacktrackPhase::Selecting {
-            selected_idx: 1,
-            total: 3,
-        };
+        s.phase = BacktrackPhase::Selecting { selected_idx: 1, total: 3 };
         s.reset();
         assert!(matches!(s.phase, BacktrackPhase::Inactive));
     }
@@ -350,10 +325,7 @@ mod tests {
         // Esc handler is the canonical close path, but we defend against
         // a callsite that misroutes.
         let mut s = BacktrackState::new();
-        s.phase = BacktrackPhase::Selecting {
-            selected_idx: 1,
-            total: 3,
-        };
+        s.phase = BacktrackPhase::Selecting { selected_idx: 1, total: 3 };
         let effect = s.handle_esc(3);
         assert_eq!(effect, EscEffect::Cancel);
         assert!(matches!(s.phase, BacktrackPhase::Inactive));

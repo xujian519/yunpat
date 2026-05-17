@@ -95,7 +95,7 @@ make lint
 
 ## 7. Docker（可选）
 
-仓库已包含 `Dockerfile` 与 `docker-compose.yml`。常用命令：
+仓库已包含 `packages/Dockerfile`（TypeScript 层）和 `crates/Dockerfile`（Rust 层）。常用命令：
 
 ```bash
 docker-compose build

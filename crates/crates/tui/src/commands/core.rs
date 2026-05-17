@@ -140,8 +140,7 @@ pub fn models(_app: &mut App) -> CommandResult {
 /// List sub-agent status from the engine
 pub fn subagents(app: &mut App) -> CommandResult {
     if app.view_stack.top_kind() != Some(ModalKind::SubAgents) {
-        app.view_stack
-            .push(SubAgentsView::new(app.subagent.cache.clone()));
+        app.view_stack.push(SubAgentsView::new(app.subagent.cache.clone()));
     }
     app.status_message = Some(tr(app.ui_locale, MessageId::SubagentsFetching).to_string());
     CommandResult::action(AppAction::ListSubAgents)
@@ -159,9 +158,7 @@ pub fn profile_switch(_app: &mut App, arg: Option<&str>) -> CommandResult {
     };
     CommandResult::with_message_and_action(
         format!("Switching to profile '{profile_name}'..."),
-        AppAction::SwitchProfile {
-            profile: profile_name,
-        },
+        AppAction::SwitchProfile { profile: profile_name },
     )
 }
 
@@ -401,9 +398,7 @@ mod tests {
     fn test_clear_resets_all_state() {
         let mut app = create_test_app();
         // Set up some state
-        app.history.push(HistoryCell::User {
-            content: "test".to_string(),
-        });
+        app.history.push(HistoryCell::User { content: "test".to_string() });
         app.api_messages.push(Message {
             role: "user".to_string(),
             content: vec![],
@@ -552,12 +547,10 @@ mod tests {
     #[test]
     fn test_home_dashboard_shows_queued_when_present() {
         let mut app = create_test_app();
-        app.queue
-            .queued_messages
-            .push_back(crate::tui::app::QueuedMessage::new(
-                "test".to_string(),
-                None,
-            ));
+        app.queue.queued_messages.push_back(crate::tui::app::QueuedMessage::new(
+            "test".to_string(),
+            None,
+        ));
         let result = home_dashboard(&mut app);
         let msg = result.message.unwrap();
         assert!(msg.contains("Queued:"));
@@ -579,15 +572,10 @@ mod tests {
     fn test_home_dashboard_quick_actions_reflect_links_and_config_and_hide_removed_commands() {
         let mut app = create_test_app();
         let result = home_dashboard(&mut app);
-        let msg = result
-            .message
-            .expect("home dashboard should return message");
+        let msg = result.message.expect("home dashboard should return message");
         assert!(msg.contains("/links      - Dashboard & API links"));
         assert!(msg.contains("/config      - Open interactive configuration editor"));
-        assert!(
-            !msg.lines()
-                .any(|line| line.trim_start().starts_with("/set "))
-        );
+        assert!(!msg.lines().any(|line| line.trim_start().starts_with("/set ")));
         assert!(!msg.contains("/deepseek"));
     }
 
@@ -597,9 +585,7 @@ mod tests {
         let mut app = create_test_app();
         app.ui_locale = Locale::ZhHans;
         let result = home_dashboard(&mut app);
-        let msg = result
-            .message
-            .expect("home dashboard should return message");
+        let msg = result.message.expect("home dashboard should return message");
         assert!(msg.contains("主面板"), "missing zh-Hans title:\n{msg}");
         assert!(msg.contains("模型"), "missing zh-Hans model label:\n{msg}");
         assert!(

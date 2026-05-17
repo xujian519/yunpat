@@ -67,9 +67,7 @@ impl ToolSpec for RunTestsTool {
 
     async fn execute(&self, input: Value, context: &ToolContext) -> Result<ToolResult, ToolError> {
         let all_features = optional_bool(&input, "all_features", false);
-        let extra_args = optional_str(&input, "args")
-            .map(str::trim)
-            .filter(|s| !s.is_empty());
+        let extra_args = optional_str(&input, "args").map(str::trim).filter(|s| !s.is_empty());
 
         let mut args = vec!["test".to_string()];
         if all_features {
@@ -121,10 +119,7 @@ fn format_command(workspace: &Path, args: &[String]) -> String {
     format!(
         "(cd {} && cargo {})",
         workspace.display(),
-        args.iter()
-            .map(String::as_str)
-            .collect::<Vec<_>>()
-            .join(" ")
+        args.iter().map(String::as_str).collect::<Vec<_>>().join(" ")
     )
 }
 
@@ -134,10 +129,7 @@ fn truncate_with_note(text: &str, max_chars: usize) -> String {
     }
     let end = char_boundary_index(text, max_chars);
     let truncated = &text[..end];
-    let omitted_chars = text
-        .chars()
-        .count()
-        .saturating_sub(truncated.chars().count());
+    let omitted_chars = text.chars().count().saturating_sub(truncated.chars().count());
     let note = format!(
         "\n\n[output truncated to {max_chars} characters; {omitted_chars} characters omitted]"
     );

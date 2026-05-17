@@ -6,16 +6,88 @@
 
 import { createAdapter } from './index.js'
 import type { OrchestratorAgentConfig } from '@yunpat/orchestrator'
-import { EventBus, ToolRegistry, MemoryManager } from '@yunpat/core'
+import { EventBus, ToolRegistry, MemoryManager, type LLMAdapter } from '@yunpat/core'
 import type { OrchestratorLLMConfig } from '@yunpat/orchestrator'
 import { loadConfig, type LLMConfig } from './config.js'
 
 /**
- * GLM API 响应类型
+ * LLM 响应类型
  */
-interface GLMChatResponse {
-  choices: Array<{ message?: { content?: string } }>
-  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
+interface LLMResponse {
+  content: string
+  usage?: {
+    prompt_tokens?: number
+    completion_tokens?: number
+    total_tokens?: number
+  }
+}
+
+/**
+ * 通用 LLM 客户端类
+ */
+class UniversalLLMClient {
+  constructor(private config: LLMConfig) {}
+
+  async chat(messages: Array<{ role: string; content: string }>): Promise<LLMResponse> {
+    const provider = this.config.provider.toLowerCase()
+    
+    if (provider === 'deepseek') {
+      // DeepSeek API 调用
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.config.model,
+          messages,
+          temperature: this.config.temperature,
+          max_tokens: this.config.maxTokens,
+        }),
+      })
+      const data = (await response.json()) as { choices: Array<{ message?: { content?: string } }> }
+      return { content: data.choices[0]?.message?.content || '' }
+    } else if (provider === 'openai') {
+      // OpenAI API 调用
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.config.model,
+          messages,
+          temperature: this.config.temperature,
+          max_tokens: this.config.maxTokens,
+        }),
+      })
+      const data = (await response.json()) as { choices: Array<{ message?: { content?: string } }> }
+      return { content: data.choices[0]?.message?.content || '' }
+    }
+    // 其他提供商类似实现...
+    return { content: '' }
+  }
+}
+
+/**
+ * 创建 LLMAdapter 实现
+ */
+function createLLMAdapter(llmClient: UniversalLLMClient): LLMAdapter {
+  return {
+    async generate({ messages }) {
+      const response = await llmClient.chat(messages)
+      return {
+        content: response.content,
+        usage: {
+          inputTokens: response.usage?.prompt_tokens || 0,
+          outputTokens: response.usage?.completion_tokens || 0,
+          totalTokens: response.usage?.total_tokens || 0,
+        },
+      }
+    },
+  }
 }
 
 /**

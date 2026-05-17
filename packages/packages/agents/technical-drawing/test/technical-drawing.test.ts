@@ -1,20 +1,67 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { TechnicalDrawingAgent } from '../src/TechnicalDrawingAgent.js'
+import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
-const mockContext = {
-  registry: {} as any,
-  llm: {} as any,
-  memory: {} as any,
-  eventBus: {
+function createMockEventBus(): IEventBus {
+  return {
     publish: vi.fn(),
-    subscribe: vi.fn(() => ({ id: 'mock-sub', pattern: '*', handler: vi.fn() })),
+    subscribe: vi.fn(() => ({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() })),
     unsubscribe: vi.fn(),
     request: vi.fn(() => Promise.resolve(undefined)),
-  },
+  }
+}
+
+function createMockMemory(): MemoryStore {
+  return {
+    get: vi.fn().mockResolvedValue(undefined),
+    set: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+    has: vi.fn().mockResolvedValue(false),
+    getAll: vi.fn().mockResolvedValue({}),
+    setAll: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn().mockResolvedValue(undefined),
+    search: vi.fn().mockResolvedValue([]),
+  }
+}
+
+function createMockToolRegistry(): IToolRegistry {
+  return {
+    register: vi.fn(),
+    unregister: vi.fn(),
+    get: vi.fn().mockReturnValue(undefined),
+    call: vi.fn().mockResolvedValue(undefined),
+    list: vi.fn().mockReturnValue([]),
+  }
+}
+
+function createMockLLM(): LLMAdapter {
+  return {
+    chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+    chatStream: vi.fn(),
+    embed: vi.fn(),
+  }
+}
+
+const mockContext = {
+  registry: createMockToolRegistry(),
+  llm: createMockLLM(),
+  memory: createMockMemory(),
+  eventBus: createMockEventBus(),
 }
 
 // Mock fetch API
 global.fetch = vi.fn()
+
+type FetchJsonResponse = {
+  ok: boolean
+  status?: number
+  statusText?: string
+  json: () => Promise<Record<string, unknown>>
+}
+
+function mockFetchResponse(json: Record<string, unknown>, ok = true, status = 200, statusText = 'OK'): FetchJsonResponse {
+  return { ok, status, statusText, json: async () => json }
+}
 
 describe('TechnicalDrawingAgent', () => {
   let agent: TechnicalDrawingAgent
@@ -40,17 +87,15 @@ describe('TechnicalDrawingAgent', () => {
 
   describe('化学结构识别', () => {
     it('应该成功识别化学结构', async () => {
-      // Mock化学结构识别服务响应
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '化学结构识别成功',
           structure: 'CC(C)Cc1ccccc1',
           confidence: 0.95,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'base64encodedimagedata',
@@ -71,12 +116,9 @@ describe('TechnicalDrawingAgent', () => {
     })
 
     it('应该处理化学结构识别服务错误', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-        json: async () => ({ detail: '识别失败' }),
-      } as any)
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({ detail: '识别失败' }, false, 500, 'Internal Server Error')
+      )
 
       const input = {
         imageData: 'base64encodedimagedata',
@@ -102,16 +144,14 @@ describe('TechnicalDrawingAgent', () => {
 
   describe('数学公式识别', () => {
     it('应该成功识别数学公式', async () => {
-      // Mock数学公式识别服务响应
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '数学公式识别成功',
           latex: '\\frac{a}{b} + \\sqrt{c}',
           confidence: 0.92,
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'base64encodedimagedata',
@@ -131,12 +171,9 @@ describe('TechnicalDrawingAgent', () => {
     })
 
     it('应该处理数学公式识别服务错误', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-        json: async () => ({ detail: '识别失败' }),
-      } as any)
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({ detail: '识别失败' }, false, 500, 'Internal Server Error')
+      )
 
       const input = {
         imageData: 'base64encodedimagedata',
@@ -162,16 +199,15 @@ describe('TechnicalDrawingAgent', () => {
 
   describe('自动类型检测', () => {
     it('应该自动检测化学结构类型', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '化学结构识别成功',
           structure: 'CCO',
           confidence: 0.9,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData:
@@ -187,15 +223,14 @@ describe('TechnicalDrawingAgent', () => {
     })
 
     it('应该自动检测数学公式类型', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '数学公式识别成功',
           latex: 'E = mc^2',
           confidence: 0.95,
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'formula_image_data',
@@ -211,16 +246,15 @@ describe('TechnicalDrawingAgent', () => {
     })
 
     it('应该使用指定的图纸类型', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '化学结构识别成功',
           structure: 'CCO',
           confidence: 0.9,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'chemical_image_data',
@@ -272,16 +306,15 @@ describe('TechnicalDrawingAgent', () => {
 
   describe('不同图片格式', () => {
     it('应该支持PNG格式', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '化学结构识别成功',
           structure: 'CCO',
           confidence: 0.9,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'png_image_data',
@@ -295,16 +328,15 @@ describe('TechnicalDrawingAgent', () => {
     })
 
     it('应该支持JPG格式', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '化学结构识别成功',
           structure: 'CCO',
           confidence: 0.9,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'jpg_image_data',
@@ -318,16 +350,15 @@ describe('TechnicalDrawingAgent', () => {
     })
 
     it('应该支持JPEG格式', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '化学结构识别成功',
           structure: 'CCO',
           confidence: 0.9,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'jpeg_image_data',
@@ -343,18 +374,16 @@ describe('TechnicalDrawingAgent', () => {
 
   describe('错误处理', () => {
     it('应该处理空图片数据', async () => {
-      // 当mock fetch返回成功时，空图片数据仍会正常处理
       // Agent不直接校验图片数据是否为空
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '识别成功',
           structure: 'CCO',
           confidence: 0.9,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: '',
@@ -368,16 +397,15 @@ describe('TechnicalDrawingAgent', () => {
     })
 
     it('应该处理无效的图片格式', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '识别成功',
           structure: 'CCO',
           confidence: 0.9,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'invalid_image_data',
@@ -393,16 +421,15 @@ describe('TechnicalDrawingAgent', () => {
 
   describe('性能测试', () => {
     it('应该在合理时间内完成识别', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '化学结构识别成功',
           structure: 'CCO',
           confidence: 0.9,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'test_image_data',
@@ -422,16 +449,15 @@ describe('TechnicalDrawingAgent', () => {
 
   describe('边界条件', () => {
     it('应该处理低置信度结果', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '识别成功',
           structure: 'CCO',
           confidence: 0.6, // 低置信度
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'low_confidence_image',
@@ -446,16 +472,15 @@ describe('TechnicalDrawingAgent', () => {
     })
 
     it('应该处理空的识别结果', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.mocked(fetch).mockResolvedValue(
+        mockFetchResponse({
           success: true,
           message: '识别成功',
           structure: '', // 空结果
           confidence: 0.5,
           format: 'smiles',
-        }),
-      } as any)
+        })
+      )
 
       const input = {
         imageData: 'empty_result_image',

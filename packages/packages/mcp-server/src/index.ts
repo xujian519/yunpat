@@ -18,6 +18,19 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js'
 
+// ============================================================
+// 类型定义
+// ============================================================
+
+/** MCP 工具元数据扩展 */
+interface ExtendedToolMetadata {
+  name: string
+  description: string
+  version: string
+  inputSchema: unknown
+  timeout?: number
+}
+
 // 导入核心框架
 import {
   EventBus,
@@ -230,7 +243,7 @@ function createServer() {
         }
       }
 
-      const timeoutMs = (mcpTool.metadata as any).timeout || 600000 // 默认 10 分钟
+      const timeoutMs = (mcpTool.metadata as ExtendedToolMetadata).timeout || 600000 // 默认 10 分钟
 
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
@@ -238,7 +251,7 @@ function createServer() {
         }, timeoutMs)
       })
 
-      const result = (await Promise.race([mcpTool.execute(args, context), timeoutPromise])) as any
+      const result = await Promise.race([mcpTool.execute(args, context), timeoutPromise])
 
       // 格式化返回结果
       if (result.success) {

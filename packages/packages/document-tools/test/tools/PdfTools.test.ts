@@ -27,17 +27,47 @@ vi.mock('fs', async () => {
   return {
     ...actual,
     existsSync: vi.fn(() => true),
-    statSync: vi.fn(() => ({ size: 2048 }) as any),
+    statSync: vi.fn(() => ({ size: 2048 })),
     readFileSync: vi.fn(() => Buffer.from('mock pdf content')),
   }
 })
 
-const mockContext: any = {
-  registry: {},
-  llm: {} as any,
-  memory: {} as any,
-  eventBus: {} as any,
+import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
+
+function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+  return {
+    registry: {
+      register: vi.fn(),
+      unregister: vi.fn(),
+      get: vi.fn().mockReturnValue(undefined),
+      call: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockReturnValue([]),
+    },
+    llm: {
+      chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    },
+    memory: {
+      get: vi.fn().mockResolvedValue(undefined),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      has: vi.fn().mockResolvedValue(false),
+      getAll: vi.fn().mockResolvedValue({}),
+      setAll: vi.fn().mockResolvedValue(undefined),
+      clear: vi.fn().mockResolvedValue(undefined),
+      search: vi.fn().mockResolvedValue([]),
+    },
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      unsubscribe: vi.fn(),
+      request: vi.fn().mockResolvedValue(undefined),
+    },
+  }
 }
+
+const mockContext = createMockContext()
 
 describe('PdfTools', () => {
   beforeEach(() => {

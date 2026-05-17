@@ -22,9 +22,7 @@ pub fn install_system_skills(skills_dir: &Path) -> std::io::Result<()> {
     let target_dir = skills_dir.join("skill-creator");
     let target_file = target_dir.join("SKILL.md");
 
-    let installed_version = fs::read_to_string(&marker)
-        .ok()
-        .map(|s| s.trim().to_string());
+    let installed_version = fs::read_to_string(&marker).ok().map(|s| s.trim().to_string());
     let dir_exists = target_dir.exists();
 
     // Re-install only when BOTH conditions hold:

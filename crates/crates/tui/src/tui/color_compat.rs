@@ -48,6 +48,8 @@ impl<W: Write> Write for ColorCompatBackend<W> {
 }
 
 impl<W: Write> Backend for ColorCompatBackend<W> {
+    type Error = std::io::Error;
+
     fn draw<'a, I>(&mut self, content: I) -> io::Result<()>
     where
         I: Iterator<Item = (u16, u16, &'a Cell)>,
@@ -59,8 +61,7 @@ impl<W: Write> Backend for ColorCompatBackend<W> {
                 (x, y, cell)
             })
             .collect::<Vec<_>>();
-        self.inner
-            .draw(adapted.iter().map(|(x, y, cell)| (*x, *y, cell)))
+        self.inner.draw(adapted.iter().map(|(x, y, cell)| (*x, *y, cell)))
     }
 
     fn append_lines(&mut self, n: u16) -> io::Result<()> {

@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest'
 import { OrchestratorAgent } from '../../src/OrchestratorAgent.js'
 import type { OrchestratorAgentConfig, OrchestratorInput } from '../../src/types/index.js'
 import { MockLLMClient, createClarifyResponse } from '../mocks/MockLLMClient.js'
+import type { LLMAdapter, IEventBus } from '@yunpat/core'
 
 // Mock EventBus
 const mockEventBus = {
@@ -15,7 +16,9 @@ const mockEventBus = {
   on: () => {},
   publish: () => {},
   subscribe: () => {},
-}
+  unsubscribe: () => {},
+  request: () => Promise.resolve(undefined),
+} as unknown as IEventBus
 
 // Mock Memory
 const mockMemory = {
@@ -33,7 +36,9 @@ const mockLLMAdapter = {
       content: 'Mock professional agent response',
     },
   }),
-}
+  chatStream: async function* () { yield { message: { content: '' } } },
+  embed: async () => ({ embedding: [] }),
+} as unknown as LLMAdapter
 
 describe('简化MockLLMClient集成测试', () => {
   it('应该正确使用MockLLMClient', async () => {
@@ -52,7 +57,7 @@ describe('简化MockLLMClient集成测试', () => {
         apiKey: 'test-key',
         maxTokens: 4096,
         temperature: 0.7,
-        adapter: mockLLMAdapter as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        adapter: mockLLMAdapter,
       },
       intentConfig: {
         confidenceThreshold: 0.7,
@@ -71,7 +76,7 @@ describe('简化MockLLMClient集成测试', () => {
         patentWriter: false, // 禁用专业层Agent，只测试意图识别
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      eventBus: mockEventBus as any,
+      eventBus: mockEventBus,
       memory: mockMemory,
       tools: mockTools,
       llmClient: mockLLMClient, // 注入MockLLMClient
@@ -126,7 +131,7 @@ describe('简化MockLLMClient集成测试', () => {
           apiKey: 'test-key',
           maxTokens: 4096,
           temperature: 0.7,
-          adapter: mockLLMAdapter as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+          adapter: mockLLMAdapter,
         },
         intentConfig: {
           confidenceThreshold: 0.7,
@@ -145,7 +150,7 @@ describe('简化MockLLMClient集成测试', () => {
           patentWriter: false,
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        eventBus: mockEventBus as any,
+        eventBus: mockEventBus,
         memory: mockMemory,
         tools: mockTools,
         llmClient,
@@ -203,7 +208,7 @@ describe('简化MockLLMClient集成测试', () => {
         apiKey: 'test-key',
         maxTokens: 4096,
         temperature: 0.7,
-        adapter: mockLLMAdapter as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        adapter: mockLLMAdapter,
       },
       intentConfig: {
         confidenceThreshold: 0.7,
@@ -222,7 +227,7 @@ describe('简化MockLLMClient集成测试', () => {
         patentWriter: false,
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      eventBus: mockEventBus as any,
+      eventBus: mockEventBus,
       memory: mockMemory,
       tools: mockTools,
       llmClient: mockLLMClient,

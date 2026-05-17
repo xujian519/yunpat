@@ -5,11 +5,11 @@
 import { Pool } from 'pg'
 
 const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  database: 'legal_world_model',
-  user: 'postgres',
-  password: 'nxLVXyZ3e87L0kE8Xqx3AB9NK1z74pwOdjugqpc7hc',
+  host: process.env.DB_HOST || 'localhost',
+  port: Number(process.env.DB_PORT) || 5432,
+  database: process.env.DB_NAME || 'legal_world_model',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || '',
 })
 
 async function checkTables() {

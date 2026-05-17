@@ -360,10 +360,7 @@ fn shape_large_text(
     label: &str,
     threshold: usize,
 ) -> Result<Value, ToolError> {
-    let body = value
-        .get("body")
-        .and_then(Value::as_str)
-        .map(ToString::to_string);
+    let body = value.get("body").and_then(Value::as_str).map(ToString::to_string);
     if let Some(body) = body
         && body.len() > threshold
     {
@@ -407,10 +404,7 @@ fn write_artifact_if_needed(
     std::fs::write(&absolute, content)
         .map_err(|e| ToolError::execution_failed(format!("write artifact: {e}")))?;
     Ok(Some(
-        absolute
-            .strip_prefix(data_dir)
-            .map(Path::to_path_buf)
-            .unwrap_or(absolute),
+        absolute.strip_prefix(data_dir).map(Path::to_path_buf).unwrap_or(absolute),
     ))
 }
 
@@ -508,10 +502,7 @@ fn validate_evidence(input: &Value, closing: bool) -> Result<(), ToolError> {
             .and_then(Value::as_array)
             .filter(|items| !items.is_empty())
             .ok_or_else(|| ToolError::invalid_input("acceptance_criteria must be non-empty"))?;
-        if criteria
-            .iter()
-            .any(|item| item.as_str().unwrap_or("").trim().is_empty())
-        {
+        if criteria.iter().any(|item| item.as_str().unwrap_or("").trim().is_empty()) {
             return Err(ToolError::invalid_input(
                 "acceptance_criteria entries must be non-empty",
             ));

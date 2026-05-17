@@ -713,8 +713,8 @@ describeE2E('专利撰写工作流', () => {
 
       await expect(
         agent.execute({
-          inventionUnderstanding: null as any,
-          specification: null as any,
+          inventionUnderstanding: null as unknown as import('@yunpat/agent-invention').InventionUnderstandingOutput,
+          specification: null as unknown as import('@yunpat/agent-specification-drafter').SpecificationContent,
         })
       ).rejects.toThrow()
     })

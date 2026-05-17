@@ -28,7 +28,7 @@
 
 | 维度 | 数据 |
 |------|------|
-| Rust 代码 | workspace members：17 个 crate（目录位于 `crates/crates/*`） |
+| Rust 代码 | workspace members：19 个 crate（目录位于 `crates/crates/*`） |
 | TypeScript 代码 | 基础设施包位于 `packages/packages/*` |
 | 专业 Agent | Agent 包位于 `packages/packages/agents/*` |
 | 构建系统 | Cargo（Rust）+ pnpm workspace（TypeScript） |
@@ -148,6 +148,7 @@ Rust workspace members 按职责分为三层：
 | `yunpat-models` | ~1.2K | 多提供商 ModelProvider 接口（SSE、OpenAI 兼容） |
 | `config` | ~2K | 配置加载、profiles、环境变量优先级管理 |
 | `secrets` | ~800 | OS keyring API key 安全存储 |
+| `yunpat-patent-tui` | — | 专利 TUI 模块（从 tui 提取） |
 
 ### 3.2 核心运行时结构
 
@@ -625,6 +626,7 @@ make format
 | `tools` | `crates/tools/` | 工具生命周期、Schema 验证、并行调度 |
 | `protocol` | `crates/protocol/` | 协议类型 |
 | `yunpat-router` | `crates/yunpat-router/` | 意图路由、命令分发 |
+| `yunpat-patent-tui` | `crates/yunpat-patent-tui/` | 专利 TUI 模块（从 tui 提取） |
 
 ### 附录 B：TypeScript 包详细列表
 

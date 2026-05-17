@@ -280,12 +280,10 @@ async fn run_rlm_turn_impl(
                 }
             };
 
-            total_usage.input_tokens = total_usage
-                .input_tokens
-                .saturating_add(response.usage.input_tokens);
-            total_usage.output_tokens = total_usage
-                .output_tokens
-                .saturating_add(response.usage.output_tokens);
+            total_usage.input_tokens =
+                total_usage.input_tokens.saturating_add(response.usage.input_tokens);
+            total_usage.output_tokens =
+                total_usage.output_tokens.saturating_add(response.usage.output_tokens);
 
             let response_text = extract_text_blocks(&response.content);
             last_response_text = response_text.clone();
@@ -506,20 +504,14 @@ async fn run_rlm_turn_impl(
     // Fold bridge usage (children + nested sub_rlm) into totals.
     let bridge_usage = usage_handle.lock().await;
     let mut final_usage = result.usage.clone();
-    final_usage.input_tokens = final_usage
-        .input_tokens
-        .saturating_add(bridge_usage.input_tokens);
-    final_usage.output_tokens = final_usage
-        .output_tokens
-        .saturating_add(bridge_usage.output_tokens);
+    final_usage.input_tokens = final_usage.input_tokens.saturating_add(bridge_usage.input_tokens);
+    final_usage.output_tokens =
+        final_usage.output_tokens.saturating_add(bridge_usage.output_tokens);
     drop(bridge_usage);
 
     repl.shutdown().await;
 
-    RlmTurnResult {
-        usage: final_usage,
-        ..result
-    }
+    RlmTurnResult { usage: final_usage, ..result }
 }
 
 // ---------------------------------------------------------------------------
@@ -634,10 +626,7 @@ fn build_metadata_message(
 
     Message {
         role: "user".to_string(),
-        content: vec![ContentBlock::Text {
-            text,
-            cache_control: None,
-        }],
+        content: vec![ContentBlock::Text { text, cache_control: None }],
     }
 }
 
@@ -693,9 +682,7 @@ fn extract_repl_code(text: &str) -> Option<String> {
 
     let after_fence = best_start.map(|(_, rest)| rest)?;
 
-    let end_idx = after_fence
-        .find("\n```")
-        .or_else(|| after_fence.find("```"))?;
+    let end_idx = after_fence.find("\n```").or_else(|| after_fence.find("```"))?;
 
     let code = after_fence[..end_idx].trim().to_string();
     if code.is_empty() {
@@ -939,9 +926,7 @@ mod tests {
                 text: "first".to_string(),
                 cache_control: None,
             },
-            ContentBlock::Thinking {
-                thinking: "skip".to_string(),
-            },
+            ContentBlock::Thinking { thinking: "skip".to_string() },
             ContentBlock::Text {
                 text: "second".to_string(),
                 cache_control: None,

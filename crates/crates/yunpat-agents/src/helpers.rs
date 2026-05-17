@@ -64,10 +64,7 @@ pub fn keyword_confidence(
     max_boost: f32,
 ) -> Confidence {
     let lower = input.to_lowercase();
-    let matching = keywords
-        .iter()
-        .filter(|kw| lower.contains(&kw.to_lowercase()))
-        .count();
+    let matching = keywords.iter().filter(|kw| lower.contains(&kw.to_lowercase())).count();
     if matching == 0 {
         return 0.0;
     }
@@ -81,10 +78,7 @@ pub fn keyword_confidence(
 
 /// Extract `case_id` from the `extra` field of an `AgentInput`.
 pub fn extract_case_id(extra: &serde_json::Value) -> Option<String> {
-    extra
-        .get("case_id")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
+    extra.get("case_id").and_then(|v| v.as_str()).map(|s| s.to_string())
 }
 
 /// Common struct fields for agent implementations.

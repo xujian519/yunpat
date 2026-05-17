@@ -4,7 +4,7 @@
 # ============================================================================
 # 阶段0: Rust Gateway 构建
 # ============================================================================
-FROM rust:1.80-alpine AS rust-build
+FROM rust:1.88-alpine AS rust-build
 
 WORKDIR /rust
 
@@ -22,7 +22,7 @@ RUN cargo build --release
 # ============================================================================
 # 阶段1: Node.js 依赖安装
 # ============================================================================
-FROM node:18-alpine AS deps
+FROM node:20-alpine AS deps
 
 WORKDIR /app
 
@@ -50,7 +50,7 @@ RUN pnpm install --prod --no-frozen-lockfile --ignore-scripts
 # ============================================================================
 # 阶段2: Node.js 构建
 # ============================================================================
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
@@ -93,7 +93,7 @@ RUN pnpm --filter "@yunpat/core" build && \
 # ============================================================================
 # 阶段3: 生产镜像 - 完整服务栈
 # ============================================================================
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 

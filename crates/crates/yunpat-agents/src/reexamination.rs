@@ -499,9 +499,7 @@ struct QualityDimensionScore {
 }
 
 fn generate_rejection_analysis_content(topic: &str, case_id: Option<&str>) -> String {
-    let case_info = case_id
-        .map(|id| format!("\n关联案件: {}", id))
-        .unwrap_or_default();
+    let case_info = case_id.map(|id| format!("\n关联案件: {}", id)).unwrap_or_default();
     format!(
         "## 驳回决定分析\n\n\
          针对输入的驳回决定，进行以下分析：\n\n\

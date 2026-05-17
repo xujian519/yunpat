@@ -504,10 +504,7 @@ fn truncate_for_prompt(value: &str, max_chars: usize) -> String {
         return single_line;
     }
 
-    let mut truncated = single_line
-        .chars()
-        .take(max_chars.saturating_sub(1))
-        .collect::<String>();
+    let mut truncated = single_line.chars().take(max_chars.saturating_sub(1)).collect::<String>();
     truncated.push('…');
     truncated
 }
@@ -676,10 +673,7 @@ mod tests {
             crate::skills::render_available_skills_context(&tmpdir.path().join("skills"))
                 .expect("skill context");
 
-        let line = rendered
-            .lines()
-            .find(|l| l.starts_with("- spaced-skill:"))
-            .expect("skill line");
+        let line = rendered.lines().find(|l| l.starts_with("- spaced-skill:")).expect("skill line");
         assert!(line.contains("alpha beta gamma"), "got: {line:?}");
     }
 
@@ -742,9 +736,7 @@ mod tests {
         idx += 1;
         // .opencode/skills was not created — it must NOT appear.
         assert!(
-            !dirs
-                .iter()
-                .any(|p| p == &workspace.join(".opencode").join("skills")),
+            !dirs.iter().any(|p| p == &workspace.join(".opencode").join("skills")),
             "missing dir must be omitted, got: {dirs:?}"
         );
         assert_eq!(dirs.get(idx), Some(&claude), "claude must come after local");

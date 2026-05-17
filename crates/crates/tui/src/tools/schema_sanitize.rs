@@ -66,10 +66,7 @@ fn collapse_nullable_unions(schema: &mut Value) {
 }
 
 fn is_null_type(v: &Value) -> bool {
-    v.as_object()
-        .and_then(|o| o.get("type"))
-        .and_then(|t| t.as_str())
-        == Some("null")
+    v.as_object().and_then(|o| o.get("type")).and_then(|t| t.as_str()) == Some("null")
 }
 
 /// Bare `{"type": "object"}` (no `properties`, no `additionalProperties`)
@@ -101,11 +98,8 @@ fn prune_dangling_required(schema: &mut Value) {
     let Some(required) = obj.get_mut("required").and_then(|v| v.as_array_mut()) else {
         return;
     };
-    required.retain(|entry| {
-        entry
-            .as_str()
-            .is_some_and(|k| known_keys.iter().any(|known| known == k))
-    });
+    required
+        .retain(|entry| entry.as_str().is_some_and(|k| known_keys.iter().any(|known| known == k)));
     if required.is_empty() {
         obj.remove("required");
     }

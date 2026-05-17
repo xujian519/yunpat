@@ -42,9 +42,7 @@ impl ContextMenuView {
     }
 
     fn selected_action(&self) -> Option<ContextMenuAction> {
-        self.entries
-            .get(self.selected)
-            .map(|entry| entry.action.clone())
+        self.entries.get(self.selected).map(|entry| entry.action.clone())
     }
 
     fn move_selection(&mut self, delta: isize) {
@@ -80,12 +78,7 @@ impl ContextMenuView {
         let max_y = area.bottom().saturating_sub(height).max(area.y);
         let x = self.column.max(area.x).min(max_x);
         let y = self.row.max(area.y).min(max_y);
-        Rect {
-            x,
-            y,
-            width,
-            height,
-        }
+        Rect { x, y, width, height }
     }
 
     fn clicked_entry(&self, mouse: MouseEvent) -> Option<usize> {
@@ -190,9 +183,7 @@ impl ModalView for ContextMenuView {
                         .bg(palette::YUNPAT_BLUE)
                         .add_modifier(Modifier::BOLD)
                 } else {
-                    Style::default()
-                        .fg(palette::TEXT_SOFT)
-                        .bg(palette::SURFACE_ELEVATED)
+                    Style::default().fg(palette::TEXT_SOFT).bg(palette::SURFACE_ELEVATED)
                 };
                 Line::from(Span::styled(text, style))
             })

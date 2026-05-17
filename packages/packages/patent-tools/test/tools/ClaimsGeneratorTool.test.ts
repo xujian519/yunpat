@@ -1,6 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ClaimsGeneratorTool, FeatureExtractorTool } from '../../src/tools/ClaimsGeneratorTool.js'
 import { InventionType, ClaimType } from '../../src/types/patent.js'
+import type { ToolContext, LLMAdapter } from '@yunpat/core'
+
+function createMockToolContext(mockLLM: Partial<LLMAdapter>): ToolContext {
+  return {
+    registry: { register: vi.fn(), unregister: vi.fn(), get: vi.fn(), call: vi.fn(), list: vi.fn() } as unknown as ToolContext['registry'],
+    llm: {
+      chat: vi.fn(),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+      ...mockLLM,
+    } as unknown as ToolContext['llm'],
+    memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() } as unknown as ToolContext['memory'],
+    eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() } as unknown as ToolContext['eventBus'],
+    sessionId: 'test-session',
+  }
+}
 
 describe('ClaimsGeneratorTool', () => {
   let tool: ClaimsGeneratorTool
@@ -22,13 +38,13 @@ describe('ClaimsGeneratorTool', () => {
   })
 
   it('throws error when no essential features provided', async () => {
-    const context = {} as any
+    const context = createMockToolContext({})
     const input = {
       inventionType: InventionType.DEVICE,
       coreFeatures: [{ text: '可选特征1', isEssential: false }],
     }
 
-    await expect(tool.execute(input as any, context)).rejects.toThrow(
+    await expect(tool.execute(input, context)).rejects.toThrow(
       '至少需要一个必要特征来生成独立权利要求'
     )
   })
@@ -42,7 +58,7 @@ describe('ClaimsGeneratorTool', () => {
       }),
     }
 
-    const context = { llm: mockLLM } as any
+    const context = createMockToolContext(mockLLM)
     const input = {
       inventionType: InventionType.DEVICE,
       coreFeatures: [
@@ -75,7 +91,7 @@ describe('ClaimsGeneratorTool', () => {
       }),
     }
 
-    const context = { llm: mockLLM } as any
+    const context = createMockToolContext(mockLLM)
     const input = {
       inventionType: InventionType.METHOD,
       coreFeatures: [{ text: '步骤一', isEssential: true }],
@@ -98,7 +114,7 @@ describe('ClaimsGeneratorTool', () => {
       }),
     }
 
-    const context = { llm: mockLLM } as any
+    const context = createMockToolContext(mockLLM)
     const input = {
       inventionType: InventionType.DEVICE,
       coreFeatures: [{ text: '模块', isEssential: true }],
@@ -140,7 +156,7 @@ describe('FeatureExtractorTool', () => {
       }),
     }
 
-    const context = { llm: mockLLM } as any
+    const context = createMockToolContext(mockLLM)
     const result = await tool.execute({ description: '本发明涉及一种图像识别装置...' }, context)
 
     expect(result.features).toHaveLength(2)
@@ -161,7 +177,7 @@ describe('FeatureExtractorTool', () => {
       }),
     }
 
-    const context = { llm: mockLLM } as any
+    const context = createMockToolContext(mockLLM)
     const result = await tool.execute({ description: 'test' }, context)
     expect(result.features).toHaveLength(1)
     expect(result.features[0].text).toBe('模块A')
@@ -174,7 +190,7 @@ describe('FeatureExtractorTool', () => {
       }),
     }
 
-    const context = { llm: mockLLM } as any
+    const context = createMockToolContext(mockLLM)
     await expect(tool.execute({ description: 'test' }, context)).rejects.toThrow(
       'Failed to parse extracted features'
     )

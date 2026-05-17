@@ -46,10 +46,6 @@ mod tests {
 
     #[test]
     fn pass_for_reversible_tool() {
-        assert!(
-            IrreversibleActionPrinciple
-                .check("patent_search", &json!({}))
-                .is_pass()
-        );
+        assert!(IrreversibleActionPrinciple.check("patent_search", &json!({})).is_pass());
     }
 }

@@ -69,9 +69,7 @@ impl KnowledgeBase {
             }
 
             let title = extract_title(&content).unwrap_or_else(|| {
-                path.file_name()
-                    .map(|f| f.to_string_lossy().to_string())
-                    .unwrap_or_default()
+                path.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default()
             });
 
             let score = score_content(&content, &keywords);
@@ -88,9 +86,7 @@ impl KnowledgeBase {
         }
 
         results.sort_by(|a, b| {
-            b.relevance
-                .partial_cmp(&a.relevance)
-                .unwrap_or(std::cmp::Ordering::Equal)
+            b.relevance.partial_cmp(&a.relevance).unwrap_or(std::cmp::Ordering::Equal)
         });
         results.truncate(max_results);
         Ok(results)
@@ -130,9 +126,7 @@ impl KnowledgeBase {
                 continue;
             }
             let title = extract_title(&content).unwrap_or_else(|| {
-                path.file_name()
-                    .map(|f| f.to_string_lossy().to_string())
-                    .unwrap_or_default()
+                path.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default()
             });
             // Chunk into ~500 char segments for embedding.
             for chunk in content.as_bytes().chunks(500) {
@@ -215,9 +209,7 @@ impl KnowledgeBase {
 
         let keywords = extract_keywords(query);
         // alpha=0.7 gives more weight to semantic similarity.
-        let results = self
-            .vector_store
-            .hybrid_search(query_embedding, &keywords, top_k, 0.7);
+        let results = self.vector_store.hybrid_search(query_embedding, &keywords, top_k, 0.7);
 
         Ok(results
             .into_iter()

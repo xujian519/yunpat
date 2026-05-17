@@ -29,23 +29,15 @@ impl PatentCommand {
         let input = input.trim();
 
         if let Some(query) = input.strip_prefix("/search ") {
-            Some(Self::Search {
-                query: query.to_string(),
-            })
+            Some(Self::Search { query: query.to_string() })
         } else if let Some(id) = input.strip_prefix("/analyze ") {
-            Some(Self::Analyze {
-                patent_number: id.to_string(),
-            })
+            Some(Self::Analyze { patent_number: id.to_string() })
         } else if let Some(id) = input.strip_prefix("/respond ") {
-            Some(Self::Respond {
-                patent_number: id.to_string(),
-            })
+            Some(Self::Respond { patent_number: id.to_string() })
         } else if input == "/manage" {
             Some(Self::Manage)
         } else if let Some(query) = input.strip_prefix("/legal ") {
-            Some(Self::LegalQuery {
-                query: query.to_string(),
-            })
+            Some(Self::LegalQuery { query: query.to_string() })
         } else {
             None
         }

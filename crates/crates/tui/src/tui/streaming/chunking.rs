@@ -216,25 +216,19 @@ impl AdaptiveChunkingPolicy {
 /// Returns whether current queue pressure warrants entering catch-up mode.
 fn should_enter_catch_up(snapshot: QueueSnapshot) -> bool {
     snapshot.queued_lines >= ENTER_QUEUE_DEPTH_LINES
-        || snapshot
-            .oldest_age
-            .is_some_and(|oldest| oldest >= ENTER_OLDEST_AGE)
+        || snapshot.oldest_age.is_some_and(|oldest| oldest >= ENTER_OLDEST_AGE)
 }
 
 /// Returns whether queue pressure is low enough to begin exit hysteresis.
 fn should_exit_catch_up(snapshot: QueueSnapshot) -> bool {
     snapshot.queued_lines <= EXIT_QUEUE_DEPTH_LINES
-        && snapshot
-            .oldest_age
-            .is_some_and(|oldest| oldest <= EXIT_OLDEST_AGE)
+        && snapshot.oldest_age.is_some_and(|oldest| oldest <= EXIT_OLDEST_AGE)
 }
 
 /// Returns whether backlog is severe enough to bypass the re-entry hold.
 fn is_severe_backlog(snapshot: QueueSnapshot) -> bool {
     snapshot.queued_lines >= SEVERE_QUEUE_DEPTH_LINES
-        || snapshot
-            .oldest_age
-            .is_some_and(|oldest| oldest >= SEVERE_OLDEST_AGE)
+        || snapshot.oldest_age.is_some_and(|oldest| oldest >= SEVERE_OLDEST_AGE)
 }
 
 #[cfg(test)]

@@ -100,15 +100,9 @@ impl Workspace {
         let _ = builder.add_custom_ignore_filename(".deepseekignore");
 
         for entry in builder.build().flatten() {
-            if entry
-                .file_type()
-                .is_some_and(|ft| ft.is_file() || ft.is_dir())
-            {
+            if entry.file_type().is_some_and(|ft| ft.is_file() || ft.is_dir()) {
                 let name = entry.file_name().to_string_lossy().to_lowercase();
-                index
-                    .entry(name)
-                    .or_default()
-                    .push(entry.path().to_path_buf());
+                index.entry(name).or_default().push(entry.path().to_path_buf());
             }
         }
         index
@@ -141,11 +135,7 @@ impl Workspace {
         // Walk the recorded cwd first when it diverges from the workspace
         // root, so cwd-relative entries appear ahead of duplicates surfaced by
         // the workspace walk.
-        let cwd_diverges = self
-            .cwd
-            .as_deref()
-            .map(|c| c != self.root.as_path())
-            .unwrap_or(false);
+        let cwd_diverges = self.cwd.as_deref().map(|c| c != self.root.as_path()).unwrap_or(false);
         if cwd_diverges && let Some(cwd) = self.cwd.as_deref() {
             walk_for_completions(
                 cwd,
@@ -191,10 +181,7 @@ fn walk_for_completions(
     seen: &mut HashSet<PathBuf>,
 ) {
     let mut builder = WalkBuilder::new(walk_root);
-    builder
-        .hidden(true)
-        .follow_links(false)
-        .max_depth(Some(COMPLETIONS_WALK_DEPTH));
+    builder.hidden(true).follow_links(false).max_depth(Some(COMPLETIONS_WALK_DEPTH));
     let _ = builder.add_custom_ignore_filename(".deepseekignore");
 
     for entry in builder.build().flatten() {
@@ -440,11 +427,8 @@ impl WorkingSet {
             return Vec::new();
         }
 
-        let pinned_paths: Vec<&WorkingSetEntry> = self
-            .sorted_entries()
-            .into_iter()
-            .take(self.config.max_pinned_paths)
-            .collect();
+        let pinned_paths: Vec<&WorkingSetEntry> =
+            self.sorted_entries().into_iter().take(self.config.max_pinned_paths).collect();
         if pinned_paths.is_empty() {
             return Vec::new();
         }
@@ -836,9 +820,7 @@ fn message_mentions_any_path(message: &Message, needles: &[String], max_scan_cha
 }
 
 fn contains_any(text: &str, needles: &[String]) -> bool {
-    needles
-        .iter()
-        .any(|needle| !needle.is_empty() && text.contains(needle))
+    needles.iter().any(|needle| !needle.is_empty() && text.contains(needle))
 }
 
 fn summarize_repo_root(workspace: &Path) -> Option<String> {

@@ -94,11 +94,9 @@ pub fn cost(app: &mut App) -> CommandResult {
 pub fn system_prompt(app: &mut App) -> CommandResult {
     let prompt_text = match &app.system_prompt {
         Some(SystemPrompt::Text(text)) => text.clone(),
-        Some(SystemPrompt::Blocks(blocks)) => blocks
-            .iter()
-            .map(|b| b.text.clone())
-            .collect::<Vec<_>>()
-            .join("\n\n---\n\n"),
+        Some(SystemPrompt::Blocks(blocks)) => {
+            blocks.iter().map(|b| b.text.clone()).collect::<Vec<_>>().join("\n\n---\n\n")
+        }
         None => "(no system prompt)".to_string(),
     };
 
@@ -136,13 +134,9 @@ pub fn context(_app: &mut App) -> CommandResult {
 /// `arg` is parsed as a count override (default 10, capped at the ring size).
 /// Renders a fixed-width table the user can paste into a bug report.
 pub fn cache(app: &mut App, arg: Option<&str>) -> CommandResult {
-    let want = arg
-        .and_then(|s| s.trim().parse::<usize>().ok())
-        .unwrap_or(10);
+    let want = arg.and_then(|s| s.trim().parse::<usize>().ok()).unwrap_or(10);
     let cap = app.session.turn_cache_history.len();
-    let count = want
-        .min(cap)
-        .min(crate::tui::app::App::TURN_CACHE_HISTORY_CAP);
+    let count = want.min(cap).min(crate::tui::app::App::TURN_CACHE_HISTORY_CAP);
 
     if cap == 0 {
         return CommandResult::message(tr(app.ui_locale, MessageId::CmdCacheNoData));
@@ -176,9 +170,8 @@ fn format_cache_history(app: &App, count: usize, locale: Locale) -> String {
         let turn_index = absolute_start + i + 1;
         totals_input += u64::from(rec.input_tokens);
 
-        let replay_cell = rec
-            .reasoning_replay_tokens
-            .map_or_else(|| "—".to_string(), |t| t.to_string());
+        let replay_cell =
+            rec.reasoning_replay_tokens.map_or_else(|| "—".to_string(), |t| t.to_string());
         let age = humanize_age(now.saturating_duration_since(rec.recorded_at));
 
         // No cache telemetry → render `—` everywhere and don't pollute totals
@@ -318,9 +311,7 @@ mod tests {
                 cache_control: None,
             }],
         });
-        app.history.push(HistoryCell::User {
-            content: "test".to_string(),
-        });
+        app.history.push(HistoryCell::User { content: "test".to_string() });
 
         let result = tokens(&mut app);
         assert!(result.message.is_some());
@@ -526,9 +517,7 @@ mod tests {
                 cache_control: None,
             }],
         });
-        app.history.push(HistoryCell::User {
-            content: "Hello".to_string(),
-        });
+        app.history.push(HistoryCell::User { content: "Hello".to_string() });
 
         let result = context(&mut app);
         assert!(matches!(
@@ -541,9 +530,7 @@ mod tests {
     #[test]
     fn test_undo_conversation_removes_last_exchange() {
         let mut app = create_test_app();
-        app.history.push(HistoryCell::User {
-            content: "Hello".to_string(),
-        });
+        app.history.push(HistoryCell::User { content: "Hello".to_string() });
         app.history.push(HistoryCell::Assistant {
             content: "Hi".to_string(),
             streaming: false,
@@ -613,9 +600,7 @@ mod tests {
     fn test_retry_truncates_long_input() {
         let mut app = create_test_app();
         let long_input = "x".repeat(100);
-        app.history.push(HistoryCell::User {
-            content: long_input.clone(),
-        });
+        app.history.push(HistoryCell::User { content: long_input.clone() });
         app.history.push(HistoryCell::Assistant {
             content: "Response".to_string(),
             streaming: false,
@@ -845,11 +830,8 @@ pub fn retry(app: &mut App) -> CommandResult {
         Some(input) => {
             undo_conversation(app);
             let display_input = if input.len() > 50 {
-                let truncate_at = input
-                    .char_indices()
-                    .take_while(|(i, _)| *i <= 50)
-                    .last()
-                    .map_or(0, |(i, _)| i);
+                let truncate_at =
+                    input.char_indices().take_while(|(i, _)| *i <= 50).last().map_or(0, |(i, _)| i);
                 format!("{}...", &input[..truncate_at])
             } else {
                 input.clone()

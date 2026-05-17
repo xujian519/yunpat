@@ -9,9 +9,7 @@ pub fn lines() -> Vec<Line<'static>> {
     vec![
         Line::from(Span::styled(
             "YunPat Agent",
-            Style::default()
-                .fg(palette::YUNPAT_BLUE)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::BOLD),
         )),
         Line::from(Span::styled(
             format!("Version {}", env!("CARGO_PKG_VERSION")),

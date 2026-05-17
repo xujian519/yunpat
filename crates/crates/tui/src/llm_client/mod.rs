@@ -254,11 +254,7 @@ impl LlmError {
         retry_after: Option<Duration>,
     ) -> Self {
         let mut error = Self::from_http_response(status, body);
-        if let LlmError::RateLimited {
-            retry_after: ref mut ra,
-            ..
-        } = error
-        {
+        if let LlmError::RateLimited { retry_after: ref mut ra, .. } = error {
             *ra = retry_after;
         }
         error

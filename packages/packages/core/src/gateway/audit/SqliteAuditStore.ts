@@ -175,17 +175,17 @@ export class SqliteAuditStore implements AuditLogStore {
     sql += ' LIMIT 1000'
 
     const stmt = this.db.prepare(sql)
-    const rows = stmt.all(...params) as any[]
+    const rows = stmt.all(...params) as Array<Record<string, unknown>>
 
     return rows.map((row) => ({
-      timestamp: new Date(row.timestamp),
-      userId: row.user_id,
-      agentName: row.agent_name,
-      action: row.action,
-      resource: row.resource,
-      result: row.result,
-      details: row.details ? JSON.parse(row.details) : undefined,
-      ipAddress: row.ip_address,
+      timestamp: new Date(row.timestamp as string),
+      userId: row.user_id as string,
+      agentName: row.agent_name as string,
+      action: row.action as string,
+      resource: row.resource as string,
+      result: row.result as string,
+      details: row.details ? JSON.parse(row.details as string) : undefined,
+      ipAddress: row.ip_address as string,
     }))
   }
 
@@ -295,18 +295,18 @@ export class SqliteAuditStore implements AuditLogStore {
       LIMIT ?
     `)
 
-    const rows = stmt.all(limit) as any[]
-
-    return rows.map((row) => ({
-      timestamp: new Date(row.timestamp),
-      userId: row.user_id,
-      agentName: row.agent_name,
-      action: row.action,
-      resource: row.resource,
-      result: row.result,
-      details: row.details ? JSON.parse(row.details) : undefined,
-      ipAddress: row.ip_address,
-    }))
+     const rows = stmt.all(limit) as Array<Record<string, unknown>>
+ 
+     return rows.map((row) => ({
+       timestamp: new Date(row.timestamp as string),
+       userId: row.user_id as string,
+       agentName: row.agent_name as string,
+       action: row.action as string,
+       resource: row.resource as string,
+       result: row.result as string,
+       details: row.details ? JSON.parse(row.details as string) : undefined,
+       ipAddress: row.ip_address as string,
+     }))
   }
 
   /**

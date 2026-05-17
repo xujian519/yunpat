@@ -289,19 +289,15 @@ fn read_audit_log(path: &Path, since: Option<DateTime<Utc>>, rollup: &mut Rollup
 
         match event {
             "tool.approval.auto_approve" => {
-                let tool_name = v
-                    .pointer("/details/tool_name")
-                    .and_then(|t| t.as_str())
-                    .unwrap_or("unknown");
+                let tool_name =
+                    v.pointer("/details/tool_name").and_then(|t| t.as_str()).unwrap_or("unknown");
                 let stats = rollup.tool_mut(tool_name);
                 stats.calls += 1;
                 stats.auto_approved += 1;
             }
             "tool.approval.prompted" => {
-                let tool_name = v
-                    .pointer("/details/tool_name")
-                    .and_then(|t| t.as_str())
-                    .unwrap_or("unknown");
+                let tool_name =
+                    v.pointer("/details/tool_name").and_then(|t| t.as_str()).unwrap_or("unknown");
                 let stats = rollup.tool_mut(tool_name);
                 stats.calls += 1;
                 stats.prompted += 1;
@@ -370,11 +366,7 @@ fn read_audit_log(path: &Path, since: Option<DateTime<Utc>>, rollup: &mut Rollup
                     .or_else(|| v.pointer("/payload/category"))
                     .and_then(|c| c.as_str())
                     .unwrap_or(e.trim_start_matches("capacity."));
-                *rollup
-                    .capacity
-                    .by_category
-                    .entry(category.to_string())
-                    .or_insert(0) += 1;
+                *rollup.capacity.by_category.entry(category.to_string()).or_insert(0) += 1;
             }
             "credential.save" => {
                 rollup.credentials.saves += 1;
@@ -483,20 +475,14 @@ fn read_session_file(path: &Path, since: Option<DateTime<Utc>>, rollup: &mut Rol
             match (role, block_type) {
                 ("assistant", "tool_use") => {
                     let id = block.get("id").and_then(|i| i.as_str()).unwrap_or("");
-                    let name = block
-                        .get("name")
-                        .and_then(|n| n.as_str())
-                        .unwrap_or("unknown");
+                    let name = block.get("name").and_then(|n| n.as_str()).unwrap_or("unknown");
                     let elapsed_ms = block.get("elapsed_ms").and_then(|e| e.as_u64());
                     if !id.is_empty() {
                         pending.insert(id.to_string(), (name.to_string(), elapsed_ms));
                     }
                 }
                 ("user", "tool_result") => {
-                    let id = block
-                        .get("tool_use_id")
-                        .and_then(|i| i.as_str())
-                        .unwrap_or("");
+                    let id = block.get("tool_use_id").and_then(|i| i.as_str()).unwrap_or("");
                     if let Some((name, elapsed_ms)) = pending.remove(id) {
                         let stats = rollup.tool_mut(&name);
                         // Only count if not already counted via audit log (we don't de-dup, so
@@ -508,10 +494,8 @@ fn read_session_file(path: &Path, since: Option<DateTime<Utc>>, rollup: &mut Rol
                             stats.elapsed_samples += 1;
                         }
                         // Tool result success: absence of "is_error": true
-                        let is_error = block
-                            .get("is_error")
-                            .and_then(|e| e.as_bool())
-                            .unwrap_or(false);
+                        let is_error =
+                            block.get("is_error").and_then(|e| e.as_bool()).unwrap_or(false);
                         if is_error {
                             stats.failures += 1;
                         } else {
@@ -526,9 +510,8 @@ fn read_session_file(path: &Path, since: Option<DateTime<Utc>>, rollup: &mut Rol
 
     // Walk messages for compaction events embedded as special user messages.
     for msg in messages {
-        if let Some(compaction) = msg
-            .get("compaction")
-            .or_else(|| msg.pointer("/metadata/compaction"))
+        if let Some(compaction) =
+            msg.get("compaction").or_else(|| msg.pointer("/metadata/compaction"))
         {
             rollup.compaction.events += 1;
             if let Some(ratio) = compaction.get("reduction_ratio").and_then(|r| r.as_f64()) {
@@ -631,9 +614,7 @@ fn read_events_jsonl(path: &Path, since: Option<DateTime<Utc>>, rollup: &mut Rol
             }
             "compaction.completed" => {
                 rollup.compaction.events += 1;
-                if let Some(ratio) = v
-                    .pointer("/payload/reduction_ratio")
-                    .and_then(|r| r.as_f64())
+                if let Some(ratio) = v.pointer("/payload/reduction_ratio").and_then(|r| r.as_f64())
                 {
                     rollup.compaction.ratio_sum += ratio;
                     rollup.compaction.ratio_samples += 1;
@@ -643,10 +624,8 @@ fn read_events_jsonl(path: &Path, since: Option<DateTime<Utc>>, rollup: &mut Rol
                 rollup.agents.spawns += 1;
             }
             "agent.completed" | "subagent.completed" => {
-                let success = v
-                    .pointer("/payload/success")
-                    .and_then(|b| b.as_bool())
-                    .unwrap_or(true);
+                let success =
+                    v.pointer("/payload/success").and_then(|b| b.as_bool()).unwrap_or(true);
                 if success {
                     rollup.agents.successes += 1;
                 } else {
@@ -659,11 +638,7 @@ fn read_events_jsonl(path: &Path, since: Option<DateTime<Utc>>, rollup: &mut Rol
                     .pointer("/payload/category")
                     .and_then(|c| c.as_str())
                     .unwrap_or(e.trim_start_matches("capacity."));
-                *rollup
-                    .capacity
-                    .by_category
-                    .entry(category.to_string())
-                    .or_insert(0) += 1;
+                *rollup.capacity.by_category.entry(category.to_string()).or_insert(0) += 1;
             }
             _ => {}
         }
@@ -704,11 +679,7 @@ fn print_human(rollup: &Rollup) {
     if total_calls > 0 {
         // Overall success rate from session-file data (where we have result info).
         let total_ok: u64 = rollup.tools.values().map(|t| t.successes).sum();
-        let total_judged: u64 = rollup
-            .tools
-            .values()
-            .map(|t| t.successes + t.failures)
-            .sum();
+        let total_judged: u64 = rollup.tools.values().map(|t| t.successes + t.failures).sum();
         let overall_rate = if total_judged > 0 {
             format!(
                 "{:.1}% success",
@@ -795,10 +766,7 @@ fn print_human(rollup: &Rollup) {
         let cat_str: String = {
             let mut cats: Vec<(&String, &u64)> = rollup.capacity.by_category.iter().collect();
             cats.sort_by(|a, b| b.1.cmp(a.1));
-            cats.iter()
-                .map(|(k, v)| format!("{} {}", v, k))
-                .collect::<Vec<_>>()
-                .join(", ")
+            cats.iter().map(|(k, v)| format!("{} {}", v, k)).collect::<Vec<_>>().join(", ")
         };
         println!(
             "Capacity interventions: {} ({})",
@@ -829,9 +797,7 @@ fn yunpat_home() -> PathBuf {
     {
         return PathBuf::from(v);
     }
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".yunpat")
+    dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".yunpat")
 }
 
 /// Parse a timestamp from a JSON value field (tries RFC3339).

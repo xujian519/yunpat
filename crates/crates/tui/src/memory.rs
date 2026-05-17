@@ -105,10 +105,7 @@ pub fn append_entry(path: &Path, entry: &str) -> io::Result<()> {
     }
 
     let timestamp = Utc::now().format("%Y-%m-%d %H:%M UTC");
-    let mut file = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
+    let mut file = fs::OpenOptions::new().create(true).append(true).open(path)?;
     writeln!(file, "- ({timestamp}) {trimmed}")?;
     Ok(())
 }

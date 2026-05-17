@@ -496,10 +496,7 @@ impl SseTransport {
 #[async_trait::async_trait]
 impl McpTransport for SseTransport {
     async fn send(&mut self, msg: serde_json::Value) -> Result<()> {
-        let endpoint = self
-            .endpoint_url
-            .as_ref()
-            .context("SSE endpoint not yet discovered")?;
+        let endpoint = self.endpoint_url.as_ref().context("SSE endpoint not yet discovered")?;
         let response = self.client.post(endpoint).json(&msg).send().await?;
         if !response.status().is_success() {
             anyhow::bail!("Failed to send message via SSE POST: {}", response.status());
@@ -880,10 +877,7 @@ impl McpConnection {
             ));
         }
 
-        Ok(response
-            .get("result")
-            .cloned()
-            .unwrap_or(serde_json::json!(null)))
+        Ok(response.get("result").cloned().unwrap_or(serde_json::json!(null)))
     }
 
     /// Get discovered tools
@@ -1005,11 +999,8 @@ impl McpPool {
 
     /// Get or create a connection to a server
     pub async fn get_or_connect(&mut self, server_name: &str) -> Result<&mut McpConnection> {
-        let is_ready = self
-            .connections
-            .get(server_name)
-            .map(|conn| conn.is_ready())
-            .unwrap_or(false);
+        let is_ready =
+            self.connections.get(server_name).map(|conn| conn.is_ready()).unwrap_or(false);
         if is_ready {
             return self
                 .connections
@@ -1064,10 +1055,7 @@ impl McpPool {
         for (name, server_cfg) in &self.config.servers {
             if server_cfg.required
                 && server_cfg.is_enabled()
-                && !self
-                    .connections
-                    .get(name)
-                    .is_some_and(McpConnection::is_ready)
+                && !self.connections.get(name).is_some_and(McpConnection::is_ready)
             {
                 errors.push((
                     name.clone(),
@@ -1376,19 +1364,13 @@ impl McpPool {
         arguments: serde_json::Value,
     ) -> Result<serde_json::Value> {
         if prefixed_name == "list_mcp_resources" {
-            let server = arguments
-                .get("server")
-                .and_then(|v| v.as_str())
-                .map(str::to_string);
+            let server = arguments.get("server").and_then(|v| v.as_str()).map(str::to_string);
             let resources = self.list_resources(server).await?;
             return Ok(serde_json::json!({ "resources": resources }));
         }
 
         if prefixed_name == "list_mcp_resource_templates" {
-            let server = arguments
-                .get("server")
-                .and_then(|v| v.as_str())
-                .map(str::to_string);
+            let server = arguments.get("server").and_then(|v| v.as_str()).map(str::to_string);
             let templates = self.list_resource_templates(server).await?;
             return Ok(serde_json::json!({ "templates": templates }));
         }
@@ -1426,10 +1408,7 @@ impl McpPool {
                 .get("name")
                 .and_then(|v| v.as_str())
                 .context("Missing 'name' argument")?;
-            let args = arguments
-                .get("arguments")
-                .cloned()
-                .unwrap_or(serde_json::json!({}));
+            let args = arguments.get("arguments").cloned().unwrap_or(serde_json::json!({}));
             return self.get_prompt(server_name, name, args).await;
         }
 
@@ -1447,11 +1426,7 @@ impl McpPool {
     /// Get list of configured server names
     #[allow(dead_code)] // Public API for MCP consumers
     pub fn server_names(&self) -> Vec<&str> {
-        self.config
-            .servers
-            .keys()
-            .map(std::string::String::as_str)
-            .collect()
+        self.config.servers.keys().map(std::string::String::as_str).collect()
     }
 
     /// Get list of connected server names
@@ -1713,10 +1688,7 @@ fn snapshot_from_config(
                 "stdio"
             };
             let command_or_url = server.url.clone().unwrap_or_else(|| {
-                let mut command = server
-                    .command
-                    .clone()
-                    .unwrap_or_else(|| "(missing)".to_string());
+                let mut command = server.command.clone().unwrap_or_else(|| "(missing)".to_string());
                 if !server.args.is_empty() {
                     command.push(' ');
                     command.push_str(&server.args.join(" "));
@@ -1759,30 +1731,30 @@ fn snapshot_from_config(
                             description: tool.description.clone(),
                         })
                         .collect();
-                    snapshot.resources =
-                        conn.resources()
-                            .iter()
-                            .map(|resource| McpDiscoveredItem {
-                                name: resource.name.clone(),
+                    snapshot.resources = conn
+                        .resources()
+                        .iter()
+                        .map(|resource| McpDiscoveredItem {
+                            name: resource.name.clone(),
+                            model_name: format!(
+                                "mcp_{}_{}",
+                                name,
+                                resource.name.replace(' ', "_").to_lowercase()
+                            ),
+                            description: resource.description.clone(),
+                        })
+                        .chain(
+                            conn.resource_templates().iter().map(|template| McpDiscoveredItem {
+                                name: template.name.clone(),
                                 model_name: format!(
                                     "mcp_{}_{}",
                                     name,
-                                    resource.name.replace(' ', "_").to_lowercase()
+                                    template.name.replace(' ', "_").to_lowercase()
                                 ),
-                                description: resource.description.clone(),
-                            })
-                            .chain(conn.resource_templates().iter().map(|template| {
-                                McpDiscoveredItem {
-                                    name: template.name.clone(),
-                                    model_name: format!(
-                                        "mcp_{}_{}",
-                                        name,
-                                        template.name.replace(' ', "_").to_lowercase()
-                                    ),
-                                    description: template.description.clone(),
-                                }
-                            }))
-                            .collect();
+                                description: template.description.clone(),
+                            }),
+                        )
+                        .collect();
                     snapshot.prompts = conn
                         .prompts()
                         .iter()
@@ -1812,26 +1784,20 @@ fn snapshot_from_config(
 /// Format MCP tool result for display
 #[allow(dead_code)] // Will be used when MCP tool results are displayed in TUI
 pub fn format_tool_result(result: &serde_json::Value) -> String {
-    let is_error = result
-        .get("isError")
-        .and_then(serde_json::Value::as_bool)
-        .unwrap_or(false);
+    let is_error = result.get("isError").and_then(serde_json::Value::as_bool).unwrap_or(false);
 
-    let content = result
-        .get("content")
-        .and_then(|v| v.as_array())
-        .map_or_else(
-            || serde_json::to_string_pretty(result).unwrap_or_default(),
-            |arr| {
-                arr.iter()
-                    .filter_map(|item| match item.get("type")?.as_str()? {
-                        "text" => item.get("text")?.as_str().map(String::from),
-                        other => Some(format!("[{other} content]")),
-                    })
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            },
-        );
+    let content = result.get("content").and_then(|v| v.as_array()).map_or_else(
+        || serde_json::to_string_pretty(result).unwrap_or_default(),
+        |arr| {
+            arr.iter()
+                .filter_map(|item| match item.get("type")?.as_str()? {
+                    "text" => item.get("text")?.as_str().map(String::from),
+                    other => Some(format!("[{other} content]")),
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
+        },
+    );
 
     if is_error {
         format!("Error: {content}")
@@ -1931,11 +1897,7 @@ mod tests {
         .unwrap();
         set_server_enabled(&path, "local", false).unwrap();
         let disabled = manager_snapshot_from_config(&path, true).unwrap();
-        let local = disabled
-            .servers
-            .iter()
-            .find(|server| server.name == "local")
-            .unwrap();
+        let local = disabled.servers.iter().find(|server| server.name == "local").unwrap();
         assert!(!local.enabled);
         assert_eq!(local.transport, "stdio");
 

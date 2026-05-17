@@ -54,9 +54,7 @@ pub fn render_diff(diff: &str, width: u16) -> Vec<Line<'static>> {
                 old_line,
                 new_line,
                 '+',
-                Style::default()
-                    .fg(palette::DIFF_ADDED)
-                    .bg(palette::DIFF_ADDED_BG),
+                Style::default().fg(palette::DIFF_ADDED).bg(palette::DIFF_ADDED_BG),
             ));
             if let Some(line) = new_line.as_mut() {
                 *line = line.saturating_add(1);
@@ -72,9 +70,7 @@ pub fn render_diff(diff: &str, width: u16) -> Vec<Line<'static>> {
                 old_line,
                 new_line,
                 '-',
-                Style::default()
-                    .fg(palette::STATUS_ERROR)
-                    .bg(palette::DIFF_DELETED_BG),
+                Style::default().fg(palette::STATUS_ERROR).bg(palette::DIFF_DELETED_BG),
             ));
             if let Some(line) = old_line.as_mut() {
                 *line = line.saturating_add(1);
@@ -129,10 +125,7 @@ pub fn summarize_diff(diff: &str) -> Vec<DiffFileSummary> {
         }
 
         if raw.starts_with("+++ ") {
-            let path = raw
-                .trim_start_matches("+++ ")
-                .trim_start_matches("b/")
-                .to_string();
+            let path = raw.trim_start_matches("+++ ").trim_start_matches("b/").to_string();
             if path != "/dev/null" {
                 current
                     .get_or_insert_with(|| DiffFileSummary {
@@ -231,9 +224,7 @@ fn render_diff_summary(summaries: &[DiffFileSummary], width: u16) -> Vec<Line<'s
             if files == 1 { "" } else { "s" },
             if hunks == 1 { "" } else { "s" },
         ),
-        Style::default()
-            .fg(palette::TEXT_PRIMARY)
-            .add_modifier(Modifier::BOLD),
+        Style::default().fg(palette::TEXT_PRIMARY).add_modifier(Modifier::BOLD),
         width,
     ));
     for summary in summaries {
@@ -267,9 +258,7 @@ fn parse_hunk_header(line: &str) -> Option<(usize, usize)> {
 }
 
 fn render_header_line(line: &str, width: u16) -> Vec<Line<'static>> {
-    let style = Style::default()
-        .fg(palette::YUNPAT_SKY)
-        .add_modifier(Modifier::BOLD);
+    let style = Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD);
     wrap_with_style(line, style, width)
 }
 
@@ -390,10 +379,7 @@ mod tests {
     use super::*;
 
     fn line_text(line: &Line<'static>) -> String {
-        line.spans
-            .iter()
-            .map(|span| span.content.as_ref())
-            .collect()
+        line.spans.iter().map(|span| span.content.as_ref()).collect()
     }
 
     #[test]

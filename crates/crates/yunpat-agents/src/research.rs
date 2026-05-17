@@ -108,10 +108,7 @@ impl PatentAgent for ResearchAgent {
         let input = &intent.raw_input;
         let lower = input.to_lowercase();
 
-        let matches = RESEARCH_KEYWORDS
-            .iter()
-            .filter(|kw| lower.contains(*kw))
-            .count();
+        let matches = RESEARCH_KEYWORDS.iter().filter(|kw| lower.contains(*kw)).count();
 
         if matches == 0 {
             return 0.0;
@@ -594,9 +591,7 @@ mod tests {
 
     #[test]
     fn test_with_llm_builder() {
-        let llm = MockLlmProvider {
-            response: "test".to_string(),
-        };
+        let llm = MockLlmProvider { response: "test".to_string() };
         let agent = ResearchAgent::new(KnowledgeBase::new(PathBuf::from("/nonexistent")))
             .with_llm(Box::new(llm));
         assert!(agent.has_llm());

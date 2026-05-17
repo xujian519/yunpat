@@ -19,9 +19,7 @@ struct RegisteredAgent {
 
 impl AgentRegistry {
     pub fn new() -> Self {
-        Self {
-            agents: HashMap::new(),
-        }
+        Self { agents: HashMap::new() }
     }
 
     /// Register a native Rust agent.

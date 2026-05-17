@@ -125,9 +125,7 @@ impl SnapshotRepo {
     ///    the user's global git identity (we don't want our snapshots to
     ///    look like they came from the user).
     pub fn open_or_init(workspace: &Path) -> io::Result<Self> {
-        let work_tree = workspace
-            .canonicalize()
-            .unwrap_or_else(|_| workspace.to_path_buf());
+        let work_tree = workspace.canonicalize().unwrap_or_else(|_| workspace.to_path_buf());
         if let Some(reason) =
             unsafe_workspace_snapshot_reason(&work_tree, dirs::home_dir().as_deref())
         {
@@ -358,10 +356,7 @@ impl SnapshotRepo {
         for line in stdout.lines() {
             let mut parts = line.splitn(3, '\t');
             let sha = parts.next().unwrap_or("").to_string();
-            let ts = parts
-                .next()
-                .and_then(|s| s.parse::<i64>().ok())
-                .unwrap_or(0);
+            let ts = parts.next().and_then(|s| s.parse::<i64>().ok()).unwrap_or(0);
             let subject = parts.next().unwrap_or("").to_string();
             if sha.is_empty() {
                 continue;
@@ -590,9 +585,7 @@ fn parse_nul_paths(bytes: &[u8]) -> HashSet<PathBuf> {
 
 fn is_safe_relative_path(path: &Path) -> bool {
     !path.as_os_str().is_empty()
-        && path
-            .components()
-            .all(|component| matches!(component, Component::Normal(_)))
+        && path.components().all(|component| matches!(component, Component::Normal(_)))
 }
 
 #[cfg(test)]
@@ -635,10 +628,7 @@ mod tests {
             std::env::remove_var("HOMEDRIVE");
             std::env::remove_var("HOMEPATH");
         }
-        ScopedHome {
-            prev_vars,
-            _guard: guard,
-        }
+        ScopedHome { prev_vars, _guard: guard }
     }
 
     /// Build a side-repo whose snapshot dir lives under the same

@@ -30,11 +30,11 @@
     "@yunpat/agent-invention": "workspace:*",
     "@yunpat/agent-prior-art-search": "workspace:*",
     "@yunpat/core": "workspace:*",
-    "zod": "^4.4.3"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "typescript": "^5.3.3",
-    "vitest": "^1.6.1"
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.5"
   }
 }

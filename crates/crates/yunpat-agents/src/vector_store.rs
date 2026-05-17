@@ -36,9 +36,7 @@ impl Default for VectorStore {
 
 impl VectorStore {
     pub fn new() -> Self {
-        Self {
-            documents: HashMap::new(),
-        }
+        Self { documents: HashMap::new() }
     }
 
     pub fn add_document(&mut self, doc: VectorDocument) {
@@ -71,17 +69,12 @@ impl VectorStore {
             .values()
             .map(|doc| {
                 let similarity = cosine_similarity(query_embedding, &doc.embedding);
-                VectorSearchResult {
-                    doc: doc.clone(),
-                    similarity,
-                }
+                VectorSearchResult { doc: doc.clone(), similarity }
             })
             .collect();
 
         results.sort_by(|a, b| {
-            b.similarity
-                .partial_cmp(&a.similarity)
-                .unwrap_or(std::cmp::Ordering::Equal)
+            b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal)
         });
 
         results.truncate(top_k);
@@ -125,9 +118,7 @@ impl VectorStore {
             .collect();
 
         results.sort_by(|a, b| {
-            b.similarity
-                .partial_cmp(&a.similarity)
-                .unwrap_or(std::cmp::Ordering::Equal)
+            b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal)
         });
 
         results.truncate(top_k);
@@ -182,10 +173,7 @@ fn score_keywords(content: &str, keywords: &[String]) -> f32 {
     }
 
     let lower = content.to_lowercase();
-    let matched = keywords
-        .iter()
-        .filter(|kw| lower.contains(kw.to_lowercase().as_str()))
-        .count();
+    let matched = keywords.iter().filter(|kw| lower.contains(kw.to_lowercase().as_str())).count();
 
     matched as f32 / keywords.len() as f32
 }

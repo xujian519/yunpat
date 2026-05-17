@@ -535,9 +535,8 @@ fn resolve_runtime_for_dispatch_with_secrets(
     runtime_overrides: &CliRuntimeOverrides,
     secrets: &Secrets,
 ) -> ResolvedRuntimeOptions {
-    let mut resolved = store
-        .config
-        .resolve_runtime_options_with_secrets(runtime_overrides, secrets);
+    let mut resolved =
+        store.config.resolve_runtime_options_with_secrets(runtime_overrides, secrets);
 
     if resolved.api_key_source == Some(RuntimeApiKeySource::Keyring)
         && !provider_config_set(store, resolved.provider)
@@ -728,12 +727,7 @@ fn provider_env_set(provider: ProviderKind) -> bool {
 }
 
 fn provider_config_set(store: &ConfigStore, provider: ProviderKind) -> bool {
-    let slot = store
-        .config
-        .providers
-        .for_provider(provider)
-        .api_key
-        .as_ref();
+    let slot = store.config.providers.for_provider(provider).api_key.as_ref();
     let root = (provider == ProviderKind::Deepseek)
         .then_some(store.config.api_key.as_ref())
         .flatten();
@@ -918,9 +912,7 @@ fn prompt_api_key(slot: &str) -> Result<String> {
         return read_api_key_from_stdin();
     }
     let mut buf = String::new();
-    io::stdin()
-        .read_line(&mut buf)
-        .context("failed to read API key from stdin")?;
+    io::stdin().read_line(&mut buf).context("failed to read API key from stdin")?;
     let key = buf.trim().to_string();
     if key.is_empty() {
         bail!("empty API key provided");
@@ -971,9 +963,7 @@ fn run_auth_migrate(store: &mut ConfigStore, secrets: &Secrets, dry_run: bool) -
     }
 
     if !dry_run && !migrated.is_empty() {
-        store
-            .save()
-            .context("failed to write updated config.toml")?;
+        store.save().context("failed to write updated config.toml")?;
     }
 
     println!("keyring backend: {}", secrets.backend_name());
@@ -1063,18 +1053,12 @@ fn run_thread_command(command: ThreadCommand) -> Result<()> {
     let state = StateStore::open(None)?;
     match command {
         ThreadCommand::List { all, limit } => {
-            let threads = state.list_threads(ThreadListFilters {
-                include_archived: all,
-                limit,
-            })?;
+            let threads = state.list_threads(ThreadListFilters { include_archived: all, limit })?;
             for thread in threads {
                 println!(
                     "{} | {} | {} | {}",
                     thread.id,
-                    thread
-                        .name
-                        .clone()
-                        .unwrap_or_else(|| "(unnamed)".to_string()),
+                    thread.name.clone().unwrap_or_else(|| "(unnamed)".to_string()),
                     thread.model_provider,
                     thread.cwd.display()
                 );
@@ -1142,14 +1126,12 @@ fn run_app_server_command(args: AppServerArgs) -> Result<()> {
     if args.stdio {
         return runtime.block_on(run_app_server_stdio(args.config));
     }
-    let listen: SocketAddr = format!("{}:{}", args.host, args.port)
-        .parse()
-        .with_context(|| {
-            format!(
-                "invalid app-server listen address {}:{}",
-                args.host, args.port
-            )
-        })?;
+    let listen: SocketAddr = format!("{}:{}", args.host, args.port).parse().with_context(|| {
+        format!(
+            "invalid app-server listen address {}:{}",
+            args.host, args.port
+        )
+    })?;
     runtime.block_on(run_app_server(AppServerOptions {
         listen,
         config_path: args.config,
@@ -1197,9 +1179,7 @@ fn persist_mcp_server_definitions(
 ) -> Result<()> {
     let encoded =
         serde_json::to_string(definitions).context("failed to encode MCP server definitions")?;
-    store
-        .config
-        .set_value(MCP_SERVER_DEFINITIONS_KEY, &encoded)?;
+    store.config.set_value(MCP_SERVER_DEFINITIONS_KEY, &encoded)?;
     store.save()
 }
 
@@ -1210,9 +1190,7 @@ fn delegate_to_tui(
 ) -> Result<()> {
     let mut cmd = build_tui_command(cli, resolved_runtime, passthrough)?;
     let tui = PathBuf::from(cmd.get_program());
-    let status = cmd
-        .status()
-        .map_err(|err| anyhow!("{}", tui_spawn_error(&tui, &err)))?;
+    let status = cmd.status().map_err(|err| anyhow!("{}", tui_spawn_error(&tui, &err)))?;
     exit_with_tui_status(status)
 }
 
@@ -1248,9 +1226,7 @@ fn run_dispatcher_resume_picker(
     io::stdout().flush()?;
 
     let mut input = String::new();
-    io::stdin()
-        .read_line(&mut input)
-        .context("failed to read session selection")?;
+    io::stdin().read_line(&mut input).context("failed to read session selection")?;
     let session_id = input.trim();
     if session_id.is_empty() {
         bail!("No session selected.");
@@ -1472,10 +1448,7 @@ fn run_metrics_command(args: MetricsArgs) -> Result<()> {
         }
         None => None,
     };
-    metrics::run(metrics::MetricsArgs {
-        json: args.json,
-        since,
-    })
+    metrics::run(metrics::MetricsArgs { json: args.json, since })
 }
 
 fn read_api_key_from_stdin() -> Result<String> {
@@ -1631,10 +1604,7 @@ mod tests {
         assert!(matches!(
             cli.command,
             Some(Commands::Thread(ThreadArgs {
-                command: ThreadCommand::List {
-                    all: true,
-                    limit: Some(50)
-                }
+                command: ThreadCommand::List { all: true, limit: Some(50) }
             }))
         ));
 
@@ -1865,9 +1835,7 @@ mod tests {
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
-                command: AuthCommand::Get {
-                    provider: ProviderArg::Novita
-                }
+                command: AuthCommand::Get { provider: ProviderArg::Novita }
             }))
         ));
 
@@ -1897,9 +1865,7 @@ mod tests {
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
-                command: AuthCommand::Get {
-                    provider: ProviderArg::Sglang
-                }
+                command: AuthCommand::Get { provider: ProviderArg::Sglang }
             }))
         ));
 
@@ -1907,9 +1873,7 @@ mod tests {
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
-                command: AuthCommand::Get {
-                    provider: ProviderArg::Vllm
-                }
+                command: AuthCommand::Get { provider: ProviderArg::Vllm }
             }))
         ));
 
@@ -1928,9 +1892,7 @@ mod tests {
         let cli = parse_ok(&["deepseek", "auth", "list"]);
         assert!(matches!(
             cli.command,
-            Some(Commands::Auth(AuthArgs {
-                command: AuthCommand::List
-            }))
+            Some(Commands::Auth(AuthArgs { command: AuthCommand::List }))
         ));
 
         let cli = parse_ok(&["deepseek", "auth", "migrate"]);
@@ -2417,10 +2379,8 @@ mod tests {
     #[test]
     fn sibling_tui_candidate_picks_platform_correct_name() {
         let dir = tempfile::TempDir::new().expect("tempdir");
-        let dispatcher = dir
-            .path()
-            .join("deepseek")
-            .with_extension(std::env::consts::EXE_EXTENSION);
+        let dispatcher =
+            dir.path().join("deepseek").with_extension(std::env::consts::EXE_EXTENSION);
         // Touch the dispatcher so its parent dir is the lookup root.
         std::fs::write(&dispatcher, b"").unwrap();
 
@@ -2471,9 +2431,7 @@ mod tests {
     #[test]
     fn locate_sibling_tui_binary_honours_env_override() {
         let dir = tempfile::TempDir::new().expect("tempdir");
-        let custom = dir
-            .path()
-            .join(format!("custom-tui{}", std::env::consts::EXE_SUFFIX));
+        let custom = dir.path().join(format!("custom-tui{}", std::env::consts::EXE_SUFFIX));
         std::fs::write(&custom, b"").unwrap();
 
         // Use a guard so even on test failure the env var clears.

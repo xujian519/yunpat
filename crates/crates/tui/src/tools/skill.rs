@@ -209,10 +209,7 @@ mod tests {
             "Run a focused PR review",
             "# Steps\n1. Read the diff.\n2. Comment.\n",
         );
-        let skill = SkillRegistry::discover(tmp.path())
-            .get("review-pr")
-            .unwrap()
-            .clone();
+        let skill = SkillRegistry::discover(tmp.path()).get("review-pr").unwrap().clone();
         let body = format_skill_body(&skill);
         assert!(body.contains("# Skill: review-pr"));
         assert!(body.contains("Run a focused PR review"));
@@ -324,9 +321,7 @@ mod tests {
 
         let metadata = result.metadata.expect("metadata stamped");
         assert_eq!(
-            metadata
-                .get("skill_name")
-                .and_then(serde_json::Value::as_str),
+            metadata.get("skill_name").and_then(serde_json::Value::as_str),
             Some("from-opencode")
         );
         let path_str = metadata

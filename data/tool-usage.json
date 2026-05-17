@@ -1,0 +1,198 @@
+[
+  {
+    "id": "1778595620632-n9b6r6yhk",
+    "timestamp": "2026-05-12T14:20:20.632Z",
+    "toolName": "ToolA",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620632-nxen9m827",
+    "timestamp": "2026-05-12T14:20:20.632Z",
+    "toolName": "ToolA",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620632-tukr3ym5w",
+    "timestamp": "2026-05-12T14:20:20.632Z",
+    "toolName": "ToolA",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620632-y11yepwrx",
+    "timestamp": "2026-05-12T14:20:20.632Z",
+    "toolName": "ToolA",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620632-f4ftomaz3",
+    "timestamp": "2026-05-12T14:20:20.632Z",
+    "toolName": "ToolA",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620632-0uqvgqx9b",
+    "timestamp": "2026-05-12T14:20:20.632Z",
+    "toolName": "ToolA",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620633-u08jcvr8k",
+    "timestamp": "2026-05-12T14:20:20.633Z",
+    "toolName": "ToolA",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620633-gegmtqu5x",
+    "timestamp": "2026-05-12T14:20:20.633Z",
+    "toolName": "ToolA",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620633-0orvqqf27",
+    "timestamp": "2026-05-12T14:20:20.633Z",
+    "toolName": "ToolA",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620633-n8fsta0gv",
+    "timestamp": "2026-05-12T14:20:20.633Z",
+    "toolName": "ToolB",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620633-2p6ut0bz7",
+    "timestamp": "2026-05-12T14:20:20.633Z",
+    "toolName": "ToolB",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620633-m1fmth3zc",
+    "timestamp": "2026-05-12T14:20:20.633Z",
+    "toolName": "ToolB",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": true,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620633-35kqjcnxv",
+    "timestamp": "2026-05-12T14:20:20.633Z",
+    "toolName": "ToolB",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": false,
+      "executionTime": 1000,
+      "output": {}
+    }
+  },
+  {
+    "id": "1778595620633-bjgg95zvt",
+    "timestamp": "2026-05-12T14:20:20.633Z",
+    "toolName": "ToolB",
+    "sessionId": "default",
+    "userInput": "测试任务",
+    "toolParameters": {},
+    "context": {},
+    "result": {
+      "success": false,
+      "executionTime": 1000,
+      "output": {}
+    }
+  }
+]

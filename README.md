@@ -12,7 +12,7 @@
 
 ```
 yunpat-agent/                          ← 统一 Monorepo
-├── crates/                            ← Rust 工作区（workspace members: 17）
+├── crates/                            ← Rust 工作区（workspace members: 19）
 │   └── crates/                        ← Rust crate 实际目录
 │       ├── tui/                       ← TUI 主运行时（crate: yunpat-tui）
 │       ├── cli/                       ← CLI 入口（crate: yunpat-cli）
@@ -22,6 +22,7 @@ yunpat-agent/                          ← 统一 Monorepo
 │       ├── yunpat-agents/             ← 专利领域 Agent trait 系统
 │       ├── yunpat-router/             ← 意图路由和命令分发
 │       ├── yunpat-mcp-bridge/         ← MCP Rust-TS 桥接
+│       ├── yunpat-patent-tui/         ← 专利 TUI 模块（从 tui 提取）
 │       └── ...                        ← execpolicy、hooks、mcp、state、tools 等
 │
 ├── packages/packages/                 ← TypeScript 业务层
@@ -130,6 +131,7 @@ pnpm --filter @yunpat/mcp-server dev
 | `yunpat-state` | SQLite 会话持久化 |
 | `yunpat-execpolicy` | 审批/沙箱策略引擎 |
 | `yunpat-hooks` | 生命周期钩子 |
+| `yunpat-patent-tui` | 专利 TUI 模块（从 tui 提取） |
 
 ### TypeScript 层
 

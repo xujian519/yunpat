@@ -85,9 +85,7 @@ impl OcrTool {
             )
             .map_err(|e| anyhow::anyhow!("设置图片失败: {:?}", e))?;
 
-        let text = tess
-            .get_text()
-            .map_err(|e| anyhow::anyhow!("OCR 识别失败: {:?}", e))?;
+        let text = tess.get_text().map_err(|e| anyhow::anyhow!("OCR 识别失败: {:?}", e))?;
 
         let confidence = Some(tess.mean_text_conf() as f32);
 
@@ -164,13 +162,13 @@ mod tests {
         }
 
         let result = tool
-            .recognize_image(temp_image.to_str().unwrap(), Some("eng"))
+            .recognize_image(temp_image.to_str().unwrap_or("test.png"), Some("eng"))
             .await;
         assert!(result.is_ok());
 
         #[cfg(not(feature = "ocr"))]
         {
-            let ocr_result = result.unwrap();
+            let ocr_result = result.expect("OCR 结果已验证 is_ok");
             assert!(ocr_result.text.contains("OCR 功能未启用"));
         }
 

@@ -512,8 +512,7 @@ impl ConfigToml {
                         }
                     }
                 } else {
-                    self.extras
-                        .insert(key.to_string(), toml::Value::String(value.to_string()));
+                    self.extras.insert(key.to_string(), toml::Value::String(value.to_string()));
                 }
             }
         }
@@ -657,12 +656,10 @@ impl ConfigToml {
         let provider = cli.provider.or(env.provider).unwrap_or(self.provider);
 
         let provider_cfg = self.providers.for_provider(provider);
-        let root_yunpat_api_key = (provider == ProviderKind::Deepseek)
-            .then(|| self.api_key.clone())
-            .flatten();
-        let root_yunpat_base_url = (provider == ProviderKind::Deepseek)
-            .then(|| self.base_url.clone())
-            .flatten();
+        let root_yunpat_api_key =
+            (provider == ProviderKind::Deepseek).then(|| self.api_key.clone()).flatten();
+        let root_yunpat_base_url =
+            (provider == ProviderKind::Deepseek).then(|| self.base_url.clone()).flatten();
         let root_yunpat_model = (provider == ProviderKind::Deepseek)
             .then(|| self.default_text_model.clone())
             .flatten();
@@ -752,11 +749,7 @@ impl ConfigToml {
             .clone()
             .or_else(|| env.log_level.clone())
             .or_else(|| self.log_level.clone());
-        let telemetry = cli
-            .telemetry
-            .or(env.telemetry)
-            .or(self.telemetry)
-            .unwrap_or(false);
+        let telemetry = cli.telemetry.or(env.telemetry).or(self.telemetry).unwrap_or(false);
         let approval_policy = cli
             .approval_policy
             .clone()
@@ -945,10 +938,7 @@ impl ConfigStore {
         let parsed: ConfigToml = toml::from_str(&raw)
             .with_context(|| format!("failed to parse config at {}", path.display()))?;
 
-        Ok(Self {
-            path,
-            config: parsed,
-        })
+        Ok(Self { path, config: parsed })
     }
 
     pub fn save(&self) -> Result<()> {
@@ -969,13 +959,12 @@ impl ConfigStore {
                 .with_context(|| format!("failed to write config at {}", self.path.display()))?;
             file.write_all(body.as_bytes())
                 .with_context(|| format!("failed to write config at {}", self.path.display()))?;
-            file.set_permissions(fs::Permissions::from_mode(0o600))
-                .with_context(|| {
-                    format!(
-                        "failed to set config permissions at {}",
-                        self.path.display()
-                    )
-                })?;
+            file.set_permissions(fs::Permissions::from_mode(0o600)).with_context(|| {
+                format!(
+                    "failed to set config permissions at {}",
+                    self.path.display()
+                )
+            })?;
         }
         #[cfg(not(unix))]
         {
@@ -1122,16 +1111,12 @@ struct EnvRuntimeOverrides {
 impl EnvRuntimeOverrides {
     fn load() -> Self {
         Self {
-            provider: std::env::var("DEEPSEEK_PROVIDER")
-                .ok()
-                .and_then(|v| ProviderKind::parse(&v)),
+            provider: std::env::var("DEEPSEEK_PROVIDER").ok().and_then(|v| ProviderKind::parse(&v)),
             model: std::env::var("DEEPSEEK_MODEL").ok(),
             output_mode: std::env::var("DEEPSEEK_OUTPUT_MODE").ok(),
             auth_mode: std::env::var("DEEPSEEK_AUTH_MODE").ok(),
             log_level: std::env::var("DEEPSEEK_LOG_LEVEL").ok(),
-            telemetry: std::env::var("DEEPSEEK_TELEMETRY")
-                .ok()
-                .and_then(|v| parse_bool(&v).ok()),
+            telemetry: std::env::var("DEEPSEEK_TELEMETRY").ok().and_then(|v| parse_bool(&v).ok()),
             approval_policy: std::env::var("DEEPSEEK_APPROVAL_POLICY").ok(),
             sandbox_mode: std::env::var("DEEPSEEK_SANDBOX_MODE").ok(),
             http_headers: std::env::var("DEEPSEEK_HTTP_HEADERS")
@@ -1146,36 +1131,22 @@ impl EnvRuntimeOverrides {
                 .or_else(|_| std::env::var("NVIDIA_BASE_URL"))
                 .ok()
                 .filter(|v| !v.trim().is_empty()),
-            openai_base_url: std::env::var("OPENAI_BASE_URL")
-                .ok()
-                .filter(|v| !v.trim().is_empty()),
+            openai_base_url: std::env::var("OPENAI_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
             openrouter_base_url: std::env::var("OPENROUTER_BASE_URL")
                 .ok()
                 .filter(|v| !v.trim().is_empty()),
-            novita_base_url: std::env::var("NOVITA_BASE_URL")
-                .ok()
-                .filter(|v| !v.trim().is_empty()),
+            novita_base_url: std::env::var("NOVITA_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
             fireworks_base_url: std::env::var("FIREWORKS_BASE_URL")
                 .ok()
                 .filter(|v| !v.trim().is_empty()),
-            sglang_base_url: std::env::var("SGLANG_BASE_URL")
-                .ok()
-                .filter(|v| !v.trim().is_empty()),
-            vllm_base_url: std::env::var("VLLM_BASE_URL")
-                .ok()
-                .filter(|v| !v.trim().is_empty()),
-            ollama_base_url: std::env::var("OLLAMA_BASE_URL")
-                .ok()
-                .filter(|v| !v.trim().is_empty()),
-            zhipu_base_url: std::env::var("ZHIPU_BASE_URL")
-                .ok()
-                .filter(|v| !v.trim().is_empty()),
+            sglang_base_url: std::env::var("SGLANG_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
+            vllm_base_url: std::env::var("VLLM_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
+            ollama_base_url: std::env::var("OLLAMA_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
+            zhipu_base_url: std::env::var("ZHIPU_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
             moonshot_base_url: std::env::var("MOONSHOT_BASE_URL")
                 .ok()
                 .filter(|v| !v.trim().is_empty()),
-            doubao_base_url: std::env::var("DOUBAO_BASE_URL")
-                .ok()
-                .filter(|v| !v.trim().is_empty()),
+            doubao_base_url: std::env::var("DOUBAO_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
         }
     }
 
@@ -1395,9 +1366,7 @@ mod tests {
         config.providers.deepseek.api_key = Some("provider-key".to_string());
         config.providers.deepseek.base_url = Some("https://api.deepseeki.com".to_string());
         config.providers.deepseek.model = Some("deepseek-v4-flash".to_string());
-        config
-            .http_headers
-            .insert("X-Shared".to_string(), "root".to_string());
+        config.http_headers.insert("X-Shared".to_string(), "root".to_string());
         config
             .providers
             .deepseek
@@ -1415,10 +1384,7 @@ mod tests {
         assert_eq!(resolved.base_url, "https://api.deepseeki.com");
         assert_eq!(resolved.model, "deepseek-v4-flash");
         assert_eq!(
-            resolved
-                .http_headers
-                .get("X-Model-Provider-Id")
-                .map(String::as_str),
+            resolved.http_headers.get("X-Model-Provider-Id").map(String::as_str),
             Some("tongyi")
         );
         assert_eq!(
@@ -1443,10 +1409,7 @@ mod tests {
         let resolved = config.resolve_runtime_options(&CliRuntimeOverrides::default());
 
         assert_eq!(
-            resolved
-                .http_headers
-                .get("X-Model-Provider-Id")
-                .map(String::as_str),
+            resolved.http_headers.get("X-Model-Provider-Id").map(String::as_str),
             Some("from-env")
         );
     }
@@ -1590,10 +1553,7 @@ mod tests {
     fn save_clamps_existing_config_permissions() {
         use std::time::{SystemTime, UNIX_EPOCH};
 
-        let unique = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("clock")
-            .as_nanos();
+        let unique = SystemTime::now().duration_since(UNIX_EPOCH).expect("clock").as_nanos();
         let dir = std::env::temp_dir().join(format!(
             "deepseek-config-perms-{}-{unique}",
             std::process::id()
@@ -2022,9 +1982,7 @@ mod tests {
     #[test]
     fn zhipu_provider_get_set_round_trip() {
         let mut config = ConfigToml::default();
-        config
-            .set_value("providers.zhipu.api_key", "zhipu-key")
-            .unwrap();
+        config.set_value("providers.zhipu.api_key", "zhipu-key").unwrap();
         assert_eq!(
             config.get_value("providers.zhipu.api_key"),
             Some("zhipu-key".to_string())
@@ -2036,9 +1994,7 @@ mod tests {
     #[test]
     fn moonshot_provider_get_set_round_trip() {
         let mut config = ConfigToml::default();
-        config
-            .set_value("providers.moonshot.api_key", "moonshot-key")
-            .unwrap();
+        config.set_value("providers.moonshot.api_key", "moonshot-key").unwrap();
         assert_eq!(
             config.get_value("providers.moonshot.api_key"),
             Some("moonshot-key".to_string())
@@ -2050,9 +2006,7 @@ mod tests {
     #[test]
     fn doubao_provider_get_set_round_trip() {
         let mut config = ConfigToml::default();
-        config
-            .set_value("providers.doubao.api_key", "doubao-key")
-            .unwrap();
+        config.set_value("providers.doubao.api_key", "doubao-key").unwrap();
         assert_eq!(
             config.get_value("providers.doubao.api_key"),
             Some("doubao-key".to_string())

@@ -13,7 +13,7 @@ use serde_json::json;
 
 use crate::models::Tool;
 use crate::tools::spec::{ToolError, ToolResult, required_str};
-use crate::tui::app::AppMode;
+use yunpat_protocol::AppMode;
 
 pub(super) const MULTI_TOOL_PARALLEL_NAME: &str = "multi_tool_use.parallel";
 pub(super) const REQUEST_USER_INPUT_NAME: &str = "request_user_input";
@@ -226,11 +226,8 @@ pub(super) fn active_tools_for_step(
     // so for obvious quick-plan asks we narrow the first-step tool surface to
     // update_plan instead.
     if force_update_plan {
-        let forced: Vec<_> = catalog
-            .iter()
-            .filter(|tool| tool.name == "update_plan")
-            .cloned()
-            .collect();
+        let forced: Vec<_> =
+            catalog.iter().filter(|tool| tool.name == "update_plan").cloned().collect();
         if !forced.is_empty() {
             return forced;
         }
@@ -359,17 +356,10 @@ fn suggest_tool_names(catalog: &[Tool], requested: &str, limit: usize) -> Vec<St
         candidates.push((rank, distance, tool.name.clone()));
     }
 
-    candidates.sort_by(|a, b| {
-        a.0.cmp(&b.0)
-            .then_with(|| a.1.cmp(&b.1))
-            .then_with(|| a.2.cmp(&b.2))
-    });
-    candidates.dedup_by(|a, b| a.2 == b.2);
     candidates
-        .into_iter()
-        .take(limit)
-        .map(|(_, _, name)| name)
-        .collect()
+        .sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)).then_with(|| a.2.cmp(&b.2)));
+    candidates.dedup_by(|a, b| a.2 == b.2);
+    candidates.into_iter().take(limit).map(|(_, _, name)| name).collect()
 }
 
 pub(super) fn missing_tool_error_message(tool_name: &str, catalog: &[Tool]) -> String {

@@ -21,7 +21,7 @@ use ratatui::{
     Frame, Terminal,
     layout::{Constraint, Direction, Layout, Rect},
     prelude::Widget,
-    style::{Color, Style},
+    style::Style,
     text::Span,
     widgets::Block,
 };
@@ -169,11 +169,7 @@ pub async fn run_tui(config: &Config, options: TuiOptions) -> Result<()> {
     // on every platform; opt back in via `[ui] osc8_links = true`.
     let osc8_default_on = false;
     crate::tui::osc8::set_enabled(
-        config
-            .tui
-            .as_ref()
-            .and_then(|tui| tui.osc8_links)
-            .unwrap_or(osc8_default_on),
+        config.tui.as_ref().and_then(|tui| tui.osc8_links).unwrap_or(osc8_default_on),
     );
 
     // Terminal probe with timeout to prevent hanging on unresponsive terminals
@@ -258,6 +254,8 @@ pub async fn run_tui(config: &Config, options: TuiOptions) -> Result<()> {
     let mut config = config.clone();
     let config = &mut config;
     let mut app = App::new(options.clone(), config);
+    terminal.backend_mut().set_palette_mode(app.theme_mode);
+    crate::yunpat_theme::set_active_palette_mode(app.theme_mode);
 
     // Load existing session if resuming.
     if let Some(ref session_id) = options.resume_session_id
@@ -333,11 +331,8 @@ pub async fn run_tui(config: &Config, options: TuiOptions) -> Result<()> {
                 };
 
                 if should_restore {
-                    app.queue.queued_messages = state
-                        .messages
-                        .into_iter()
-                        .map(queued_session_to_ui)
-                        .collect();
+                    app.queue.queued_messages =
+                        state.messages.into_iter().map(queued_session_to_ui).collect();
                     app.queue.queued_draft = state.draft.map(queued_session_to_ui);
                     if app.status_message.is_none() && app.queued_message_count() > 0 {
                         app.status_message = Some(format!(
@@ -379,11 +374,10 @@ pub async fn run_tui(config: &Config, options: TuiOptions) -> Result<()> {
         automation_cancel.clone(),
         AutomationSchedulerConfig::default(),
     );
-    let shell_manager = app
-        .runtime_services
-        .shell_manager
-        .clone()
-        .unwrap_or_else(|| crate::tools::shell::new_shared_shell_manager(app.workspace.clone()));
+    let shell_manager =
+        app.runtime_services.shell_manager.clone().unwrap_or_else(|| {
+            crate::tools::shell::new_shared_shell_manager(app.workspace.clone())
+        });
     app.runtime_services = RuntimeToolServices {
         shell_manager: Some(shell_manager),
         task_manager: Some(task_manager.clone()),
@@ -571,10 +565,7 @@ fn build_engine_config(app: &App, config: &Config) -> EngineConfig {
             crate::network_policy::NetworkPolicyDecider::with_default_audit(toml_cfg.into_runtime())
         }),
         snapshots_enabled: config.snapshots_config().enabled,
-        lsp_config: config
-            .lsp
-            .clone()
-            .map(crate::config::LspConfigToml::into_runtime),
+        lsp_config: config.lsp.clone().map(crate::config::LspConfigToml::into_runtime),
         runtime_services: app.runtime_services.clone(),
         subagent_model_overrides: config.subagent_model_overrides(),
         memory_enabled: config.memory_enabled(),
@@ -628,9 +619,8 @@ async fn run_event_loop(
         app.queue.queued_messages.clone(),
         app.queue.queued_draft.clone(),
     );
-    let mut last_task_refresh = Instant::now()
-        .checked_sub(Duration::from_secs(2))
-        .unwrap_or_else(Instant::now);
+    let mut last_task_refresh =
+        Instant::now().checked_sub(Duration::from_secs(2)).unwrap_or_else(Instant::now);
     let mut last_status_frame = Instant::now()
         .checked_sub(Duration::from_millis(UI_STATUS_ANIMATION_MS))
         .unwrap_or_else(Instant::now);
@@ -727,12 +717,7 @@ async fn run_event_loop(
                             });
                         }
                         for (id, name, input) in app.tool.pending_tool_uses.drain(..) {
-                            blocks.push(ContentBlock::ToolUse {
-                                id,
-                                name,
-                                input,
-                                caller: None,
-                            });
+                            blocks.push(ContentBlock::ToolUse { id, name, input, caller: None });
                         }
 
                         // DeepSeek rejects assistant messages that contain only reasoning blocks.
@@ -799,9 +784,7 @@ async fn run_event_loop(
                         app.streaming.reasoning_buffer.clear();
                     }
                     EngineEvent::ToolCallStarted { id, name, input } => {
-                        app.tool
-                            .pending_tool_uses
-                            .push((id.clone(), name.clone(), input.clone()));
+                        app.tool.pending_tool_uses.push((id.clone(), name.clone(), input.clone()));
                         // Note this dispatch so the next sub-agent `Started`
                         // mailbox envelope routes into the right card kind
                         // (delegate vs fanout).
@@ -883,11 +866,7 @@ async fn run_event_loop(
                         app.plan.tool_used_in_turn = false;
                         last_status_frame = Instant::now();
                     }
-                    EngineEvent::TurnComplete {
-                        usage,
-                        status,
-                        error,
-                    } => {
+                    EngineEvent::TurnComplete { usage, status, error } => {
                         // Finalize any in-flight tool group. Cancellation
                         // marks still-running entries as Failed so the user
                         // sees they were interrupted rather than the spinner
@@ -944,10 +923,8 @@ async fn run_event_loop(
                         let turn_tokens = usage.input_tokens + usage.output_tokens;
                         app.session.total_tokens =
                             app.session.total_tokens.saturating_add(turn_tokens);
-                        app.session.total_conversation_tokens = app
-                            .session
-                            .total_conversation_tokens
-                            .saturating_add(turn_tokens);
+                        app.session.total_conversation_tokens =
+                            app.session.total_conversation_tokens.saturating_add(turn_tokens);
                         app.session.last_prompt_tokens = Some(usage.input_tokens);
                         app.session.last_completion_tokens = Some(usage.output_tokens);
                         app.session.last_prompt_cache_hit_tokens = usage.prompt_cache_hit_tokens;
@@ -1052,10 +1029,7 @@ async fn run_event_loop(
                             queued_to_send = app.pop_queued_message();
                         }
                     }
-                    EngineEvent::Error {
-                        envelope,
-                        recoverable: _,
-                    } => {
+                    EngineEvent::Error { envelope, recoverable: _ } => {
                         apply_engine_error_to_app(app, envelope);
                     }
                     EngineEvent::Status { message } => {
@@ -1415,6 +1389,41 @@ async fn run_event_loop(
                             app.status_message =
                                 Some(format!("Sandbox blocked {tool_name}: {denial_reason}"));
                         }
+                    }
+                    EngineEvent::PatentWorkflowStatus {
+                        agent_id,
+                        status,
+                        progress,
+                        details,
+                        completed,
+                        error,
+                        result: _,
+                    } => {
+                        let step_idx = app.patent.current_step_index;
+                        if let Some(p) = progress {
+                            app.patent.update_step_progress(step_idx, p, details.clone());
+                        } else if let Some(d) = details.clone()
+                            && step_idx < app.patent.steps.len() {
+                                app.patent.steps[step_idx].details = Some(d);
+                            }
+                        if completed {
+                            if error.is_some() {
+                                if step_idx < app.patent.steps.len() {
+                                    app.patent.steps[step_idx].status =
+                                        crate::tui::app_state::StepStatus::Failed;
+                                    if let Some(e) = error {
+                                        app.patent.steps[step_idx].details =
+                                            Some(format!("Error: {}", e));
+                                    }
+                                }
+                            } else {
+                                app.patent.complete_step(step_idx);
+                                if app.patent.current_step_index >= app.patent.total_steps {
+                                    app.patent.complete_workflow();
+                                }
+                            }
+                        }
+                        app.status_message = Some(format!("Patent Workflow {agent_id}: {status}"));
                     }
                 }
             }
@@ -1920,14 +1929,13 @@ async fn run_event_loop(
                 if app.view_stack.is_empty() && app.kill_to_end_of_line() {
                     continue;
                 }
-                app.view_stack
-                    .push(CommandPaletteView::new(build_command_palette_entries(
-                        app.ui_locale,
-                        &app.skills_dir,
-                        &app.workspace,
-                        &app.mcp_config_path,
-                        app.mcp.snapshot.as_ref(),
-                    )));
+                app.view_stack.push(CommandPaletteView::new(build_command_palette_entries(
+                    app.ui_locale,
+                    &app.skills_dir,
+                    &app.workspace,
+                    &app.mcp_config_path,
+                    app.mcp.snapshot.as_ref(),
+                )));
                 continue;
             }
 
@@ -2172,6 +2180,7 @@ async fn run_event_loop(
                     };
                     app.ui_theme = crate::palette::UiTheme::for_mode(app.theme_mode);
                     terminal.backend_mut().set_palette_mode(app.theme_mode);
+                    crate::yunpat_theme::set_active_palette_mode(app.theme_mode);
                     let label = match app.theme_mode {
                         crate::palette::PaletteMode::Dark => "深色模式",
                         crate::palette::PaletteMode::Light => "浅色模式",
@@ -2532,11 +2541,7 @@ async fn run_event_loop(
                     let prior_model = app.model.clone();
                     app.cycle_mode();
                     if app.model != prior_model {
-                        let _ = engine_handle
-                            .send(Op::SetModel {
-                                model: app.model.clone(),
-                            })
-                            .await;
+                        let _ = engine_handle.send(Op::SetModel { model: app.model.clone() }).await;
                     }
                 }
                 KeyCode::BackTab => {
@@ -2813,9 +2818,7 @@ async fn run_event_loop(
                                 .ok()
                                 .filter(|s| !s.trim().is_empty())
                                 .or_else(|| {
-                                    std::env::var("EDITOR")
-                                        .ok()
-                                        .filter(|s| !s.trim().is_empty())
+                                    std::env::var("EDITOR").ok().filter(|s| !s.trim().is_empty())
                                 })
                                 .unwrap_or_else(|| "vi".to_string());
                             app.status_message = Some(format!("Edited in {editor}"));
@@ -3146,10 +3149,7 @@ pub(crate) fn apply_engine_error_to_app(
     // tailing the audit log. Read-only — the hook can react but not
     // suppress the error from reaching the transcript. Fast-path
     // skip when no hooks configured.
-    if app
-        .hooks
-        .has_hooks_for_event(crate::hooks::HookEvent::OnError)
-    {
+    if app.hooks.has_hooks_for_event(crate::hooks::HookEvent::OnError) {
         let context = app.base_hook_context().with_error(&message);
         let _ = app.execute_hooks(crate::hooks::HookEvent::OnError, &context);
     }
@@ -3189,12 +3189,7 @@ fn persist_offline_queue_state(app: &App) {
             return;
         }
         let state = OfflineQueueState {
-            messages: app
-                .queue
-                .queued_messages
-                .iter()
-                .map(queued_ui_to_session)
-                .collect(),
+            messages: app.queue.queued_messages.iter().map(queued_ui_to_session).collect(),
             draft: app.queue.queued_draft.as_ref().map(queued_ui_to_session),
             ..OfflineQueueState::default()
         };
@@ -3204,10 +3199,7 @@ fn persist_offline_queue_state(app: &App) {
 
 fn sanitize_stream_chunk(chunk: &str) -> String {
     // Keep printable characters and common whitespace; drop control bytes.
-    chunk
-        .chars()
-        .filter(|c| *c == '\n' || *c == '\t' || !c.is_control())
-        .collect()
+    chunk.chars().filter(|c| *c == '\n' || *c == '\t' || !c.is_control()).collect()
 }
 
 /// Resolve the effective notification method/threshold/include-summary tuple
@@ -3229,11 +3221,7 @@ fn notification_settings(
         crate::config::NotificationMethod::Off => crate::tui::notifications::Method::Off,
     };
 
-    if let Some(condition) = config
-        .tui
-        .as_ref()
-        .and_then(|tui| tui.notification_condition)
-    {
+    if let Some(condition) = config.tui.as_ref().and_then(|tui| tui.notification_condition) {
         match condition {
             crate::config::NotificationCondition::Always => {
                 return Some((method, Duration::ZERO, notif.include_summary));
@@ -3376,11 +3364,7 @@ fn ensure_streaming_thinking_active_entry(app: &mut App) -> usize {
     if app.tool.active_cell.is_none() {
         app.tool.active_cell = Some(ActiveCell::new());
     }
-    let active = app
-        .tool
-        .active_cell
-        .as_mut()
-        .expect("active_cell just ensured");
+    let active = app.tool.active_cell.as_mut().expect("active_cell just ensured");
     let entry_idx = active.push_thinking(HistoryCell::Thinking {
         content: String::new(),
         streaming: true,
@@ -3427,11 +3411,8 @@ fn finalize_streaming_thinking_active_entry(
         append_streaming_thinking(app, entry_idx, remaining);
     }
     if let Some(active) = app.tool.active_cell.as_mut()
-        && let Some(HistoryCell::Thinking {
-            streaming,
-            duration_secs,
-            ..
-        }) = active.entry_mut(entry_idx)
+        && let Some(HistoryCell::Thinking { streaming, duration_secs, .. }) =
+            active.entry_mut(entry_idx)
     {
         *streaming = false;
         *duration_secs = duration;
@@ -3492,10 +3473,7 @@ fn handle_history_search_key(app: &mut App, key: KeyEvent) {
             app.history_search_backspace();
         }
         KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            while app
-                .history_search_query()
-                .is_some_and(|query| !query.is_empty())
-            {
+            while app.history_search_query().is_some_and(|query| !query.is_empty()) {
                 app.history_search_backspace();
             }
         }
@@ -3635,9 +3613,7 @@ async fn execute_patent_intent(
 
     match tool.execute(tool_input, &ctx).await {
         Ok(result) => {
-            app.add_message(HistoryCell::System {
-                content: result.content,
-            });
+            app.add_message(HistoryCell::System { content: result.content });
         }
         Err(e) => {
             app.add_message(HistoryCell::System {
@@ -3702,10 +3678,7 @@ async fn dispatch_user_message(
     // `with_message` builder. Read-only — they can log, audit, or
     // notify but cannot mutate the message that goes to the engine.
     // Fast-path skip when no hooks configured.
-    if app
-        .hooks
-        .has_hooks_for_event(crate::hooks::HookEvent::MessageSubmit)
-    {
+    if app.hooks.has_hooks_for_event(crate::hooks::HookEvent::MessageSubmit) {
         let context = app.base_hook_context().with_message(&message.display);
         let _ = app.execute_hooks(crate::hooks::HookEvent::MessageSubmit, &context);
     }
@@ -3934,9 +3907,7 @@ async fn apply_model_and_compaction_update(
             model: compaction.model.clone(),
         })
         .await;
-    let _ = engine_handle
-        .send(Op::SetCompaction { config: compaction })
-        .await;
+    let _ = engine_handle.send(Op::SetCompaction { config: compaction }).await;
 }
 
 async fn drain_web_config_events(
@@ -4206,11 +4177,7 @@ async fn switch_provider(
 }
 
 fn open_text_pager(app: &mut App, title: String, content: String) {
-    let width = app
-        .viewport
-        .last_transcript_area
-        .map(|area| area.width)
-        .unwrap_or(80);
+    let width = app.viewport.last_transcript_area.map(|area| area.width).unwrap_or(80);
     app.view_stack.push(PagerView::from_text(
         title,
         &content,
@@ -4219,11 +4186,7 @@ fn open_text_pager(app: &mut App, title: String, content: String) {
 }
 
 fn open_context_inspector(app: &mut App) {
-    let width = app
-        .viewport
-        .last_transcript_area
-        .map(|area| area.width)
-        .unwrap_or(80);
+    let width = app.viewport.last_transcript_area.map(|area| area.width).unwrap_or(80);
     let content = build_context_inspector_text(app);
     app.view_stack.push(PagerView::from_text(
         "Context inspector",
@@ -4234,11 +4197,10 @@ fn open_context_inspector(app: &mut App) {
 
 fn open_file_picker(app: &mut App) {
     let relevance = build_file_picker_relevance(app);
-    app.view_stack
-        .push(crate::tui::file_picker::FilePickerView::new_with_relevance(
-            &app.workspace,
-            relevance,
-        ));
+    app.view_stack.push(crate::tui::file_picker::FilePickerView::new_with_relevance(
+        &app.workspace,
+        relevance,
+    ));
 }
 
 fn build_file_picker_relevance(app: &App) -> crate::tui::file_picker::FilePickerRelevance {
@@ -4321,11 +4283,7 @@ fn mark_tool_detail_paths(
 ) {
     let mut budget = 256usize;
     mark_tool_paths_from_value(&detail.input, workspace, seen, relevance, &mut budget);
-    if let Some(output) = detail
-        .output
-        .as_deref()
-        .filter(|output| output.len() <= 8_192)
-    {
+    if let Some(output) = detail.output.as_deref().filter(|output| output.len() <= 8_192) {
         mark_tool_paths_from_text(output, workspace, seen, relevance, &mut budget);
     }
 }
@@ -4623,25 +4581,22 @@ async fn apply_command_result(
             }
             AppAction::OpenModelPicker => {
                 if app.view_stack.top_kind() != Some(ModalKind::ModelPicker) {
-                    app.view_stack
-                        .push(crate::tui::model_picker::ModelPickerView::new(app));
+                    app.view_stack.push(crate::tui::model_picker::ModelPickerView::new(app));
                 }
             }
             AppAction::OpenProviderPicker => {
                 if app.view_stack.top_kind() != Some(ModalKind::ProviderPicker) {
-                    app.view_stack
-                        .push(crate::tui::provider_picker::ProviderPickerView::new(
-                            app.api_provider,
-                            config,
-                        ));
+                    app.view_stack.push(crate::tui::provider_picker::ProviderPickerView::new(
+                        app.api_provider,
+                        config,
+                    ));
                 }
             }
             AppAction::OpenStatusPicker => {
                 if app.view_stack.top_kind() != Some(ModalKind::StatusPicker) {
-                    app.view_stack
-                        .push(crate::tui::views::status_picker::StatusPickerView::new(
-                            &app.status_items,
-                        ));
+                    app.view_stack.push(crate::tui::views::status_picker::StatusPickerView::new(
+                        &app.status_items,
+                    ));
                 }
             }
             AppAction::OpenContextInspector => {
@@ -4756,11 +4711,7 @@ async fn apply_command_result(
                     }
                 }
             }
-            AppAction::ShareSession {
-                history_len: _,
-                model,
-                mode,
-            } => {
+            AppAction::ShareSession { history_len: _, model, mode } => {
                 let status = if app.api_messages.is_empty() {
                     "No session content to share.".to_string()
                 } else {
@@ -4772,94 +4723,41 @@ async fn apply_command_result(
                         Err(err) => format!("Share failed: {err}"),
                     }
                 };
-                app.add_message(HistoryCell::System {
-                    content: status.clone(),
-                });
+                app.add_message(HistoryCell::System { content: status.clone() });
                 app.status_message = Some(status);
             }
             // Patent workflow and case management actions.
-            AppAction::PatentWorkflow {
-                agent_id,
-                topic,
-                case_id: _,
-            } => {
-                let topic_str = topic.clone().unwrap_or_default();
+            AppAction::PatentWorkflow { agent_id, topic, case_id: _ } => {
                 let status = match &topic {
                     Some(t) => format!("执行专利工作流 '{}': {}...", agent_id, t),
                     None => format!("执行专利工作流 '{}'...", agent_id),
                 };
                 app.status_message = Some(status);
                 app.router.set_active_agent(Some(agent_id.clone()));
+                app.sidebar.focus = crate::tui::app::SidebarFocus::Patent;
 
-                // Execute the patent agent workflow.
-                use crate::tools::spec::ToolSpec;
-                let tool = crate::tools::patent_workflow::PatentWorkflowTool::new(&agent_id);
-                let tool_input = serde_json::json!({
-                    "topic": topic_str,
-                });
-                let workspace = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-                let mut ctx = crate::tools::spec::ToolContext::new(workspace);
+                // Initialize the patent workflow state
+                app.patent.start_workflow(
+                    agent_id.clone(),
+                    vec![
+                        "意图识别".to_string(),
+                        "方案规划".to_string(),
+                        "检索分析".to_string(),
+                        "内容生成".to_string(),
+                        "质量审查".to_string(),
+                    ],
+                );
 
-                // 注入 MCP Pool，使 PatentWorkflowTool 能走 MCP-first 路径
-                if let Ok(pool) = app.ensure_mcp_pool().await {
-                    ctx.mcp_pool = Some(pool);
-                }
-
-                if let Ok(client) = crate::client::DeepSeekClient::new(config) {
-                    let adapter = crate::llm_client::adapter::LlmClientAdapter::new(
-                        std::sync::Arc::new(client)
-                            as std::sync::Arc<dyn crate::llm_client::LlmClient>,
-                        &app.model,
-                    );
-                    ctx.llm_provider = Some(std::sync::Arc::new(adapter));
-                } else {
-                    eprintln!(
-                        "[WARN] DeepSeekClient 创建失败 — 专利智能体将使用模板模式（无真实 LLM 生成）"
-                    );
-                }
-
-                match tool.execute(tool_input, &ctx).await {
-                    Ok(result) => {
-                        let stage_info = result
-                            .metadata
-                            .as_ref()
-                            .and_then(|m| {
-                                let count = m.get("stage_count")?.as_u64()?;
-                                let has_approval = m.get("has_approval_gate")?.as_bool()?;
-                                Some(format!(
-                                    "工作流 '{}' 完成 — {} 个阶段{}",
-                                    agent_id,
-                                    count,
-                                    if has_approval {
-                                        " (含审批节点)"
-                                    } else {
-                                        ""
-                                    }
-                                ))
-                            })
-                            .unwrap_or_else(|| format!("工作流 '{}' 完成", agent_id));
-                        app.status_message = Some(stage_info);
-                        app.add_message(HistoryCell::System {
-                            content: result.content,
-                        });
-                    }
-                    Err(e) => {
-                        let err_msg = format!("工作流 '{}' 执行失败: {}", agent_id, e);
-                        app.add_message(HistoryCell::System {
-                            content: err_msg.clone(),
-                        });
-                        app.status_message = Some(err_msg);
-                    }
-                }
+                let _ = engine_handle
+                    .send(crate::core::ops::Op::PatentWorkflow { agent_id, topic, case_id: None })
+                    .await;
             }
             AppAction::CaseCreate { title, patent_type } => {
                 let msg = match execute_case_create(&title, &patent_type) {
                     Ok(id) => format!("Case created: '{}' ({}) → {}", title, patent_type, id),
                     Err(e) => format!("Failed to create case: {}", e),
                 };
-                app.add_message(HistoryCell::System {
-                    content: msg.clone(),
-                });
+                app.add_message(HistoryCell::System { content: msg.clone() });
                 app.status_message = Some(msg);
             }
             AppAction::CaseList => {
@@ -4915,11 +4813,7 @@ async fn apply_command_result(
                 };
                 app.add_message(HistoryCell::System { content });
             }
-            AppAction::CaseDocAdd {
-                case_id,
-                doc_type,
-                file_path,
-            } => {
+            AppAction::CaseDocAdd { case_id, doc_type, file_path } => {
                 let msg = match execute_case_doc_add(&case_id, &doc_type, &file_path) {
                     Ok(_) => format!(
                         "Document '{}' ({}) added to case {}",
@@ -4927,9 +4821,7 @@ async fn apply_command_result(
                     ),
                     Err(e) => format!("Failed to add document: {}", e),
                 };
-                app.add_message(HistoryCell::System {
-                    content: msg.clone(),
-                });
+                app.add_message(HistoryCell::System { content: msg.clone() });
                 app.status_message = Some(msg);
             }
             AppAction::CaseArchive { case_id } => {
@@ -4937,9 +4829,7 @@ async fn apply_command_result(
                     Ok(_) => format!("Case {} archived", case_id),
                     Err(e) => format!("Failed to archive case: {}", e),
                 };
-                app.add_message(HistoryCell::System {
-                    content: msg.clone(),
-                });
+                app.add_message(HistoryCell::System { content: msg.clone() });
                 app.status_message = Some(msg);
             }
         }
@@ -4987,11 +4877,7 @@ async fn handle_mcp_ui_action(
                 Err(err) => Err(err),
             }
         }
-        crate::tui::app::McpUiAction::AddStdio {
-            name,
-            command,
-            args,
-        } => {
+        crate::tui::app::McpUiAction::AddStdio { name, command, args } => {
             changed = true;
             mcp::add_server_config(&path, name.clone(), Some(command), None, args)
                 .map(|()| message = Some(format!("Added MCP stdio server '{name}'")))
@@ -5416,27 +5302,17 @@ fn build_pending_input_preview(app: &App) -> PendingInputPreview {
         }
     })
     .collect();
-    preview.pending_steers = app
-        .queue
-        .pending_steers
-        .iter()
-        .map(|m| m.display.clone())
-        .collect();
+    preview.pending_steers = app.queue.pending_steers.iter().map(|m| m.display.clone()).collect();
     preview.rejected_steers = app.queue.rejected_steers.iter().cloned().collect();
-    preview.queued_messages = app
-        .queue
-        .queued_messages
-        .iter()
-        .map(|m| m.display.clone())
-        .collect();
+    preview.queued_messages = app.queue.queued_messages.iter().map(|m| m.display.clone()).collect();
     preview
 }
 
 fn render(f: &mut Frame, app: &mut App) {
     let size = f.area();
 
-    // Clear entire area with terminal default background
-    let background = Block::default().style(Style::default().bg(Color::Reset));
+    // Clear entire area with the active UI theme background
+    let background = Block::default().style(Style::default().bg(app.ui_theme.surface_bg));
     f.render_widget(background, size);
 
     // Show onboarding screen if needed
@@ -5455,9 +5331,7 @@ fn render(f: &mut Frame, app: &mut App) {
         app.mention_menu_selected = mention_menu_entries.len().saturating_sub(1);
     }
     let context_usage = context_usage_snapshot(app);
-    let composer_max_height = body_height
-        .saturating_sub(MIN_CHAT_HEIGHT)
-        .max(MIN_COMPOSER_HEIGHT);
+    let composer_max_height = body_height.saturating_sub(MIN_CHAT_HEIGHT).max(MIN_COMPOSER_HEIGHT);
     let composer_height = {
         let composer_widget = ComposerWidget::new(
             app,
@@ -5492,9 +5366,8 @@ fn render(f: &mut Frame, app: &mut App) {
             .as_ref()
             .map(|(_, max, _)| *max)
             .or_else(|| crate::models::context_window_for_model(&app.model));
-        let sanitized_prompt_tokens = context_usage
-            .as_ref()
-            .and_then(|(used, _, _)| u32::try_from(*used).ok());
+        let sanitized_prompt_tokens =
+            context_usage.as_ref().and_then(|(used, _, _)| u32::try_from(*used).ok());
         let workspace_name = app
             .workspace
             .file_name()
@@ -5606,9 +5479,7 @@ fn render(f: &mut Frame, app: &mut App) {
             let preferred_sidebar = (u32::from(chat_area.width)
                 * u32::from(app.sidebar.width_percent.clamp(10, 50))
                 / 100) as u16;
-            let sidebar_width = preferred_sidebar
-                .max(24)
-                .min(chat_area.width.saturating_sub(40));
+            let sidebar_width = preferred_sidebar.max(24).min(chat_area.width.saturating_sub(40));
             if sidebar_width >= 20 {
                 let split = Layout::default()
                     .direction(Direction::Horizontal)
@@ -5794,11 +5665,7 @@ async fn handle_view_events(
                     });
                 }
             }
-            ViewEvent::ElevationDecision {
-                tool_id,
-                tool_name,
-                option,
-            } => {
+            ViewEvent::ElevationDecision { tool_id, tool_name, option } => {
                 use crate::tui::approval::ElevationOption;
                 match option {
                     ElevationOption::Abort => {
@@ -5899,11 +5766,7 @@ async fn handle_view_events(
                     title
                 ));
             }
-            ViewEvent::ConfigUpdated {
-                key,
-                value,
-                persist,
-            } => {
+            ViewEvent::ConfigUpdated { key, value, persist } => {
                 let result = commands::set_config_value(app, &key, &value, persist);
                 if let Some(msg) = result.message {
                     app.add_message(HistoryCell::System { content: msg });
@@ -6166,9 +6029,7 @@ async fn apply_provider_picker_api_key(
     if matches!(provider, ApiProvider::Deepseek | ApiProvider::DeepseekCN) {
         config.api_key = Some(api_key);
     } else {
-        let providers = config
-            .providers
-            .get_or_insert_with(ProvidersConfig::default);
+        let providers = config.providers.get_or_insert_with(ProvidersConfig::default);
         let entry: &mut ProviderConfig = match provider {
             ApiProvider::Deepseek | ApiProvider::DeepseekCN => {
                 // Guarded by the outer `if` above; safety net against refactors.
@@ -6220,9 +6081,8 @@ fn apply_loaded_session(app: &mut App, session: &SavedSession) {
         }
         let base = app.history.len();
         if msg.role == "user"
-            && let Some(offset) = cells
-                .iter()
-                .position(|cell| matches!(cell, HistoryCell::User { .. }))
+            && let Some(offset) =
+                cells.iter().position(|cell| matches!(cell, HistoryCell::User { .. }))
         {
             message_to_cell.insert(message_index, base + offset);
         }
@@ -6397,10 +6257,7 @@ fn workspace_git_change_summary(workspace: &Path) -> Option<WorkspaceChangeSumma
 }
 
 fn run_git_query(workspace: &Path, args: &[&str]) -> std::io::Result<String> {
-    let output = Command::new("git")
-        .args(args)
-        .current_dir(workspace)
-        .output()?;
+    let output = Command::new("git").args(args).current_dir(workspace).output()?;
     if !output.status.success() {
         return Err(std::io::Error::other("git command failed"));
     }
@@ -7067,12 +6924,7 @@ fn footer_cache_spans(app: &App) -> Vec<Span<'static>> {
     let miss_tokens = app
         .session
         .last_prompt_cache_miss_tokens
-        .unwrap_or_else(|| {
-            app.session
-                .last_prompt_tokens
-                .unwrap_or(0)
-                .saturating_sub(hit_tokens)
-        });
+        .unwrap_or_else(|| app.session.last_prompt_tokens.unwrap_or(0).saturating_sub(hit_tokens));
     let total = hit_tokens.saturating_add(miss_tokens);
     if total == 0 {
         return Vec::new();
@@ -7284,10 +7136,7 @@ fn jump_to_adjacent_tool_cell(app: &mut App, direction: SearchDirection) -> bool
         return false;
     }
 
-    let top = app
-        .viewport
-        .last_transcript_top
-        .min(line_meta.len().saturating_sub(1));
+    let top = app.viewport.last_transcript_top.min(line_meta.len().saturating_sub(1));
     let current_cell = line_meta
         .get(top)
         .and_then(crate::tui::scrolling::TranscriptLineMeta::cell_line)
@@ -7335,11 +7184,7 @@ fn estimated_context_tokens(app: &App) -> Option<i64> {
 fn context_usage_snapshot(app: &App) -> Option<(i64, u32, f64)> {
     let max = context_window_for_model(app.effective_model_for_budget())?;
     let max_i64 = i64::from(max);
-    let reported = app
-        .session
-        .last_prompt_tokens
-        .map(i64::from)
-        .map(|tokens| tokens.max(0));
+    let reported = app.session.last_prompt_tokens.map(i64::from).map(|tokens| tokens.max(0));
     let estimated = estimated_context_tokens(app).map(|tokens| tokens.max(0));
 
     // Always prefer the estimated current-context size (computed from
@@ -7453,10 +7298,9 @@ fn history_has_live_motion(history: &[HistoryCell]) -> bool {
         HistoryCell::Thinking { streaming, .. } => *streaming,
         HistoryCell::Tool(tool) => match tool {
             ToolCell::Exec(cell) => cell.status == ToolStatus::Running,
-            ToolCell::Exploring(cell) => cell
-                .entries
-                .iter()
-                .any(|entry| entry.status == ToolStatus::Running),
+            ToolCell::Exploring(cell) => {
+                cell.entries.iter().any(|entry| entry.status == ToolStatus::Running)
+            }
             ToolCell::PlanUpdate(cell) => cell.status == ToolStatus::Running,
             ToolCell::PatchSummary(cell) => cell.status == ToolStatus::Running,
             ToolCell::Review(cell) => cell.status == ToolStatus::Running,
@@ -7596,8 +7440,7 @@ fn open_context_menu(app: &mut App, mouse: MouseEvent) {
     if entries.is_empty() {
         return;
     }
-    app.view_stack
-        .push(ContextMenuView::new(entries, mouse.column, mouse.row));
+    app.view_stack.push(ContextMenuView::new(entries, mouse.column, mouse.row));
     app.needs_redraw = true;
 }
 
@@ -7736,14 +7579,13 @@ fn handle_context_menu_action(app: &mut App, action: ContextMenuAction) {
             app.paste_from_clipboard();
         }
         ContextMenuAction::OpenCommandPalette => {
-            app.view_stack
-                .push(CommandPaletteView::new(build_command_palette_entries(
-                    app.ui_locale,
-                    &app.skills_dir,
-                    &app.workspace,
-                    &app.mcp_config_path,
-                    app.mcp.snapshot.as_ref(),
-                )));
+            app.view_stack.push(CommandPaletteView::new(build_command_palette_entries(
+                app.ui_locale,
+                &app.skills_dir,
+                &app.workspace,
+                &app.mcp_config_path,
+                app.mcp.snapshot.as_ref(),
+            )));
         }
         ContextMenuAction::OpenContextInspector => {
             open_context_inspector(app);
@@ -7752,16 +7594,10 @@ fn handle_context_menu_action(app: &mut App, action: ContextMenuAction) {
             app.view_stack.push(HelpView::new_for_locale(app.ui_locale));
         }
         ContextMenuAction::OpenFileAtLine { cell_index } => {
-            let width = app
-                .viewport
-                .last_transcript_area
-                .map(|area| area.width)
-                .unwrap_or(80);
+            let width = app.viewport.last_transcript_area.map(|area| area.width).unwrap_or(80);
             let text = history_cell_to_text(
                 app.cell_at_virtual_index(cell_index)
-                    .unwrap_or(&HistoryCell::System {
-                        content: String::new(),
-                    }),
+                    .unwrap_or(&HistoryCell::System { content: String::new() }),
                 width,
             );
             if crate::tui::history::try_open_file_at_line(&text, &app.workspace) {
@@ -7825,14 +7661,9 @@ fn selection_point_from_position(
     let row = row.saturating_sub(padding_top);
 
     let col = column.saturating_sub(area.x) as usize;
-    let line_index = transcript_top
-        .saturating_add(row)
-        .min(transcript_total.saturating_sub(1));
+    let line_index = transcript_top.saturating_add(row).min(transcript_total.saturating_sub(1));
 
-    Some(TranscriptSelectionPoint {
-        line_index,
-        column: col,
-    })
+    Some(TranscriptSelectionPoint { line_index, column: col })
 }
 
 fn selection_has_content(app: &App) -> bool {
@@ -7889,11 +7720,7 @@ fn open_pager_for_selection(app: &mut App) -> bool {
     let Some(text) = selection_to_text(app) else {
         return false;
     };
-    let width = app
-        .viewport
-        .last_transcript_area
-        .map(|area| area.width)
-        .unwrap_or(80);
+    let width = app.viewport.last_transcript_area.map(|area| area.width).unwrap_or(80);
     let pager = PagerView::from_text("Selection", &text, width.saturating_sub(2));
     app.view_stack.push(pager);
     true
@@ -7903,11 +7730,7 @@ fn open_pager_for_last_message(app: &mut App) -> bool {
     let Some(cell) = app.history.last() else {
         return false;
     };
-    let width = app
-        .viewport
-        .last_transcript_area
-        .map(|area| area.width)
-        .unwrap_or(80);
+    let width = app.viewport.last_transcript_area.map(|area| area.width).unwrap_or(80);
     let text = history_cell_to_text(cell, width);
     let pager = PagerView::from_text("Message", &text, width.saturating_sub(2));
     app.view_stack.push(pager);
@@ -7939,17 +7762,13 @@ fn open_thinking_pager(app: &mut App) -> bool {
         });
 
     let target_idx = selected_cell.or_else(|| {
-        app.history
-            .iter()
-            .enumerate()
-            .rev()
-            .find_map(|(idx, cell)| {
-                if matches!(cell, crate::tui::history::HistoryCell::Thinking { .. }) {
-                    Some(idx)
-                } else {
-                    None
-                }
-            })
+        app.history.iter().enumerate().rev().find_map(|(idx, cell)| {
+            if matches!(cell, crate::tui::history::HistoryCell::Thinking { .. }) {
+                Some(idx)
+            } else {
+                None
+            }
+        })
     });
 
     let Some(idx) = target_idx else {
@@ -7958,11 +7777,7 @@ fn open_thinking_pager(app: &mut App) -> bool {
     };
 
     let cell = &app.history[idx];
-    let width = app
-        .viewport
-        .last_transcript_area
-        .map(|area| area.width)
-        .unwrap_or(80);
+    let width = app.viewport.last_transcript_area.map(|area| area.width).unwrap_or(80);
     let text = history_cell_to_text(cell, width);
     app.view_stack.push(PagerView::from_text(
         "Thinking",
@@ -7992,8 +7807,7 @@ fn spillover_pager_section(app: &App, cell_index: usize) -> Option<String> {
 
     let cell = app.cell_at_virtual_index(cell_index)?;
     let HistoryCell::Tool(ToolCell::Generic(GenericToolCell {
-        spillover_path: Some(path),
-        ..
+        spillover_path: Some(path), ..
     })) = cell
     else {
         return None;
@@ -8036,11 +7850,7 @@ fn open_details_pager_for_cell(app: &mut App, cell_index: usize) -> bool {
             )
         };
 
-        let width = app
-            .viewport
-            .last_transcript_area
-            .map(|area| area.width)
-            .unwrap_or(80);
+        let width = app.viewport.last_transcript_area.map(|area| area.width).unwrap_or(80);
         app.view_stack.push(PagerView::from_text(
             format!("Tool: {}", detail.tool_name),
             &content,
@@ -8063,11 +7873,7 @@ fn open_details_pager_for_cell(app: &mut App, cell_index: usize) -> bool {
         HistoryCell::SubAgent(_) => "Sub-agent".to_string(),
         HistoryCell::ArchivedContext { .. } => "Archived Context".to_string(),
     };
-    let width = app
-        .viewport
-        .last_transcript_area
-        .map(|area| area.width)
-        .unwrap_or(80);
+    let width = app.viewport.last_transcript_area.map(|area| area.width).unwrap_or(80);
     let content = history_cell_to_text(cell, width);
     app.view_stack.push(PagerView::from_text(
         title,
@@ -8094,11 +7900,7 @@ fn copy_cell_to_clipboard(app: &mut App, cell_index: usize) -> bool {
         app.status_message = Some("No message at that line".to_string());
         return false;
     };
-    let width = app
-        .viewport
-        .last_transcript_area
-        .map(|area| area.width)
-        .unwrap_or(80);
+    let width = app.viewport.last_transcript_area.map(|area| area.width).unwrap_or(80);
     let text = history_cell_to_text(cell, width);
     if text.trim().is_empty() {
         app.status_message = Some("Message is empty".to_string());

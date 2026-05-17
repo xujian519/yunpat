@@ -12,8 +12,5 @@ pub const THRESHOLDS: [(f32, &str); 3] = [
 ];
 #[allow(dead_code)]
 pub fn threshold_message(ratio: f32) -> Option<&'static str> {
-    THRESHOLDS
-        .iter()
-        .find(|(t, _)| ratio >= *t)
-        .map(|(_, m)| *m)
+    THRESHOLDS.iter().find(|(t, _)| ratio >= *t).map(|(_, m)| *m)
 }

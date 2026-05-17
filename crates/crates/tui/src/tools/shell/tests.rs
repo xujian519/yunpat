@@ -54,9 +54,7 @@ fn test_sync_execution() {
     let tmp = tempdir().expect("tempdir");
     let mut manager = ShellManager::new(tmp.path().to_path_buf());
 
-    let result = manager
-        .execute(&echo_command("hello"), None, 5000, false)
-        .expect("execute");
+    let result = manager.execute(&echo_command("hello"), None, 5000, false).expect("execute");
 
     assert_eq!(result.status, ShellStatus::Completed);
     assert!(result.stdout.contains("hello"));
@@ -75,14 +73,10 @@ fn test_background_execution() {
     assert_eq!(result.status, ShellStatus::Running);
     assert!(result.task_id.is_some());
 
-    let task_id = result
-        .task_id
-        .expect("background execution should return task_id");
+    let task_id = result.task_id.expect("background execution should return task_id");
 
     // Wait for completion
-    let final_result = manager
-        .get_output(&task_id, true, 5000)
-        .expect("get_output");
+    let final_result = manager.get_output(&task_id, true, 5000).expect("get_output");
 
     assert_eq!(final_result.status, ShellStatus::Completed);
     assert!(final_result.stdout.contains("done"));
@@ -93,9 +87,7 @@ fn test_timeout() {
     let tmp = tempdir().expect("tempdir");
     let mut manager = ShellManager::new(tmp.path().to_path_buf());
 
-    let result = manager
-        .execute(&sleep_command(10), None, 1000, false)
-        .expect("execute");
+    let result = manager.execute(&sleep_command(10), None, 1000, false).expect("execute");
 
     assert_eq!(result.status, ShellStatus::TimedOut);
 }
@@ -105,13 +97,9 @@ fn test_kill() {
     let tmp = tempdir().expect("tempdir");
     let mut manager = ShellManager::new(tmp.path().to_path_buf());
 
-    let result = manager
-        .execute(&sleep_command(60), None, 5000, true)
-        .expect("execute");
+    let result = manager.execute(&sleep_command(60), None, 5000, true).expect("execute");
 
-    let task_id = result
-        .task_id
-        .expect("background execution should return task_id");
+    let task_id = result.task_id.expect("background execution should return task_id");
 
     // Kill it
     let killed = manager.kill(&task_id).expect("kill");
@@ -127,23 +115,15 @@ fn test_write_stdin_streams_output() {
         .execute_with_options(&echo_stdin_command(), None, 5000, true, None, false, None)
         .expect("execute");
 
-    let task_id = result
-        .task_id
-        .expect("background execution should return task_id");
+    let task_id = result.task_id.expect("background execution should return task_id");
 
-    manager
-        .write_stdin(&task_id, "hello\n", true)
-        .expect("write stdin");
+    manager.write_stdin(&task_id, "hello\n", true).expect("write stdin");
 
-    let delta = manager
-        .get_output_delta(&task_id, true, 5000)
-        .expect("get_output_delta");
+    let delta = manager.get_output_delta(&task_id, true, 5000).expect("get_output_delta");
 
     assert!(delta.result.stdout.contains("hello"));
 
-    let delta2 = manager
-        .get_output_delta(&task_id, false, 0)
-        .expect("get_output_delta");
+    let delta2 = manager.get_output_delta(&task_id, false, 0).expect("get_output_delta");
     assert!(delta2.result.stdout.is_empty());
 }
 
@@ -161,18 +141,13 @@ fn test_job_list_poll_cancel_and_stale_snapshot() {
         .expect("tag linked task");
 
     let running = manager.list_jobs();
-    let job = running
-        .iter()
-        .find(|job| job.id == task_id)
-        .expect("running job");
+    let job = running.iter().find(|job| job.id == task_id).expect("running job");
     assert_eq!(job.status, ShellStatus::Running);
     assert_eq!(job.linked_task_id.as_deref(), Some("task_123"));
     assert!(job.command.contains("done"));
     assert_eq!(job.cwd, tmp.path());
 
-    let completed = manager
-        .poll_delta(&task_id, true, 5000)
-        .expect("poll delta");
+    let completed = manager.poll_delta(&task_id, true, 5000).expect("poll delta");
     assert_eq!(completed.result.status, ShellStatus::Completed);
     assert!(completed.result.stdout.contains("done"));
 
@@ -200,9 +175,7 @@ fn test_job_cancel_updates_completion_state() {
     let tmp = tempdir().expect("tempdir");
     let mut manager = ShellManager::new(tmp.path().to_path_buf());
 
-    let started = manager
-        .execute(&sleep_command(60), None, 5000, true)
-        .expect("execute");
+    let started = manager.execute(&sleep_command(60), None, 5000, true).expect("execute");
     let task_id = started.task_id.expect("task id");
 
     let killed = manager.kill(&task_id).expect("kill");
@@ -253,11 +226,7 @@ async fn test_exec_shell_metadata_includes_summaries() {
     assert!(result.success);
 
     let meta = result.metadata.expect("metadata");
-    let summary = meta
-        .get("summary")
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string();
+    let summary = meta.get("summary").and_then(Value::as_str).unwrap_or_default().to_string();
     assert!(summary.contains("hello"));
     assert!(meta.get("stdout_len").is_some());
     assert!(meta.get("stdout_truncated").is_some());
@@ -286,13 +255,9 @@ async fn test_exec_shell_foreground_timeout_guides_background_rerun() {
     assert!(result.content.contains("process killed"));
     let meta = result.metadata.expect("metadata");
     assert_eq!(meta.get("status").and_then(Value::as_str), Some("TimedOut"));
-    let recovery = meta
-        .get("foreground_timeout_recovery")
-        .expect("timeout recovery metadata");
+    let recovery = meta.get("foreground_timeout_recovery").expect("timeout recovery metadata");
     assert_eq!(
-        recovery
-            .get("exec_shell_background")
-            .and_then(Value::as_bool),
+        recovery.get("exec_shell_background").and_then(Value::as_bool),
         Some(true)
     );
     assert!(
@@ -381,11 +346,7 @@ async fn test_exec_shell_foreground_can_move_to_background() {
         meta.get("backgrounded").and_then(Value::as_bool),
         Some(true)
     );
-    let task_id = meta
-        .get("task_id")
-        .and_then(Value::as_str)
-        .expect("task id")
-        .to_string();
+    let task_id = meta.get("task_id").and_then(Value::as_str).expect("task id").to_string();
 
     let mut manager = shell_manager.lock().expect("shell manager lock");
     let job = manager.inspect_job(&task_id).expect("inspect job");
@@ -504,10 +465,7 @@ async fn test_exec_shell_cancel_tool_kills_background_process() {
     let meta = result.metadata.expect("metadata");
     assert_eq!(meta.get("status").and_then(Value::as_str), Some("Killed"));
 
-    let task_id = meta
-        .get("task_id")
-        .and_then(Value::as_str)
-        .expect("task id");
+    let task_id = meta.get("task_id").and_then(Value::as_str).expect("task id");
     let mut manager = shell_manager.lock().expect("shell manager lock");
     let job = manager.inspect_job(task_id).expect("inspect job");
     assert_eq!(job.snapshot.status, ShellStatus::Killed);
@@ -533,10 +491,7 @@ async fn test_exec_shell_cancel_tool_can_kill_all_running_processes() {
         .task_id
         .expect("second task id");
 
-    let result = ShellCancelTool
-        .execute(json!({ "all": true }), &ctx)
-        .await
-        .expect("cancel all");
+    let result = ShellCancelTool.execute(json!({ "all": true }), &ctx).await.expect("cancel all");
 
     assert!(result.success);
     let meta = result.metadata.expect("metadata");

@@ -96,11 +96,7 @@ fn apply_paste_burst_retro_capture(
 ) -> bool {
     let cursor_byte = app.cursor_byte_index();
     let before = &app.composer.input[..cursor_byte];
-    let Some(grab) = app
-        .composer
-        .paste_burst
-        .decide_begin_buffer(now, before, retro_chars)
-    else {
+    let Some(grab) = app.composer.paste_burst.decide_begin_buffer(now, before, retro_chars) else {
         return false;
     };
     if !grab.grabbed.is_empty() {

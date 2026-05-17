@@ -3,46 +3,16 @@
 //! Maps `(ToolCategory, RiskLevel)` to one of four gate levels, determining
 //! which UI to present when a tool requires approval. All classification
 //! signals come from existing code in `approval.rs`.
+//!
+//! The core types have been migrated to `yunpat_protocol` to break the
+//! `core ↔ tui` circular dependency.
 
-use super::approval::{RiskLevel, ToolCategory};
-
-/// Gate level for a tool execution request.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CollaborationGate {
-    /// Auto-execute, no UI needed (read-only tools).
-    None,
-    /// Toast with summary + ApprovalView (benign file writes, shell queries).
-    ConfirmPlan,
-    /// Preview panel shows diff + ApprovalView (destructive file writes).
-    ReviewDiff,
-    /// Sidebar switches to Plan + ApprovalView (destructive shell, unknown).
-    RequirePlan,
-}
-
-/// Determine the collaboration gate level for a tool.
-pub fn determine_gate(category: ToolCategory, risk: RiskLevel) -> CollaborationGate {
-    match (category, risk) {
-        // Safe / read-only → always auto-execute
-        (ToolCategory::Safe | ToolCategory::McpRead, _) => CollaborationGate::None,
-        // File writes: benign → confirm, destructive → diff review
-        (ToolCategory::FileWrite, RiskLevel::Benign) => CollaborationGate::ConfirmPlan,
-        (ToolCategory::FileWrite, RiskLevel::Destructive) => CollaborationGate::ReviewDiff,
-        // Shell: destructive → require plan, benign → confirm
-        (ToolCategory::Shell, RiskLevel::Destructive) => CollaborationGate::RequirePlan,
-        (ToolCategory::Shell, RiskLevel::Benign) => CollaborationGate::ConfirmPlan,
-        // Network → confirm with URL info
-        (ToolCategory::Network, _) => CollaborationGate::ConfirmPlan,
-        // MCP actions: destructive → require plan, benign → confirm
-        (ToolCategory::McpAction, RiskLevel::Destructive) => CollaborationGate::RequirePlan,
-        (ToolCategory::McpAction, RiskLevel::Benign) => CollaborationGate::ConfirmPlan,
-        // Unknown → safest path
-        (ToolCategory::Unknown, _) => CollaborationGate::RequirePlan,
-    }
-}
+pub use yunpat_protocol::{CollaborationGate, determine_gate};
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use yunpat_protocol::{RiskLevel, ToolCategory};
 
     #[test]
     fn safe_tools_are_none() {

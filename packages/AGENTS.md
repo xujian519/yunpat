@@ -261,7 +261,7 @@ const response = await eventBus.request('target-agent', payload, timeoutMs)
 
 ### ESLint 要点
 
-- `@typescript-eslint/no-explicit-any`: **warn**（但 orchestrator 和 test 包中是 **error**）
+- `@typescript-eslint/no-explicit-any`: **warn**（但 orchestrator 和 test 包中是 **error**）。生产代码已清理干净，新增 `as any` 应视为 code smell。
 - `_` 前缀变量忽略 unused-vars 检查
 - `no-console: off`（允许 console 输出）
 - 忽略模式：`*.js`, `*.d.ts`, `cli/patent-cli/**`
@@ -347,11 +347,11 @@ commit-msg hook 会检查格式但不阻止（询问 y/N）。
 
 ### CI（`pnpm ci:full`）
 
-lint -> type-check -> test -> build
+lint -> type-check -> test -> build（本地模拟统一 `ci.yml` 的完整流水线）
 
 ### GitHub Actions
 
-`.github/workflows/` 目录当前为空——CI 配置待重建。
+`.github/workflows/` 目录包含统一 `ci.yml`（15 jobs, path filtering, release）。原来 3 个独立工作流文件已合并。
 
 ---
 
@@ -460,4 +460,4 @@ PROMPT_TEMPLATES_DIR=./prompts/patent-drafting
 
 ---
 
-_最后更新：2026-05-06_
+_最后更新：2026-05-18_

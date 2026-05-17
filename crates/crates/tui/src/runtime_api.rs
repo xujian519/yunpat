@@ -384,9 +384,7 @@ pub fn build_router(state: RuntimeApiState) -> Router {
         )
         .route(
             "/v1/automations/{id}",
-            get(get_automation)
-                .patch(update_automation)
-                .delete(delete_automation),
+            get(get_automation).patch(update_automation).delete(delete_automation),
         )
         .route("/v1/automations/{id}/run", post(run_automation))
         .route("/v1/automations/{id}/pause", post(pause_automation))
@@ -485,9 +483,7 @@ async fn get_session(
 ) -> Result<Json<SessionDetailResponse>, ApiError> {
     let manager = SessionManager::new(state.sessions_dir.clone())
         .map_err(|e| ApiError::internal(format!("Failed to open sessions dir: {e}")))?;
-    let session = manager
-        .load_session(&id)
-        .map_err(|e| map_session_err(&id, e, "read"))?;
+    let session = manager.load_session(&id).map_err(|e| map_session_err(&id, e, "read"))?;
     Ok(Json(session_to_detail(session)))
 }
 
@@ -498,18 +494,12 @@ async fn resume_session_thread(
 ) -> Result<(StatusCode, Json<ResumeSessionResponse>), ApiError> {
     let manager = SessionManager::new(state.sessions_dir.clone())
         .map_err(|e| ApiError::internal(format!("Failed to open sessions dir: {e}")))?;
-    let session = manager
-        .load_session(&id)
-        .map_err(|e| map_session_err(&id, e, "read"))?;
+    let session = manager.load_session(&id).map_err(|e| map_session_err(&id, e, "read"))?;
 
     let model = req.model.unwrap_or_else(|| session.metadata.model.clone());
-    let mode = req.mode.unwrap_or_else(|| {
-        session
-            .metadata
-            .mode
-            .clone()
-            .unwrap_or_else(|| "agent".to_string())
-    });
+    let mode = req
+        .mode
+        .unwrap_or_else(|| session.metadata.mode.clone().unwrap_or_else(|| "agent".to_string()));
 
     let thread = state
         .runtime_threads
@@ -556,9 +546,7 @@ async fn delete_session(
 ) -> Result<StatusCode, ApiError> {
     let manager = SessionManager::new(state.sessions_dir.clone())
         .map_err(|e| ApiError::internal(format!("Failed to open sessions dir: {e}")))?;
-    manager
-        .delete_session(&id)
-        .map_err(|e| map_session_err(&id, e, "delete"))?;
+    manager.delete_session(&id).map_err(|e| map_session_err(&id, e, "delete"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -799,11 +787,8 @@ async fn list_mcp_servers(
     let config = load_mcp_config_or_default(&state.mcp_config_path)?;
     let mut pool = McpPool::new(config.clone());
     let _errors = pool.connect_all().await;
-    let connected: HashSet<String> = pool
-        .connected_servers()
-        .into_iter()
-        .map(str::to_string)
-        .collect();
+    let connected: HashSet<String> =
+        pool.connected_servers().into_iter().map(str::to_string).collect();
 
     let mut servers = Vec::new();
     for (name, server_cfg) in config.servers {
@@ -896,9 +881,7 @@ async fn update_automation(
     Json(req): Json<UpdateAutomationRequest>,
 ) -> Result<Json<AutomationRecord>, ApiError> {
     let manager = state.automations.lock().await;
-    let automation = manager
-        .update_automation(&id, req)
-        .map_err(map_automation_err)?;
+    let automation = manager.update_automation(&id, req).map_err(map_automation_err)?;
     Ok(Json(automation))
 }
 
@@ -916,10 +899,7 @@ async fn run_automation(
     Path(id): Path<String>,
 ) -> Result<Json<AutomationRunRecord>, ApiError> {
     let manager = state.automations.lock().await;
-    let run = manager
-        .run_now(&id, &state.task_manager)
-        .await
-        .map_err(map_automation_err)?;
+    let run = manager.run_now(&id, &state.task_manager).await.map_err(map_automation_err)?;
     Ok(Json(run))
 }
 
@@ -947,9 +927,7 @@ async fn list_automation_runs(
     Query(query): Query<AutomationRunsQuery>,
 ) -> Result<Json<Vec<AutomationRunRecord>>, ApiError> {
     let manager = state.automations.lock().await;
-    let runs = manager
-        .list_runs(&id, query.limit)
-        .map_err(map_automation_err)?;
+    let runs = manager.list_runs(&id, query.limit).map_err(map_automation_err)?;
     Ok(Json(runs))
 }
 
@@ -957,11 +935,7 @@ async fn get_thread(
     State(state): State<RuntimeApiState>,
     Path(id): Path<String>,
 ) -> Result<Json<ThreadDetail>, ApiError> {
-    let detail = state
-        .runtime_threads
-        .get_thread_detail(&id)
-        .await
-        .map_err(map_thread_err)?;
+    let detail = state.runtime_threads.get_thread_detail(&id).await.map_err(map_thread_err)?;
     Ok(Json(detail))
 }
 
@@ -970,11 +944,7 @@ async fn update_thread(
     Path(id): Path<String>,
     Json(req): Json<UpdateThreadRequest>,
 ) -> Result<Json<ThreadRecord>, ApiError> {
-    let thread = state
-        .runtime_threads
-        .update_thread(&id, req)
-        .await
-        .map_err(map_thread_err)?;
+    let thread = state.runtime_threads.update_thread(&id, req).await.map_err(map_thread_err)?;
     Ok(Json(thread))
 }
 
@@ -982,11 +952,7 @@ async fn resume_thread(
     State(state): State<RuntimeApiState>,
     Path(id): Path<String>,
 ) -> Result<Json<ThreadRecord>, ApiError> {
-    let thread = state
-        .runtime_threads
-        .resume_thread(&id)
-        .await
-        .map_err(map_thread_err)?;
+    let thread = state.runtime_threads.resume_thread(&id).await.map_err(map_thread_err)?;
     Ok(Json(thread))
 }
 
@@ -994,11 +960,7 @@ async fn fork_thread(
     State(state): State<RuntimeApiState>,
     Path(id): Path<String>,
 ) -> Result<(StatusCode, Json<ThreadRecord>), ApiError> {
-    let thread = state
-        .runtime_threads
-        .fork_thread(&id)
-        .await
-        .map_err(map_thread_err)?;
+    let thread = state.runtime_threads.fork_thread(&id).await.map_err(map_thread_err)?;
     Ok((StatusCode::CREATED, Json(thread)))
 }
 
@@ -1007,16 +969,8 @@ async fn start_thread_turn(
     Path(id): Path<String>,
     Json(req): Json<StartTurnRequest>,
 ) -> Result<(StatusCode, Json<StartTurnResponse>), ApiError> {
-    let turn = state
-        .runtime_threads
-        .start_turn(&id, req)
-        .await
-        .map_err(map_thread_err)?;
-    let thread = state
-        .runtime_threads
-        .get_thread(&id)
-        .await
-        .map_err(map_thread_err)?;
+    let turn = state.runtime_threads.start_turn(&id, req).await.map_err(map_thread_err)?;
+    let thread = state.runtime_threads.get_thread(&id).await.map_err(map_thread_err)?;
     Ok((
         StatusCode::CREATED,
         Json(StartTurnResponse { thread, turn }),
@@ -1053,16 +1007,8 @@ async fn compact_thread(
     Path(id): Path<String>,
     Json(req): Json<CompactThreadRequest>,
 ) -> Result<(StatusCode, Json<StartTurnResponse>), ApiError> {
-    let turn = state
-        .runtime_threads
-        .compact_thread(&id, req)
-        .await
-        .map_err(map_thread_err)?;
-    let thread = state
-        .runtime_threads
-        .get_thread(&id)
-        .await
-        .map_err(map_thread_err)?;
+    let turn = state.runtime_threads.compact_thread(&id, req).await.map_err(map_thread_err)?;
+    let thread = state.runtime_threads.get_thread(&id).await.map_err(map_thread_err)?;
     Ok((
         StatusCode::ACCEPTED,
         Json(StartTurnResponse { thread, turn }),
@@ -1082,11 +1028,7 @@ async fn get_task(
     State(state): State<RuntimeApiState>,
     Path(id): Path<String>,
 ) -> Result<Json<TaskRecord>, ApiError> {
-    let task = state
-        .task_manager
-        .get_task(&id)
-        .await
-        .map_err(map_task_err)?;
+    let task = state.task_manager.get_task(&id).await.map_err(map_task_err)?;
     Ok(Json(task))
 }
 
@@ -1094,11 +1036,7 @@ async fn cancel_task(
     State(state): State<RuntimeApiState>,
     Path(id): Path<String>,
 ) -> Result<Json<TaskRecord>, ApiError> {
-    let task = state
-        .task_manager
-        .cancel_task(&id)
-        .await
-        .map_err(map_task_err)?;
+    let task = state.task_manager.cancel_task(&id).await.map_err(map_task_err)?;
     Ok(Json(task))
 }
 
@@ -1107,11 +1045,7 @@ async fn stream_thread_events(
     Path(id): Path<String>,
     Query(query): Query<ThreadEventsQuery>,
 ) -> Result<Sse<impl futures_util::Stream<Item = Result<SseEvent, Infallible>>>, ApiError> {
-    let _ = state
-        .runtime_threads
-        .get_thread(&id)
-        .await
-        .map_err(map_thread_err)?;
+    let _ = state.runtime_threads.get_thread(&id).await.map_err(map_thread_err)?;
 
     let backlog = state
         .runtime_threads
@@ -1146,11 +1080,8 @@ async fn stream_thread_events(
         }
     };
 
-    Ok(Sse::new(stream).keep_alive(
-        KeepAlive::new()
-            .interval(Duration::from_secs(15))
-            .text("keepalive"),
-    ))
+    Ok(Sse::new(stream)
+        .keep_alive(KeepAlive::new().interval(Duration::from_secs(15)).text("keepalive")))
 }
 
 async fn stream_turn(
@@ -1168,10 +1099,7 @@ async fn stream_turn(
             .clone()
             .unwrap_or_else(|| DEFAULT_TEXT_MODEL.to_string())
     });
-    let workspace = req
-        .workspace
-        .clone()
-        .unwrap_or_else(|| state.workspace.clone());
+    let workspace = req.workspace.clone().unwrap_or_else(|| state.workspace.clone());
     let mode = req.mode.clone().unwrap_or_else(|| "agent".to_string());
     let allow_shell = req.allow_shell.unwrap_or(state.config.allow_shell());
     let trust_mode = req.trust_mode.unwrap_or(false);
@@ -1261,11 +1189,8 @@ async fn stream_turn(
         yield Ok(sse_json("done", json!({})));
     };
 
-    Ok(Sse::new(stream).keep_alive(
-        KeepAlive::new()
-            .interval(Duration::from_secs(15))
-            .text("keepalive"),
-    ))
+    Ok(Sse::new(stream)
+        .keep_alive(KeepAlive::new().interval(Duration::from_secs(15)).text("keepalive")))
 }
 
 fn runtime_event_payload(event: crate::runtime_threads::RuntimeEventRecord) -> serde_json::Value {
@@ -1284,21 +1209,12 @@ fn map_compat_stream_event(event: &crate::runtime_threads::RuntimeEventRecord) -
     let payload = &event.payload;
     match event.event.as_str() {
         "item.delta" => {
-            let kind = payload
-                .get("kind")
-                .and_then(|v| v.as_str())
-                .unwrap_or_default();
+            let kind = payload.get("kind").and_then(|v| v.as_str()).unwrap_or_default();
             if kind == "agent_message" {
-                let content = payload
-                    .get("delta")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or_default();
+                let content = payload.get("delta").and_then(|v| v.as_str()).unwrap_or_default();
                 Some(sse_json("message.delta", json!({ "content": content })))
             } else if kind == "tool_call" {
-                let output = payload
-                    .get("delta")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or_default();
+                let output = payload.get("delta").and_then(|v| v.as_str()).unwrap_or_default();
                 Some(sse_json("tool.progress", json!({ "output": output })))
             } else {
                 None
@@ -1320,10 +1236,7 @@ fn map_compat_stream_event(event: &crate::runtime_threads::RuntimeEventRecord) -
         }
         "item.completed" | "item.failed" => {
             let item = payload.get("item")?;
-            let kind = item
-                .get("kind")
-                .and_then(|v| v.as_str())
-                .unwrap_or_default();
+            let kind = item.get("kind").and_then(|v| v.as_str()).unwrap_or_default();
             if kind == "tool_call" || kind == "file_change" || kind == "command_execution" {
                 let id = item.get("id").cloned().unwrap_or(Value::Null);
                 let success = event.event == "item.completed";
@@ -1446,11 +1359,7 @@ fn collect_workspace_status(workspace: &std::path::Path) -> WorkspaceStatusRespo
 }
 
 fn run_git(workspace: &std::path::Path, args: &[&str]) -> Option<String> {
-    let output = Command::new("git")
-        .args(args)
-        .current_dir(workspace)
-        .output()
-        .ok()?;
+    let output = Command::new("git").args(args).current_dir(workspace).output().ok()?;
     if !output.status.success() {
         return None;
     }
@@ -1915,11 +1824,7 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        assert!(
-            listed["tasks"]
-                .as_array()
-                .is_some_and(|tasks| !tasks.is_empty())
-        );
+        assert!(listed["tasks"].as_array().is_some_and(|tasks| !tasks.is_empty()));
 
         let detail: serde_json::Value = client
             .get(format!("http://{addr}/v1/tasks/{id}"))
@@ -1954,17 +1859,11 @@ mod tests {
         };
         let client = reqwest::Client::new();
 
-        let health = client
-            .get(format!("http://{addr}/health"))
-            .send()
-            .await?
-            .error_for_status()?;
+        let health =
+            client.get(format!("http://{addr}/health")).send().await?.error_for_status()?;
         assert_eq!(health.status(), StatusCode::OK);
 
-        let unauthorized = client
-            .get(format!("http://{addr}/v1/threads/summary"))
-            .send()
-            .await?;
+        let unauthorized = client.get(format!("http://{addr}/v1/threads/summary")).send().await?;
         assert_eq!(unauthorized.status(), StatusCode::UNAUTHORIZED);
 
         let bearer = client
@@ -2015,10 +1914,7 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let automation_id = created["id"]
-            .as_str()
-            .context("missing automation id")?
-            .to_string();
+        let automation_id = created["id"].as_str().context("missing automation id")?.to_string();
 
         let listed: serde_json::Value = client
             .get(format!("http://{addr}/v1/automations"))
@@ -2142,10 +2038,7 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let thread_id = created["id"]
-            .as_str()
-            .context("missing thread id")?
-            .to_string();
+        let thread_id = created["id"].as_str().context("missing thread id")?.to_string();
 
         let archived: serde_json::Value = client
             .patch(format!("http://{addr}/v1/threads/{thread_id}"))
@@ -2242,9 +2135,7 @@ mod tests {
         // The mock handles both SendMessage and CompactContext ops so the
         // compact endpoint tested later also works.
         let harness = crate::core::engine::mock_engine_handle();
-        runtime_threads
-            .install_test_engine(&thread_id, harness.handle.clone())
-            .await?;
+        runtime_threads.install_test_engine(&thread_id, harness.handle.clone()).await?;
         let mut rx_op = harness.rx_op;
         let tx_event = harness.tx_event;
         tokio::spawn(async move {
@@ -2256,18 +2147,14 @@ mod tests {
                                 turn_id: "mock_lifecycle".to_string(),
                             })
                             .await;
-                        let _ = tx_event
-                            .send(EngineEvent::MessageStarted { index: 0 })
-                            .await;
+                        let _ = tx_event.send(EngineEvent::MessageStarted { index: 0 }).await;
                         let _ = tx_event
                             .send(EngineEvent::MessageDelta {
                                 index: 0,
                                 content: "mock reply".to_string(),
                             })
                             .await;
-                        let _ = tx_event
-                            .send(EngineEvent::MessageComplete { index: 0 })
-                            .await;
+                        let _ = tx_event.send(EngineEvent::MessageComplete { index: 0 }).await;
                         let _ = tx_event
                             .send(EngineEvent::TurnComplete {
                                 usage: Usage {
@@ -2306,10 +2193,7 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let turn_id = turn_start["turn"]["id"]
-            .as_str()
-            .context("missing turn id")?
-            .to_string();
+        let turn_id = turn_start["turn"]["id"].as_str().context("missing turn id")?.to_string();
 
         let _ = wait_for_terminal_turn_status(
             &client,
@@ -2386,16 +2270,11 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let thread_id = created["id"]
-            .as_str()
-            .context("missing thread id")?
-            .to_string();
+        let thread_id = created["id"].as_str().context("missing thread id")?.to_string();
 
         // Install a mock engine so the turn completes without calling the real API.
         let harness = crate::core::engine::mock_engine_handle();
-        runtime_threads
-            .install_test_engine(&thread_id, harness.handle.clone())
-            .await?;
+        runtime_threads.install_test_engine(&thread_id, harness.handle.clone()).await?;
         let mut rx_op = harness.rx_op;
         let tx_event = harness.tx_event;
         tokio::spawn(async move {
@@ -2407,12 +2286,8 @@ mod tests {
                     turn_id: "mock_cursor".to_string(),
                 })
                 .await;
-            let _ = tx_event
-                .send(EngineEvent::MessageStarted { index: 0 })
-                .await;
-            let _ = tx_event
-                .send(EngineEvent::MessageComplete { index: 0 })
-                .await;
+            let _ = tx_event.send(EngineEvent::MessageStarted { index: 0 }).await;
+            let _ = tx_event.send(EngineEvent::MessageComplete { index: 0 }).await;
             let _ = tx_event
                 .send(EngineEvent::TurnComplete {
                     usage: Usage {
@@ -2434,10 +2309,7 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let turn_id = started["turn"]["id"]
-            .as_str()
-            .context("missing turn id")?
-            .to_string();
+        let turn_id = started["turn"]["id"].as_str().context("missing turn id")?.to_string();
 
         let _ = wait_for_terminal_turn_status(
             &client,
@@ -2500,15 +2372,10 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let thread_id = created["id"]
-            .as_str()
-            .context("missing thread id")?
-            .to_string();
+        let thread_id = created["id"].as_str().context("missing thread id")?.to_string();
 
         let harness = crate::core::engine::mock_engine_handle();
-        runtime_threads
-            .install_test_engine(&thread_id, harness.handle.clone())
-            .await?;
+        runtime_threads.install_test_engine(&thread_id, harness.handle.clone()).await?;
         let mut rx_op = harness.rx_op;
         let mut rx_steer = harness.rx_steer;
         let tx_event = harness.tx_event;
@@ -2522,9 +2389,7 @@ mod tests {
                     turn_id: "engine_turn_api".to_string(),
                 })
                 .await;
-            let _ = tx_event
-                .send(EngineEvent::MessageStarted { index: 0 })
-                .await;
+            let _ = tx_event.send(EngineEvent::MessageStarted { index: 0 }).await;
             if let Some(steer_text) = rx_steer.recv().await {
                 let _ = tx_event
                     .send(EngineEvent::MessageDelta {
@@ -2556,10 +2421,7 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let turn_id = turn_start["turn"]["id"]
-            .as_str()
-            .context("missing turn id")?
-            .to_string();
+        let turn_id = turn_start["turn"]["id"].as_str().context("missing turn id")?.to_string();
 
         let steer_resp: serde_json::Value = client
             .post(format!(
@@ -2597,11 +2459,7 @@ mod tests {
 
         let events = runtime_threads.events_since(&thread_id, None)?;
         assert!(events.iter().any(|ev| ev.event == "turn.steered"));
-        assert!(
-            events
-                .iter()
-                .any(|ev| ev.event == "turn.interrupt_requested")
-        );
+        assert!(events.iter().any(|ev| ev.event == "turn.interrupt_requested"));
         assert!(events.iter().any(|ev| {
             ev.event == "turn.completed"
                 && ev
@@ -2722,15 +2580,10 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let thread_id = created["id"]
-            .as_str()
-            .context("missing thread id")?
-            .to_string();
+        let thread_id = created["id"].as_str().context("missing thread id")?.to_string();
 
         let harness = crate::core::engine::mock_engine_handle();
-        runtime_threads
-            .install_test_engine(&thread_id, harness.handle.clone())
-            .await?;
+        runtime_threads.install_test_engine(&thread_id, harness.handle.clone()).await?;
         let mut rx_op = harness.rx_op;
         let tx_event = harness.tx_event;
         tokio::spawn(async move {
@@ -2742,18 +2595,14 @@ mod tests {
                     turn_id: "mock_stream".to_string(),
                 })
                 .await;
-            let _ = tx_event
-                .send(EngineEvent::MessageStarted { index: 0 })
-                .await;
+            let _ = tx_event.send(EngineEvent::MessageStarted { index: 0 }).await;
             let _ = tx_event
                 .send(EngineEvent::MessageDelta {
                     index: 0,
                     content: "streamed".to_string(),
                 })
                 .await;
-            let _ = tx_event
-                .send(EngineEvent::MessageComplete { index: 0 })
-                .await;
+            let _ = tx_event.send(EngineEvent::MessageComplete { index: 0 }).await;
             let _ = tx_event
                 .send(EngineEvent::TurnComplete {
                     usage: Usage {
@@ -2776,10 +2625,7 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let turn_id = turn_start["turn"]["id"]
-            .as_str()
-            .context("missing turn id")?
-            .to_string();
+        let turn_id = turn_start["turn"]["id"].as_str().context("missing turn id")?.to_string();
 
         let _ = wait_for_terminal_turn_status(
             &client,
@@ -2828,10 +2674,7 @@ mod tests {
         };
         let client = reqwest::Client::new();
 
-        let resp = client
-            .get(format!("http://{addr}/v1/sessions/nonexistent_id"))
-            .send()
-            .await?;
+        let resp = client.get(format!("http://{addr}/v1/sessions/nonexistent_id")).send().await?;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 
         handle.abort();
@@ -2845,10 +2688,7 @@ mod tests {
         };
         let client = reqwest::Client::new();
 
-        let get_resp = client
-            .get(format!("http://{addr}/v1/sessions/invalid%20id"))
-            .send()
-            .await?;
+        let get_resp = client.get(format!("http://{addr}/v1/sessions/invalid%20id")).send().await?;
         assert_eq!(get_resp.status(), StatusCode::BAD_REQUEST);
 
         let resume_resp = client
@@ -2860,10 +2700,8 @@ mod tests {
             .await?;
         assert_eq!(resume_resp.status(), StatusCode::BAD_REQUEST);
 
-        let delete_resp = client
-            .delete(format!("http://{addr}/v1/sessions/invalid%20id"))
-            .send()
-            .await?;
+        let delete_resp =
+            client.delete(format!("http://{addr}/v1/sessions/invalid%20id")).send().await?;
         assert_eq!(delete_resp.status(), StatusCode::BAD_REQUEST);
 
         handle.abort();
@@ -2945,9 +2783,7 @@ mod tests {
         assert_eq!(resumed["session_id"], session_id);
         assert_eq!(resumed["message_count"], 2);
 
-        let thread_id = resumed["thread_id"]
-            .as_str()
-            .context("missing resumed thread id")?;
+        let thread_id = resumed["thread_id"].as_str().context("missing resumed thread id")?;
         let detail: serde_json::Value = client
             .get(format!("http://{addr}/v1/threads/{thread_id}"))
             .send()
@@ -2989,9 +2825,7 @@ mod tests {
         // and observe the response headers.
         let extra = vec!["http://localhost:5173".to_string()];
         let layer = cors_layer(&extra);
-        let router: Router = Router::new()
-            .route("/probe", get(|| async { "ok" }))
-            .layer(layer);
+        let router: Router = Router::new().route("/probe", get(|| async { "ok" })).layer(layer);
 
         let listener = match TcpListener::bind("127.0.0.1:0").await {
             Ok(listener) => listener,
@@ -3013,9 +2847,7 @@ mod tests {
             .send()
             .await?;
         assert_eq!(
-            resp.headers()
-                .get("access-control-allow-origin")
-                .and_then(|v| v.to_str().ok()),
+            resp.headers().get("access-control-allow-origin").and_then(|v| v.to_str().ok()),
             Some("http://localhost:5173")
         );
 
@@ -3027,9 +2859,7 @@ mod tests {
             .send()
             .await?;
         assert_eq!(
-            resp.headers()
-                .get("access-control-allow-origin")
-                .and_then(|v| v.to_str().ok()),
+            resp.headers().get("access-control-allow-origin").and_then(|v| v.to_str().ok()),
             Some("http://localhost:1420")
         );
 
@@ -3086,10 +2916,7 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let thread_id = created["id"]
-            .as_str()
-            .context("missing thread id")?
-            .to_string();
+        let thread_id = created["id"].as_str().context("missing thread id")?.to_string();
 
         // Patch every new field at once.
         let patched: serde_json::Value = client
@@ -3250,12 +3077,8 @@ mod tests {
             .error_for_status()?
             .json()
             .await?;
-        let summary_ids: Vec<&str> = summary
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter_map(|t| t["id"].as_str())
-            .collect();
+        let summary_ids: Vec<&str> =
+            summary.as_array().unwrap().iter().filter_map(|t| t["id"].as_str()).collect();
         assert_eq!(summary_ids, vec![archived_id.as_str()]);
 
         handle.abort();
@@ -3289,26 +3112,19 @@ mod tests {
         );
 
         // group_by query options are validated.
-        let bad_group = client
-            .get(format!("http://{addr}/v1/usage?group_by=galaxy"))
-            .send()
-            .await?;
+        let bad_group =
+            client.get(format!("http://{addr}/v1/usage?group_by=galaxy")).send().await?;
         assert_eq!(bad_group.status(), StatusCode::BAD_REQUEST);
 
         // Each accepted group_by value succeeds.
         for gb in ["day", "model", "provider", "thread"] {
-            let resp = client
-                .get(format!("http://{addr}/v1/usage?group_by={gb}"))
-                .send()
-                .await?;
+            let resp = client.get(format!("http://{addr}/v1/usage?group_by={gb}")).send().await?;
             assert!(resp.status().is_success(), "group_by={gb} failed: {resp:?}");
         }
 
         // Bad ISO-8601 timestamp rejected.
-        let bad_since = client
-            .get(format!("http://{addr}/v1/usage?since=not-a-date"))
-            .send()
-            .await?;
+        let bad_since =
+            client.get(format!("http://{addr}/v1/usage?since=not-a-date")).send().await?;
         assert_eq!(bad_since.status(), StatusCode::BAD_REQUEST);
 
         // since > until rejected.

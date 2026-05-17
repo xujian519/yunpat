@@ -30,9 +30,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
     let mut out: Vec<Line<'static>> = vec![
         Line::from(Span::styled(
             "Choose your language",
-            Style::default()
-                .fg(palette::YUNPAT_SKY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
         )),
         Line::from(""),
         Line::from(Span::styled(
@@ -54,9 +52,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
             Span::styled(format!("  {bullet}  "), Style::default().fg(bullet_color)),
             Span::styled(
                 format!("[{hotkey}] "),
-                Style::default()
-                    .fg(palette::TEXT_PRIMARY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::TEXT_PRIMARY).add_modifier(Modifier::BOLD),
             ),
             Span::styled(
                 native.to_string(),
@@ -77,16 +73,12 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
         Span::styled("Press ", Style::default().fg(palette::TEXT_MUTED)),
         Span::styled(
             "1-5",
-            Style::default()
-                .fg(palette::TEXT_PRIMARY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::TEXT_PRIMARY).add_modifier(Modifier::BOLD),
         ),
         Span::styled(" to choose, or ", Style::default().fg(palette::TEXT_MUTED)),
         Span::styled(
             "Enter",
-            Style::default()
-                .fg(palette::TEXT_PRIMARY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::TEXT_PRIMARY).add_modifier(Modifier::BOLD),
         ),
         Span::styled(
             " to keep the current setting",

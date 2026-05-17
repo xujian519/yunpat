@@ -86,11 +86,8 @@ impl ToolSpec for DiagnosticsTool {
         let sandbox_type = crate::sandbox::get_platform_sandbox().map(|s| s.to_string());
         let sandbox_available = sandbox_type.is_some();
 
-        let trusted_external_paths = context
-            .trusted_external_paths
-            .iter()
-            .map(|p| p.display().to_string())
-            .collect();
+        let trusted_external_paths =
+            context.trusted_external_paths.iter().map(|p| p.display().to_string()).collect();
         let diagnostics = DiagnosticsOutput {
             workspace_root,
             current_dir,

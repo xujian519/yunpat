@@ -107,9 +107,7 @@ fn parse_index(input: Option<&str>) -> Result<usize, &'static str> {
     let Some(input) = input else {
         return Err("Missing index. Usage: /queue edit <n> or /queue drop <n>");
     };
-    let raw = input
-        .parse::<usize>()
-        .map_err(|_| "Index must be a positive number")?;
+    let raw = input.parse::<usize>().map_err(|_| "Index must be a positive number")?;
     if raw == 0 {
         return Err("Index must be >= 1");
     }
@@ -206,12 +204,7 @@ mod tests {
         let mut app = create_test_app_with_tmpdir(&tmpdir);
         let result = queue(&mut app, Some("edit abc"));
         assert!(result.message.is_some());
-        assert!(
-            result
-                .message
-                .unwrap()
-                .contains("must be a positive number")
-        );
+        assert!(result.message.unwrap().contains("must be a positive number"));
     }
 
     #[test]

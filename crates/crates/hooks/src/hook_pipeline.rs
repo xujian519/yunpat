@@ -250,17 +250,13 @@ mod tests {
 
         let hook1 = Arc::new(MockHook {
             events: Vec::new(),
-            instructions: vec![HookInstruction::Warn {
-                message: "警告1".to_string(),
-            }],
+            instructions: vec![HookInstruction::Warn { message: "警告1".to_string() }],
         });
 
         let hook2 = Arc::new(MockHook {
             events: Vec::new(),
             instructions: vec![
-                HookInstruction::Warn {
-                    message: "警告2".to_string(),
-                },
+                HookInstruction::Warn { message: "警告2".to_string() },
                 HookInstruction::SuggestTool {
                     tool: "search".to_string(),
                     reason: "需要搜索".to_string(),

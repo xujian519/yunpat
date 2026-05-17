@@ -74,10 +74,7 @@ impl Drop for ScopedDeepSeekApiKey {
 }
 
 fn build_engine_with_capacity(capacity: CapacityControllerConfig) -> Engine {
-    let engine_config = EngineConfig {
-        capacity,
-        ..Default::default()
-    };
+    let engine_config = EngineConfig { capacity, ..Default::default() };
     let (engine, _handle) = Engine::new(engine_config, &Config::default());
     engine
 }
@@ -170,11 +167,9 @@ fn engine_initial_prompt_includes_configured_goal() {
     let (engine, _handle) = Engine::new(config, &Config::default());
     let prompt = match engine.session.system_prompt {
         Some(SystemPrompt::Text(text)) => text,
-        Some(SystemPrompt::Blocks(blocks)) => blocks
-            .into_iter()
-            .map(|block| block.text)
-            .collect::<Vec<_>>()
-            .join("\n"),
+        Some(SystemPrompt::Blocks(blocks)) => {
+            blocks.into_iter().map(|block| block.text).collect::<Vec<_>>().join("\n")
+        }
         None => panic!("expected system prompt"),
     };
 
@@ -455,11 +450,7 @@ fn turn_tool_registry_builder_keeps_plan_mode_read_only_for_files() {
 fn agent_mode_can_build_auto_approved_tool_context() {
     let (engine, _handle) = Engine::new(EngineConfig::default(), &Config::default());
 
-    assert!(
-        !engine
-            .build_tool_context(AppMode::Agent, false)
-            .auto_approve
-    );
+    assert!(!engine.build_tool_context(AppMode::Agent, false).auto_approve);
     assert!(engine.build_tool_context(AppMode::Agent, true).auto_approve);
     assert!(engine.build_tool_context(AppMode::Yolo, false).auto_approve);
 }
@@ -670,11 +661,9 @@ fn refresh_system_prompt_leaves_working_set_out_of_system_prompt() {
 
     let prompt = match &engine.session.system_prompt {
         Some(SystemPrompt::Text(text)) => text.clone(),
-        Some(SystemPrompt::Blocks(blocks)) => blocks
-            .iter()
-            .map(|block| block.text.as_str())
-            .collect::<Vec<_>>()
-            .join("\n"),
+        Some(SystemPrompt::Blocks(blocks)) => {
+            blocks.iter().map(|block| block.text.as_str()).collect::<Vec<_>>().join("\n")
+        }
         None => panic!("expected system prompt"),
     };
     assert!(!prompt.contains(WORKING_SET_SUMMARY_MARKER));
@@ -911,11 +900,9 @@ fn compaction_summary_stays_in_stable_system_prompt() {
 
     let prompt = match &engine.session.system_prompt {
         Some(SystemPrompt::Text(text)) => text.clone(),
-        Some(SystemPrompt::Blocks(blocks)) => blocks
-            .iter()
-            .map(|block| block.text.as_str())
-            .collect::<Vec<_>>()
-            .join("\n"),
+        Some(SystemPrompt::Blocks(blocks)) => {
+            blocks.iter().map(|block| block.text.as_str()).collect::<Vec<_>>().join("\n")
+        }
         None => panic!("expected system prompt"),
     };
 
@@ -937,9 +924,7 @@ async fn pre_request_refresh_skips_compaction_below_normal_threshold() {
     engine.config.capacity = capacity.clone();
     engine.capacity_controller = CapacityController::new(capacity);
     engine.turn_counter = 5;
-    engine
-        .capacity_controller
-        .mark_turn_start(engine.turn_counter);
+    engine.capacity_controller.mark_turn_start(engine.turn_counter);
     engine.session.model = "deepseek-v4-pro".to_string();
     engine.config.model = "deepseek-v4-pro".to_string();
 
@@ -956,9 +941,7 @@ async fn pre_request_refresh_skips_compaction_below_normal_threshold() {
     let before = engine.estimated_input_tokens();
     let before_len = engine.session.messages.len();
     let turn = TurnContext::new(10);
-    let applied = engine
-        .run_capacity_pre_request_checkpoint(&turn, None, AppMode::Agent)
-        .await;
+    let applied = engine.run_capacity_pre_request_checkpoint(&turn, None, AppMode::Agent).await;
     let after = engine.estimated_input_tokens();
 
     assert!(!applied);
@@ -980,9 +963,7 @@ async fn pre_request_refresh_invoked_when_medium_risk() {
     engine.config.capacity = capacity.clone();
     engine.capacity_controller = CapacityController::new(capacity);
     engine.turn_counter = 5;
-    engine
-        .capacity_controller
-        .mark_turn_start(engine.turn_counter);
+    engine.capacity_controller.mark_turn_start(engine.turn_counter);
 
     // Pin the model to an explicit 128k-context variant so the pressure ratio stays
     // stable regardless of changes to the workspace-wide default model.
@@ -1002,9 +983,7 @@ async fn pre_request_refresh_invoked_when_medium_risk() {
 
     let before = engine.estimated_input_tokens();
     let turn = TurnContext::new(10);
-    let applied = engine
-        .run_capacity_pre_request_checkpoint(&turn, None, AppMode::Agent)
-        .await;
+    let applied = engine.run_capacity_pre_request_checkpoint(&turn, None, AppMode::Agent).await;
     let after = engine.estimated_input_tokens();
 
     assert!(applied);
@@ -1032,9 +1011,7 @@ async fn post_tool_replay_invoked_when_high_non_severe_risk() {
     engine.config.capacity = capacity.clone();
     engine.capacity_controller = CapacityController::new(capacity);
     engine.turn_counter = 4;
-    engine
-        .capacity_controller
-        .mark_turn_start(engine.turn_counter);
+    engine.capacity_controller.mark_turn_start(engine.turn_counter);
 
     let mut turn = TurnContext::new(10);
     let mut tool_call = TurnToolCall::new(
@@ -1092,9 +1069,7 @@ async fn error_escalation_triggers_replan_when_severe_or_repeated_failures() {
     engine.config.capacity = capacity.clone();
     engine.capacity_controller = CapacityController::new(capacity);
     engine.turn_counter = 6;
-    engine
-        .capacity_controller
-        .mark_turn_start(engine.turn_counter);
+    engine.capacity_controller.mark_turn_start(engine.turn_counter);
 
     for i in 0..10 {
         engine.session.messages.push(Message {
@@ -1150,9 +1125,7 @@ async fn capacity_disabled_by_default_keeps_messages_intact() {
         "capacity controller must be off by default in v0.8.11+"
     );
     engine.turn_counter = 6;
-    engine
-        .capacity_controller
-        .mark_turn_start(engine.turn_counter);
+    engine.capacity_controller.mark_turn_start(engine.turn_counter);
 
     for i in 0..10 {
         engine.session.messages.push(Message {
@@ -1193,9 +1166,7 @@ async fn controller_disabled_keeps_behavior_unchanged() {
     engine.config.capacity = capacity.clone();
     engine.capacity_controller = CapacityController::new(capacity);
     engine.turn_counter = 3;
-    engine
-        .capacity_controller
-        .mark_turn_start(engine.turn_counter);
+    engine.capacity_controller.mark_turn_start(engine.turn_counter);
 
     let long = "y".repeat(5_000);
     for _ in 0..120 {
@@ -1211,9 +1182,7 @@ async fn controller_disabled_keeps_behavior_unchanged() {
     let before = engine.estimated_input_tokens();
     let before_len = engine.session.messages.len();
     let turn = TurnContext::new(10);
-    let applied = engine
-        .run_capacity_pre_request_checkpoint(&turn, None, AppMode::Agent)
-        .await;
+    let applied = engine.run_capacity_pre_request_checkpoint(&turn, None, AppMode::Agent).await;
     let after = engine.estimated_input_tokens();
     let after_len = engine.session.messages.len();
 
@@ -1816,10 +1785,7 @@ async fn post_edit_hook_injects_diagnostics_message_before_next_request() {
         severity: Severity::Error,
         message: "expected i32, found &str".to_string(),
     }]));
-    engine
-        .lsp_manager
-        .install_test_transport(Language::Rust, fake)
-        .await;
+    engine.lsp_manager.install_test_transport(Language::Rust, fake).await;
 
     // Simulate the success path of an edit_file tool call.
     let input = json!({ "path": "src/main.rs", "search": "0", "replace": "\"not a number\"" });
@@ -1887,10 +1853,7 @@ async fn post_edit_hook_skips_unknown_tool_names() {
         severity: Severity::Error,
         message: "should not be reported".to_string(),
     }]));
-    engine
-        .lsp_manager
-        .install_test_transport(Language::Rust, fake.clone())
-        .await;
+    engine.lsp_manager.install_test_transport(Language::Rust, fake.clone()).await;
 
     let input = json!({ "path": "src/main.rs" });
     engine.run_post_edit_lsp_hook("read_file", &input).await;

@@ -5,6 +5,23 @@
 import { z } from 'zod'
 import { BaseMcpTool } from './BaseMcpTool.js'
 import type { McpToolContext } from '../types.js'
+import type { ToolExecutionResult } from './DraftingTools.js'
+
+// ============================================================
+// 类型定义
+// ============================================================
+
+/** 结构化内容 */
+interface StructuredContent {
+  [key: string]: unknown
+}
+
+/** 文档元数据 */
+interface DocumentMetadata {
+  applicationNumber?: string
+  applicant?: string
+  inventor?: string
+}
 
 // ============================================================
 // FormatConverterTool
@@ -16,7 +33,7 @@ const formatConverterSchema = z.object({
   content: z
     .object({
       markdown: z.string().optional().describe('Markdown 内容'),
-      structured: z.any().optional().describe('结构化内容'),
+      structured: z.lazy(() => z.record(z.unknown())).optional().describe('结构化内容'),
     })
     .describe('待转换内容'),
   patentOfficeFormat: z
@@ -35,7 +52,7 @@ const formatConverterSchema = z.object({
     .describe('文档元数据'),
 })
 
-export class FormatConverterTool extends BaseMcpTool<z.infer<typeof formatConverterSchema>, any> {
+export class FormatConverterTool extends BaseMcpTool<z.infer<typeof formatConverterSchema>, ToolExecutionResult> {
   readonly metadata = {
     name: 'format_convert',
     description:
@@ -47,7 +64,7 @@ export class FormatConverterTool extends BaseMcpTool<z.infer<typeof formatConver
   protected async executeInternal(
     input: z.infer<typeof formatConverterSchema>,
     context: McpToolContext
-  ) {
+  ): Promise<ToolExecutionResult> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { PatentFormatConverterAgent } = await import('@yunpat/format-converter')
@@ -59,10 +76,20 @@ export class FormatConverterTool extends BaseMcpTool<z.infer<typeof formatConver
           memory: context.memory,
           tools: context.registry,
         })
-        const result = await agent.execute({
-          ...input,
+        const agentConfig: Record<string, unknown> & {
+          inputFormat: string
+          outputFormat: string
+          patentOfficeFormat: string
+          content: unknown
+          outputPath?: string
+        } = {
+          inputFormat: input.inputFormat,
+          outputFormat: input.outputFormat,
+          patentOfficeFormat: input.patentOfficeFormat,
+          content: input.content,
           outputPath: input.outputPath || '/tmp/patent-output.docx',
-        } as any)
+        }
+        const result = await agent.execute(agentConfig)
         return { version: '3.0.0', integrationMode: 'real_agent', ...result }
       } catch (error) {
         console.warn('[FormatConverterTool] 智能体调用失败，回退规则模式:', error)
@@ -94,10 +121,10 @@ const patentManagerSchema = z.object({
       'calculate_fees',
     ])
     .describe('操作类型'),
-  data: z.any().optional().describe('操作数据（根据操作类型不同）'),
+  data: z.lazy(() => z.record(z.unknown())).optional().describe('操作数据（根据操作类型不同）'),
 })
 
-export class PatentManagerTool extends BaseMcpTool<z.infer<typeof patentManagerSchema>, any> {
+export class PatentManagerTool extends BaseMcpTool<z.infer<typeof patentManagerSchema>, ToolExecutionResult> {
   readonly metadata = {
     name: 'patent_manager',
     description:
@@ -109,7 +136,7 @@ export class PatentManagerTool extends BaseMcpTool<z.infer<typeof patentManagerS
   protected async executeInternal(
     input: z.infer<typeof patentManagerSchema>,
     context: McpToolContext
-  ) {
+  ): Promise<ToolExecutionResult> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { PatentManagerAgent } = await import('@yunpat/agent-patent-manager')
@@ -121,10 +148,14 @@ export class PatentManagerTool extends BaseMcpTool<z.infer<typeof patentManagerS
           memory: context.memory,
           tools: context.registry,
         })
-        const result = await agent.execute({
-          operation: input.operation as any,
+        const agentConfig: Record<string, unknown> & {
+          operation: string
+          data: unknown
+        } = {
+          operation: input.operation,
           data: input.data,
-        } as any)
+        }
+        const result = await agent.execute(agentConfig)
         return { version: '3.0.0', integrationMode: 'real_agent', ...result }
       } catch (error) {
         console.warn('[PatentManagerTool] 智能体调用失败，回退规则模式:', error)

@@ -234,6 +234,7 @@ pub enum SubAgentType {
 impl SubAgentType {
     /// Parse a sub-agent type from user input.
     #[must_use]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "general" | "general-purpose" | "general_purpose" | "worker" | "default" => {
@@ -454,12 +455,12 @@ impl WaitMode {
 
     fn condition_met(self, snapshots: &[SubAgentResult]) -> bool {
         match self {
-            Self::Any => snapshots
-                .iter()
-                .any(|snapshot| snapshot.status != SubAgentStatus::Running),
-            Self::All => snapshots
-                .iter()
-                .all(|snapshot| snapshot.status != SubAgentStatus::Running),
+            Self::Any => {
+                snapshots.iter().any(|snapshot| snapshot.status != SubAgentStatus::Running)
+            }
+            Self::All => {
+                snapshots.iter().all(|snapshot| snapshot.status != SubAgentStatus::Running)
+            }
         }
     }
 }
@@ -1123,19 +1124,13 @@ impl SubAgentManager {
         self.agents.insert(agent_id.clone(), agent);
         self.persist_state_best_effort();
 
-        Ok(self
-            .agents
-            .get(&agent_id)
-            .expect("agent should exist after spawn")
-            .snapshot())
+        Ok(self.agents.get(&agent_id).expect("agent should exist after spawn").snapshot())
     }
 
     /// Get the current snapshot for an agent.
     pub fn get_result(&self, agent_id: &str) -> Result<SubAgentResult> {
-        let agent = self
-            .agents
-            .get(agent_id)
-            .ok_or_else(|| anyhow!("Agent {agent_id} not found"))?;
+        let agent =
+            self.agents.get(agent_id).ok_or_else(|| anyhow!("Agent {agent_id} not found"))?;
         Ok(agent.snapshot())
     }
 
@@ -1180,10 +1175,8 @@ impl SubAgentManager {
             .clone();
 
         if status == SubAgentStatus::Running {
-            let agent = self
-                .agents
-                .get(agent_id)
-                .ok_or_else(|| anyhow!("Agent {agent_id} not found"))?;
+            let agent =
+                self.agents.get(agent_id).ok_or_else(|| anyhow!("Agent {agent_id} not found"))?;
             return Ok(agent.snapshot());
         }
 
@@ -1359,11 +1352,8 @@ impl SubAgentManager {
         if let Some(payload) = payload {
             let tx = input_tx
                 .ok_or_else(|| anyhow!("Agent {agent_id} cannot accept assignment input"))?;
-            tx.send(SubAgentInput {
-                text: payload,
-                interrupt,
-            })
-            .map_err(|_| anyhow!("Failed to send assignment to agent {agent_id}"))?;
+            tx.send(SubAgentInput { text: payload, interrupt })
+                .map_err(|_| anyhow!("Failed to send assignment to agent {agent_id}"))?;
         }
 
         if changed {
@@ -1389,10 +1379,7 @@ impl SubAgentManager {
     /// session origin. Use [`Self::list_filtered`] in user-facing tool
     /// paths so prior-session agents stay hidden by default (#405).
     pub fn list(&self) -> Vec<SubAgentResult> {
-        self.agents
-            .values()
-            .map(|agent| self.snapshot_for_listing(agent))
-            .collect()
+        self.agents.values().map(|agent| self.snapshot_for_listing(agent)).collect()
     }
 
     /// List agents respecting the session-boundary filter (#405).
@@ -1469,10 +1456,7 @@ impl SubAgentManager {
 pub type SharedSubAgentManager = Arc<RwLock<SubAgentManager>>;
 
 fn default_state_path(workspace: &Path) -> PathBuf {
-    workspace
-        .join(".deepseek")
-        .join("state")
-        .join(SUBAGENT_STATE_FILE)
+    workspace.join(".deepseek").join("state").join(SUBAGENT_STATE_FILE)
 }
 
 fn epoch_millis_now() -> u64 {
@@ -1483,9 +1467,7 @@ fn epoch_millis_now() -> u64 {
 }
 
 fn instant_from_duration(duration: Duration) -> Instant {
-    Instant::now()
-        .checked_sub(duration)
-        .unwrap_or_else(Instant::now)
+    Instant::now().checked_sub(duration).unwrap_or_else(Instant::now)
 }
 
 fn write_json_atomic<T: Serialize>(path: &Path, value: &T) -> Result<()> {
@@ -1534,11 +1516,7 @@ impl AgentSpawnTool {
         runtime: SubAgentRuntime,
         name: &'static str,
     ) -> Self {
-        Self {
-            manager,
-            runtime,
-            name,
-        }
+        Self { manager, runtime, name }
     }
 }
 
@@ -1660,9 +1638,8 @@ impl ToolSpec for AgentSpawnTool {
                     requested_cwd.display()
                 ))
             })?;
-            let workspace_canonical = parent_workspace
-                .canonicalize()
-                .unwrap_or_else(|_| parent_workspace.clone());
+            let workspace_canonical =
+                parent_workspace.canonicalize().unwrap_or_else(|_| parent_workspace.clone());
             if !canonical.starts_with(&workspace_canonical) {
                 return Err(ToolError::invalid_input(format!(
                     "cwd must be inside the parent workspace: {} is not under {}",
@@ -2123,10 +2100,8 @@ impl ToolSpec for AgentListTool {
     }
 
     async fn execute(&self, input: Value, _context: &ToolContext) -> Result<ToolResult, ToolError> {
-        let include_archived = input
-            .get("include_archived")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
+        let include_archived =
+            input.get("include_archived").and_then(Value::as_bool).unwrap_or(false);
         let mut manager = self.manager.write().await;
         manager.cleanup(COMPLETED_AGENT_RETENTION);
         let results = manager.list_filtered(include_archived);
@@ -2430,9 +2405,7 @@ impl ToolSpec for AgentWaitTool {
         )
         .await?;
 
-        let all_done = snapshots
-            .iter()
-            .all(|snapshot| snapshot.status != SubAgentStatus::Running);
+        let all_done = snapshots.iter().all(|snapshot| snapshot.status != SubAgentStatus::Running);
         let completed_ids = snapshots
             .iter()
             .filter(|snapshot| snapshot.status != SubAgentStatus::Running)
@@ -2788,9 +2761,7 @@ async fn run_subagent(
                 format!("step {steps}/{max_steps}: cancelled"),
             );
             if let Some(mb) = runtime.mailbox.as_ref() {
-                let _ = mb.send(MailboxMessage::Cancelled {
-                    agent_id: agent_id.clone(),
-                });
+                let _ = mb.send(MailboxMessage::Cancelled { agent_id: agent_id.clone() });
             }
             return Ok(SubAgentResult {
                 agent_id: agent_id.clone(),
@@ -2900,9 +2871,7 @@ async fn run_subagent(
                 ContentBlock::Text { text, .. } if !text.trim().is_empty() => {
                     final_result = Some(text.clone());
                 }
-                ContentBlock::ToolUse {
-                    id, name, input, ..
-                } => {
+                ContentBlock::ToolUse { id, name, input, .. } => {
                     tool_uses.push((id.clone(), name.clone(), input.clone()));
                 }
                 _ => {}
@@ -2958,9 +2927,7 @@ async fn run_subagent(
                 });
             }
             let result = match tokio::time::timeout(TOOL_TIMEOUT, async {
-                tool_registry
-                    .execute(&agent_id, &tool_name, tool_input)
-                    .await
+                tool_registry.execute(&agent_id, &tool_name, tool_input).await
             })
             .await
             {
@@ -3055,9 +3022,7 @@ async fn wait_for_agents(
             let manager = manager.read().await;
             ids.iter()
                 .map(|id| {
-                    manager
-                        .get_result(id)
-                        .map_err(|e| ToolError::execution_failed(e.to_string()))
+                    manager.get_result(id).map_err(|e| ToolError::execution_failed(e.to_string()))
                 })
                 .collect::<Result<Vec<_>, _>>()?
         };
@@ -3074,10 +3039,7 @@ async fn wait_for_agents(
 }
 
 fn parse_wait_mode(input: &Value) -> Result<WaitMode, ToolError> {
-    let raw_mode = input
-        .get("wait_mode")
-        .and_then(|v| v.as_str())
-        .unwrap_or("any");
+    let raw_mode = input.get("wait_mode").and_then(|v| v.as_str()).unwrap_or("any");
     WaitMode::from_str(raw_mode).ok_or_else(|| {
         ToolError::invalid_input(format!("Invalid wait_mode '{raw_mode}'. Use: any or all"))
     })
@@ -3169,11 +3131,7 @@ fn parse_items_text(input: &Value, key: &str) -> Result<Option<String>, ToolErro
         let object = item
             .as_object()
             .ok_or_else(|| ToolError::invalid_input("each item must be an object"))?;
-        let item_type = object
-            .get("type")
-            .and_then(Value::as_str)
-            .unwrap_or("text")
-            .trim();
+        let item_type = object.get("type").and_then(Value::as_str).unwrap_or("text").trim();
         let rendered = match item_type {
             "text" => object
                 .get("text")
@@ -3283,9 +3241,7 @@ fn parse_spawn_request(input: &Value) -> Result<SpawnRequest, ToolError> {
         ));
     }
 
-    let agent_type = parsed_type
-        .or(parsed_role_type)
-        .unwrap_or(SubAgentType::General);
+    let agent_type = parsed_type.or(parsed_role_type).unwrap_or(SubAgentType::General);
 
     if let Some(role) = role_input
         && normalize_role_alias(role).is_none()
@@ -3300,21 +3256,18 @@ fn parse_spawn_request(input: &Value) -> Result<SpawnRequest, ToolError> {
         .or_else(|| type_input.and_then(normalize_role_alias))
         .map(str::to_string);
 
-    let allowed_tools = input
-        .get("allowed_tools")
-        .and_then(|v| v.as_array())
-        .map(|items| {
-            let mut tools = Vec::new();
-            for item in items {
-                if let Some(tool) = item.as_str() {
-                    let trimmed = tool.trim();
-                    if !trimmed.is_empty() && !tools.iter().any(|existing| existing == trimmed) {
-                        tools.push(trimmed.to_string());
-                    }
+    let allowed_tools = input.get("allowed_tools").and_then(|v| v.as_array()).map(|items| {
+        let mut tools = Vec::new();
+        for item in items {
+            if let Some(tool) = item.as_str() {
+                let trimmed = tool.trim();
+                if !trimmed.is_empty() && !tools.iter().any(|existing| existing == trimmed) {
+                    tools.push(trimmed.to_string());
                 }
             }
-            tools
-        });
+        }
+        tools
+    });
 
     let cwd = parse_optional_cwd(input)?;
     let model = parse_optional_subagent_model(input, "model")?;
@@ -3427,10 +3380,7 @@ fn fallback_subagent_assignment_route(
         runtime.reasoning_effort.clone()
     };
 
-    SubAgentResolvedRoute {
-        model,
-        reasoning_effort,
-    }
+    SubAgentResolvedRoute { model, reasoning_effort }
 }
 
 async fn subagent_flash_router(
@@ -3492,10 +3442,7 @@ fn subagent_router_prompt(runtime: &SubAgentRuntime, prompt: &str) -> String {
         if runtime.reasoning_effort_auto {
             "auto"
         } else {
-            runtime
-                .reasoning_effort
-                .as_deref()
-                .unwrap_or("provider-default")
+            runtime.reasoning_effort.as_deref().unwrap_or("provider-default")
         },
         truncate_subagent_router_prompt(prompt, 4_000)
     )
@@ -3693,21 +3640,16 @@ impl SubAgentToolRegistry {
         let api_tools = self.registry.to_api_tools();
         match &self.allowed_tools {
             None => api_tools,
-            Some(list) => api_tools
-                .into_iter()
-                .filter(|tool| list.contains(&tool.name))
-                .collect(),
+            Some(list) => api_tools.into_iter().filter(|tool| list.contains(&tool.name)).collect(),
         }
     }
 
     fn unavailable_allowed_tools(&self) -> Vec<String> {
         match &self.allowed_tools {
             None => Vec::new(),
-            Some(list) => list
-                .iter()
-                .filter(|name| !self.registry.contains(name))
-                .cloned()
-                .collect(),
+            Some(list) => {
+                list.iter().filter(|name| !self.registry.contains(name)).cloned().collect()
+            }
         }
     }
 
@@ -3715,10 +3657,7 @@ impl SubAgentToolRegistry {
         if !self.is_tool_allowed(name) {
             return Err(anyhow!("Tool {name} not allowed for this sub-agent"));
         }
-        self.registry
-            .execute(name, input)
-            .await
-            .map_err(|e| anyhow!(e))
+        self.registry.execute(name, input).await.map_err(|e| anyhow!(e))
     }
 }
 

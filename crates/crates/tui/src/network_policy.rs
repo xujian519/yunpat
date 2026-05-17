@@ -175,18 +175,10 @@ impl NetworkPolicy {
             // default (prompt or deny).
             return self.default.into();
         }
-        if self
-            .deny
-            .iter()
-            .any(|entry| host_matches(entry, &normalized))
-        {
+        if self.deny.iter().any(|entry| host_matches(entry, &normalized)) {
             return Decision::Deny;
         }
-        if self
-            .allow
-            .iter()
-            .any(|entry| host_matches(entry, &normalized))
-        {
+        if self.allow.iter().any(|entry| host_matches(entry, &normalized)) {
             return Decision::Allow;
         }
         self.default.into()
@@ -199,11 +191,7 @@ impl NetworkPolicy {
         if normalized.is_empty() {
             return;
         }
-        if !self
-            .allow
-            .iter()
-            .any(|existing| normalize_host(existing) == normalized)
-        {
+        if !self.allow.iter().any(|existing| normalize_host(existing) == normalized) {
             self.allow.push(normalized);
         }
     }
@@ -281,10 +269,7 @@ impl NetworkAuditor {
         if let Some(parent) = self.path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let mut file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&self.path)?;
+        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
         writeln!(
             file,
             "{ts} network {host} {tool} {decision}",
@@ -304,9 +289,7 @@ impl NetworkAuditor {
 
 /// Replace whitespace in a token so the line stays parseable.
 fn sanitize_field(s: &str) -> String {
-    s.chars()
-        .map(|c| if c.is_whitespace() { '_' } else { c })
-        .collect()
+    s.chars().map(|c| if c.is_whitespace() { '_' } else { c }).collect()
 }
 
 /// In-process cache of "approve once for this session" decisions. Keyed by
@@ -647,13 +630,7 @@ mod tests {
         let policy = mk(Decision::Prompt, &[], &[]);
         let mut decider = NetworkPolicyDecider::new(policy, None);
         decider.approve_persistent("api.example.com", "fetch_url");
-        assert!(
-            decider
-                .policy()
-                .allow
-                .iter()
-                .any(|h| h == "api.example.com")
-        );
+        assert!(decider.policy().allow.iter().any(|h| h == "api.example.com"));
         // And the session cache also got updated, so fresh evaluate returns Allow.
         assert_eq!(
             decider.evaluate("api.example.com", "fetch_url"),

@@ -8,12 +8,14 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex as StdMutex};
+use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, anyhow, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tokio::sync::{Mutex, broadcast};
+use tokio::task::spawn_blocking;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
@@ -27,11 +29,82 @@ use crate::models::{ContentBlock, Message, SystemPrompt, Usage, compaction_thres
 use crate::tools::plan::new_shared_plan_state;
 use crate::tools::subagent::SubAgentStatus;
 use crate::tools::todo::new_shared_todo_list;
-use crate::tui::app::AppMode;
+use yunpat_protocol::AppMode;
 
 const EVENT_CHANNEL_CAPACITY: usize = 1024;
 const MAX_ACTIVE_THREADS_DEFAULT: usize = 8;
 const SUMMARY_LIMIT: usize = 280;
+
+/// Fsync 模式配置
+/// - `always`: 每次追加事件都执行 fsync（最安全，性能最差）
+/// - `batch`: 每 N 次写入或 M 秒执行一次 fsync（平衡）
+/// - `never`: 不执行 fsync，让操作系统决定何时刷盘（性能最好，可能有数据丢失风险）
+#[allow(dead_code)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FsyncMode {
+    Always,
+    Batch { count: usize, interval_ms: u64 },
+    Never,
+}
+
+impl Default for FsyncMode {
+    fn default() -> Self {
+        FsyncMode::Batch { count: 10, interval_ms: 5000 }
+    }
+}
+
+/// 简单的内存缓存
+#[derive(Debug)]
+struct Cache<T> {
+    data: HashMap<String, (T, Instant)>,
+    max_age: Duration,
+    max_size: usize,
+}
+
+#[allow(dead_code)]
+impl<T: Clone> Cache<T> {
+    fn new(max_age: Duration, max_size: usize) -> Self {
+        Self {
+            data: HashMap::new(),
+            max_age,
+            max_size,
+        }
+    }
+
+    fn get(&self, key: &str) -> Option<T> {
+        self.data.get(key).and_then(|(value, timestamp)| {
+            if timestamp.elapsed() < self.max_age {
+                Some(value.clone())
+            } else {
+                None
+            }
+        })
+    }
+
+    fn put(&mut self, key: String, value: T) {
+        if self.data.len() >= self.max_size
+            && let Some(key) = self.data.keys().next().cloned() {
+                self.data.remove(&key);
+            }
+        self.data.insert(key, (value, Instant::now()));
+    }
+
+    fn invalidate(&mut self, key: &str) {
+        self.data.remove(key);
+    }
+
+    fn clear(&mut self) {
+        self.data.clear();
+    }
+}
+
+/// 事件写入器配置
+#[derive(Debug, Clone)]
+#[derive(Default)]
+pub struct EventWriterConfig {
+    pub fsync_mode: FsyncMode,
+}
+
 /// Bumped to 2 for v0.6.6 — see issue #124. The persisted thread/turn/item
 /// records didn't change shape, but the live engine semantics did: cycle
 /// boundaries advance the `Session.cycle_count` and produce archived JSONL
@@ -199,10 +272,18 @@ pub struct RuntimeThreadStore {
     events_dir: PathBuf,
     state_path: PathBuf,
     state: Arc<Mutex<RuntimeStoreState>>,
+    event_writer_config: EventWriterConfig,
+    threads_cache: Arc<Mutex<Cache<Vec<ThreadRecord>>>>,
+    turns_cache: Arc<Mutex<Cache<Vec<TurnRecord>>>>,
+    items_cache: Arc<Mutex<Cache<Vec<TurnItemRecord>>>>,
 }
 
 impl RuntimeThreadStore {
     pub fn open(root: PathBuf) -> Result<Self> {
+        Self::open_with_config(root, EventWriterConfig::default())
+    }
+
+    pub fn open_with_config(root: PathBuf, event_writer_config: EventWriterConfig) -> Result<Self> {
         let threads_dir = root.join("threads");
         let turns_dir = root.join("turns");
         let items_dir = root.join("items");
@@ -235,6 +316,10 @@ impl RuntimeThreadStore {
             events_dir,
             state_path,
             state: Arc::new(Mutex::new(state)),
+            event_writer_config,
+            threads_cache: Arc::new(Mutex::new(Cache::new(Duration::from_secs(60), 100))),
+            turns_cache: Arc::new(Mutex::new(Cache::new(Duration::from_secs(30), 200))),
+            items_cache: Arc::new(Mutex::new(Cache::new(Duration::from_secs(10), 500))),
         })
     }
 
@@ -314,7 +399,14 @@ impl RuntimeThreadStore {
         Ok(record)
     }
 
-    pub fn list_threads(&self) -> Result<Vec<ThreadRecord>> {
+    pub async fn list_threads(&self) -> Result<Vec<ThreadRecord>> {
+        let cache_key = "all_threads";
+
+        let mut cache = self.threads_cache.lock().await;
+        if let Some(cached) = cache.get(cache_key) {
+            return Ok(cached);
+        }
+
         let mut out = Vec::new();
         for entry in fs::read_dir(&self.threads_dir)
             .with_context(|| format!("Failed to read {}", self.threads_dir.display()))?
@@ -338,10 +430,20 @@ impl RuntimeThreadStore {
             out.push(thread);
         }
         out.sort_by_key(|t| std::cmp::Reverse(t.updated_at));
+
+        cache.put(cache_key.to_string(), out.clone());
+        drop(cache);
         Ok(out)
     }
 
-    pub fn list_turns_for_thread(&self, thread_id: &str) -> Result<Vec<TurnRecord>> {
+    pub async fn list_turns_for_thread(&self, thread_id: &str) -> Result<Vec<TurnRecord>> {
+        let cache_key = format!("turns_for_thread:{}", thread_id);
+
+        let mut cache = self.turns_cache.lock().await;
+        if let Some(cached) = cache.get(&cache_key) {
+            return Ok(cached);
+        }
+
         let mut out = Vec::new();
         for entry in fs::read_dir(&self.turns_dir)
             .with_context(|| format!("Failed to read {}", self.turns_dir.display()))?
@@ -367,10 +469,20 @@ impl RuntimeThreadStore {
             }
         }
         out.sort_by_key(|a| a.created_at);
+
+        cache.put(cache_key, out.clone());
+        drop(cache);
         Ok(out)
     }
 
-    pub fn list_items_for_turn(&self, turn_id: &str) -> Result<Vec<TurnItemRecord>> {
+    pub async fn list_items_for_turn(&self, turn_id: &str) -> Result<Vec<TurnItemRecord>> {
+        let cache_key = format!("items_for_turn:{}", turn_id);
+
+        let mut cache = self.items_cache.lock().await;
+        if let Some(cached) = cache.get(&cache_key) {
+            return Ok(cached);
+        }
+
         let mut out = Vec::new();
         for entry in fs::read_dir(&self.items_dir)
             .with_context(|| format!("Failed to read {}", self.items_dir.display()))?
@@ -400,6 +512,9 @@ impl RuntimeThreadStore {
             let right = b.started_at.unwrap_or_else(Utc::now);
             left.cmp(&right)
         });
+
+        cache.put(cache_key, out.clone());
+        drop(cache);
         Ok(out)
     }
 
@@ -436,10 +551,27 @@ impl RuntimeThreadStore {
             .with_context(|| format!("Failed to open {}", path.display()))?;
         let line = serde_json::to_string(&record)?;
         writeln!(file, "{line}").with_context(|| format!("Failed to append {}", path.display()))?;
-        file.flush()
-            .with_context(|| format!("Failed to flush {}", path.display()))?;
-        file.sync_all()
-            .with_context(|| format!("Failed to fsync {}", path.display()))?;
+        file.flush().with_context(|| format!("Failed to flush {}", path.display()))?;
+
+        match &self.event_writer_config.fsync_mode {
+            FsyncMode::Always => {
+                file.sync_all().with_context(|| format!("Failed to fsync {}", path.display()))?;
+            }
+            FsyncMode::Batch { count, interval_ms: _ } => {
+                if seq % (*count as u64) == 0 {
+                    let path_clone = path.clone();
+                    spawn_blocking(move || {
+                        if let Ok(file) = OpenOptions::new().write(true).open(&path_clone) {
+                            let _ = file.sync_all();
+                        }
+                    });
+                }
+            }
+            FsyncMode::Never => {
+                // 不执行 fsync，让操作系统决定何时刷盘
+            }
+        }
+
         Ok(record)
     }
 
@@ -717,7 +849,9 @@ impl RuntimeThreadManager {
             task_manager: Arc::new(StdMutex::new(None)),
             automations: Arc::new(StdMutex::new(None)),
         };
-        manager.recover_interrupted_state()?;
+        if let Ok(rt) = tokio::runtime::Handle::try_current() {
+            rt.block_on(manager.recover_interrupted_state())?;
+        }
         Ok(manager)
     }
 
@@ -762,10 +896,7 @@ impl RuntimeThreadManager {
         event: impl Into<String>,
         payload: Value,
     ) -> Result<RuntimeEventRecord> {
-        let record = self
-            .store
-            .append_event(thread_id, turn_id, item_id, event, payload)
-            .await?;
+        let record = self.store.append_event(thread_id, turn_id, item_id, event, payload).await?;
         if let Err(e) = self.event_tx.send(record.clone()) {
             tracing::debug!(
                 "Runtime event broadcast failed (no receivers or channel full): {}",
@@ -783,10 +914,7 @@ impl RuntimeThreadManager {
             .or_else(|| self.config.default_text_model.clone())
             .unwrap_or_else(|| DEFAULT_TEXT_MODEL.to_string());
         let workspace = req.workspace.unwrap_or_else(|| self.workspace.clone());
-        let mode = req
-            .mode
-            .filter(|m| !m.trim().is_empty())
-            .unwrap_or_else(|| "agent".to_string());
+        let mode = req.mode.filter(|m| !m.trim().is_empty()).unwrap_or_else(|| "agent".to_string());
         let allow_shell = req.allow_shell.unwrap_or_else(|| self.config.allow_shell());
         let trust_mode = req.trust_mode.unwrap_or(false);
         let auto_approve = req.auto_approve.unwrap_or(false);
@@ -827,7 +955,7 @@ impl RuntimeThreadManager {
         filter: ThreadListFilter,
         limit: Option<usize>,
     ) -> Result<Vec<ThreadRecord>> {
-        let mut threads = self.store.list_threads()?;
+        let mut threads = self.store.list_threads().await?;
         match filter {
             ThreadListFilter::ActiveOnly => threads.retain(|t| !t.archived),
             ThreadListFilter::ArchivedOnly => threads.retain(|t| t.archived),
@@ -857,8 +985,8 @@ impl RuntimeThreadManager {
         let mut buckets: BTreeMap<String, UsageBucket> = BTreeMap::new();
         let mut totals = UsageTotals::default();
 
-        for thread in self.store.list_threads()? {
-            let turns = self.store.list_turns_for_thread(&thread.id)?;
+        for thread in self.store.list_threads().await? {
+            let turns = self.store.list_turns_for_thread(&thread.id).await?;
             for turn in turns {
                 if let Some(s) = since
                     && turn.created_at < s
@@ -893,10 +1021,9 @@ impl RuntimeThreadManager {
                     UsageGroupBy::Provider => provider_label_for_model(&thread.model).to_string(),
                     UsageGroupBy::Thread => thread.id.clone(),
                 };
-                let bucket = buckets.entry(key.clone()).or_insert_with(|| UsageBucket {
-                    key,
-                    ..UsageBucket::default()
-                });
+                let bucket = buckets
+                    .entry(key.clone())
+                    .or_insert_with(|| UsageBucket { key, ..UsageBucket::default() });
                 bucket.input_tokens += input;
                 bucket.output_tokens += output;
                 bucket.cached_tokens += cached;
@@ -924,9 +1051,7 @@ impl RuntimeThreadManager {
     }
 
     pub async fn get_thread(&self, id: &str) -> Result<ThreadRecord> {
-        self.store
-            .load_thread(id)
-            .with_context(|| format!("Thread not found: {id}"))
+        self.store.load_thread(id).with_context(|| format!("Thread not found: {id}"))
     }
 
     pub async fn update_thread(&self, id: &str, req: UpdateThreadRequest) -> Result<ThreadRecord> {
@@ -1037,10 +1162,10 @@ impl RuntimeThreadManager {
 
     pub async fn get_thread_detail(&self, id: &str) -> Result<ThreadDetail> {
         let thread = self.get_thread(id).await?;
-        let turns = self.store.list_turns_for_thread(id)?;
+        let turns = self.store.list_turns_for_thread(id).await?;
         let mut items = Vec::new();
         for turn in &turns {
-            items.extend(self.store.list_items_for_turn(&turn.id)?);
+            items.extend(self.store.list_items_for_turn(&turn.id).await?);
         }
         let latest_seq = self.store.current_seq().await;
         Ok(ThreadDetail {
@@ -1085,7 +1210,7 @@ impl RuntimeThreadManager {
         forked.archived = false;
         self.store.save_thread(&forked)?;
 
-        let source_turns = self.store.list_turns_for_thread(&source.id)?;
+        let source_turns = self.store.list_turns_for_thread(&source.id).await?;
         for source_turn in source_turns {
             let mut cloned_turn = source_turn.clone();
             cloned_turn.id = format!("turn_{}", &Uuid::new_v4().to_string()[..8]);
@@ -1093,7 +1218,7 @@ impl RuntimeThreadManager {
             cloned_turn.item_ids.clear();
             self.store.save_turn(&cloned_turn)?;
 
-            let items = self.store.list_items_for_turn(&source_turn.id)?;
+            let items = self.store.list_items_for_turn(&source_turn.id).await?;
             for item in items {
                 let mut cloned_item = item.clone();
                 cloned_item.id = format!("item_{}", &Uuid::new_v4().to_string()[..8]);
@@ -1155,17 +1280,14 @@ impl RuntimeThreadManager {
         depth_from_tail: usize,
     ) -> Result<(ThreadRecord, Option<String>)> {
         let source = self.get_thread(id).await?;
-        let source_turns = self.store.list_turns_for_thread(&source.id)?;
+        let source_turns = self.store.list_turns_for_thread(&source.id).await?;
 
         // Walk turns from newest to oldest. For each turn, ask: does it
         // contain a UserMessage item? If yes, it counts toward the depth.
         let mut user_turn_indices: Vec<usize> = Vec::new();
         for (idx, turn) in source_turns.iter().enumerate().rev() {
-            let items = self.store.list_items_for_turn(&turn.id)?;
-            if items
-                .iter()
-                .any(|item| item.kind == TurnItemKind::UserMessage)
-            {
+            let items = self.store.list_items_for_turn(&turn.id).await?;
+            if items.iter().any(|item| item.kind == TurnItemKind::UserMessage) {
                 user_turn_indices.push(idx);
             }
         }
@@ -1184,7 +1306,7 @@ impl RuntimeThreadManager {
 
         // Pull the original user-message text out of the dropped turn so
         // the caller can drop it back into the composer.
-        let target_items = self.store.list_items_for_turn(&target_turn_id)?;
+        let target_items = self.store.list_items_for_turn(&target_turn_id).await?;
         let original_user_text = target_items
             .iter()
             .find(|item| item.kind == TurnItemKind::UserMessage)
@@ -1210,7 +1332,7 @@ impl RuntimeThreadManager {
             cloned_turn.item_ids.clear();
             self.store.save_turn(&cloned_turn)?;
 
-            let items = self.store.list_items_for_turn(&source_turn.id)?;
+            let items = self.store.list_items_for_turn(&source_turn.id).await?;
             for item in items {
                 let mut cloned_item = item.clone();
                 cloned_item.id = format!("item_{}", &Uuid::new_v4().to_string()[..8]);
@@ -1474,9 +1596,7 @@ impl RuntimeThreadManager {
             .await;
             (
                 selection.model,
-                selection
-                    .reasoning_effort
-                    .map(|effort| effort.as_setting().to_string()),
+                selection.reasoning_effort.map(|effort| effort.as_setting().to_string()),
             )
         } else {
             (requested_model, None)
@@ -1498,9 +1618,9 @@ impl RuntimeThreadManager {
                 trust_mode,
                 auto_approve,
                 approval_mode: if auto_approve {
-                    crate::tui::approval::ApprovalMode::Auto
+                    yunpat_protocol::ApprovalMode::Auto
                 } else {
-                    crate::tui::approval::ApprovalMode::Suggest
+                    yunpat_protocol::ApprovalMode::Suggest
                 },
             })
             .await
@@ -1776,10 +1896,8 @@ impl RuntimeThreadManager {
     async fn ensure_engine_loaded(&self, thread: &ThreadRecord) -> Result<EngineHandle> {
         {
             let mut active = self.active.lock().await;
-            if let Some(engine) = active
-                .engines
-                .get(thread.id.as_str())
-                .map(|state| state.engine.clone())
+            if let Some(engine) =
+                active.engines.get(thread.id.as_str()).map(|state| state.engine.clone())
             {
                 touch_lru(&mut active.lru, &thread.id);
                 return Ok(engine);
@@ -1798,11 +1916,7 @@ impl RuntimeThreadManager {
         let network_policy = self.config.network.clone().map(|toml_cfg| {
             crate::network_policy::NetworkPolicyDecider::with_default_audit(toml_cfg.into_runtime())
         });
-        let lsp_config = self
-            .config
-            .lsp
-            .clone()
-            .map(crate::config::LspConfigToml::into_runtime);
+        let lsp_config = self.config.lsp.clone().map(crate::config::LspConfigToml::into_runtime);
         let engine_cfg = EngineConfig {
             model: thread.model.clone(),
             workspace: thread.workspace.clone(),
@@ -1850,12 +1964,9 @@ impl RuntimeThreadManager {
 
         let engine = spawn_engine(engine_cfg, &self.config);
 
-        let turns = self.store.list_turns_for_thread(&thread.id)?;
-        let session_messages = self.reconstruct_messages_from_turns(&turns)?;
-        let sys_prompt = thread
-            .system_prompt
-            .as_ref()
-            .map(|s| SystemPrompt::Text(s.clone()));
+        let turns = self.store.list_turns_for_thread(&thread.id).await?;
+        let session_messages = self.reconstruct_messages_from_turns(&turns).await?;
+        let sys_prompt = thread.system_prompt.as_ref().map(|s| SystemPrompt::Text(s.clone()));
         if !session_messages.is_empty() || sys_prompt.is_some() {
             engine
                 .send(Op::SyncSession {
@@ -1885,30 +1996,24 @@ impl RuntimeThreadManager {
         Ok(engine)
     }
 
-    fn reconstruct_messages_from_turns(&self, turns: &[TurnRecord]) -> Result<Vec<Message>> {
+    async fn reconstruct_messages_from_turns(&self, turns: &[TurnRecord]) -> Result<Vec<Message>> {
         let mut messages = Vec::new();
         for turn in turns {
-            let items = self.store.list_items_for_turn(&turn.id)?;
+            let items = self.store.list_items_for_turn(&turn.id).await?;
             for item in items {
                 match item.kind {
                     TurnItemKind::UserMessage => {
                         let text = item.detail.unwrap_or(item.summary);
                         messages.push(Message {
                             role: "user".to_string(),
-                            content: vec![ContentBlock::Text {
-                                text,
-                                cache_control: None,
-                            }],
+                            content: vec![ContentBlock::Text { text, cache_control: None }],
                         });
                     }
                     TurnItemKind::AgentMessage => {
                         let text = item.detail.unwrap_or(item.summary);
                         messages.push(Message {
                             role: "assistant".to_string(),
-                            content: vec![ContentBlock::Text {
-                                text,
-                                cache_control: None,
-                            }],
+                            content: vec![ContentBlock::Text { text, cache_control: None }],
                         });
                     }
                     _ => {}
@@ -1937,11 +2042,7 @@ impl RuntimeThreadManager {
                 rx.recv().await
             };
             let Some(event) = event else {
-                if self
-                    .is_interrupt_requested(&thread_id, &turn_id)
-                    .await
-                    .unwrap_or(false)
-                {
+                if self.is_interrupt_requested(&thread_id, &turn_id).await.unwrap_or(false) {
                     turn_status = RuntimeTurnStatus::Interrupted;
                 }
                 break;
@@ -2217,12 +2318,7 @@ impl RuntimeThreadManager {
                     )
                     .await?;
                 }
-                EngineEvent::CapacityDecision {
-                    risk_band,
-                    action,
-                    reason,
-                    ..
-                } => {
+                EngineEvent::CapacityDecision { risk_band, action, reason, .. } => {
                     let message = format!(
                         "Capacity decision: risk={risk_band} action={action} reason={reason}"
                     );
@@ -2438,12 +2534,7 @@ impl RuntimeThreadManager {
                     )
                     .await?;
                 }
-                EngineEvent::ApprovalRequired {
-                    id,
-                    tool_name,
-                    description,
-                    ..
-                } => {
+                EngineEvent::ApprovalRequired { id, tool_name, description, .. } => {
                     self.emit_event(
                         &thread_id,
                         Some(&turn_id),
@@ -2561,11 +2652,7 @@ impl RuntimeThreadManager {
                     )
                     .await?;
                 }
-                EngineEvent::TurnComplete {
-                    usage,
-                    status,
-                    error,
-                } => {
+                EngineEvent::TurnComplete { usage, status, error } => {
                     turn_usage = Some(usage);
                     turn_status = match status {
                         TurnOutcomeStatus::Completed => RuntimeTurnStatus::Completed,
@@ -2581,11 +2668,7 @@ impl RuntimeThreadManager {
             }
         }
 
-        if self
-            .is_interrupt_requested(&thread_id, &turn_id)
-            .await
-            .unwrap_or(false)
-        {
+        if self.is_interrupt_requested(&thread_id, &turn_id).await.unwrap_or(false) {
             turn_status = RuntimeTurnStatus::Interrupted;
         }
 
@@ -2640,10 +2723,7 @@ impl RuntimeThreadManager {
         {
             let mut active = self.active.lock().await;
             if let Some(state) = active.engines.get_mut(&thread_id)
-                && state
-                    .active_turn
-                    .as_ref()
-                    .is_some_and(|t| t.turn_id == turn_id)
+                && state.active_turn.as_ref().is_some_and(|t| t.turn_id == turn_id)
             {
                 state.active_turn = None;
             }
@@ -2702,11 +2782,11 @@ impl RuntimeThreadManager {
         }
     }
 
-    fn recover_interrupted_state(&self) -> Result<()> {
+    async fn recover_interrupted_state(&self) -> Result<()> {
         let now = Utc::now();
-        for mut thread in self.store.list_threads()? {
+        for mut thread in self.store.list_threads().await? {
             let mut thread_changed = false;
-            for mut turn in self.store.list_turns_for_thread(&thread.id)? {
+            for mut turn in self.store.list_turns_for_thread(&thread.id).await? {
                 if !matches!(
                     turn.status,
                     RuntimeTurnStatus::Queued | RuntimeTurnStatus::InProgress
@@ -2757,10 +2837,7 @@ impl RuntimeThreadManager {
         let mut active = self.active.lock().await;
         active.engines.insert(
             thread_id.to_string(),
-            ActiveThreadState {
-                engine,
-                active_turn: None,
-            },
+            ActiveThreadState { engine, active_turn: None },
         );
         touch_lru(&mut active.lru, thread_id);
         Ok(())
@@ -3076,9 +3153,7 @@ mod tests {
         let payload = serde_json::to_string(&thread).expect("serialize thread");
         std::fs::write(&path, payload).expect("write thread");
 
-        let err = store
-            .load_thread(&thread.id)
-            .expect_err("load_thread must reject newer schema");
+        let err = store.load_thread(&thread.id).expect_err("load_thread must reject newer schema");
         let msg = format!("{err:#}");
         assert!(msg.contains("newer than supported"), "got: {msg}");
 
@@ -3106,9 +3181,7 @@ mod tests {
         std::fs::write(&path, serde_json::to_string(&turn).expect("serialize turn"))
             .expect("write turn");
 
-        let err = store
-            .load_turn(&turn.id)
-            .expect_err("load_turn must reject newer schema");
+        let err = store.load_turn(&turn.id).expect_err("load_turn must reject newer schema");
         assert!(
             format!("{err:#}").contains("newer than supported"),
             "got: {err:#}"
@@ -3130,9 +3203,7 @@ mod tests {
         std::fs::write(&path, serde_json::to_string(&item).expect("serialize item"))
             .expect("write item");
 
-        let err = store
-            .load_item(&item.id)
-            .expect_err("load_item must reject newer schema");
+        let err = store.load_item(&item.id).expect_err("load_item must reject newer schema");
         assert!(
             format!("{err:#}").contains("newer than supported"),
             "got: {err:#}"
@@ -3304,18 +3375,14 @@ mod tests {
                         turn_id: "engine_turn_1".to_string(),
                     })
                     .await;
-                let _ = tx_event
-                    .send(EngineEvent::MessageStarted { index: 0 })
-                    .await;
+                let _ = tx_event.send(EngineEvent::MessageStarted { index: 0 }).await;
                 let _ = tx_event
                     .send(EngineEvent::MessageDelta {
                         index: 0,
                         content: "mock response".to_string(),
                     })
                     .await;
-                let _ = tx_event
-                    .send(EngineEvent::MessageComplete { index: 0 })
-                    .await;
+                let _ = tx_event.send(EngineEvent::MessageComplete { index: 0 }).await;
                 let _ = tx_event
                     .send(EngineEvent::CoherenceState {
                         state: CoherenceState::GettingCrowded,
@@ -3509,9 +3576,7 @@ mod tests {
         let harness = install_mock_engine(&manager, &thread.id).await;
         let mut rx_op = harness.rx_op;
 
-        let turn = manager
-            .compact_thread(&thread.id, CompactThreadRequest::default())
-            .await?;
+        let turn = manager.compact_thread(&thread.id, CompactThreadRequest::default()).await?;
 
         assert!(matches!(rx_op.recv().await, Some(Op::CompactContext)));
         assert_eq!(
@@ -3539,9 +3604,7 @@ mod tests {
             })
             .await?;
 
-        let turn = manager
-            .compact_thread(&thread.id, CompactThreadRequest::default())
-            .await?;
+        let turn = manager.compact_thread(&thread.id, CompactThreadRequest::default()).await?;
         let terminal = wait_for_terminal_turn(&manager, &turn.id, Duration::from_secs(2)).await?;
 
         assert!(matches!(
@@ -3604,18 +3667,14 @@ mod tests {
                         turn_id: format!("engine_turn_{turn_index}"),
                     })
                     .await;
-                let _ = tx_event
-                    .send(EngineEvent::MessageStarted { index: 0 })
-                    .await;
+                let _ = tx_event.send(EngineEvent::MessageStarted { index: 0 }).await;
                 let _ = tx_event
                     .send(EngineEvent::MessageDelta {
                         index: 0,
                         content: format!("reply {turn_index}"),
                     })
                     .await;
-                let _ = tx_event
-                    .send(EngineEvent::MessageComplete { index: 0 })
-                    .await;
+                let _ = tx_event.send(EngineEvent::MessageComplete { index: 0 }).await;
                 let _ = tx_event
                     .send(EngineEvent::TurnComplete {
                         usage: Usage {
@@ -3681,14 +3740,8 @@ mod tests {
         }));
 
         let events = manager.events_since(&thread.id, None)?;
-        let started = events
-            .iter()
-            .filter(|ev| ev.event == "turn.started")
-            .count();
-        let completed = events
-            .iter()
-            .filter(|ev| ev.event == "turn.completed")
-            .count();
+        let started = events.iter().filter(|ev| ev.event == "turn.started").count();
+        let completed = events.iter().filter(|ev| ev.event == "turn.completed").count();
         assert_eq!(started, 2);
         assert_eq!(completed, 2);
         Ok(())
@@ -3723,9 +3776,7 @@ mod tests {
                         turn_id: "engine_turn_interrupt".to_string(),
                     })
                     .await;
-                let _ = tx_event
-                    .send(EngineEvent::MessageStarted { index: 0 })
-                    .await;
+                let _ = tx_event.send(EngineEvent::MessageStarted { index: 0 }).await;
                 let _ = tx_event
                     .send(EngineEvent::MessageDelta {
                         index: 0,
@@ -3825,10 +3876,8 @@ mod tests {
         ));
         {
             let mut active = manager.active.lock().await;
-            let state = active
-                .engines
-                .get_mut(&thread.id)
-                .context("missing active thread state")?;
+            let state =
+                active.engines.get_mut(&thread.id).context("missing active thread state")?;
             state.active_turn = None;
         }
 
@@ -3839,15 +3888,13 @@ mod tests {
                 id: "tool_stale".to_string(),
                 tool_name: "exec_command".to_string(),
                 description: "stale approval".to_string(),
-                gate: crate::tui::collaboration_gate::CollaborationGate::RequirePlan,
+                gate: yunpat_protocol::CollaborationGate::RequirePlan,
             })
             .await?;
 
         assert_eq!(
             harness.recv_approval_event().await,
-            Some(MockApprovalEvent::Denied {
-                id: "tool_stale".to_string(),
-            })
+            Some(MockApprovalEvent::Denied { id: "tool_stale".to_string() })
         );
 
         harness
@@ -3907,10 +3954,8 @@ mod tests {
         ));
         {
             let mut active = manager.active.lock().await;
-            let state = active
-                .engines
-                .get_mut(&thread.id)
-                .context("missing active thread state")?;
+            let state =
+                active.engines.get_mut(&thread.id).context("missing active thread state")?;
             state.active_turn = None;
         }
 
@@ -3983,18 +4028,14 @@ mod tests {
                 if let Some(steer) = rx_steer.recv().await {
                     let _ = steer_seen_tx.send(steer);
                 }
-                let _ = tx_event
-                    .send(EngineEvent::MessageStarted { index: 0 })
-                    .await;
+                let _ = tx_event.send(EngineEvent::MessageStarted { index: 0 }).await;
                 let _ = tx_event
                     .send(EngineEvent::MessageDelta {
                         index: 0,
                         content: "steered response".to_string(),
                     })
                     .await;
-                let _ = tx_event
-                    .send(EngineEvent::MessageComplete { index: 0 })
-                    .await;
+                let _ = tx_event.send(EngineEvent::MessageComplete { index: 0 }).await;
                 let _ = tx_event
                     .send(EngineEvent::TurnComplete {
                         usage: Usage {
@@ -4029,15 +4070,11 @@ mod tests {
             .steer_turn(
                 &thread.id,
                 &turn.id,
-                SteerTurnRequest {
-                    prompt: steer_text.clone(),
-                },
+                SteerTurnRequest { prompt: steer_text.clone() },
             )
             .await?;
         assert_eq!(steered_turn.steer_count, 1);
-        let observed_steer = steer_seen_rx
-            .await
-            .context("driver did not receive steer")?;
+        let observed_steer = steer_seen_rx.await.context("driver did not receive steer")?;
         assert_eq!(observed_steer, steer_text);
 
         let final_turn = wait_for_terminal_turn(&manager, &turn.id, Duration::from_secs(2)).await?;
@@ -4188,21 +4225,13 @@ mod tests {
         let events = manager.events_since(&thread.id, None)?;
         assert!(events.iter().any(|ev| {
             ev.event == "item.started"
-                && ev
-                    .payload
-                    .get("item")
-                    .and_then(|item| item.get("kind"))
-                    .and_then(Value::as_str)
+                && ev.payload.get("item").and_then(|item| item.get("kind")).and_then(Value::as_str)
                     == Some("context_compaction")
                 && ev.payload.get("auto").and_then(Value::as_bool) == Some(true)
         }));
         assert!(events.iter().any(|ev| {
             ev.event == "item.completed"
-                && ev
-                    .payload
-                    .get("item")
-                    .and_then(|item| item.get("kind"))
-                    .and_then(Value::as_str)
+                && ev.payload.get("item").and_then(|item| item.get("kind")).and_then(Value::as_str)
                     == Some("context_compaction")
                 && ev.payload.get("auto").and_then(Value::as_bool) == Some(true)
                 && ev.payload.get("messages_before").and_then(Value::as_u64) == Some(7)
@@ -4210,11 +4239,7 @@ mod tests {
         }));
         assert!(events.iter().any(|ev| {
             ev.event == "item.completed"
-                && ev
-                    .payload
-                    .get("item")
-                    .and_then(|item| item.get("kind"))
-                    .and_then(Value::as_str)
+                && ev.payload.get("item").and_then(|item| item.get("kind")).and_then(Value::as_str)
                     == Some("context_compaction")
                 && ev.payload.get("auto").and_then(Value::as_bool) == Some(false)
                 && ev.payload.get("messages_before").and_then(Value::as_u64) == Some(5)
@@ -4367,11 +4392,7 @@ mod tests {
             Some(RUNTIME_RESTART_REASON)
         );
         assert!(recovered_in_progress_turn.ended_at.is_some());
-        assert!(
-            recovered_in_progress_turn
-                .duration_ms
-                .is_some_and(|duration| duration >= 5_000)
-        );
+        assert!(recovered_in_progress_turn.duration_ms.is_some_and(|duration| duration >= 5_000));
 
         let recovered_queued_turn = recovered.store.load_turn("turn_queued")?;
         assert_eq!(recovered_queued_turn.status, RuntimeTurnStatus::Interrupted);
@@ -4441,10 +4462,8 @@ mod tests {
         ];
         let hints = collect_agent_rebind_hints(&events);
         assert_eq!(hints.len(), 3, "every fanout worker must be rebound");
-        let by_id: std::collections::BTreeMap<&str, AgentRebindStatus> = hints
-            .iter()
-            .map(|h| (h.agent_id.as_str(), h.status))
-            .collect();
+        let by_id: std::collections::BTreeMap<&str, AgentRebindStatus> =
+            hints.iter().map(|h| (h.agent_id.as_str(), h.status)).collect();
         assert_eq!(by_id.get("agent_a"), Some(&AgentRebindStatus::Completed));
         assert_eq!(by_id.get("agent_b"), Some(&AgentRebindStatus::Completed));
         assert_eq!(
@@ -4590,16 +4609,13 @@ mod tests {
         assert_eq!(original_text.as_deref(), Some("third"));
         assert_ne!(forked.id, thread.id);
 
-        let forked_turns = manager.store.list_turns_for_thread(&forked.id)?;
+        let forked_turns = manager.store.list_turns_for_thread(&forked.id).await?;
         assert_eq!(
             forked_turns.len(),
             2,
             "depth=0 should drop the most recent turn"
         );
-        let summaries: Vec<&str> = forked_turns
-            .iter()
-            .map(|t| t.input_summary.as_str())
-            .collect();
+        let summaries: Vec<&str> = forked_turns.iter().map(|t| t.input_summary.as_str()).collect();
         assert_eq!(summaries, vec!["first", "second"]);
         Ok(())
     }
@@ -4624,11 +4640,8 @@ mod tests {
 
         let (forked, original_text) = manager.fork_at_user_message(&thread.id, 1).await?;
         assert_eq!(original_text.as_deref(), Some("c"));
-        let forked_turns = manager.store.list_turns_for_thread(&forked.id)?;
-        let summaries: Vec<&str> = forked_turns
-            .iter()
-            .map(|t| t.input_summary.as_str())
-            .collect();
+        let forked_turns = manager.store.list_turns_for_thread(&forked.id).await?;
+        let summaries: Vec<&str> = forked_turns.iter().map(|t| t.input_summary.as_str()).collect();
         assert_eq!(summaries, vec!["a", "b"]);
         Ok(())
     }
@@ -4679,7 +4692,7 @@ mod tests {
 
         let _ = manager.fork_at_user_message(&thread.id, 0).await?;
 
-        let source_turns = manager.store.list_turns_for_thread(&thread.id)?;
+        let source_turns = manager.store.list_turns_for_thread(&thread.id).await?;
         assert_eq!(
             source_turns.len(),
             3,

@@ -225,7 +225,7 @@ pub enum Event {
         /// Fingerprint key for per‑call approval caching (§5.A).
         approval_key: String,
         /// Collaboration gate level for this tool call.
-        gate: crate::tui::collaboration_gate::CollaborationGate,
+        gate: yunpat_protocol::CollaborationGate,
     },
 
     /// Request user input for a tool call
@@ -258,6 +258,17 @@ pub enum Event {
         blocked_network: bool,
         blocked_write: bool,
     },
+
+    /// Patent workflow progress/status update
+    PatentWorkflowStatus {
+        agent_id: String,
+        status: String,
+        progress: Option<f32>,
+        details: Option<String>,
+        completed: bool,
+        error: Option<String>,
+        result: Option<String>,
+    },
 }
 
 impl Event {
@@ -265,16 +276,11 @@ impl Event {
     /// `recoverable` flag controls whether the UI flips into offline mode.
     pub fn error(envelope: ErrorEnvelope) -> Self {
         let recoverable = envelope.recoverable;
-        Event::Error {
-            envelope,
-            recoverable,
-        }
+        Event::Error { envelope, recoverable }
     }
 
     /// Create a new status event
     pub fn status(message: impl Into<String>) -> Self {
-        Event::Status {
-            message: message.into(),
-        }
+        Event::Status { message: message.into() }
     }
 }

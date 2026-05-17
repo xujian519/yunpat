@@ -140,10 +140,7 @@ impl ToolRegistry {
             use crate::tools::large_output_router::{LargeOutputRouter, RouteDecision};
             match router.route(name, &result, raw_bypass) {
                 RouteDecision::PassThrough => {}
-                RouteDecision::Synthesise {
-                    estimated_tokens,
-                    threshold,
-                } => {
+                RouteDecision::Synthesise { estimated_tokens, threshold } => {
                     // Store the raw output in the workshop variable store.
                     if let Some(vars_arc) = ctx.workshop_vars.as_ref() {
                         let mut vars = vars_arc.lock().await;
@@ -207,9 +204,7 @@ impl ToolRegistry {
     /// `remove`, and `clear`.
     #[must_use]
     pub fn to_api_tools(&self) -> Vec<Tool> {
-        self.api_cache
-            .get_or_init(|| self.build_api_tools())
-            .clone()
+        self.api_cache.get_or_init(|| self.build_api_tools()).clone()
     }
 
     fn build_api_tools(&self) -> Vec<Tool> {
@@ -266,11 +261,7 @@ impl ToolRegistry {
     #[must_use]
     #[allow(dead_code)]
     pub fn read_only_tools(&self) -> Vec<Arc<dyn ToolSpec>> {
-        self.tools
-            .values()
-            .filter(|t| t.is_read_only())
-            .cloned()
-            .collect()
+        self.tools.values().filter(|t| t.is_read_only()).cloned().collect()
     }
 
     /// Remove a tool by name.
@@ -381,8 +372,7 @@ impl ToolRegistryBuilder {
     #[must_use]
     pub fn with_read_only_file_tools(self) -> Self {
         use super::file::{ListDirTool, ReadFileTool};
-        self.with_tool(Arc::new(ReadFileTool))
-            .with_tool(Arc::new(ListDirTool))
+        self.with_tool(Arc::new(ReadFileTool)).with_tool(Arc::new(ListDirTool))
     }
 
     /// Include shell execution tool.
@@ -402,16 +392,14 @@ impl ToolRegistryBuilder {
     pub fn with_search_tools(self) -> Self {
         use super::file_search::FileSearchTool;
         use super::search::GrepFilesTool;
-        self.with_tool(Arc::new(GrepFilesTool))
-            .with_tool(Arc::new(FileSearchTool))
+        self.with_tool(Arc::new(GrepFilesTool)).with_tool(Arc::new(FileSearchTool))
     }
 
     /// Include git inspection tools (`git_status`, `git_diff`).
     #[must_use]
     pub fn with_git_tools(self) -> Self {
         use super::git::{GitDiffTool, GitStatusTool};
-        self.with_tool(Arc::new(GitStatusTool))
-            .with_tool(Arc::new(GitDiffTool))
+        self.with_tool(Arc::new(GitStatusTool)).with_tool(Arc::new(GitDiffTool))
     }
 
     /// Include git history tools (`git_log`, `git_show`, `git_blame`).
@@ -985,10 +973,7 @@ mod tests {
         assert_eq!(api_tools.len(), 2);
         assert!(api_tools[0].cache_control.is_none());
         assert_eq!(
-            api_tools[1]
-                .cache_control
-                .as_ref()
-                .map(|c| c.cache_type.as_str()),
+            api_tools[1].cache_control.as_ref().map(|c| c.cache_type.as_str()),
             Some("ephemeral")
         );
     }
@@ -1096,10 +1081,8 @@ mod tests {
         // first read above sampled `first description`; this rebuild samples
         // `second description`. The point is just that the bytes *can*
         // change after a real mutation, not that they always do.
-        let varying_after = after
-            .iter()
-            .find(|t| t.name == "varying")
-            .expect("varying tool present");
+        let varying_after =
+            after.iter().find(|t| t.name == "varying").expect("varying tool present");
         assert_eq!(varying_after.description, "second description");
     }
 
@@ -1139,11 +1122,7 @@ mod tests {
             registry.register(make_test_tool("zebra"));
             registry.register(make_test_tool("alpha"));
             registry.register(make_test_tool("mango"));
-            registry
-                .to_api_tools()
-                .iter()
-                .map(|t| t.name.clone())
-                .collect::<Vec<_>>()
+            registry.to_api_tools().iter().map(|t| t.name.clone()).collect::<Vec<_>>()
         };
 
         let order_b = {
@@ -1151,11 +1130,7 @@ mod tests {
             registry.register(make_test_tool("alpha"));
             registry.register(make_test_tool("mango"));
             registry.register(make_test_tool("zebra"));
-            registry
-                .to_api_tools()
-                .iter()
-                .map(|t| t.name.clone())
-                .collect::<Vec<_>>()
+            registry.to_api_tools().iter().map(|t| t.name.clone()).collect::<Vec<_>>()
         };
 
         assert_eq!(order_a, vec!["alpha", "mango", "zebra"]);
@@ -1197,10 +1172,7 @@ mod tests {
 
         registry.register(make_test_tool("echo"));
 
-        let result = registry
-            .execute("echo", json!({"message": "hello"}))
-            .await
-            .expect("execute");
+        let result = registry.execute("echo", json!({"message": "hello"})).await.expect("execute");
 
         assert_eq!(result, "Echo: hello");
     }
@@ -1220,9 +1192,7 @@ mod tests {
         let tmp = tempdir().expect("tempdir");
         let ctx = ToolContext::new(tmp.path().to_path_buf());
 
-        let registry = ToolRegistryBuilder::new()
-            .with_tool(make_test_tool("custom"))
-            .build(ctx);
+        let registry = ToolRegistryBuilder::new().with_tool(make_test_tool("custom")).build(ctx);
 
         assert!(registry.contains("custom"));
     }
@@ -1270,9 +1240,7 @@ mod tests {
         let tmp = tempdir().expect("tempdir");
         let ctx = ToolContext::new(tmp.path().to_path_buf());
 
-        let registry = ToolRegistryBuilder::new()
-            .with_agent_tools(false)
-            .build(ctx);
+        let registry = ToolRegistryBuilder::new().with_agent_tools(false).build(ctx);
 
         assert!(registry.contains("finance"));
     }

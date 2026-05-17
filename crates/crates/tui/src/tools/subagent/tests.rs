@@ -236,10 +236,7 @@ fn test_parse_spawn_request_rejects_conflicting_type_and_role() {
         "role": "worker"
     });
     let err = parse_spawn_request(&input).expect_err("conflicting type+role should fail");
-    assert!(
-        err.to_string()
-            .contains("Conflicting type/agent_type and role/agent_role")
-    );
+    assert!(err.to_string().contains("Conflicting type/agent_type and role/agent_role"));
 }
 
 #[test]
@@ -286,11 +283,7 @@ fn test_parse_assign_request_requires_update_fields() {
 fn test_send_input_schema_does_not_require_message_field() {
     let manager = Arc::new(RwLock::new(SubAgentManager::new(PathBuf::from("."), 1)));
     let schema = AgentSendInputTool::new(manager, "send_input").input_schema();
-    let required = schema
-        .get("required")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
+    let required = schema.get("required").and_then(Value::as_array).cloned().unwrap_or_default();
     assert!(
         !required
             .iter()
@@ -608,9 +601,7 @@ fn test_assign_updates_running_agent_and_sends_message() {
     assert_eq!(snapshot.assignment.objective, "Re-check module boundaries");
     assert_eq!(snapshot.assignment.role.as_deref(), Some("explorer"));
 
-    let dispatched = input_rx
-        .try_recv()
-        .expect("running agent should receive assignment update");
+    let dispatched = input_rx.try_recv().expect("running agent should receive assignment update");
     assert!(dispatched.interrupt);
     assert!(dispatched.text.contains("Assignment updated"));
     assert!(dispatched.text.contains("objective"));
@@ -696,9 +687,7 @@ fn test_persist_and_reload_marks_running_agent_as_interrupted() {
     let mut reloaded =
         SubAgentManager::new(workspace, 2).with_state_path(default_state_path(tmp.path()));
     reloaded.load_state().expect("load state");
-    let snapshot = reloaded
-        .get_result(&running_id)
-        .expect("reloaded agent should exist");
+    let snapshot = reloaded.get_result(&running_id).expect("reloaded agent should exist");
     assert!(matches!(
         snapshot.status,
         SubAgentStatus::Interrupted(ref message)
@@ -732,12 +721,7 @@ fn test_wrap_with_deprecation_notice_adds_deprecation_block() {
     assert_eq!(dep["this_tool"], "spawn_agent");
     assert_eq!(dep["use_instead"], "agent_spawn");
     assert_eq!(dep["removed_in"], DEPRECATION_REMOVAL_VERSION);
-    assert!(
-        dep["message"]
-            .as_str()
-            .unwrap_or("")
-            .contains("spawn_agent")
-    );
+    assert!(dep["message"].as_str().unwrap_or("").contains("spawn_agent"));
 }
 
 #[test]
@@ -1260,15 +1244,9 @@ fn list_filtered_drops_prior_session_terminals_by_default() {
         "completed prior-session agents are hidden by default: {ids:?}"
     );
 
-    let prior = listed
-        .iter()
-        .find(|s| s.agent_id == "prior_running")
-        .unwrap();
+    let prior = listed.iter().find(|s| s.agent_id == "prior_running").unwrap();
     assert!(prior.from_prior_session);
-    let current = listed
-        .iter()
-        .find(|s| s.agent_id == "current_running")
-        .unwrap();
+    let current = listed.iter().find(|s| s.agent_id == "current_running").unwrap();
     assert!(!current.from_prior_session);
 }
 
@@ -1299,10 +1277,7 @@ fn list_filtered_with_include_archived_returns_everything() {
     assert_eq!(listed.len(), 3, "{listed:?}");
     let prior = listed.iter().find(|s| s.agent_id == "prior_done").unwrap();
     assert!(prior.from_prior_session);
-    let current = listed
-        .iter()
-        .find(|s| s.agent_id == "current_done")
-        .unwrap();
+    let current = listed.iter().find(|s| s.agent_id == "current_done").unwrap();
     assert!(!current.from_prior_session);
 }
 
@@ -1321,10 +1296,7 @@ fn agents_with_empty_boot_id_classify_as_prior_session() {
     );
 
     let listed_archived = manager.list_filtered(true);
-    let legacy = listed_archived
-        .iter()
-        .find(|s| s.agent_id == "legacy")
-        .unwrap();
+    let legacy = listed_archived.iter().find(|s| s.agent_id == "legacy").unwrap();
     assert!(legacy.from_prior_session);
 }
 
@@ -1344,9 +1316,7 @@ fn persist_round_trip_preserves_session_boot_id() {
             SubAgentStatus::Completed,
             &original_boot,
         );
-        writer
-            .persist_state()
-            .expect("persist round-trip should write");
+        writer.persist_state().expect("persist round-trip should write");
     }
 
     // A fresh manager comes up with a *different* boot id and reloads
@@ -1362,10 +1332,7 @@ fn persist_round_trip_preserves_session_boot_id() {
         "completed prior-session agent hidden after reload: {listed_default:?}"
     );
     let listed_all = reader.list_filtered(true);
-    let snap = listed_all
-        .iter()
-        .find(|s| s.agent_id == "agent_persist")
-        .unwrap();
+    let snap = listed_all.iter().find(|s| s.agent_id == "agent_persist").unwrap();
     assert!(snap.from_prior_session);
 }
 

@@ -73,19 +73,14 @@ pub fn blocking_append_allow_prefix_rule(
     let pattern = format!("[{}]", tokens.join(", "));
     let rule = format!(r#"prefix_rule(pattern={pattern}, decision="allow")"#);
 
-    let dir = policy_path
-        .parent()
-        .ok_or_else(|| AmendError::MissingParent {
-            path: policy_path.to_path_buf(),
-        })?;
+    let dir = policy_path.parent().ok_or_else(|| AmendError::MissingParent {
+        path: policy_path.to_path_buf(),
+    })?;
     match std::fs::create_dir(dir) {
         Ok(()) => {}
         Err(ref source) if source.kind() == std::io::ErrorKind::AlreadyExists => {}
         Err(source) => {
-            return Err(AmendError::CreatePolicyDir {
-                dir: dir.to_path_buf(),
-                source,
-            });
+            return Err(AmendError::CreatePolicyDir { dir: dir.to_path_buf(), source });
         }
     }
     append_locked_line(policy_path, &rule)
@@ -117,32 +112,30 @@ fn append_locked_line(policy_path: &Path, line: &str) -> Result<(), AmendError> 
 
     // Ensure file ends in a newline before appending.
     if len > 0 {
-        file.seek(SeekFrom::End(-1))
-            .map_err(|source| AmendError::SeekPolicyFile {
-                path: policy_path.to_path_buf(),
-                source,
-            })?;
-        let mut last = [0; 1];
-        file.read_exact(&mut last)
-            .map_err(|source| AmendError::ReadPolicyFile {
-                path: policy_path.to_path_buf(),
-                source,
-            })?;
-
-        if last[0] != b'\n' {
-            file.write_all(b"\n")
-                .map_err(|source| AmendError::WritePolicyFile {
-                    path: policy_path.to_path_buf(),
-                    source,
-                })?;
-        }
-    }
-
-    file.write_all(format!("{line}\n").as_bytes())
-        .map_err(|source| AmendError::WritePolicyFile {
+        file.seek(SeekFrom::End(-1)).map_err(|source| AmendError::SeekPolicyFile {
             path: policy_path.to_path_buf(),
             source,
         })?;
+        let mut last = [0; 1];
+        file.read_exact(&mut last).map_err(|source| AmendError::ReadPolicyFile {
+            path: policy_path.to_path_buf(),
+            source,
+        })?;
+
+        if last[0] != b'\n' {
+            file.write_all(b"\n").map_err(|source| AmendError::WritePolicyFile {
+                path: policy_path.to_path_buf(),
+                source,
+            })?;
+        }
+    }
+
+    file.write_all(format!("{line}\n").as_bytes()).map_err(|source| {
+        AmendError::WritePolicyFile {
+            path: policy_path.to_path_buf(),
+            source,
+        }
+    })?;
 
     Ok(())
 }

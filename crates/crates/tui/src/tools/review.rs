@@ -85,6 +85,7 @@ pub struct ReviewOutput {
 
 impl ReviewOutput {
     #[must_use]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(raw: &str) -> Self {
         if let Ok(parsed) = serde_json::from_str::<ReviewOutput>(raw) {
             return parsed.normalize();
@@ -287,10 +288,7 @@ fn resolve_review_source(
                 let pr = parse_pr_url(target)
                     .ok_or_else(|| ToolError::invalid_input("Invalid pull request URL"))?;
                 let diff = gh_pr_diff(&pr, &context.workspace)?;
-                Ok(ReviewSource::PullRequest {
-                    label: pr.label(),
-                    diff,
-                })
+                Ok(ReviewSource::PullRequest { label: pr.label(), diff })
             }
             other => Err(ToolError::invalid_input(format!(
                 "Unknown review kind '{other}'"
@@ -300,10 +298,7 @@ fn resolve_review_source(
 
     if let Some(pr) = parse_pr_url(target) {
         let diff = gh_pr_diff(&pr, &context.workspace)?;
-        return Ok(ReviewSource::PullRequest {
-            label: pr.label(),
-            diff,
-        });
+        return Ok(ReviewSource::PullRequest { label: pr.label(), diff });
     }
 
     if let Some(staged_override) = diff_mode_from_target(target) {
@@ -404,9 +399,7 @@ fn gh_pr_diff(pr: &PullRequestRef, workspace: &Path) -> Result<String, ToolError
 
 fn build_review_prompt(source: &ReviewSource, max_chars: usize) -> String {
     match source {
-        ReviewSource::File {
-            display, content, ..
-        } => {
+        ReviewSource::File { display, content, .. } => {
             let numbered = format_with_line_numbers(content);
             let truncated = truncate_with_ellipsis(&numbered, max_chars, "\n...[truncated]\n");
             format!(
@@ -452,9 +445,7 @@ fn extract_text(blocks: &[ContentBlock]) -> String {
 }
 
 fn normalize_optional(value: Option<String>) -> Option<String> {
-    value
-        .map(|v| v.trim().to_string())
-        .filter(|v| !v.is_empty())
+    value.map(|v| v.trim().to_string()).filter(|v| !v.is_empty())
 }
 
 fn normalize_severity(value: &str) -> String {

@@ -73,10 +73,7 @@ pub fn try_autocomplete_slash_command(app: &mut App) -> bool {
     }
 
     let prefix = app.input.trim_start_matches('/');
-    let refs: Vec<&str> = candidates
-        .iter()
-        .map(|name| name.trim_start_matches('/'))
-        .collect();
+    let refs: Vec<&str> = candidates.iter().map(|name| name.trim_start_matches('/')).collect();
     let shared = crate::tui::file_mention::longest_common_prefix(&refs);
 
     if !shared.is_empty() && shared.len() > prefix.len() {
@@ -99,12 +96,7 @@ pub fn try_autocomplete_slash_command(app: &mut App) -> bool {
         return true;
     }
 
-    let preview = candidates
-        .iter()
-        .take(5)
-        .map(String::as_str)
-        .collect::<Vec<_>>()
-        .join(", ");
+    let preview = candidates.iter().take(5).map(String::as_str).collect::<Vec<_>>().join(", ");
     app.status_message = Some(format!("Suggestions: {preview}"));
     true
 }

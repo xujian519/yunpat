@@ -118,12 +118,15 @@ export class LegalKnowledgeSearchTool extends BaseMcpTool<any, any> {
         domain: input.domain,
         totalFound: results.length,
         results: topResults,
-        citations: topResults.map((r, i) => ({
-          id: i + 1,
-          type: r.type,
-          source: r.source,
-          reference: (r as any).documentNumber || (r as any).articleId,
-        })),
+        citations: topResults.map((r, i) => {
+          const result = r as Record<string, unknown>
+          return {
+            id: i + 1,
+            type: r.type,
+            source: r.source,
+            reference: (result.documentNumber || result.articleId) as string,
+          }
+        }),
       }
     } catch (error) {
       return {

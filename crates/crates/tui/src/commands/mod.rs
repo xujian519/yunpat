@@ -802,9 +802,7 @@ pub fn rlm(app: &mut App, arg: Option<&str>) -> CommandResult {
 /// Get command info by name or alias
 pub fn get_command_info(name: &str) -> Option<&'static CommandInfo> {
     let name = name.strip_prefix('/').unwrap_or(name);
-    COMMANDS
-        .iter()
-        .find(|cmd| cmd.name == name || cmd.aliases.contains(&name))
+    COMMANDS.iter().find(|cmd| cmd.name == name || cmd.aliases.contains(&name))
 }
 
 /// Get all command names matching a prefix, including both built-in
@@ -908,16 +906,8 @@ fn suggest_command_names(input: &str, limit: usize) -> Vec<String> {
         }
     }
 
-    scored.sort_by(|a, b| {
-        a.0.cmp(&b.0)
-            .then_with(|| a.1.cmp(&b.1))
-            .then_with(|| a.2.cmp(&b.2))
-    });
-    scored
-        .into_iter()
-        .take(limit)
-        .map(|(_, _, name)| name)
-        .collect()
+    scored.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)).then_with(|| a.2.cmp(&b.2)));
+    scored.into_iter().take(limit).map(|(_, _, name)| name).collect()
 }
 
 #[cfg(test)]
@@ -1034,18 +1024,15 @@ mod tests {
     fn removed_set_and_yunpat_commands_show_migration_hints() {
         let mut app = create_test_app();
         let set_result = execute("/set model deepseek-v4-pro", &mut app);
-        let set_msg = set_result
-            .message
-            .expect("legacy command should return an error message");
+        let set_msg = set_result.message.expect("legacy command should return an error message");
         assert!(set_msg.contains("The /set command was retired"));
         assert!(set_msg.contains("/config"));
         assert!(set_msg.contains("/settings"));
         assert!(set_result.action.is_none());
 
         let yunpat_result = execute("/deepseek", &mut app);
-        let yunpat_msg = yunpat_result
-            .message
-            .expect("legacy command should return an error message");
+        let yunpat_msg =
+            yunpat_result.message.expect("legacy command should return an error message");
         assert!(yunpat_msg.contains("The /deepseek command was renamed"));
         assert!(yunpat_msg.contains("/links"));
         assert!(yunpat_msg.contains("/dashboard"));
@@ -1167,9 +1154,7 @@ mod tests {
     fn unknown_command_suggests_nearest_match() {
         let mut app = create_test_app();
         let result = execute("/modle", &mut app);
-        let msg = result
-            .message
-            .expect("unknown command should return an error message");
+        let msg = result.message.expect("unknown command should return an error message");
         assert!(msg.contains("Unknown command: /modle"));
         assert!(msg.contains("Did you mean:"));
         assert!(msg.contains("/model"));
@@ -1179,9 +1164,7 @@ mod tests {
     fn unknown_command_without_close_match_keeps_help_guidance() {
         let mut app = create_test_app();
         let result = execute("/zzzzzz", &mut app);
-        let msg = result
-            .message
-            .expect("unknown command should return an error message");
+        let msg = result.message.expect("unknown command should return an error message");
         assert!(msg.contains("Unknown command: /zzzzzz"));
         assert!(msg.contains("Type /help for available commands."));
     }
@@ -1203,9 +1186,7 @@ mod tests {
         );
 
         match result.action {
-            Some(AppAction::PatentWorkflow {
-                agent_id, topic, ..
-            }) => {
+            Some(AppAction::PatentWorkflow { agent_id, topic, .. }) => {
                 assert_eq!(agent_id, "patent_search", "应路由到 patent_search agent");
                 assert_eq!(
                     topic,
@@ -1238,9 +1219,7 @@ mod tests {
 
         assert!(!result.is_error);
         match result.action {
-            Some(AppAction::PatentWorkflow {
-                agent_id, topic, ..
-            }) => {
+            Some(AppAction::PatentWorkflow { agent_id, topic, .. }) => {
                 assert_eq!(agent_id, "paper_search", "应路由到 paper_search agent");
                 assert_eq!(topic, Some("transformer".to_string()), "主题应正确传递");
             }
@@ -1269,9 +1248,7 @@ mod tests {
 
         assert!(!result.is_error);
         match result.action {
-            Some(AppAction::PatentWorkflow {
-                agent_id, topic, ..
-            }) => {
+            Some(AppAction::PatentWorkflow { agent_id, topic, .. }) => {
                 assert_eq!(agent_id, "patent_db", "应路由到 patent_db agent");
                 assert!(
                     topic.as_ref().unwrap().contains("人工智能"),
@@ -1329,9 +1306,7 @@ mod tests {
 
         assert!(!result.is_error);
         match result.action {
-            Some(AppAction::PatentWorkflow {
-                agent_id, topic, ..
-            }) => {
+            Some(AppAction::PatentWorkflow { agent_id, topic, .. }) => {
                 assert_eq!(agent_id, "creativity", "应路由到 creativity agent");
                 assert_eq!(topic, Some("创造性判断分析".to_string()), "主题应正确传递");
             }
@@ -1360,9 +1335,7 @@ mod tests {
 
         assert!(!result.is_error);
         match result.action {
-            Some(AppAction::PatentWorkflow {
-                agent_id, topic, ..
-            }) => {
+            Some(AppAction::PatentWorkflow { agent_id, topic, .. }) => {
                 assert_eq!(agent_id, "research", "应路由到 research agent");
                 assert_eq!(
                     topic,

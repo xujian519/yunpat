@@ -22,6 +22,7 @@ import {
   IntentType,
   IntentRecognitionResult,
   TaskPlan,
+  TaskStep,
   HITLRequest,
   AgentResult,
   AggregatedResult,
@@ -156,16 +157,12 @@ export class OrchestratorAgent {
    * 异步初始化所有 Agent
    */
   private async initializeAgents(): Promise<void> {
-    // NOTE: as any 是因为 AgentConfig 的 EventBus/ToolRegistry 接口类型
-    // 与 AgentSharedDeps 期望的具体类存在 structural mismatch，
-    // 运行时实例是兼容的，仅编译期类型不匹配。
     const factory = new AgentFactory({
       llm: this.config.llm,
       eventBus: this.config.eventBus,
       memory: this.config.memory,
       tools: this.config.tools,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any)
+    })
     await factory.createAll(this.agentRegistry)
   }
 
@@ -508,8 +505,7 @@ export class OrchestratorAgent {
   /**
    * 执行单个步骤（通过 AgentRegistry 路由到专业层 Agent）
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async executeStep(step: any, input: OrchestratorInput): Promise<AgentResult> {
+  private async executeStep(step: TaskStep, input: OrchestratorInput): Promise<AgentResult> {
     const startTime = Date.now()
     const agent = this.agentRegistry.get(step.agentId)
 
@@ -523,8 +519,9 @@ export class OrchestratorAgent {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await agent.execute((step.input || input) as any)
+      // 使用 step.input 如果存在，否则使用原始 input
+      const agentInput = step.input ? { ...input, ...step.input } : input
+      const result = await agent.execute(agentInput)
       return {
         success: true,
         data: result,
@@ -607,18 +604,20 @@ export class OrchestratorAgent {
             content: `用户输入：${message}\n\n只输出 JSON：{"intent":"...","confidence":0-1,"complexity":"simple|complex","extracted":{...}}`,
           },
         ]
-        const parsed = await this.llmClient.chatWithSchema<IntentRecognitionResult>(messages, schema)
+        const parsed = await this.llmClient.chatWithSchema<IntentRecognitionResult>(
+          messages,
+          schema
+        )
         return {
           intent: parsed.intent as IntentType,
-          confidence: typeof parsed.confidence === 'number' ? parsed.confidence : ruleResult.confidence,
+          confidence:
+            typeof parsed.confidence === 'number' ? parsed.confidence : ruleResult.confidence,
           complexity: parsed.complexity ?? ruleResult.complexity,
-          extracted:
-            parsed.extracted ??
-            ({
-              hasAttachment: !!(input.attachments && input.attachments.length > 0),
-              urgency: 'normal',
-              keywords: [],
-            } as any),
+          extracted: parsed.extracted ?? {
+            hasAttachment: !!(input.attachments && input.attachments.length > 0),
+            urgency: 'normal',
+            keywords: [],
+          },
           clarifyQuestion: parsed.clarifyQuestion,
         }
       } catch {
@@ -655,16 +654,15 @@ export class OrchestratorAgent {
         intent: parsed.intent as IntentType,
         confidence: parsed.confidence ?? 0.5,
         complexity: parsed.complexity ?? 'simple',
-        extracted:
-          parsed.extracted ??
-          ({
-            hasAttachment: !!(input.attachments && input.attachments.length > 0),
-            urgency: 'normal',
-            keywords: [],
-          } as any),
+        extracted: parsed.extracted ?? {
+          hasAttachment: !!(input.attachments && input.attachments.length > 0),
+          urgency: 'normal',
+          keywords: [],
+        },
         clarifyQuestion: parsed.clarifyQuestion,
       }
     } catch {
+      // LLM 识别失败时回退到简单 clarify 结果
       return {
         intent: 'CLARIFY',
         confidence: 0.5,
@@ -744,6 +742,7 @@ export class OrchestratorAgent {
         return planned
       }
     } catch {
+      // 规划失败时回退到简单意图处理
     }
 
     // 简单意图：单步直达
@@ -1001,8 +1000,7 @@ export class OrchestratorAgent {
       suggestedActions: aggregated.suggestedActions,
       requiresHITL: false,
       metadata: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        intent: (state.taskPlan as any).intent || 'CLARIFY',
+        intent: state.taskPlan.intent || 'CLARIFY',
         confidence: 1,
         executionTime: state.metrics.totalDuration,
         stepsExecuted: state.stats.stepsExecuted,

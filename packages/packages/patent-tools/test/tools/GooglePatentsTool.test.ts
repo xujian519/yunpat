@@ -3,6 +3,21 @@ import {
   GooglePatentsFetchTool,
   GooglePatentDetailTool,
 } from '../../src/tools/GooglePatentsTool.js'
+import type { ToolContext } from '@yunpat/core'
+
+function createMockToolContext(): ToolContext {
+  return {
+    registry: { register: vi.fn(), unregister: vi.fn(), get: vi.fn(), call: vi.fn(), list: vi.fn() } as unknown as ToolContext['registry'],
+    llm: {
+      chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    } as unknown as ToolContext['llm'],
+    memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() } as unknown as ToolContext['memory'],
+    eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() } as unknown as ToolContext['eventBus'],
+    sessionId: 'test-session',
+  }
+}
 
 describe('GooglePatentsFetchTool', () => {
   let tool: GooglePatentsFetchTool
@@ -31,12 +46,12 @@ describe('GooglePatentsFetchTool', () => {
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    const context = {} as any
+    const context = createMockToolContext()
     await tool.execute({ query: 'neural network', page: 2, language: 'en' }, context)
 
     const callArgs = mockFetch.mock.calls[0]
     const url = callArgs[0]
-    const options = callArgs[1]
+    const options = callArgs[1] as Record<string, Record<string, string>>
 
     expect(url).toContain('patents.google.com/xhr/query')
     expect(url).toContain(encodeURIComponent('neural network'))
@@ -69,7 +84,7 @@ describe('GooglePatentsFetchTool', () => {
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute({ query: 'neural' }, context)
 
     expect(result.results).toHaveLength(1)
@@ -93,7 +108,7 @@ describe('GooglePatentsFetchTool', () => {
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute({ query: 'xyz' }, context)
 
     expect(result.results).toEqual([])
@@ -108,7 +123,7 @@ describe('GooglePatentsFetchTool', () => {
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    const context = {} as any
+    const context = createMockToolContext()
     await expect(tool.execute({ query: 'test' }, context)).rejects.toThrow('HTTP 403: Forbidden')
   })
 
@@ -121,7 +136,7 @@ describe('GooglePatentsFetchTool', () => {
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute({ query: 'test' }, context)
 
     expect(result.page).toBe(1)
@@ -155,12 +170,12 @@ describe('GooglePatentDetailTool', () => {
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    const context = {} as any
+    const context = createMockToolContext()
     await tool.execute({ patentNumber: 'CN123456789A', language: 'zh-CN' }, context)
 
     const callArgs = mockFetch.mock.calls[0]
     expect(callArgs[0]).toBe('https://patents.google.com/patent/CN123456789A/')
-    expect(callArgs[1].headers['Accept-Language']).toBe('zh-CN')
+    expect((callArgs[1] as Record<string, Record<string, string>>).headers['Accept-Language']).toBe('zh-CN')
   })
 
   it('parses HTML correctly', async () => {
@@ -190,7 +205,7 @@ describe('GooglePatentDetailTool', () => {
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute({ patentNumber: 'US1234567A' }, context)
 
     expect(result.patentNumber).toBe('US1234567A')
@@ -214,7 +229,7 @@ describe('GooglePatentDetailTool', () => {
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute({ patentNumber: 'WO9999999A1' }, context)
 
     expect(result.patentNumber).toBe('WO9999999A1')
@@ -236,7 +251,7 @@ describe('GooglePatentDetailTool', () => {
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    const context = {} as any
+    const context = createMockToolContext()
     await expect(tool.execute({ patentNumber: 'INVALID' }, context)).rejects.toThrow(
       'HTTP 404: Not Found'
     )

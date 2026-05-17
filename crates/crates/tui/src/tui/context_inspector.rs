@@ -51,10 +51,7 @@ pub fn build_context_inspector_text(app: &App) -> String {
     let _ = writeln!(
         out,
         "Workspace status: {}",
-        app.workspace_ctx
-            .context
-            .as_deref()
-            .unwrap_or("not sampled yet")
+        app.workspace_ctx.context.as_deref().unwrap_or("not sampled yet")
     );
 
     let _ = writeln!(out);
@@ -106,19 +103,14 @@ fn push_system_prompt_structure(out: &mut String, app: &App) {
 
     match &app.system_prompt {
         Some(SystemPrompt::Blocks(blocks)) => {
-            let working_set_idx = blocks
-                .iter()
-                .position(|b| b.text.contains(WORKING_SET_MARKER));
+            let working_set_idx = blocks.iter().position(|b| b.text.contains(WORKING_SET_MARKER));
             let (stable_count, working_block) = match working_set_idx {
                 Some(idx) => (idx, Some(&blocks[idx])),
                 None => (blocks.len(), None),
             };
 
-            let stable_tokens: usize = blocks
-                .iter()
-                .take(stable_count)
-                .map(|b| text_tokens(&b.text))
-                .sum();
+            let stable_tokens: usize =
+                blocks.iter().take(stable_count).map(|b| text_tokens(&b.text)).sum();
             let working_tokens = working_block.map(|b| text_tokens(&b.text)).unwrap_or(0);
 
             let _ = writeln!(
@@ -250,10 +242,7 @@ fn push_tools(out: &mut String, app: &App) {
             return;
         }
     }
-    for (cell_idx, detail) in rows
-        .into_iter()
-        .take(MAX_TOOL_ROWS.saturating_sub(rendered))
-    {
+    for (cell_idx, detail) in rows.into_iter().take(MAX_TOOL_ROWS.saturating_sub(rendered)) {
         let location = format!("cell {cell_idx}");
         push_tool_row(out, &location, detail);
         rendered += 1;
@@ -347,20 +336,19 @@ mod tests {
         app.history.push(HistoryCell::User {
             content: "read @src/main.rs".to_string(),
         });
-        app.session_context_references
-            .push(SessionContextReference {
-                message_index: 0,
-                reference: ContextReference {
-                    kind: ContextReferenceKind::File,
-                    source: ContextReferenceSource::AtMention,
-                    badge: "file".to_string(),
-                    label: "src/main.rs".to_string(),
-                    target: "/tmp/project/src/main.rs".to_string(),
-                    included: true,
-                    expanded: true,
-                    detail: Some("included".to_string()),
-                },
-            });
+        app.session_context_references.push(SessionContextReference {
+            message_index: 0,
+            reference: ContextReference {
+                kind: ContextReferenceKind::File,
+                source: ContextReferenceSource::AtMention,
+                badge: "file".to_string(),
+                label: "src/main.rs".to_string(),
+                target: "/tmp/project/src/main.rs".to_string(),
+                included: true,
+                expanded: true,
+                detail: Some("included".to_string()),
+            },
+        });
 
         let text = build_context_inspector_text(&app);
         assert!(text.contains("[file] @src/main.rs -> /tmp/project/src/main.rs"));

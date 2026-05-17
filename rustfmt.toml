@@ -1,0 +1,21 @@
+# Rustfmt configuration for YunPat Agent
+# Reference: https://rust-lang.github.io/rustfmt/
+
+edition = "2024"
+max_width = 100
+chain_width = 80
+use_small_heuristics = "Default"
+
+tab_spaces = 4
+hard_tabs = false
+newline_style = "Unix"
+
+# Imports
+reorder_imports = true
+
+# Structs
+struct_lit_width = 30
+
+# Misc
+use_field_init_shorthand = true
+use_try_shorthand = true

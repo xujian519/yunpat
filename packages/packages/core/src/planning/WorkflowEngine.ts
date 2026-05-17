@@ -6,7 +6,12 @@
  */
 
 import { v4 as uuidv4 } from 'uuid'
-import type { ExecutionContext, EventBus, MemoryStore } from '../lifecycle/Lifecycle.js'
+import {
+  ExecutionContext,
+  LifecycleStage,
+  type EventBus,
+  type MemoryStore,
+} from '../lifecycle/Lifecycle.js'
 import type { Agent } from '../agent/Agent.js'
 import type { ApprovalFlow } from '../gateway/ApprovalFlow.js'
 import type { CheckpointManager } from '../memory/CheckpointManager.js'
@@ -571,7 +576,7 @@ export class WorkflowEngine {
           executionId: execution.executionId,
           agentName: step.agentName,
           startTime,
-          currentStage: 'act' as any,
+          currentStage: LifecycleStage.ACT,
           memory: this.config.memory,
           eventBus: this.config.eventBus,
           tools: agent.getTools(),

@@ -28,6 +28,13 @@ import { TokenBudgetManager } from '../token/token-budget.js'
 import { estimateTextTokens } from '../token/token-estimator.js'
 
 /**
+ * Zod 错误结构（duck typing 避免 instanceof 问题）
+ */
+interface ZodErrorLike {
+  issues: Array<{ path: (string | number)[]; message: string }>
+}
+
+/**
  * 执行引擎配置
  */
 export interface ToolExecutionEngineConfig {
@@ -417,14 +424,14 @@ export class ToolExecutionEngine {
       return tool.metadata.inputSchema.parse(input)
     } catch (error) {
       // 使用 duck typing 检测 ZodError，避免 instanceof 跨模块问题
+      const zodErrorLike = error as ZodErrorLike
       if (
         error &&
         typeof error === 'object' &&
         'issues' in error &&
-        Array.isArray((error as any).issues)
+        Array.isArray(zodErrorLike.issues)
       ) {
-        const zodError = error as { issues: Array<{ path: (string | number)[]; message: string }> }
-        const issues = zodError.issues.map((issue) => ({
+        const issues = zodErrorLike.issues.map((issue) => ({
           path: issue.path.join('.'),
           message: issue.message,
         }))

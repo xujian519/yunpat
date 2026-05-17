@@ -370,16 +370,9 @@ fn parse_duckduckgo_results(html: &str, max_results: usize) -> Vec<WebSearchEntr
             continue;
         }
         let url = normalize_url(href);
-        let snippet = snippets
-            .get(idx)
-            .map(|s| s.to_string())
-            .filter(|s| !s.is_empty());
+        let snippet = snippets.get(idx).map(|s| s.to_string()).filter(|s| !s.is_empty());
 
-        results.push(WebSearchEntry {
-            title,
-            url,
-            snippet,
-        });
+        results.push(WebSearchEntry { title, url, snippet });
     }
 
     results

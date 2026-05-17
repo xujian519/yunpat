@@ -10,21 +10,19 @@
  * - 所有 Agent 基类（Agent → KnowledgeEnhancedAgent → ProfessionalAgent）都接受此格式
  */
 
-import type { LLMAdapter, EventBus, MemoryStore, ToolRegistry } from '@yunpat/core'
+import type { LLMAdapter, EventBus, MemoryStore, ToolRegistry, AgentConfig } from '@yunpat/core'
 import { AgentRegistry, type ExecutableAgent } from './AgentRegistry.js'
 import { agentManifest, type AgentManifestEntry } from './agentManifest.js'
 import { fileURLToPath } from 'url'
 import { dirname, resolve } from 'path'
 
 /**
- * Agent 共享依赖
+ * Agent 共享依赖 - 使用与 AgentConfig 相同的类型定义
  */
-export interface AgentSharedDeps {
-  llm: LLMAdapter
-  eventBus: EventBus
-  memory: MemoryStore
-  tools: ToolRegistry
-}
+export type AgentSharedDeps = Pick<
+  AgentConfig,
+  'llm' | 'eventBus' | 'memory' | 'tools'
+>
 
 export class AgentFactory {
   private deps: AgentSharedDeps

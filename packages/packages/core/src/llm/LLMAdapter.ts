@@ -27,6 +27,23 @@ export interface LangChainAdapterConfig {
 }
 
 /**
+ * LangChain 消息响应
+ */
+interface LangChainMessageResponse {
+  /** 响应内容 */
+  content: string
+  /** 使用元数据 */
+  usage_metadata?: {
+    /** 输入 token 数 */
+    input_tokens?: number
+    /** 输出 token 数 */
+    output_tokens?: number
+    /** 总 token 数 */
+    total_tokens?: number
+  }
+}
+
+/**
  * LangChain LLM 适配器
  *
  * 将 LangChain 的 ChatOpenAI 适配到统一的 LLM 接口
@@ -69,20 +86,20 @@ export class LangChainAdapter implements ILLMAdapter {
     }))
 
     // 调用 LangChain
-    const response: unknown = await this.llm.call(messages as any)
+    const response = await this.llm.call(messages) as LangChainMessageResponse
 
     return {
       message: {
         role: 'assistant',
-        content: (response as any).content as string,
+        content: response.content as string,
       },
-      usage: (response as any).usage_metadata
+      usage: response.usage_metadata
         ? {
-            promptTokens: (response as any).usage_metadata.input_tokens || 0,
-            completionTokens: (response as any).usage_metadata.output_tokens || 0,
+            promptTokens: response.usage_metadata.input_tokens || 0,
+            completionTokens: response.usage_metadata.output_tokens || 0,
             totalTokens:
-              ((response as any).usage_metadata.input_tokens || 0) +
-              ((response as any).usage_metadata.output_tokens || 0),
+              (response.usage_metadata.input_tokens || 0) +
+              (response.usage_metadata.output_tokens || 0),
           }
         : undefined,
     }
@@ -97,7 +114,7 @@ export class LangChainAdapter implements ILLMAdapter {
       content: msg.content,
     }))
 
-    const stream = await this.llm.stream(messages as any)
+    const stream = await this.llm.stream(messages)
 
     for await (const chunk of stream) {
       const content = chunk.content as string

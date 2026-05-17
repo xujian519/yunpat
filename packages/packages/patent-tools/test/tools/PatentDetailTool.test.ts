@@ -2,6 +2,21 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { PatentDetailTool, HighCitationPatentsTool } from '../../src/tools/PatentDetailTool.js'
 import { GooglePatentDetailTool } from '../../src/tools/GooglePatentsTool.js'
 import { GooglePatentsFetchTool } from '../../src/tools/GooglePatentsTool.js'
+import type { ToolContext } from '@yunpat/core'
+
+function createMockToolContext(): ToolContext {
+  return {
+    registry: { register: vi.fn(), unregister: vi.fn(), get: vi.fn(), call: vi.fn(), list: vi.fn() } as unknown as ToolContext['registry'],
+    llm: {
+      chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    } as unknown as ToolContext['llm'],
+    memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() } as unknown as ToolContext['memory'],
+    eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() } as unknown as ToolContext['eventBus'],
+    sessionId: 'test-session',
+  }
+}
 
 describe('PatentDetailTool', () => {
   let tool: PatentDetailTool
@@ -37,7 +52,7 @@ describe('PatentDetailTool', () => {
       filingDate: '2022-01-01',
     })
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute(
       { patentNumber: 'CN123456789A', includeClaims: true, includeAnalysis: true },
       context
@@ -68,7 +83,7 @@ describe('PatentDetailTool', () => {
       filingDate: '2022-01-01',
     })
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute(
       { patentNumber: 'CN123456789A', includeClaims: false },
       context
@@ -81,7 +96,7 @@ describe('PatentDetailTool', () => {
   })
 
   it('analyzes claims correctly via private method', () => {
-    const analyzeClaims = (tool as any).analyzeClaims.bind(tool)
+    const analyzeClaims = (tool as unknown as { analyzeClaims: (c: string[]) => { totalClaims: number; independentClaims: number; dependentClaims: number; claimTexts: string[] } }).analyzeClaims.bind(tool)
 
     const claims = [
       '一种装置，其特征在于，包括：A模块；',
@@ -97,7 +112,7 @@ describe('PatentDetailTool', () => {
   })
 
   it('handles empty claims array', () => {
-    const analyzeClaims = (tool as any).analyzeClaims.bind(tool)
+    const analyzeClaims = (tool as unknown as { analyzeClaims: (c: string[]) => { totalClaims: number; independentClaims: number; dependentClaims: number } }).analyzeClaims.bind(tool)
     const result = analyzeClaims([])
     expect(result.totalClaims).toBe(0)
     expect(result.independentClaims).toBe(0)
@@ -105,7 +120,7 @@ describe('PatentDetailTool', () => {
   })
 
   it('handles claims with "wherein" keyword', () => {
-    const analyzeClaims = (tool as any).analyzeClaims.bind(tool)
+    const analyzeClaims = (tool as unknown as { analyzeClaims: (c: string[]) => { independentClaims: number; dependentClaims: number } }).analyzeClaims.bind(tool)
     const claims = [
       'A device comprising: a module;',
       'The device of claim 1, wherein the module includes a processor.',
@@ -117,7 +132,7 @@ describe('PatentDetailTool', () => {
   })
 
   it('returns correct IPC description', () => {
-    const getIPCDescription = (tool as any).getIPCDescription.bind(tool)
+    const getIPCDescription = (tool as unknown as { getIPCDescription: (ipc: string) => string }).getIPCDescription.bind(tool)
     expect(getIPCDescription('G06N3/00')).toBe('物理')
     expect(getIPCDescription('H01L21/00')).toBe('电学')
     expect(getIPCDescription('A01B1/00')).toBe(
@@ -127,7 +142,7 @@ describe('PatentDetailTool', () => {
   })
 
   it('extracts keywords from text', () => {
-    const extractKeywords = (tool as any).extractKeywords.bind(tool)
+    const extractKeywords = (tool as unknown as { extractKeywords: (t: string) => string[] }).extractKeywords.bind(tool)
     const keywords = extractKeywords('Neural network chip for deep learning')
     expect(keywords.length).toBeGreaterThan(0)
     expect(keywords.length).toBeLessThanOrEqual(10)
@@ -139,13 +154,13 @@ describe('PatentDetailTool', () => {
   })
 
   it('returns empty keywords for short text', () => {
-    const extractKeywords = (tool as any).extractKeywords.bind(tool)
+    const extractKeywords = (tool as unknown as { extractKeywords: (t: string) => string[] }).extractKeywords.bind(tool)
     const keywords = extractKeywords('a b')
     expect(keywords).toEqual([])
   })
 
   it('returns correct technology field', () => {
-    const getTechnologyField = (tool as any).getTechnologyField.bind(tool)
+    const getTechnologyField = (tool as unknown as { getTechnologyField: (ipc: string) => string }).getTechnologyField.bind(tool)
     expect(getTechnologyField('G06N')).toBe('物理技术')
     expect(getTechnologyField('H01L')).toBe('电子电气')
     expect(getTechnologyField('A01B')).toBe('生活必需品')
@@ -196,7 +211,7 @@ describe('HighCitationPatentsTool', () => {
       page: 1,
     })
 
-    const context = {} as any
+    const context = createMockToolContext()
     const result = await tool.execute(
       { technology: 'neural network', minCitations: 5, limit: 2 },
       context

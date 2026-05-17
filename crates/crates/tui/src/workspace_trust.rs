@@ -84,12 +84,8 @@ impl WorkspaceTrust {
     #[must_use]
     #[allow(dead_code)]
     pub fn permits(&self, candidate: &Path) -> bool {
-        let canonical = candidate
-            .canonicalize()
-            .unwrap_or_else(|_| candidate.to_path_buf());
-        self.paths
-            .iter()
-            .any(|trusted| canonical.starts_with(trusted))
+        let canonical = candidate.canonicalize().unwrap_or_else(|_| candidate.to_path_buf());
+        self.paths.iter().any(|trusted| canonical.starts_with(trusted))
     }
 }
 
@@ -150,9 +146,7 @@ fn remove_at(workspace: &Path, path: &Path, trust_path: &Path) -> Result<bool> {
 }
 
 fn workspace_key(workspace: &Path) -> String {
-    canonicalize_or_keep(workspace)
-        .to_string_lossy()
-        .into_owned()
+    canonicalize_or_keep(workspace).to_string_lossy().into_owned()
 }
 
 fn canonicalize_or_keep(path: &Path) -> PathBuf {
@@ -257,15 +251,11 @@ mod tests {
 
         add_at(&ws_a, &other, &trust_path).unwrap();
         assert_eq!(
-            WorkspaceTrust::load_from_file(&ws_a, &trust_path)
-                .paths()
-                .len(),
+            WorkspaceTrust::load_from_file(&ws_a, &trust_path).paths().len(),
             1
         );
         assert_eq!(
-            WorkspaceTrust::load_from_file(&ws_b, &trust_path)
-                .paths()
-                .len(),
+            WorkspaceTrust::load_from_file(&ws_b, &trust_path).paths().len(),
             0
         );
     }

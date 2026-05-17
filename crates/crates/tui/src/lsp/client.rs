@@ -107,18 +107,11 @@ impl StdioLspTransport {
         cmd.stderr(Stdio::piped());
         cmd.kill_on_drop(true);
 
-        let mut child = cmd
-            .spawn()
-            .with_context(|| format!("failed to spawn LSP server `{command}`"))?;
+        let mut child =
+            cmd.spawn().with_context(|| format!("failed to spawn LSP server `{command}`"))?;
 
-        let stdin = child
-            .stdin
-            .take()
-            .context("LSP child has no stdin handle")?;
-        let stdout = child
-            .stdout
-            .take()
-            .context("LSP child has no stdout handle")?;
+        let stdin = child.stdin.take().context("LSP child has no stdin handle")?;
+        let stdout = child.stdout.take().context("LSP child has no stdout handle")?;
 
         let (tx_outbound, rx_outbound) = mpsc::channel::<Vec<u8>>(64);
         let (tx_inbound, rx_inbound) = mpsc::channel::<Value>(64);
@@ -287,9 +280,7 @@ async fn send_message(tx: &mpsc::Sender<Vec<u8>>, value: &Value) -> Result<()> {
     let mut frame = Vec::with_capacity(header.len() + body.len());
     frame.extend_from_slice(header.as_bytes());
     frame.extend_from_slice(&body);
-    tx.send(frame)
-        .await
-        .map_err(|_| anyhow!("LSP outbound channel closed"))?;
+    tx.send(frame).await.map_err(|_| anyhow!("LSP outbound channel closed"))?;
     Ok(())
 }
 
@@ -395,11 +386,7 @@ fn parse_publish_diagnostics(value: &Value) -> Option<(PathBuf, Vec<Diagnostic>)
         let column = start.get("character")?.as_u64()? as u32 + 1;
         let severity = Severity::from_lsp(d.get("severity").and_then(|v| v.as_i64()))
             .unwrap_or(Severity::Error);
-        let message = d
-            .get("message")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string();
+        let message = d.get("message").and_then(|v| v.as_str()).unwrap_or("").to_string();
         out.push(Diagnostic {
             line,
             column,

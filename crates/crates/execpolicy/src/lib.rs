@@ -287,9 +287,414 @@ fn normalize_command(value: &str) -> String {
 }
 
 fn first_token(command: &str) -> String {
-    command
-        .split_whitespace()
-        .next()
-        .unwrap_or_default()
-        .to_string()
+    command.split_whitespace().next().unwrap_or_default().to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_engine() -> ExecPolicyEngine {
+        ExecPolicyEngine::new(vec!["git status".to_string()], vec!["rm -rf".to_string()])
+    }
+
+    fn create_test_context<'a>() -> ExecPolicyContext<'a> {
+        ExecPolicyContext {
+            command: "git status",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::UnlessTrusted,
+            sandbox_mode: None,
+        }
+    }
+
+    #[test]
+    fn test_ruleset_builtin_default() {
+        let ruleset = Ruleset::builtin_default();
+        assert_eq!(ruleset.layer, RulesetLayer::BuiltinDefault);
+        assert!(ruleset.trusted_prefixes.is_empty());
+        assert!(ruleset.denied_prefixes.is_empty());
+    }
+
+    #[test]
+    fn test_ruleset_agent_layer() {
+        let ruleset = Ruleset::agent(
+            vec!["cargo test".to_string()],
+            vec!["cargo clean".to_string()],
+        );
+        assert_eq!(ruleset.layer, RulesetLayer::Agent);
+        assert_eq!(ruleset.trusted_prefixes.len(), 1);
+        assert_eq!(ruleset.denied_prefixes.len(), 1);
+    }
+
+    #[test]
+    fn test_ruleset_user_layer() {
+        let ruleset = Ruleset::user(
+            vec!["npm start".to_string()],
+            vec!["rm -rf".to_string()],
+        );
+        assert_eq!(ruleset.layer, RulesetLayer::User);
+        assert_eq!(ruleset.trusted_prefixes.len(), 1);
+        assert_eq!(ruleset.denied_prefixes.len(), 1);
+    }
+
+    #[test]
+    fn test_ruleset_layer_ordering() {
+        assert!(RulesetLayer::User > RulesetLayer::Agent);
+        assert!(RulesetLayer::Agent > RulesetLayer::BuiltinDefault);
+    }
+
+    #[test]
+    fn test_execpolicy_engine_new() {
+        let engine = ExecPolicyEngine::new(
+            vec!["git status".to_string()],
+            vec!["rm -rf".to_string()],
+        );
+        assert!(engine.approved_for_session.is_empty());
+    }
+
+    #[test]
+    fn test_execpolicy_engine_with_rulesets() {
+        let rulesets = vec![
+            Ruleset::builtin_default(),
+            Ruleset::agent(vec!["cargo test".to_string()], vec![]),
+            Ruleset::user(vec!["npm start".to_string()], vec![]),
+        ];
+        let engine = ExecPolicyEngine::with_rulesets(rulesets.clone());
+        assert_eq!(engine.rulesets.len(), 3);
+    }
+
+    #[test]
+    fn test_execpolicy_engine_add_ruleset() {
+        let mut engine = ExecPolicyEngine::new(vec![], vec![]);
+        engine.add_ruleset(Ruleset::builtin_default());
+        engine.add_ruleset(Ruleset::agent(vec!["cargo test".to_string()], vec![]));
+        assert_eq!(engine.rulesets.len(), 2);
+    }
+
+    #[test]
+    fn test_session_approval_tracking() {
+        let mut engine = ExecPolicyEngine::new(vec![], vec![]);
+
+        assert!(!engine.is_session_approved("test-key"));
+
+        engine.remember_session_approval("test-key".to_string());
+        assert!(engine.is_session_approved("test-key"));
+        assert!(!engine.is_session_approved("other-key"));
+    }
+
+    #[test]
+    fn test_deny_rule_blocks_command() {
+        let engine = create_test_engine();
+        let ctx = ExecPolicyContext {
+            command: "rm -rf /tmp/test",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::UnlessTrusted,
+            sandbox_mode: None,
+        };
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(!decision.allow);
+        assert!(!decision.requires_approval);
+        assert_eq!(
+            decision.reason(),
+            "Command blocked by denied prefix rule 'rm -rf'"
+        );
+        assert_eq!(decision.matched_rule, Some("rm -rf".to_string()));
+    }
+
+    #[test]
+    fn test_deny_rule_case_insensitive() {
+        let engine = ExecPolicyEngine::new(vec![], vec!["RM -RF".to_string()]);
+        let ctx = ExecPolicyContext {
+            command: "rm -rf /tmp/test",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::UnlessTrusted,
+            sandbox_mode: None,
+        };
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(!decision.allow);
+    }
+
+    #[test]
+    fn test_trusted_rule_allows_command() {
+        let engine = create_test_engine();
+        let ctx = create_test_context();
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(decision.allow);
+        assert!(!decision.requires_approval);
+        assert_eq!(decision.requirement.phase(), "allowed");
+    }
+
+    #[test]
+    fn test_trusted_rule_with_flags() {
+        let engine = ExecPolicyEngine::new(vec!["git status".to_string()], vec![]);
+        let ctx = ExecPolicyContext {
+            command: "git status -s",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::UnlessTrusted,
+            sandbox_mode: None,
+        };
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(decision.allow);
+        assert!(!decision.requires_approval);
+        assert_eq!(decision.matched_rule, Some("git status".to_string()));
+    }
+
+    #[test]
+    fn test_unmatched_command_needs_approval() {
+        let engine = ExecPolicyEngine::new(vec![], vec![]);
+        let ctx = ExecPolicyContext {
+            command: "cargo build",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::UnlessTrusted,
+            sandbox_mode: None,
+        };
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(decision.allow);
+        assert!(decision.requires_approval);
+        assert_eq!(decision.requirement.phase(), "needs_approval");
+        assert!(decision.matched_rule.is_none());
+    }
+
+    #[test]
+    fn test_ask_for_approval_never() {
+        let engine = ExecPolicyEngine::new(vec![], vec![]);
+        let ctx = ExecPolicyContext {
+            command: "cargo build",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::Never,
+            sandbox_mode: None,
+        };
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(decision.allow);
+        assert!(!decision.requires_approval);
+        assert_eq!(decision.requirement.phase(), "allowed");
+    }
+
+    #[test]
+    fn test_ask_for_approval_on_failure() {
+        let engine = ExecPolicyEngine::new(vec![], vec![]);
+        let ctx = ExecPolicyContext {
+            command: "cargo build",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::OnFailure,
+            sandbox_mode: None,
+        };
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(decision.allow);
+        assert!(!decision.requires_approval);
+        assert_eq!(decision.requirement.phase(), "allowed");
+    }
+
+    #[test]
+    fn test_ask_for_approval_reject_rules() {
+        let engine = ExecPolicyEngine::new(vec!["cargo test".to_string()], vec![]);
+        let ctx = ExecPolicyContext {
+            command: "cargo test",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::Reject {
+                sandbox_approval: false,
+                rules: true,
+                mcp_elicitations: false,
+            },
+            sandbox_mode: None,
+        };
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(!decision.allow);
+        assert!(!decision.requires_approval);
+        assert_eq!(decision.requirement.phase(), "forbidden");
+        assert!(decision.reason().contains("reject rule-exceptions"));
+    }
+
+    #[test]
+    fn test_execapprovalrequirement_reason() {
+        let skip = ExecApprovalRequirement::Skip {
+            bypass_sandbox: false,
+            proposed_execpolicy_amendment: None,
+        };
+        assert_eq!(skip.reason(), "Execution allowed by policy.");
+
+        let needs = ExecApprovalRequirement::NeedsApproval {
+            reason: "Test reason".to_string(),
+            proposed_execpolicy_amendment: None,
+            proposed_network_policy_amendments: vec![],
+        };
+        assert_eq!(needs.reason(), "Test reason");
+
+        let forbidden = ExecApprovalRequirement::Forbidden {
+            reason: "Test deny".to_string(),
+        };
+        assert_eq!(forbidden.reason(), "Test deny");
+    }
+
+    #[test]
+    fn test_execapprovalrequirement_phase() {
+        let skip = ExecApprovalRequirement::Skip {
+            bypass_sandbox: false,
+            proposed_execpolicy_amendment: None,
+        };
+        assert_eq!(skip.phase(), "allowed");
+
+        let needs = ExecApprovalRequirement::NeedsApproval {
+            reason: "Test".to_string(),
+            proposed_execpolicy_amendment: None,
+            proposed_network_policy_amendments: vec![],
+        };
+        assert_eq!(needs.phase(), "needs_approval");
+
+        let forbidden = ExecApprovalRequirement::Forbidden {
+            reason: "Test".to_string(),
+        };
+        assert_eq!(forbidden.phase(), "forbidden");
+    }
+
+    #[test]
+    fn test_execpolicydecision_reason_delegates() {
+        let requirement = ExecApprovalRequirement::Skip {
+            bypass_sandbox: false,
+            proposed_execpolicy_amendment: None,
+        };
+        let decision = ExecPolicyDecision {
+            allow: true,
+            requires_approval: false,
+            requirement: requirement.clone(),
+            matched_rule: None,
+        };
+        assert_eq!(decision.reason(), requirement.reason());
+    }
+
+    #[test]
+    fn test_normalize_command() {
+        assert_eq!(normalize_command("  Git Status  "), "git status");
+        assert_eq!(normalize_command("CARGO BUILD"), "cargo build");
+    }
+
+    #[test]
+    fn test_first_token() {
+        assert_eq!(first_token("git status"), "git");
+        assert_eq!(first_token("  cargo test --verbose  "), "cargo");
+        assert_eq!(first_token(""), "");
+        assert_eq!(first_token("   "), "");
+    }
+
+    #[test]
+    fn test_empty_command() {
+        let engine = ExecPolicyEngine::new(vec![], vec![]);
+        let ctx = ExecPolicyContext {
+            command: "",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::UnlessTrusted,
+            sandbox_mode: None,
+        };
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(decision.allow);
+    }
+
+    #[test]
+    fn test_whitespace_command() {
+        let engine = ExecPolicyEngine::new(vec![], vec![]);
+        let ctx = ExecPolicyContext {
+            command: "   ",
+            cwd: "/tmp",
+            ask_for_approval: AskForApproval::UnlessTrusted,
+            sandbox_mode: None,
+        };
+
+        let decision = engine.check(ctx).unwrap();
+        assert!(decision.allow);
+    }
+
+    #[test]
+    fn test_serde_ruleset() {
+        let ruleset = Ruleset::user(
+            vec!["npm start".to_string()],
+            vec!["rm -rf".to_string()],
+        );
+
+        let json = serde_json::to_string(&ruleset).unwrap();
+        let deserialized: Ruleset = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.layer, ruleset.layer);
+        assert_eq!(deserialized.trusted_prefixes, ruleset.trusted_prefixes);
+        assert_eq!(deserialized.denied_prefixes, ruleset.denied_prefixes);
+    }
+
+    #[test]
+    fn test_serde_askforapproval() {
+        let mode = AskForApproval::Reject {
+            sandbox_approval: true,
+            rules: false,
+            mcp_elicitations: true,
+        };
+
+        let json = serde_json::to_string(&mode).unwrap();
+        let deserialized: AskForApproval = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(mode, deserialized);
+    }
+
+    #[test]
+    fn test_layered_ruleset_priority() {
+        let builtin = Ruleset::builtin_default();
+        let agent = Ruleset::agent(vec!["cargo test".to_string()], vec![]);
+        let user = Ruleset::user(vec!["npm start".to_string()], vec![]);
+
+        let mut engine = ExecPolicyEngine::new(vec![], vec![]);
+        engine.add_ruleset(user);
+        engine.add_ruleset(builtin);
+        engine.add_ruleset(agent);
+
+        // Should be sorted by priority (builtin < agent < user)
+        // Should be sorted by priority (builtin < agent < user)
+        assert_eq!(engine.rulesets[0].layer, RulesetLayer::BuiltinDefault);
+        assert_eq!(engine.rulesets[1].layer, RulesetLayer::Agent);
+        assert_eq!(engine.rulesets[2].layer, RulesetLayer::User);
+    }
+
+    #[test]
+    fn test_resolve_prefixes_with_rulesets() {
+        let rulesets = vec![
+            Ruleset::builtin_default(),
+            Ruleset::agent(
+                vec!["cargo test".to_string()],
+                vec!["cargo clean".to_string()],
+            ),
+            Ruleset::user(
+                vec!["npm start".to_string()],
+                vec!["npm stop".to_string()],
+            ),
+        ];
+
+        let engine = ExecPolicyEngine::with_rulesets(rulesets);
+        let (trusted, denied) = engine.resolve_prefixes();
+
+        assert_eq!(trusted.len(), 2);
+        assert!(trusted.contains(&"cargo test".to_string()));
+        assert!(trusted.contains(&"npm start".to_string()));
+
+        assert_eq!(denied.len(), 2);
+        assert!(denied.contains(&"cargo clean".to_string()));
+        assert!(denied.contains(&"npm stop".to_string()));
+    }
+
+    #[test]
+    fn test_resolve_prefixes_legacy() {
+        let engine = ExecPolicyEngine::new(
+            vec!["git status".to_string()],
+            vec!["rm -rf".to_string()],
+        );
+
+        let (trusted, denied) = engine.resolve_prefixes();
+
+        assert_eq!(trusted.len(), 1);
+        assert_eq!(denied.len(), 1);
+    }
 }

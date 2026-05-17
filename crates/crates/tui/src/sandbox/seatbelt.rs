@@ -269,10 +269,7 @@ fn generate_params(policy: &SandboxPolicy, cwd: &Path) -> Vec<(String, PathBuf)>
     let writable_roots = policy.get_writable_roots(cwd);
 
     for (index, root) in writable_roots.iter().enumerate() {
-        let canonical = root
-            .root
-            .canonicalize()
-            .unwrap_or_else(|_| root.root.clone());
+        let canonical = root.root.canonicalize().unwrap_or_else(|_| root.root.clone());
         params.push((format!("WRITABLE_ROOT_{index}"), canonical));
 
         // Add parameters for read-only subpaths

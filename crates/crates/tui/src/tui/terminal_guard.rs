@@ -61,10 +61,7 @@ impl TerminalGuard {
     /// Create a new guard with the given flags.
     /// The guard assumes raw mode is already active.
     pub fn new(flags: TerminalFlags) -> Self {
-        Self {
-            flags,
-            disarmed: false,
-        }
+        Self { flags, disarmed: false }
     }
 
     /// Disarm the guard so it won't cleanup on drop (used on normal exit).

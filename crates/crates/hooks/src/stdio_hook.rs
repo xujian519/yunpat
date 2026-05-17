@@ -76,10 +76,7 @@ impl StdioBidirectionalHook {
         {
             let stdin = child.stdin.as_mut().context("无法获取子进程 stdin")?;
             let event_json = serde_json::to_string(event).context("序列化事件失败")?;
-            stdin
-                .write_all(event_json.as_bytes())
-                .await
-                .context("写入子进程 stdin 失败")?;
+            stdin.write_all(event_json.as_bytes()).await.context("写入子进程 stdin 失败")?;
             stdin.write_all(b"\n").await.context("写入换行符失败")?;
         }
         // stdin 在此处 drop，通知子进程输入结束

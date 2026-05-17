@@ -137,9 +137,6 @@ impl Evaluation {
         #[expect(clippy::expect_used)]
         let decision = decision.expect("invariant failed: matched_rules must be non-empty");
 
-        Self {
-            decision,
-            matched_rules,
-        }
+        Self { decision, matched_rules }
     }
 }

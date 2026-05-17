@@ -44,9 +44,7 @@ pub fn render(f: &mut Frame, area: Rect, app: &App) {
         let mut panel = Block::default()
             .title(Line::from(Span::styled(
                 " 云熙 TUI ",
-                Style::default()
-                    .fg(palette::YUNPAT_BLUE)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::BOLD),
             )))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(palette::BORDER_COLOR))
@@ -56,9 +54,7 @@ pub fn render(f: &mut Frame, area: Rect, app: &App) {
             let (step, total) = onboarding_step(app);
             panel = panel.title_bottom(Line::from(Span::styled(
                 format!(" Step {step}/{total} "),
-                Style::default()
-                    .fg(palette::TEXT_MUTED)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::TEXT_MUTED).add_modifier(Modifier::BOLD),
             )));
         }
         let inner = panel.inner(content_area);
@@ -101,9 +97,7 @@ pub fn tips_lines() -> Vec<ratatui::text::Line<'static>> {
     vec![
         Line::from(Span::styled(
             "Start Simple",
-            Style::default()
-                .fg(palette::YUNPAT_SKY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
         )),
         Line::from(""),
         Line::from(Span::raw(
@@ -122,9 +116,7 @@ pub fn tips_lines() -> Vec<ratatui::text::Line<'static>> {
             Span::styled("Press ", Style::default().fg(palette::TEXT_MUTED)),
             Span::styled(
                 "Enter",
-                Style::default()
-                    .fg(palette::TEXT_PRIMARY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::TEXT_PRIMARY).add_modifier(Modifier::BOLD),
             ),
             Span::styled(
                 " to open the workspace",

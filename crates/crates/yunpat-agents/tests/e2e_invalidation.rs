@@ -230,11 +230,7 @@ async fn test_invalidation_workflow_end_to_end() {
         let entries = std::fs::read_dir(&case_dir)
             .unwrap()
             .filter_map(|e| e.ok())
-            .filter(|e| {
-                e.file_name()
-                    .to_string_lossy()
-                    .starts_with(&format!("output_step{}_", i))
-            })
+            .filter(|e| e.file_name().to_string_lossy().starts_with(&format!("output_step{}_", i)))
             .collect::<Vec<_>>();
         assert!(
             !entries.is_empty(),

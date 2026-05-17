@@ -84,10 +84,8 @@ impl ToolSpec for RevertTurnTool {
             let snapshots = repo
                 .list((MAX_OFFSET as usize).saturating_mul(2) + 16)
                 .map_err(|e| format!("Snapshot list failed: {e}"))?;
-            let pre_turns: Vec<_> = snapshots
-                .into_iter()
-                .filter(|s| s.label.starts_with("pre-turn:"))
-                .collect();
+            let pre_turns: Vec<_> =
+                snapshots.into_iter().filter(|s| s.label.starts_with("pre-turn:")).collect();
             let target = pre_turns
                 .get((offset - 1) as usize)
                 .ok_or_else(|| {
@@ -97,8 +95,7 @@ impl ToolSpec for RevertTurnTool {
                     )
                 })?
                 .clone();
-            repo.restore(&target.id)
-                .map_err(|e| format!("Restore failed: {e}"))?;
+            repo.restore(&target.id).map_err(|e| format!("Restore failed: {e}"))?;
             Ok(format!(
                 "{label}: restored '{}' ({}). Workspace files reverted; conversation unchanged.",
                 target.label,

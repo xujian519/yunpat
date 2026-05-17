@@ -50,10 +50,7 @@ pub struct FlowEngine<'a> {
 
 impl<'a> FlowEngine<'a> {
     pub fn new(registry: &'a AgentRegistry) -> Self {
-        Self {
-            registry,
-            llm_provider: None,
-        }
+        Self { registry, llm_provider: None }
     }
 
     /// Set an LLM provider for quality evaluation (builder pattern).
@@ -267,12 +264,8 @@ async fn evaluate_quality(
 ) -> f32 {
     if let Some(provider) = llm_provider {
         // Build evaluation prompt from dimensions and accumulated context.
-        let dims: String = qc
-            .dimensions
-            .iter()
-            .map(|d| format!("- {}", d))
-            .collect::<Vec<_>>()
-            .join("\n");
+        let dims: String =
+            qc.dimensions.iter().map(|d| format!("- {}", d)).collect::<Vec<_>>().join("\n");
 
         let context_summary = if ctx.stage_outputs.is_empty() {
             "无上下文数据".to_string()

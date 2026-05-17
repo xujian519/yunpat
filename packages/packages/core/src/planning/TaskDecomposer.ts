@@ -14,6 +14,9 @@ import type {
   PlanningExecutionContext,
   DecompositionStats,
   Dependency,
+  LLMDecompositionResponse,
+  LLMSubGoal,
+  LLMTask,
 } from './types.js'
 import { Priority, TaskStatus, TaskType, PlanStatus } from './types.js'
 import { DependencyAnalyzer } from './DependencyAnalyzer.js'
@@ -432,30 +435,30 @@ export class TaskDecomposer {
         throw new Error('无效的子目标格式')
       }
 
-      return result.subGoals.map((sg: unknown) => ({
+      return result.subGoals.map((sg: LLMSubGoal) => ({
         id: uuidv4(),
-        title: (sg as any).title || '未命名子目标',
-        description: (sg as any).description || '',
-        tasks: ((sg as any).tasks || []).map((t: unknown) => ({
+        title: sg.title || '未命名子目标',
+        description: sg.description || '',
+        tasks: sg.tasks.map((t: LLMTask) => ({
           id: uuidv4(),
-          title: (t as any).title || '未命名任务',
-          description: (t as any).description || '',
-          type: this.parseTaskType((t as any).type),
+          title: t.title || '未命名任务',
+          description: t.description || '',
+          type: this.parseTaskType(t.type),
           status: TaskStatus.PENDING,
-          requiredCapabilities: this.inferCapabilities((t as any).type),
-          estimatedTokens: (t as any).estimatedTokens || 2000,
-          estimatedDuration: (t as any).estimatedDuration || 300,
+          requiredCapabilities: this.inferCapabilities(this.parseTaskType(t.type)),
+          estimatedTokens: t.estimatedTokens || 2000,
+          estimatedDuration: t.estimatedDuration || 300,
           createdAt: new Date(),
         })),
-        dependencies: (sg as any).dependencies || [],
-        priority: this.parsePriority((sg as any).priority),
+        dependencies: sg.dependencies || [],
+        priority: this.parsePriority(sg.priority),
         status: TaskStatus.PENDING,
-        estimatedDuration: ((sg as any).tasks || []).reduce(
-          (sum: number, t: unknown) => sum + ((t as any).estimatedDuration || 300),
+        estimatedDuration: sg.tasks.reduce(
+          (sum: number, t: LLMTask) => sum + (t.estimatedDuration || 300),
           0
         ),
-        estimatedTokens: ((sg as any).tasks || []).reduce(
-          (sum: number, t: unknown) => sum + ((t as any).estimatedTokens || 2000),
+        estimatedTokens: sg.tasks.reduce(
+          (sum: number, t: LLMTask) => sum + (t.estimatedTokens || 2000),
           0
         ),
       }))

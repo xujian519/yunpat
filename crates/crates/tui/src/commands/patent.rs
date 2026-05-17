@@ -432,13 +432,7 @@ mod tests {
         let result = patent_db(&mut app, Some("人工智能"));
         assert!(!result.is_error);
         assert!(result.message.is_some());
-        assert!(
-            result
-                .message
-                .as_ref()
-                .unwrap()
-                .contains("Searching local patent database")
-        );
+        assert!(result.message.as_ref().unwrap().contains("Searching local patent database"));
         assert!(result.action.is_some());
     }
 
@@ -473,13 +467,7 @@ mod tests {
 
         let result = patent_db(&mut app, None);
         assert!(result.is_error);
-        assert!(
-            result
-                .message
-                .as_ref()
-                .unwrap()
-                .contains("Usage: /patent-db")
-        );
+        assert!(result.message.as_ref().unwrap().contains("Usage: /patent-db"));
     }
 
     #[test]
@@ -513,13 +501,7 @@ mod tests {
 
         let result = patent_db(&mut app, Some("--ipc G06N"));
         assert!(!result.is_error);
-        assert!(
-            result
-                .message
-                .as_ref()
-                .unwrap()
-                .contains("Searching local patent database")
-        );
+        assert!(result.message.as_ref().unwrap().contains("Searching local patent database"));
     }
 
     #[test]
@@ -553,12 +535,6 @@ mod tests {
 
         let result = patent_db(&mut app, Some("--applicant 华为"));
         assert!(!result.is_error);
-        assert!(
-            result
-                .message
-                .as_ref()
-                .unwrap()
-                .contains("Searching local patent database")
-        );
+        assert!(result.message.as_ref().unwrap().contains("Searching local patent database"));
     }
 }

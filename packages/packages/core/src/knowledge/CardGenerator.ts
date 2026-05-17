@@ -9,6 +9,24 @@ import type { LLMAdapter } from '../lifecycle/Lifecycle.js'
 import type { KnowledgeCard } from './KnowledgeCard.js'
 import { generateCardId } from './KnowledgeCard.js'
 
+/**
+ * LLM 卡片质量评估响应
+ */
+interface CardQualityResponse {
+  quality: number
+  issues: string[]
+}
+
+/**
+ * LLM 卡片生成响应项
+ */
+interface CardGenerationItem {
+  question?: string
+  content?: string
+  tags?: string[]
+  quality?: number
+}
+
 const GENERATION_PROMPT = `你是一个专利法知识卡片的生成助手。请根据提供的知识页面内容，生成一张高质量的知识卡片。
 
 ## 要求
@@ -154,10 +172,10 @@ export class CardGenerator {
         maxTokens: 500,
       })
 
-      const parsed = this.extractJSON(response.message.content)
+      const parsed = this.extractJSON(response.message.content) as CardQualityResponse
       return {
-        quality: (parsed as any).quality ?? 0.5,
-        issues: (parsed as any).issues ?? [],
+        quality: parsed.quality ?? 0.5,
+        issues: parsed.issues ?? [],
       }
     } catch {
       return { quality: card.quality, issues: [] }
@@ -174,25 +192,25 @@ export class CardGenerator {
     const items = Array.isArray(parsed) ? parsed : [parsed]
     const now = new Date().toISOString()
 
-    return items.map((item: unknown) => {
-      const question = (item as any).question ?? ''
+    return items.map((item: CardGenerationItem) => {
+      const question = item.question ?? ''
       const card: KnowledgeCard = {
         id: generateCardId(question, concept),
         question,
-        content: (item as any).content ?? '',
+        content: item.content ?? '',
         sourcePages: [sourcePage],
         relatedCards: [],
         concept,
         domain,
-        quality: typeof (item as any).quality === 'number' ? (item as any).quality : 0.5,
-        tags: (item as any).tags ?? [],
+        quality: typeof item.quality === 'number' ? item.quality : 0.5,
+        tags: item.tags ?? [],
         version: 1,
         createdAt: now,
         updatedAt: now,
         metadata: {
           generator: 'CardGenerator',
           llmModel: 'unknown',
-          tokenCount: ((item as any).content ?? '').length,
+          tokenCount: (item.content ?? '').length,
           referenceCount: 0,
         },
       }

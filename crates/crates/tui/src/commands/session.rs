@@ -84,11 +84,8 @@ pub fn load(app: &mut App, path: Option<&str>) -> CommandResult {
 
     app.api_messages.clone_from(&session.messages);
     app.clear_history();
-    let cells_to_add: Vec<_> = app
-        .api_messages
-        .iter()
-        .flat_map(history_cells_from_message)
-        .collect();
+    let cells_to_add: Vec<_> =
+        app.api_messages.iter().flat_map(history_cells_from_message).collect();
     app.extend_history(cells_to_add);
     app.mark_history_updated();
     app.viewport.transcript_selection.clear();
@@ -163,12 +160,7 @@ pub fn export(app: &mut App, path: Option<&str>) -> CommandResult {
             HistoryCell::Thinking { content, .. } => ("*Thinking:*", content.clone()),
             HistoryCell::Tool(tool) => ("**Tool:**", render_tool_cell(tool, 80)),
             HistoryCell::SubAgent(sub) => ("**Sub-agent:**", render_subagent_cell(sub, 80)),
-            HistoryCell::ArchivedContext {
-                level,
-                range,
-                summary,
-                ..
-            } => (
+            HistoryCell::ArchivedContext { level, range, summary, .. } => (
                 "**Archived Context:**",
                 format!("L{level} [{range}]: {summary}"),
             ),
@@ -248,26 +240,15 @@ fn prune(_app: &mut App, days_arg: Option<&str>) -> CommandResult {
 }
 
 fn render_tool_cell(tool: &crate::tui::history::ToolCell, width: u16) -> String {
-    tool.lines(width)
-        .into_iter()
-        .map(line_to_string)
-        .collect::<Vec<_>>()
-        .join("\n")
+    tool.lines(width).into_iter().map(line_to_string).collect::<Vec<_>>().join("\n")
 }
 
 fn render_subagent_cell(cell: &crate::tui::history::SubAgentCell, width: u16) -> String {
-    cell.lines(width)
-        .into_iter()
-        .map(line_to_string)
-        .collect::<Vec<_>>()
-        .join("\n")
+    cell.lines(width).into_iter().map(line_to_string).collect::<Vec<_>>().join("\n")
 }
 
 fn line_to_string(line: ratatui::text::Line<'static>) -> String {
-    line.spans
-        .into_iter()
-        .map(|span| span.content.to_string())
-        .collect::<String>()
+    line.spans.into_iter().map(|span| span.content.to_string()).collect::<String>()
 }
 
 #[cfg(test)]
@@ -422,9 +403,7 @@ mod tests {
     fn test_export_crees_markdown_file() {
         let tmpdir = TempDir::new().unwrap();
         let mut app = create_test_app_with_tmpdir(&tmpdir);
-        app.history.push(HistoryCell::User {
-            content: "Hello".to_string(),
-        });
+        app.history.push(HistoryCell::User { content: "Hello".to_string() });
         app.history.push(HistoryCell::Assistant {
             content: "Hi there".to_string(),
             streaming: false,
@@ -519,11 +498,7 @@ mod tests {
         let result = sessions(&mut app, Some("teleport"));
         assert!(result.is_error);
         assert!(
-            result
-                .message
-                .as_deref()
-                .unwrap_or("")
-                .contains("unknown subcommand"),
+            result.message.as_deref().unwrap_or("").contains("unknown subcommand"),
             "expected unknown-subcommand error: {:?}",
             result.message
         );

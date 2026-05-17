@@ -382,11 +382,7 @@ fn sync_skills(app: &mut App) -> CommandResult {
 /// network-gated install rather than a silent crash.
 fn installer_settings(_app: &App) -> (NetworkPolicy, u64, String) {
     let cfg = crate::config::Config::load(None, None).unwrap_or_default();
-    let network = cfg
-        .network
-        .clone()
-        .map(|policy| policy.into_runtime())
-        .unwrap_or_default();
+    let network = cfg.network.clone().map(|policy| policy.into_runtime()).unwrap_or_default();
     let skills_cfg = cfg.skills.as_ref();
     let max_size = skills_cfg
         .and_then(|s| s.max_install_size_bytes)
@@ -414,10 +410,7 @@ fn path_or_default(path: &std::path::Path) -> String {
             // Display with parent so the user sees the full skill location.
             // We intentionally use `display()` here because it's just for
             // user-facing output, not for path comparisons.
-            let parent = path
-                .parent()
-                .map(|p| p.display().to_string())
-                .unwrap_or_default();
+            let parent = path.parent().map(|p| p.display().to_string()).unwrap_or_default();
             if parent.is_empty() {
                 n.to_string_lossy().to_string()
             } else {

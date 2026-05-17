@@ -205,8 +205,7 @@ impl FanoutCard {
         S: Into<String>,
     {
         for id in ids {
-            self.workers
-                .push(WorkerSlot::new(id.into(), AgentLifecycle::Pending));
+            self.workers.push(WorkerSlot::new(id.into(), AgentLifecycle::Pending));
         }
         self
     }
@@ -234,10 +233,8 @@ impl FanoutCard {
             slot.status = status;
             return;
         }
-        if let Some(slot) = self
-            .workers
-            .iter_mut()
-            .find(|s| matches!(s.status, AgentLifecycle::Pending))
+        if let Some(slot) =
+            self.workers.iter_mut().find(|s| matches!(s.status, AgentLifecycle::Pending))
         {
             slot.agent_id = agent_id.to_string();
             slot.status = status;
@@ -293,9 +290,7 @@ impl FanoutCard {
             Span::styled("  ", Style::default()),
             Span::styled(
                 self.dot_grid(),
-                Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
             ),
         ]));
         let (done, running, failed, pending) = self.counts();
@@ -343,15 +338,11 @@ fn card_header(
     Line::from(vec![
         Span::styled(
             format!("{glyph} "),
-            Style::default()
-                .fg(header_color)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(header_color).add_modifier(Modifier::BOLD),
         ),
         Span::styled(
             verb.to_string(),
-            Style::default()
-                .fg(header_color)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(header_color).add_modifier(Modifier::BOLD),
         ),
         Span::raw(" "),
         Span::styled(role.to_string(), Style::default().fg(palette::TEXT_PRIMARY)),
@@ -391,17 +382,10 @@ pub fn apply_to_delegate(card: &mut DelegateCard, msg: &MailboxMessage) -> bool 
             card.status = AgentLifecycle::Running;
             card.push_action(status);
         }
-        MailboxMessage::ToolCallStarted {
-            tool_name, step, ..
-        } => {
+        MailboxMessage::ToolCallStarted { tool_name, step, .. } => {
             card.push_action(format!("[{step}] {tool_name} started"));
         }
-        MailboxMessage::ToolCallCompleted {
-            tool_name,
-            step,
-            ok,
-            ..
-        } => {
+        MailboxMessage::ToolCallCompleted { tool_name, step, ok, .. } => {
             card.push_action(format!(
                 "[{step}] {tool_name} {}",
                 if *ok { "ok" } else { "failed" }
@@ -479,12 +463,7 @@ mod tests {
     fn render_to_strings(lines: &[Line<'static>]) -> Vec<String> {
         lines
             .iter()
-            .map(|line| {
-                line.spans
-                    .iter()
-                    .map(|span| span.content.as_ref())
-                    .collect::<String>()
-            })
+            .map(|line| line.spans.iter().map(|span| span.content.as_ref()).collect::<String>())
             .collect()
     }
 
@@ -543,9 +522,7 @@ mod tests {
         assert_eq!(card.status, AgentLifecycle::Completed);
         let rendered = render_to_strings(&card.render_lines(80));
         assert!(
-            rendered
-                .iter()
-                .any(|line| line.contains("scanned 42 files")),
+            rendered.iter().any(|line| line.contains("scanned 42 files")),
             "summary row renders on terminal status: got {rendered:?}"
         );
     }

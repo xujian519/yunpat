@@ -26,6 +26,7 @@ pub enum StepStatus {
 impl StepStatus {
     #[allow(dead_code)]
     #[must_use]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(value: &str) -> Option<Self> {
         match value.trim().to_lowercase().as_str() {
             "pending" => Some(StepStatus::Pending),
@@ -226,11 +227,7 @@ impl PlanState {
         if self.steps.is_empty() {
             return 0;
         }
-        let completed = self
-            .steps
-            .iter()
-            .filter(|s| s.status == StepStatus::Completed)
-            .count();
+        let completed = self.steps.iter().filter(|s| s.status == StepStatus::Completed).count();
         let percent = completed.saturating_mul(100) / self.steps.len();
         u8::try_from(percent).unwrap_or(u8::MAX)
     }
@@ -248,11 +245,8 @@ pub enum PlanValidation {
 /// Validate a plan update
 #[allow(dead_code)]
 pub fn validate_plan_update(current: &PlanState, update: &UpdatePlanArgs) -> PlanValidation {
-    let current_steps: std::collections::HashMap<_, _> = current
-        .steps()
-        .iter()
-        .map(|s| (s.text.clone(), &s.status))
-        .collect();
+    let current_steps: std::collections::HashMap<_, _> =
+        current.steps().iter().map(|s| (s.text.clone(), &s.status)).collect();
 
     for item in &update.plan {
         if let Some(old_status) = current_steps.get(&item.step) {
@@ -371,23 +365,14 @@ impl ToolSpec for UpdatePlanTool {
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| ToolError::invalid_input("Plan item missing 'step'"))?;
 
-            let status_str = item
-                .get("status")
-                .and_then(|v| v.as_str())
-                .unwrap_or("pending");
+            let status_str = item.get("status").and_then(|v| v.as_str()).unwrap_or("pending");
 
             let status = StepStatus::from_str(status_str).unwrap_or(StepStatus::Pending);
 
-            plan_args.push(PlanItemArg {
-                step: step.to_string(),
-                status,
-            });
+            plan_args.push(PlanItemArg { step: step.to_string(), status });
         }
 
-        let args = UpdatePlanArgs {
-            explanation,
-            plan: plan_args,
-        };
+        let args = UpdatePlanArgs { explanation, plan: plan_args };
 
         let mut state = self.plan_state.lock().await;
 

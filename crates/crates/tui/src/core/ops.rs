@@ -5,8 +5,8 @@
 
 use crate::compaction::CompactionConfig;
 use crate::models::{Message, SystemPrompt};
-use crate::tui::app::AppMode;
-use crate::tui::approval::ApprovalMode;
+use yunpat_protocol::AppMode;
+use yunpat_protocol::ApprovalMode;
 use std::path::PathBuf;
 
 /// Operations that can be submitted to the engine.
@@ -92,6 +92,13 @@ pub enum Op {
     /// from the session, then re-send with the new content.
     #[allow(dead_code)]
     EditLastTurn { new_message: String },
+
+    /// Execute a patent workflow directly
+    PatentWorkflow {
+        agent_id: String,
+        topic: Option<String>,
+        case_id: Option<String>,
+    },
 
     /// Shutdown the engine
     Shutdown,

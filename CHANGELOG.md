@@ -4,6 +4,29 @@
 
 **阶段 3：大文件拆分与代码质量提升**
 
+### 质量审计与代码治理 (2026-05-18)
+
+#### Phase 0: 快赢
+- 统一 zod (^3.25.76)、vitest (^4.1.5)、TypeScript (^5.6.3) 版本
+- 修复 Dockerfile: rust:1.88-alpine, node:20-alpine
+- 添加 .editorconfig, 移除 Cargo.lock 排除
+
+#### Phase 1: P0 修复
+- secrets unwrap 安全修复 (3处)
+- CI Rust toolchain 锁定 1.88.0, lockfile 冻结, pnpm action 升级
+
+#### Phase 2: 质量治理
+- tsconfig strict 继承修复 (7包)
+- 3个 CI 文件合并为统一 ci.yml (15 jobs, path filtering)
+- Rust 测试 +40
+
+#### Phase 3: 架构优化
+- 生产代码 `as any` 全部归零 (172→0)
+- tui 专利模块提取为 yunpat-patent-tui crate
+- orchestrator peer deps 从 21 降至 0
+- Release CI (binary builds + GitHub Release)
+- 测试代码 `as any` 减少 58% (703→296)
+
 ### 重构
 
 - 拆分 10 个大文件，消除所有 >450 行的 TypeScript 文件

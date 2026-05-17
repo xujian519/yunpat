@@ -84,12 +84,7 @@ impl PatentAgent for McpAgentAdapter {
         let input = &intent.raw_input;
         let lower = input.to_lowercase();
 
-        let matches = self
-            .config
-            .keywords
-            .iter()
-            .filter(|kw| lower.contains(kw.as_str()))
-            .count();
+        let matches = self.config.keywords.iter().filter(|kw| lower.contains(kw.as_str())).count();
 
         if matches == 0 {
             return 0.0;

@@ -5,11 +5,7 @@
  */
 
 export { SemanticChunker, createSemanticChunker } from './SemanticChunker.js'
-export type {
-  SemanticChunkerConfig,
-  Chunk,
-  PatentDocument,
-} from './SemanticChunker.js'
+export type { SemanticChunkerConfig, Chunk, PatentDocument } from './SemanticChunker.js'
 
 export { GraphRAGEngine, createGraphRAGEngine } from './GraphRAGEngine.js'
 export type {
@@ -20,11 +16,7 @@ export type {
 } from './GraphRAGEngine.js'
 
 export { AgenticRAGEngine, createAgenticRAGEngine } from './AgenticRAGEngine.js'
-export type {
-  AgenticRAGConfig,
-  QualityAssessment,
-  AgenticRAGResult,
-} from './AgenticRAGEngine.js'
+export type { AgenticRAGConfig, QualityAssessment, AgenticRAGResult } from './AgenticRAGEngine.js'
 
 export {
   RetrievalTuningConfig,

@@ -89,7 +89,7 @@ export class TokenBudget {
 
     let tokens = 0
     for (const ch of text) {
-      const code = ch.codePointAt(0)!
+      const code = ch.codePointAt(0) ?? 0
       // CJK 统一汉字范围
       if (
         (code >= 0x4e00 && code <= 0x9fff) ||
@@ -117,7 +117,7 @@ export class TokenBudget {
 
     for (let i = 0; i < text.length; i++) {
       const ch = text[i]
-      const code = ch.codePointAt(0)!
+      const code = ch.codePointAt(0) ?? 0
       if (
         (code >= 0x4e00 && code <= 0x9fff) ||
         (code >= 0x3400 && code <= 0x4dbf) ||

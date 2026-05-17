@@ -72,9 +72,7 @@ fn push_server(lines: &mut Vec<String>, server: &McpServerSnapshot) {
         lines.push(format!(
             "    tool {}{}",
             tool.model_name,
-            tool.description
-                .as_ref()
-                .map_or(String::new(), |desc| format!(" - {desc}"))
+            tool.description.as_ref().map_or(String::new(), |desc| format!(" - {desc}"))
         ));
     }
     for resource in &server.resources {

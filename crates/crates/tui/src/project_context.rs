@@ -180,9 +180,7 @@ fn load_context_file(path: &Path) -> Result<String, ProjectContextError> {
 
     // Basic validation
     if content.trim().is_empty() {
-        return Err(ProjectContextError::Empty {
-            path: path.to_path_buf(),
-        });
+        return Err(ProjectContextError::Empty { path: path.to_path_buf() });
     }
 
     Ok(content)
@@ -273,10 +271,7 @@ Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore
 /// Merge multiple project contexts (e.g., from nested directories)
 #[allow(dead_code)] // Public API for monorepo context merging
 pub fn merge_contexts(contexts: &[ProjectContext]) -> Option<String> {
-    let non_empty: Vec<_> = contexts
-        .iter()
-        .filter_map(ProjectContext::as_system_block)
-        .collect();
+    let non_empty: Vec<_> = contexts.iter().filter_map(ProjectContext::as_system_block).collect();
 
     if non_empty.is_empty() {
         None
@@ -310,12 +305,7 @@ mod tests {
         let ctx = load_project_context(tmp.path());
 
         assert!(ctx.has_instructions());
-        assert!(
-            ctx.instructions
-                .as_ref()
-                .unwrap()
-                .contains("Test Instructions")
-        );
+        assert!(ctx.instructions.as_ref().unwrap().contains("Test Instructions"));
         assert_eq!(ctx.source_path, Some(agents_path));
     }
 
@@ -332,12 +322,7 @@ mod tests {
         let ctx = load_project_context(tmp.path());
 
         assert!(ctx.has_instructions());
-        assert!(
-            ctx.instructions
-                .as_ref()
-                .unwrap()
-                .contains("AGENTS content")
-        );
+        assert!(ctx.instructions.as_ref().unwrap().contains("AGENTS content"));
     }
 
     #[test]
@@ -350,12 +335,7 @@ mod tests {
         let ctx = load_project_context(tmp.path());
 
         assert!(ctx.has_instructions());
-        assert!(
-            ctx.instructions
-                .as_ref()
-                .unwrap()
-                .contains("Hidden instructions")
-        );
+        assert!(ctx.instructions.as_ref().unwrap().contains("Hidden instructions"));
     }
 
     #[test]
@@ -426,12 +406,7 @@ mod tests {
         let ctx = load_project_context_with_parents(&subdir);
 
         assert!(ctx.has_instructions());
-        assert!(
-            ctx.instructions
-                .as_ref()
-                .unwrap()
-                .contains("Parent instructions")
-        );
+        assert!(ctx.instructions.as_ref().unwrap().contains("Parent instructions"));
     }
 
     #[test]
@@ -467,11 +442,6 @@ mod tests {
 
         let ctx = load_project_context_with_parents(&workspace);
         assert!(ctx.has_instructions());
-        assert!(
-            ctx.instructions
-                .as_ref()
-                .unwrap()
-                .contains("Organization instructions")
-        );
+        assert!(ctx.instructions.as_ref().unwrap().contains("Organization instructions"));
     }
 }

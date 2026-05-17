@@ -227,9 +227,7 @@ impl<'a> HeaderWidget<'a> {
         }
         vec![Span::styled(
             trimmed.to_string(),
-            Style::default()
-                .fg(palette::YUNPAT_SKY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
         )]
     }
 
@@ -286,9 +284,7 @@ impl<'a> HeaderWidget<'a> {
             }
             spans.push(Span::styled(
                 "●",
-                Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
             ));
             if show_stream_label {
                 spans.push(Span::raw(" "));
@@ -408,21 +404,12 @@ impl<'a> HeaderWidget<'a> {
             .add_modifier(Modifier::BOLD);
 
         if max_width < mode_label.width() {
-            let fallback = self
-                .data
-                .mode
-                .label()
-                .chars()
-                .next()
-                .unwrap_or('?')
-                .to_string();
+            let fallback = self.data.mode.label().chars().next().unwrap_or('?').to_string();
             return vec![Span::styled(fallback, mode_style)];
         }
 
         let mut spans = vec![Span::styled(mode_label.to_string(), mode_style)];
-        let metadata_width = max_width
-            .saturating_sub(mode_label.width())
-            .saturating_sub(2);
+        let metadata_width = max_width.saturating_sub(mode_label.width()).saturating_sub(2);
         let metadata = if metadata_width >= 4 {
             self.metadata_spans(metadata_width)
         } else {

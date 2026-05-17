@@ -56,9 +56,7 @@ impl FrameRateLimiter {
         let Some(last_emitted_at) = self.last_emitted_at else {
             return requested;
         };
-        let min_allowed = last_emitted_at
-            .checked_add(self.interval())
-            .unwrap_or(last_emitted_at);
+        let min_allowed = last_emitted_at.checked_add(self.interval()).unwrap_or(last_emitted_at);
         requested.max(min_allowed)
     }
 

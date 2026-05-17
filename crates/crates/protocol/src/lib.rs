@@ -3,6 +3,93 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+/// Application mode controls the agent's autonomy level.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AppMode {
+    /// Fully autonomous agent mode
+    Agent,
+    /// YOLO mode — maximum autonomy
+    Yolo,
+    /// Plan mode — step-by-step execution
+    Plan,
+}
+
+/// Approval policy for tool execution.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ApprovalMode {
+    /// Auto-approve all tools (YOLO mode / --yolo flag)
+    Auto,
+    /// Suggest approval for non-safe tools (non-YOLO modes)
+    #[default]
+    Suggest,
+    /// Never execute tools requiring approval
+    Never,
+}
+
+impl ApprovalMode {
+    /// Human-readable label for the approval mode.
+    pub fn label(self) -> &'static str {
+        match self {
+            ApprovalMode::Auto => "AUTO",
+            ApprovalMode::Suggest => "SUGGEST",
+            ApprovalMode::Never => "NEVER",
+        }
+    }
+
+    /// Parse from a config string value.
+    pub fn from_config_value(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "auto" => Some(ApprovalMode::Auto),
+            "suggest" => Some(ApprovalMode::Suggest),
+            "never" => Some(ApprovalMode::Never),
+            _ => None,
+        }
+    }
+}
+
+impl AppMode {
+    /// Parse from a config string value.
+    #[must_use]
+    pub fn from_setting(value: &str) -> Self {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "plan" => Self::Plan,
+            "yolo" => Self::Yolo,
+            _ => Self::Agent,
+        }
+    }
+
+    /// Serialize to a config string value.
+    #[must_use]
+    pub fn as_setting(self) -> &'static str {
+        match self {
+            Self::Agent => "agent",
+            Self::Yolo => "yolo",
+            Self::Plan => "plan",
+        }
+    }
+
+    /// Short label used in the UI footer.
+    pub fn label(self) -> &'static str {
+        match self {
+            AppMode::Agent => "AGENT",
+            AppMode::Yolo => "YOLO",
+            AppMode::Plan => "PLAN",
+        }
+    }
+
+    /// Description shown in help or onboarding text.
+    #[allow(dead_code)]
+    pub fn description(self) -> &'static str {
+        match self {
+            AppMode::Agent => "Agent mode - autonomous task execution with tools",
+            AppMode::Yolo => "YOLO mode - full tool access without approvals",
+            AppMode::Plan => "Plan mode - design before implementing",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ThreadStatus {
@@ -438,4 +525,376 @@ pub enum EventFrame {
         response_id: String,
         message: String,
     },
+}
+
+// ============================================================================
+// Tool approval & collaboration gate types (migrated from tui crate to break
+// core ↔ tui circular dependency)
+// ============================================================================
+
+/// Categorizes tools by cost/risk level.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolCategory {
+    /// Free, read-only operations (`list_dir`, `read_file`, todo_*)
+    Safe,
+    /// File modifications (`write_file`, `edit_file`)
+    FileWrite,
+    /// Shell execution (`exec_shell`)
+    Shell,
+    /// Network-oriented built-in tools
+    Network,
+    /// Read-only MCP discovery and resource access
+    McpRead,
+    /// MCP actions that may change remote state
+    McpAction,
+    /// Unknown or unclassified tool surface
+    Unknown,
+}
+
+/// Stakes-based variant for the takeover modal.
+///
+/// `RiskLevel::Benign` lets a single keystroke commit the approval.
+/// `RiskLevel::Destructive` requires an explicit second confirmation
+/// keypress so muscle-memory `Enter` never lands on an irreversible op.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RiskLevel {
+    Benign,
+    Destructive,
+}
+
+/// Gate level for a tool execution request.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CollaborationGate {
+    /// Auto-execute, no UI needed (read-only tools).
+    None,
+    /// Toast with summary + ApprovalView (benign file writes, shell queries).
+    ConfirmPlan,
+    /// Preview panel shows diff + ApprovalView (destructive file writes).
+    ReviewDiff,
+    /// Sidebar switches to Plan + ApprovalView (destructive shell, unknown).
+    RequirePlan,
+}
+
+/// Determine the collaboration gate level for a tool.
+pub fn determine_gate(category: ToolCategory, risk: RiskLevel) -> CollaborationGate {
+    match (category, risk) {
+        // Safe / read-only → always auto-execute
+        (ToolCategory::Safe | ToolCategory::McpRead, _) => CollaborationGate::None,
+        // File writes: benign → confirm, destructive → diff review
+        (ToolCategory::FileWrite, RiskLevel::Benign) => CollaborationGate::ConfirmPlan,
+        (ToolCategory::FileWrite, RiskLevel::Destructive) => CollaborationGate::ReviewDiff,
+        // Shell: destructive → require plan, benign → confirm
+        (ToolCategory::Shell, RiskLevel::Destructive) => CollaborationGate::RequirePlan,
+        (ToolCategory::Shell, RiskLevel::Benign) => CollaborationGate::ConfirmPlan,
+        // Network → confirm with URL info
+        (ToolCategory::Network, _) => CollaborationGate::ConfirmPlan,
+        // MCP actions: destructive → require plan, benign → confirm
+        (ToolCategory::McpAction, RiskLevel::Destructive) => CollaborationGate::RequirePlan,
+        (ToolCategory::McpAction, RiskLevel::Benign) => CollaborationGate::ConfirmPlan,
+        // Unknown → safest path
+        (ToolCategory::Unknown, _) => CollaborationGate::RequirePlan,
+    }
+}
+
+// ============================================================================
+// Capacity & coherence types (migrated from core/ to break core ↔ tui cycle)
+// ============================================================================
+
+/// Action recommended by the capacity controller.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum GuardrailAction {
+    NoIntervention,
+    TargetedContextRefresh,
+    VerifyWithToolReplay,
+    VerifyAndReplan,
+}
+
+impl GuardrailAction {
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            GuardrailAction::NoIntervention => "no_intervention",
+            GuardrailAction::TargetedContextRefresh => "targeted_context_refresh",
+            GuardrailAction::VerifyWithToolReplay => "verify_with_tool_replay",
+            GuardrailAction::VerifyAndReplan => "verify_and_replan",
+        }
+    }
+}
+
+/// Coarse failure risk band.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RiskBand {
+    Low,
+    Medium,
+    High,
+}
+
+impl RiskBand {
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            RiskBand::Low => "low",
+            RiskBand::Medium => "medium",
+            RiskBand::High => "high",
+        }
+    }
+}
+
+/// User-facing coherence ladder for session health.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CoherenceState {
+    #[default]
+    Healthy,
+    GettingCrowded,
+    RefreshingContext,
+    VerifyingRecentWork,
+    ResettingPlan,
+}
+
+impl CoherenceState {
+    #[must_use]
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Healthy => "healthy",
+            Self::GettingCrowded => "getting crowded",
+            Self::RefreshingContext => "refreshing context",
+            Self::VerifyingRecentWork => "verifying recent work",
+            Self::ResettingPlan => "resetting plan",
+        }
+    }
+
+    #[must_use]
+    pub fn description(self) -> &'static str {
+        match self {
+            Self::Healthy => "The session is stable and focused.",
+            Self::GettingCrowded => "The session is approaching context pressure.",
+            Self::RefreshingContext => "The engine is refreshing context before continuing.",
+            Self::VerifyingRecentWork => {
+                "The engine is checking recent tool results before continuing."
+            }
+            Self::ResettingPlan => {
+                "The engine is rebuilding from canonical context and replanning."
+            }
+        }
+    }
+}
+
+/// Synthetic input to the coherence reducer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CoherenceSignal {
+    CapacityDecision {
+        risk_band: RiskBand,
+        action: GuardrailAction,
+        cooldown_blocked: bool,
+    },
+    CapacityIntervention {
+        action: GuardrailAction,
+    },
+    CompactionStarted,
+    CompactionCompleted,
+    CompactionFailed,
+}
+
+/// Pure transition function for the plain-language coherence ladder.
+#[must_use]
+pub fn next_coherence_state(current: CoherenceState, signal: CoherenceSignal) -> CoherenceState {
+    match signal {
+        CoherenceSignal::CompactionStarted => CoherenceState::RefreshingContext,
+        CoherenceSignal::CompactionCompleted => CoherenceState::Healthy,
+        CoherenceSignal::CompactionFailed => CoherenceState::GettingCrowded,
+        CoherenceSignal::CapacityIntervention { action }
+        | CoherenceSignal::CapacityDecision { action, .. } => match action {
+            GuardrailAction::NoIntervention => match signal {
+                CoherenceSignal::CapacityDecision {
+                    risk_band, cooldown_blocked, ..
+                } => {
+                    if cooldown_blocked {
+                        return current;
+                    }
+                    match risk_band {
+                        RiskBand::Low => CoherenceState::Healthy,
+                        RiskBand::Medium | RiskBand::High => CoherenceState::GettingCrowded,
+                    }
+                }
+                _ => current,
+            },
+            GuardrailAction::TargetedContextRefresh => CoherenceState::RefreshingContext,
+            GuardrailAction::VerifyWithToolReplay => CoherenceState::VerifyingRecentWork,
+            GuardrailAction::VerifyAndReplan => CoherenceState::ResettingPlan,
+        },
+    }
+}
+
+
+// ============================================================================
+// Tool types (migrated from yunpat-tools to break core ↔ tools cycle)
+// ============================================================================
+
+/// Capabilities that a tool may have or require.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ToolCapability {
+    /// Tool only reads data, never modifies state.
+    ReadOnly,
+    /// Tool writes to the filesystem.
+    WritesFiles,
+    /// Tool executes arbitrary shell commands.
+    ExecutesCode,
+    /// Tool makes network requests.
+    Network,
+    /// Tool can be run in a sandbox.
+    Sandboxable,
+    /// Tool requires user approval before execution.
+    RequiresApproval,
+}
+
+/// Approval requirement for a tool.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
+pub enum ApprovalRequirement {
+    /// Never needs approval: safe read-only operations.
+    #[default]
+    Auto,
+    /// Suggest approval but allow user to skip.
+    Suggest,
+    /// Always require explicit user approval.
+    Required,
+}
+
+/// Errors that can occur during tool execution.
+#[derive(Debug, Clone)]
+pub enum ToolError {
+    InvalidInput { message: String },
+    MissingField { field: String },
+    PathEscape { path: PathBuf },
+    ExecutionFailed { message: String },
+    Timeout { seconds: u64 },
+    NotAvailable { message: String },
+    PermissionDenied { message: String },
+}
+
+impl std::fmt::Display for ToolError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidInput { message } => {
+                write!(f, "Failed to validate input: {message}")
+            }
+            Self::MissingField { field } => {
+                write!(
+                    f,
+                    "Failed to validate input: missing required field '{field}'"
+                )
+            }
+            Self::PathEscape { path } => {
+                write!(
+                    f,
+                    "Failed to resolve path '{}': path escapes workspace",
+                    path.display()
+                )
+            }
+            Self::ExecutionFailed { message } => {
+                write!(f, "Failed to execute tool: {message}")
+            }
+            Self::Timeout { seconds } => {
+                write!(
+                    f,
+                    "Failed to execute tool: operation timed out after {seconds}s"
+                )
+            }
+            Self::NotAvailable { message } => {
+                write!(f, "Failed to locate tool: {message}")
+            }
+            Self::PermissionDenied { message } => {
+                write!(f, "Failed to authorize tool execution: {message}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ToolError {}
+
+impl ToolError {
+    #[must_use]
+    pub fn invalid_input(msg: impl Into<String>) -> Self {
+        Self::InvalidInput { message: msg.into() }
+    }
+
+    #[must_use]
+    pub fn missing_field(field: impl Into<String>) -> Self {
+        Self::MissingField { field: field.into() }
+    }
+
+    #[must_use]
+    pub fn execution_failed(msg: impl Into<String>) -> Self {
+        Self::ExecutionFailed { message: msg.into() }
+    }
+
+    #[must_use]
+    pub fn path_escape(path: impl Into<PathBuf>) -> Self {
+        Self::PathEscape { path: path.into() }
+    }
+
+    #[must_use]
+    pub fn not_available(msg: impl Into<String>) -> Self {
+        Self::NotAvailable { message: msg.into() }
+    }
+
+    #[must_use]
+    pub fn permission_denied(msg: impl Into<String>) -> Self {
+        Self::PermissionDenied { message: msg.into() }
+    }
+}
+
+/// Result of a tool execution.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolResult {
+    /// The output content, which may be JSON or plain text.
+    pub content: String,
+    /// Whether the execution was successful.
+    pub success: bool,
+    /// Optional structured metadata.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<Value>,
+}
+
+impl ToolResult {
+    /// Create a successful result with content.
+    #[must_use]
+    pub fn success(content: impl Into<String>) -> Self {
+        Self {
+            content: content.into(),
+            success: true,
+            metadata: None,
+        }
+    }
+
+    /// Create an error result with message.
+    #[must_use]
+    pub fn error(message: impl Into<String>) -> Self {
+        Self {
+            content: message.into(),
+            success: false,
+            metadata: None,
+        }
+    }
+
+    /// Create a successful result from JSON.
+    pub fn json<T: Serialize>(value: &T) -> std::result::Result<Self, serde_json::Error> {
+        Ok(Self {
+            content: serde_json::to_string_pretty(value)?,
+            success: true,
+            metadata: None,
+        })
+    }
+
+    /// Add metadata to the result.
+    #[must_use]
+    pub fn with_metadata(mut self, metadata: Value) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
 }

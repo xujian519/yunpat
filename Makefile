@@ -1,7 +1,7 @@
 # 云熙知识产权智能体 - 统一构建系统
 # 作者：徐健 <xujian519@gmail.com>
 
-.PHONY: all build build-rust build-ts test test-rust test-ts lint format clean install dev run docker release
+.PHONY: all build build-rust build-ts test test-rust test-ts lint format clean install dev run docker release test-coverage test-coverage-rust test-coverage-ts
 
 # 默认目标
 all: build
@@ -13,9 +13,16 @@ all: build
 install:
 	@echo "🚀 安装云熙知识产权智能体开发环境..."
 	@echo ""
-	@echo "📦 检查 Rust 工具链..."
-	@rustup show 2>/dev/null || (echo "安装 Rust..." && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh)
-	@echo "✅ Rust 就绪"
+	@echo "📦 检查工具链版本..."
+	@echo "  - 检查 Rust 1.88+..."
+	@rustc --version | grep -qE 'rustc 1\.(88|[89][0-9]|[1-9][0-9]{2,})\.' || (echo "❌ Rust 版本必须为 1.88 或更高" && exit 1)
+	@echo "✅ Rust 版本合格"
+	@echo "  - 检查 Node.js 18+..."
+	@node --version | grep -qE '^v(1[89]|[2-9][0-9])\.' || (echo "❌ Node.js 版本必须为 v18 或更高" && exit 1)
+	@echo "✅ Node.js 版本合格"
+	@echo "  - 检查 pnpm 8+..."
+	@pnpm --version | grep -qE '^[89]\.' || (echo "❌ pnpm 版本必须为 8 或更高" && exit 1)
+	@echo "✅ pnpm 版本合格"
 	@echo ""
 	@echo "📦 安装 Node.js 依赖..."
 	@cd packages && pnpm install
@@ -70,6 +77,27 @@ test-ts:
 test-ts-real:
 	@echo "🧪 运行 TypeScript 真实 LLM 测试..."
 	@cd packages && pnpm test:real
+
+# =============================================================================
+# 覆盖率
+# =============================================================================
+
+test-coverage-rust:
+	@echo "📊 生成 Rust 测试覆盖率报告..."
+	@cargo install cargo-tarpaulin 2>/dev/null || true
+	@cargo tarpaulin --workspace --out Html --out Lcov --line-coverage 70 --branch-coverage 60
+	@echo "✅ Rust 覆盖率报告已生成: target/tarpaulin/index.html"
+
+test-coverage-ts:
+	@echo "📊 生成 TypeScript 测试覆盖率报告..."
+	@cd packages && pnpm test:coverage
+	@echo "✅ TypeScript 覆盖率报告已生成: packages/coverage/index.html"
+
+test-coverage: test-coverage-rust test-coverage-ts
+	@echo ""
+	@echo "✅ 全部覆盖率报告已生成！"
+	@echo "  - Rust: target/tarpaulin/index.html"
+	@echo "  - TypeScript: packages/coverage/index.html"
 
 # =============================================================================
 # 代码质量

@@ -168,13 +168,8 @@ impl Mailbox {
             cancel_token,
         };
         (
-            Self {
-                inner: Arc::new(inner),
-            },
-            MailboxReceiver {
-                rx,
-                pending: VecDeque::new(),
-            },
+            Self { inner: Arc::new(inner) },
+            MailboxReceiver { rx, pending: VecDeque::new() },
         )
     }
 
@@ -253,10 +248,7 @@ impl MailboxReceiver {
     /// Awaits the next envelope with a timeout. Useful in tests.
     #[allow(dead_code)]
     pub async fn recv_timeout(&mut self, timeout: Duration) -> Option<MailboxEnvelope> {
-        tokio::time::timeout(timeout, self.recv())
-            .await
-            .ok()
-            .flatten()
+        tokio::time::timeout(timeout, self.recv()).await.ok().flatten()
     }
 }
 
@@ -278,15 +270,9 @@ mod tests {
     #[tokio::test]
     async fn mailbox_assigns_monotonic_sequence_numbers() {
         let (mb, _rx, _tok) = open();
-        let s1 = mb
-            .send(MailboxMessage::progress("a", "one"))
-            .expect("seq 1");
-        let s2 = mb
-            .send(MailboxMessage::progress("a", "two"))
-            .expect("seq 2");
-        let s3 = mb
-            .send(MailboxMessage::progress("b", "three"))
-            .expect("seq 3");
+        let s1 = mb.send(MailboxMessage::progress("a", "one")).expect("seq 1");
+        let s2 = mb.send(MailboxMessage::progress("a", "two")).expect("seq 2");
+        let s3 = mb.send(MailboxMessage::progress("b", "three")).expect("seq 3");
         assert_eq!(s1, 1);
         assert_eq!(s2, 2);
         assert_eq!(s3, 3);
@@ -349,10 +335,7 @@ mod tests {
         assert!(token.is_cancelled(), "close-as-cancel: token must fire");
         assert!(mb.is_closed());
         // Further sends are no-ops, returning None instead of poisoning seq.
-        assert!(
-            mb.send(MailboxMessage::progress("a", "after close"))
-                .is_none()
-        );
+        assert!(mb.send(MailboxMessage::progress("a", "after close")).is_none());
     }
 
     #[tokio::test]
@@ -391,12 +374,8 @@ mod tests {
     async fn cloned_mailbox_shares_sequence_and_close_state() {
         let (mb, mut rx, token) = open();
         let mb_clone = mb.clone();
-        let s1 = mb
-            .send(MailboxMessage::progress("a", "from original"))
-            .unwrap();
-        let s2 = mb_clone
-            .send(MailboxMessage::progress("a", "from clone"))
-            .unwrap();
+        let s1 = mb.send(MailboxMessage::progress("a", "from original")).unwrap();
+        let s2 = mb_clone.send(MailboxMessage::progress("a", "from clone")).unwrap();
         assert_eq!(s1, 1);
         assert_eq!(s2, 2, "clones share the seq counter");
 
@@ -452,12 +431,7 @@ mod tests {
                 },
                 "a7",
             ),
-            (
-                MailboxMessage::Cancelled {
-                    agent_id: "a8".into(),
-                },
-                "a8",
-            ),
+            (MailboxMessage::Cancelled { agent_id: "a8".into() }, "a8"),
             (
                 MailboxMessage::TokenUsage {
                     agent_id: "a9".into(),

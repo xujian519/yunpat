@@ -60,9 +60,7 @@ impl ApprovalCache {
     /// Construct an empty cache.
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            entries: HashMap::new(),
-        }
+        Self { entries: HashMap::new() }
     }
 
     /// Look up a previously‑rendered approval decision.

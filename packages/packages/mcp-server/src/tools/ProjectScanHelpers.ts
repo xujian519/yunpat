@@ -7,6 +7,19 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
+// ============================================================
+// 类型定义
+// ============================================================
+
+/** 工具执行上下文 */
+interface ToolExecutionContext {
+  registry?: unknown
+  llm?: unknown
+  memory?: unknown
+  eventBus?: unknown
+  [key: string]: unknown
+}
+
 // ─── 类型 ────────────────────────────────────────────────────
 
 /** 文件分类桶 */
@@ -438,8 +451,9 @@ export async function extractText(
       try {
         const { PdfExtractTextTool } = await import('@yunpat/document-tools')
         const tool = new PdfExtractTextTool()
-        const result = await tool.execute({ filePath, includeMetadata: false }, {} as any)
-        return (result as any).text?.slice(0, maxPreview) ?? undefined
+        const result = await tool.execute({ filePath, includeMetadata: false }, {} as ToolExecutionContext)
+        const textResult = result as Record<string, unknown>
+        return (textResult.text as string | undefined)?.slice(0, maxPreview) ?? undefined
       } catch (error) {
         console.warn(
           `[ProjectScanTool] PDF 文本提取失败 (${path.basename(filePath)}):`,
@@ -453,8 +467,9 @@ export async function extractText(
       try {
         const { DocxExtractTextTool } = await import('@yunpat/document-tools')
         const tool = new DocxExtractTextTool()
-        const result = await tool.execute({ filePath }, {} as any)
-        return (result as any).text?.slice(0, maxPreview) ?? undefined
+        const result = await tool.execute({ filePath }, {} as ToolExecutionContext)
+        const textResult = result as Record<string, unknown>
+        return (textResult.text as string | undefined)?.slice(0, maxPreview) ?? undefined
       } catch (error) {
         console.warn(
           `[ProjectScanTool] DOCX 文本提取失败 (${path.basename(filePath)}):`,

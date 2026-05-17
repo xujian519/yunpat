@@ -175,7 +175,11 @@ function createViolation(
 
   // 如果提供了内容，添加上下文
   if (content) {
-    ;(violation as any).location.context = content.substring(
+    const violation = result as { location?: { context?: string } }
+    if (!violation.location) {
+      violation.location = {}
+    }
+    violation.location.context = content.substring(
       Math.max(0, start - 20),
       Math.min(content.length, end + 20)
     )

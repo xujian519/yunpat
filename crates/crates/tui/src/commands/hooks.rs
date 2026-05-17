@@ -92,10 +92,7 @@ fn list(app: &App) -> CommandResult {
     let mut by_event: std::collections::BTreeMap<&str, Vec<&crate::hooks::Hook>> =
         std::collections::BTreeMap::new();
     for hook in &config.hooks {
-        by_event
-            .entry(event_label(hook.event))
-            .or_default()
-            .push(hook);
+        by_event.entry(event_label(hook.event)).or_default().push(hook);
     }
 
     for (event, hooks) in by_event {
@@ -153,19 +150,11 @@ fn condition_summary(condition: &crate::hooks::HookCondition) -> String {
         crate::hooks::HookCondition::ExitCode { code } => format!("exit_code={code}"),
         crate::hooks::HookCondition::All { conditions } => format!(
             "all of [{}]",
-            conditions
-                .iter()
-                .map(condition_summary)
-                .collect::<Vec<_>>()
-                .join(", ")
+            conditions.iter().map(condition_summary).collect::<Vec<_>>().join(", ")
         ),
         crate::hooks::HookCondition::Any { conditions } => format!(
             "any of [{}]",
-            conditions
-                .iter()
-                .map(condition_summary)
-                .collect::<Vec<_>>()
-                .join(", ")
+            conditions.iter().map(condition_summary).collect::<Vec<_>>().join(", ")
         ),
     }
 }
@@ -176,10 +165,7 @@ fn preview_command(command: &str, max_chars: usize) -> String {
     if single_line.chars().count() <= max_chars {
         return single_line;
     }
-    let mut out: String = single_line
-        .chars()
-        .take(max_chars.saturating_sub(1))
-        .collect();
+    let mut out: String = single_line.chars().take(max_chars.saturating_sub(1)).collect();
     out.push('…');
     out
 }
@@ -213,21 +199,15 @@ mod tests {
     fn condition_summary_renders_all_variants() {
         assert_eq!(condition_summary(&HookCondition::Always), "always");
         assert_eq!(
-            condition_summary(&HookCondition::ToolName {
-                name: "exec_shell".into()
-            }),
+            condition_summary(&HookCondition::ToolName { name: "exec_shell".into() }),
             "tool_name=`exec_shell`"
         );
         assert_eq!(
-            condition_summary(&HookCondition::ToolCategory {
-                category: "shell".into()
-            }),
+            condition_summary(&HookCondition::ToolCategory { category: "shell".into() }),
             "tool_category=`shell`"
         );
         assert_eq!(
-            condition_summary(&HookCondition::Mode {
-                mode: "yolo".into()
-            }),
+            condition_summary(&HookCondition::Mode { mode: "yolo".into() }),
             "mode=`yolo`"
         );
         assert_eq!(
@@ -237,12 +217,8 @@ mod tests {
         assert_eq!(
             condition_summary(&HookCondition::All {
                 conditions: vec![
-                    HookCondition::ToolName {
-                        name: "exec_shell".into()
-                    },
-                    HookCondition::Mode {
-                        mode: "yolo".into()
-                    }
+                    HookCondition::ToolName { name: "exec_shell".into() },
+                    HookCondition::Mode { mode: "yolo".into() }
                 ]
             }),
             "all of [tool_name=`exec_shell`, mode=`yolo`]"
@@ -312,9 +288,7 @@ mod tests {
             hooks: vec![
                 Hook::new(HookEvent::SessionStart, "echo started").with_name("greet"),
                 Hook::new(HookEvent::ToolCallAfter, "notify-send done")
-                    .with_condition(HookCondition::ToolName {
-                        name: "exec_shell".into(),
-                    })
+                    .with_condition(HookCondition::ToolName { name: "exec_shell".into() })
                     .with_name("notify"),
             ],
             ..crate::hooks::HooksConfig::default()

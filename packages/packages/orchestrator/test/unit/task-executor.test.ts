@@ -2,9 +2,19 @@
  * DAG单元测试
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { TaskExecutor } from '../../src/executor/TaskExecutor.js'
 import type { TaskPlan, TaskStep, ExecutionContext } from '../../src/types/index.js'
+
+function createMockExecutionContext(): ExecutionContext {
+  return {
+    sessionId: 'test-session',
+    userId: 'test-user',
+    llmClient: { generate: vi.fn() } as unknown as ExecutionContext['llmClient'],
+    eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() } as unknown as ExecutionContext['eventBus'],
+    metadata: {},
+  }
+}
 
 describe('TaskExecutor', () => {
   let executor: TaskExecutor
@@ -12,7 +22,7 @@ describe('TaskExecutor', () => {
 
   beforeEach(() => {
     executor = new TaskExecutor()
-    mockContext = {} as any
+    mockContext = createMockExecutionContext()
   })
 
   describe('DAG构建', () => {

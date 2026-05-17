@@ -5,7 +5,7 @@
 use crate::cycle_manager::CycleBriefing;
 use crate::models::{Message, SystemPrompt, Usage};
 use crate::project_context::{ProjectContext, load_project_context_with_parents};
-use crate::tui::approval::ApprovalMode;
+use yunpat_protocol::ApprovalMode;
 use crate::working_set::WorkingSet;
 use chrono::{DateTime, Utc};
 use std::path::PathBuf;
@@ -161,7 +161,6 @@ impl Session {
 
     /// Rebuild the working set from current messages (best effort).
     pub fn rebuild_working_set(&mut self) {
-        self.working_set
-            .rebuild_from_messages(&self.messages, &self.workspace);
+        self.working_set.rebuild_from_messages(&self.messages, &self.workspace);
     }
 }

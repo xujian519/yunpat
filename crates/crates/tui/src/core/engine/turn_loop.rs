@@ -57,9 +57,7 @@ impl Engine {
                 if steer.is_empty() {
                     continue;
                 }
-                self.session
-                    .working_set
-                    .observe_user_message(&steer, &self.session.workspace);
+                self.session.working_set.observe_user_message(&steer, &self.session.workspace);
                 self.add_session_message(Message {
                     role: "user".to_string(),
                     content: vec![ContentBlock::Text {
@@ -81,10 +79,7 @@ impl Engine {
             self.refresh_system_prompt(mode);
 
             if turn.at_max_steps() {
-                let _ = self
-                    .tx_event
-                    .send(Event::status("Reached maximum steps"))
-                    .await;
+                let _ = self.tx_event.send(Event::status("Reached maximum steps")).await;
                 break;
             }
 
@@ -166,17 +161,13 @@ impl Engine {
                     Err(err) => {
                         // Log error but continue with original messages (never corrupt)
                         let message = format!("Auto-compaction failed: {err}");
-                        self.emit_compaction_failed(compaction_id, true, message.clone())
-                            .await;
+                        self.emit_compaction_failed(compaction_id, true, message.clone()).await;
                         let _ = self.tx_event.send(Event::status(message)).await;
                     }
                 }
             }
 
-            if self
-                .run_capacity_pre_request_checkpoint(turn, Some(&*client), mode)
-                .await
-            {
+            if self.run_capacity_pre_request_checkpoint(turn, Some(&*client), mode).await {
                 continue;
             }
 
@@ -475,84 +466,78 @@ impl Engine {
                     StreamEvent::MessageStart { message } => {
                         usage = message.usage;
                     }
-                    StreamEvent::ContentBlockStart {
-                        index,
-                        content_block,
-                    } => match content_block {
-                        ContentBlockStart::Text { text } => {
-                            current_text_raw = text;
-                            current_text_visible.clear();
-                            in_tool_call_block = false;
-                            let filtered =
-                                filter_tool_call_delta(&current_text_raw, &mut in_tool_call_block);
-                            if !fake_wrapper_notice_emitted
-                                && filtered.len() < current_text_raw.len()
-                                && contains_fake_tool_wrapper(&current_text_raw)
-                            {
-                                let _ =
-                                    self.tx_event.send(Event::status(FAKE_WRAPPER_NOTICE)).await;
-                                fake_wrapper_notice_emitted = true;
+                    StreamEvent::ContentBlockStart { index, content_block } => {
+                        match content_block {
+                            ContentBlockStart::Text { text } => {
+                                current_text_raw = text;
+                                current_text_visible.clear();
+                                in_tool_call_block = false;
+                                let filtered = filter_tool_call_delta(
+                                    &current_text_raw,
+                                    &mut in_tool_call_block,
+                                );
+                                if !fake_wrapper_notice_emitted
+                                    && filtered.len() < current_text_raw.len()
+                                    && contains_fake_tool_wrapper(&current_text_raw)
+                                {
+                                    let _ = self
+                                        .tx_event
+                                        .send(Event::status(FAKE_WRAPPER_NOTICE))
+                                        .await;
+                                    fake_wrapper_notice_emitted = true;
+                                }
+                                current_text_visible.push_str(&filtered);
+                                current_block_kind = Some(ContentBlockKind::Text);
+                                last_text_index = Some(index as usize);
+                                let _ = self
+                                    .tx_event
+                                    .send(Event::MessageStarted { index: index as usize })
+                                    .await;
                             }
-                            current_text_visible.push_str(&filtered);
-                            current_block_kind = Some(ContentBlockKind::Text);
-                            last_text_index = Some(index as usize);
-                            let _ = self
-                                .tx_event
-                                .send(Event::MessageStarted {
-                                    index: index as usize,
-                                })
-                                .await;
+                            ContentBlockStart::Thinking { thinking } => {
+                                current_thinking = thinking;
+                                current_block_kind = Some(ContentBlockKind::Thinking);
+                                let _ = self
+                                    .tx_event
+                                    .send(Event::ThinkingStarted { index: index as usize })
+                                    .await;
+                            }
+                            ContentBlockStart::ToolUse { id, name, input, caller } => {
+                                crate::logging::info(format!(
+                                    "Tool '{}' block start. Initial input: {:?}",
+                                    name, input
+                                ));
+                                current_block_kind = Some(ContentBlockKind::ToolUse);
+                                current_tool_index = Some(tool_uses.len());
+                                // ToolCallStarted is deferred to ContentBlockStop —
+                                // see `final_tool_input`. Emitting here would ship
+                                // the placeholder `{}` and the cell would render
+                                // `<command>` / `<file>` literals to the user.
+                                tool_uses.push(ToolUseState {
+                                    id,
+                                    name,
+                                    input,
+                                    caller,
+                                    input_buffer: String::new(),
+                                });
+                            }
+                            ContentBlockStart::ServerToolUse { id, name, input } => {
+                                crate::logging::info(format!(
+                                    "Server tool '{}' block start. Initial input: {:?}",
+                                    name, input
+                                ));
+                                current_block_kind = Some(ContentBlockKind::ToolUse);
+                                current_tool_index = Some(tool_uses.len());
+                                tool_uses.push(ToolUseState {
+                                    id,
+                                    name,
+                                    input,
+                                    caller: None,
+                                    input_buffer: String::new(),
+                                });
+                            }
                         }
-                        ContentBlockStart::Thinking { thinking } => {
-                            current_thinking = thinking;
-                            current_block_kind = Some(ContentBlockKind::Thinking);
-                            let _ = self
-                                .tx_event
-                                .send(Event::ThinkingStarted {
-                                    index: index as usize,
-                                })
-                                .await;
-                        }
-                        ContentBlockStart::ToolUse {
-                            id,
-                            name,
-                            input,
-                            caller,
-                        } => {
-                            crate::logging::info(format!(
-                                "Tool '{}' block start. Initial input: {:?}",
-                                name, input
-                            ));
-                            current_block_kind = Some(ContentBlockKind::ToolUse);
-                            current_tool_index = Some(tool_uses.len());
-                            // ToolCallStarted is deferred to ContentBlockStop —
-                            // see `final_tool_input`. Emitting here would ship
-                            // the placeholder `{}` and the cell would render
-                            // `<command>` / `<file>` literals to the user.
-                            tool_uses.push(ToolUseState {
-                                id,
-                                name,
-                                input,
-                                caller,
-                                input_buffer: String::new(),
-                            });
-                        }
-                        ContentBlockStart::ServerToolUse { id, name, input } => {
-                            crate::logging::info(format!(
-                                "Server tool '{}' block start. Initial input: {:?}",
-                                name, input
-                            ));
-                            current_block_kind = Some(ContentBlockKind::ToolUse);
-                            current_tool_index = Some(tool_uses.len());
-                            tool_uses.push(ToolUseState {
-                                id,
-                                name,
-                                input,
-                                caller: None,
-                                input_buffer: String::new(),
-                            });
-                        }
-                    },
+                    }
                     StreamEvent::ContentBlockDelta { index, delta } => match delta {
                         Delta::TextDelta { text } => {
                             stream_content_bytes = stream_content_bytes.saturating_add(text.len());
@@ -620,9 +605,7 @@ impl Engine {
                             Some(ContentBlockKind::Thinking) => {
                                 let _ = self
                                     .tx_event
-                                    .send(Event::ThinkingComplete {
-                                        index: index as usize,
-                                    })
+                                    .send(Event::ThinkingComplete { index: index as usize })
                                     .await;
                             }
                             Some(ContentBlockKind::ToolUse) | None => {}
@@ -677,9 +660,7 @@ impl Engine {
                                 .await;
                         }
                     }
-                    StreamEvent::MessageDelta {
-                        usage: delta_usage, ..
-                    } => {
+                    StreamEvent::MessageDelta { usage: delta_usage, .. } => {
                         if let Some(u) = delta_usage {
                             usage = u;
                         }
@@ -1038,10 +1019,7 @@ impl Engine {
 
             // Execute tools
             let tool_exec_lock = self.tool_exec_lock.clone();
-            let mcp_pool = if tool_uses
-                .iter()
-                .any(|tool| McpPool::is_mcp_tool(&tool.name))
-            {
+            let mcp_pool = if tool_uses.iter().any(|tool| McpPool::is_mcp_tool(&tool.name)) {
                 match self.ensure_mcp_pool().await {
                     Ok(pool) => Some(pool),
                     Err(err) => {
@@ -1065,9 +1043,7 @@ impl Engine {
                 ));
 
                 let interactive = (tool_name == "exec_shell"
-                    && tool_input
-                        .get("interactive")
-                        .and_then(serde_json::Value::as_bool)
+                    && tool_input.get("interactive").and_then(serde_json::Value::as_bool)
                         == Some(true))
                     || tool_name == REQUEST_USER_INPUT_NAME;
 
@@ -1173,9 +1149,8 @@ impl Engine {
                 // Constitutional engine check — patent safety constraints (bypasses YOLO)
                 if blocked_error.is_none() {
                     use yunpat_execpolicy::constitutional::ConstitutionalVerdict;
-                    let (verdict, audit) = self
-                        .constitutional_engine
-                        .adjudicate(&tool_name, &tool_input);
+                    let (verdict, audit) =
+                        self.constitutional_engine.adjudicate(&tool_name, &tool_input);
                     // 持久化审计记录
                     if !verdict.is_pass() {
                         for entry in &audit {
@@ -1553,7 +1528,7 @@ impl Engine {
                         let category = crate::tui::approval::get_tool_category(&tool_name);
                         let risk =
                             crate::tui::approval::classify_risk(&tool_name, category, &tool_input);
-                        let gate = crate::tui::collaboration_gate::determine_gate(category, risk);
+                        let gate = yunpat_protocol::determine_gate(category, risk);
                         let _ = self
                             .tx_event
                             .send(Event::ApprovalRequired {
@@ -1741,8 +1716,7 @@ impl Engine {
                         // untouched, so polling for diagnostics would just
                         // surface stale state.
                         if output.success {
-                            self.run_post_edit_lsp_hook(&outcome.name, &tool_input)
-                                .await;
+                            self.run_post_edit_lsp_hook(&outcome.name, &tool_input).await;
                         }
 
                         self.add_session_message(Message {
@@ -1832,9 +1806,7 @@ impl Engine {
 
             if !pending_steers.is_empty() {
                 for steer in pending_steers.drain(..) {
-                    self.session
-                        .working_set
-                        .observe_user_message(&steer, &self.session.workspace);
+                    self.session.working_set.observe_user_message(&steer, &self.session.workspace);
                     self.add_session_message(Message {
                         role: "user".to_string(),
                         content: vec![ContentBlock::Text {
@@ -1907,10 +1879,7 @@ impl Engine {
                     .content
                     .iter()
                     .all(|block| !matches!(block, ContentBlock::ToolResult { .. }))
-                && message
-                    .content
-                    .iter()
-                    .any(|block| matches!(block, ContentBlock::Text { .. }))
+                && message.content.iter().any(|block| matches!(block, ContentBlock::Text { .. }))
         }) else {
             // No real user message in the trailing slice (e.g. mid-turn
             // after a tool call). Skip injection — the working_set will

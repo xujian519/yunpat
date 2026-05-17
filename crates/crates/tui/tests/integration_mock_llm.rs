@@ -67,9 +67,7 @@ fn assistant_thinking(thinking: &str, text: &str) -> Message {
     Message {
         role: "assistant".to_string(),
         content: vec![
-            ContentBlock::Thinking {
-                thinking: thinking.to_string(),
-            },
+            ContentBlock::Thinking { thinking: thinking.to_string() },
             ContentBlock::Text {
                 text: text.to_string(),
                 cache_control: None,
@@ -123,10 +121,7 @@ async fn drain_stream_text(
     mock: &MockLlmClient,
     request: MessageRequest,
 ) -> (String, Option<String>) {
-    let mut stream = mock
-        .create_message_stream(request)
-        .await
-        .expect("stream open");
+    let mut stream = mock.create_message_stream(request).await.expect("stream open");
     let mut text = String::new();
     let mut stop_reason: Option<String> = None;
     while let Some(ev) = stream.next().await {
@@ -226,9 +221,7 @@ async fn reasoning_replay_required_on_subsequent_turn() {
         .iter()
         .find(|m| {
             m.role == "assistant"
-                && m.content
-                    .iter()
-                    .any(|b| matches!(b, ContentBlock::Thinking { .. }))
+                && m.content.iter().any(|b| matches!(b, ContentBlock::Thinking { .. }))
         })
         .expect("turn 2 request must replay assistant Thinking content");
 
@@ -343,11 +336,7 @@ async fn parallel_tool_calls_preserve_ordering_in_turn_payload() {
 
     let mut starts: Vec<(u32, String)> = Vec::new();
     while let Some(ev) = stream.next().await {
-        if let StreamEvent::ContentBlockStart {
-            index,
-            content_block,
-        } = ev.unwrap()
-        {
+        if let StreamEvent::ContentBlockStart { index, content_block } = ev.unwrap() {
             use crate::models::ContentBlockStart;
             if let ContentBlockStart::ToolUse { id, .. } = content_block {
                 starts.push((index, id));

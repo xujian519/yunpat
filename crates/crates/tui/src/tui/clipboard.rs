@@ -59,6 +59,12 @@ pub struct ClipboardHandler {
     written_text: Vec<String>,
 }
 
+impl Default for ClipboardHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ClipboardHandler {
     /// Create a new clipboard handler, falling back to a no-op when unavailable.
     pub fn new() -> Self {
@@ -137,9 +143,7 @@ fn write_text_with_pbcopy(text: &str) -> Result<()> {
             .write_all(text.as_bytes())
             .map_err(|e| anyhow::anyhow!("Failed to write to pbcopy: {e}"))?;
     }
-    let status = child
-        .wait()
-        .map_err(|e| anyhow::anyhow!("Failed to wait for pbcopy: {e}"))?;
+    let status = child.wait().map_err(|e| anyhow::anyhow!("Failed to wait for pbcopy: {e}"))?;
     if status.success() {
         return Ok(());
     }
@@ -217,10 +221,7 @@ fn save_image_as_png(workspace: &Path, image: &ImageData) -> Result<PastedImage>
 fn save_image_as_png_in(dir: &Path, image: &ImageData) -> Result<PastedImage> {
     std::fs::create_dir_all(dir).context("create clipboard-images dir")?;
 
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos();
+    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
     let path = dir.join(format!("clipboard-{timestamp}.png"));
 
     let width = u32::try_from(image.width).context("clipboard image width too large")?;
@@ -244,15 +245,8 @@ fn save_image_as_png_in(dir: &Path, image: &ImageData) -> Result<PastedImage> {
         .save_with_format(&path, image::ImageFormat::Png)
         .context("write clipboard PNG")?;
 
-    let byte_len = std::fs::metadata(&path)
-        .map(|m| m.len() as usize)
-        .unwrap_or(0);
-    Ok(PastedImage {
-        path,
-        width,
-        height,
-        byte_len,
-    })
+    let byte_len = std::fs::metadata(&path).map(|m| m.len() as usize).unwrap_or(0);
+    Ok(PastedImage { path, width, height, byte_len })
 }
 
 #[cfg(test)]

@@ -140,19 +140,14 @@ pub struct StateStore {
 impl StateStore {
     pub fn open(path: Option<PathBuf>) -> Result<Self> {
         let db_path = path.unwrap_or_else(default_state_db_path);
-        let session_index_path = db_path
-            .parent()
-            .unwrap_or_else(|| Path::new("."))
-            .join("session_index.jsonl");
+        let session_index_path =
+            db_path.parent().unwrap_or_else(|| Path::new(".")).join("session_index.jsonl");
         if let Some(parent) = db_path.parent() {
             fs::create_dir_all(parent).with_context(|| {
                 format!("failed to create state directory {}", parent.display())
             })?;
         }
-        let store = Self {
-            db_path,
-            session_index_path,
-        };
+        let store = Self { db_path, session_index_path };
         store.init_schema()?;
         Ok(store)
     }
@@ -378,9 +373,7 @@ impl StateStore {
 
         let mut stmt = conn.prepare(sql).context("failed to prepare list query")?;
         let limit = i64::try_from(filters.limit.unwrap_or(50)).unwrap_or(50);
-        let mut rows = stmt
-            .query(params![limit])
-            .context("failed to query threads")?;
+        let mut rows = stmt.query(params![limit]).context("failed to query threads")?;
         let mut out = Vec::new();
         while let Some(row) = rows.next().context("failed to iterate thread rows")? {
             out.push(row_to_thread(row)?);
@@ -447,9 +440,7 @@ impl StateStore {
         tools: &[DynamicToolRecord],
     ) -> Result<()> {
         let mut conn = self.conn()?;
-        let tx = conn
-            .transaction()
-            .context("failed to begin dynamic tools transaction")?;
+        let tx = conn.transaction().context("failed to begin dynamic tools transaction")?;
         tx.execute(
             "DELETE FROM thread_dynamic_tools WHERE thread_id = ?1",
             params![thread_id],
@@ -479,9 +470,7 @@ impl StateStore {
                 "SELECT position, name, description, input_schema FROM thread_dynamic_tools WHERE thread_id = ?1 ORDER BY position ASC",
             )
             .context("failed to prepare get dynamic tools query")?;
-        let mut rows = stmt
-            .query(params![thread_id])
-            .context("failed to query dynamic tools")?;
+        let mut rows = stmt.query(params![thread_id]).context("failed to query dynamic tools")?;
         let mut out = Vec::new();
         while let Some(row) = rows.next().context("failed to iterate dynamic tools")? {
             let input_schema_raw: String =
@@ -540,11 +529,8 @@ impl StateStore {
         let mut out = Vec::new();
         while let Some(row) = rows.next().context("failed to iterate message rows")? {
             let item_json: Option<String> = row.get(4).context("failed to read item json")?;
-            let item = item_json
-                .as_deref()
-                .map(serde_json::from_str)
-                .transpose()
-                .with_context(|| {
+            let item =
+                item_json.as_deref().map(serde_json::from_str).transpose().with_context(|| {
                     format!("failed to parse message item json in thread {thread_id}")
                 })?;
             out.push(MessageRecord {
@@ -765,13 +751,9 @@ impl StateStore {
         })?;
 
         let mut out = Vec::new();
-        while let Some(row) = rows
-            .next()
-            .context("failed to iterate unified checkpoint rows")?
-        {
-            let state_json: String = row
-                .get(0)
-                .context("failed to read unified checkpoint state json")?;
+        while let Some(row) = rows.next().context("failed to iterate unified checkpoint rows")? {
+            let state_json: String =
+                row.get(0).context("failed to read unified checkpoint state json")?;
             let checkpoint = parse_unified_checkpoint(&state_json)?;
             out.push(checkpoint);
         }
@@ -849,9 +831,7 @@ impl StateStore {
                 "SELECT id, name, status, progress, detail, created_at, updated_at FROM jobs ORDER BY updated_at DESC LIMIT ?1",
             )
             .context("failed to prepare job list query")?;
-        let mut rows = stmt
-            .query(params![limit])
-            .context("failed to query persisted jobs")?;
+        let mut rows = stmt.query(params![limit]).context("failed to query persisted jobs")?;
         let mut out = Vec::new();
         while let Some(row) = rows.next().context("failed to iterate persisted jobs")? {
             let status_raw: String = row.get(2).context("failed to read job status")?;
@@ -927,9 +907,7 @@ impl StateStore {
 
     pub fn find_thread_name_by_id(&self, thread_id: &str) -> Result<Option<String>> {
         let map = self.session_index_map()?;
-        Ok(map
-            .get(thread_id)
-            .and_then(|entry| entry.thread_name.clone()))
+        Ok(map.get(thread_id).and_then(|entry| entry.thread_name.clone()))
     }
 
     pub fn find_thread_names_by_ids(
@@ -950,10 +928,7 @@ impl StateStore {
         let matched = map
             .values()
             .filter(|entry| {
-                entry
-                    .thread_name
-                    .as_deref()
-                    .is_some_and(|n| n.eq_ignore_ascii_case(name))
+                entry.thread_name.as_deref().is_some_and(|n| n.eq_ignore_ascii_case(name))
             })
             .max_by_key(|entry| entry.updated_at);
         Ok(matched.and_then(|entry| entry.rollout_path.clone()))
@@ -963,10 +938,8 @@ impl StateStore {
         if !self.session_index_path.exists() {
             return Ok(HashMap::new());
         }
-        let file = OpenOptions::new()
-            .read(true)
-            .open(&self.session_index_path)
-            .with_context(|| {
+        let file =
+            OpenOptions::new().read(true).open(&self.session_index_path).with_context(|| {
                 format!(
                     "failed to read session index {}",
                     self.session_index_path.display()
@@ -1572,10 +1545,8 @@ mod unified_checkpoint_tests {
             )
             .unwrap();
 
-        let loaded = store
-            .load_unified_checkpoint(thread_id, Some(checkpoint_id))
-            .unwrap()
-            .unwrap();
+        let loaded =
+            store.load_unified_checkpoint(thread_id, Some(checkpoint_id)).unwrap().unwrap();
 
         assert_eq!(loaded.schema_version, 2);
         assert_eq!(loaded.checkpoint_id, checkpoint_id);
@@ -1597,9 +1568,7 @@ mod unified_checkpoint_tests {
             "nested": {"key": "value"}
         });
 
-        store
-            .save_checkpoint(thread_id, checkpoint_id, &v1_state)
-            .unwrap();
+        store.save_checkpoint(thread_id, checkpoint_id, &v1_state).unwrap();
 
         let loaded_v1 = store.load_checkpoint(thread_id, Some(checkpoint_id));
         assert!(loaded_v1.is_ok());
@@ -1653,10 +1622,7 @@ mod unified_checkpoint_tests {
             )
             .unwrap();
 
-        let loaded = store
-            .load_unified_checkpoint(thread_id, Some("cp-ts-001"))
-            .unwrap()
-            .unwrap();
+        let loaded = store.load_unified_checkpoint(thread_id, Some("cp-ts-001")).unwrap().unwrap();
 
         assert!(matches!(loaded.source, CheckpointSource::TsOrchestrator));
     }

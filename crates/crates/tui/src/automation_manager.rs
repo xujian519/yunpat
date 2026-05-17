@@ -169,14 +169,8 @@ impl AutomationSchedule {
                 if interval_hours == 0 {
                     bail!("INTERVAL must be >= 1 for HOURLY schedules");
                 }
-                let byday = parts
-                    .get("BYDAY")
-                    .map(|value| parse_byday(value))
-                    .transpose()?;
-                Ok(Self::Hourly {
-                    interval_hours,
-                    byday,
-                })
+                let byday = parts.get("BYDAY").map(|value| parse_byday(value)).transpose()?;
+                Ok(Self::Hourly { interval_hours, byday })
             }
             AutomationFrequency::Weekly => {
                 for key in parts.keys() {
@@ -211,11 +205,7 @@ impl AutomationSchedule {
                     bail!("BYMINUTE must be between 0 and 59");
                 }
 
-                Ok(Self::Weekly {
-                    byday,
-                    byhour,
-                    byminute,
-                })
+                Ok(Self::Weekly { byday, byhour, byminute })
             }
         }
     }
@@ -223,10 +213,7 @@ impl AutomationSchedule {
     pub fn next_after(&self, after: DateTime<Utc>) -> Result<DateTime<Utc>> {
         let local_after = after.with_timezone(&Local);
         match self {
-            Self::Hourly {
-                interval_hours,
-                byday,
-            } => {
+            Self::Hourly { interval_hours, byday } => {
                 let mut candidate = local_after + Duration::hours(i64::from(*interval_hours))
                     - Duration::seconds(i64::from(local_after.second()))
                     - Duration::nanoseconds(i64::from(local_after.nanosecond()));
@@ -243,11 +230,7 @@ impl AutomationSchedule {
 
                 Ok(candidate.with_timezone(&Utc))
             }
-            Self::Weekly {
-                byday,
-                byhour,
-                byminute,
-            } => {
+            Self::Weekly { byday, byhour, byminute } => {
                 for day_offset in 0..15 {
                     let date = local_after.date_naive() + Duration::days(i64::from(day_offset));
                     if !byday.contains(&date.weekday()) {
@@ -310,10 +293,7 @@ impl AutomationManager {
             .with_context(|| format!("Failed to create {}", automations_dir.display()))?;
         fs::create_dir_all(&runs_dir)
             .with_context(|| format!("Failed to create {}", runs_dir.display()))?;
-        Ok(Self {
-            automations_dir,
-            runs_dir,
-        })
+        Ok(Self { automations_dir, runs_dir })
     }
 
     pub fn default_location() -> Result<Self> {
@@ -329,8 +309,7 @@ impl AutomationManager {
     }
 
     fn run_path(&self, automation_id: &str, run_id: &str) -> PathBuf {
-        self.runs_dir_for(automation_id)
-            .join(format!("{run_id}.json"))
+        self.runs_dir_for(automation_id).join(format!("{run_id}.json"))
     }
 
     pub fn create_automation(&self, req: CreateAutomationRequest) -> Result<AutomationRecord> {
@@ -596,8 +575,7 @@ impl AutomationManager {
             error: None,
         };
 
-        self.enqueue_run_task(&automation, &mut run, task_manager)
-            .await?;
+        self.enqueue_run_task(&automation, &mut run, task_manager).await?;
         self.save_run(&run)?;
 
         automation.updated_at = Utc::now();
@@ -665,8 +643,7 @@ impl AutomationManager {
                 error: None,
             };
 
-            self.enqueue_run_task(automation, &mut run, task_manager)
-                .await?;
+            self.enqueue_run_task(automation, &mut run, task_manager).await?;
             self.save_run(&run)?;
 
             automation.updated_at = now;
@@ -809,9 +786,7 @@ pub struct AutomationSchedulerConfig {
 
 impl Default for AutomationSchedulerConfig {
     fn default() -> Self {
-        Self {
-            tick_interval_secs: 15,
-        }
+        Self { tick_interval_secs: 15 }
     }
 }
 
@@ -859,10 +834,7 @@ mod tests {
         let parsed =
             AutomationSchedule::parse_rrule("FREQ=HOURLY;INTERVAL=2;BYDAY=MO,TU").expect("parse");
         match parsed {
-            AutomationSchedule::Hourly {
-                interval_hours,
-                byday,
-            } => {
+            AutomationSchedule::Hourly { interval_hours, byday } => {
                 assert_eq!(interval_hours, 2);
                 assert_eq!(byday.expect("byday").len(), 2);
             }
@@ -876,11 +848,7 @@ mod tests {
             AutomationSchedule::parse_rrule("FREQ=WEEKLY;BYDAY=MO,WE;BYHOUR=9;BYMINUTE=30")
                 .expect("parse");
         match parsed {
-            AutomationSchedule::Weekly {
-                byday,
-                byhour,
-                byminute,
-            } => {
+            AutomationSchedule::Weekly { byday, byhour, byminute } => {
                 assert_eq!(byday.len(), 2);
                 assert_eq!(byhour, 9);
                 assert_eq!(byminute, 30);
@@ -928,9 +896,7 @@ mod tests {
         manager.save_run(&run).expect("save run");
         assert!(manager.runs_dir_for(&created.id).exists());
 
-        manager
-            .delete_automation(&created.id)
-            .expect("delete automation");
+        manager.delete_automation(&created.id).expect("delete automation");
 
         assert!(manager.get_automation(&created.id).is_err());
         assert!(!manager.runs_dir_for(&created.id).exists());

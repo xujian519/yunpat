@@ -30,11 +30,7 @@ pub fn note(app: &mut App, content: Option<&str>) -> CommandResult {
     }
 
     // Append to notes file
-    let mut file = match fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&notes_path)
-    {
+    let mut file = match fs::OpenOptions::new().create(true).append(true).open(&notes_path) {
         Ok(f) => f,
         Err(e) => {
             return CommandResult::error(format!("Failed to open notes file: {e}"));

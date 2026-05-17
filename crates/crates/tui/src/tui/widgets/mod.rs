@@ -10,6 +10,7 @@ pub mod key_hint;
 // the composer area in `ui.rs`. `pub mod` (vs the usual `pub use` pattern)
 // keeps the unused-imports lint quiet until then.
 pub mod agent_card;
+pub mod patent_workflow;
 pub mod pending_input_preview;
 mod renderable;
 pub mod tool_card;
@@ -33,7 +34,7 @@ use crate::{commands, config::COMMON_YUNPAT_MODELS};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    prelude::Stylize,
+    
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{
@@ -1720,7 +1721,7 @@ fn composer_height(
 }
 
 /// A single entry in the slash-command autocomplete popup.
-pub(crate) struct SlashMenuEntry {
+pub struct SlashMenuEntry {
     pub name: String,
     pub description: String,
     pub is_skill: bool,

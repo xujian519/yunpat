@@ -59,11 +59,7 @@ pub fn show_cycle(app: &App, arg: Option<&str>) -> CommandResult {
     };
 
     let Some(brief) = app.cycle_briefings.iter().find(|b| b.cycle == n) else {
-        let known: Vec<String> = app
-            .cycle_briefings
-            .iter()
-            .map(|b| b.cycle.to_string())
-            .collect();
+        let known: Vec<String> = app.cycle_briefings.iter().map(|b| b.cycle.to_string()).collect();
         let known_str = if known.is_empty() {
             "(none)".to_string()
         } else {
@@ -105,10 +101,7 @@ pub fn recall_archive(app: &App, arg: Option<&str>) -> CommandResult {
         return CommandResult::error("Usage: /recall <query>".to_string());
     }
 
-    let session_id = app
-        .current_session_id
-        .clone()
-        .unwrap_or_else(|| "workspace".to_string());
+    let session_id = app.current_session_id.clone().unwrap_or_else(|| "workspace".to_string());
 
     let context = ToolContext::new(app.workspace.clone()).with_state_namespace(session_id);
     let tool = RecallArchiveTool;
@@ -126,11 +119,7 @@ pub fn recall_archive(app: &App, arg: Option<&str>) -> CommandResult {
 
 /// Truncate `text` to its first non-empty line, capped at `max_chars`.
 fn first_line(text: &str, max_chars: usize) -> String {
-    let line = text
-        .lines()
-        .map(str::trim)
-        .find(|l| !l.is_empty())
-        .unwrap_or("");
+    let line = text.lines().map(str::trim).find(|l| !l.is_empty()).unwrap_or("");
     if line.chars().count() <= max_chars {
         line.to_string()
     } else {
@@ -176,12 +165,7 @@ mod tests {
         let app = App::new(test_options(), &crate::config::Config::default());
         let res = list_cycles(&app);
         assert!(res.message.is_some());
-        assert!(
-            res.message
-                .as_deref()
-                .unwrap()
-                .contains("No cycle boundaries")
-        );
+        assert!(res.message.as_deref().unwrap().contains("No cycle boundaries"));
     }
 
     #[test]

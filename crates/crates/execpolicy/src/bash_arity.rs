@@ -321,10 +321,8 @@ impl BashArityDict {
         let max_depth = positional.len().min(3);
         for depth in (1..=max_depth).rev() {
             let candidate = positional[..depth].join(" ");
-            if let Some(&(_key, arity)) = self
-                .entries
-                .iter()
-                .find(|(key, _)| *key == candidate.as_str())
+            if let Some(&(_key, arity)) =
+                self.entries.iter().find(|(key, _)| *key == candidate.as_str())
             {
                 let take = (arity as usize).min(positional.len());
                 return positional[..take].join(" ");
@@ -363,14 +361,8 @@ impl BashArityDict {
         // (preserves backward compatibility with exact-match allow rules).
         let command_lower = command.trim().to_ascii_lowercase();
         // Normalise whitespace in both sides before comparing.
-        let pattern_norm: String = pattern_lower
-            .split_whitespace()
-            .collect::<Vec<_>>()
-            .join(" ");
-        let command_norm: String = command_lower
-            .split_whitespace()
-            .collect::<Vec<_>>()
-            .join(" ");
+        let pattern_norm: String = pattern_lower.split_whitespace().collect::<Vec<_>>().join(" ");
+        let command_norm: String = command_lower.split_whitespace().collect::<Vec<_>>().join(" ");
         command_norm == pattern_norm || command_norm.starts_with(&format!("{pattern_norm} "))
     }
 

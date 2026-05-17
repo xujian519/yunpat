@@ -373,7 +373,7 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
     clarity: number
     total: number
   } {
-    const scores = {
+    let scores: Record<string, number> = {
       feasibility: 5.0,
       innovation: 5.0,
       completeness: 5.0,
@@ -398,7 +398,7 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
       for (const [key, regex] of Object.entries(patterns)) {
         const m = line.match(regex)
         if (m) {
-          ;(scores as any)[key] = parseFloat(m[1])
+          scores[key] = parseFloat(m[1])
         }
       }
 

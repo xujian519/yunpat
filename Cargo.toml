@@ -17,6 +17,7 @@ members = [
     "crates/crates/yunpat-models",
     "crates/crates/yunpat-mcp-bridge",
     "crates/crates/yunpat-router",
+    "crates/crates/yunpat-patent-tui",
 ]
 default-members = ["crates/crates/cli", "crates/crates/app-server", "crates/crates/tui"]
 resolver = "2"
@@ -36,6 +37,11 @@ description = "云熙知识产权智能体 - 知识产权全生命周期智能�
 keywords = ["patent", "ip", "ai", "agent", "llm"]
 categories = ["development-tools", "command-line-utilities"]
 authors = ["徐健 <xujian519@gmail.com>"]
+
+[workspace.metadata.tarpaulin]
+out = ["Html", "Lcov"]
+line-coverage = 70
+branch-coverage = 60
 
 [workspace.dependencies]
 anyhow = "1.0.100"

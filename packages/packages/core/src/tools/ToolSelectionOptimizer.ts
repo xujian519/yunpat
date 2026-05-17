@@ -5,8 +5,8 @@
  */
 
 import { EnhancedTool } from './types.js'
-import { ToolDescriptionEnhancer } from './ToolDescriptionEnhancer.js'
-import { FewShotPromptManager } from '../reasoning/FewShotPromptManager.js'
+import { ToolDescriptionEnhancer, type EnhancedToolMetadata } from './ToolDescriptionEnhancer.js'
+import { FewShotPromptManager, type FewShotExample } from '../reasoning/FewShotPromptManager.js'
 import { toolUsageTracker } from './ToolUsageTracker.js'
 
 type ToolUsageRecord = import('./ToolUsageTracker.js').ToolUsageRecord
@@ -63,10 +63,10 @@ export class ToolSelectionOptimizer {
   private generateOptimizedPrompt(
     userInput: string,
     availableTools: EnhancedTool[],
-    enhancedMetadata: Map<string, any>,
-    relevantExamples: any[],
-    recommendations: any[],
-    context?: Record<string, any>
+    enhancedMetadata: Map<string, EnhancedToolMetadata>,
+    relevantExamples: FewShotExample[],
+    recommendations: { toolName: string; confidence: number; reason: string; expectedPerformance?: { successRate: number } }[],
+    context?: Record<string, unknown>
   ): string {
     let prompt = `
 # 工具选择辅助系统
@@ -172,26 +172,26 @@ ${this.formatConversationHistory(context.conversationHistory)}
   /**
    * 格式化工具描述
    */
-  private formatToolDescription(metadata: unknown): string {
+  private formatToolDescription(metadata: EnhancedToolMetadata): string {
     let desc = `
-### ${(metadata as any).name}
+### ${metadata.name}
 
-**描述**：${(metadata as any).description}
+**描述**：${metadata.description}
 `
 
-    if ((metadata as any).commonUseCases && (metadata as any).commonUseCases.length > 0) {
+    if (metadata.commonUseCases && metadata.commonUseCases.length > 0) {
       desc += `\n**常见用例**：\n`
-      ;(metadata as any).commonUseCases.forEach((useCase: string) => {
+      metadata.commonUseCases.forEach((useCase: string) => {
         desc += `- ${useCase}\n`
       })
     }
 
-    if ((metadata as any).capabilities && (metadata as any).capabilities.length > 0) {
-      desc += `\n**能力**：${(metadata as any).capabilities.join('、')}`
+    if (metadata.capabilities && metadata.capabilities.length > 0) {
+      desc += `\n**能力**：${metadata.capabilities.join('、')}`
     }
 
-    if ((metadata as any).examples && (metadata as any).examples.length > 0) {
-      const example = (metadata as any).examples[0]
+    if (metadata.examples && metadata.examples.length > 0) {
+      const example = metadata.examples[0]
       desc += `\n**示例**：${example.description}`
       if (example.scenario) {
         desc += ` (${example.scenario})`
@@ -204,25 +204,25 @@ ${this.formatConversationHistory(context.conversationHistory)}
   /**
    * 格式化Few-shot示例
    */
-  private formatFewShotExample(example: unknown): string {
+  private formatFewShotExample(example: FewShotExample): string {
     return `
-#### 示例：${(example as any).scenario}
+#### 示例：${example.scenario}
 
-**用户输入**：${(example as any).userInput}
+**用户输入**：${example.userInput}
 
 **思考过程**：
-${(example as any).reasoning}
+${example.reasoning}
 
-**选择工具**：${(example as any).selectedTool}
+**选择工具**：${example.selectedTool}
 
 **工具参数**：
 \`\`\`json
-${JSON.stringify((example as any).toolParameters, null, 2)}
+${JSON.stringify(example.toolParameters, null, 2)}
 \`\`\`
 
-**结果**：${(example as any).outcome}
+**结果**：${example.outcome}
 
-${(example as any).lessons ? `**经验**：${(example as any).lessons}` : ''}
+${example.lessons ? `**经验**：${example.lessons}` : ''}
 
 ---
 `

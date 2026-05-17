@@ -119,10 +119,7 @@ impl LargeOutputRouter {
         let threshold = self.config.threshold_for(tool_name);
         let estimated_tokens = estimate_tokens(&result.content);
         if estimated_tokens > threshold {
-            RouteDecision::Synthesise {
-                estimated_tokens,
-                threshold,
-            }
+            RouteDecision::Synthesise { estimated_tokens, threshold }
         } else {
             RouteDecision::PassThrough
         }

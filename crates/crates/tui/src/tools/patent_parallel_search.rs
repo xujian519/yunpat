@@ -126,9 +126,7 @@ impl ToolSpec for PatentParallelSearchTool {
         let query = input
             .get("query")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| ToolError::MissingField {
-                field: "query".to_string(),
-            })?
+            .ok_or_else(|| ToolError::MissingField { field: "query".to_string() })?
             .trim();
 
         if query.is_empty() {
@@ -141,11 +139,7 @@ impl ToolSpec for PatentParallelSearchTool {
         let databases: Vec<String> = input
             .get("databases")
             .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str().map(|s| s.to_uppercase()))
-                    .collect()
-            })
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_uppercase())).collect())
             .unwrap_or_else(|| vec!["CN".to_string(), "US".to_string(), "EP".to_string()]);
 
         // 验证数据库代码
@@ -385,10 +379,7 @@ mod tests {
     async fn returns_not_available_without_client() {
         let t = tool();
         let ctx = ctx();
-        let res = t
-            .execute(json!({"query": "test"}), &ctx)
-            .await
-            .expect_err("must error");
+        let res = t.execute(json!({"query": "test"}), &ctx).await.expect_err("must error");
         assert!(matches!(res, ToolError::NotAvailable { .. }));
     }
 
@@ -407,10 +398,7 @@ mod tests {
     async fn rejects_empty_query() {
         let t = PatentParallelSearchTool::new(None, "x".into());
         let ctx = ctx();
-        let res = t
-            .execute(json!({"query": "   "}), &ctx)
-            .await
-            .expect_err("must error");
+        let res = t.execute(json!({"query": "   "}), &ctx).await.expect_err("must error");
         // Without a client we hit NotAvailable first
         assert!(matches!(
             res,

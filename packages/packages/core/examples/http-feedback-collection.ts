@@ -6,6 +6,14 @@
 
 import { ApprovalFlow, ApprovalMode } from '../src/gateway/ApprovalFlow.js'
 import type { UserFeedback } from '../src/gateway/ApprovalFlow.js'
+import {
+  LifecycleStage,
+  type ExecutionContext,
+  type MemoryStore,
+  type EventBus,
+  type ToolRegistry,
+  type LLMAdapter,
+} from '../src/lifecycle/Lifecycle.js'
 
 async function main() {
   console.log('=== HTTP 反馈收集示例 ===\n')
@@ -41,11 +49,43 @@ async function main() {
     },
   }
 
-  const mockContext = {
-    agentName: 'PatentWriterAgent',
+  const mockContext: ExecutionContext = {
     executionId: 'exec-123',
-    goal: '生成专利申请文件',
-    reasoning: '基于用户提供的技术交底书生成专利文本',
+    agentName: 'PatentWriterAgent',
+    startTime: new Date(),
+    currentStage: LifecycleStage.ACT,
+    memory: {
+      get: async () => undefined,
+      set: async () => {},
+      delete: async () => {},
+      has: async () => false,
+      getAll: async () => ({}),
+      setAll: async () => {},
+      clear: async () => {},
+      search: async () => [],
+    } satisfies MemoryStore,
+    eventBus: {
+      publish: () => {},
+      subscribe: () => ({ id: '', pattern: '', handler: () => {}, unsubscribe: () => {} }),
+      unsubscribe: () => {},
+      request: async () => undefined,
+    } satisfies EventBus,
+    tools: {
+      register: () => {},
+      unregister: () => {},
+      get: () => undefined,
+      call: async () => undefined,
+      list: () => [],
+    } satisfies ToolRegistry,
+    llm: {
+      chat: async () => ({
+        message: { role: 'assistant' as const, content: '' },
+      }),
+      chatStream: async function* () {},
+      embed: async () => [[]],
+    } satisfies LLMAdapter,
+    metadata: {},
+    sharedState: new Map(),
   }
 
   // 4. 请求审批（这会阻塞等待 HTTP API 收到反馈）
@@ -78,7 +118,7 @@ async function main() {
     // 请求审批（会阻塞直到收到反馈或超时）
     const response = await approvalFlow.requestApproval(
       mockResult,
-      mockContext as any,
+      mockContext,
       60000 // 60 秒超时
     )
 

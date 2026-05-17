@@ -59,10 +59,7 @@ fn default_path() -> Option<PathBuf> {
 }
 
 fn now_secs() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0)
+    SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }
 
 /// Time-decayed frecency score for a record, in arbitrary units. Mentions
@@ -103,11 +100,8 @@ fn evict_to_cap(store: &mut Store, now: u64) {
         return;
     }
     let target = FRECENCY_CAP;
-    let mut scored: Vec<(String, f64)> = store
-        .by_path
-        .iter()
-        .map(|(k, v)| (k.clone(), decayed_score(v, now)))
-        .collect();
+    let mut scored: Vec<(String, f64)> =
+        store.by_path.iter().map(|(k, v)| (k.clone(), decayed_score(v, now))).collect();
     scored.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
     let drop_count = store.by_path.len().saturating_sub(target);
     for (key, _) in scored.iter().take(drop_count) {
@@ -140,14 +134,11 @@ pub fn record_mention(path: &str) {
     };
     ensure_loaded(&mut store);
     let now = now_secs();
-    let entry = store
-        .by_path
-        .entry(path.to_string())
-        .or_insert_with(|| FrecencyRecord {
-            path: path.to_string(),
-            count: 0,
-            last_used: now,
-        });
+    let entry = store.by_path.entry(path.to_string()).or_insert_with(|| FrecencyRecord {
+        path: path.to_string(),
+        count: 0,
+        last_used: now,
+    });
     entry.count = entry.count.saturating_add(1);
     entry.last_used = now;
     let snapshot = entry.clone();
@@ -179,11 +170,7 @@ pub fn rerank_by_frecency(candidates: Vec<String>) -> Vec<String> {
         .into_iter()
         .enumerate()
         .map(|(idx, path)| {
-            let score = store
-                .by_path
-                .get(&path)
-                .map(|r| decayed_score(r, now))
-                .unwrap_or(0.0);
+            let score = store.by_path.get(&path).map(|r| decayed_score(r, now)).unwrap_or(0.0);
             (idx, path, score)
         })
         .collect();

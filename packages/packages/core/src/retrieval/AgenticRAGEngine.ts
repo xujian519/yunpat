@@ -186,8 +186,7 @@ export class AgenticRAGEngine extends GraphRAGEngine {
       }
     }
 
-    const avgSimilarity =
-      results.reduce((sum, r) => sum + r.similarity, 0) / results.length
+    const avgSimilarity = results.reduce((sum, r) => sum + r.similarity, 0) / results.length
 
     const coverage = Math.min(results.length / 10, 1)
 
@@ -202,9 +201,7 @@ export class AgenticRAGEngine extends GraphRAGEngine {
     const gaps: string[] = []
 
     for (const term of keyTerms) {
-      const covered = results.some((r) =>
-        r.content.toLowerCase().includes(term.toLowerCase())
-      )
+      const covered = results.some((r) => r.content.toLowerCase().includes(term.toLowerCase()))
       if (!covered) {
         gaps.push(term)
       }
@@ -355,13 +352,15 @@ export class AgenticRAGEngine extends GraphRAGEngine {
       type: string
       source: 'vector' | 'graph'
     }>
-  ): Promise<Array<{
-    content: string
-    similarity: number
-    metadata: Record<string, any> | null
-    type: string
-    source: 'vector' | 'graph'
-  }>> {
+  ): Promise<
+    Array<{
+      content: string
+      similarity: number
+      metadata: Record<string, any> | null
+      type: string
+      source: 'vector' | 'graph'
+    }>
+  > {
     const dedupThreshold = 0.95
     const merged = [...existing]
 
@@ -369,10 +368,7 @@ export class AgenticRAGEngine extends GraphRAGEngine {
       let isDuplicate = false
 
       for (const existingResult of merged) {
-        const similarity = this.computeTextSimilarity(
-          newResult.content,
-          existingResult.content
-        )
+        const similarity = this.computeTextSimilarity(newResult.content, existingResult.content)
 
         if (similarity > dedupThreshold) {
           isDuplicate = true

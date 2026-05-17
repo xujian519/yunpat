@@ -74,9 +74,5 @@ fn generate_project_map(root: &std::path::Path, max_depth: usize) -> Result<Proj
         }
     }
 
-    Ok(ProjectMap {
-        tree,
-        summary,
-        key_files,
-    })
+    Ok(ProjectMap { tree, summary, key_files })
 }

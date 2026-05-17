@@ -13,6 +13,24 @@ import {
 } from './hallucination-types.js'
 
 /**
+ * LLM 矛盾检测响应项
+ */
+interface LLMContradictionItem {
+  description: string
+  statements: string[]
+  severity: string
+}
+
+/**
+ * LLM 逻辑断层检测响应项
+ */
+interface LLMLogicalGapItem {
+  description: string
+  location: string
+  suggestedFix: string
+}
+
+/**
  * 逻辑一致性检查器
  */
 export class LogicalConsistencyChecker {
@@ -224,15 +242,15 @@ ${content}
 
       const parsed = JSON.parse(response.message.content)
 
-      return parsed.map((item: unknown, index: number) => ({
+      return parsed.map((item: LLMContradictionItem, index: number) => ({
         id: `contradiction-llm-${index}`,
         type: LogicalInconsistencyType.CONTRADICTION,
-        severity: (item as any).severity || 'major',
-        description: (item as any).description,
-        locations: (item as any).statements
+        severity: (item.severity || 'major') as 'critical' | 'major' | 'minor',
+        description: item.description,
+        locations: item.statements
           .map((stmt: string) => this.findLocationInText(content, stmt))
           .filter((loc: TextLocation | undefined) => loc !== undefined) as TextLocation[],
-        conflictingStatements: (item as any).statements,
+        conflictingStatements: item.statements,
       }))
     } catch (error) {
       console.error('LLM矛盾检测失败:', error)
@@ -339,16 +357,16 @@ ${content}
 
       const parsed = JSON.parse(response.message.content)
 
-      return parsed.map((item: unknown, index: number) => ({
+      return parsed.map((item: LLMLogicalGapItem, index: number) => ({
         id: `logical-gap-${index}`,
         type: LogicalInconsistencyType.LOGICAL_GAP,
         severity: 'minor',
-        description: (item as any).description,
-        locations: [this.findLocationInText(content, (item as any).location || '')].filter(
+        description: item.description,
+        locations: [this.findLocationInText(content, item.location || '')].filter(
           (loc) => loc !== undefined
         ) as TextLocation[],
         conflictingStatements: [],
-        suggestedFix: (item as any).suggestedFix,
+        suggestedFix: item.suggestedFix,
       }))
     } catch (error) {
       console.error('LLM逻辑断层检测失败:', error)

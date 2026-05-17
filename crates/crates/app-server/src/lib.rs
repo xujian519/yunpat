@@ -135,11 +135,7 @@ pub async fn run_stdio(config_path: Option<PathBuf>) -> Result<()> {
             }
         };
 
-        if request
-            .jsonrpc
-            .as_deref()
-            .is_some_and(|version| version != "2.0")
-        {
+        if request.jsonrpc.as_deref().is_some_and(|version| version != "2.0") {
             let response = jsonrpc_error(
                 request.id,
                 JsonRpcError::invalid_request("jsonrpc version must be 2.0"),
@@ -467,13 +463,9 @@ async fn dispatch_stdio_request(
                 metadata: Value,
             }
             let parsed: CreateParams = parse_params(params_or_object(params))?;
-            let response = handle_thread_request(
-                state,
-                ThreadRequest::Create {
-                    metadata: parsed.metadata,
-                },
-            )
-            .await?;
+            let response =
+                handle_thread_request(state, ThreadRequest::Create { metadata: parsed.metadata })
+                    .await?;
             StdioDispatchResult {
                 result: serde_json::to_value(response)
                     .map_err(|err| JsonRpcError::internal(err.to_string()))?,
@@ -538,9 +530,7 @@ async fn dispatch_stdio_request(
             let parsed: ThreadIdParams = parse_params(params_or_object(params))?;
             let response = handle_thread_request(
                 state,
-                ThreadRequest::Archive {
-                    thread_id: parsed.thread_id,
-                },
+                ThreadRequest::Archive { thread_id: parsed.thread_id },
             )
             .await?;
             StdioDispatchResult {
@@ -553,9 +543,7 @@ async fn dispatch_stdio_request(
             let parsed: ThreadIdParams = parse_params(params_or_object(params))?;
             let response = handle_thread_request(
                 state,
-                ThreadRequest::Unarchive {
-                    thread_id: parsed.thread_id,
-                },
+                ThreadRequest::Unarchive { thread_id: parsed.thread_id },
             )
             .await?;
             StdioDispatchResult {

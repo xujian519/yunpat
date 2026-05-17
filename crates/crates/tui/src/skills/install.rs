@@ -137,9 +137,7 @@ impl InstallSource {
 /// already points at a specific archive / blob / tree path — those are real
 /// direct URLs and the caller fetches them as-is.
 fn parse_github_browser_url(url: &str) -> Option<String> {
-    let after_scheme = url
-        .strip_prefix("https://")
-        .or_else(|| url.strip_prefix("http://"))?;
+    let after_scheme = url.strip_prefix("https://").or_else(|| url.strip_prefix("http://"))?;
     let (host, rest) = after_scheme.split_once('/')?;
     if !host.eq_ignore_ascii_case("github.com") && !host.eq_ignore_ascii_case("www.github.com") {
         return None;
@@ -634,16 +632,10 @@ async fn sync_one_skill(
         match network.decide(&host) {
             Decision::Allow => {}
             Decision::Deny => {
-                return SkillSyncOutcome::Denied {
-                    name: name.to_string(),
-                    host,
-                };
+                return SkillSyncOutcome::Denied { name: name.to_string(), host };
             }
             Decision::Prompt => {
-                return SkillSyncOutcome::NeedsApproval {
-                    name: name.to_string(),
-                    host,
-                };
+                return SkillSyncOutcome::NeedsApproval { name: name.to_string(), host };
             }
         }
 
@@ -653,9 +645,7 @@ async fn sync_one_skill(
         let existing_meta: Option<CacheMeta> = meta_path
             .exists()
             .then(|| {
-                fs::read_to_string(&meta_path)
-                    .ok()
-                    .and_then(|s| serde_json::from_str(&s).ok())
+                fs::read_to_string(&meta_path).ok().and_then(|s| serde_json::from_str(&s).ok())
             })
             .flatten();
 
@@ -681,9 +671,7 @@ async fn sync_one_skill(
 
         // 304 Not Modified: cached copy is still fresh.
         if status == reqwest::StatusCode::NOT_MODIFIED {
-            return SkillSyncOutcome::Fresh {
-                name: name.to_string(),
-            };
+            return SkillSyncOutcome::Fresh { name: name.to_string() };
         }
 
         if status == reqwest::StatusCode::NOT_FOUND {
@@ -736,9 +724,7 @@ async fn sync_one_skill(
             && meta.sha256 == sha256
             && meta.url == *url
         {
-            return SkillSyncOutcome::Fresh {
-                name: name.to_string(),
-            };
+            return SkillSyncOutcome::Fresh { name: name.to_string() };
         }
 
         // Determine whether this is a tarball or a plain SKILL.md.
@@ -790,11 +776,7 @@ async fn sync_one_skill(
         };
 
         // Write the updated freshness metadata.
-        let meta = CacheMeta {
-            etag,
-            sha256,
-            url: url.clone(),
-        };
+        let meta = CacheMeta { etag, sha256, url: url.clone() };
         let meta_json = serde_json::to_string(&meta).unwrap_or_default();
         let _ = fs::write(final_path.join(".cache-meta.json"), meta_json);
 
@@ -943,10 +925,7 @@ async fn download_first_success(
         }
         match download_with_cap(url, max_size).await? {
             DownloadAttempt::Bytes(bytes) => {
-                return Ok(DownloadOutcome::Bytes {
-                    bytes,
-                    url: url.clone(),
-                });
+                return Ok(DownloadOutcome::Bytes { bytes, url: url.clone() });
             }
             DownloadAttempt::NotFound(status) => {
                 last_status = Some(status);
@@ -962,9 +941,7 @@ async fn download_first_success(
     }
     bail!(
         "failed to download skill (last status: {})",
-        last_status
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| "unknown".to_string())
+        last_status.map(|s| s.to_string()).unwrap_or_else(|| "unknown".to_string())
     );
 }
 
@@ -977,9 +954,7 @@ enum DownloadAttempt {
 /// would push the buffer over `max_size * 4` (the *4 accounts for compression;
 /// the unpack step still enforces `max_size` on the *uncompressed* bytes).
 async fn download_with_cap(url: &str, max_size: u64) -> Result<DownloadAttempt> {
-    let resp = reqwest::get(url)
-        .await
-        .with_context(|| format!("failed to GET {url}"))?;
+    let resp = reqwest::get(url).await.with_context(|| format!("failed to GET {url}"))?;
     let status = resp.status();
     if !status.is_success() {
         if status == reqwest::StatusCode::NOT_FOUND {
@@ -990,10 +965,7 @@ async fn download_with_cap(url: &str, max_size: u64) -> Result<DownloadAttempt> 
     // Soft cap on the *compressed* download — well above max_size to allow
     // for highly compressible payloads but still bounded.
     let compressed_cap = max_size.saturating_mul(4);
-    let bytes = resp
-        .bytes()
-        .await
-        .with_context(|| format!("failed to read body of {url}"))?;
+    let bytes = resp.bytes().await.with_context(|| format!("failed to read body of {url}"))?;
     if (bytes.len() as u64) > compressed_cap {
         bail!("download {url} exceeds compressed size cap of {compressed_cap} bytes");
     }
@@ -1069,17 +1041,11 @@ fn scan_tarball(bytes: &[u8], max_size: u64) -> Result<TarballScan> {
     let mut skill_md_relative: Option<(String, Vec<u8>)> = None;
     let mut link_paths: Vec<String> = Vec::new();
 
-    for entry in archive
-        .entries()
-        .context("failed to read tar entries (corrupt archive?)")?
-    {
+    for entry in archive.entries().context("failed to read tar entries (corrupt archive?)")? {
         let mut entry = entry.context("failed to read tar entry")?;
         let header = entry.header().clone();
         let entry_type = header.entry_type();
-        let path = entry
-            .path()
-            .context("tar entry has invalid path")?
-            .to_path_buf();
+        let path = entry.path().context("tar entry has invalid path")?.to_path_buf();
         let path_str = path.to_string_lossy().into_owned();
         if !is_safe_path(&path) {
             return Err(InstallError::PathTraversal(path_str).into());
@@ -1133,9 +1099,7 @@ fn scan_tarball(bytes: &[u8], max_size: u64) -> Result<TarballScan> {
                     && stripped.matches('/').count() == 2
             {
                 let mut buf = Vec::new();
-                entry
-                    .read_to_end(&mut buf)
-                    .context("failed to read SKILL.md from archive")?;
+                entry.read_to_end(&mut buf).context("failed to read SKILL.md from archive")?;
                 // Prefer the first match — we don't support multi-skill
                 // archives where a tarball ships several SKILL.mds at once.
                 if skill_md_relative.is_none() {
@@ -1154,10 +1118,7 @@ fn scan_tarball(bytes: &[u8], max_size: u64) -> Result<TarballScan> {
         String::new()
     } else {
         // strip trailing /SKILL.md
-        skill_md_path
-            .strip_suffix("/SKILL.md")
-            .unwrap_or("")
-            .to_string()
+        skill_md_path.strip_suffix("/SKILL.md").unwrap_or("").to_string()
     };
 
     for link_path in link_paths {
@@ -1192,17 +1153,11 @@ fn extract_into(scan: &TarballScan, bytes: &[u8], dest: &Path, max_size: u64) ->
         format!("{}/{}", scan.prefix, scan.skill_root)
     };
 
-    for entry in archive
-        .entries()
-        .context("failed to read tar entries (corrupt archive?)")?
-    {
+    for entry in archive.entries().context("failed to read tar entries (corrupt archive?)")? {
         let mut entry = entry.context("failed to read tar entry")?;
         let header = entry.header().clone();
         let entry_type = header.entry_type();
-        let path = entry
-            .path()
-            .context("tar entry has invalid path")?
-            .to_path_buf();
+        let path = entry.path().context("tar entry has invalid path")?.to_path_buf();
         let path_str = path.to_string_lossy().into_owned();
         if !is_safe_path(&path) {
             return Err(InstallError::PathTraversal(path_str).into());

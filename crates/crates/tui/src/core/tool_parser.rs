@@ -158,10 +158,7 @@ pub fn parse_tool_calls(text: &str) -> ParseResult {
         .trim()
         .to_string();
 
-    ParseResult {
-        clean_text,
-        tool_calls,
-    }
+    ParseResult { clean_text, tool_calls }
 }
 
 /// Parse an `<invoke>` block into a tool call.

@@ -53,10 +53,7 @@ pub fn load_preview(state: &mut PreviewState, path: std::path::PathBuf) {
 
     let content = match metadata {
         Ok(meta) if meta.len() > MAX_PREVIEW_SIZE => PreviewContent::Binary {
-            name: path
-                .file_name()
-                .map(|n| n.to_string_lossy().to_string())
-                .unwrap_or_default(),
+            name: path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
             size_bytes: meta.len(),
             mime_hint: format!("{:?}", file_type),
         },
@@ -65,16 +62,12 @@ pub fn load_preview(state: &mut PreviewState, path: std::path::PathBuf) {
                 Ok(text) => {
                     let line_count = text.lines().count();
                     match &file_type {
-                        PreviewFileType::Markdown => PreviewContent::Markdown {
-                            raw: text,
-                            rendered_height: 0,
-                        },
+                        PreviewFileType::Markdown => {
+                            PreviewContent::Markdown { raw: text, rendered_height: 0 }
+                        }
                         _ => {
-                            let lines: Vec<String> = text
-                                .lines()
-                                .take(MAX_PREVIEW_LINES)
-                                .map(String::from)
-                                .collect();
+                            let lines: Vec<String> =
+                                text.lines().take(MAX_PREVIEW_LINES).map(String::from).collect();
                             PreviewContent::Text { lines, line_count }
                         }
                     }
@@ -120,9 +113,7 @@ impl Renderable for PreviewPanel<'_> {
         }
 
         let border_style = if self.focused {
-            Style::default()
-                .fg(palette::SELECTION_TEXT)
-                .bg(palette::SELECTION_BG)
+            Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
         } else {
             Style::default().fg(palette::BORDER_COLOR)
         };
@@ -179,11 +170,9 @@ impl Renderable for PreviewPanel<'_> {
                 );
                 apply_scroll(rendered, self.state.scroll_offset, inner.height)
             }
-            PreviewContent::Binary {
-                name,
-                size_bytes,
-                mime_hint,
-            } => render_binary_placeholder(name, *size_bytes, mime_hint, inner.width),
+            PreviewContent::Binary { name, size_bytes, mime_hint } => {
+                render_binary_placeholder(name, *size_bytes, mime_hint, inner.width)
+            }
         };
 
         let paragraph = Paragraph::new(lines).wrap(Wrap { trim: false });

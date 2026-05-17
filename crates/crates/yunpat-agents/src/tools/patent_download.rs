@@ -8,9 +8,8 @@ impl PatentDownloadTool {
     }
 
     pub async fn download_pdf(&self, patent_id: &str, output_dir: &str) -> anyhow::Result<String> {
-        let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(60))
-            .build()?;
+        let client =
+            reqwest::Client::builder().timeout(std::time::Duration::from_secs(60)).build()?;
 
         let url = format!(
             "https://patentimages.storage.googleapis.com/{}/{}.pdf",

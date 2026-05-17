@@ -412,10 +412,7 @@ fn normalize_diff_path(raw: &str) -> Option<String> {
     if raw == "/dev/null" || raw == "dev/null" {
         return None;
     }
-    let raw = raw
-        .strip_prefix("a/")
-        .or_else(|| raw.strip_prefix("b/"))
-        .unwrap_or(raw);
+    let raw = raw.strip_prefix("a/").or_else(|| raw.strip_prefix("b/")).unwrap_or(raw);
     Some(raw.to_string())
 }
 
@@ -854,9 +851,7 @@ fn snippet_around(lines: &[String], line_1_based: usize, radius: usize) -> Vec<S
         return vec!["  <empty file>".to_string()];
     }
 
-    let center = line_1_based
-        .saturating_sub(1)
-        .min(lines.len().saturating_sub(1));
+    let center = line_1_based.saturating_sub(1).min(lines.len().saturating_sub(1));
     let start = center.saturating_sub(radius);
     let end = (center + radius).min(lines.len().saturating_sub(1));
 
@@ -1129,10 +1124,7 @@ mod tests {
         let err = apply_hunk(&mut lines, &hunk, 0, &mut offset).unwrap_err();
         assert!(matches!(
             err,
-            ApplyHunkError::NoMatch {
-                expected_line: 5,
-                ..
-            }
+            ApplyHunkError::NoMatch { expected_line: 5, .. }
         ));
     }
 
@@ -1286,10 +1278,7 @@ diff --git a/b.txt b/b.txt
 ";
 
         let tool = ApplyPatchTool;
-        let result = tool
-            .execute(json!({"patch": patch}), &ctx)
-            .await
-            .expect("execute");
+        let result = tool.execute(json!({"patch": patch}), &ctx).await.expect("execute");
 
         assert!(result.success);
         let patch_result = parse_patch_result(result);
@@ -1314,10 +1303,7 @@ diff --git a/b.txt b/b.txt
 +new
 ";
 
-        let err = tool
-            .execute(json!({"patch": patch}), &ctx)
-            .await
-            .unwrap_err();
+        let err = tool.execute(json!({"patch": patch}), &ctx).await.unwrap_err();
         match err {
             ToolError::InvalidInput { message } => {
                 assert!(message.contains("no file headers"));
@@ -1347,10 +1333,7 @@ diff --git a/b.txt b/b.txt
 +two-mod
 ";
 
-        let err = tool
-            .execute(json!({"path": "a.txt", "patch": patch}), &ctx)
-            .await
-            .unwrap_err();
+        let err = tool.execute(json!({"path": "a.txt", "patch": patch}), &ctx).await.unwrap_err();
         match err {
             ToolError::InvalidInput { message } => {
                 assert!(message.contains("multiple files"));
@@ -1408,16 +1391,8 @@ diff --git a/b.txt b/b.txt
             .await
             .expect("execute");
         let patch_result = parse_patch_result(result);
-        assert!(
-            patch_result
-                .message
-                .contains("headers reference `other.txt`")
-        );
-        assert!(
-            patch_result
-                .message
-                .contains("path` overrides to `override.txt`")
-        );
+        assert!(patch_result.message.contains("headers reference `other.txt`"));
+        assert!(patch_result.message.contains("path` overrides to `override.txt`"));
     }
 
     #[test]

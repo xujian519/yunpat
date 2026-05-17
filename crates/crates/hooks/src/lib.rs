@@ -108,12 +108,8 @@ impl HookSink for JsonlHookSink {
             "event": event
         });
         let encoded = serde_json::to_string(&payload).context("failed to encode hook event")?;
-        file.write_all(encoded.as_bytes())
-            .await
-            .context("failed to write hook event")?;
-        file.write_all(b"\n")
-            .await
-            .context("failed to write hook event newline")?;
+        file.write_all(encoded.as_bytes()).await.context("failed to write hook event")?;
+        file.write_all(b"\n").await.context("failed to write hook event newline")?;
         Ok(())
     }
 }
@@ -178,6 +174,320 @@ impl HookDispatcher {
     pub async fn emit(&self, event: HookEvent) {
         for sink in &self.sinks {
             let _ = sink.emit(&event).await;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_user_message_event() -> HookEvent {
+        HookEvent::UserMessage {
+            message: "test message".to_string(),
+            mode: "general".to_string(),
+        }
+    }
+
+    fn create_response_start_event() -> HookEvent {
+        HookEvent::ResponseStart {
+            response_id: "test-id-123".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_hook_event_user_message_json() {
+        let event = HookEvent::UserMessage {
+            message: "Hello world".to_string(),
+            mode: "agent".to_string(),
+        };
+
+        let json = event.to_json();
+        assert_eq!(json["type"], "user_message");
+        assert_eq!(json["message"], "Hello world");
+        assert_eq!(json["mode"], "agent");
+    }
+
+    #[test]
+    fn test_hook_event_response_start_json() {
+        let event = HookEvent::ResponseStart {
+            response_id: "resp-001".to_string(),
+        };
+
+        let json = event.to_json();
+        assert_eq!(json["type"], "response_start");
+        assert_eq!(json["response_id"], "resp-001");
+    }
+
+    #[test]
+    fn test_hook_event_response_delta_json() {
+        let event = HookEvent::ResponseDelta {
+            response_id: "resp-001".to_string(),
+            delta: "Hello".to_string(),
+        };
+
+        let json = event.to_json();
+        assert_eq!(json["type"], "response_delta");
+        assert_eq!(json["delta"], "Hello");
+    }
+
+    #[test]
+    fn test_hook_event_response_end_json() {
+        let event = HookEvent::ResponseEnd {
+            response_id: "resp-001".to_string(),
+        };
+
+        let json = event.to_json();
+        assert_eq!(json["type"], "response_end");
+    }
+
+    #[test]
+    fn test_hook_event_tool_lifecycle_json() {
+        let event = HookEvent::ToolLifecycle {
+            response_id: "resp-001".to_string(),
+            tool_name: "search".to_string(),
+            phase: "start".to_string(),
+            payload: json!({"query": "test"}),
+        };
+
+        let json = event.to_json();
+        assert_eq!(json["type"], "tool_lifecycle");
+        assert_eq!(json["tool_name"], "search");
+        assert_eq!(json["phase"], "start");
+        assert_eq!(json["payload"]["query"], "test");
+    }
+
+    #[test]
+    fn test_hook_event_job_lifecycle_json() {
+        let event = HookEvent::JobLifecycle {
+            job_id: "job-123".to_string(),
+            phase: "running".to_string(),
+            progress: Some(50),
+            detail: Some("Processing".to_string()),
+        };
+
+        let json = event.to_json();
+        assert_eq!(json["type"], "job_lifecycle");
+        assert_eq!(json["progress"], 50);
+        assert_eq!(json["detail"], "Processing");
+    }
+
+    #[test]
+    fn test_hook_event_approval_lifecycle_json() {
+        let event = HookEvent::ApprovalLifecycle {
+            approval_id: "apr-001".to_string(),
+            phase: "approved".to_string(),
+            reason: Some("User approved".to_string()),
+        };
+
+        let json = event.to_json();
+        assert_eq!(json["type"], "approval_lifecycle");
+        assert_eq!(json["phase"], "approved");
+        assert_eq!(json["reason"], "User approved");
+    }
+
+    #[test]
+    fn test_hook_event_serde_roundtrip() {
+        let original = HookEvent::UserMessage {
+            message: "test".to_string(),
+            mode: "general".to_string(),
+        };
+
+        let json = serde_json::to_value(&original).unwrap();
+        let deserialized: HookEvent = serde_json::from_value(json).unwrap();
+
+        match deserialized {
+            HookEvent::UserMessage { message, mode } => {
+                assert_eq!(message, "test");
+                assert_eq!(mode, "general");
+            }
+            _ => panic!("Roundtrip failed"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_stdout_hook_sink_emit() {
+        let sink = StdoutHookSink;
+        let event = create_user_message_event();
+
+        let result = sink.emit(&event).await;
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_jsonl_hook_sink_new() {
+        let path = PathBuf::from("/tmp/test-hook.jsonl");
+        let sink = JsonlHookSink::new(path.clone());
+
+        let _ = sink;
+    }
+
+    #[tokio::test]
+    async fn test_jsonl_hook_sink_emit_creates_dir() {
+        let temp_dir = PathBuf::from("/tmp/test-hooks-nested");
+        let file_path = temp_dir.join("nested/dir/hooks.jsonl");
+        let sink = JsonlHookSink::new(file_path.clone());
+
+        let event = create_response_start_event();
+        let result = sink.emit(&event).await;
+
+        assert!(result.is_ok());
+        assert!(file_path.exists());
+
+        tokio::fs::remove_dir_all(temp_dir).await.ok();
+    }
+
+    #[tokio::test]
+    async fn test_jsonl_hook_sink_emit_appends() {
+        let temp_dir = PathBuf::from("/tmp/test-hooks-append");
+        let file_path = temp_dir.join("hooks.jsonl");
+        let sink = JsonlHookSink::new(file_path.clone());
+
+        let event1 = create_response_start_event();
+        let event2 = HookEvent::ResponseEnd {
+            response_id: "test-id".to_string(),
+        };
+
+        let result1 = sink.emit(&event1).await;
+        let result2 = sink.emit(&event2).await;
+
+        assert!(result1.is_ok());
+        assert!(result2.is_ok());
+
+        let content: String = tokio::fs::read_to_string(&file_path).await.unwrap();
+        let lines: Vec<&str> = content.lines().collect();
+        assert_eq!(lines.len(), 2);
+
+        tokio::fs::remove_dir_all(temp_dir).await.ok();
+    }
+
+    #[test]
+    fn test_webhook_hook_sink_new() {
+        let sink = WebhookHookSink::new("http://example.com/webhook".to_string());
+
+        let _ = sink;
+    }
+
+    #[test]
+    fn test_hook_dispatcher_default() {
+        let dispatcher = HookDispatcher::default();
+        assert!(dispatcher.sinks.is_empty());
+    }
+
+    #[test]
+    fn test_hook_dispatcher_add_sink() {
+        let mut dispatcher = HookDispatcher::default();
+        let sink = Arc::new(StdoutHookSink);
+
+        dispatcher.add_sink(sink);
+        assert!(!dispatcher.sinks.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_hook_dispatcher_emit_single_sink() {
+        let mut dispatcher = HookDispatcher::default();
+        let sink = Arc::new(StdoutHookSink);
+
+        dispatcher.add_sink(sink);
+
+        let event = create_user_message_event();
+        dispatcher.emit(event).await;
+    }
+
+    #[tokio::test]
+    async fn test_hook_dispatcher_emit_multiple_sinks() {
+        let mut dispatcher = HookDispatcher::default();
+
+        let stdout_sink = Arc::new(StdoutHookSink);
+        let temp_dir = PathBuf::from("/tmp/test-hooks-multi");
+        let file_path = temp_dir.join("hooks.jsonl");
+        let jsonl_sink = Arc::new(JsonlHookSink::new(file_path.clone()));
+
+        dispatcher.add_sink(stdout_sink);
+        dispatcher.add_sink(jsonl_sink);
+
+        let event = create_response_start_event();
+        dispatcher.emit(event).await;
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+        let content: String = tokio::fs::read_to_string(&file_path).await.unwrap();
+        assert!(!content.is_empty());
+
+        tokio::fs::remove_dir_all(temp_dir).await.ok();
+    }
+
+    #[tokio::test]
+    async fn test_hook_dispatcher_sink_failure_does_not_stop_others() {
+        struct FailingSink;
+        #[async_trait]
+        impl HookSink for FailingSink {
+            async fn emit(&self, _event: &HookEvent) -> Result<()> {
+                anyhow::bail!("Intentional failure");
+            }
+        }
+
+        let mut dispatcher = HookDispatcher::default();
+
+        let temp_dir = PathBuf::from("/tmp/test-hooks-fail");
+        let file_path = temp_dir.join("hooks.jsonl");
+        let success_sink = Arc::new(JsonlHookSink::new(file_path.clone()));
+        let failing_sink = Arc::new(FailingSink);
+
+        dispatcher.add_sink(failing_sink);
+        dispatcher.add_sink(success_sink);
+
+        let event = create_user_message_event();
+        dispatcher.emit(event).await;
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+        let content: String = tokio::fs::read_to_string(&file_path).await.unwrap();
+        assert!(!content.is_empty());
+
+        tokio::fs::remove_dir_all(temp_dir).await.ok();
+    }
+
+    #[test]
+    fn test_hook_event_all_variants_serde() {
+        let events = vec![
+            HookEvent::UserMessage {
+                message: "msg".to_string(),
+                mode: "m".to_string(),
+            },
+            HookEvent::ResponseStart {
+                response_id: "id".to_string(),
+            },
+            HookEvent::ResponseDelta {
+                response_id: "id".to_string(),
+                delta: "delta".to_string(),
+            },
+            HookEvent::ResponseEnd {
+                response_id: "id".to_string(),
+            },
+            HookEvent::ToolLifecycle {
+                response_id: "id".to_string(),
+                tool_name: "tool".to_string(),
+                phase: "phase".to_string(),
+                payload: json!({}),
+            },
+            HookEvent::JobLifecycle {
+                job_id: "job".to_string(),
+                phase: "phase".to_string(),
+                progress: None,
+                detail: None,
+            },
+            HookEvent::ApprovalLifecycle {
+                approval_id: "apr".to_string(),
+                phase: "phase".to_string(),
+                reason: None,
+            },
+        ];
+
+        for event in events {
+            let json = serde_json::to_value(&event).unwrap();
+            let deserialized: HookEvent = serde_json::from_value(json).unwrap();
+            let _ = deserialized;
         }
     }
 }

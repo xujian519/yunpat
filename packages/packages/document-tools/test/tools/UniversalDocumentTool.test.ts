@@ -73,17 +73,17 @@ vi.mock('fs', async () => {
   return {
     ...actual,
     existsSync: vi.fn(() => true),
-    statSync: vi.fn(() => ({ size: 1024 }) as any),
+    statSync: vi.fn(() => ({ size: 1024 })),
     readFileSync: vi.fn(() => Buffer.from('mock content')),
     writeFileSync: vi.fn(),
   }
 })
 
-const mockContext: any = {
-  registry: {},
-  llm: {} as any,
-  memory: {} as any,
-  eventBus: {} as any,
+const mockContext = {
+  registry: { register: vi.fn(), unregister: vi.fn(), get: vi.fn(), call: vi.fn(), list: vi.fn() },
+  llm: { chat: vi.fn(), chatStream: vi.fn(), embed: vi.fn() },
+  memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() },
+  eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() },
 }
 
 describe('UniversalDocumentTool', () => {
@@ -139,7 +139,7 @@ describe('UniversalDocumentTool', () => {
 
     it('reads text files directly', async () => {
       const { readFileSync } = await import('fs')
-      vi.mocked(readFileSync).mockReturnValueOnce('plain text content' as any)
+      vi.mocked(readFileSync).mockReturnValueOnce(Buffer.from('plain text content'))
       const tool = new UniversalDocumentParserTool()
       const result = await tool.execute({ filePath: '/mock/test.txt' }, mockContext)
       expect(result.documentType).toBe(DocumentType.TXT)
@@ -148,7 +148,7 @@ describe('UniversalDocumentTool', () => {
 
     it('falls back to text mode for unknown file types', async () => {
       const { readFileSync } = await import('fs')
-      vi.mocked(readFileSync).mockReturnValueOnce('unknown file content' as any)
+      vi.mocked(readFileSync).mockReturnValueOnce(Buffer.from('unknown file content'))
       const tool = new UniversalDocumentParserTool()
       const result = await tool.execute({ filePath: '/mock/test.unknown' }, mockContext)
       expect(result.documentType).toBe('txt')

@@ -40,9 +40,7 @@ fn make_tarball(entries: &[(&str, &[u8])]) -> Vec<u8> {
             header.set_size(body.len() as u64);
             header.set_mode(0o644);
             header.set_cksum();
-            builder
-                .append_data(&mut header, path, *body)
-                .expect("append_data");
+            builder.append_data(&mut header, path, *body).expect("append_data");
         }
         builder.finish().expect("finish tar");
     }
@@ -235,10 +233,8 @@ async fn install_rejects_oversized_tarball() {
     for i in 0..50 {
         entries.push((format!("test-skill-main/big-{i}.bin"), big.clone()));
     }
-    let entry_refs: Vec<(&str, &[u8])> = entries
-        .iter()
-        .map(|(p, b)| (p.as_str(), b.as_slice()))
-        .collect();
+    let entry_refs: Vec<(&str, &[u8])> =
+        entries.iter().map(|(p, b)| (p.as_str(), b.as_slice())).collect();
     let tarball = make_tarball(&entry_refs);
     let (url, tx, handle) = spawn_tarball_server(tarball);
 
@@ -377,10 +373,7 @@ async fn update_no_change_returns_nochange_without_overwriting() {
     .unwrap();
 
     // Patch the marker so update() re-fetches the same URL.
-    let marker_path = tmp
-        .path()
-        .join("upd-skill")
-        .join(install::INSTALLED_FROM_MARKER);
+    let marker_path = tmp.path().join("upd-skill").join(install::INSTALLED_FROM_MARKER);
     let marker_body = std::fs::read_to_string(&marker_path).unwrap();
     let mut marker_json: serde_json::Value = serde_json::from_str(&marker_body).unwrap();
     marker_json["spec"] = serde_json::Value::String(url);
@@ -388,10 +381,7 @@ async fn update_no_change_returns_nochange_without_overwriting() {
 
     // Capture mtime so we can confirm SKILL.md wasn't rewritten.
     let skill_md_path = tmp.path().join("upd-skill").join("SKILL.md");
-    let mtime_before = std::fs::metadata(&skill_md_path)
-        .unwrap()
-        .modified()
-        .unwrap();
+    let mtime_before = std::fs::metadata(&skill_md_path).unwrap().modified().unwrap();
 
     let result = install::update(
         "upd-skill",
@@ -403,10 +393,7 @@ async fn update_no_change_returns_nochange_without_overwriting() {
     .expect("update ok");
     assert!(matches!(result, UpdateResult::NoChange));
 
-    let mtime_after = std::fs::metadata(&skill_md_path)
-        .unwrap()
-        .modified()
-        .unwrap();
+    let mtime_after = std::fs::metadata(&skill_md_path).unwrap().modified().unwrap();
     assert_eq!(mtime_before, mtime_after, "SKILL.md must not be rewritten");
     shutdown(tx, handle);
 }
@@ -474,9 +461,7 @@ async fn install_rejects_symlink_entry() {
         hdr.set_size(body.len() as u64);
         hdr.set_mode(0o644);
         hdr.set_cksum();
-        builder
-            .append_data(&mut hdr, "repo-main/SKILL.md", body.as_slice())
-            .unwrap();
+        builder.append_data(&mut hdr, "repo-main/SKILL.md", body.as_slice()).unwrap();
 
         let mut link_hdr = tar::Header::new_gnu();
         link_hdr.set_entry_type(tar::EntryType::Symlink);
@@ -581,8 +566,7 @@ fn uninstall_refuses_system_skill() {
     let dir = tmp.path().join("system-skill");
     std::fs::create_dir_all(&dir).unwrap();
     let mut f = std::fs::File::create(dir.join("SKILL.md")).unwrap();
-    f.write_all(b"---\nname: system-skill\ndescription: x\n---\n")
-        .unwrap();
+    f.write_all(b"---\nname: system-skill\ndescription: x\n---\n").unwrap();
     // No `.installed-from` marker — looks like a system skill.
 
     let err = install::uninstall("system-skill", tmp.path()).expect_err("must refuse");

@@ -192,10 +192,7 @@ impl SandboxPolicy {
                             read_only_subpaths.push(yunpat_dir);
                         }
 
-                        WritableRoot {
-                            root,
-                            read_only_subpaths,
-                        }
+                        WritableRoot { root, read_only_subpaths }
                     })
                     .collect()
             }

@@ -137,9 +137,7 @@ fn read_pdf(path: &Path, pages: Option<&str>) -> Result<ToolResult, ToolError> {
     }
 
     cmd.arg(path).arg("-"); // output to stdout
-    cmd.stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+    cmd.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
 
     let child = match cmd.spawn() {
         Ok(c) => c,
@@ -422,9 +420,8 @@ impl ToolSpec for ListDirTool {
             ))
         })? {
             let entry = entry.map_err(|e| ToolError::execution_failed(e.to_string()))?;
-            let file_type = entry
-                .file_type()
-                .map_err(|e| ToolError::execution_failed(e.to_string()))?;
+            let file_type =
+                entry.file_type().map_err(|e| ToolError::execution_failed(e.to_string()))?;
 
             entries.push(json!({
                 "name": entry.file_name().to_string_lossy().to_string(),
@@ -453,10 +450,7 @@ mod tests {
         fs::write(&test_file, "hello world").expect("write");
 
         let tool = ReadFileTool;
-        let result = tool
-            .execute(json!({"path": "test.txt"}), &ctx)
-            .await
-            .expect("execute");
+        let result = tool.execute(json!({"path": "test.txt"}), &ctx).await.expect("execute");
 
         assert!(result.success);
         assert_eq!(result.content, "hello world");
@@ -728,10 +722,7 @@ mod tests {
         fs::write(subdir.join("nested.txt"), "").expect("write");
 
         let tool = ListDirTool;
-        let result = tool
-            .execute(json!({"path": "mydir"}), &ctx)
-            .await
-            .expect("execute");
+        let result = tool.execute(json!({"path": "mydir"}), &ctx).await.expect("execute");
 
         assert!(result.success);
         assert!(result.content.contains("nested.txt"));

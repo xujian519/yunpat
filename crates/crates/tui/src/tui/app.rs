@@ -83,12 +83,7 @@ fn onboarding_is_workspace_trust_gate(
 }
 
 /// Supported application modes for the TUI.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AppMode {
-    Agent,
-    Yolo,
-    Plan,
-}
+pub use yunpat_protocol::AppMode;
 
 /// One row in the per-turn cache-telemetry ring (`/cache` debug surface, #263).
 #[derive(Debug, Clone)]
@@ -201,6 +196,7 @@ impl ReasoningEffort {
 pub enum SidebarFocus {
     Auto,
     Plan,
+    Patent,
     Todos,
     Tasks,
     Agents,
@@ -248,6 +244,7 @@ impl SidebarFocus {
     pub fn from_setting(value: &str) -> Self {
         match value.trim().to_ascii_lowercase().as_str() {
             "plan" => Self::Plan,
+            "patent" => Self::Patent,
             "todos" => Self::Todos,
             "tasks" => Self::Tasks,
             "agents" | "subagents" | "sub-agents" => Self::Agents,
@@ -262,6 +259,7 @@ impl SidebarFocus {
         match self {
             Self::Auto => "auto",
             Self::Plan => "plan",
+            Self::Patent => "patent",
             Self::Todos => "todos",
             Self::Tasks => "tasks",
             Self::Agents => "agents",
@@ -369,44 +367,9 @@ fn sanitize_api_key_text(text: &str) -> String {
 const MAX_SUBMITTED_INPUT_CHARS: usize = 16_000;
 const MAX_DRAFT_HISTORY: usize = 50;
 
-impl AppMode {
-    #[must_use]
-    pub fn from_setting(value: &str) -> Self {
-        match value.trim().to_ascii_lowercase().as_str() {
-            "plan" => Self::Plan,
-            "yolo" => Self::Yolo,
-            _ => Self::Agent,
-        }
-    }
-
-    #[must_use]
-    pub fn as_setting(self) -> &'static str {
-        match self {
-            Self::Agent => "agent",
-            Self::Yolo => "yolo",
-            Self::Plan => "plan",
-        }
-    }
-
-    /// Short label used in the UI footer.
-    pub fn label(self) -> &'static str {
-        match self {
-            AppMode::Agent => "AGENT",
-            AppMode::Yolo => "YOLO",
-            AppMode::Plan => "PLAN",
-        }
-    }
-
-    #[allow(dead_code)]
-    /// Description shown in help or onboarding text.
-    pub fn description(self) -> &'static str {
-        match self {
-            AppMode::Agent => "Agent mode - autonomous task execution with tools",
-            AppMode::Yolo => "YOLO mode - full tool access without approvals",
-            AppMode::Plan => "Plan mode - design before implementing",
-        }
-    }
-}
+// AppMode's inherent methods (from_setting, as_setting, label, description)
+// now live in yunpat_protocol to avoid "cannot define inherent impl for a type
+// outside of the crate where the type is defined".
 
 /// Configuration required to bootstrap the TUI.
 #[derive(Clone)]
@@ -778,6 +741,8 @@ pub struct App {
     pub project_doc: Option<String>,
     /// Plan mode state (extracted from App).
     pub plan: super::app_state::PlanState,
+    /// Patent workflow state (extracted from App).
+    pub patent: super::app_state::PatentWorkflowState,
     /// Todo list for `TodoWriteTool`
     #[allow(dead_code)] // For future engine integration
     pub todos: SharedTodoList,
@@ -906,10 +871,7 @@ pub struct TaskPanelEntry {
 
 impl QueuedMessage {
     pub fn new(display: String, skill_instruction: Option<String>) -> Self {
-        Self {
-            display,
-            skill_instruction,
-        }
+        Self { display, skill_instruction }
     }
 
     #[allow(dead_code)] // Tests and queue helpers use the display-only form; send path resolves @mentions.
@@ -1027,10 +989,7 @@ impl App {
             CostCurrency::from_setting(&settings.cost_currency).unwrap_or(CostCurrency::Usd);
         let composer_density = ComposerDensity::from_setting(&settings.composer_density);
         let composer_border = settings.composer_border;
-        let composer_vim_enabled = settings
-            .composer_vim_mode
-            .trim()
-            .eq_ignore_ascii_case("vim");
+        let composer_vim_enabled = settings.composer_vim_mode.trim().eq_ignore_ascii_case("vim");
         let transcript_spacing = TranscriptSpacing::from_setting(&settings.transcript_spacing);
         let sidebar_width_percent = settings.sidebar_width_percent;
         let sidebar_focus = SidebarFocus::from_setting(&settings.sidebar_focus);
@@ -1057,11 +1016,9 @@ impl App {
         let reasoning_effort = if auto_model {
             ReasoningEffort::Auto
         } else {
-            config
-                .reasoning_effort()
-                .map_or_else(ReasoningEffort::default, |s| {
-                    ReasoningEffort::from_setting(s)
-                })
+            config.reasoning_effort().map_or_else(ReasoningEffort::default, |s| {
+                ReasoningEffort::from_setting(s)
+            })
         };
 
         // Start in YOLO mode if --yolo flag was passed
@@ -1259,6 +1216,7 @@ impl App {
                 prompt_pending: false,
                 tool_used_in_turn: false,
             },
+            patent: super::app_state::PatentWorkflowState::default(),
             todos: new_shared_todo_list(),
             runtime_services: RuntimeToolServices {
                 shell_manager: Some(shell_manager),
@@ -1377,9 +1335,7 @@ impl App {
     /// language picker to highlight the current selection without `App`
     /// having to keep `Settings` resident.
     pub fn current_locale_tag(&self) -> String {
-        Settings::load()
-            .map(|s| s.locale)
-            .unwrap_or_else(|_| "auto".to_string())
+        Settings::load().map(|s| s.locale).unwrap_or_else(|_| "auto".to_string())
     }
 
     pub fn set_mode(&mut self, mode: AppMode) -> bool {
@@ -1833,18 +1789,11 @@ impl App {
         // past the new tail. We keep the rest intact so unaffected tool
         // cells continue to render correctly.
         self.tool.tool_cells.retain(|_, idx| *idx < new_len);
-        self.tool
-            .tool_details_by_cell
-            .retain(|idx, _| *idx < new_len);
-        self.context_references_by_cell
-            .retain(|idx, _| *idx < new_len);
+        self.tool.tool_details_by_cell.retain(|idx, _| *idx < new_len);
+        self.context_references_by_cell.retain(|idx, _| *idx < new_len);
         self.rebuild_session_context_references();
         self.subagent.card_index.retain(|_, idx| *idx < new_len);
-        if self
-            .subagent
-            .last_fanout_card_index
-            .is_some_and(|idx| idx >= new_len)
-        {
+        if self.subagent.last_fanout_card_index.is_some_and(|idx| idx >= new_len) {
             self.subagent.last_fanout_card_index = None;
         }
         // Drop collapsed cells that reference indices past the new tail.
@@ -1874,12 +1823,7 @@ impl App {
     #[must_use]
     #[allow(dead_code)] // Reserved for renderers that need a unified cell count.
     pub fn virtual_cell_count(&self) -> usize {
-        self.history.len()
-            + self
-                .tool
-                .active_cell
-                .as_ref()
-                .map_or(0, ActiveCell::entry_count)
+        self.history.len() + self.tool.active_cell.as_ref().map_or(0, ActiveCell::entry_count)
     }
 
     /// The next cell index a freshly-pushed entry would occupy in the virtual
@@ -1980,13 +1924,9 @@ impl App {
         }
         let records: Vec<SessionContextReference> = references
             .into_iter()
-            .map(|reference| SessionContextReference {
-                message_index,
-                reference,
-            })
+            .map(|reference| SessionContextReference { message_index, reference })
             .collect();
-        self.context_references_by_cell
-            .insert(history_cell, records.clone());
+        self.context_references_by_cell.insert(history_cell, records.clone());
         self.rebuild_session_context_references();
         self.needs_redraw = true;
     }
@@ -2038,10 +1978,7 @@ impl App {
             let entry_idx = index - self.history.len();
             self.tool.active_cell_revision = self.tool.active_cell_revision.wrapping_add(1);
             self.history_version = self.history_version.wrapping_add(1);
-            self.tool
-                .active_cell
-                .as_mut()
-                .and_then(|active| active.entry_mut(entry_idx))
+            self.tool.active_cell.as_mut().and_then(|active| active.entry_mut(entry_idx))
         }
     }
 
@@ -2081,13 +2018,7 @@ impl App {
         for (tool_id, detail) in details.drain() {
             self.tool
                 .tool_details_by_cell
-                .entry(
-                    self.tool
-                        .tool_cells
-                        .get(&tool_id)
-                        .copied()
-                        .unwrap_or(base_index),
-                )
+                .entry(self.tool.tool_cells.get(&tool_id).copied().unwrap_or(base_index))
                 .or_insert(detail);
         }
 
@@ -2154,9 +2085,7 @@ impl App {
     /// Whether the quit timer is currently armed (i.e. a prior Ctrl+C set it
     /// and it hasn't expired yet).
     pub fn quit_is_armed(&self) -> bool {
-        self.quit_armed_until
-            .map(|deadline| Instant::now() < deadline)
-            .unwrap_or(false)
+        self.quit_armed_until.map(|deadline| Instant::now() < deadline).unwrap_or(false)
     }
 
     /// Clear the quit-armed timer. Call when expiry is detected on a tick or
@@ -2273,19 +2202,11 @@ impl App {
     pub fn active_status_toasts(&mut self, limit: usize) -> Vec<StatusToast> {
         self.sync_status_message_to_toasts();
         let now = Instant::now();
-        while self
-            .status_toasts
-            .front()
-            .is_some_and(|toast| toast.is_expired(now))
-        {
+        while self.status_toasts.front().is_some_and(|toast| toast.is_expired(now)) {
             self.status_toasts.pop_front();
             self.needs_redraw = true;
         }
-        if self
-            .sticky_status
-            .as_ref()
-            .is_some_and(|toast| toast.is_expired(now))
-        {
+        if self.sticky_status.as_ref().is_some_and(|toast| toast.is_expired(now)) {
             self.sticky_status = None;
             self.needs_redraw = true;
         }
@@ -2295,13 +2216,8 @@ impl App {
             out.push(sticky);
         }
         let take = limit.saturating_sub(out.len());
-        let queued: Vec<StatusToast> = self
-            .status_toasts
-            .iter()
-            .rev()
-            .take(take)
-            .cloned()
-            .collect();
+        let queued: Vec<StatusToast> =
+            self.status_toasts.iter().rev().take(take).cloned().collect();
         // Iterate in queue order (oldest of the visible window first) so the
         // stacked renderer feels chronological — most recent at the bottom.
         for toast in queued.into_iter().rev() {
@@ -2315,20 +2231,12 @@ impl App {
         let now = Instant::now();
         let mut removed = false;
 
-        while self
-            .status_toasts
-            .front()
-            .is_some_and(|toast| toast.is_expired(now))
-        {
+        while self.status_toasts.front().is_some_and(|toast| toast.is_expired(now)) {
             self.status_toasts.pop_front();
             removed = true;
         }
 
-        if self
-            .sticky_status
-            .as_ref()
-            .is_some_and(|toast| toast.is_expired(now))
-        {
+        if self.sticky_status.as_ref().is_some_and(|toast| toast.is_expired(now)) {
             self.sticky_status = None;
             removed = true;
         }
@@ -2337,9 +2245,7 @@ impl App {
             self.needs_redraw = true;
         }
 
-        self.sticky_status
-            .clone()
-            .or_else(|| self.status_toasts.back().cloned())
+        self.sticky_status.clone().or_else(|| self.status_toasts.back().cloned())
     }
 
     pub fn transcript_render_options(&self) -> TranscriptRenderOptions {
@@ -2406,14 +2312,10 @@ impl App {
         let reference = media_attachment_reference(kind, path, description);
         let cursor = self.cursor_position.min(char_count(&self.input));
         let byte_index = byte_index_at_char(&self.input, cursor);
-        let needs_prefix_newline = self.input[..byte_index]
-            .chars()
-            .last()
-            .is_some_and(|ch| !ch.is_whitespace());
-        let needs_suffix_newline = self.input[byte_index..]
-            .chars()
-            .next()
-            .is_some_and(|ch| !ch.is_whitespace());
+        let needs_prefix_newline =
+            self.input[..byte_index].chars().last().is_some_and(|ch| !ch.is_whitespace());
+        let needs_suffix_newline =
+            self.input[byte_index..].chars().next().is_some_and(|ch| !ch.is_whitespace());
 
         let mut inserted = String::new();
         if needs_prefix_newline {
@@ -2433,8 +2335,7 @@ impl App {
 
     pub fn selected_composer_attachment_index(&self) -> Option<usize> {
         let count = self.composer_attachment_count();
-        self.selected_attachment_index
-            .filter(|index| *index < count)
+        self.selected_attachment_index.filter(|index| *index < count)
     }
 
     pub fn select_previous_composer_attachment(&mut self) -> bool {
@@ -2500,11 +2401,8 @@ impl App {
             reference.start_byte
         };
 
-        self.input
-            .replace_range(reference.start_byte..reference.end_byte, "");
-        self.cursor_position = self.input[..new_cursor_byte.min(self.input.len())]
-            .chars()
-            .count();
+        self.input.replace_range(reference.start_byte..reference.end_byte, "");
+        self.cursor_position = self.input[..new_cursor_byte.min(self.input.len())].chars().count();
         let remaining = self.composer_attachment_count();
         self.selected_attachment_index = if remaining == 0 {
             None
@@ -2728,10 +2626,7 @@ impl App {
 
         let cursor_byte = byte_index_at_char(&self.input, self.cursor_position);
         // Find the start of the current line (last newline or start of string)
-        let line_start = self.input[..cursor_byte]
-            .rfind('\n')
-            .map(|idx| idx + 1)
-            .unwrap_or(0);
+        let line_start = self.input[..cursor_byte].rfind('\n').map(|idx| idx + 1).unwrap_or(0);
 
         if line_start < cursor_byte {
             self.input.replace_range(line_start..cursor_byte, "");
@@ -2979,9 +2874,8 @@ impl App {
         let text = self.input.clone();
         let cursor_byte = byte_index_at_char(&text, self.cursor_position);
         let line_start_byte = text[..cursor_byte].rfind('\n').map_or(0, |idx| idx + 1);
-        let line_end_byte = text[cursor_byte..]
-            .find('\n')
-            .map_or(text.len(), |rel| cursor_byte + rel);
+        let line_end_byte =
+            text[cursor_byte..].find('\n').map_or(text.len(), |rel| cursor_byte + rel);
 
         // Include the trailing newline if present, or the leading newline for the
         // very last non-terminated line to avoid leaving a dangling newline.
@@ -3151,15 +3045,11 @@ impl App {
     }
 
     pub fn history_search_query(&self) -> Option<&str> {
-        self.composer_history_search
-            .as_ref()
-            .map(|search| search.query.as_str())
+        self.composer_history_search.as_ref().map(|search| search.query.as_str())
     }
 
     pub fn history_search_selected_index(&self) -> usize {
-        self.composer_history_search
-            .as_ref()
-            .map_or(0, |search| search.selected)
+        self.composer_history_search.as_ref().map_or(0, |search| search.selected)
     }
 
     pub fn composer_display_input(&self) -> &str {
@@ -3184,12 +3074,7 @@ impl App {
         let mut seen: HashSet<&str> = HashSet::new();
         let mut matches = Vec::new();
 
-        for candidate in self
-            .draft_history
-            .iter()
-            .rev()
-            .chain(self.input_history.iter().rev())
-        {
+        for candidate in self.draft_history.iter().rev().chain(self.input_history.iter().rev()) {
             if candidate.trim().is_empty() || !seen.insert(candidate.as_str()) {
                 continue;
             }
@@ -3274,9 +3159,8 @@ impl App {
             return false;
         };
         let matches = self.history_search_matches_for_query(&search.query);
-        if let Some(selected) = matches
-            .get(search.selected.min(matches.len().saturating_sub(1)))
-            .cloned()
+        if let Some(selected) =
+            matches.get(search.selected.min(matches.len().saturating_sub(1))).cloned()
         {
             self.input = selected;
             self.cursor_position = char_count(&self.input);
@@ -3893,14 +3777,9 @@ mod tests {
 
         // A status toast should have been pushed.
         assert!(
-            app.status_toasts
-                .iter()
-                .any(|toast| toast.text.contains("consolidated")),
+            app.status_toasts.iter().any(|toast| toast.text.contains("consolidated")),
             "expected consolidation toast, got: {:?}",
-            app.status_toasts
-                .iter()
-                .map(|t| &t.text)
-                .collect::<Vec<_>>()
+            app.status_toasts.iter().map(|t| &t.text).collect::<Vec<_>>()
         );
 
         // The composer must be clear after submit.
@@ -3919,11 +3798,7 @@ mod tests {
         let mut app = App::new(test_options(false), &Config::default());
 
         {
-            let mut plan = app
-                .plan
-                .shared
-                .try_lock()
-                .expect("plan lock should be available");
+            let mut plan = app.plan.shared.try_lock().expect("plan lock should be available");
             plan.update(UpdatePlanArgs {
                 explanation: Some("test plan".to_string()),
                 plan: vec![PlanItemArg {
@@ -3936,11 +3811,7 @@ mod tests {
 
         assert!(app.clear_todos());
 
-        let plan = app
-            .plan
-            .shared
-            .try_lock()
-            .expect("plan lock should be available");
+        let plan = app.plan.shared.try_lock().expect("plan lock should be available");
         assert!(plan.is_empty());
     }
 
@@ -4108,9 +3979,7 @@ mod tests {
     fn test_add_message() {
         let mut app = App::new(test_options(false), &Config::default());
         let initial_len = app.history.len();
-        app.add_message(HistoryCell::User {
-            content: "test".to_string(),
-        });
+        app.add_message(HistoryCell::User { content: "test".to_string() });
         assert_eq!(app.history.len(), initial_len + 1);
     }
 
@@ -4324,10 +4193,7 @@ mod tests {
             byte_len: 2048,
         }));
 
-        assert!(
-            app.input
-                .contains("before\n[Attached image: 8x4 PNG (2KB) at /tmp/pasted.png]")
-        );
+        assert!(app.input.contains("before\n[Attached image: 8x4 PNG (2KB) at /tmp/pasted.png]"));
         assert!(app.input.contains("] after"));
         let status = app.status_message.as_deref().expect("status message");
         assert_eq!(status, "Attached image: 8x4 PNG (2KB)");

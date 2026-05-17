@@ -10,8 +10,17 @@ import {
   ProfessionalAgent,
   type ExtendedExecutionContext,
   type ProfessionalAgentConfig,
+  type LLMCallParams,
 } from '../src/ProfessionalAgent.js'
-import type { ExecutionContext } from '@yunpat/core'
+import {
+  type ExecutionContext,
+  type LLMAdapter,
+  type ChatResponse,
+  type MemoryStore,
+  type IEventBus,
+  type IToolRegistry,
+  type LifecycleStage,
+} from '@yunpat/core'
 import type { AgentError } from '../src/types.js'
 
 // ============================================================================
@@ -42,20 +51,45 @@ class FailingAgent extends ProfessionalAgent<string, string> {
 // Mock 工厂
 // ============================================================================
 
-function createMockLLM() {
+function createMockLLM(): LLMAdapter {
   return {
     chat: vi.fn().mockResolvedValue({
-      message: { content: 'mock LLM response' },
-    }),
+      message: { role: 'assistant' as const, content: 'mock LLM response' },
+    } satisfies ChatResponse),
+    chatStream: vi.fn(),
+    embed: vi.fn(),
   }
 }
 
-function createMockEventBus() {
+function createMockEventBus(): IEventBus {
   return {
     publish: vi.fn(),
-    subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
+    subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
     unsubscribe: vi.fn(),
     request: vi.fn().mockResolvedValue(undefined),
+  }
+}
+
+function createMockMemory(): MemoryStore {
+  return {
+    get: vi.fn().mockResolvedValue(undefined),
+    set: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+    has: vi.fn().mockResolvedValue(false),
+    getAll: vi.fn().mockResolvedValue({}),
+    setAll: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn().mockResolvedValue(undefined),
+    search: vi.fn().mockResolvedValue([]),
+  }
+}
+
+function createMockToolRegistry(): IToolRegistry {
+  return {
+    register: vi.fn(),
+    unregister: vi.fn(),
+    get: vi.fn().mockReturnValue(undefined),
+    call: vi.fn().mockResolvedValue(undefined),
+    list: vi.fn().mockReturnValue([]),
   }
 }
 
@@ -64,11 +98,11 @@ function createMockContext(): ExtendedExecutionContext {
     executionId: 'test-exec-id',
     agentName: 'test-agent',
     startTime: new Date(),
-    currentStage: 'executing' as any,
-    memory: {} as any,
-    eventBus: createMockEventBus() as any,
-    tools: {} as any,
-    llm: createMockLLM() as any,
+    currentStage: 'executing' as LifecycleStage,
+    memory: createMockMemory(),
+    eventBus: createMockEventBus(),
+    tools: createMockToolRegistry(),
+    llm: createMockLLM(),
     metadata: {},
     sharedState: new Map(),
     logger: {
@@ -83,10 +117,10 @@ function createBaseConfig(overrides?: Partial<ProfessionalAgentConfig>): Profess
   return {
     name: 'test-agent',
     description: 'Test agent for unit testing',
-    llm: createMockLLM() as any,
-    eventBus: createMockEventBus() as any,
-    memory: {} as any,
-    tools: {} as any,
+    llm: createMockLLM(),
+    eventBus: createMockEventBus(),
+    memory: createMockMemory(),
+    tools: createMockToolRegistry(),
     enableKnowledgeGraph: false,
     ...overrides,
   }
@@ -154,10 +188,10 @@ describe('ProfessionalAgent', () => {
     it('未配置管道时直接传递消息给 LLM', async () => {
       const mockLLM = createMockLLM()
       const agent = new TestableAgent(
-        createBaseConfig({ llm: mockLLM as any, usePromptPipeline: false })
+        createBaseConfig({ llm: mockLLM, usePromptPipeline: false })
       )
 
-      const result = await (agent as any).callLLM({
+      const result = await (agent as unknown as { callLLM: (p: LLMCallParams) => Promise<string> }).callLLM({
         messages: [
           { role: 'system', content: 'original prompt' },
           { role: 'user', content: 'hello' },
@@ -172,12 +206,12 @@ describe('ProfessionalAgent', () => {
       const mockLLM = createMockLLM()
       const agent = new TestableAgent(
         createBaseConfig({
-          llm: mockLLM as any,
+          llm: mockLLM,
           usePromptPipeline: true,
         })
       )
 
-      await (agent as any).callLLM({
+      await (agent as unknown as { callLLM: (p: LLMCallParams) => Promise<string> }).callLLM({
         messages: [
           { role: 'system', content: 'original prompt' },
           { role: 'user', content: 'user query' },
@@ -185,19 +219,22 @@ describe('ProfessionalAgent', () => {
       })
 
       expect(mockLLM.chat).toHaveBeenCalled()
-      const callArgs = mockLLM.chat.mock.calls[0][0]
+      const chatMock = vi.mocked(mockLLM.chat)
+      const callArgs = chatMock.mock.calls[0][0]
       // pipeline 组装后 system prompt 不再是原始的 'original prompt'
       expect(callArgs.messages[0].content).not.toBe('original prompt')
     })
 
     it('LLM 调用失败时抛出包装后的错误', async () => {
-      const mockLLM = {
+      const mockLLM: LLMAdapter = {
         chat: vi.fn().mockRejectedValue(new Error('network error')),
+        chatStream: vi.fn(),
+        embed: vi.fn(),
       }
-      const agent = new TestableAgent(createBaseConfig({ llm: mockLLM as any }))
+      const agent = new TestableAgent(createBaseConfig({ llm: mockLLM }))
 
       await expect(
-        (agent as any).callLLM({
+        (agent as unknown as { callLLM: (p: LLMCallParams) => Promise<string> }).callLLM({
           messages: [{ role: 'user', content: 'test' }],
         })
       ).rejects.toThrow('LLM调用失败')
@@ -213,7 +250,7 @@ describe('ProfessionalAgent', () => {
         { role: 'user' as const, content: 'hello' },
       ]
 
-      const result = await (agent as any).autoCompactIfNeeded(messages)
+      const result = await (agent as unknown as { autoCompactIfNeeded: (m: typeof messages) => Promise<typeof messages> }).autoCompactIfNeeded(messages)
       expect(result).toEqual(messages)
     })
 
@@ -222,10 +259,9 @@ describe('ProfessionalAgent', () => {
         createBaseConfig({
           enableAutoCompact: true,
           tokenBudgetConfig: {
-            maxContextTokens: 100000,
-            autoCompactThreshold: 0.9,
-            warningThreshold: 0.7,
-          } as any,
+            contextWindow: 100000,
+            safetyBuffer: 10000,
+          },
         })
       )
 
@@ -234,7 +270,7 @@ describe('ProfessionalAgent', () => {
         { role: 'user' as const, content: 'hello' },
       ]
 
-      const result = await (agent as any).autoCompactIfNeeded(messages)
+      const result = await (agent as unknown as { autoCompactIfNeeded: (m: typeof messages) => Promise<typeof messages> }).autoCompactIfNeeded(messages)
       expect(result).toEqual(messages)
     })
   })
@@ -243,30 +279,32 @@ describe('ProfessionalAgent', () => {
     it('null 字段抛出错误', () => {
       const agent = new TestableAgent(createBaseConfig())
 
-      expect(() => (agent as any).validateInput({ name: null, age: 25 }, ['name'])).toThrow(
-        'name不能为空'
-      )
+      expect(() =>
+        (agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }).validateInput({ name: null, age: 25 }, ['name'])
+      ).toThrow('name不能为空')
     })
 
     it('undefined 字段抛出错误', () => {
       const agent = new TestableAgent(createBaseConfig())
 
-      expect(() => (agent as any).validateInput({ name: undefined }, ['name'])).toThrow(
-        'name不能为空'
-      )
+      expect(() =>
+        (agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }).validateInput({ name: undefined }, ['name'])
+      ).toThrow('name不能为空')
     })
 
     it('空字符串字段抛出错误', () => {
       const agent = new TestableAgent(createBaseConfig())
 
-      expect(() => (agent as any).validateInput({ name: '' }, ['name'])).toThrow('name不能为空')
+      expect(() =>
+        (agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }).validateInput({ name: '' }, ['name'])
+      ).toThrow('name不能为空')
     })
 
     it('有效字段不抛出', () => {
       const agent = new TestableAgent(createBaseConfig())
 
       expect(() =>
-        (agent as any).validateInput({ name: 'Alice', age: 30 }, ['name', 'age'])
+        (agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }).validateInput({ name: 'Alice', age: 30 }, ['name', 'age'])
       ).not.toThrow()
     })
   })
@@ -275,7 +313,7 @@ describe('ProfessionalAgent', () => {
     it('格式化为 [agentName] context: message', () => {
       const agent = new TestableAgent(createBaseConfig({ name: 'my-agent' }))
 
-      const result = (agent as any).formatErrorMessage(new Error('timeout'), '执行阶段')
+      const result = (agent as unknown as { formatErrorMessage: (e: unknown, ctx: string) => string }).formatErrorMessage(new Error('timeout'), '执行阶段')
 
       expect(result).toBe('[my-agent] 执行阶段: timeout')
     })
@@ -283,7 +321,7 @@ describe('ProfessionalAgent', () => {
     it('非 Error 对象使用 String() 转换', () => {
       const agent = new TestableAgent(createBaseConfig({ name: 'my-agent' }))
 
-      const result = (agent as any).formatErrorMessage('raw string', '测试')
+      const result = (agent as unknown as { formatErrorMessage: (e: unknown, ctx: string) => string }).formatErrorMessage('raw string', '测试')
 
       expect(result).toBe('[my-agent] 测试: raw string')
     })

@@ -112,11 +112,7 @@ impl DocumentParser {
             }
         };
 
-        Ok(ParseResult {
-            text,
-            metadata,
-            format,
-        })
+        Ok(ParseResult { text, metadata, format })
     }
 
     fn parse_pdf(bytes: &[u8]) -> anyhow::Result<String> {
@@ -250,20 +246,16 @@ impl DocumentGenerator {
                 }
                 let code = code_lines.join("\n");
                 docx = docx.add_paragraph(
-                    Paragraph::new()
-                        .add_run(Run::new().add_text(code).size(20))
-                        .style("Code"),
+                    Paragraph::new().add_run(Run::new().add_text(code).size(20)).style("Code"),
                 );
             } else if line.starts_with("- ") || line.starts_with("* ") {
-                let text = line
-                    .trim_start_matches("- ")
-                    .trim_start_matches("* ")
-                    .trim();
-                docx = docx.add_paragraph(
-                    Paragraph::new()
-                        .add_run(Run::new().add_text(format!("• {}", text)))
-                        .indent(Some(720), None, None, None),
-                );
+                let text = line.trim_start_matches("- ").trim_start_matches("* ").trim();
+                docx =
+                    docx.add_paragraph(
+                        Paragraph::new()
+                            .add_run(Run::new().add_text(format!("• {}", text)))
+                            .indent(Some(720), None, None, None),
+                    );
             } else if line.chars().next().is_some_and(|c| c.is_ascii_digit()) && line.contains(". ")
             {
                 let text = line.split_once(". ").map(|x| x.1).unwrap_or(line).trim();
@@ -271,7 +263,7 @@ impl DocumentGenerator {
                     Paragraph::new()
                         .add_run(Run::new().add_text(format!(
                             "{}. {}",
-                            line.chars().next().unwrap(),
+                            line.chars().next().unwrap_or('1'),
                             text
                         )))
                         .indent(Some(720), None, None, None),
@@ -279,9 +271,7 @@ impl DocumentGenerator {
             } else if line.starts_with("> ") {
                 let text = line.trim_start_matches("> ").trim();
                 docx = docx.add_paragraph(
-                    Paragraph::new()
-                        .add_run(Run::new().add_text(text).italic())
-                        .style("Quote"),
+                    Paragraph::new().add_run(Run::new().add_text(text).italic()).style("Quote"),
                 );
             } else {
                 docx = self.add_formatted_paragraph(docx, line);
@@ -409,10 +399,10 @@ mod tests {
             .await
             .expect("写入测试文件失败");
 
-        let result = parser.parse_file(temp_file.to_str().unwrap()).await;
-        assert!(result.is_ok());
+        let result = parser.parse_file(temp_file.to_str().unwrap_or("test.md")).await;
+        assert!(result.is_ok(), "解析失败: {:?}", result.err());
 
-        let parsed = result.unwrap();
+        let parsed = result.expect("已验证 is_ok");
         assert_eq!(parsed.text, "# 测试文档\n\n这是一段内容。");
 
         tokio::fs::remove_file(temp_file).await.ok();
@@ -422,13 +412,11 @@ mod tests {
     async fn test_parse_to_markdown() {
         let parser = DocumentParser::new();
         let temp_file = std::env::temp_dir().join("test_doc.txt");
-        tokio::fs::write(&temp_file, "纯文本内容")
-            .await
-            .expect("写入测试文件失败");
+        tokio::fs::write(&temp_file, "纯文本内容").await.expect("写入测试文件失败");
 
-        let result = parser.parse_to_markdown(temp_file.to_str().unwrap()).await;
-        assert!(result.is_ok());
-        assert!(result.unwrap().contains("纯文本内容"));
+        let result = parser.parse_to_markdown(temp_file.to_str().unwrap_or("test.txt")).await;
+        assert!(result.is_ok(), "转换失败: {:?}", result.err());
+        assert!(result.expect("已验证 is_ok").contains("纯文本内容"));
 
         tokio::fs::remove_file(temp_file).await.ok();
     }
@@ -439,13 +427,15 @@ mod tests {
         let output_path = std::env::temp_dir().join("test_report.md");
 
         let result = generator
-            .generate_report("测试报告", "报告内容", output_path.to_str().unwrap())
+            .generate_report(
+                "测试报告",
+                "报告内容",
+                output_path.to_str().unwrap_or("report.docx"),
+            )
             .await;
         assert!(result.is_ok());
 
-        let content = tokio::fs::read_to_string(&output_path)
-            .await
-            .expect("读取报告失败");
+        let content = tokio::fs::read_to_string(&output_path).await.expect("读取报告失败");
         assert!(content.contains("测试报告"));
         assert!(content.contains("报告内容"));
 
@@ -476,15 +466,13 @@ let x = 1;
 "#;
 
         let result = generator
-            .markdown_to_docx(markdown, output_path.to_str().unwrap())
+            .markdown_to_docx(markdown, output_path.to_str().unwrap_or("output.docx"))
             .await;
         assert!(result.is_ok(), "DOCX 生成失败: {:?}", result.err());
 
         assert!(output_path.exists(), "DOCX 文件未创建");
 
-        let metadata = tokio::fs::metadata(&output_path)
-            .await
-            .expect("读取文件元数据失败");
+        let metadata = tokio::fs::metadata(&output_path).await.expect("读取文件元数据失败");
         assert!(metadata.len() > 0, "DOCX 文件为空");
 
         tokio::fs::remove_file(output_path).await.ok();
@@ -494,7 +482,7 @@ let x = 1;
     fn test_parse_markdown_headings() {
         let generator = DocumentGenerator::new();
         let markdown = "# 一级标题\n## 二级标题\n### 三级标题";
-        let docx = generator.parse_markdown_to_docx(markdown).unwrap();
+        let docx = generator.parse_markdown_to_docx(markdown).expect("Markdown 解析不应失败");
         let _ = docx.build();
     }
 
@@ -502,7 +490,7 @@ let x = 1;
     fn test_parse_markdown_formatting() {
         let generator = DocumentGenerator::new();
         let markdown = "这是**粗体**和*斜体*文本";
-        let docx = generator.parse_markdown_to_docx(markdown).unwrap();
+        let docx = generator.parse_markdown_to_docx(markdown).expect("Markdown 解析不应失败");
         let _ = docx.build();
     }
 }

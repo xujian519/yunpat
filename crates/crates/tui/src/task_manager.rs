@@ -497,19 +497,13 @@ impl TaskExecutor for EngineTaskExecutor {
         loop {
             if cancel.is_cancelled() && !cancel_requested {
                 cancel_requested = true;
-                let _ = self
-                    .runtime_threads
-                    .interrupt_turn(&thread.id, &turn.id)
-                    .await;
+                let _ = self.runtime_threads.interrupt_turn(&thread.id, &turn.id).await;
                 let _ = events.send(TaskExecutionEvent::Status {
                     message: "Cancellation requested".to_string(),
                 });
             }
 
-            let batch = match self
-                .runtime_threads
-                .events_since(&thread.id, Some(seen_seq))
-            {
+            let batch = match self.runtime_threads.events_since(&thread.id, Some(seen_seq)) {
                 Ok(batch) => batch,
                 Err(err) => {
                     return TaskExecutionResult {
@@ -534,11 +528,8 @@ impl TaskExecutor for EngineTaskExecutor {
 
                 match event.event.as_str() {
                     "item.delta" => {
-                        let kind = event
-                            .payload
-                            .get("kind")
-                            .and_then(Value::as_str)
-                            .unwrap_or_default();
+                        let kind =
+                            event.payload.get("kind").and_then(Value::as_str).unwrap_or_default();
                         if kind == "agent_message" {
                             if let Some(content) =
                                 event.payload.get("delta").and_then(Value::as_str)
@@ -822,9 +813,7 @@ impl TaskManager {
             id: format!("task_{}", &Uuid::new_v4().to_string()[..8]),
             prompt,
             model: req.model.unwrap_or_else(|| self.cfg.default_model.clone()),
-            workspace: req
-                .workspace
-                .unwrap_or_else(|| self.cfg.default_workspace.clone()),
+            workspace: req.workspace.unwrap_or_else(|| self.cfg.default_workspace.clone()),
             mode: req.mode.unwrap_or_else(|| self.cfg.default_mode.clone()),
             allow_shell: req.allow_shell.unwrap_or(self.cfg.allow_shell),
             trust_mode: req.trust_mode.unwrap_or(self.cfg.trust_mode),
@@ -867,11 +856,7 @@ impl TaskManager {
     /// List tasks, newest first.
     pub async fn list_tasks(&self, limit: Option<usize>) -> Vec<TaskSummary> {
         let state = self.state.lock().await;
-        let mut items = state
-            .tasks
-            .values()
-            .map(TaskSummary::from)
-            .collect::<Vec<_>>();
+        let mut items = state.tasks.values().map(TaskSummary::from).collect::<Vec<_>>();
         items.sort_by_key(|i| std::cmp::Reverse(i.created_at));
         if let Some(limit) = limit {
             items.truncate(limit);
@@ -898,10 +883,7 @@ impl TaskManager {
 
         let mut cancel_running = false;
         {
-            let task = state
-                .tasks
-                .get_mut(&id)
-                .ok_or_else(|| anyhow!("Task not found: {id}"))?;
+            let task = state.tasks.get_mut(&id).ok_or_else(|| anyhow!("Task not found: {id}"))?;
             match task.status {
                 TaskStatus::Queued => {
                     task.status = TaskStatus::Canceled;
@@ -933,11 +915,7 @@ impl TaskManager {
         }
 
         self.persist_all_locked(&state)?;
-        state
-            .tasks
-            .get(&id)
-            .cloned()
-            .ok_or_else(|| anyhow!("Task not found: {id}"))
+        state.tasks.get(&id).cloned().ok_or_else(|| anyhow!("Task not found: {id}"))
     }
 
     /// Return aggregate status counters.
@@ -991,10 +969,7 @@ impl TaskManager {
         let mut state = self.state.lock().await;
         let id = resolve_task_id(&state.tasks, id_or_prefix)?;
         let updated = {
-            let task = state
-                .tasks
-                .get_mut(&id)
-                .ok_or_else(|| anyhow!("Task not found: {id}"))?;
+            let task = state.tasks.get_mut(&id).ok_or_else(|| anyhow!("Task not found: {id}"))?;
             self.apply_task_update_metadata(task, Some(metadata))?;
             task.clone()
         };
@@ -1076,9 +1051,7 @@ impl TaskManager {
 
     async fn run_task(&self, task_id: String, request: ExecutionTask, cancel: CancellationToken) {
         let (event_tx, mut event_rx) = mpsc::unbounded_channel();
-        let exec_fut = self
-            .executor
-            .execute(request.clone(), event_tx, cancel.clone());
+        let exec_fut = self.executor.execute(request.clone(), event_tx, cancel.clone());
         tokio::pin!(exec_fut);
 
         let result = loop {
@@ -1102,10 +1075,7 @@ impl TaskManager {
             }
         }
 
-        if let Err(err) = self
-            .finish_task(&task_id, result, cancel, &request.mode_label)
-            .await
-        {
+        if let Err(err) = self.finish_task(&task_id, result, cancel, &request.mode_label).await {
             tracing::error!("Failed to finalize task {task_id}: {err}");
         }
     }
@@ -1244,11 +1214,7 @@ impl TaskManager {
                     detail_path: None,
                 });
             }
-            TaskExecutionEvent::RuntimeEvent {
-                seq,
-                event,
-                summary,
-            } => {
+            TaskExecutionEvent::RuntimeEvent { seq, event, summary } => {
                 task.runtime_event_count = task.runtime_event_count.saturating_add(1);
                 task.timeline.push(TaskTimelineEntry {
                     timestamp: Utc::now(),
@@ -1350,10 +1316,8 @@ impl TaskManager {
         let absolute = artifact_dir.join(filename);
         fs::write(&absolute, content)
             .with_context(|| format!("Failed to write artifact {}", absolute.display()))?;
-        let relative = absolute
-            .strip_prefix(&self.cfg.data_dir)
-            .map(PathBuf::from)
-            .unwrap_or(absolute);
+        let relative =
+            absolute.strip_prefix(&self.cfg.data_dir).map(PathBuf::from).unwrap_or(absolute);
         Ok(relative)
     }
 
@@ -1522,11 +1486,7 @@ fn load_state(
         VecDeque::new()
     };
 
-    queue.retain(|id| {
-        tasks
-            .get(id)
-            .is_some_and(|task| task.status == TaskStatus::Queued)
-    });
+    queue.retain(|id| tasks.get(id).is_some_and(|task| task.status == TaskStatus::Queued));
 
     let known = queue.iter().cloned().collect::<HashSet<_>>();
     let mut missing = tasks
@@ -1741,9 +1701,7 @@ mod tests {
             TaskManager::start_with_executor(test_config(root.clone()), Arc::new(MockExecutor))
                 .await?;
 
-        let task = manager
-            .add_task(NewTaskRequest::from_prompt("test persistence"))
-            .await?;
+        let task = manager.add_task(NewTaskRequest::from_prompt("test persistence")).await?;
         let finished = wait_for_terminal_state(&manager, &task.id, Duration::from_secs(3)).await?;
         assert_eq!(finished.status, TaskStatus::Completed);
         assert_eq!(finished.thread_id.as_deref(), Some("thr_test"));
@@ -1769,9 +1727,7 @@ mod tests {
         let manager =
             TaskManager::start_with_executor(test_config(root), Arc::new(MockExecutor)).await?;
 
-        let task = manager
-            .add_task(NewTaskRequest::from_prompt("test metadata"))
-            .await?;
+        let task = manager.add_task(NewTaskRequest::from_prompt("test metadata")).await?;
         let finished = wait_for_terminal_state(&manager, &task.id, Duration::from_secs(3)).await?;
         let updated = manager
             .record_tool_metadata(
@@ -1807,9 +1763,7 @@ mod tests {
         let manager =
             TaskManager::start_with_executor(test_config(root), Arc::new(MockExecutor)).await?;
 
-        let task = manager
-            .add_task(NewTaskRequest::from_prompt("test cancellation"))
-            .await?;
+        let task = manager.add_task(NewTaskRequest::from_prompt("test cancellation")).await?;
 
         sleep(Duration::from_millis(10)).await;
         let _ = manager.cancel_task(&task.id).await?;
@@ -1825,9 +1779,7 @@ mod tests {
             TaskManager::start_with_executor(test_config(root.clone()), Arc::new(MockExecutor))
                 .await?;
 
-        let task = manager
-            .add_task(NewTaskRequest::from_prompt("test schema gate"))
-            .await?;
+        let task = manager.add_task(NewTaskRequest::from_prompt("test schema gate")).await?;
         let _ = wait_for_terminal_state(&manager, &task.id, Duration::from_secs(3)).await?;
         drop(manager);
 

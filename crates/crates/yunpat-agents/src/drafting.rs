@@ -576,9 +576,7 @@ struct ReviewDimensionScore {
 }
 
 fn generate_parse_disclosure_content(topic: &str, case_id: Option<&str>) -> String {
-    let case_info = case_id
-        .map(|id| format!("\n关联案件: {}", id))
-        .unwrap_or_default();
+    let case_info = case_id.map(|id| format!("\n关联案件: {}", id)).unwrap_or_default();
     format!(
         "# 技术交底书解析\n\n\
          主题: {}\n{}\n\n\

@@ -736,9 +736,7 @@ struct QualityDimensionScore {
 }
 
 fn generate_parse_input_content(topic: &str, case_id: Option<&str>) -> String {
-    let case_info = case_id
-        .map(|id| format!("\n关联案件: {}", id))
-        .unwrap_or_default();
+    let case_info = case_id.map(|id| format!("\n关联案件: {}", id)).unwrap_or_default();
     format!(
         "# 输入解析\n\n\
          主题: {}\n{}\n\n\

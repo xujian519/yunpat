@@ -84,9 +84,7 @@ impl PendingInputPreview {
             return Vec::new();
         }
 
-        let dim = Style::default()
-            .fg(palette::TEXT_DIM)
-            .add_modifier(Modifier::DIM);
+        let dim = Style::default().fg(palette::TEXT_DIM).add_modifier(Modifier::DIM);
         let dim_italic = dim.add_modifier(Modifier::ITALIC);
 
         let mut lines: Vec<Line<'static>> = Vec::new();
@@ -170,9 +168,7 @@ fn push_context_item(lines: &mut Vec<Line<'static>>, item: &ContextPreviewItem, 
         Style::default().fg(palette::STATUS_WARNING)
     };
     let label_style = if item.selected {
-        Style::default()
-            .fg(palette::SELECTION_TEXT)
-            .bg(palette::SELECTION_BG)
+        Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
     } else if item.included {
         Style::default().fg(palette::TEXT_PRIMARY)
     } else {
@@ -295,9 +291,7 @@ fn wrap_to_width(text: &str, width: usize) -> Vec<String> {
 }
 
 fn display_width(s: &str) -> usize {
-    s.chars()
-        .map(|c| UnicodeWidthChar::width(c).unwrap_or(0))
-        .sum()
+    s.chars().map(|c| UnicodeWidthChar::width(c).unwrap_or(0)).sum()
 }
 
 #[cfg(test)]
@@ -379,10 +373,7 @@ mod tests {
 
         let rows = render_to_string(&preview, 96);
 
-        assert!(
-            rows.iter()
-                .any(|row| row.contains("Backspace/Delete removes"))
-        );
+        assert!(rows.iter().any(|row| row.contains("Backspace/Delete removes")));
         assert!(rows.iter().any(|row| row.contains("▸")));
     }
 
@@ -426,9 +417,7 @@ mod tests {
     #[test]
     fn message_truncates_to_three_visible_lines() {
         let mut preview = PendingInputPreview::new();
-        preview
-            .queued_messages
-            .push("line1\nline2\nline3\nline4\nline5".to_string());
+        preview.queued_messages.push("line1\nline2\nline3\nline4\nline5".to_string());
         let rows = render_to_string(&preview, 40);
         // Header + 3 visible lines + ellipsis row + hint = 6 rows.
         assert_eq!(rows.len(), 6, "got rows: {rows:?}");

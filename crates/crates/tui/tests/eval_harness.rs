@@ -32,11 +32,7 @@ fn runs_offline_tool_loop_successfully() {
         ScenarioStepKind::ApplyPatch,
         ScenarioStepKind::ExecShell,
     ] {
-        let stats = run
-            .metrics
-            .per_tool
-            .get(&kind)
-            .expect("missing per-tool stats");
+        let stats = run.metrics.per_tool.get(&kind).expect("missing per-tool stats");
         assert_eq!(stats.invocations, 1, "unexpected invocations for {kind:?}");
         assert_eq!(stats.errors, 0, "unexpected errors for {kind:?}");
         assert!(stats.total_duration.as_nanos() > 0);

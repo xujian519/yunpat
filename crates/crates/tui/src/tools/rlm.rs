@@ -133,9 +133,7 @@ impl ToolSpec for RlmTool {
         let task = input
             .get("task")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| ToolError::MissingField {
-                field: "task".to_string(),
-            })?
+            .ok_or_else(|| ToolError::MissingField { field: "task".to_string() })?
             .trim();
         if task.is_empty() {
             return Err(ToolError::invalid_input("rlm: `task` is empty"));
@@ -386,10 +384,7 @@ mod tests {
     async fn rejects_missing_task() {
         let t = RlmTool::new(None, "x".into());
         let ctx = ctx();
-        let res = t
-            .execute(json!({"content": "abc"}), &ctx)
-            .await
-            .expect_err("must error");
+        let res = t.execute(json!({"content": "abc"}), &ctx).await.expect_err("must error");
         // Without a client we hit NotAvailable first. Re-check ordering by
         // injecting an obviously-bad payload that would trip earlier.
         assert!(matches!(
@@ -404,9 +399,7 @@ mod tests {
         // bypass the client guard. Simpler: just verify the schema lists
         // the two as alternatives via descriptions.
         let schema = tool().input_schema();
-        let path_desc = schema["properties"]["file_path"]["description"]
-            .as_str()
-            .unwrap();
+        let path_desc = schema["properties"]["file_path"]["description"].as_str().unwrap();
         assert!(path_desc.to_lowercase().contains("mutually exclusive"));
     }
 }

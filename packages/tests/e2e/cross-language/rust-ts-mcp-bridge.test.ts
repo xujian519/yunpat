@@ -128,7 +128,7 @@ describeE2E('Rust↔TS MCP 桥接', () => {
       }
 
       // 验证最终结果包含完整数据
-      const finalChunk = chunks[chunks.length - 1] as any
+      const finalChunk = chunks[chunks.length - 1] as (typeof chunks)[number] & { result: { content: unknown[] } }
       expect(finalChunk.result).toBeDefined()
       expect(finalChunk.result.content).toBeDefined()
     })

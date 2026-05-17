@@ -53,12 +53,7 @@ enum Format {
 
 impl Format {
     fn parse(value: Option<&str>) -> Result<Self, ToolError> {
-        match value
-            .unwrap_or("markdown")
-            .trim()
-            .to_ascii_lowercase()
-            .as_str()
-        {
+        match value.unwrap_or("markdown").trim().to_ascii_lowercase().as_str() {
             "text" | "txt" | "plain" => Ok(Self::Text),
             "markdown" | "md" => Ok(Self::Markdown),
             "raw" | "html" | "bytes" => Ok(Self::Raw),
@@ -340,10 +335,7 @@ fn html_to_text(html: &str) -> String {
     let no_style = style_re().replace_all(&no_script, "");
     let no_tags = tag_re().replace_all(&no_style, " ");
     let decoded = decode_entities(&no_tags);
-    whitespace_re()
-        .replace_all(&decoded, " ")
-        .trim()
-        .to_string()
+    whitespace_re().replace_all(&decoded, " ").trim().to_string()
 }
 
 /// Decode the handful of HTML entities we expect to hit in stripped text.
@@ -402,9 +394,7 @@ mod tests {
     #[tokio::test]
     async fn rejects_non_http_schemes() {
         let tool = FetchUrlTool;
-        let res = tool
-            .execute(json!({"url": "file:///etc/passwd"}), &ctx())
-            .await;
+        let res = tool.execute(json!({"url": "file:///etc/passwd"}), &ctx()).await;
         let err = res.unwrap_err();
         assert!(format!("{err:?}").contains("http"));
     }
@@ -481,9 +471,7 @@ mod tests {
     #[tokio::test]
     async fn rejects_localhost_hostname() {
         let tool = FetchUrlTool;
-        let res = tool
-            .execute(json!({"url": "http://localhost:8080/admin"}), &ctx())
-            .await;
+        let res = tool.execute(json!({"url": "http://localhost:8080/admin"}), &ctx()).await;
         let err = res.unwrap_err();
         assert!(format!("{err}").contains("localhost"));
     }
@@ -500,9 +488,7 @@ mod tests {
         let decider = NetworkPolicyDecider::new(policy, None);
         let ctx = ToolContext::new(PathBuf::from(".")).with_network_policy(decider);
         let tool = FetchUrlTool;
-        let res = tool
-            .execute(json!({"url": "https://example.com/foo"}), &ctx)
-            .await;
+        let res = tool.execute(json!({"url": "https://example.com/foo"}), &ctx).await;
         let err = res.expect_err("blocked host should fail");
         assert!(format!("{err}").contains("blocked"));
     }

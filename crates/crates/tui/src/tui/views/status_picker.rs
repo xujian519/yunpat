@@ -170,9 +170,7 @@ impl ModalView for StatusPickerView {
         let block = Block::default()
             .title(Line::from(Span::styled(
                 " Status line ",
-                Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
             )))
             .title_bottom(Line::from(vec![
                 Span::styled(" Space ", Style::default().fg(palette::TEXT_MUTED)),
@@ -217,9 +215,7 @@ impl ModalView for StatusPickerView {
                 Style::default().fg(palette::TEXT_MUTED)
             };
             let hint_style = if is_cursor {
-                Style::default()
-                    .fg(palette::SELECTION_TEXT)
-                    .bg(palette::SELECTION_BG)
+                Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
             } else {
                 Style::default().fg(palette::TEXT_DIM)
             };

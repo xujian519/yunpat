@@ -217,9 +217,7 @@ pub struct ExecEnv {
 impl ExecEnv {
     /// Get the program to execute (first element of command).
     pub fn program(&self) -> &str {
-        self.command
-            .first()
-            .map_or("sh", std::string::String::as_str)
+        self.command.first().map_or("sh", std::string::String::as_str)
     }
 
     /// Get the arguments (all elements after the first).
@@ -595,9 +593,8 @@ mod tests {
         assert_eq!(no_sandbox, SandboxType::None);
 
         // ExternalSandbox should never sandbox
-        let external = manager.select_sandbox(&SandboxPolicy::ExternalSandbox {
-            network_access: true,
-        });
+        let external =
+            manager.select_sandbox(&SandboxPolicy::ExternalSandbox { network_access: true });
         assert_eq!(external, SandboxType::None);
     }
 

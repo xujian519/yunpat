@@ -284,9 +284,7 @@ impl Settings {
             s.composer_density = normalize_composer_density(&s.composer_density).to_string();
             s.transcript_spacing = normalize_transcript_spacing(&s.transcript_spacing).to_string();
             s.sidebar_focus = normalize_sidebar_focus(&s.sidebar_focus).to_string();
-            s.locale = normalize_configured_locale(&s.locale)
-                .unwrap_or("en")
-                .to_string();
+            s.locale = normalize_configured_locale(&s.locale).unwrap_or("en").to_string();
             s.default_model = s.default_model.as_deref().and_then(normalize_default_model);
             s
         };
@@ -683,9 +681,7 @@ mod tests {
         assert!(settings.bracketed_paste);
         assert!(!settings.paste_burst_detection);
 
-        settings
-            .set("bracketed_paste", "off")
-            .expect("disable bracketed paste");
+        settings.set("bracketed_paste", "off").expect("disable bracketed paste");
         assert!(!settings.bracketed_paste);
         assert!(!settings.paste_burst_detection);
     }
@@ -699,9 +695,7 @@ mod tests {
         settings.set("language", "pt-PT").expect("set pt fallback");
         assert_eq!(settings.locale, "pt-BR");
 
-        let err = settings
-            .set("locale", "ar")
-            .expect_err("Arabic is planned, not shipped");
+        let err = settings.set("locale", "ar").expect_err("Arabic is planned, not shipped");
         assert!(err.to_string().contains("invalid locale"));
     }
 
@@ -716,9 +710,7 @@ mod tests {
         settings.set("currency", "rmb").expect("set rmb");
         assert_eq!(settings.cost_currency, "cny");
 
-        let err = settings
-            .set("cost_currency", "eur")
-            .expect_err("unsupported currency");
+        let err = settings.set("cost_currency", "eur").expect_err("unsupported currency");
         assert!(err.to_string().contains("invalid cost currency"));
     }
 
@@ -849,9 +841,7 @@ mod tests {
                 theme: theme.to_string(),
                 ..TuiPrefs::default()
             };
-            prefs
-                .validate()
-                .unwrap_or_else(|e| panic!("validate({theme}) failed: {e}"));
+            prefs.validate().unwrap_or_else(|e| panic!("validate({theme}) failed: {e}"));
             assert_eq!(prefs.theme, theme);
         }
     }
@@ -872,9 +862,7 @@ mod tests {
             theme: "solarized".to_string(),
             ..TuiPrefs::default()
         };
-        let err = prefs
-            .validate()
-            .expect_err("solarized is not a valid theme");
+        let err = prefs.validate().expect_err("solarized is not a valid theme");
         assert!(err.to_string().contains("Invalid tui.toml theme"));
     }
 

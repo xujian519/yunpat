@@ -133,9 +133,7 @@ mod tests {
         let tmpdir = TempDir::new().expect("tempdir");
         let mut app = create_test_app_with_memory(&tmpdir, true);
         let result = memory(&mut app, Some("wat"));
-        let msg = result
-            .message
-            .expect("unknown subcommand should return text");
+        let msg = result.message.expect("unknown subcommand should return text");
         assert!(msg.contains("Try `/memory help`"));
         assert!(msg.contains("/memory clear"));
     }

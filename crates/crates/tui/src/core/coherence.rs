@@ -1,96 +1,10 @@
 //! Plain-language session coherence state derived from capacity events.
+//!
+//! Core types have been migrated to `yunpat_protocol`.
 
-use serde::{Deserialize, Serialize};
-
-use crate::core::capacity::{GuardrailAction, RiskBand};
-
-/// User-facing coherence ladder for session health.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum CoherenceState {
-    #[default]
-    Healthy,
-    GettingCrowded,
-    RefreshingContext,
-    VerifyingRecentWork,
-    ResettingPlan,
-}
-
-impl CoherenceState {
-    #[must_use]
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::Healthy => "healthy",
-            Self::GettingCrowded => "getting crowded",
-            Self::RefreshingContext => "refreshing context",
-            Self::VerifyingRecentWork => "verifying recent work",
-            Self::ResettingPlan => "resetting plan",
-        }
-    }
-
-    #[must_use]
-    pub fn description(self) -> &'static str {
-        match self {
-            Self::Healthy => "The session is stable and focused.",
-            Self::GettingCrowded => "The session is approaching context pressure.",
-            Self::RefreshingContext => "The engine is refreshing context before continuing.",
-            Self::VerifyingRecentWork => {
-                "The engine is checking recent tool results before continuing."
-            }
-            Self::ResettingPlan => {
-                "The engine is rebuilding from canonical context and replanning."
-            }
-        }
-    }
-}
-
-/// Synthetic input to the coherence reducer.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CoherenceSignal {
-    CapacityDecision {
-        risk_band: RiskBand,
-        action: GuardrailAction,
-        cooldown_blocked: bool,
-    },
-    CapacityIntervention {
-        action: GuardrailAction,
-    },
-    CompactionStarted,
-    CompactionCompleted,
-    CompactionFailed,
-}
-
-/// Pure transition function for the plain-language coherence ladder.
-#[must_use]
-pub fn next_coherence_state(current: CoherenceState, signal: CoherenceSignal) -> CoherenceState {
-    match signal {
-        CoherenceSignal::CompactionStarted => CoherenceState::RefreshingContext,
-        CoherenceSignal::CompactionCompleted => CoherenceState::Healthy,
-        CoherenceSignal::CompactionFailed => CoherenceState::GettingCrowded,
-        CoherenceSignal::CapacityIntervention { action }
-        | CoherenceSignal::CapacityDecision { action, .. } => match action {
-            GuardrailAction::NoIntervention => match signal {
-                CoherenceSignal::CapacityDecision {
-                    risk_band,
-                    cooldown_blocked,
-                    ..
-                } => {
-                    if cooldown_blocked {
-                        return current;
-                    }
-                    match risk_band {
-                        RiskBand::Low => CoherenceState::Healthy,
-                        RiskBand::Medium | RiskBand::High => CoherenceState::GettingCrowded,
-                    }
-                }
-                _ => current,
-            },
-            GuardrailAction::TargetedContextRefresh => CoherenceState::RefreshingContext,
-            GuardrailAction::VerifyWithToolReplay => CoherenceState::VerifyingRecentWork,
-            GuardrailAction::VerifyAndReplan => CoherenceState::ResettingPlan,
-        },
-    }
-}
+pub use yunpat_protocol::{
+    CoherenceSignal, CoherenceState, GuardrailAction, RiskBand, next_coherence_state,
+};
 
 #[cfg(test)]
 mod tests {

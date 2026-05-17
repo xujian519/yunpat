@@ -110,10 +110,7 @@ impl HelpView {
         // failure mode for a *help* surface. We split on whitespace so
         // multi-term queries (`apply mode`) act as an AND.
         let query = self.query.trim().to_ascii_lowercase();
-        let terms: Vec<&str> = query
-            .split_whitespace()
-            .filter(|term| !term.is_empty())
-            .collect();
+        let terms: Vec<&str> = query.split_whitespace().filter(|term| !term.is_empty()).collect();
 
         let mut filtered: Vec<usize> = self
             .entries
@@ -156,12 +153,7 @@ fn build_entries(locale: Locale) -> Vec<HelpEntry> {
             format!(
                 "{}  (aliases: {})",
                 localized,
-                command
-                    .aliases
-                    .iter()
-                    .map(|a| format!("/{a}"))
-                    .collect::<Vec<_>>()
-                    .join(", ")
+                command.aliases.iter().map(|a| format!("/{a}")).collect::<Vec<_>>().join(", ")
             )
         };
         let haystack = format!(
@@ -317,9 +309,7 @@ impl ModalView for HelpView {
         };
         lines.push(Line::from(Span::styled(
             query_label,
-            Style::default()
-                .fg(palette::YUNPAT_SKY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
         )));
 
         let match_count = if self.query.is_empty() {
@@ -329,18 +319,14 @@ impl ModalView for HelpView {
         };
         lines.push(Line::from(Span::styled(
             match_count,
-            Style::default()
-                .fg(palette::TEXT_DIM)
-                .add_modifier(Modifier::ITALIC),
+            Style::default().fg(palette::TEXT_DIM).add_modifier(Modifier::ITALIC),
         )));
         lines.push(Line::from(""));
 
         if self.filtered.is_empty() {
             lines.push(Line::from(Span::styled(
                 self.tr(MessageId::HelpNoMatches),
-                Style::default()
-                    .fg(palette::TEXT_MUTED)
-                    .add_modifier(Modifier::ITALIC),
+                Style::default().fg(palette::TEXT_MUTED).add_modifier(Modifier::ITALIC),
             )));
         } else {
             // The chord/label column takes up to 28 cols on wide screens;
@@ -356,15 +342,11 @@ impl ModalView for HelpView {
             // terminals — we still render them because losing the heading is
             // worse than losing one trailing row of entries.
             let header_lines = lines.len();
-            let visible_budget = (popup_height as usize)
-                .saturating_sub(header_lines + 3)
-                .max(1);
+            let visible_budget = (popup_height as usize).saturating_sub(header_lines + 3).max(1);
 
             // Centre the selected row in the visible window when it is far
             // down, otherwise keep the natural top-aligned listing.
-            let scroll = self
-                .selected
-                .saturating_sub(visible_budget.saturating_sub(1));
+            let scroll = self.selected.saturating_sub(visible_budget.saturating_sub(1));
             let mut active_section: Option<HelpSection> = None;
             let mut rendered_rows = 0usize;
 
@@ -389,9 +371,7 @@ impl ModalView for HelpView {
                         .count();
                     lines.push(Line::from(Span::styled(
                         format!("  {} ({})", entry.section.label(self.locale), count),
-                        Style::default()
-                            .fg(palette::YUNPAT_BLUE)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::BOLD),
                     )));
                     rendered_rows += 1;
                     active_section = Some(entry.section);
@@ -402,9 +382,7 @@ impl ModalView for HelpView {
 
                 let is_selected = slot == self.selected;
                 let style = if is_selected {
-                    Style::default()
-                        .fg(palette::SELECTION_TEXT)
-                        .bg(palette::SELECTION_BG)
+                    Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
                 } else {
                     Style::default().fg(palette::TEXT_PRIMARY)
                 };
@@ -420,9 +398,7 @@ impl ModalView for HelpView {
         let block = modal_block()
             .title(Line::from(vec![Span::styled(
                 format!(" {} ", self.tr(MessageId::HelpTitle)),
-                Style::default()
-                    .fg(palette::YUNPAT_BLUE)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::BOLD),
             )]))
             .title_bottom(Line::from(vec![
                 Span::styled(
@@ -488,9 +464,7 @@ mod tests {
         // The `/yolo` command must survive the filter; it's the canonical
         // single-term match.
         assert!(
-            view.filtered
-                .iter()
-                .any(|idx| view.entries[*idx].label == "/yolo"),
+            view.filtered.iter().any(|idx| view.entries[*idx].label == "/yolo"),
             "/yolo should match the `yolo` filter"
         );
     }
@@ -641,18 +615,13 @@ mod tests {
     #[test]
     fn localized_help_keybinding_descriptions_use_zh_hans() {
         let entries = build_entries(Locale::ZhHans);
-        let kb_entries: Vec<_> = entries
-            .iter()
-            .filter(|e| e.section == HelpSection::Keybinding)
-            .collect();
+        let kb_entries: Vec<_> =
+            entries.iter().filter(|e| e.section == HelpSection::Keybinding).collect();
         assert!(!kb_entries.is_empty(), "no keybinding entries found");
 
         for entry in &kb_entries {
             assert!(
-                entry
-                    .description
-                    .chars()
-                    .any(|c| { ('\u{4e00}'..='\u{9fff}').contains(&c) }),
+                entry.description.chars().any(|c| { ('\u{4e00}'..='\u{9fff}').contains(&c) }),
                 "keybinding description not localized: {}",
                 entry.description
             );

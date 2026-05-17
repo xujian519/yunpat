@@ -177,10 +177,8 @@ fn load_last_k_capacity_records_from_candidates(
                 let modified = fs::metadata(path)
                     .and_then(|meta| meta.modified())
                     .unwrap_or(SystemTime::UNIX_EPOCH);
-                let should_replace = newest
-                    .as_ref()
-                    .map(|(current, _)| modified >= *current)
-                    .unwrap_or(true);
+                let should_replace =
+                    newest.as_ref().map(|(current, _)| modified >= *current).unwrap_or(true);
                 if should_replace {
                     newest = Some((modified, records));
                 }

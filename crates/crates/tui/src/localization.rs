@@ -1969,9 +1969,7 @@ mod tests {
         for (label, sample) in samples {
             let area = Rect::new(0, 0, 18, 4);
             let mut buf = Buffer::empty(area);
-            Paragraph::new(sample)
-                .wrap(Wrap { trim: false })
-                .render(area, &mut buf);
+            Paragraph::new(sample).wrap(Wrap { trim: false }).render(area, &mut buf);
             let dump = buffer_text(&buf, area);
 
             assert!(

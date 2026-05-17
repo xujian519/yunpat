@@ -5,6 +5,59 @@
 import { z } from 'zod'
 import { BaseMcpTool } from './BaseMcpTool.js'
 import type { McpToolContext } from '../types.js'
+import type { ToolExecutionResult } from './DraftingTools.js'
+
+// ============================================================
+// 类型定义
+// ============================================================
+
+/** 权利要求项 */
+export interface ClaimItem {
+  type: 'independent' | 'dependent'
+  number: number
+  content: string
+  dependsOn?: number
+}
+
+/** 说明书内容 */
+export interface SpecificationContent {
+  technicalField?: string
+  backgroundArt?: string
+  inventionContent?: string
+  embodiment?: string
+}
+
+/** 检索选项 */
+export interface SearchOptions {
+  keywords?: string[]
+  classification?: string
+  dateRange?: { start: string; end: string }
+  applicant?: string
+  limit?: number
+}
+
+/** 申请信息 */
+export interface ApplicationInfo {
+  claims?: string[]
+  specification?: string
+  inventionTitle: string
+}
+
+/** 对比文件 */
+export interface PriorArtItem {
+  patentId?: string
+  title: string
+  abstract?: string
+  claims?: string[]
+  description?: string
+}
+
+/** 报告选项 */
+export interface ReportOptions {
+  format?: 'markdown' | 'structured'
+  includeTables?: boolean
+  language?: 'zh' | 'en'
+}
 
 // ============================================================
 // PriorArtSearchTool
@@ -12,44 +65,33 @@ import type { McpToolContext } from '../types.js'
 
 const priorArtSearchSchema = z.object({
   inventionTitle: z.string().describe('发明名称'),
-  claims: z
-    .array(
-      z.object({
-        type: z.enum(['independent', 'dependent']),
-        number: z.number(),
-        content: z.string(),
-        dependsOn: z.number().optional(),
-      })
-    )
-    .optional()
-    .describe('权利要求列表（可选）'),
-  specification: z
-    .object({
-      technicalField: z.string().optional(),
-      backgroundArt: z.string().optional(),
-      inventionContent: z.string().optional(),
-      embodiment: z.string().optional(),
-    })
-    .optional()
-    .describe('说明书内容（可选）'),
+  claims: z.array(z.object({
+    type: z.enum(['independent', 'dependent']),
+    number: z.number(),
+    content: z.string(),
+    dependsOn: z.number().optional(),
+  })).optional().describe('权利要求列表（可选）'),
+  specification: z.object({
+    technicalField: z.string().optional(),
+    backgroundArt: z.string().optional(),
+    inventionContent: z.string().optional(),
+    embodiment: z.string().optional(),
+  }).optional().describe('说明书内容（可选）'),
   patentType: z
     .enum(['invention', 'utilityModel', 'design'])
     .optional()
     .default('invention')
     .describe('专利类型'),
-  searchOptions: z
-    .object({
-      keywords: z.array(z.string()).optional(),
-      classification: z.string().optional(),
-      dateRange: z.object({ start: z.string(), end: z.string() }).optional(),
-      applicant: z.string().optional(),
-      limit: z.number().optional().default(20),
-    })
-    .optional()
-    .describe('检索选项'),
+  searchOptions: z.object({
+    keywords: z.array(z.string()).optional(),
+    classification: z.string().optional(),
+    dateRange: z.object({ start: z.string(), end: z.string() }).optional(),
+    applicant: z.string().optional(),
+    limit: z.number().optional().default(20),
+  }).optional().describe('检索选项'),
 })
 
-export class PriorArtSearchTool extends BaseMcpTool<z.infer<typeof priorArtSearchSchema>, any> {
+export class PriorArtSearchTool extends BaseMcpTool<z.infer<typeof priorArtSearchSchema>, ToolExecutionResult> {
   readonly metadata = {
     name: 'prior_art_search',
     description:
@@ -61,7 +103,7 @@ export class PriorArtSearchTool extends BaseMcpTool<z.infer<typeof priorArtSearc
   protected async executeInternal(
     input: z.infer<typeof priorArtSearchSchema>,
     context: McpToolContext
-  ) {
+  ): Promise<ToolExecutionResult> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { PriorArtSearchAgent } = await import('@yunpat/agent-prior-art-search')
@@ -75,10 +117,10 @@ export class PriorArtSearchTool extends BaseMcpTool<z.infer<typeof priorArtSearc
         })
         const result = await agent.execute({
           inventionTitle: input.inventionTitle,
-          claims: input.claims as any,
-          specification: input.specification as any,
+          claims: input.claims as Record<string, unknown> | undefined,
+          specification: input.specification as Record<string, unknown> | undefined,
           patentType: input.patentType || 'invention',
-          searchOptions: input.searchOptions as any,
+          searchOptions: input.searchOptions as Record<string, unknown> | undefined,
         })
         return { version: '3.0.0', integrationMode: 'real_agent', ...result }
       } catch (error) {
@@ -109,33 +151,27 @@ export class PriorArtSearchTool extends BaseMcpTool<z.infer<typeof priorArtSearc
 const comparisonReportSchema = z.object({
   application: z
     .object({
-      claims: z.array(z.string()).optional().describe('权利要求列表'),
-      specification: z.string().optional().describe('说明书摘要'),
-      inventionTitle: z.string().describe('发明名称'),
-    })
-    .describe('本申请信息'),
-  priorArt: z
-    .array(
-      z.object({
-        patentId: z.string().optional(),
-        title: z.string(),
-        abstract: z.string().optional(),
-        claims: z.array(z.string()).optional(),
-        description: z.string().optional(),
-      })
-    )
-    .describe('对比文件列表'),
-  options: z
-    .object({
-      format: z.enum(['markdown', 'structured']).optional().default('markdown'),
-      includeTables: z.boolean().optional().default(true),
-      language: z.enum(['zh', 'en']).optional().default('zh'),
-    })
-    .optional()
-    .describe('报告选项'),
+  claims: z.array(z.string()).optional().describe('权利要求列表'),
+  specification: z.string().optional().describe('说明书摘要'),
+  inventionTitle: z.string().describe('发明名称'),
+}).describe('本申请信息'),
+priorArt: z.array(
+  z.object({
+    patentId: z.string().optional(),
+    title: z.string(),
+    abstract: z.string().optional(),
+    claims: z.array(z.string()).optional(),
+    description: z.string().optional(),
+  })
+).describe('对比文件列表'),
+options: z.object({
+  format: z.enum(['markdown', 'structured']).optional().default('markdown'),
+  includeTables: z.boolean().optional().default(true),
+  language: z.enum(['zh', 'en']).optional().default('zh'),
+}).optional().describe('报告选项'),
 })
 
-export class ComparisonReportTool extends BaseMcpTool<z.infer<typeof comparisonReportSchema>, any> {
+export class ComparisonReportTool extends BaseMcpTool<z.infer<typeof comparisonReportSchema>, ToolExecutionResult> {
   readonly metadata = {
     name: 'comparison_report',
     description:
@@ -147,7 +183,7 @@ export class ComparisonReportTool extends BaseMcpTool<z.infer<typeof comparisonR
   protected async executeInternal(
     input: z.infer<typeof comparisonReportSchema>,
     context: McpToolContext
-  ) {
+  ): Promise<ToolExecutionResult> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { ComparisonReportGeneratorAgent } =
@@ -161,9 +197,9 @@ export class ComparisonReportTool extends BaseMcpTool<z.infer<typeof comparisonR
           tools: context.registry,
         })
         const result = await agent.execute({
-          application: input.application as any,
-          priorArt: input.priorArt as any,
-          options: input.options as any,
+          application: input.application as Record<string, unknown>,
+          priorArt: input.priorArt as Record<string, unknown>[],
+          options: input.options as Record<string, unknown> | undefined,
         })
         return { version: '3.0.0', integrationMode: 'real_agent', ...result }
       } catch (error) {
@@ -209,7 +245,7 @@ const researcherSchema = z.object({
   maxResults: z.number().optional().default(20).describe('最大结果数'),
 })
 
-export class ResearcherTool extends BaseMcpTool<z.infer<typeof researcherSchema>, any> {
+export class ResearcherTool extends BaseMcpTool<z.infer<typeof researcherSchema>, ToolExecutionResult> {
   readonly metadata = {
     name: 'research',
     description:
@@ -221,16 +257,22 @@ export class ResearcherTool extends BaseMcpTool<z.infer<typeof researcherSchema>
   protected async executeInternal(
     input: z.infer<typeof researcherSchema>,
     context: McpToolContext
-  ): Promise<any> {
+  ): Promise<ToolExecutionResult> {
     if (context.llm && context.eventBus && context.memory && context.registry) {
       try {
         const { ResearcherAgent } = await import('@yunpat/agent-researcher')
-        const agent = new ResearcherAgent({
+        const agentConfig: Record<string, unknown> & {
+          llm: unknown
+          eventBus: unknown
+          memory: unknown
+          tools: unknown
+        } = {
           llm: context.llm,
           eventBus: context.eventBus,
           memory: context.memory,
           tools: context.registry,
-        } as any)
+        }
+        const agent = new ResearcherAgent(agentConfig)
         const result = await agent.execute(input)
         return { version: '3.0.0', integrationMode: 'real_agent', ...result }
       } catch (error) {

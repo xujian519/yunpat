@@ -39,11 +39,7 @@ pub(super) fn format_shell_job_list(jobs: &[ShellJobSnapshot]) -> String {
         "----------------------------------------".to_string(),
     ];
     for job in jobs {
-        let task = job
-            .linked_task_id
-            .as_ref()
-            .map(|id| format!(" task={id}"))
-            .unwrap_or_default();
+        let task = job.linked_task_id.as_ref().map(|id| format!(" task={id}")).unwrap_or_default();
         lines.push(format!(
             "{}  {:8}  {}  exit={:?}{}",
             job.id,

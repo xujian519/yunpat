@@ -25,11 +25,8 @@ impl ConstitutionalPrinciple for ClaimIntegrityPrinciple {
         }
 
         let content = params.to_string();
-        let matched: Vec<&str> = BROADENING_PATTERNS
-            .iter()
-            .filter(|p| content.contains(**p))
-            .copied()
-            .collect();
+        let matched: Vec<&str> =
+            BROADENING_PATTERNS.iter().filter(|p| content.contains(**p)).copied().collect();
 
         if !matched.is_empty() {
             return ConstitutionalVerdict::RequireHuman {
@@ -66,10 +63,6 @@ mod tests {
 
     #[test]
     fn pass_for_unrelated_tool() {
-        assert!(
-            ClaimIntegrityPrinciple
-                .check("patent_search", &json!({}))
-                .is_pass()
-        );
+        assert!(ClaimIntegrityPrinciple.check("patent_search", &json!({})).is_pass());
     }
 }

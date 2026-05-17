@@ -77,12 +77,8 @@ fn list_policy() -> anyhow::Result<String> {
         .and_then(|table| table.get("default"))
         .and_then(Value::as_str)
         .unwrap_or("prompt");
-    let allow = network
-        .map(|table| string_array(table, "allow"))
-        .unwrap_or_default();
-    let deny = network
-        .map(|table| string_array(table, "deny"))
-        .unwrap_or_default();
+    let allow = network.map(|table| string_array(table, "allow")).unwrap_or_default();
+    let deny = network.map(|table| string_array(table, "deny")).unwrap_or_default();
 
     Ok(format!(
         "Network policy ({})\n\
@@ -167,9 +163,7 @@ fn save_config_doc(path: &Path, doc: &Value) -> anyhow::Result<()> {
 }
 
 fn network_table_mut(doc: &mut Value) -> anyhow::Result<&mut toml::value::Table> {
-    let root = doc
-        .as_table_mut()
-        .context("config.toml root must be a table")?;
+    let root = doc.as_table_mut().context("config.toml root must be a table")?;
     let entry = root
         .entry("network".to_string())
         .or_insert_with(|| Value::Table(toml::value::Table::new()));
@@ -179,9 +173,7 @@ fn network_table_mut(doc: &mut Value) -> anyhow::Result<&mut toml::value::Table>
     table
         .entry("default".to_string())
         .or_insert_with(|| Value::String("prompt".to_string()));
-    table
-        .entry("audit".to_string())
-        .or_insert_with(|| Value::Boolean(true));
+    table.entry("audit".to_string()).or_insert_with(|| Value::Boolean(true));
     Ok(table)
 }
 
@@ -200,9 +192,7 @@ fn string_array_mut<'a>(
     table: &'a mut toml::value::Table,
     key: &str,
 ) -> anyhow::Result<&'a mut Vec<Value>> {
-    let value = table
-        .entry(key.to_string())
-        .or_insert_with(|| Value::Array(Vec::new()));
+    let value = table.entry(key.to_string()).or_insert_with(|| Value::Array(Vec::new()));
     value
         .as_array_mut()
         .with_context(|| format!("`network.{key}` must be an array of strings"))
@@ -324,10 +314,7 @@ mod tests {
     }
 
     fn temp_home(label: &str) -> PathBuf {
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let path = env::temp_dir().join(format!(
             "deepseek-network-{label}-{}-{nanos}",
             std::process::id()

@@ -22,11 +22,13 @@ path = "src/main.rs"
 anyhow = "1.0.100"
 arboard = "3.4"
 yunpat-agents = { path = "../yunpat-agents", version = "0.8.15" }
+yunpat-protocol = { path = "../protocol", version = "0.8.15" }
 yunpat-models = { path = "../yunpat-models", version = "0.8.15" }
 yunpat-router = { path = "../yunpat-router" }
 yunpat-secrets = { path = "../secrets", version = "0.8.15" }
 yunpat-state = { path = "../state", version = "0.8.15" }
 yunpat-tools = { path = "../tools", version = "0.8.15" }
+yunpat-patent-tui = { path = "../yunpat-patent-tui", version = "0.8.15" }
 yunpat-hooks = { path = "../hooks", version = "0.8.15" }
 yunpat-execpolicy = { path = "../execpolicy", version = "0.8.15" }
 schemaui = { version = "0.12.0", default-features = false, optional = true }
@@ -42,7 +44,7 @@ dotenvy = "0.15.7"
 dirs = "6.0.0"
 fd-lock = "4.0.4"
 futures-util = "0.3.31"
-ratatui = "0.29"
+ratatui = "0.30"
 regex = "1.11"
 reqwest = { version = "0.13.1", default-features = false, features = ["blocking", "json", "stream", "multipart", "rustls", "http2"] }
 similar = "2"

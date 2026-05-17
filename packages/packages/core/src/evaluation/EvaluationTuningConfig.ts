@@ -132,16 +132,12 @@ export function readEvaluationConfigFromEnv(): Partial<EvaluationTuningConfig> {
 
   // MARG 权重
   if (process.env.YUNPAT_MARG_TECHNICAL_WEIGHT) {
-    margOverrides.technicalWeight = parseFloat(
-      process.env.YUNPAT_MARG_TECHNICAL_WEIGHT
-    )
+    margOverrides.technicalWeight = parseFloat(process.env.YUNPAT_MARG_TECHNICAL_WEIGHT)
   }
 
   // NovAScore 阈值
   if (process.env.YUNPAT_NOVA_SIMILARITY_THRESHOLD) {
-    novaOverrides.similarityThreshold = parseFloat(
-      process.env.YUNPAT_NOVA_SIMILARITY_THRESHOLD
-    )
+    novaOverrides.similarityThreshold = parseFloat(process.env.YUNPAT_NOVA_SIMILARITY_THRESHOLD)
   }
 
   // RND K 值
@@ -151,9 +147,12 @@ export function readEvaluationConfigFromEnv(): Partial<EvaluationTuningConfig> {
 
   // 仅组装非空的子配置
   const overrides: Partial<EvaluationTuningConfig> = {}
-  if (Object.keys(margOverrides).length > 0) overrides.marg = margOverrides as EvaluationTuningConfig['marg']
-  if (Object.keys(novaOverrides).length > 0) overrides.novaScore = novaOverrides as EvaluationTuningConfig['novaScore']
-  if (Object.keys(rndOverrides).length > 0) overrides.rnd = rndOverrides as EvaluationTuningConfig['rnd']
+  if (Object.keys(margOverrides).length > 0)
+    overrides.marg = margOverrides as EvaluationTuningConfig['marg']
+  if (Object.keys(novaOverrides).length > 0)
+    overrides.novaScore = novaOverrides as EvaluationTuningConfig['novaScore']
+  if (Object.keys(rndOverrides).length > 0)
+    overrides.rnd = rndOverrides as EvaluationTuningConfig['rnd']
 
   return overrides
 }

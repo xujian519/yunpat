@@ -651,3 +651,30 @@ pub fn run_setup_clean(checkpoints_dir: &Path, force: bool) -> Result<()> {
     }
     Ok(())
 }
+
+/// CLI auto-route result for one-shot / ACP / eval modes.
+#[derive(Debug, Clone)]
+pub struct CliAutoRoute {
+    pub model: String,
+    pub reasoning_effort: Option<crate::tui::app::ReasoningEffort>,
+    pub auto_model: bool,
+}
+
+/// Resolve the effective model and reasoning effort for a CLI prompt.
+pub async fn resolve_cli_auto_route(config: &crate::config::Config, model: &str, prompt: &str) -> CliAutoRoute {
+    if model.trim().eq_ignore_ascii_case("auto") {
+        let selection =
+            crate::commands::resolve_auto_route_with_flash(config, prompt, "", "auto", "auto").await;
+        CliAutoRoute {
+            model: selection.model,
+            reasoning_effort: selection.reasoning_effort,
+            auto_model: true,
+        }
+    } else {
+        CliAutoRoute {
+            model: model.to_string(),
+            reasoning_effort: None,
+            auto_model: false,
+        }
+    }
+}

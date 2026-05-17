@@ -16,21 +16,15 @@ impl Engine {
         client: Option<&dyn LlmClient>,
         mode: AppMode,
     ) -> bool {
-        let snapshot = self
-            .capacity_controller
-            .observe_pre_turn(self.capacity_observation(turn));
-        let decision = self
-            .capacity_controller
-            .decide(self.turn_counter, snapshot.as_ref());
-        self.emit_capacity_decision(turn, snapshot.as_ref(), &decision)
-            .await;
+        let snapshot = self.capacity_controller.observe_pre_turn(self.capacity_observation(turn));
+        let decision = self.capacity_controller.decide(self.turn_counter, snapshot.as_ref());
+        self.emit_capacity_decision(turn, snapshot.as_ref(), &decision).await;
 
         if decision.action != GuardrailAction::TargetedContextRefresh {
             return false;
         }
 
-        self.apply_targeted_context_refresh(turn, client, mode, snapshot.as_ref())
-            .await
+        self.apply_targeted_context_refresh(turn, client, mode, snapshot.as_ref()).await
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -44,14 +38,9 @@ impl Engine {
         _step_error_count: usize,
         _consecutive_tool_error_steps: u32,
     ) -> bool {
-        let snapshot = self
-            .capacity_controller
-            .observe_post_tool(self.capacity_observation(turn));
-        let decision = self
-            .capacity_controller
-            .decide(self.turn_counter, snapshot.as_ref());
-        self.emit_capacity_decision(turn, snapshot.as_ref(), &decision)
-            .await;
+        let snapshot = self.capacity_controller.observe_post_tool(self.capacity_observation(turn));
+        let decision = self.capacity_controller.decide(self.turn_counter, snapshot.as_ref());
+        self.emit_capacity_decision(turn, snapshot.as_ref(), &decision).await;
 
         match decision.action {
             GuardrailAction::VerifyWithToolReplay => {
@@ -106,13 +95,9 @@ impl Engine {
             return false;
         }
 
-        let snapshot = self
-            .capacity_controller
-            .last_snapshot()
-            .cloned()
-            .or_else(|| {
-                self.capacity_controller
-                    .observe_pre_turn(self.capacity_observation(turn))
+        let snapshot =
+            self.capacity_controller.last_snapshot().cloned().or_else(|| {
+                self.capacity_controller.observe_pre_turn(self.capacity_observation(turn))
             });
         let Some(snapshot) = snapshot else {
             return false;
@@ -125,11 +110,8 @@ impl Engine {
             forced.severe = true;
         }
 
-        let decision = self
-            .capacity_controller
-            .decide(self.turn_counter, Some(&forced));
-        self.emit_capacity_decision(turn, Some(&forced), &decision)
-            .await;
+        let decision = self.capacity_controller.decide(self.turn_counter, Some(&forced));
+        self.emit_capacity_decision(turn, Some(&forced), &decision).await;
 
         if decision.action != GuardrailAction::VerifyAndReplan {
             return false;
@@ -272,8 +254,7 @@ impl Engine {
                 message: message.clone(),
             })
             .await;
-        self.emit_coherence_signal(CoherenceSignal::CompactionStarted, message)
-            .await;
+        self.emit_coherence_signal(CoherenceSignal::CompactionStarted, message).await;
     }
 
     pub(super) async fn emit_compaction_completed(
@@ -294,8 +275,7 @@ impl Engine {
                 messages_after,
             })
             .await;
-        self.emit_coherence_signal(CoherenceSignal::CompactionCompleted, message)
-            .await;
+        self.emit_coherence_signal(CoherenceSignal::CompactionCompleted, message).await;
     }
 
     pub(super) async fn emit_compaction_failed(&mut self, id: String, auto: bool, message: String) {
@@ -307,8 +287,7 @@ impl Engine {
                 message: message.clone(),
             })
             .await;
-        self.emit_coherence_signal(CoherenceSignal::CompactionFailed, message)
-            .await;
+        self.emit_coherence_signal(CoherenceSignal::CompactionFailed, message).await;
     }
 
     pub(super) async fn emit_capacity_decision(
@@ -511,10 +490,7 @@ impl Engine {
                 .is_some_and(|spec| spec.supports_parallel())
         };
         let interactive = (candidate.name == "exec_shell"
-            && candidate
-                .input
-                .get("interactive")
-                .and_then(serde_json::Value::as_bool)
+            && candidate.input.get("interactive").and_then(serde_json::Value::as_bool)
                 == Some(true))
             || candidate.name == REQUEST_USER_INPUT_NAME;
 
@@ -556,8 +532,7 @@ impl Engine {
                 )
             }
             Err(err) => {
-                self.capacity_controller
-                    .mark_replay_failed(self.turn_counter);
+                self.capacity_controller.mark_replay_failed(self.turn_counter);
                 (
                     false,
                     "error".to_string(),
@@ -582,8 +557,7 @@ impl Engine {
         .await;
 
         if !pass {
-            self.capacity_controller
-                .mark_replay_failed(self.turn_counter);
+            self.capacity_controller.mark_replay_failed(self.turn_counter);
         }
 
         let canonical = self.build_canonical_state(
@@ -665,10 +639,7 @@ impl Engine {
             .rev()
             .find(|msg| {
                 msg.role == "user"
-                    && msg
-                        .content
-                        .iter()
-                        .any(|block| matches!(block, ContentBlock::Text { .. }))
+                    && msg.content.iter().any(|block| matches!(block, ContentBlock::Text { .. }))
             })
             .cloned();
         let latest_verified = self
@@ -892,13 +863,8 @@ impl Engine {
     }
 
     pub(super) fn capacity_source_message_ids(&self, turn: &TurnContext) -> Vec<String> {
-        let mut ids: Vec<String> = turn
-            .tool_calls
-            .iter()
-            .rev()
-            .take(8)
-            .map(|call| call.id.clone())
-            .collect();
+        let mut ids: Vec<String> =
+            turn.tool_calls.iter().rev().take(8).map(|call| call.id.clone()).collect();
         ids.reverse();
         ids
     }

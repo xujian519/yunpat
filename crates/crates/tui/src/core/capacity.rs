@@ -100,8 +100,7 @@ impl CapacityControllerConfig {
             out.model_priors.insert("yunpat_v3_2_chat".to_string(), v);
         }
         if let Some(v) = capacity.yunpat_v3_2_reasoner_prior {
-            out.model_priors
-                .insert("yunpat_v3_2_reasoner".to_string(), v);
+            out.model_priors.insert("yunpat_v3_2_reasoner".to_string(), v);
         }
         if let Some(v) = capacity.yunpat_v4_pro_prior {
             out.model_priors.insert("yunpat_v4_pro".to_string(), v);
@@ -117,45 +116,7 @@ impl CapacityControllerConfig {
     }
 }
 
-/// Guardrail decision output.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GuardrailAction {
-    NoIntervention,
-    TargetedContextRefresh,
-    VerifyWithToolReplay,
-    VerifyAndReplan,
-}
-
-impl GuardrailAction {
-    #[must_use]
-    pub fn as_str(self) -> &'static str {
-        match self {
-            GuardrailAction::NoIntervention => "no_intervention",
-            GuardrailAction::TargetedContextRefresh => "targeted_context_refresh",
-            GuardrailAction::VerifyWithToolReplay => "verify_with_tool_replay",
-            GuardrailAction::VerifyAndReplan => "verify_and_replan",
-        }
-    }
-}
-
-/// Coarse failure risk band.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RiskBand {
-    Low,
-    Medium,
-    High,
-}
-
-impl RiskBand {
-    #[must_use]
-    pub fn as_str(self) -> &'static str {
-        match self {
-            RiskBand::Low => "low",
-            RiskBand::Medium => "medium",
-            RiskBand::High => "high",
-        }
-    }
-}
+pub use yunpat_protocol::{GuardrailAction, RiskBand};
 
 /// Input used to observe current turn pressure.
 #[derive(Debug, Clone)]
@@ -286,11 +247,7 @@ impl CapacityController {
             };
         }
 
-        if self
-            .state
-            .intervention_applied_turn
-            .is_some_and(|t| t == turn_index)
-        {
+        if self.state.intervention_applied_turn.is_some_and(|t| t == turn_index) {
             return CapacityDecision {
                 action: GuardrailAction::NoIntervention,
                 reason: "intervention_already_applied_this_turn".to_string(),
@@ -313,11 +270,7 @@ impl CapacityController {
                 }
             }
             GuardrailAction::VerifyWithToolReplay => {
-                if self
-                    .state
-                    .replay_disabled_turn
-                    .is_some_and(|t| t == turn_index)
-                {
+                if self.state.replay_disabled_turn.is_some_and(|t| t == turn_index) {
                     return CapacityDecision {
                         action: GuardrailAction::NoIntervention,
                         reason: "replay_disabled_for_turn".to_string(),

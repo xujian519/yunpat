@@ -1,11 +1,55 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AcademicSearchTool } from '../src/search/SearchTools.js'
+import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
-const mockContext = {
-  registry: {} as any,
-  llm: {} as any,
-  memory: {} as any,
-  eventBus: {} as any,
+function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+  return {
+    registry: {
+      register: vi.fn(),
+      unregister: vi.fn(),
+      get: vi.fn().mockReturnValue(undefined),
+      call: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockReturnValue([]),
+    },
+    llm: {
+      chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    },
+    memory: {
+      get: vi.fn().mockResolvedValue(undefined),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      has: vi.fn().mockResolvedValue(false),
+      getAll: vi.fn().mockResolvedValue({}),
+      setAll: vi.fn().mockResolvedValue(undefined),
+      clear: vi.fn().mockResolvedValue(undefined),
+      search: vi.fn().mockResolvedValue([]),
+    },
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      unsubscribe: vi.fn(),
+      request: vi.fn().mockResolvedValue(undefined),
+    },
+  }
+}
+
+const mockContext = createMockContext()
+
+type FetchResponse = {
+  ok: boolean
+  status?: number
+  statusText?: string
+  json: () => Promise<Record<string, unknown>>
+}
+
+function mockFetchOk(json: Record<string, unknown>): FetchResponse {
+  return { ok: true, json: async () => json }
+}
+
+function mockFetchError(status: number, statusText: string, json: Record<string, unknown>): FetchResponse {
+  return { ok: false, status, statusText, json: async () => json }
 }
 
 // Mock fetch API
@@ -52,10 +96,7 @@ describe('AcademicSearchTool', () => {
       total: 2,
     }
 
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchOk(mockResponse))
 
     const result = await tool.execute(
       {
@@ -82,10 +123,7 @@ describe('AcademicSearchTool', () => {
       total: 0,
     }
 
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchOk(mockResponse))
 
     const result = await tool.execute(
       {
@@ -101,12 +139,7 @@ describe('AcademicSearchTool', () => {
   })
 
   it('should handle API errors', async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      json: async () => ({ detail: 'Internal Server Error' }),
-    } as any)
+    vi.mocked(fetch).mockResolvedValue(mockFetchError(500, 'Internal Server Error', { detail: 'Internal Server Error' }))
 
     await expect(
       tool.execute(
@@ -137,10 +170,7 @@ describe('AcademicSearchTool', () => {
       total: 0,
     }
 
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchOk(mockResponse))
 
     await tool.execute(
       {
@@ -161,10 +191,7 @@ describe('AcademicSearchTool', () => {
       total: 0,
     }
 
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchOk(mockResponse))
 
     await tool.execute(
       {
@@ -184,16 +211,12 @@ describe('AcademicSearchTool', () => {
         {
           paperId: '1234',
           title: 'Test Paper',
-          // Missing authors, year, venue, etc.
         },
       ],
       total: 1,
     }
 
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockResponse,
-    } as any)
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchOk(mockResponse))
 
     const result = await tool.execute(
       {

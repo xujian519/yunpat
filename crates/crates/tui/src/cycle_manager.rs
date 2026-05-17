@@ -461,11 +461,7 @@ pub struct CycleArchiveHeader {
 /// Resolve the on-disk archive directory: `~/.deepseek/sessions/<id>/cycles`.
 fn archive_dir_for(session_id: &str) -> Result<PathBuf> {
     let home = dirs::home_dir().context("Could not resolve home directory for cycle archive")?;
-    Ok(home
-        .join(".deepseek")
-        .join("sessions")
-        .join(session_id)
-        .join("cycles"))
+    Ok(home.join(".deepseek").join("sessions").join(session_id).join("cycles"))
 }
 
 /// Archive a cycle's messages to JSONL on disk and return the path written.
@@ -511,11 +507,7 @@ fn write_archive_file(
 ) -> Result<()> {
     let tmp_path = path.with_extension("jsonl.tmp");
     {
-        let file = OpenOptions::new()
-            .create(true)
-            .truncate(true)
-            .write(true)
-            .open(&tmp_path)?;
+        let file = OpenOptions::new().create(true).truncate(true).write(true).open(&tmp_path)?;
         let mut buf = std::io::BufWriter::new(file);
         let header_line = serde_json::to_string(header)?;
         buf.write_all(header_line.as_bytes())?;

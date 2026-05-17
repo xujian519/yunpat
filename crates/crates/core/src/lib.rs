@@ -154,28 +154,15 @@ impl JobManager {
     fn parse_persisted_detail(raw: Option<&str>) -> Option<PersistedJobDetail> {
         let raw = raw?;
         let parsed: Value = serde_json::from_str(raw).ok()?;
-        let status = parsed
-            .get("status")
-            .and_then(Value::as_str)
-            .and_then(job_status_from_str)?;
+        let status = parsed.get("status").and_then(Value::as_str).and_then(job_status_from_str)?;
         let detail = parsed.get("detail").and_then(json_optional_string);
         let retry = parse_retry_metadata(parsed.get("retry"));
         let history = parsed
             .get("history")
             .and_then(Value::as_array)
-            .map(|items| {
-                items
-                    .iter()
-                    .filter_map(parse_history_entry)
-                    .collect::<Vec<_>>()
-            })
+            .map(|items| items.iter().filter_map(parse_history_entry).collect::<Vec<_>>())
             .unwrap_or_default();
-        Some(PersistedJobDetail {
-            status,
-            detail,
-            retry,
-            history,
-        })
+        Some(PersistedJobDetail { status, detail, retry, history })
     }
 
     fn encode_persisted_detail(job: &JobRecord) -> Result<Option<String>> {
@@ -295,10 +282,7 @@ impl JobManager {
     }
 
     pub fn history(&self, id: &str) -> Vec<JobHistoryEntry> {
-        self.jobs
-            .get(id)
-            .map(|job| job.history.clone())
-            .unwrap_or_default()
+        self.jobs.get(id).map(|job| job.history.clone()).unwrap_or_default()
     }
 
     pub fn resume_pending(&mut self) -> Vec<JobRecord> {
@@ -454,8 +438,7 @@ impl ThreadManager {
             }
             InitialHistory::New => {}
         }
-        self.running_threads
-            .insert(thread.id.clone(), thread.clone());
+        self.running_threads.insert(thread.id.clone(), thread.clone());
         Ok(NewThread {
             thread,
             model: "auto".to_string(),
@@ -492,10 +475,7 @@ impl ThreadManager {
         let mut thread = to_protocol_thread(metadata);
         thread.status = ThreadStatus::Running;
         thread.updated_at = chrono::Utc::now().timestamp();
-        thread.cwd = params
-            .cwd
-            .clone()
-            .unwrap_or_else(|| fallback_cwd.to_path_buf());
+        thread.cwd = params.cwd.clone().unwrap_or_else(|| fallback_cwd.to_path_buf());
 
         // Check for pending HITL or patent checkpoints on resume
         if let Some(patent_ctx) = &params.patent_context
@@ -537,8 +517,7 @@ impl ThreadManager {
         }
 
         self.persist_thread(&thread, None)?;
-        self.running_threads
-            .insert(thread.id.clone(), thread.clone());
+        self.running_threads.insert(thread.id.clone(), thread.clone());
         if let Some(history) = params.history.as_ref() {
             for item in history {
                 self.store.append_message(
@@ -575,10 +554,7 @@ impl ThreadManager {
                 .model_provider
                 .clone()
                 .unwrap_or_else(|| parent_thread.model_provider.clone()),
-            params
-                .cwd
-                .clone()
-                .unwrap_or_else(|| fallback_cwd.to_path_buf()),
+            params.cwd.clone().unwrap_or_else(|| fallback_cwd.to_path_buf()),
             InitialHistory::Forked(vec![json!({
                 "type": "fork",
                 "from_thread_id": parent_thread.id
@@ -597,10 +573,7 @@ impl ThreadManager {
     }
 
     pub fn read_thread(&self, params: &ThreadReadParams) -> Result<Option<Thread>> {
-        Ok(self
-            .store
-            .get_thread(&params.thread_id)?
-            .map(to_protocol_thread))
+        Ok(self.store.get_thread(&params.thread_id)?.map(to_protocol_thread))
     }
 
     pub fn set_thread_name(&mut self, params: &ThreadSetNameParams) -> Result<Option<Thread>> {
@@ -611,8 +584,7 @@ impl ThreadManager {
         metadata.updated_at = chrono::Utc::now().timestamp();
         self.store.upsert_thread(&metadata)?;
         let updated = to_protocol_thread(metadata);
-        self.running_threads
-            .insert(updated.id.clone(), updated.clone());
+        self.running_threads.insert(updated.id.clone(), updated.clone());
         Ok(Some(updated))
     }
 
@@ -738,17 +710,17 @@ impl Runtime {
             })
             .collect::<Vec<_>>();
 
-        let checkpoint = self
-            .thread_manager
-            .state_store()
-            .load_checkpoint(thread_id, None)?
-            .map(|record| {
-                json!({
-                    "checkpoint_id": record.checkpoint_id,
-                    "state": record.state,
-                    "created_at": record.created_at
-                })
-            });
+        let checkpoint =
+            self.thread_manager
+                .state_store()
+                .load_checkpoint(thread_id, None)?
+                .map(|record| {
+                    json!({
+                        "checkpoint_id": record.checkpoint_id,
+                        "state": record.state,
+                        "created_at": record.created_at
+                    })
+                });
 
         Ok(json!({
             "history": history,
@@ -787,10 +759,7 @@ impl Runtime {
                     std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
                 });
                 let new = self.thread_manager.spawn_thread_with_history(
-                    params
-                        .model_provider
-                        .clone()
-                        .unwrap_or_else(|| "deepseek".to_string()),
+                    params.model_provider.clone().unwrap_or_else(|| "deepseek".to_string()),
                     cwd,
                     InitialHistory::New,
                     params.persist_extended_history,
@@ -969,9 +938,8 @@ impl Runtime {
     ) -> Result<PromptResponse> {
         let resolved = self.config.resolve_runtime_options(cli_overrides);
         let requested_model = req.model.clone().unwrap_or_else(|| resolved.model.clone());
-        let selection = self
-            .model_registry
-            .resolve(Some(&requested_model), Some(resolved.provider));
+        let selection =
+            self.model_registry.resolve(Some(&requested_model), Some(resolved.provider));
         let resolved_model = selection.resolved.id.clone();
         let response_id = format!("resp-{}", Uuid::new_v4());
 
@@ -1082,9 +1050,7 @@ impl Runtime {
                 })
                 .await;
             self.hooks
-                .emit(HookEvent::GenericEventFrame {
-                    frame: error_frame.clone(),
-                })
+                .emit(HookEvent::GenericEventFrame { frame: error_frame.clone() })
                 .await;
             return Ok(json!({
                 "ok": false,
@@ -1117,11 +1083,7 @@ impl Runtime {
                 .await;
             let mut events = Vec::new();
             if let Some(frame) = maybe_approval_frame {
-                self.hooks
-                    .emit(HookEvent::GenericEventFrame {
-                        frame: frame.clone(),
-                    })
-                    .await;
+                self.hooks.emit(HookEvent::GenericEventFrame { frame: frame.clone() }).await;
                 events.push(event_frame_payload(&frame));
             }
             return Ok(json!({
@@ -1142,9 +1104,7 @@ impl Runtime {
             arguments: tool_payload_value(&call.payload),
         };
         self.hooks
-            .emit(HookEvent::GenericEventFrame {
-                frame: start_frame.clone(),
-            })
+            .emit(HookEvent::GenericEventFrame { frame: start_frame.clone() })
             .await;
         self.hooks
             .emit(HookEvent::ToolLifecycle {
@@ -1166,9 +1126,7 @@ impl Runtime {
                     output: tool_output_value(&tool_output),
                 };
                 self.hooks
-                    .emit(HookEvent::GenericEventFrame {
-                        frame: result_frame.clone(),
-                    })
+                    .emit(HookEvent::GenericEventFrame { frame: result_frame.clone() })
                     .await;
                 self.hooks
                     .emit(HookEvent::ToolLifecycle {
@@ -1198,9 +1156,7 @@ impl Runtime {
                     message: message.clone(),
                 };
                 self.hooks
-                    .emit(HookEvent::GenericEventFrame {
-                        frame: error_frame.clone(),
-                    })
+                    .emit(HookEvent::GenericEventFrame { frame: error_frame.clone() })
                     .await;
                 self.hooks
                     .emit(HookEvent::ToolLifecycle {
@@ -1240,9 +1196,7 @@ impl Runtime {
         }
         self.hooks
             .emit(HookEvent::GenericEventFrame {
-                frame: EventFrame::McpStartupComplete {
-                    summary: summary.clone(),
-                },
+                frame: EventFrame::McpStartupComplete { summary: summary.clone() },
             })
             .await;
         summary
@@ -1317,15 +1271,13 @@ impl Runtime {
 
     pub fn enqueue_job(&mut self, name: impl Into<String>) -> Result<JobRecord> {
         let job = self.jobs.enqueue(name);
-        self.jobs
-            .persist_job(self.thread_manager.state_store(), &job.id)?;
+        self.jobs.persist_job(self.thread_manager.state_store(), &job.id)?;
         Ok(job)
     }
 
     pub fn set_job_running(&mut self, job_id: &str) -> Result<()> {
         self.jobs.set_running(job_id);
-        self.jobs
-            .persist_job(self.thread_manager.state_store(), job_id)
+        self.jobs.persist_job(self.thread_manager.state_store(), job_id)
     }
 
     pub fn update_job_progress(
@@ -1335,38 +1287,32 @@ impl Runtime {
         detail: Option<String>,
     ) -> Result<()> {
         self.jobs.update_progress(job_id, progress, detail);
-        self.jobs
-            .persist_job(self.thread_manager.state_store(), job_id)
+        self.jobs.persist_job(self.thread_manager.state_store(), job_id)
     }
 
     pub fn complete_job(&mut self, job_id: &str) -> Result<()> {
         self.jobs.complete(job_id);
-        self.jobs
-            .persist_job(self.thread_manager.state_store(), job_id)
+        self.jobs.persist_job(self.thread_manager.state_store(), job_id)
     }
 
     pub fn fail_job(&mut self, job_id: &str, detail: impl Into<String>) -> Result<()> {
         self.jobs.fail(job_id, detail);
-        self.jobs
-            .persist_job(self.thread_manager.state_store(), job_id)
+        self.jobs.persist_job(self.thread_manager.state_store(), job_id)
     }
 
     pub fn cancel_job(&mut self, job_id: &str) -> Result<()> {
         self.jobs.cancel(job_id);
-        self.jobs
-            .persist_job(self.thread_manager.state_store(), job_id)
+        self.jobs.persist_job(self.thread_manager.state_store(), job_id)
     }
 
     pub fn pause_job(&mut self, job_id: &str, detail: Option<String>) -> Result<()> {
         self.jobs.pause(job_id, detail);
-        self.jobs
-            .persist_job(self.thread_manager.state_store(), job_id)
+        self.jobs.persist_job(self.thread_manager.state_store(), job_id)
     }
 
     pub fn resume_job(&mut self, job_id: &str, detail: Option<String>) -> Result<()> {
         self.jobs.resume(job_id, detail);
-        self.jobs
-            .persist_job(self.thread_manager.state_store(), job_id)
+        self.jobs.persist_job(self.thread_manager.state_store(), job_id)
     }
 
     pub fn job_history(&self, job_id: &str) -> Vec<JobHistoryEntry> {
@@ -1602,11 +1548,8 @@ fn parse_retry_metadata(value: Option<&Value>) -> JobRetryMetadata {
         return JobRetryMetadata::default();
     };
     JobRetryMetadata {
-        attempt: value
-            .get("attempt")
-            .and_then(Value::as_u64)
-            .unwrap_or(0)
-            .min(u32::MAX as u64) as u32,
+        attempt: value.get("attempt").and_then(Value::as_u64).unwrap_or(0).min(u32::MAX as u64)
+            as u32,
         max_attempts: value
             .get("max_attempts")
             .and_then(Value::as_u64)
@@ -1616,26 +1559,16 @@ fn parse_retry_metadata(value: Option<&Value>) -> JobRetryMetadata {
             .get("backoff_base_ms")
             .and_then(Value::as_u64)
             .unwrap_or(DEFAULT_JOB_BACKOFF_BASE_MS),
-        next_backoff_ms: value
-            .get("next_backoff_ms")
-            .and_then(Value::as_u64)
-            .unwrap_or(0),
+        next_backoff_ms: value.get("next_backoff_ms").and_then(Value::as_u64).unwrap_or(0),
         next_retry_at: value.get("next_retry_at").and_then(Value::as_i64),
     }
 }
 
 fn parse_history_entry(value: &Value) -> Option<JobHistoryEntry> {
-    let status = value
-        .get("status")
-        .and_then(Value::as_str)
-        .and_then(job_status_from_str)?;
+    let status = value.get("status").and_then(Value::as_str).and_then(job_status_from_str)?;
     Some(JobHistoryEntry {
         at: value.get("at").and_then(Value::as_i64).unwrap_or(0),
-        phase: value
-            .get("phase")
-            .and_then(Value::as_str)
-            .unwrap_or("unknown")
-            .to_string(),
+        phase: value.get("phase").and_then(Value::as_str).unwrap_or("unknown").to_string(),
         status,
         progress: value
             .get("progress")

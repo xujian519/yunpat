@@ -9,6 +9,7 @@ import { ConditionalActivator } from '../../src/activation/ConditionalActivator.
 import { PathMatcher } from '../../src/activation/PathMatcher.js'
 import type { Skill } from '../../src/types/Skill.js'
 import type { SkillFrontmatter } from '../../src/types/SkillFrontmatter.js'
+import { SkillSource } from '../../src/types/Skill.js'
 
 // 创建测试 Skill 的辅助函数
 function createTestSkill(name: string, frontmatter: Partial<SkillFrontmatter>): Skill {
@@ -30,7 +31,7 @@ function createTestSkill(name: string, frontmatter: Partial<SkillFrontmatter>): 
       },
     }),
     loadedAt: new Date(),
-    source: 'project' as any,
+    source: SkillSource.PROJECT,
   }
 }
 

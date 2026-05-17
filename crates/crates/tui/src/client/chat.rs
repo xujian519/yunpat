@@ -29,11 +29,7 @@ const DEFAULT_STREAM_OPEN_TIMEOUT: Duration = Duration::from_secs(45);
 /// timeout because it only covers connection setup and upstream header return,
 /// not model thinking time after streaming has started.
 fn stream_open_timeout() -> Duration {
-    stream_open_timeout_from_env(
-        std::env::var("DEEPSEEK_STREAM_OPEN_TIMEOUT_SECS")
-            .ok()
-            .as_deref(),
-    )
+    stream_open_timeout_from_env(std::env::var("DEEPSEEK_STREAM_OPEN_TIMEOUT_SECS").ok().as_deref())
 }
 
 fn stream_open_timeout_from_env(value: Option<&str>) -> Duration {
@@ -185,9 +181,7 @@ impl DeepSeekClient {
         );
 
         let url = api_url(&self.base_url, "chat/completions");
-        let response = self
-            .send_with_retry(|| self.http_client.post(&url).json(&body))
-            .await?;
+        let response = self.send_with_retry(|| self.http_client.post(&url).json(&body)).await?;
 
         let status = response.status();
         if !status.is_success() {
@@ -439,13 +433,7 @@ fn build_chat_messages_with_reasoning(
             match block {
                 ContentBlock::Text { text, .. } => text_parts.push(text.clone()),
                 ContentBlock::Thinking { thinking } => thinking_parts.push(thinking.clone()),
-                ContentBlock::ToolUse {
-                    id,
-                    name,
-                    input,
-                    caller,
-                    ..
-                } => {
+                ContentBlock::ToolUse { id, name, input, caller, .. } => {
                     let args = serde_json::to_string(input).unwrap_or_else(|_| input.to_string());
                     let mut call = json!({
                         "id": id,
@@ -464,11 +452,7 @@ fn build_chat_messages_with_reasoning(
                     tool_calls.push(call);
                     tool_call_ids.push(id.clone());
                 }
-                ContentBlock::ToolResult {
-                    tool_use_id,
-                    content,
-                    ..
-                } => {
+                ContentBlock::ToolResult { tool_use_id, content, .. } => {
                     tool_results.push((
                         tool_use_id.clone(),
                         json!({
@@ -594,9 +578,8 @@ fn build_chat_messages_with_reasoning(
             let mut tool_result_end = i + 1;
             while tool_result_end < out.len() {
                 if out[tool_result_end].get("role").and_then(Value::as_str) == Some("tool") {
-                    if let Some(id) = out[tool_result_end]
-                        .get("tool_call_id")
-                        .and_then(Value::as_str)
+                    if let Some(id) =
+                        out[tool_result_end].get("tool_call_id").and_then(Value::as_str)
                     {
                         found_ids.insert(id.to_string());
                     }
@@ -816,10 +799,7 @@ fn format_stream_headers(headers: &reqwest::header::HeaderMap) -> String {
     ];
     let mut parts: Vec<String> = Vec::with_capacity(FIELDS.len());
     for field in FIELDS {
-        let rendered = headers
-            .get(*field)
-            .and_then(|v| v.to_str().ok())
-            .unwrap_or("(absent)");
+        let rendered = headers.get(*field).and_then(|v| v.to_str().ok()).unwrap_or("(absent)");
         parts.push(format!("{field}={rendered}"));
     }
     parts.join(", ")
@@ -839,10 +819,7 @@ fn log_thinking_mode_violations(body: &Value) {
         if msg.get("role").and_then(Value::as_str) != Some("assistant") {
             continue;
         }
-        let reasoning = msg
-            .get("reasoning_content")
-            .and_then(Value::as_str)
-            .unwrap_or("");
+        let reasoning = msg.get("reasoning_content").and_then(Value::as_str).unwrap_or("");
         let has_tc = msg.get("tool_calls").is_some();
         if reasoning.trim().is_empty() {
             violations.push(format!(
@@ -907,27 +884,15 @@ fn reasoning_field(value: &Value) -> Option<&str> {
 }
 
 pub(super) fn parse_chat_message(payload: &Value) -> Result<MessageResponse> {
-    let id = payload
-        .get("id")
-        .and_then(Value::as_str)
-        .unwrap_or("chatcmpl")
-        .to_string();
-    let model = payload
-        .get("model")
-        .and_then(Value::as_str)
-        .unwrap_or("unknown")
-        .to_string();
+    let id = payload.get("id").and_then(Value::as_str).unwrap_or("chatcmpl").to_string();
+    let model = payload.get("model").and_then(Value::as_str).unwrap_or("unknown").to_string();
 
     let choices = payload
         .get("choices")
         .and_then(Value::as_array)
         .context("Chat API response missing choices")?;
-    let choice = choices
-        .first()
-        .context("Chat API response missing first choice")?;
-    let message = choice
-        .get("message")
-        .context("Chat API response missing message")?;
+    let choice = choices.first().context("Chat API response missing first choice")?;
+    let message = choice.get("message").context("Chat API response missing message")?;
 
     let mut content_blocks = Vec::new();
     if let Some(reasoning) =
@@ -948,11 +913,7 @@ pub(super) fn parse_chat_message(payload: &Value) -> Result<MessageResponse> {
 
     if let Some(tool_calls) = message.get("tool_calls").and_then(Value::as_array) {
         for call in tool_calls {
-            let id = call
-                .get("id")
-                .and_then(Value::as_str)
-                .unwrap_or("tool_call")
-                .to_string();
+            let id = call.get("id").and_then(Value::as_str).unwrap_or("tool_call").to_string();
             let function = call.get("function");
             let name = function
                 .and_then(|f| f.get("name"))
@@ -965,15 +926,13 @@ pub(super) fn parse_chat_message(payload: &Value) -> Result<MessageResponse> {
                 .map(|raw| serde_json::from_str(raw).unwrap_or(Value::String(raw.to_string())))
                 .unwrap_or(Value::Null);
             let caller = call.get("caller").and_then(|v| {
-                v.get("type")
-                    .and_then(Value::as_str)
-                    .map(|caller_type| ToolCaller {
-                        caller_type: caller_type.to_string(),
-                        tool_id: v
-                            .get("tool_id")
-                            .and_then(Value::as_str)
-                            .map(std::string::ToString::to_string),
-                    })
+                v.get("type").and_then(Value::as_str).map(|caller_type| ToolCaller {
+                    caller_type: caller_type.to_string(),
+                    tool_id: v
+                        .get("tool_id")
+                        .and_then(Value::as_str)
+                        .map(std::string::ToString::to_string),
+                })
             });
 
             content_blocks.push(ContentBlock::ToolUse {
@@ -993,10 +952,7 @@ pub(super) fn parse_chat_message(payload: &Value) -> Result<MessageResponse> {
         role: "assistant".to_string(),
         content: content_blocks,
         model,
-        stop_reason: choice
-            .get("finish_reason")
-            .and_then(Value::as_str)
-            .map(str::to_string),
+        stop_reason: choice.get("finish_reason").and_then(Value::as_str).map(str::to_string),
         stop_sequence: None,
         container: None,
         usage,
@@ -1011,18 +967,14 @@ fn build_stream_events(response: &MessageResponse) -> Vec<StreamEvent> {
     let mut events = Vec::new();
     let mut index = 0u32;
 
-    events.push(StreamEvent::MessageStart {
-        message: response.clone(),
-    });
+    events.push(StreamEvent::MessageStart { message: response.clone() });
 
     for block in &response.content {
         match block {
             ContentBlock::Text { text, .. } => {
                 events.push(StreamEvent::ContentBlockStart {
                     index,
-                    content_block: ContentBlockStart::Text {
-                        text: String::new(),
-                    },
+                    content_block: ContentBlockStart::Text { text: String::new() },
                 });
                 if !text.is_empty() {
                     events.push(StreamEvent::ContentBlockDelta {
@@ -1035,23 +987,17 @@ fn build_stream_events(response: &MessageResponse) -> Vec<StreamEvent> {
             ContentBlock::Thinking { thinking } => {
                 events.push(StreamEvent::ContentBlockStart {
                     index,
-                    content_block: ContentBlockStart::Thinking {
-                        thinking: String::new(),
-                    },
+                    content_block: ContentBlockStart::Thinking { thinking: String::new() },
                 });
                 if !thinking.is_empty() {
                     events.push(StreamEvent::ContentBlockDelta {
                         index,
-                        delta: Delta::ThinkingDelta {
-                            thinking: thinking.clone(),
-                        },
+                        delta: Delta::ThinkingDelta { thinking: thinking.clone() },
                     });
                 }
                 events.push(StreamEvent::ContentBlockStop { index });
             }
-            ContentBlock::ToolUse {
-                id, name, input, ..
-            } => {
+            ContentBlock::ToolUse { id, name, input, .. } => {
                 events.push(StreamEvent::ContentBlockStart {
                     index,
                     content_block: ContentBlockStart::ToolUse {
@@ -1138,10 +1084,7 @@ pub(super) fn parse_sse_chunk(
 
     for choice in choices {
         let delta = choice.get("delta");
-        let finish_reason = choice
-            .get("finish_reason")
-            .and_then(Value::as_str)
-            .map(str::to_string);
+        let finish_reason = choice.get("finish_reason").and_then(Value::as_str).map(str::to_string);
 
         if let Some(delta) = delta {
             // Handle reasoning_content / reasoning thinking deltas.
@@ -1152,9 +1095,7 @@ pub(super) fn parse_sse_chunk(
                 if !*thinking_started {
                     events.push(StreamEvent::ContentBlockStart {
                         index: *content_index,
-                        content_block: ContentBlockStart::Thinking {
-                            thinking: String::new(),
-                        },
+                        content_block: ContentBlockStart::Thinking { thinking: String::new() },
                     });
                     *thinking_started = true;
                 }
@@ -1172,26 +1113,20 @@ pub(super) fn parse_sse_chunk(
             {
                 // Close thinking block if transitioning to text
                 if *thinking_started {
-                    events.push(StreamEvent::ContentBlockStop {
-                        index: *content_index,
-                    });
+                    events.push(StreamEvent::ContentBlockStop { index: *content_index });
                     *content_index += 1;
                     *thinking_started = false;
                 }
                 if !*text_started {
                     events.push(StreamEvent::ContentBlockStart {
                         index: *content_index,
-                        content_block: ContentBlockStart::Text {
-                            text: String::new(),
-                        },
+                        content_block: ContentBlockStart::Text { text: String::new() },
                     });
                     *text_started = true;
                 }
                 events.push(StreamEvent::ContentBlockDelta {
                     index: *content_index,
-                    delta: Delta::TextDelta {
-                        text: content.to_string(),
-                    },
+                    delta: Delta::TextDelta { text: content.to_string() },
                 });
             }
 
@@ -1204,16 +1139,14 @@ pub(super) fn parse_sse_chunk(
                         std::collections::hash_map::Entry::Vacant(entry) => {
                             // Close text block if transitioning to tool use
                             if *text_started {
-                                events.push(StreamEvent::ContentBlockStop {
-                                    index: *content_index,
-                                });
+                                events
+                                    .push(StreamEvent::ContentBlockStop { index: *content_index });
                                 *content_index += 1;
                                 *text_started = false;
                             }
                             if *thinking_started {
-                                events.push(StreamEvent::ContentBlockStop {
-                                    index: *content_index,
-                                });
+                                events
+                                    .push(StreamEvent::ContentBlockStop { index: *content_index });
                                 *content_index += 1;
                                 *thinking_started = false;
                             }
@@ -1267,17 +1200,13 @@ pub(super) fn parse_sse_chunk(
                     };
 
                     // Stream tool call arguments
-                    if let Some(args) = tc
-                        .get("function")
-                        .and_then(|f| f.get("arguments"))
-                        .and_then(Value::as_str)
+                    if let Some(args) =
+                        tc.get("function").and_then(|f| f.get("arguments")).and_then(Value::as_str)
                         && !args.is_empty()
                     {
                         events.push(StreamEvent::ContentBlockDelta {
                             index: tool_block_index,
-                            delta: Delta::InputJsonDelta {
-                                partial_json: args.to_string(),
-                            },
+                            delta: Delta::InputJsonDelta { partial_json: args.to_string() },
                         });
                     }
                 }
@@ -1288,15 +1217,11 @@ pub(super) fn parse_sse_chunk(
         if let Some(reason) = finish_reason {
             // Close any open blocks
             if *text_started {
-                events.push(StreamEvent::ContentBlockStop {
-                    index: *content_index,
-                });
+                events.push(StreamEvent::ContentBlockStop { index: *content_index });
                 *text_started = false;
             }
             if *thinking_started {
-                events.push(StreamEvent::ContentBlockStop {
-                    index: *content_index,
-                });
+                events.push(StreamEvent::ContentBlockStop { index: *content_index });
                 *thinking_started = false;
             }
             // Close tool blocks
@@ -1304,9 +1229,7 @@ pub(super) fn parse_sse_chunk(
                 tool_indices.drain().map(|(_, idx)| idx).collect();
             open_tool_indices.sort_unstable();
             for tool_block_index in open_tool_indices {
-                events.push(StreamEvent::ContentBlockStop {
-                    index: tool_block_index,
-                });
+                events.push(StreamEvent::ContentBlockStop { index: tool_block_index });
             }
 
             // Emit usage from the chunk if available
@@ -1462,9 +1385,7 @@ mod stream_decoder_tests {
             "first event should open a text block; got {events:?}"
         );
         assert!(
-            events
-                .iter()
-                .any(|e| matches!(e, StreamEvent::ContentBlockDelta {
+            events.iter().any(|e| matches!(e, StreamEvent::ContentBlockDelta {
                     delta: Delta::TextDelta { text },
                     ..
                 } if text == "hello")),
@@ -1489,9 +1410,7 @@ mod stream_decoder_tests {
             "first event should open a thinking block; got {events:?}"
         );
         assert!(
-            events
-                .iter()
-                .any(|e| matches!(e, StreamEvent::ContentBlockDelta {
+            events.iter().any(|e| matches!(e, StreamEvent::ContentBlockDelta {
                     delta: Delta::ThinkingDelta { thinking },
                     ..
                 } if thinking == "plan...")),

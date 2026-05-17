@@ -41,9 +41,7 @@ fn render_modal_chrome(area: Rect, popup_area: Rect, buf: &mut Buffer) {
     let shadow_right = area.x.saturating_add(area.width);
     let shadow_bottom = area.y.saturating_add(area.height);
     let shadow_width = popup_area.width.min(shadow_right.saturating_sub(shadow_x));
-    let shadow_height = popup_area
-        .height
-        .min(shadow_bottom.saturating_sub(shadow_y));
+    let shadow_height = popup_area.height.min(shadow_bottom.saturating_sub(shadow_y));
 
     if shadow_width > 0 && shadow_height > 0 {
         Block::default().render(
@@ -68,10 +66,7 @@ fn push_option_lines(
     description: &str,
 ) {
     let row_style = if selected {
-        Style::default()
-            .fg(palette::SELECTION_TEXT)
-            .bg(palette::SELECTION_BG)
-            .bold()
+        Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG).bold()
     } else {
         Style::default().fg(palette::TEXT_PRIMARY)
     };
@@ -107,9 +102,7 @@ impl PlanPromptView {
     }
 
     fn submit_selected(&self) -> ViewAction {
-        ViewAction::EmitAndClose(ViewEvent::PlanPromptSelected {
-            option: self.selected + 1,
-        })
+        ViewAction::EmitAndClose(ViewEvent::PlanPromptSelected { option: self.selected + 1 })
     }
 
     fn submit_number(number: u32) -> ViewAction {

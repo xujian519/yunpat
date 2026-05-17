@@ -168,6 +168,38 @@ export interface TaskStep {
   retryOnFailure: boolean
   /** 最大重试次数 */
   maxRetries: number
+  /** 批判配置（可选） */
+  critique?: CritiqueConfig
+}
+
+/**
+ * 批判配置
+ */
+export interface CritiqueConfig {
+  /** 评估 Agent ID */
+  evaluatorAgentId: string
+  /** 质量阈值（0-1），低于此值触发重试 */
+  threshold: number
+  /** 最大批判轮数 */
+  maxCritiqueRounds: number
+  /** 反馈字段名（评估结果中用于反馈的字段） */
+  feedbackField?: string
+}
+
+/**
+ * 批判结果
+ */
+export interface CritiqueResult {
+  /** 是否通过 */
+  passed: boolean
+  /** 质量评分 */
+  score: number
+  /** 反馈内容 */
+  feedback: string
+  /** 已执行轮数 */
+  rounds: number
+  /** 评估详情 */
+  evaluation?: Record<string, any>
 }
 
 /**

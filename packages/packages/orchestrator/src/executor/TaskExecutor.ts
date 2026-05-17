@@ -22,6 +22,8 @@ import { errorToAgentError } from '@yunpat/agent-base'
 
 import type { AgentRegistry } from '../registry/AgentRegistry.js'
 
+import { CritiqueLoop } from './CritiqueLoop.js'
+
 interface DAGLayer {
   layerIndex: number
   steps: TaskStep[]
@@ -33,7 +35,11 @@ interface DAG {
 }
 
 export class TaskExecutor {
-  constructor(private agentRegistry?: AgentRegistry) {}
+  private readonly critiqueLoop: CritiqueLoop
+
+  constructor(private agentRegistry?: AgentRegistry) {
+    this.critiqueLoop = new CritiqueLoop(agentRegistry)
+  }
   /**
    * 执行任务计划
    */
@@ -191,6 +197,17 @@ export class TaskExecutor {
         }
       }
 
+      // 如果配置了批判循环，使用 CritiqueLoop 包装执行
+      if (step.critique) {
+        const { result } = await this.critiqueLoop.executeWithCritique(
+          async () => agent.execute(step.input),
+          step.critique,
+          context
+        )
+        return result
+      }
+
+      // 普通执行
       const result = await agent.execute(step.input)
 
       const agentResult: AgentResult = {

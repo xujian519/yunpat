@@ -267,6 +267,17 @@ export { CardPipeline } from './knowledge/CardPipeline.js'
 // 增量生成器（成本优化）
 export { IncrementalGenerator, type ContentDiff } from './agent/IncrementalGenerator.js'
 
+// ========== 检索系统 (Retrieval) ==========
+export {
+  SemanticChunker,
+  createSemanticChunker,
+} from './retrieval/index.js'
+export type {
+  SemanticChunkerConfig,
+  Chunk,
+  PatentDocument,
+} from './retrieval/index.js'
+
 // ========== ④ 记忆层 (Memory) ==========
 export {
   EnhancedMemoryStore,

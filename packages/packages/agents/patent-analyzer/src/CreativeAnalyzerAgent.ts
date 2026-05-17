@@ -10,6 +10,7 @@
  */
 
 import { Agent, type LLMAdapter, type ExecutionContext } from '@yunpat/core'
+import { SAOExtractor, SAO2VecEncoder } from '@yunpat/core/evaluation'
 
 /**
  * 创造性分析输入
@@ -101,6 +102,10 @@ interface AnalysisPlan {
 export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, CreativeAnalyzerOutput> {
   private agentLlm: LLMAdapter
 
+  // 可选评估模块（向后兼容）
+  private saoExtractor?: SAOExtractor
+  private sao2vecEncoder?: SAO2VecEncoder
+
   constructor(config: {
     name?: string
     description?: string
@@ -108,6 +113,10 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
     eventBus: any
     memory: any
     tools: any
+    evaluationModules?: {
+      saoExtractor?: SAOExtractor
+      sao2vecEncoder?: SAO2VecEncoder
+    }
   }) {
     super({
       ...config,
@@ -115,6 +124,12 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
       description: config.description || '创造性分析智能体',
     })
     this.agentLlm = config.llm
+
+    // 可选注入评估模块
+    if (config.evaluationModules) {
+      this.saoExtractor = config.evaluationModules.saoExtractor
+      this.sao2vecEncoder = config.evaluationModules.sao2vecEncoder
+    }
   }
 
   protected async plan(
@@ -296,6 +311,51 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
       return { distinguishingFeatures: [], obviousness: 'not-obvious', suggestion: 'no-suggestion' }
     }
 
+    // SAO 语义差异分析（当评估模块可用时）
+    let saoSemanticDifferences: string[] = []
+    if (this.saoExtractor && this.sao2vecEncoder) {
+      try {
+        const patentText = input.patent.claims || input.patent.description || input.patent.abstract
+        const patentSAOs = this.saoExtractor.extractFromClaims(
+          input.patent.claims ? input.patent.claims.split('\n').filter((c) => c.trim()) : [patentText]
+        )
+
+        for (const pa of input.priorArt) {
+          const paText = pa.abstract
+          const paSAOs = this.saoExtractor.extract(paText)
+
+          // 找出语义差异最大的 SAO 三元组
+          for (const patentSAO of patentSAOs.slice(0, 5)) {
+            const patentEmbedding = await this.sao2vecEncoder.encode(patentSAO)
+            let minSimilarity = 1
+            let mostSimilarPA: { triplet: any; similarity: number } | null = null
+
+            for (const paSAO of paSAOs) {
+              const paEmbedding = await this.sao2vecEncoder.encode(paSAO)
+              const similarity = this.sao2vecEncoder.similarity(
+                { triplet: patentSAO, embedding: patentEmbedding },
+                { triplet: paSAO, embedding: paEmbedding }
+              )
+
+              if (similarity < minSimilarity) {
+                minSimilarity = similarity
+                mostSimilarPA = { triplet: paSAO, similarity }
+              }
+            }
+
+            // 如果语义差异大，添加到差异列表
+            if (mostSimilarPA && mostSimilarPA.similarity < 0.5) {
+              saoSemanticDifferences.push(
+                `语义差异：本申请采用"${patentSAO.subject}${patentSAO.action}${patentSAO.object}"，与现有技术"${pa.title}"的"${mostSimilarPA.triplet.subject}${mostSimilarPA.triplet.action}${mostSimilarPA.triplet.object}"语义差异显著（相似度 ${(mostSimilarPA.similarity * 100).toFixed(1)}%）`
+              )
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('SAO 语义差异分析失败:', error)
+      }
+    }
+
     const prompt = `请对比以下专利与现有技术的区别：
 
 目标专利：
@@ -305,6 +365,7 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
 
 现有技术：
 ${input.priorArt.map((p) => `- ${p.publicationNumber}: ${p.title}\n摘要: ${p.abstract}`).join('\n\n')}
+${saoSemanticDifferences.length > 0 ? `基于 SAO 语义分析的差异：\n${saoSemanticDifferences.join('\n')}` : ''}
 
 请分析：1. 区别技术特征有哪些？2. 这些区别是否显而易见？3. 现有技术是否有启示？`
 
@@ -314,41 +375,114 @@ ${input.priorArt.map((p) => `- ${p.publicationNumber}: ${p.title}\n摘要: ${p.a
         prompt,
         1500
       )
-      return this.parseDifferencesFromPriorArt(content)
+      const result = this.parseDifferencesFromPriorArt(content)
+
+      // 将 SAO 语义差异添加到区别特征列表
+      if (saoSemanticDifferences.length > 0) {
+        result.distinguishingFeatures.push(...saoSemanticDifferences.slice(0, 3))
+      }
+
+      return result
     } catch {
-      return { distinguishingFeatures: [], obviousness: 'not-obvious', suggestion: 'no-suggestion' }
+      return {
+        distinguishingFeatures: saoSemanticDifferences.slice(0, 5),
+        obviousness: 'not-obvious',
+        suggestion: 'no-suggestion',
+      }
     }
   }
 
   private async assessCreativity(
-    _input: CreativeAnalyzerInput,
+    input: CreativeAnalyzerInput,
     problemAnalysis?: CreativeAnalyzerOutput['problemAnalysis'],
     solutionAnalysis?: CreativeAnalyzerOutput['solutionAnalysis'],
     effectAnalysis?: CreativeAnalyzerOutput['effectAnalysis'],
     differencesFromPriorArt?: CreativeAnalyzerOutput['differencesFromPriorArt']
   ): Promise<CreativeAnalyzerOutput['creativityAssessment']> {
+    // SAO2Vec 增强评估（当评估模块可用时）
+    let saoSimilarityScore: number | undefined
+    if (this.saoExtractor && this.sao2vecEncoder && input.priorArt && input.priorArt.length > 0) {
+      try {
+        // 提取本申请 SAO 三元组
+        const patentText = input.patent.claims || input.patent.description || input.patent.abstract
+        const patentSAOs = this.saoExtractor.extractFromClaims(
+          input.patent.claims ? input.patent.claims.split('\n').filter((c) => c.trim()) : [patentText]
+        )
+
+        // 提取现有技术 SAO 三元组
+        const priorArtSAOs: string[] = []
+        for (const pa of input.priorArt) {
+          const paText = pa.abstract
+          const paSAOs = this.saoExtractor.extract(paText)
+          priorArtSAOs.push(...paSAOs.map((sao) => sao.rawText))
+        }
+
+        // 计算语义相似度
+        if (patentSAOs.length > 0 && priorArtSAOs.length > 0) {
+          const patentEmbedding = await this.sao2vecEncoder.encode(patentSAOs[0])
+          let maxSimilarity = 0
+
+          for (const paText of priorArtSAOs) {
+            const paSAO = this.saoExtractor.extract(paText)[0]
+            if (paSAO) {
+              const paEmbedding = await this.sao2vecEncoder.encode(paSAO)
+              const similarity = this.sao2vecEncoder.similarity(
+                { triplet: patentSAOs[0], embedding: patentEmbedding },
+                { triplet: paSAO, embedding: paEmbedding }
+              )
+              if (similarity > maxSimilarity) {
+                maxSimilarity = similarity
+              }
+            }
+          }
+
+          saoSimilarityScore = 1 - maxSimilarity // 转换为新颖性评分
+        }
+      } catch (error) {
+        // SAO 评估失败，回退到纯 LLM 评估
+        console.warn('SAO2Vec 评估失败，回退到 LLM 评估:', error)
+      }
+    }
+
     const prompt = `请根据以下分析评估创造性：
 
 技术问题：${problemAnalysis ? `- 难度: ${problemAnalysis.problemDifficulty}\n- 不可预见: ${problemAnalysis.unforeseeable}` : '未分析'}
 技术方案：${solutionAnalysis ? `- 技术手段: ${solutionAnalysis.technicalMeans.join(', ')}\n- 协同效应: ${solutionAnalysis.synergisticEffect}` : '未分析'}
 技术效果：${effectAnalysis ? `- 效果: ${effectAnalysis.technicalEffects.join(', ')}\n- 意料之外: ${effectAnalysis.unexpected}` : '未分析'}
 与现有技术的区别：${differencesFromPriorArt ? `- 区别特征: ${differencesFromPriorArt.distinguishingFeatures.join(', ')}\n- 显而易见: ${differencesFromPriorArt.obviousness}` : '未分析'}
+${saoSimilarityScore !== undefined ? `SAO 语义新颖性评分: ${saoSimilarityScore.toFixed(2)} (0-1，越高越新颖)` : ''}
 
 请评估：1. 创造性等级 2. 创造性评分（0-100）3. 各维度评分和理由 4. 总体评估理由`
 
     try {
       const content = await this.callLLM('你是一位专业的专利分析师，擅长创造性评估。', prompt, 2000)
-      return this.parseCreativityAssessment(content)
+      const assessment = this.parseCreativityAssessment(content)
+
+      // 如果有 SAO2Vec 评分，调整创造性评分
+      if (saoSimilarityScore !== undefined) {
+        const saoWeightedScore = assessment.score * 0.7 + saoSimilarityScore * 100 * 0.3
+        assessment.score = Math.round(saoWeightedScore)
+        assessment.reasoning = `${assessment.reasoning}\n\n注：基于 SAO2Vec 语义分析，语义新颖性评分为 ${(saoSimilarityScore * 100).toFixed(1)}/100。`
+      }
+
+      return assessment
     } catch {
       return {
         level: 'obvious',
-        score: 50,
+        score: saoSimilarityScore !== undefined ? Math.round(saoSimilarityScore * 100) : 50,
         dimensions: {
-          substantiveCharacteristics: { score: 50, reasoning: '评估失败' },
+          substantiveCharacteristics: {
+            score: saoSimilarityScore !== undefined ? Math.round(saoSimilarityScore * 100) : 50,
+            reasoning: saoSimilarityScore !== undefined
+              ? `基于 SAO 语义分析的新颖性评分：${(saoSimilarityScore * 100).toFixed(1)}`
+              : '评估失败',
+          },
           significantProgress: { score: 50, reasoning: '评估失败' },
           technicalContribution: { score: 50, reasoning: '评估失败' },
         },
-        reasoning: '评估失败',
+        reasoning: saoSimilarityScore !== undefined
+          ? `基于 SAO2Vec 语义分析的评估：语义新颖性 ${(saoSimilarityScore * 100).toFixed(1)}/100`
+          : '评估失败',
       }
     }
   }

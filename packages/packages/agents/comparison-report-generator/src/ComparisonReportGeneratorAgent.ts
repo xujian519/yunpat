@@ -1,4 +1,5 @@
 import { Agent, type ExecutionContext, createLogger } from '@yunpat/core'
+import { NovAScoreEvaluator } from '@yunpat/core/evaluation'
 
 /**
  * 对比报告生成输入
@@ -161,6 +162,9 @@ export class ComparisonReportGeneratorAgent extends Agent<
 > {
   private logger = createLogger('ComparisonReportGeneratorAgent')
 
+  // 可选评估模块（向后兼容）
+  private novaScoreEvaluator?: NovAScoreEvaluator
+
   constructor(config: {
     name: string
     description: string
@@ -168,8 +172,16 @@ export class ComparisonReportGeneratorAgent extends Agent<
     memory: any
     tools: any
     llm: any
+    evaluationModules?: {
+      novaScoreEvaluator?: NovAScoreEvaluator
+    }
   }) {
     super(config)
+
+    // 可选注入评估模块
+    if (config.evaluationModules) {
+      this.novaScoreEvaluator = config.evaluationModules.novaScoreEvaluator
+    }
   }
 
   public async plan(
@@ -209,8 +221,8 @@ export class ComparisonReportGeneratorAgent extends Agent<
 
     const { input, extractedFeatures } = plan
 
-    // 1. 生成分析
-    const analysis = this.generateAnalysis(input, extractedFeatures)
+    // 1. 生成分析（可能包含异步评估）
+    const analysis = await this.generateAnalysis(input, extractedFeatures)
 
     // 2. 生成报告
     const report = this.generateReport(input, analysis)
@@ -297,11 +309,11 @@ export class ComparisonReportGeneratorAgent extends Agent<
   /**
    * 生成分析
    */
-  private generateAnalysis(
+  private async generateAnalysis(
     input: ComparisonReportInput,
     extractedFeatures: ComparisonReportPlan['extractedFeatures']
-  ): Analysis {
-    const { application, priorArt } = extractedFeatures
+  ): Promise<Analysis> {
+    const { priorArt } = extractedFeatures
 
     // 技术差异
     const technicalDifferences = this.identifyTechnicalDifferences(input, extractedFeatures)
@@ -312,11 +324,11 @@ export class ComparisonReportGeneratorAgent extends Agent<
     // 劣势
     const disadvantages = this.identifyDisadvantages(input, priorArt)
 
-    // 新颖性
-    const novelty = this.assessNovelty(input, priorArt)
+    // 新颖性（可能为异步）
+    const novelty = await this.assessNovelty(input, priorArt)
 
-    // 创造性
-    const inventiveStep = this.assessInventiveStep(input, priorArt)
+    // 创造性（可能为异步）
+    const inventiveStep = await this.assessInventiveStep(input, priorArt)
 
     return {
       technicalDifferences,
@@ -363,7 +375,7 @@ export class ComparisonReportGeneratorAgent extends Agent<
   /**
    * 识别优势
    */
-  private identifyAdvantages(input: ComparisonReportInput, priorArt: string[][]): string[] {
+  private identifyAdvantages(input: ComparisonReportInput, _priorArt: string[][]): string[] {
     const advantages: string[] = []
 
     // 检查是否有更多权利要求
@@ -414,7 +426,48 @@ export class ComparisonReportGeneratorAgent extends Agent<
   /**
    * 评估新颖性
    */
-  private assessNovelty(input: ComparisonReportInput, priorArt: string[][]): string {
+  private async assessNovelty(
+    input: ComparisonReportInput,
+    priorArt: string[][]
+  ): Promise<string> {
+    // NovAScore 量化评估（当评估模块可用时）
+    let novaScoreResult: any
+    if (this.novaScoreEvaluator) {
+      try {
+        // 构建发明描述
+        const claimsText = input.application.claims.map((c) => c.content).join('\n')
+        const descriptionText = input.application.specification.inventionContent || ''
+
+        const inventionDescription = `${input.application.inventionTitle}\n\n权利要求:\n${claimsText}\n\n技术方案:\n${descriptionText}`
+
+        // 评估新颖性
+        novaScoreResult = await this.novaScoreEvaluator.evaluate(inventionDescription, input.application.specification.inventionContent || undefined)
+
+        // 如果有现有技术，先添加到参考库
+        for (const pa of input.priorArt) {
+          const paText = `${pa.title}\n\n摘要:\n${pa.abstract}\n\n权利要求:\n${pa.claims.join('\n')}`
+          await this.novaScoreEvaluator.addReference(paText, pa.abstract)
+        }
+      } catch (error) {
+        console.warn('NovAScore 评估失败，回退到规则评估:', error)
+      }
+    }
+
+    // 如果有 NovAScore 结果，使用量化评分
+    if (novaScoreResult) {
+      const score = novaScoreResult.documentScore
+      const noveltyRatio = novaScoreResult.coverageScore
+
+      if (score > 0.7 && noveltyRatio > 0.5) {
+        return `新颖性较高：NovAScore 评分 ${(score * 100).toFixed(1)}/100，创新覆盖度 ${(noveltyRatio * 100).toFixed(1)}%（${novaScoreResult.novelACUs}/${novaScoreResult.totalACUs}个 ACU 高度新颖）`
+      } else if (score > 0.4 && noveltyRatio > 0.3) {
+        return `新颖性中等：NovAScore 评分 ${(score * 100).toFixed(1)}/100，创新覆盖度 ${(noveltyRatio * 100).toFixed(1)}%（${novaScoreResult.novelACUs}个高度新颖，${novaScoreResult.partialNovelACUs}个部分新颖）`
+      } else {
+        return `新颖性一般：NovAScore 评分 ${(score * 100).toFixed(1)}/100，创新覆盖度 ${(noveltyRatio * 100).toFixed(1)}%（${novaScoreResult.redundantACUs}个冗余 ACU），需要强调区别技术特征`
+      }
+    }
+
+    // 回退到原有规则评估
     const appFeatures = this.extractApplicationFeatures(input)
     const uniqueFeatures = appFeatures.filter(
       (feature) => !priorArt.some((pa) => pa.includes(feature))
@@ -434,8 +487,45 @@ export class ComparisonReportGeneratorAgent extends Agent<
   /**
    * 评估创造性
    */
-  private assessInventiveStep(input: ComparisonReportInput, priorArt: string[][]): string {
-    // 简化评估：基于权利要求的复杂度和从属关系
+  private async assessInventiveStep(
+    input: ComparisonReportInput,
+    _priorArt: string[][]
+  ): Promise<string> {
+    // NovAScore 量化评估（当评估模块可用时）
+    let novaScoreResult: any
+    if (this.novaScoreEvaluator) {
+      try {
+        // 构建发明描述
+        const claimsText = input.application.claims.map((c) => c.content).join('\n')
+        const descriptionText = input.application.specification.inventionContent || ''
+
+        const inventionDescription = `${input.application.inventionTitle}\n\n权利要求:\n${claimsText}\n\n技术方案:\n${descriptionText}`
+
+        // 评估创造性（基于 ACU 分解和语义对比）
+        novaScoreResult = await this.novaScoreEvaluator.evaluate(
+          inventionDescription,
+          input.application.specification.inventionContent || undefined
+        )
+      } catch (error) {
+        console.warn('NovAScore 创造性评估失败，回退到规则评估:', error)
+      }
+    }
+
+    // 如果有 NovAScore 结果，使用量化评分
+    if (novaScoreResult) {
+      const score = novaScoreResult.documentScore
+      const novelRatio = novaScoreResult.coverageScore
+
+      if (score > 0.7 && novelRatio > 0.5) {
+        return `创造性较高：NovAScore 评分 ${(score * 100).toFixed(1)}/100，创新覆盖度 ${(novelRatio * 100).toFixed(1)}%，权利要求结构复杂，包含多层次技术方案，具有突出的实质性特点和显著的进步`
+      } else if (score > 0.4 && novelRatio > 0.3) {
+        return `创造性中等：NovAScore 评分 ${(score * 100).toFixed(1)}/100，创新覆盖度 ${(novelRatio * 100).toFixed(1)}%，权利要求具有一定的技术复杂度，具备实质性特点和进步`
+      } else {
+        return `创造性一般：NovAScore 评分 ${(score * 100).toFixed(1)}/100，创新覆盖度 ${(novelRatio * 100).toFixed(1)}%，建议进一步充实权利要求的技术内容，突出技术方案的创造性和进步性`
+      }
+    }
+
+    // 回退到原有规则评估
     const hasDependentClaims = input.application.claims.some((c) => c.type === 'dependent')
     const avgClaimLength =
       input.application.claims.reduce((sum, c) => sum + c.content.length, 0) /
@@ -595,7 +685,7 @@ export class ComparisonReportGeneratorAgent extends Agent<
   /**
    * 生成结论
    */
-  private generateConclusions(input: ComparisonReportInput, analysis: Analysis): string {
+  private generateConclusions(_input: ComparisonReportInput, analysis: Analysis): string {
     return `### 新颖性结论
 
 ${analysis.novelty}

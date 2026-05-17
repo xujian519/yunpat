@@ -5,7 +5,12 @@ import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/
 function createMockEventBus(): IEventBus {
   return {
     publish: vi.fn(),
-    subscribe: vi.fn(() => ({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() })),
+    subscribe: vi.fn(() => ({
+      id: 'mock-sub',
+      pattern: '*',
+      handler: vi.fn(),
+      unsubscribe: vi.fn(),
+    })),
     unsubscribe: vi.fn(),
     request: vi.fn(() => Promise.resolve(undefined)),
   }
@@ -59,7 +64,12 @@ type FetchJsonResponse = {
   json: () => Promise<Record<string, unknown>>
 }
 
-function mockFetchResponse(json: Record<string, unknown>, ok = true, status = 200, statusText = 'OK'): FetchJsonResponse {
+function mockFetchResponse(
+  json: Record<string, unknown>,
+  ok = true,
+  status = 200,
+  statusText = 'OK'
+): FetchJsonResponse {
   return { ok, status, statusText, json: async () => json }
 }
 

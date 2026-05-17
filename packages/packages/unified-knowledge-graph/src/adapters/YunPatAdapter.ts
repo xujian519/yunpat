@@ -41,9 +41,7 @@ export class YunPatAdapter {
 
   constructor(knowledgeBasePath?: string) {
     this.knowledgeBasePath =
-      knowledgeBasePath ||
-      process.env.KNOWLEDGE_BASE_PATH ||
-      join(process.cwd(), 'knowledge-base')
+      knowledgeBasePath || process.env.KNOWLEDGE_BASE_PATH || join(process.cwd(), 'knowledge-base')
 
     this.bridge = new ObsidianKnowledgeBridge(this.knowledgeBasePath)
   }

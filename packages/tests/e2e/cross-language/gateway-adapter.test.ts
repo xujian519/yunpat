@@ -8,9 +8,19 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { spawn, ChildProcess } from 'child_process'
 
-interface SessionResponse { id: string; status: string; [key: string]: unknown }
-interface HealthResponse { status: string; [key: string]: unknown }
-interface StateResponse { id: string; [key: string]: unknown }
+interface SessionResponse {
+  id: string
+  status: string
+  [key: string]: unknown
+}
+interface HealthResponse {
+  status: string
+  [key: string]: unknown
+}
+interface StateResponse {
+  id: string
+  [key: string]: unknown
+}
 
 const describeIntegration = process.env.RUN_INTEGRATION_TESTS === 'true' ? describe : describe.skip
 

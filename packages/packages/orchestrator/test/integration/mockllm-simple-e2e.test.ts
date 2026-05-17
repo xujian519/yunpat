@@ -36,7 +36,9 @@ const mockLLMAdapter = {
       content: 'Mock professional agent response',
     },
   }),
-  chatStream: async function* () { yield { message: { content: '' } } },
+  chatStream: async function* () {
+    yield { message: { content: '' } }
+  },
   embed: async () => ({ embedding: [] }),
 } as unknown as LLMAdapter
 

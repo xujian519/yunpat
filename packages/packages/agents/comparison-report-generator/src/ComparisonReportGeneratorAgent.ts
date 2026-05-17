@@ -426,10 +426,7 @@ export class ComparisonReportGeneratorAgent extends Agent<
   /**
    * 评估新颖性
    */
-  private async assessNovelty(
-    input: ComparisonReportInput,
-    priorArt: string[][]
-  ): Promise<string> {
+  private async assessNovelty(input: ComparisonReportInput, priorArt: string[][]): Promise<string> {
     // NovAScore 量化评估（当评估模块可用时）
     let novaScoreResult: any
     if (this.novaScoreEvaluator) {
@@ -441,7 +438,10 @@ export class ComparisonReportGeneratorAgent extends Agent<
         const inventionDescription = `${input.application.inventionTitle}\n\n权利要求:\n${claimsText}\n\n技术方案:\n${descriptionText}`
 
         // 评估新颖性
-        novaScoreResult = await this.novaScoreEvaluator.evaluate(inventionDescription, input.application.specification.inventionContent || undefined)
+        novaScoreResult = await this.novaScoreEvaluator.evaluate(
+          inventionDescription,
+          input.application.specification.inventionContent || undefined
+        )
 
         // 如果有现有技术，先添加到参考库
         for (const pa of input.priorArt) {

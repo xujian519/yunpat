@@ -64,7 +64,9 @@ function createMockLLM(): LLMAdapter {
 function createMockEventBus(): IEventBus {
   return {
     publish: vi.fn(),
-    subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+    subscribe: vi
+      .fn()
+      .mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
     unsubscribe: vi.fn(),
     request: vi.fn().mockResolvedValue(undefined),
   }
@@ -187,11 +189,11 @@ describe('ProfessionalAgent', () => {
   describe('callLLM()', () => {
     it('未配置管道时直接传递消息给 LLM', async () => {
       const mockLLM = createMockLLM()
-      const agent = new TestableAgent(
-        createBaseConfig({ llm: mockLLM, usePromptPipeline: false })
-      )
+      const agent = new TestableAgent(createBaseConfig({ llm: mockLLM, usePromptPipeline: false }))
 
-      const result = await (agent as unknown as { callLLM: (p: LLMCallParams) => Promise<string> }).callLLM({
+      const result = await (
+        agent as unknown as { callLLM: (p: LLMCallParams) => Promise<string> }
+      ).callLLM({
         messages: [
           { role: 'system', content: 'original prompt' },
           { role: 'user', content: 'hello' },
@@ -250,7 +252,11 @@ describe('ProfessionalAgent', () => {
         { role: 'user' as const, content: 'hello' },
       ]
 
-      const result = await (agent as unknown as { autoCompactIfNeeded: (m: typeof messages) => Promise<typeof messages> }).autoCompactIfNeeded(messages)
+      const result = await (
+        agent as unknown as {
+          autoCompactIfNeeded: (m: typeof messages) => Promise<typeof messages>
+        }
+      ).autoCompactIfNeeded(messages)
       expect(result).toEqual(messages)
     })
 
@@ -270,7 +276,11 @@ describe('ProfessionalAgent', () => {
         { role: 'user' as const, content: 'hello' },
       ]
 
-      const result = await (agent as unknown as { autoCompactIfNeeded: (m: typeof messages) => Promise<typeof messages> }).autoCompactIfNeeded(messages)
+      const result = await (
+        agent as unknown as {
+          autoCompactIfNeeded: (m: typeof messages) => Promise<typeof messages>
+        }
+      ).autoCompactIfNeeded(messages)
       expect(result).toEqual(messages)
     })
   })
@@ -280,7 +290,9 @@ describe('ProfessionalAgent', () => {
       const agent = new TestableAgent(createBaseConfig())
 
       expect(() =>
-        (agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }).validateInput({ name: null, age: 25 }, ['name'])
+        (
+          agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }
+        ).validateInput({ name: null, age: 25 }, ['name'])
       ).toThrow('name不能为空')
     })
 
@@ -288,7 +300,9 @@ describe('ProfessionalAgent', () => {
       const agent = new TestableAgent(createBaseConfig())
 
       expect(() =>
-        (agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }).validateInput({ name: undefined }, ['name'])
+        (
+          agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }
+        ).validateInput({ name: undefined }, ['name'])
       ).toThrow('name不能为空')
     })
 
@@ -296,7 +310,9 @@ describe('ProfessionalAgent', () => {
       const agent = new TestableAgent(createBaseConfig())
 
       expect(() =>
-        (agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }).validateInput({ name: '' }, ['name'])
+        (
+          agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }
+        ).validateInput({ name: '' }, ['name'])
       ).toThrow('name不能为空')
     })
 
@@ -304,7 +320,9 @@ describe('ProfessionalAgent', () => {
       const agent = new TestableAgent(createBaseConfig())
 
       expect(() =>
-        (agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }).validateInput({ name: 'Alice', age: 30 }, ['name', 'age'])
+        (
+          agent as unknown as { validateInput: (o: Record<string, unknown>, f: string[]) => void }
+        ).validateInput({ name: 'Alice', age: 30 }, ['name', 'age'])
       ).not.toThrow()
     })
   })
@@ -313,7 +331,9 @@ describe('ProfessionalAgent', () => {
     it('格式化为 [agentName] context: message', () => {
       const agent = new TestableAgent(createBaseConfig({ name: 'my-agent' }))
 
-      const result = (agent as unknown as { formatErrorMessage: (e: unknown, ctx: string) => string }).formatErrorMessage(new Error('timeout'), '执行阶段')
+      const result = (
+        agent as unknown as { formatErrorMessage: (e: unknown, ctx: string) => string }
+      ).formatErrorMessage(new Error('timeout'), '执行阶段')
 
       expect(result).toBe('[my-agent] 执行阶段: timeout')
     })
@@ -321,7 +341,9 @@ describe('ProfessionalAgent', () => {
     it('非 Error 对象使用 String() 转换', () => {
       const agent = new TestableAgent(createBaseConfig({ name: 'my-agent' }))
 
-      const result = (agent as unknown as { formatErrorMessage: (e: unknown, ctx: string) => string }).formatErrorMessage('raw string', '测试')
+      const result = (
+        agent as unknown as { formatErrorMessage: (e: unknown, ctx: string) => string }
+      ).formatErrorMessage('raw string', '测试')
 
       expect(result).toBe('[my-agent] 测试: raw string')
     })

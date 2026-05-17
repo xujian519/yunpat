@@ -39,10 +39,7 @@ type NotificationConfigSchema = typeof schema.notificationConfigs.$inferSelect
 type NotificationLogSchema = typeof schema.notificationLogs.$inferSelect
 
 // Drizzle Query Builder 类型
-import type {
-  PgSelect,
-  SelectedFieldsFlat,
-} from 'drizzle-orm/pg-core'
+import type { PgSelect, SelectedFieldsFlat } from 'drizzle-orm/pg-core'
 
 /**
  * 数据库连接配置

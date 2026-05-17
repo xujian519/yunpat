@@ -22,55 +22,65 @@ import { FactCheckError } from '../../src/validation/ExternalFactChecker.js'
  */
 class TestFactChecker extends FactChecker {
   public extractClaimsByRegexInternal(content: string): Claim[] {
-    return (this as unknown as { extractClaimsByRegex: (content: string) => Claim[] }).extractClaimsByRegex(content)
+    return (
+      this as unknown as { extractClaimsByRegex: (content: string) => Claim[] }
+    ).extractClaimsByRegex(content)
   }
 
   public categorizeClaimInternal(content: string): ClaimCategory {
-    return (this as unknown as { categorizeClaim: (content: string) => ClaimCategory }).categorizeClaim(
-      content
-    )
+    return (
+      this as unknown as { categorizeClaim: (content: string) => ClaimCategory }
+    ).categorizeClaim(content)
   }
 
   public async extractClaimsByLLMInternal(content: string): Promise<Claim[]> {
-    return (this as unknown as { extractClaimsByLLM: (content: string) => Promise<Claim[]> }).extractClaimsByLLM(
-      content
-    )
+    return (
+      this as unknown as { extractClaimsByLLM: (content: string) => Promise<Claim[]> }
+    ).extractClaimsByLLM(content)
   }
 
   public async extractClaimsInternal(content: string): Promise<Claim[]> {
-    return (this as unknown as { extractClaims: (content: string) => Promise<Claim[]> }).extractClaims(content)
+    return (
+      this as unknown as { extractClaims: (content: string) => Promise<Claim[]> }
+    ).extractClaims(content)
   }
 
   public async verifyClaimInternal(claim: Claim) {
-    return (this as unknown as { verifyClaim: (claim: Claim) => Promise<unknown> }).verifyClaim(claim)
-  }
-
-  public async verifyWithKnowledgeBaseInternal(claim: Claim) {
-    return (this as unknown as { verifyWithKnowledgeBase: (claim: Claim) => Promise<unknown> })
-      .verifyWithKnowledgeBase(claim)
-  }
-
-  public mergeVerificationResultsInternal(claim: Claim, results: unknown[]) {
-    return (this as unknown as { mergeVerificationResults: (claim: Claim, results: unknown[]) => unknown })
-      .mergeVerificationResults(claim, results)
-  }
-
-  public parseClaimCategoryInternal(category: string): ClaimCategory {
-    return (this as unknown as { parseClaimCategory: (category: string) => ClaimCategory }).parseClaimCategory(
-      category
-    )
-  }
-
-  public async getKnowledgeBaseResultInternal(claim: Claim) {
-    return (this as unknown as { getKnowledgeBaseResult: (claim: Claim) => Promise<unknown> }).getKnowledgeBaseResult(
+    return (this as unknown as { verifyClaim: (claim: Claim) => Promise<unknown> }).verifyClaim(
       claim
     )
   }
 
-  public calculateSourceCredibilityInternal(isValid: 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN'): number {
-    return (this as unknown as { calculateSourceCredibility: (isValid: string) => number }).calculateSourceCredibility(
-      isValid
-    )
+  public async verifyWithKnowledgeBaseInternal(claim: Claim) {
+    return (
+      this as unknown as { verifyWithKnowledgeBase: (claim: Claim) => Promise<unknown> }
+    ).verifyWithKnowledgeBase(claim)
+  }
+
+  public mergeVerificationResultsInternal(claim: Claim, results: unknown[]) {
+    return (
+      this as unknown as { mergeVerificationResults: (claim: Claim, results: unknown[]) => unknown }
+    ).mergeVerificationResults(claim, results)
+  }
+
+  public parseClaimCategoryInternal(category: string): ClaimCategory {
+    return (
+      this as unknown as { parseClaimCategory: (category: string) => ClaimCategory }
+    ).parseClaimCategory(category)
+  }
+
+  public async getKnowledgeBaseResultInternal(claim: Claim) {
+    return (
+      this as unknown as { getKnowledgeBaseResult: (claim: Claim) => Promise<unknown> }
+    ).getKnowledgeBaseResult(claim)
+  }
+
+  public calculateSourceCredibilityInternal(
+    isValid: 'TRUE' | 'FALSE' | 'MIXED' | 'UNKNOWN'
+  ): number {
+    return (
+      this as unknown as { calculateSourceCredibility: (isValid: string) => number }
+    ).calculateSourceCredibility(isValid)
   }
 
   public get externalCheckerInternal(): ExternalFactChecker | undefined {
@@ -78,7 +88,8 @@ class TestFactChecker extends FactChecker {
   }
 
   public set externalCheckerInternal(checker: ExternalFactChecker | undefined) {
-    ;(this as unknown as { externalChecker: ExternalFactChecker | undefined }).externalChecker = checker
+    ;(this as unknown as { externalChecker: ExternalFactChecker | undefined }).externalChecker =
+      checker
   }
 }
 
@@ -241,9 +252,9 @@ describe('FactChecker', () => {
 
       expect(results).toHaveLength(2)
       expect(results.every((r) => typeof r.claim === 'object')).toBe(true)
-      expect(
-        results.every((r) => r.claim.id === claims[0].id || r.claim.id === claims[1].id)
-      ).toBe(true)
+      expect(results.every((r) => r.claim.id === claims[0].id || r.claim.id === claims[1].id)).toBe(
+        true
+      )
     })
   })
 
@@ -372,14 +383,10 @@ describe('FactChecker', () => {
         ],
       })
 
-      const fc = new TestFactChecker(
-        mockLLM,
-        mockKB as KnowledgeBase,
-        {
-          extractionMethod: 'regex',
-          verificationMethods: ['knowledge_base'],
-        }
-      )
+      const fc = new TestFactChecker(mockLLM, mockKB as KnowledgeBase, {
+        extractionMethod: 'regex',
+        verificationMethods: ['knowledge_base'],
+      })
 
       const claim: Claim = {
         id: '1',
@@ -478,15 +485,27 @@ describe('FactChecker', () => {
 
   describe('parseClaimCategory 完整覆盖', () => {
     it('应该解析所有有效的声明类别', () => {
-      expect(factChecker.parseClaimCategoryInternal('legal_precedent')).toBe(ClaimCategory.LEGAL_PRECEDENT)
-      expect(factChecker.parseClaimCategoryInternal('technical_fact')).toBe(ClaimCategory.TECHNICAL_FACT)
-      expect(factChecker.parseClaimCategoryInternal('statistical_data')).toBe(ClaimCategory.STATISTICAL_DATA)
-      expect(factChecker.parseClaimCategoryInternal('domain_knowledge')).toBe(ClaimCategory.DOMAIN_KNOWLEDGE)
-      expect(factChecker.parseClaimCategoryInternal('general_statement')).toBe(ClaimCategory.GENERAL_STATEMENT)
+      expect(factChecker.parseClaimCategoryInternal('legal_precedent')).toBe(
+        ClaimCategory.LEGAL_PRECEDENT
+      )
+      expect(factChecker.parseClaimCategoryInternal('technical_fact')).toBe(
+        ClaimCategory.TECHNICAL_FACT
+      )
+      expect(factChecker.parseClaimCategoryInternal('statistical_data')).toBe(
+        ClaimCategory.STATISTICAL_DATA
+      )
+      expect(factChecker.parseClaimCategoryInternal('domain_knowledge')).toBe(
+        ClaimCategory.DOMAIN_KNOWLEDGE
+      )
+      expect(factChecker.parseClaimCategoryInternal('general_statement')).toBe(
+        ClaimCategory.GENERAL_STATEMENT
+      )
     })
 
     it('应该将无效类别映射为默认值', () => {
-      expect(factChecker.parseClaimCategoryInternal('invalid_category')).toBe(ClaimCategory.GENERAL_STATEMENT)
+      expect(factChecker.parseClaimCategoryInternal('invalid_category')).toBe(
+        ClaimCategory.GENERAL_STATEMENT
+      )
       expect(factChecker.parseClaimCategoryInternal('')).toBe(ClaimCategory.GENERAL_STATEMENT)
       expect(factChecker.parseClaimCategoryInternal('random')).toBe(ClaimCategory.GENERAL_STATEMENT)
     })

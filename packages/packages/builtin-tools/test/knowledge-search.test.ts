@@ -8,7 +8,12 @@ interface CardMetadata {
   quality: number
 }
 
-function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+function createMockContext(): {
+  registry: IToolRegistry
+  llm: LLMAdapter
+  memory: MemoryStore
+  eventBus: IEventBus
+} {
   return {
     registry: {
       register: vi.fn(),
@@ -34,7 +39,9 @@ function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory
     },
     eventBus: {
       publish: vi.fn(),
-      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      subscribe: vi
+        .fn()
+        .mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
       unsubscribe: vi.fn(),
       request: vi.fn().mockResolvedValue(undefined),
     },
@@ -101,7 +108,9 @@ describe('KnowledgeSearchTool', () => {
     const tool = new KnowledgeSearchTool('/tmp/test-kb2', '/tmp/test-kb2/card-index.json')
     await (tool as unknown as { buildIndex: () => Promise<void> }).buildIndex()
 
-    const relevance = (tool as unknown as { calculateRelevance: (q: string, m: CardMetadata) => number }).calculateRelevance('发明专利', {
+    const relevance = (
+      tool as unknown as { calculateRelevance: (q: string, m: CardMetadata) => number }
+    ).calculateRelevance('发明专利', {
       title: '发明专利申请流程',
       concept: '发明专利',
       quality: 1.0,

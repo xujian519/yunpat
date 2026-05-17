@@ -75,9 +75,7 @@ export function createMockKnowledgeBase(
 /**
  * 创建类型安全的 Mock 声明对象
  */
-export function createMockClaim(
-  overrides?: Partial<Claim>
-): Claim {
+export function createMockClaim(overrides?: Partial<Claim>): Claim {
   return {
     id: 'mock-claim-id',
     content: 'mock claim content',
@@ -90,9 +88,7 @@ export function createMockClaim(
 /**
  * 创建类型安全的 Mock 来源引用
  */
-export function createMockSourceReference(
-  overrides?: Partial<SourceReference>
-): SourceReference {
+export function createMockSourceReference(overrides?: Partial<SourceReference>): SourceReference {
   return {
     id: 'mock-source-id',
     type: SourceType.KNOWLEDGE_ENTRY,
@@ -105,9 +101,7 @@ export function createMockSourceReference(
 /**
  * 创建类型安全的 Mock 事实验证结果
  */
-export function createMockFactCheckResult(
-  overrides?: Partial<FactCheckResult>
-): FactCheckResult {
+export function createMockFactCheckResult(overrides?: Partial<FactCheckResult>): FactCheckResult {
   const claim = overrides?.claim ?? createMockClaim()
   return {
     claim,

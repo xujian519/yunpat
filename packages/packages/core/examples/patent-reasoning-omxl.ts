@@ -170,7 +170,12 @@ async function example2_ToT_ClaimLayout() {
 
     console.log('\n📊 多维度评估结果：')
     evaluated.forEach((t, i) => {
-      const eval_ = t.evaluation as { feasibility?: number; innovation?: number; completeness?: number; clarity?: number }
+      const eval_ = t.evaluation as {
+        feasibility?: number
+        innovation?: number
+        completeness?: number
+        clarity?: number
+      }
       console.log(`\n  方案${i + 1}:`)
       console.log(`    可行性: ${eval_?.feasibility || 'N/A'}/10`)
       console.log(`    创新性: ${eval_?.innovation || 'N/A'}/10`)
@@ -265,7 +270,11 @@ async function example4_Reflection_QualityCheck() {
   const reflection = new EnhancedReflection(llm, {
     maxIterations: 3,
     iterationThreshold: 0.7,
-    enabledDimensions: [ReflectionDimension.QUALITY, ReflectionDimension.COMPLETENESS, ReflectionDimension.CONSISTENCY],
+    enabledDimensions: [
+      ReflectionDimension.QUALITY,
+      ReflectionDimension.COMPLETENESS,
+      ReflectionDimension.CONSISTENCY,
+    ],
     useDeepAnalysis: true,
   })
 

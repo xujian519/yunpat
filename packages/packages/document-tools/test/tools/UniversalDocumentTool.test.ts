@@ -82,7 +82,16 @@ vi.mock('fs', async () => {
 const mockContext = {
   registry: { register: vi.fn(), unregister: vi.fn(), get: vi.fn(), call: vi.fn(), list: vi.fn() },
   llm: { chat: vi.fn(), chatStream: vi.fn(), embed: vi.fn() },
-  memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() },
+  memory: {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    has: vi.fn(),
+    getAll: vi.fn(),
+    setAll: vi.fn(),
+    clear: vi.fn(),
+    search: vi.fn(),
+  },
   eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() },
 }
 

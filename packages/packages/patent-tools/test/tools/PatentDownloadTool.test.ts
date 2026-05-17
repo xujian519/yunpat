@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PatentDownloadTool, BatchPatentDownloadTool } from '../../src/tools/PatentDownloadTool.js'
 import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
-function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+function createMockContext(): {
+  registry: IToolRegistry
+  llm: LLMAdapter
+  memory: MemoryStore
+  eventBus: IEventBus
+} {
   return {
     registry: {
       register: vi.fn(),
@@ -28,7 +33,9 @@ function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory
     },
     eventBus: {
       publish: vi.fn(),
-      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      subscribe: vi
+        .fn()
+        .mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
       unsubscribe: vi.fn(),
       request: vi.fn().mockResolvedValue(undefined),
     },
@@ -51,7 +58,11 @@ function mockFetchOk(json: Record<string, unknown>): FetchResponse {
   return { ok: true, json: async () => json }
 }
 
-function mockFetchError(json: Record<string, unknown>, status: number, statusText: string): FetchResponse {
+function mockFetchError(
+  json: Record<string, unknown>,
+  status: number,
+  statusText: string
+): FetchResponse {
   return { ok: false, status, statusText, json: async () => json }
 }
 
@@ -112,7 +123,9 @@ describe('PatentDownloadTool', () => {
       detail: '专利下载失败: 未找到专利',
     }
 
-    vi.mocked(fetch).mockResolvedValue(mockFetchError(mockErrorResponse, 500, 'Internal Server Error'))
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchError(mockErrorResponse, 500, 'Internal Server Error')
+    )
 
     await expect(
       tool.execute(
@@ -232,7 +245,9 @@ describe('BatchPatentDownloadTool', () => {
       detail: '批量下载失败: 网络错误',
     }
 
-    vi.mocked(fetch).mockResolvedValue(mockFetchError(mockErrorResponse, 500, 'Internal Server Error'))
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchError(mockErrorResponse, 500, 'Internal Server Error')
+    )
 
     await expect(
       tool.execute(

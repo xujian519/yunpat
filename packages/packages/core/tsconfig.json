@@ -15,7 +15,5 @@
     "**/example.ts",
     "**/__tests__/**"
   ],
-  "references": [
-    { "path": "../unified-knowledge-graph" }
-  ]
+  "references": [{ "path": "../unified-knowledge-graph" }]
 }

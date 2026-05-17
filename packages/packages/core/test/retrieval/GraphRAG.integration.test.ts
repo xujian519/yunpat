@@ -30,10 +30,7 @@ function createMockBGEM3Client() {
 vi.mock('../../src/memory/integration/BGEIntegration.js', () => ({
   createBGEM3Client: () => ({
     embed: vi.fn().mockResolvedValue(new Array(1024).fill(0.1)),
-    embedBatch: vi.fn().mockResolvedValue([
-      new Array(1024).fill(0.1),
-      new Array(1024).fill(0.2),
-    ]),
+    embedBatch: vi.fn().mockResolvedValue([new Array(1024).fill(0.1), new Array(1024).fill(0.2)]),
     healthCheck: vi.fn().mockResolvedValue(true),
     getCacheStats: vi.fn().mockReturnValue({ size: 0, hits: 0, misses: 0, hitRate: 0 }),
     clearCache: vi.fn(),
@@ -432,7 +429,8 @@ describe('SemanticChunker', () => {
     it('应该正确分割专利文档', async () => {
       const patentDoc = {
         title: '一种基于深度学习的图像识别方法',
-        abstract: '本发明提供了一种基于深度学习的图像识别方法，包括数据预处理、特征提取和分类步骤。',
+        abstract:
+          '本发明提供了一种基于深度学习的图像识别方法，包括数据预处理、特征提取和分类步骤。',
         claims: '1. 一种基于深度学习的图像识别方法，其特征在于包括数据预处理步骤。',
         description: `
           本发明涉及图像识别技术领域。

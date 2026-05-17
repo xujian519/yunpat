@@ -3,7 +3,12 @@ import { ChemicalStructureTool } from '../src/tools/ChemicalStructureTool.js'
 import { MathFormulaTool } from '../src/tools/MathFormulaTool.js'
 import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
-function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+function createMockContext(): {
+  registry: IToolRegistry
+  llm: LLMAdapter
+  memory: MemoryStore
+  eventBus: IEventBus
+} {
   return {
     registry: {
       register: vi.fn(),
@@ -29,7 +34,9 @@ function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory
     },
     eventBus: {
       publish: vi.fn(),
-      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      subscribe: vi
+        .fn()
+        .mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
       unsubscribe: vi.fn(),
       request: vi.fn().mockResolvedValue(undefined),
     },
@@ -49,7 +56,11 @@ function mockFetchOk(json: Record<string, unknown>): FetchResponse {
   return { ok: true, json: async () => json }
 }
 
-function mockFetchError(status: number, statusText: string, json: Record<string, unknown>): FetchResponse {
+function mockFetchError(
+  status: number,
+  statusText: string,
+  json: Record<string, unknown>
+): FetchResponse {
   return { ok: false, status, statusText, json: async () => json }
 }
 
@@ -99,7 +110,9 @@ describe('ChemicalStructureTool', () => {
       detail: '化学结构识别失败',
     }
 
-    vi.mocked(fetch).mockResolvedValueOnce(mockFetchError(500, 'Internal Server Error', mockErrorResponse))
+    vi.mocked(fetch).mockResolvedValueOnce(
+      mockFetchError(500, 'Internal Server Error', mockErrorResponse)
+    )
 
     await expect(
       tool.execute(
@@ -190,7 +203,9 @@ describe('MathFormulaTool', () => {
       detail: '数学公式识别失败',
     }
 
-    vi.mocked(fetch).mockResolvedValueOnce(mockFetchError(500, 'Internal Server Error', mockErrorResponse))
+    vi.mocked(fetch).mockResolvedValueOnce(
+      mockFetchError(500, 'Internal Server Error', mockErrorResponse)
+    )
 
     await expect(
       tool.execute(

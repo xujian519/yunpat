@@ -34,7 +34,12 @@ vi.mock('fs', async () => {
 
 import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
-function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+function createMockContext(): {
+  registry: IToolRegistry
+  llm: LLMAdapter
+  memory: MemoryStore
+  eventBus: IEventBus
+} {
   return {
     registry: {
       register: vi.fn(),
@@ -60,7 +65,9 @@ function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory
     },
     eventBus: {
       publish: vi.fn(),
-      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      subscribe: vi
+        .fn()
+        .mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
       unsubscribe: vi.fn(),
       request: vi.fn().mockResolvedValue(undefined),
     },

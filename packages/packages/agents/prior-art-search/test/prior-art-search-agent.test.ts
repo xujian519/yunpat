@@ -1,11 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { PriorArtSearchAgent } from '../src/PriorArtSearchAgent'
-import type { ExecutionContext, LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
+import type {
+  ExecutionContext,
+  LLMAdapter,
+  MemoryStore,
+  IEventBus,
+  IToolRegistry,
+} from '@yunpat/core'
 
 function createMockEventBus(): IEventBus {
   return {
     publish: vi.fn(),
-    subscribe: vi.fn(() => ({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() })),
+    subscribe: vi.fn(() => ({
+      id: 'mock-sub',
+      pattern: '*',
+      handler: vi.fn(),
+      unsubscribe: vi.fn(),
+    })),
     unsubscribe: vi.fn(),
     request: vi.fn().mockResolvedValue(undefined),
   }

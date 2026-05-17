@@ -317,7 +317,9 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
       try {
         const patentText = input.patent.claims || input.patent.description || input.patent.abstract
         const patentSAOs = this.saoExtractor.extractFromClaims(
-          input.patent.claims ? input.patent.claims.split('\n').filter((c) => c.trim()) : [patentText]
+          input.patent.claims
+            ? input.patent.claims.split('\n').filter((c) => c.trim())
+            : [patentText]
         )
 
         for (const pa of input.priorArt) {
@@ -406,7 +408,9 @@ ${saoSemanticDifferences.length > 0 ? `基于 SAO 语义分析的差异：\n${sa
         // 提取本申请 SAO 三元组
         const patentText = input.patent.claims || input.patent.description || input.patent.abstract
         const patentSAOs = this.saoExtractor.extractFromClaims(
-          input.patent.claims ? input.patent.claims.split('\n').filter((c) => c.trim()) : [patentText]
+          input.patent.claims
+            ? input.patent.claims.split('\n').filter((c) => c.trim())
+            : [patentText]
         )
 
         // 提取现有技术 SAO 三元组
@@ -473,16 +477,18 @@ ${saoSimilarityScore !== undefined ? `SAO 语义新颖性评分: ${saoSimilarity
         dimensions: {
           substantiveCharacteristics: {
             score: saoSimilarityScore !== undefined ? Math.round(saoSimilarityScore * 100) : 50,
-            reasoning: saoSimilarityScore !== undefined
-              ? `基于 SAO 语义分析的新颖性评分：${(saoSimilarityScore * 100).toFixed(1)}`
-              : '评估失败',
+            reasoning:
+              saoSimilarityScore !== undefined
+                ? `基于 SAO 语义分析的新颖性评分：${(saoSimilarityScore * 100).toFixed(1)}`
+                : '评估失败',
           },
           significantProgress: { score: 50, reasoning: '评估失败' },
           technicalContribution: { score: 50, reasoning: '评估失败' },
         },
-        reasoning: saoSimilarityScore !== undefined
-          ? `基于 SAO2Vec 语义分析的评估：语义新颖性 ${(saoSimilarityScore * 100).toFixed(1)}/100`
-          : '评估失败',
+        reasoning:
+          saoSimilarityScore !== undefined
+            ? `基于 SAO2Vec 语义分析的评估：语义新颖性 ${(saoSimilarityScore * 100).toFixed(1)}/100`
+            : '评估失败',
       }
     }
   }

@@ -11,7 +11,12 @@ function createMockExecutionContext(): ExecutionContext {
     sessionId: 'test-session',
     userId: 'test-user',
     llmClient: { generate: vi.fn() } as unknown as ExecutionContext['llmClient'],
-    eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() } as unknown as ExecutionContext['eventBus'],
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn(),
+      unsubscribe: vi.fn(),
+      request: vi.fn(),
+    } as unknown as ExecutionContext['eventBus'],
     metadata: {},
   }
 }

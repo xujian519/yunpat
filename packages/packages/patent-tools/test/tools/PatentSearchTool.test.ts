@@ -9,14 +9,34 @@ import type { ToolContext } from '@yunpat/core'
 
 function createMockToolContext(): ToolContext {
   return {
-    registry: { register: vi.fn(), unregister: vi.fn(), get: vi.fn(), call: vi.fn(), list: vi.fn() } as unknown as ToolContext['registry'],
+    registry: {
+      register: vi.fn(),
+      unregister: vi.fn(),
+      get: vi.fn(),
+      call: vi.fn(),
+      list: vi.fn(),
+    } as unknown as ToolContext['registry'],
     llm: {
       chat: vi.fn().mockResolvedValue({ message: { role: 'assistant' as const, content: 'mock' } }),
       chatStream: vi.fn(),
       embed: vi.fn(),
     } as unknown as ToolContext['llm'],
-    memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() } as unknown as ToolContext['memory'],
-    eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() } as unknown as ToolContext['eventBus'],
+    memory: {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      has: vi.fn(),
+      getAll: vi.fn(),
+      setAll: vi.fn(),
+      clear: vi.fn(),
+      search: vi.fn(),
+    } as unknown as ToolContext['memory'],
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn(),
+      unsubscribe: vi.fn(),
+      request: vi.fn(),
+    } as unknown as ToolContext['eventBus'],
     sessionId: 'test-session',
   }
 }
@@ -139,7 +159,9 @@ describe('SimilarPatentSearchTool', () => {
   })
 
   it('builds enhanced query correctly', () => {
-    const query = (tool as unknown as { buildEnhancedQuery: (t: string, f: string[]) => string }).buildEnhancedQuery('neural network', ['chip', 'accelerator'])
+    const query = (
+      tool as unknown as { buildEnhancedQuery: (t: string, f: string[]) => string }
+    ).buildEnhancedQuery('neural network', ['chip', 'accelerator'])
     expect(query).toContain('neural network')
     expect(query).toContain('chip')
     expect(query).toContain('accelerator')
@@ -147,21 +169,24 @@ describe('SimilarPatentSearchTool', () => {
   })
 
   it('calculates similarity correctly', () => {
-    const similarity = (tool as unknown as { calculateSimilarity: (a: string, b: string) => number }).calculateSimilarity(
-      'neural network chip',
-      'neural network processor chip'
-    )
+    const similarity = (
+      tool as unknown as { calculateSimilarity: (a: string, b: string) => number }
+    ).calculateSimilarity('neural network chip', 'neural network processor chip')
     expect(similarity).toBeGreaterThan(0)
     expect(similarity).toBeLessThanOrEqual(1)
   })
 
   it('returns zero similarity for completely different texts', () => {
-    const similarity = (tool as unknown as { calculateSimilarity: (a: string, b: string) => number }).calculateSimilarity('abc xyz', '123 456')
+    const similarity = (
+      tool as unknown as { calculateSimilarity: (a: string, b: string) => number }
+    ).calculateSimilarity('abc xyz', '123 456')
     expect(similarity).toBe(0)
   })
 
   it('returns zero similarity for empty query', () => {
-    const similarity = (tool as unknown as { calculateSimilarity: (a: string, b: string) => number }).calculateSimilarity('', 'some content')
+    const similarity = (
+      tool as unknown as { calculateSimilarity: (a: string, b: string) => number }
+    ).calculateSimilarity('', 'some content')
     expect(similarity).toBe(0)
   })
 

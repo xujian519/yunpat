@@ -10,10 +10,34 @@ function createMockOrchestratorConfig(): OrchestratorAgentConfig {
   return {
     name: 'test-orchestrator',
     description: 'Test Orchestrator',
-    eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() } as unknown as OrchestratorAgentConfig['eventBus'],
-    memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() } as unknown as OrchestratorAgentConfig['memory'],
-    tools: { register: vi.fn(), unregister: vi.fn(), get: vi.fn(), call: vi.fn(), list: vi.fn() } as unknown as OrchestratorAgentConfig['tools'],
-    llm: { chat: vi.fn(), chatStream: vi.fn(), embed: vi.fn() } as unknown as OrchestratorAgentConfig['llm'],
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn(),
+      unsubscribe: vi.fn(),
+      request: vi.fn(),
+    } as unknown as OrchestratorAgentConfig['eventBus'],
+    memory: {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      has: vi.fn(),
+      getAll: vi.fn(),
+      setAll: vi.fn(),
+      clear: vi.fn(),
+      search: vi.fn(),
+    } as unknown as OrchestratorAgentConfig['memory'],
+    tools: {
+      register: vi.fn(),
+      unregister: vi.fn(),
+      get: vi.fn(),
+      call: vi.fn(),
+      list: vi.fn(),
+    } as unknown as OrchestratorAgentConfig['tools'],
+    llm: {
+      chat: vi.fn(),
+      chatStream: vi.fn(),
+      embed: vi.fn(),
+    } as unknown as OrchestratorAgentConfig['llm'],
     llmConfig: {
       provider: 'local',
       model: 'test-model',

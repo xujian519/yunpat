@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AcademicSearchTool } from '../src/search/SearchTools.js'
 import type { LLMAdapter, MemoryStore, IEventBus, IToolRegistry } from '@yunpat/core'
 
-function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory: MemoryStore; eventBus: IEventBus } {
+function createMockContext(): {
+  registry: IToolRegistry
+  llm: LLMAdapter
+  memory: MemoryStore
+  eventBus: IEventBus
+} {
   return {
     registry: {
       register: vi.fn(),
@@ -28,7 +33,9 @@ function createMockContext(): { registry: IToolRegistry; llm: LLMAdapter; memory
     },
     eventBus: {
       publish: vi.fn(),
-      subscribe: vi.fn().mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
+      subscribe: vi
+        .fn()
+        .mockReturnValue({ id: 'mock-sub', pattern: '*', handler: vi.fn(), unsubscribe: vi.fn() }),
       unsubscribe: vi.fn(),
       request: vi.fn().mockResolvedValue(undefined),
     },
@@ -48,7 +55,11 @@ function mockFetchOk(json: Record<string, unknown>): FetchResponse {
   return { ok: true, json: async () => json }
 }
 
-function mockFetchError(status: number, statusText: string, json: Record<string, unknown>): FetchResponse {
+function mockFetchError(
+  status: number,
+  statusText: string,
+  json: Record<string, unknown>
+): FetchResponse {
   return { ok: false, status, statusText, json: async () => json }
 }
 
@@ -139,7 +150,9 @@ describe('AcademicSearchTool', () => {
   })
 
   it('should handle API errors', async () => {
-    vi.mocked(fetch).mockResolvedValue(mockFetchError(500, 'Internal Server Error', { detail: 'Internal Server Error' }))
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchError(500, 'Internal Server Error', { detail: 'Internal Server Error' })
+    )
 
     await expect(
       tool.execute(

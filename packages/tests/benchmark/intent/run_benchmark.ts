@@ -75,7 +75,11 @@ async function sendMessage(
 
     // Gateway 不直接返回 intent，但我们可以通过 session 状态或日志推断
     // 在完整实现中，Gateway 应返回 routing_decision
-    const data = (await res.json()) as { routed_intent?: string; intent?: string; [key: string]: unknown }
+    const data = (await res.json()) as {
+      routed_intent?: string
+      intent?: string
+      [key: string]: unknown
+    }
     return { intent: data.routed_intent || data.intent, latencyMs }
   } catch (e: any) {
     return { latencyMs: Date.now() - start, error: e.message }

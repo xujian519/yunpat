@@ -5,15 +5,35 @@ import type { ToolContext, LLMAdapter } from '@yunpat/core'
 
 function createMockToolContext(mockLLM: Partial<LLMAdapter>): ToolContext {
   return {
-    registry: { register: vi.fn(), unregister: vi.fn(), get: vi.fn(), call: vi.fn(), list: vi.fn() } as unknown as ToolContext['registry'],
+    registry: {
+      register: vi.fn(),
+      unregister: vi.fn(),
+      get: vi.fn(),
+      call: vi.fn(),
+      list: vi.fn(),
+    } as unknown as ToolContext['registry'],
     llm: {
       chat: vi.fn(),
       chatStream: vi.fn(),
       embed: vi.fn(),
       ...mockLLM,
     } as unknown as ToolContext['llm'],
-    memory: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), has: vi.fn(), getAll: vi.fn(), setAll: vi.fn(), clear: vi.fn(), search: vi.fn() } as unknown as ToolContext['memory'],
-    eventBus: { publish: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn(), request: vi.fn() } as unknown as ToolContext['eventBus'],
+    memory: {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      has: vi.fn(),
+      getAll: vi.fn(),
+      setAll: vi.fn(),
+      clear: vi.fn(),
+      search: vi.fn(),
+    } as unknown as ToolContext['memory'],
+    eventBus: {
+      publish: vi.fn(),
+      subscribe: vi.fn(),
+      unsubscribe: vi.fn(),
+      request: vi.fn(),
+    } as unknown as ToolContext['eventBus'],
     sessionId: 'test-session',
   }
 }

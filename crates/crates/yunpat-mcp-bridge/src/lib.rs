@@ -1,13 +1,14 @@
-//! YunPat MCP Bridge — async MCP client and agent adapter.
+//! YunPat MCP Bridge — async MCP client, supervisor, and agent adapter.
 //!
 //! Provides:
-//! - `MCPBridge`: Async stdio MCP client for launching and communicating
-//!   with MCP server child processes via JSON-RPC 2.0.
-//! - `McpAgentAdapter`: Wraps an MCP server as a `PatentAgent` trait
-//!   implementation, transparent to the caller.
+//! - `MCPBridge`: Legacy async stdio MCP client (deprecated — use `SupervisedServer`).
+//! - `SupervisedServer`: Managed MCP server with heartbeat and auto-restart.
+//! - `McpAgentAdapter`: Wraps an MCP server as a `PatentAgent` trait implementation.
 
 pub mod agent_adapter;
 pub mod bridge;
+pub mod supervisor;
 
 pub use agent_adapter::McpAgentAdapter;
 pub use bridge::{MCPBridge, ServerHandle};
+pub use supervisor::{SupervisedServer, SupervisorConfig};

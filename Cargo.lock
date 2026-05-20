@@ -7186,8 +7186,11 @@ name = "yunpat-mcp"
 version = "0.8.15"
 dependencies = [
  "anyhow",
+ "async-trait",
  "serde",
  "serde_json",
+ "tokio",
+ "tracing",
  "yunpat-protocol",
 ]
 
@@ -7205,6 +7208,7 @@ dependencies = [
  "tokio",
  "tracing",
  "yunpat-agents",
+ "yunpat-mcp",
 ]
 
 [[package]]

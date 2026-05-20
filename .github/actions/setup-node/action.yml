@@ -1,0 +1,36 @@
+name: 'Setup Node.js and pnpm'
+description: 'Setup Node.js, pnpm, and install dependencies'
+inputs:
+  node-version:
+    description: 'Node.js version'
+    required: false
+    default: '20'
+  pnpm-version:
+    description: 'pnpm version'
+    required: false
+    default: '10'
+  workspace-path:
+    description: 'Path to pnpm workspace'
+    required: false
+    default: 'packages'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'pnpm'
+        cache-dependency-path: ${{ inputs.workspace-path }}/pnpm-lock.yaml
+
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        cd ${{ inputs.workspace-path }}
+        pnpm install --frozen-lockfile

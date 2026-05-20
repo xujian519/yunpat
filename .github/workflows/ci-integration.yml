@@ -1,0 +1,79 @@
+name: CI - Integration
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cross-language:
+    name: Cross-Language Integration
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: yunpat123
+          POSTGRES_USER: yunpat
+          POSTGRES_DB: yunpat_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-rust
+        with:
+          include-ocr: 'true'
+      
+      - uses: ./.github/actions/setup-node
+      
+      - name: Build All
+        run: |
+          cd crates && cargo build --workspace --release
+          cd ../packages && pnpm build
+      
+      - name: Start Docker Services
+        run: docker-compose up -d
+        working-directory: packages
+      
+      - name: Wait for Services
+        run: |
+          for i in 1 2 3 4 5; do
+            if pg_isready -h localhost -p 5432 && redis-cli ping > /dev/null 2>&1; then
+              break
+            fi
+            echo "Waiting for services... (attempt $i)"
+            sleep 2
+          done
+      
+      - name: MCP Integration Test
+        run: cd packages && pnpm test:mcp-integration
+        env:
+          TEST_DATABASE_URL: postgresql://yunpat:yunpat123@localhost:5432/yunpat_test
+          REDIS_URL: redis://localhost:6379
+          RUN_INTEGRATION_TESTS: 'true'
+      
+      - name: Cross-Language Integration Test
+        run: cd packages && RUN_INTEGRATION_TESTS=true pnpm test:integration
+        env:
+          RUN_INTEGRATION_TESTS: 'true'

@@ -1,0 +1,60 @@
+name: 'Setup Rust Environment'
+description: 'Setup Rust toolchain, cache, and system dependencies'
+inputs:
+  toolchain:
+    description: 'Rust toolchain version'
+    required: false
+    default: '1.88.0'
+  components:
+    description: 'Additional Rust components'
+    required: false
+    default: 'clippy,rustfmt'
+  include-ocr:
+    description: 'Include OCR dependencies (leptonica, tesseract)'
+    required: false
+    default: 'false'
+  workspace-path:
+    description: 'Path to Rust workspace'
+    required: false
+    default: 'crates'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Rust Toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ inputs.toolchain }}
+        components: ${{ inputs.components }}
+
+    - name: Install Linux System Dependencies
+      shell: bash
+      if: runner.os == 'Linux'
+      run: |
+        for i in 1 2 3 4 5; do
+          sudo apt-get update && break
+          echo "apt-get update failed (attempt $i); retrying in 15s"
+          sleep 15
+        done
+        
+        PKGS="libdbus-1-dev pkg-config"
+        if [ "${{ inputs.include-ocr }}" = "true" ]; then
+          PKGS="$PKGS libleptonica-dev libtesseract-dev tesseract-ocr"
+        fi
+        
+        sudo apt-get install -y $PKGS
+
+    - name: Install macOS System Dependencies
+      shell: bash
+      if: runner.os == 'macOS'
+      run: |
+        if [ "${{ inputs.include-ocr }}" = "true" ]; then
+          brew install pkg-config tesseract leptonica
+        else
+          brew install pkg-config
+        fi
+
+    - name: Setup Rust Cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: ${{ inputs.workspace-path }}

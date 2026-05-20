@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'crates/Cargo.toml'
+      - 'crates/npm/yunpat-tui/package.json'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -Dwarnings
+  NODE_VERSION: '20'
+  PNPM_VERSION: 10
+
+jobs:
+  build-binaries:
+    name: Build Release Binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-rust
+        with:
+          include-ocr: 'true'
+      
+      - name: Build Rust Binaries (release)
+        run: |
+          cd crates
+          cargo build --release -p yunpat-tui
+          cargo build --release -p yunpat-cli
+      
+      - name: Build TypeScript Artifacts
+        uses: ./.github/actions/setup-node
+      
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yunpat-${{ github.sha }}
+          path: |
+            crates/target/release/yunpat-tui
+            crates/target/release/yunpat-cli
+            packages/packages/*/dist/*.tgz
+
+  publish-npm:
+    name: Publish to NPM
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-node
+      
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: yunpat-${{ github.sha }}
+      
+      - name: Publish to NPM
+        run: cd packages/packages/npm && pnpm publish
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-binaries, publish-npm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: yunpat-${{ github.sha }}
+      
+      - name: Extract Version
+        id: version
+        run: |
+          VERSION=$(grep -E '^version = "' Cargo.toml | head -n1 | sed -E 's/^version = "([^"]+)".*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            yunpat-tui
+            yunpat-cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

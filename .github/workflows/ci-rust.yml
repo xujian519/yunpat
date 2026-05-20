@@ -1,0 +1,109 @@
+name: CI - Rust
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -Dwarnings
+
+jobs:
+  version-check:
+    name: Version Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-rust
+        with:
+          include-ocr: 'false'
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Check Version Drift
+        run: crates/scripts/release/check-versions.sh
+
+  check:
+    name: Check (Format, Clippy, Build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-rust
+        with:
+          include-ocr: 'true'
+      
+      - name: Check Formatting
+        run: cd crates && cargo fmt --all -- --check
+      
+      - name: Clippy
+        run: cd crates && cargo clippy --workspace --all-targets --all-features --locked -- -D warnings -A clippy::uninlined-format-args -A clippy::const-is-empty
+      
+      - name: Build
+        run: cd crates && cargo build --workspace
+      
+      - name: Security Audit
+        run: cd crates && cargo install cargo-audit && cargo audit
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-rust
+        with:
+          include-ocr: 'true'
+      
+      - name: Run Tests
+        run: cd crates && cargo test --workspace --locked --all-features
+      
+      - name: Lockfile Drift Guard (Linux)
+        if: runner.os == 'Linux'
+        run: git diff --exit-code -- Cargo.lock
+      
+      - name: Run Offline Eval Harness (Linux)
+        if: runner.os == 'Linux'
+        run: cd crates && cargo run -p yunpat-tui -- eval
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-rust
+        with:
+          include-ocr: 'false'
+      
+      - name: Build Documentation
+        run: cd crates && cargo doc --no-deps --all-features
+      
+      - name: Deploy Docs
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # TODO: Set up documentation deployment
+          echo "Documentation deployment not configured"

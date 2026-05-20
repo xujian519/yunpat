@@ -1,0 +1,108 @@
+name: CI - TypeScript
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: 10
+
+jobs:
+  check:
+    name: Check (Lint, Format, TypeCheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-node
+      
+      - name: Lint
+        run: cd packages && pnpm lint
+      
+      - name: Check Format
+        run: cd packages && pnpm format:check
+      
+      - name: Type Check
+        run: cd packages && pnpm build:tsc
+
+  test:
+    name: Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-node
+        with:
+          node-version: ${{ matrix.node-version }}
+      
+      - name: Test
+        run: cd packages && pnpm test
+
+  security:
+    name: Security & Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-node
+      
+      - name: Security Audit
+        run: cd packages && pnpm audit
+      
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: yunpat123
+          POSTGRES_USER: yunpat
+          POSTGRES_DB: yunpat_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: ./.github/actions/setup-node
+      
+      - name: Run Integration Tests
+        run: cd packages && pnpm test:integration
+        env:
+          TEST_DATABASE_URL: postgresql://yunpat:yunpat123@localhost:5432/yunpat_test
+          REDIS_URL: redis://localhost:6379
+          RUN_INTEGRATION_TESTS: 'true'

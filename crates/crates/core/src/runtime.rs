@@ -7,14 +7,12 @@ use uuid::Uuid;
 use yunpat_agent::ModelRegistry;
 use yunpat_config::{CliRuntimeOverrides, ConfigToml, ProviderKind};
 use yunpat_execpolicy::{
-    AskForApproval, ExecApprovalRequirement, ExecPolicyContext, ExecPolicyDecision,
-    ExecPolicyEngine,
+    AskForApproval, ExecPolicyContext, ExecPolicyEngine,
 };
 use yunpat_hooks::{HookDispatcher, HookEvent, HookPipeline};
 use yunpat_mcp::{McpManager, McpStartupCompleteEvent, McpStartupUpdateEvent};
 use yunpat_protocol::{
     AppResponse, EventFrame, PromptRequest, PromptResponse, ThreadRequest, ThreadResponse,
-    ThreadStatus, ToolPayload,
 };
 use yunpat_state::StateStore;
 use yunpat_tools::{ToolCall, ToolRegistry};
@@ -25,7 +23,7 @@ use crate::job_manager::{
     job_status_to_str,
 };
 use crate::thread_manager::ThreadManager;
-use crate::{InitialHistory, NewThread};
+use crate::InitialHistory;
 
 pub struct Runtime {
     pub config: ConfigToml,

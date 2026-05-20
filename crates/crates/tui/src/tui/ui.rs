@@ -1403,9 +1403,10 @@ async fn run_event_loop(
                         if let Some(p) = progress {
                             app.patent.update_step_progress(step_idx, p, details.clone());
                         } else if let Some(d) = details.clone()
-                            && step_idx < app.patent.steps.len() {
-                                app.patent.steps[step_idx].details = Some(d);
-                            }
+                            && step_idx < app.patent.steps.len()
+                        {
+                            app.patent.steps[step_idx].details = Some(d);
+                        }
                         if completed {
                             if error.is_some() {
                                 if step_idx < app.patent.steps.len() {

@@ -21,7 +21,6 @@ use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
-    
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Clear, Paragraph, Widget},
@@ -75,9 +74,7 @@ impl ModelPickerView {
         } else {
             app.model.clone()
         };
-        let mut selected_model_idx = PICKER_MODELS
-            .iter()
-            .position(|(id, _)| *id == initial_model);
+        let mut selected_model_idx = PICKER_MODELS.iter().position(|(id, _)| *id == initial_model);
         let show_custom_model_row = selected_model_idx.is_none();
         if show_custom_model_row {
             // Custom row sits at the end; precompute its index.
@@ -91,10 +88,7 @@ impl ModelPickerView {
             ReasoningEffort::Low | ReasoningEffort::Medium => ReasoningEffort::High,
             other => other,
         };
-        let selected_effort_idx = PICKER_EFFORTS
-            .iter()
-            .position(|e| *e == normalized)
-            .unwrap_or(2); // default to High if somehow unknown
+        let selected_effort_idx = PICKER_EFFORTS.iter().position(|e| *e == normalized).unwrap_or(2); // default to High if somehow unknown
 
         Self {
             initial_model,
@@ -214,9 +208,7 @@ impl ModelPickerView {
                 Style::default().fg(palette::TEXT_PRIMARY)
             };
             let hint_style = if is_selected {
-                Style::default()
-                    .fg(palette::SELECTION_TEXT)
-                    .bg(palette::SELECTION_BG)
+                Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
             } else {
                 Style::default().fg(palette::TEXT_MUTED)
             };
@@ -281,9 +273,7 @@ impl ModalView for ModelPickerView {
         let outer = Block::default()
             .title(Line::from(Span::styled(
                 " Model & thinking ",
-                Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
             )))
             .title_bottom(Line::from(vec![
                 Span::styled(" ↑↓ ", Style::default().fg(palette::TEXT_MUTED)),
@@ -448,10 +438,8 @@ mod tests {
             vec!["auto", "deepseek-v4-pro", "deepseek-v4-flash"]
         );
 
-        let effort_labels: Vec<_> = PICKER_EFFORTS
-            .iter()
-            .map(|effort| effort.as_setting())
-            .collect();
+        let effort_labels: Vec<_> =
+            PICKER_EFFORTS.iter().map(|effort| effort.as_setting()).collect();
         assert_eq!(effort_labels, vec!["auto", "off", "high", "max"]);
     }
 
@@ -547,10 +535,7 @@ mod tests {
 
     #[test]
     fn picker_only_exposes_auto_off_high_max() {
-        let labels: Vec<&str> = PICKER_EFFORTS
-            .iter()
-            .map(|effort| effort.short_label())
-            .collect();
+        let labels: Vec<&str> = PICKER_EFFORTS.iter().map(|effort| effort.short_label()).collect();
         assert_eq!(labels, vec!["auto", "off", "high", "max"]);
     }
 }

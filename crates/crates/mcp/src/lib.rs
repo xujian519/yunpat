@@ -11,11 +11,11 @@ pub use yunpat_protocol::{
     McpStartupCompleteEvent, McpStartupFailure, McpStartupStatus, McpStartupUpdateEvent,
 };
 
-pub mod transport;
 pub mod stdio_transport;
+pub mod transport;
 
-pub use transport::McpTransport;
 pub use stdio_transport::StdioTransport;
+pub use transport::McpTransport;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpServerConfig {

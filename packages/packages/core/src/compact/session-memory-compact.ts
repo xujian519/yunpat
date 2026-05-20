@@ -115,9 +115,7 @@ function adjustIndexToPreserveToolPairs(
  * - 助手消息中的结论性陈述
  * - 工具调用结果中的数据摘要
  */
-function extractKeyFacts(
-  messages: Array<{ role: string; content: string }>
-): string[] {
+function extractKeyFacts(messages: Array<{ role: string; content: string }>): string[] {
   const facts: string[] = []
 
   for (const msg of messages) {
@@ -181,9 +179,8 @@ export async function sessionMemoryCompact(
   }
 
   const keyFacts = extractKeyFacts(removedMessages)
-  const factsSection = keyFacts.length > 0
-    ? `\n\n关键事实:\n${keyFacts.map((f) => `- ${f}`).join('\n')}`
-    : ''
+  const factsSection =
+    keyFacts.length > 0 ? `\n\n关键事实:\n${keyFacts.map((f) => `- ${f}`).join('\n')}` : ''
 
   const summaryMessage = {
     role: 'system' as const,
@@ -213,9 +210,10 @@ export async function sessionMemoryCompact(
       {
         originalId: 'session_memory',
         contentType: 'dialogue_history',
-        summary: keyFacts.length > 0
-          ? `已压缩 ${removedMessages.length} 轮对话，提取 ${keyFacts.length} 条关键事实`
-          : `已压缩 ${removedMessages.length} 轮对话`,
+        summary:
+          keyFacts.length > 0
+            ? `已压缩 ${removedMessages.length} 轮对话，提取 ${keyFacts.length} 条关键事实`
+            : `已压缩 ${removedMessages.length} 轮对话`,
         originalTokens: estimateMessagesTokens(removedMessages),
         summaryTokens: estimateMessagesTokens([summaryMessage]),
       },

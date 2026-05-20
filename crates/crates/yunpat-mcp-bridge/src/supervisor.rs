@@ -1,8 +1,8 @@
 //! Server Supervisor — manages an MCP server process with health monitoring and auto-restart.
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::{Context, Result};
 use serde_json::Value;
@@ -138,18 +138,15 @@ impl SupervisedServer {
     }
 
     async fn spawn_process(&self) -> Result<()> {
-        let transport = StdioTransport::spawn(
-            &self.config.command,
-            &self.config.args,
-            &self.config.env,
-        )
-        .await
-        .with_context(|| {
-            format!(
-                "failed to spawn MCP server '{}': {} {:?}",
-                self.config.server_id, self.config.command, self.config.args
-            )
-        })?;
+        let transport =
+            StdioTransport::spawn(&self.config.command, &self.config.args, &self.config.env)
+                .await
+                .with_context(|| {
+                    format!(
+                        "failed to spawn MCP server '{}': {} {:?}",
+                        self.config.server_id, self.config.command, self.config.args
+                    )
+                })?;
 
         transport
             .initialize("yunpat-mcp-bridge", "0.2.0")

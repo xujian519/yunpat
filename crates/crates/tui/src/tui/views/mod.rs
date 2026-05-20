@@ -264,10 +264,7 @@ impl ViewStack {
     }
 
     pub fn update_subagents(&mut self, agents: &[SubAgentResult]) -> bool {
-        self.views
-            .last_mut()
-            .map(|view| view.update_subagents(agents))
-            .unwrap_or(false)
+        self.views.last_mut().map(|view| view.update_subagents(agents)).unwrap_or(false)
     }
 
     pub fn handle_key(&mut self, key: KeyEvent) -> Vec<ViewEvent> {
@@ -280,10 +277,7 @@ impl ViewStack {
     }
 
     pub fn handle_paste(&mut self, text: &str) -> bool {
-        self.views
-            .last_mut()
-            .map(|view| view.handle_paste(text))
-            .unwrap_or(false)
+        self.views.last_mut().map(|view| view.handle_paste(text)).unwrap_or(false)
     }
 
     pub fn handle_mouse(&mut self, mouse: MouseEvent) -> Vec<ViewEvent> {
@@ -296,11 +290,7 @@ impl ViewStack {
     }
 
     pub fn tick(&mut self) -> Vec<ViewEvent> {
-        let action = self
-            .views
-            .last_mut()
-            .map(|view| view.tick())
-            .unwrap_or(ViewAction::None);
+        let action = self.views.last_mut().map(|view| view.tick()).unwrap_or(ViewAction::None);
         self.apply_action(action)
     }
 
@@ -405,7 +395,6 @@ impl ModalView for ShellControlView {
 
     fn render(&self, area: Rect, buf: &mut Buffer) {
         use ratatui::{
-            
             style::Style,
             text::{Line, Span},
             widgets::{Block, Borders, Clear, Padding, Paragraph, Widget},
@@ -426,9 +415,7 @@ impl ModalView for ShellControlView {
         let option_line = |choice: ShellControlChoice, key: &'static str, label: &'static str| {
             let selected = self.selected == choice;
             let style = if selected {
-                Style::default()
-                    .fg(palette::SELECTION_TEXT)
-                    .bg(palette::SELECTION_BG)
+                Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
             } else {
                 Style::default().fg(palette::TEXT_PRIMARY)
             };
@@ -574,11 +561,7 @@ impl ConfigView {
             ConfigRow {
                 section: ConfigSection::Model,
                 key: "default_model".to_string(),
-                value: settings
-                    .default_model
-                    .as_deref()
-                    .unwrap_or("(default)")
-                    .to_string(),
+                value: settings.default_model.as_deref().unwrap_or("(default)").to_string(),
                 editable: true,
                 scope: ConfigScope::Saved,
             },
@@ -831,10 +814,7 @@ impl ConfigView {
             return;
         }
 
-        let current = matches
-            .iter()
-            .position(|idx| *idx == self.selected)
-            .unwrap_or(0);
+        let current = matches.iter().position(|idx| *idx == self.selected).unwrap_or(0);
         let max = matches.len().saturating_sub(1);
         let next = if delta.is_negative() {
             current.saturating_sub(delta.unsigned_abs())
@@ -1021,7 +1001,6 @@ fn config_hint_for_key(key: &str) -> &'static str {
 
 fn render_config_editor_value_line(edit: &ConfigEdit) -> ratatui::text::Line<'static> {
     use ratatui::{
-        
         style::Style,
         text::{Line, Span},
     };
@@ -1032,13 +1011,8 @@ fn render_config_editor_value_line(edit: &ConfigEdit) -> ratatui::text::Line<'st
         Style::default().fg(palette::TEXT_MUTED),
     ));
 
-    let cursor_style = Style::default()
-        .fg(palette::YUNPAT_INK)
-        .bg(palette::YUNPAT_SKY)
-        .bold();
-    let selected_style = Style::default()
-        .fg(palette::SELECTION_TEXT)
-        .bg(palette::SELECTION_BG);
+    let cursor_style = Style::default().fg(palette::YUNPAT_INK).bg(palette::YUNPAT_SKY).bold();
+    let selected_style = Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG);
 
     if edit.select_all && !edit.buffer.is_empty() {
         let text = edit.buffer.iter().collect::<String>();
@@ -1052,11 +1026,7 @@ fn render_config_editor_value_line(edit: &ConfigEdit) -> ratatui::text::Line<'st
     if edit.cursor < edit.buffer.len() {
         let ch = edit.buffer[edit.cursor];
         spans.push(Span::styled(ch.to_string(), cursor_style));
-        let after = edit
-            .buffer
-            .iter()
-            .skip(edit.cursor.saturating_add(1))
-            .collect::<String>();
+        let after = edit.buffer.iter().skip(edit.cursor.saturating_add(1)).collect::<String>();
         spans.push(Span::raw(after));
     } else {
         spans.push(Span::styled(" ", cursor_style));
@@ -1178,7 +1148,6 @@ impl ModalView for ConfigView {
 
     fn render(&self, area: Rect, buf: &mut Buffer) {
         use ratatui::{
-            
             style::Style,
             text::{Line, Span},
             widgets::{Block, Borders, Clear, Padding, Paragraph, Widget},
@@ -1237,9 +1206,7 @@ impl ModalView for ConfigView {
             let content_height = usize::from(inner.height);
             let header_lines = 5usize;
             let bottom_lines = 1usize;
-            let visible_rows = content_height
-                .saturating_sub(header_lines + bottom_lines)
-                .max(1);
+            let visible_rows = content_height.saturating_sub(header_lines + bottom_lines).max(1);
             self.last_visible_rows.set(visible_rows);
 
             let items = self.visible_items();
@@ -1433,7 +1400,6 @@ impl ModalView for SubAgentsView {
 
     fn render(&self, area: Rect, buf: &mut Buffer) {
         use ratatui::{
-            
             style::Style,
             text::{Line, Span},
             widgets::{Block, Borders, Clear, Padding, Paragraph, Widget},
@@ -1610,7 +1576,6 @@ fn append_subagent_group(
     content_width: usize,
 ) {
     use ratatui::{
-        
         style::Style,
         text::{Line, Span},
     };
@@ -1839,11 +1804,7 @@ mod tests {
     fn config_view_includes_expected_editable_rows() {
         let app = create_test_app();
         let view = ConfigView::new_for_app(&app);
-        let keys = view
-            .rows
-            .iter()
-            .map(|row| row.key.as_str())
-            .collect::<Vec<_>>();
+        let keys = view.rows.iter().map(|row| row.key.as_str()).collect::<Vec<_>>();
         assert!(keys.contains(&"model"));
         assert!(keys.contains(&"approval_mode"));
         assert!(keys.contains(&"locale"));
@@ -1940,11 +1901,7 @@ mod tests {
 
         let submit = view.handle_key(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         match submit {
-            ViewAction::Emit(ViewEvent::ConfigUpdated {
-                key,
-                value,
-                persist,
-            }) => {
+            ViewAction::Emit(ViewEvent::ConfigUpdated { key, value, persist }) => {
                 assert_eq!(key, "mcp_config_path");
                 assert_eq!(value, "servers.json");
                 assert!(persist);
@@ -1964,10 +1921,7 @@ mod tests {
 
         let clear = view.handle_key(KeyEvent::new(KeyCode::Char('u'), KeyModifiers::CONTROL));
         assert!(matches!(clear, ViewAction::None));
-        let cleared = view
-            .editing
-            .as_ref()
-            .expect("editing should remain active after Ctrl+U");
+        let cleared = view.editing.as_ref().expect("editing should remain active after Ctrl+U");
         assert!(cleared.buffer.is_empty());
 
         for ch in "deepseek-v4-flash".chars() {
@@ -1977,11 +1931,7 @@ mod tests {
 
         let submit = view.handle_key(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         match submit {
-            ViewAction::Emit(ViewEvent::ConfigUpdated {
-                key,
-                value,
-                persist,
-            }) => {
+            ViewAction::Emit(ViewEvent::ConfigUpdated { key, value, persist }) => {
                 assert_eq!(key, "model");
                 assert_eq!(value, "deepseek-v4-flash");
                 assert!(!persist);
@@ -2002,11 +1952,7 @@ mod tests {
         let hitboxes = view.last_row_hitboxes.borrow().clone();
         let (_, row_idx) = hitboxes
             .iter()
-            .find(|(_, idx)| {
-                view.rows
-                    .get(*idx)
-                    .is_some_and(|row| row.key == "default_model")
-            })
+            .find(|(_, idx)| view.rows.get(*idx).is_some_and(|row| row.key == "default_model"))
             .copied()
             .expect("default_model row should have a hitbox");
         let y = hitboxes

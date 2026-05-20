@@ -299,12 +299,7 @@ export class TaskExecutor {
 
       if (this.hitlManager) {
         try {
-          await this.hitlManager.createCheckpoint(
-            plan.planId,
-            checkpointId,
-            step,
-            result
-          )
+          await this.hitlManager.createCheckpoint(plan.planId, checkpointId, step, result)
           hitlResults.push({
             status: 'waiting',
             data: result.data,

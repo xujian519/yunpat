@@ -58,7 +58,7 @@ pub enum ReviewDecision {
     Abort,
 }
 
-pub use yunpat_protocol::{ToolCategory, RiskLevel};
+pub use yunpat_protocol::{RiskLevel, ToolCategory};
 
 /// Request for user approval of a tool execution
 #[derive(Debug, Clone)]

@@ -260,7 +260,7 @@ export class SemanticChunker {
         }
 
         // 提取句子
-        let sentence = normalized.substring(start, i + 1).trim()
+        const sentence = normalized.substring(start, i + 1).trim()
         if (sentence) {
           sentences.push(sentence)
         }

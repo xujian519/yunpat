@@ -9,9 +9,9 @@
 
 use crate::models::SystemPrompt;
 use crate::project_context::{ProjectContext, load_project_context_with_parents};
+use std::path::{Path, PathBuf};
 use yunpat_protocol::AppMode;
 use yunpat_protocol::ApprovalMode;
-use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct PromptSessionContext<'a> {

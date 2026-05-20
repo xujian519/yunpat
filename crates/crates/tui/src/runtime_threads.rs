@@ -83,9 +83,10 @@ impl<T: Clone> Cache<T> {
 
     fn put(&mut self, key: String, value: T) {
         if self.data.len() >= self.max_size
-            && let Some(key) = self.data.keys().next().cloned() {
-                self.data.remove(&key);
-            }
+            && let Some(key) = self.data.keys().next().cloned()
+        {
+            self.data.remove(&key);
+        }
         self.data.insert(key, (value, Instant::now()));
     }
 
@@ -99,8 +100,7 @@ impl<T: Clone> Cache<T> {
 }
 
 /// 事件写入器配置
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct EventWriterConfig {
     pub fsync_mode: FsyncMode,
 }

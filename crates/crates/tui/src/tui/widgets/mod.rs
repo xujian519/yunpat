@@ -34,7 +34,6 @@ use crate::{commands, config::COMMON_YUNPAT_MODELS};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{
@@ -99,11 +98,8 @@ impl ChatWidget {
         // cell forces only those rows to re-render — committed history rows
         // are unaffected.
         app.resync_history_revisions();
-        let active_entries: &[HistoryCell] = app
-            .tool
-            .active_cell
-            .as_ref()
-            .map_or(&[], |active| active.entries());
+        let active_entries: &[HistoryCell] =
+            app.tool.active_cell.as_ref().map_or(&[], |active| active.entries());
 
         let history_len = app.history.len();
         let has_collapsed = !app.collapsed_cells.is_empty();
@@ -117,11 +113,8 @@ impl ChatWidget {
                 let active_rev = app.tool.active_cell_revision;
                 for i in 0..active_entries.len() {
                     let salt = (i as u64).wrapping_add(1);
-                    cell_revisions.push(
-                        active_rev
-                            .wrapping_mul(0x9E37_79B9_7F4A_7C15)
-                            .wrapping_add(salt),
-                    );
+                    cell_revisions
+                        .push(active_rev.wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(salt));
                 }
             }
             // Build identity mapping: filtered index == original index.
@@ -163,11 +156,8 @@ impl ChatWidget {
                     }
                     filtered_cells.push(cell.clone());
                     let salt = (i as u64).wrapping_add(1);
-                    filtered_revs.push(
-                        active_rev
-                            .wrapping_mul(0x9E37_79B9_7F4A_7C15)
-                            .wrapping_add(salt),
-                    );
+                    filtered_revs
+                        .push(active_rev.wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(salt));
                     filtered_to_original.push(original_idx);
                 }
             }
@@ -208,10 +198,7 @@ impl ChatWidget {
         // stream` — the next stream chunk would then yank them back to
         // bottom mid-read.
         let was_explicit_tail = app.viewport.transcript_scroll.is_at_tail();
-        let (scroll_state, top) = app
-            .viewport
-            .transcript_scroll
-            .resolve_top(line_meta, max_start);
+        let (scroll_state, top) = app.viewport.transcript_scroll.resolve_top(line_meta, max_start);
         app.viewport.transcript_scroll = scroll_state;
         // If the user scrolled back to the live tail, the per-stream
         // "leave me alone" lock is over — new chunks should pin to bottom
@@ -242,10 +229,7 @@ impl ChatWidget {
         let mut lines = if total_lines == 0 {
             vec![Line::from("")]
         } else {
-            app.viewport
-                .transcript_cache
-                .visible_lines(top, end - top)
-                .to_vec()
+            app.viewport.transcript_cache.visible_lines(top, end - top).to_vec()
         };
 
         // Brief flash highlight on the most recently sent user message.
@@ -278,11 +262,7 @@ impl ChatWidget {
             },
         );
 
-        Self {
-            content_area,
-            lines,
-            scrollbar,
-        }
+        Self { content_area, lines, scrollbar }
     }
 }
 
@@ -469,14 +449,12 @@ impl Renderable for ComposerWidget<'_> {
                     Span::styled(
                         format!(
                             "{}  ",
-                            self.app
-                                .tr(crate::localization::MessageId::HistoryHintAccept)
+                            self.app.tr(crate::localization::MessageId::HistoryHintAccept)
                         ),
                         Style::default().fg(palette::TEXT_MUTED),
                     ),
                     Span::styled(
-                        self.app
-                            .tr(crate::localization::MessageId::HistoryHintRestore),
+                        self.app.tr(crate::localization::MessageId::HistoryHintRestore),
                         Style::default().fg(palette::TEXT_MUTED),
                     ),
                 ]))
@@ -540,8 +518,7 @@ impl Renderable for ComposerWidget<'_> {
             let mut block = Block::default()
                 .title(Line::from(Span::styled(
                     if self.app.is_history_search_active() {
-                        self.app
-                            .tr(crate::localization::MessageId::HistorySearchTitle)
+                        self.app.tr(crate::localization::MessageId::HistorySearchTitle)
                     } else if is_draft_mode {
                         "Draft"
                     } else {
@@ -577,11 +554,9 @@ impl Renderable for ComposerWidget<'_> {
         let mut input_lines = Vec::new();
         if input_text.is_empty() {
             let placeholder = if self.app.is_history_search_active() {
-                self.app
-                    .tr(crate::localization::MessageId::HistorySearchPlaceholder)
+                self.app.tr(crate::localization::MessageId::HistorySearchPlaceholder)
             } else {
-                self.app
-                    .tr(crate::localization::MessageId::ComposerPlaceholder)
+                self.app.tr(crate::localization::MessageId::ComposerPlaceholder)
             };
             input_lines.push(Line::from(Span::styled(
                 placeholder,
@@ -602,11 +577,9 @@ impl Renderable for ComposerWidget<'_> {
         // row count ourselves to keep padding accurate on narrow widths.
         let visual_rows = if input_text.is_empty() {
             let placeholder = if self.app.is_history_search_active() {
-                self.app
-                    .tr(crate::localization::MessageId::HistorySearchPlaceholder)
+                self.app.tr(crate::localization::MessageId::HistorySearchPlaceholder)
             } else {
-                self.app
-                    .tr(crate::localization::MessageId::ComposerPlaceholder)
+                self.app.tr(crate::localization::MessageId::ComposerPlaceholder)
             };
             placeholder_visual_lines_for(placeholder, content_width)
         } else {
@@ -622,8 +595,7 @@ impl Renderable for ComposerWidget<'_> {
         if self.app.is_history_search_active() {
             if history_search_matches.is_empty() {
                 lines.push(Line::from(Span::styled(
-                    self.app
-                        .tr(crate::localization::MessageId::HistoryNoMatches),
+                    self.app.tr(crate::localization::MessageId::HistoryNoMatches),
                     Style::default().fg(palette::TEXT_MUTED),
                 )));
             } else {
@@ -652,17 +624,12 @@ impl Renderable for ComposerWidget<'_> {
                 };
                 let menu_bottom = (menu_top + menu_visible_rows).min(menu_total);
 
-                for (idx, entry) in history_search_matches
-                    .iter()
-                    .enumerate()
-                    .take(menu_bottom)
-                    .skip(menu_top)
+                for (idx, entry) in
+                    history_search_matches.iter().enumerate().take(menu_bottom).skip(menu_top)
                 {
                     let is_selected = idx == selected;
                     let style = if is_selected {
-                        Style::default()
-                            .fg(palette::SELECTION_TEXT)
-                            .bg(palette::SELECTION_BG)
+                        Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
                     } else {
                         Style::default().fg(palette::TEXT_MUTED)
                     };
@@ -701,18 +668,12 @@ impl Renderable for ComposerWidget<'_> {
             };
             let menu_bottom = (menu_top + menu_visible_rows).min(menu_total);
 
-            for (idx, entry) in self
-                .mention_menu_entries
-                .iter()
-                .enumerate()
-                .take(menu_bottom)
-                .skip(menu_top)
+            for (idx, entry) in
+                self.mention_menu_entries.iter().enumerate().take(menu_bottom).skip(menu_top)
             {
                 let is_selected = idx == selected;
                 let style = if is_selected {
-                    Style::default()
-                        .fg(palette::SELECTION_TEXT)
-                        .bg(palette::SELECTION_BG)
+                    Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
                 } else {
                     Style::default().fg(palette::TEXT_MUTED)
                 };
@@ -752,18 +713,12 @@ impl Renderable for ComposerWidget<'_> {
 
             // Label column width for two-column layout (name + description)
             let label_width = 22.min(content_width.saturating_sub(4));
-            for (idx, entry) in self
-                .slash_menu_entries
-                .iter()
-                .enumerate()
-                .take(menu_bottom)
-                .skip(menu_top)
+            for (idx, entry) in
+                self.slash_menu_entries.iter().enumerate().take(menu_bottom).skip(menu_top)
             {
                 let is_selected = idx == selected;
                 let sel_style = if is_selected {
-                    Style::default()
-                        .fg(palette::SELECTION_TEXT)
-                        .bg(palette::SELECTION_BG)
+                    Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
                 } else {
                     Style::default().fg(palette::TEXT_MUTED)
                 };
@@ -778,9 +733,7 @@ impl Renderable for ComposerWidget<'_> {
 
                 // Description column (muted when not selected, secondary when selected)
                 let desc_style = if is_selected {
-                    Style::default()
-                        .fg(palette::SELECTION_TEXT)
-                        .bg(palette::SELECTION_BG)
+                    Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
                 } else {
                     Style::default().fg(palette::TEXT_DIM)
                 };
@@ -852,9 +805,7 @@ impl Renderable for ComposerWidget<'_> {
             }
         }
 
-        let paragraph = Paragraph::new(lines)
-            .style(background)
-            .wrap(Wrap { trim: false });
+        let paragraph = Paragraph::new(lines).style(background).wrap(Wrap { trim: false });
         paragraph.render(inner_area, buf);
     }
 
@@ -883,11 +834,9 @@ impl Renderable for ComposerWidget<'_> {
             layout_input(input_text, input_cursor, content_width, input_rows_budget);
         let visual_rows = if input_text.is_empty() {
             let placeholder = if self.app.is_history_search_active() {
-                self.app
-                    .tr(crate::localization::MessageId::HistorySearchPlaceholder)
+                self.app.tr(crate::localization::MessageId::HistorySearchPlaceholder)
             } else {
-                self.app
-                    .tr(crate::localization::MessageId::ComposerPlaceholder)
+                self.app.tr(crate::localization::MessageId::ComposerPlaceholder)
             };
             placeholder_visual_lines_for(placeholder, content_width)
         } else {
@@ -966,9 +915,7 @@ impl Renderable for ApprovalWidget<'_> {
             Span::raw("  "),
             Span::styled(
                 self.request.tool_name.clone(),
-                Style::default()
-                    .fg(palette::YUNPAT_SKY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
             ),
         ]));
 
@@ -1032,9 +979,7 @@ impl Renderable for ApprovalWidget<'_> {
             };
 
             let row_style = if is_selected {
-                Style::default()
-                    .fg(palette::SELECTION_TEXT)
-                    .bg(palette::SELECTION_BG)
+                Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
             } else {
                 Style::default()
             };
@@ -1043,9 +988,7 @@ impl Renderable for ApprovalWidget<'_> {
                 Span::raw("  "),
                 Span::styled(
                     format!("[{}] ", opt.key_hint),
-                    Style::default()
-                        .fg(palette_colors.shortcut)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(palette_colors.shortcut).add_modifier(Modifier::BOLD),
                 ),
                 Span::styled(opt.label.to_string(), row_style.fg(label_color)),
             ];
@@ -1053,9 +996,7 @@ impl Renderable for ApprovalWidget<'_> {
                 spans.push(Span::raw("  "));
                 spans.push(Span::styled(
                     "(staged)",
-                    Style::default()
-                        .fg(palette_colors.accent)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(palette_colors.accent).add_modifier(Modifier::BOLD),
                 ));
             }
             lines.push(Line::from(spans));
@@ -1075,9 +1016,7 @@ impl Renderable for ApprovalWidget<'_> {
                     ),
                     Span::styled(
                         "Enter / 1 / y",
-                        Style::default()
-                            .fg(palette_colors.accent)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(palette_colors.accent).add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
                         "  ·  v: full params  ·  Esc: abort",
@@ -1095,9 +1034,7 @@ impl Renderable for ApprovalWidget<'_> {
                     Span::raw("  "),
                     Span::styled(
                         "Confirm destructive action — press ",
-                        Style::default()
-                            .fg(palette_colors.accent)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(palette_colors.accent).add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
                         again_key.to_string(),
@@ -1121,9 +1058,7 @@ impl Renderable for ApprovalWidget<'_> {
                     ),
                     Span::styled(
                         "y/a then y/a again",
-                        Style::default()
-                            .fg(palette_colors.accent)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(palette_colors.accent).add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
                         "  ·  v: full params  ·  Esc: abort",
@@ -1148,9 +1083,7 @@ impl Renderable for ApprovalWidget<'_> {
         // Render the card body inside the block, then paint the warm
         // accent rail on the destructive variant. The rail uses a
         // single-cell column so it doesn't shift the body layout.
-        let paragraph = Paragraph::new(lines)
-            .block(block)
-            .wrap(Wrap { trim: false });
+        let paragraph = Paragraph::new(lines).block(block).wrap(Wrap { trim: false });
         paragraph.render(card_area, buf);
 
         if matches!(risk, RiskLevel::Destructive) {
@@ -1307,18 +1240,14 @@ impl Renderable for ElevationWidget<'_> {
             Line::from(""),
             Line::from(vec![Span::styled(
                 "  ⚠ Sandbox Denied ",
-                Style::default()
-                    .fg(palette::STATUS_ERROR)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(palette::STATUS_ERROR).add_modifier(Modifier::BOLD),
             )]),
             Line::from(""),
             Line::from(vec![
                 Span::raw("  Tool: "),
                 Span::styled(
                     &self.request.tool_name,
-                    Style::default()
-                        .fg(palette::YUNPAT_SKY)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
                 ),
             ]),
         ];
@@ -1383,9 +1312,7 @@ impl Renderable for ElevationWidget<'_> {
         for (i, option) in self.request.options.iter().enumerate() {
             let is_selected = i == self.selected;
             let style = if is_selected {
-                Style::default()
-                    .fg(palette::SELECTION_TEXT)
-                    .bg(palette::SELECTION_BG)
+                Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
             } else {
                 Style::default()
             };
@@ -1428,9 +1355,7 @@ impl Renderable for ElevationWidget<'_> {
             .style(Style::default().bg(palette::YUNPAT_INK))
             .padding(Padding::uniform(1));
 
-        let paragraph = Paragraph::new(lines)
-            .block(block)
-            .wrap(Wrap { trim: false });
+        let paragraph = Paragraph::new(lines).block(block).wrap(Wrap { trim: false });
 
         paragraph.render(popup_area, buf);
     }
@@ -1460,9 +1385,8 @@ fn apply_selection(lines: &mut [Line<'static>], top: usize, app: &App) {
         return;
     };
 
-    let selection_style = Style::default()
-        .bg(app.ui_theme.selection_bg)
-        .fg(palette::SELECTION_TEXT);
+    let selection_style =
+        Style::default().bg(app.ui_theme.selection_bg).fg(palette::SELECTION_TEXT);
 
     for (idx, line) in lines.iter_mut().enumerate() {
         let line_index = top + idx;
@@ -1518,9 +1442,7 @@ fn apply_send_flash(
     line_meta: &[TranscriptLineMeta],
 ) {
     // Find the last User cell index.
-    let last_user_cell = history
-        .iter()
-        .rposition(|cell| matches!(cell, HistoryCell::User { .. }));
+    let last_user_cell = history.iter().rposition(|cell| matches!(cell, HistoryCell::User { .. }));
     let Some(target_cell) = last_user_cell else {
         return;
     };
@@ -1713,9 +1635,7 @@ fn composer_height(
     if has_panel {
         line_count = line_count.max(composer_min_input_rows(density));
     }
-    line_count = line_count
-        .saturating_add(extra_lines)
-        .saturating_add(chrome_height);
+    line_count = line_count.saturating_add(extra_lines).saturating_add(chrome_height);
     let max_height = usize::from(available_height.clamp(1, composer_max_height(density)));
     line_count.clamp(1, max_height).try_into().unwrap_or(1)
 }
@@ -1820,11 +1740,7 @@ fn layout_input(
     if start + max_height > lines.len() {
         start = lines.len().saturating_sub(max_height);
     }
-    let visible = lines
-        .into_iter()
-        .skip(start)
-        .take(max_height)
-        .collect::<Vec<_>>();
+    let visible = lines.into_iter().skip(start).take(max_height).collect::<Vec<_>>();
     let visible_cursor_row = cursor_row.saturating_sub(start);
 
     (
@@ -2156,16 +2072,8 @@ mod tests {
             ("my-review".to_string(), "Review code".to_string()),
         ];
         let hints = slash_completion_hints("/", 128, &cached_skills, Locale::En);
-        assert!(
-            hints
-                .iter()
-                .any(|hint| hint.name == "/skill search-files" && hint.is_skill)
-        );
-        assert!(
-            hints
-                .iter()
-                .any(|hint| hint.name == "/skill my-review" && hint.is_skill)
-        );
+        assert!(hints.iter().any(|hint| hint.name == "/skill search-files" && hint.is_skill));
+        assert!(hints.iter().any(|hint| hint.name == "/skill my-review" && hint.is_skill));
     }
 
     #[test]
@@ -2175,11 +2083,7 @@ mod tests {
             ("my-review".to_string(), "Review code".to_string()),
         ];
         let hints = slash_completion_hints("/se", 128, &cached_skills, Locale::En);
-        assert!(
-            hints
-                .iter()
-                .any(|hint| hint.name == "/skill search-files" && hint.is_skill)
-        );
+        assert!(hints.iter().any(|hint| hint.name == "/skill search-files" && hint.is_skill));
         assert!(!hints.iter().any(|hint| hint.name == "/skill my-review"));
     }
 
@@ -2201,9 +2105,8 @@ mod tests {
             "hello world",
             Style::default().fg(palette::TEXT_PRIMARY),
         ));
-        let selection_style = Style::default()
-            .bg(palette::SELECTION_BG)
-            .fg(palette::SELECTION_TEXT);
+        let selection_style =
+            Style::default().bg(palette::SELECTION_BG).fg(palette::SELECTION_TEXT);
 
         let styled = apply_selection_to_line(&line, 0, 5, selection_style);
         assert_eq!(styled.len(), 2);
@@ -2446,9 +2349,7 @@ mod tests {
     fn empty_state_renders_only_without_transcript_activity() {
         let mut app = create_test_app();
         assert!(should_render_empty_state(&app));
-        app.add_message(crate::tui::history::HistoryCell::User {
-            content: "hello".to_string(),
-        });
+        app.add_message(crate::tui::history::HistoryCell::User { content: "hello".to_string() });
         assert!(!should_render_empty_state(&app));
     }
 
@@ -2468,11 +2369,8 @@ mod tests {
         for width in [40u16, 80, 111, 165] {
             let lines = cell.lines(width);
             for (idx, line) in lines.iter().enumerate() {
-                let visual: usize = line
-                    .spans
-                    .iter()
-                    .map(|s| UnicodeWidthStr::width(s.content.as_ref()))
-                    .sum();
+                let visual: usize =
+                    line.spans.iter().map(|s| UnicodeWidthStr::width(s.content.as_ref())).sum();
                 assert!(
                     visual <= usize::from(width),
                     "line {idx} at width {width} has visual width {visual} > {width}"
@@ -2622,12 +2520,7 @@ mod tests {
         // transitions produce on Windows.
         for (width, height) in [(140u16, 40u16), (90, 28), (60, 20), (140, 40)] {
             app.handle_resize(width, height);
-            let area = Rect {
-                x: 0,
-                y: 0,
-                width,
-                height,
-            };
+            let area = Rect { x: 0, y: 0, width, height };
             let mut buf = Buffer::empty(area);
             let widget = ChatWidget::new(&mut app, area);
             widget.render(area, &mut buf);
@@ -2680,12 +2573,7 @@ mod tests {
         for width in widths_to_cycle {
             // Caller-side: simulate the resize handler invalidating caches.
             app.handle_resize(width, height);
-            let area = Rect {
-                x: 0,
-                y: 0,
-                width,
-                height,
-            };
+            let area = Rect { x: 0, y: 0, width, height };
             let mut buf = Buffer::empty(area);
             let widget = ChatWidget::new(&mut app, area);
             widget.render(area, &mut buf);

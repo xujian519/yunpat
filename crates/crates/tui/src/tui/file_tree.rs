@@ -11,7 +11,7 @@ use std::sync::{Arc, Mutex};
 use ratatui::{
     Frame,
     layout::Rect,
-    style::{Style},
+    style::Style,
     text::{Line, Span},
     widgets::{Block, Paragraph, Wrap},
 };
@@ -339,9 +339,7 @@ pub fn render_file_tree(f: &mut Frame, area: Rect, state: &mut FileTreeState) {
             let display = truncate_line_to_width(&raw, content_width.max(1));
 
             let style = if is_selected {
-                Style::default()
-                    .fg(palette::SELECTION_TEXT)
-                    .bg(palette::SELECTION_BG)
+                Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
             } else {
                 Style::default().fg(palette::TEXT_PRIMARY)
             };

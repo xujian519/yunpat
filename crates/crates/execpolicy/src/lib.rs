@@ -328,10 +328,7 @@ mod tests {
 
     #[test]
     fn test_ruleset_user_layer() {
-        let ruleset = Ruleset::user(
-            vec!["npm start".to_string()],
-            vec!["rm -rf".to_string()],
-        );
+        let ruleset = Ruleset::user(vec!["npm start".to_string()], vec!["rm -rf".to_string()]);
         assert_eq!(ruleset.layer, RulesetLayer::User);
         assert_eq!(ruleset.trusted_prefixes.len(), 1);
         assert_eq!(ruleset.denied_prefixes.len(), 1);
@@ -345,10 +342,8 @@ mod tests {
 
     #[test]
     fn test_execpolicy_engine_new() {
-        let engine = ExecPolicyEngine::new(
-            vec!["git status".to_string()],
-            vec!["rm -rf".to_string()],
-        );
+        let engine =
+            ExecPolicyEngine::new(vec!["git status".to_string()], vec!["rm -rf".to_string()]);
         assert!(engine.approved_for_session.is_empty());
     }
 
@@ -549,9 +544,7 @@ mod tests {
         };
         assert_eq!(needs.phase(), "needs_approval");
 
-        let forbidden = ExecApprovalRequirement::Forbidden {
-            reason: "Test".to_string(),
-        };
+        let forbidden = ExecApprovalRequirement::Forbidden { reason: "Test".to_string() };
         assert_eq!(forbidden.phase(), "forbidden");
     }
 
@@ -614,10 +607,7 @@ mod tests {
 
     #[test]
     fn test_serde_ruleset() {
-        let ruleset = Ruleset::user(
-            vec!["npm start".to_string()],
-            vec!["rm -rf".to_string()],
-        );
+        let ruleset = Ruleset::user(vec!["npm start".to_string()], vec!["rm -rf".to_string()]);
 
         let json = serde_json::to_string(&ruleset).unwrap();
         let deserialized: Ruleset = serde_json::from_str(&json).unwrap();
@@ -667,10 +657,7 @@ mod tests {
                 vec!["cargo test".to_string()],
                 vec!["cargo clean".to_string()],
             ),
-            Ruleset::user(
-                vec!["npm start".to_string()],
-                vec!["npm stop".to_string()],
-            ),
+            Ruleset::user(vec!["npm start".to_string()], vec!["npm stop".to_string()]),
         ];
 
         let engine = ExecPolicyEngine::with_rulesets(rulesets);
@@ -687,10 +674,8 @@ mod tests {
 
     #[test]
     fn test_resolve_prefixes_legacy() {
-        let engine = ExecPolicyEngine::new(
-            vec!["git status".to_string()],
-            vec!["rm -rf".to_string()],
-        );
+        let engine =
+            ExecPolicyEngine::new(vec!["git status".to_string()], vec!["rm -rf".to_string()]);
 
         let (trusted, denied) = engine.resolve_prefixes();
 

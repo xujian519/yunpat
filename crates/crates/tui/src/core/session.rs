@@ -5,10 +5,10 @@
 use crate::cycle_manager::CycleBriefing;
 use crate::models::{Message, SystemPrompt, Usage};
 use crate::project_context::{ProjectContext, load_project_context_with_parents};
-use yunpat_protocol::ApprovalMode;
 use crate::working_set::WorkingSet;
 use chrono::{DateTime, Utc};
 use std::path::PathBuf;
+use yunpat_protocol::ApprovalMode;
 
 /// Session state for the engine.
 #[derive(Debug, Clone)]

@@ -14,7 +14,10 @@ import type { CompactResult, CompactConfig, CompactBoundary } from './types.js'
 import { estimateMessagesTokens } from '../token/token-estimator.js'
 
 export interface LLMChatFn {
-  (messages: Array<{ role: string; content: string }>, options?: { temperature?: number; maxTokens?: number }): Promise<{ content: string }>
+  (
+    messages: Array<{ role: string; content: string }>,
+    options?: { temperature?: number; maxTokens?: number }
+  ): Promise<{ content: string }>
 }
 
 /**
@@ -132,10 +135,10 @@ export async function apiSummaryCompact(
   let summaryContent: string
   if (llmChatFn) {
     try {
-      const response = await llmChatFn(
-        [{ role: 'user', content: summaryPrompt }],
-        { temperature: 0.3, maxTokens: 2000 }
-      )
+      const response = await llmChatFn([{ role: 'user', content: summaryPrompt }], {
+        temperature: 0.3,
+        maxTokens: 2000,
+      })
       summaryContent = response.content
     } catch (err) {
       console.error('[api-summary-compact] LLM 摘要生成失败，使用兜底摘要:', err)

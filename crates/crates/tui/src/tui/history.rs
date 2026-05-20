@@ -335,13 +335,7 @@ impl HistoryCell {
     /// Whether this cell is the continuation of a streaming assistant message.
     #[must_use]
     pub fn is_stream_continuation(&self) -> bool {
-        matches!(
-            self,
-            HistoryCell::Assistant {
-                streaming: true,
-                ..
-            }
-        )
+        matches!(self, HistoryCell::Assistant { streaming: true, .. })
     }
 
     #[must_use]
@@ -430,9 +424,7 @@ fn render_archived_context(
     };
 
     let label = format!("Context L{level}");
-    let label_style = Style::default()
-        .fg(palette::TEXT_DIM)
-        .add_modifier(Modifier::BOLD);
+    let label_style = Style::default().fg(palette::TEXT_DIM).add_modifier(Modifier::BOLD);
     let body_style = Style::default().fg(palette::TEXT_DIM).italic();
 
     let content_width = width.saturating_sub(4).max(1);
@@ -524,9 +516,7 @@ pub fn history_cells_from_message(msg: &Message) -> Vec<HistoryCell> {
                             }
                             content.push_str(text);
                         } else {
-                            cells.push(HistoryCell::User {
-                                content: text.clone(),
-                            });
+                            cells.push(HistoryCell::User { content: text.clone() });
                         }
                     }
                     "assistant" => {
@@ -549,9 +539,7 @@ pub fn history_cells_from_message(msg: &Message) -> Vec<HistoryCell> {
                             }
                             content.push_str(text);
                         } else {
-                            cells.push(HistoryCell::System {
-                                content: text.clone(),
-                            });
+                            cells.push(HistoryCell::System { content: text.clone() });
                         }
                     }
                     _ => {}
@@ -663,10 +651,7 @@ impl ExecCell {
     ) -> Vec<Line<'static>> {
         let mut lines = Vec::new();
         let command_summary = command_header_summary(&self.command);
-        let header_summary = self
-            .interaction
-            .as_deref()
-            .or(Some(command_summary.as_str()));
+        let header_summary = self.interaction.as_deref().or(Some(command_summary.as_str()));
         lines.push(render_tool_header_with_summary(
             "Shell",
             header_summary,
@@ -748,10 +733,7 @@ impl ExploringCell {
     /// Render the exploring cell into lines.
     pub fn lines_with_motion(&self, width: u16, low_motion: bool) -> Vec<Line<'static>> {
         let mut lines = Vec::new();
-        let all_done = self
-            .entries
-            .iter()
-            .all(|entry| entry.status != ToolStatus::Running);
+        let all_done = self.entries.iter().all(|entry| entry.status != ToolStatus::Running);
         let status = if all_done {
             ToolStatus::Success
         } else {
@@ -965,9 +947,7 @@ impl ReviewCell {
         lines.push(Line::from(""));
         lines.push(Line::from(Span::styled(
             "Issues",
-            Style::default()
-                .fg(palette::YUNPAT_BLUE)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::BOLD),
         )));
         if output.issues.is_empty() {
             lines.extend(wrap_plain_line(
@@ -999,9 +979,7 @@ impl ReviewCell {
         lines.push(Line::from(""));
         lines.push(Line::from(Span::styled(
             "Suggestions",
-            Style::default()
-                .fg(palette::YUNPAT_BLUE)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::BOLD),
         )));
         if output.suggestions.is_empty() {
             lines.extend(wrap_plain_line(
@@ -1343,11 +1321,7 @@ impl GenericToolCell {
     /// no agent id has been assigned yet.
     fn render_agent_spawn_compact(&self, low_motion: bool) -> Vec<Line<'static>> {
         let family = crate::tui::widgets::tool_card::ToolFamily::Delegate;
-        let agent_id = self
-            .output
-            .as_deref()
-            .and_then(extract_agent_id)
-            .unwrap_or("…");
+        let agent_id = self.output.as_deref().and_then(extract_agent_id).unwrap_or("…");
         vec![render_tool_header_with_family_and_summary(
             family,
             Some(agent_id),
@@ -1503,16 +1477,8 @@ fn parse_checklist_snapshot(output: &str) -> Option<ChecklistSnapshot> {
     let items: Vec<ChecklistItemSnapshot> = items_value
         .iter()
         .map(|item| ChecklistItemSnapshot {
-            content: item
-                .get("content")
-                .and_then(Value::as_str)
-                .unwrap_or("")
-                .to_string(),
-            status: item
-                .get("status")
-                .and_then(Value::as_str)
-                .unwrap_or("pending")
-                .to_string(),
+            content: item.get("content").and_then(Value::as_str).unwrap_or("").to_string(),
+            status: item.get("status").and_then(Value::as_str).unwrap_or("pending").to_string(),
         })
         .collect();
 
@@ -1605,9 +1571,7 @@ fn render_checklist_change_card(
 
     // Look up the title from the snapshot. `id` in tool input is
     // 1-indexed; `items` is 0-indexed.
-    let item = (change.id as usize)
-        .checked_sub(1)
-        .and_then(|idx| snapshot.items.get(idx));
+    let item = (change.id as usize).checked_sub(1).and_then(|idx| snapshot.items.get(idx));
     let title = item
         .map(|i| i.content.trim().to_string())
         .filter(|s| !s.is_empty())
@@ -1712,10 +1676,7 @@ fn render_checklist_card(
         let prefix_width =
             UnicodeWidthStr::width(TRANSCRIPT_RAIL) + UnicodeWidthStr::width(prefix.as_str());
         let content_width = usize::from(width).saturating_sub(prefix_width).max(1);
-        for (idx, part) in wrap_text(item.content.trim(), content_width)
-            .into_iter()
-            .enumerate()
-        {
+        for (idx, part) in wrap_text(item.content.trim(), content_width).into_iter().enumerate() {
             let mut spans = vec![Span::styled(
                 "\u{258F} ".to_string(),
                 Style::default().fg(palette::TEXT_DIM),
@@ -1878,10 +1839,8 @@ pub fn summarize_tool_output(output: &str) -> String {
             if let Some(file_id) = obj.get("file_id").and_then(|v| v.as_str()) {
                 parts.push(format!("file_id: {file_id}"));
             }
-            if let Some(url) = obj
-                .get("file_url")
-                .or_else(|| obj.get("url"))
-                .and_then(|v| v.as_str())
+            if let Some(url) =
+                obj.get("file_url").or_else(|| obj.get("url")).and_then(|v| v.as_str())
             {
                 parts.push(format!("url: {}", truncate_text(url, 120)));
             }
@@ -1893,11 +1852,7 @@ pub fn summarize_tool_output(output: &str) -> String {
                 return parts.join(" | ");
             }
 
-            if let Some(content) = obj
-                .get("content")
-                .or(obj.get("result"))
-                .or(obj.get("output"))
-            {
+            if let Some(content) = obj.get("content").or(obj.get("result")).or(obj.get("output")) {
                 return summarize_inline_value(content, TOOL_TEXT_LIMIT, false);
             }
         }
@@ -1931,10 +1886,7 @@ pub fn summarize_mcp_output(output: &str) -> McpOutputSummary {
             let mut is_image = false;
 
             for block in blocks {
-                let block_type = block
-                    .get("type")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("unknown");
+                let block_type = block.get("type").and_then(|v| v.as_str()).unwrap_or("unknown");
                 match block_type {
                     "text" => {
                         let text = block.get("text").and_then(|v| v.as_str()).unwrap_or("");
@@ -2338,10 +2290,7 @@ fn output_rows(output: &str, width: u16) -> Vec<OutputRow> {
             });
         } else {
             for wrapped in wrap_text(&sanitized, wrap_width) {
-                rows.push(OutputRow {
-                    text: wrapped,
-                    intact: false,
-                });
+                rows.push(OutputRow { text: wrapped, intact: false });
             }
         }
     }
@@ -2438,9 +2387,7 @@ fn is_cycle_boundary(content: &str) -> bool {
 /// full-width line with YUNPAT_BLUE text and bold weight, plus a thin
 /// horizontal rule above for visual separation.
 fn render_cycle_boundary(content: &str, width: u16) -> Vec<Line<'static>> {
-    let style = Style::default()
-        .fg(palette::YUNPAT_BLUE)
-        .add_modifier(Modifier::BOLD);
+    let style = Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::BOLD);
     let rule_style = Style::default().fg(palette::TEXT_DIM);
     let content_width = usize::from(width.saturating_sub(2).max(1));
     let mut lines = Vec::new();
@@ -2476,11 +2423,7 @@ fn file_line_style(text: &str) -> Option<Style> {
         && after.chars().all(|c| c.is_ascii_digit())
         && looks_like_file_path(before)
     {
-        Some(
-            Style::default()
-                .fg(palette::YUNPAT_SKY)
-                .add_modifier(Modifier::UNDERLINED),
-        )
+        Some(Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::UNDERLINED))
     } else {
         None
     }
@@ -2786,12 +2729,7 @@ fn render_tool_header_with_family_and_summary(
 }
 
 fn normalize_header_summary(summary: &str) -> Option<String> {
-    let normalized = summary
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
-        .trim()
-        .to_string();
+    let normalized = summary.split_whitespace().collect::<Vec<_>>().join(" ").trim().to_string();
     if normalized.is_empty() {
         None
     } else {
@@ -2913,9 +2851,7 @@ fn thinking_status_label(state: ThinkingVisualState) -> &'static str {
 }
 
 fn thinking_title_style() -> Style {
-    Style::default()
-        .fg(palette::TEXT_SOFT)
-        .add_modifier(Modifier::BOLD)
+    Style::default().fg(palette::TEXT_SOFT).add_modifier(Modifier::BOLD)
 }
 
 fn thinking_status_style(state: ThinkingVisualState) -> Style {
@@ -2948,11 +2884,7 @@ pub fn try_open_file_at_line(text: &str, workspace: &Path) -> bool {
     let editor = std::env::var("VISUAL")
         .ok()
         .filter(|s| !s.trim().is_empty())
-        .or_else(|| {
-            std::env::var("EDITOR")
-                .ok()
-                .filter(|s| !s.trim().is_empty())
-        })
+        .or_else(|| std::env::var("EDITOR").ok().filter(|s| !s.trim().is_empty()))
         .unwrap_or_else(|| "vim".to_string());
 
     let mut any_opened = false;
@@ -3092,10 +3024,8 @@ mod tests {
             )),
         };
         let lines = cell.lines_with_mode(120, true, super::RenderMode::Live);
-        let joined: String = lines
-            .iter()
-            .flat_map(|l| l.spans.iter().map(|s| s.content.as_ref()))
-            .collect();
+        let joined: String =
+            lines.iter().flat_map(|l| l.spans.iter().map(|s| s.content.as_ref())).collect();
         assert!(
             joined.contains("full output:"),
             "expected annotation prefix: {joined:?}"
@@ -3120,10 +3050,8 @@ mod tests {
             spillover_path: Some(PathBuf::from("/tmp/spill.txt")),
         };
         let lines = cell.lines_with_mode(120, true, super::RenderMode::Transcript);
-        let joined: String = lines
-            .iter()
-            .flat_map(|l| l.spans.iter().map(|s| s.content.as_ref()))
-            .collect();
+        let joined: String =
+            lines.iter().flat_map(|l| l.spans.iter().map(|s| s.content.as_ref())).collect();
         assert!(
             !joined.contains("full output:"),
             "annotation should be omitted in transcript mode: {joined:?}"
@@ -3142,10 +3070,8 @@ mod tests {
             spillover_path: None,
         };
         let lines = cell.lines_with_mode(80, true, super::RenderMode::Live);
-        let joined: String = lines
-            .iter()
-            .flat_map(|l| l.spans.iter().map(|s| s.content.as_ref()))
-            .collect();
+        let joined: String =
+            lines.iter().flat_map(|l| l.spans.iter().map(|s| s.content.as_ref())).collect();
         assert!(!joined.contains("full output:"), "{joined:?}");
     }
 
@@ -3164,17 +3090,9 @@ mod tests {
         let lines = cell.lines_with_mode(40, true, super::RenderMode::Live);
         let annotation_line = lines
             .iter()
-            .find(|l| {
-                l.spans
-                    .iter()
-                    .any(|s| s.content.as_ref().contains("full output:"))
-            })
+            .find(|l| l.spans.iter().any(|s| s.content.as_ref().contains("full output:")))
             .expect("annotation line present");
-        let rendered: String = annotation_line
-            .spans
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect();
+        let rendered: String = annotation_line.spans.iter().map(|s| s.content.as_ref()).collect();
         // Width budget is 40; annotation line should be at most ~40 chars.
         // (Some slack for the prefix; the truncate_text ellipsis costs
         // 3 cols.)
@@ -3423,13 +3341,8 @@ mod tests {
         );
 
         // The summary line carries the count + Alt+V hint.
-        let summary_line: String = lines
-            .last()
-            .unwrap()
-            .spans
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect();
+        let summary_line: String =
+            lines.last().unwrap().spans.iter().map(|s| s.content.as_ref()).collect();
         assert!(summary_line.contains("3 items"), "{summary_line:?}");
         assert!(summary_line.contains("Alt+V"), "{summary_line:?}");
     }
@@ -3589,18 +3502,12 @@ mod tests {
 
     #[test]
     fn user_cell_renders_with_bar_glyph_not_literal_label() {
-        let cell = HistoryCell::User {
-            content: "hello".to_string(),
-        };
+        let cell = HistoryCell::User { content: "hello".to_string() };
         let lines = cell.lines(80);
         let head = &lines[0];
         assert_eq!(head.spans[0].content.as_ref(), USER_GLYPH);
         // No "You" literal anywhere in the rendered head line.
-        let visible: String = head
-            .spans
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect::<String>();
+        let visible: String = head.spans.iter().map(|s| s.content.as_ref()).collect::<String>();
         assert!(!visible.contains("You"), "user label dropped: {visible:?}");
         assert!(visible.contains("hello"));
     }
@@ -3614,11 +3521,7 @@ mod tests {
         let lines = cell.lines(80);
         let head = &lines[0];
         assert_eq!(head.spans[0].content.as_ref(), ASSISTANT_GLYPH);
-        let visible: String = head
-            .spans
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect::<String>();
+        let visible: String = head.spans.iter().map(|s| s.content.as_ref()).collect::<String>();
         assert!(
             !visible.contains("Assistant"),
             "assistant label dropped: {visible:?}"
@@ -3677,11 +3580,7 @@ mod tests {
             interaction: None,
         };
         let header = &cell.lines_with_motion(80, true)[0];
-        let visible: String = header
-            .spans
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect::<String>();
+        let visible: String = header.spans.iter().map(|s| s.content.as_ref()).collect::<String>();
         assert!(
             visible.contains('\u{25B6}'),
             "Run glyph `▶` present: {visible:?}"
@@ -3707,11 +3606,7 @@ mod tests {
         };
 
         let header = &cell.lines_with_motion(80, true)[0];
-        let visible: String = header
-            .spans
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect::<String>();
+        let visible: String = header.spans.iter().map(|s| s.content.as_ref()).collect::<String>();
         assert!(visible.contains("run running"));
         assert!(
             visible.contains("cargo test --workspace --all-features"),
@@ -3730,11 +3625,8 @@ mod tests {
             spillover_path: None,
         };
         let lines = cell.lines_with_mode(80, true, super::RenderMode::Live);
-        let header_visible: String = lines[0]
-            .spans
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect::<String>();
+        let header_visible: String =
+            lines[0].spans.iter().map(|s| s.content.as_ref()).collect::<String>();
         // agent_spawn → Delegate family (◐ delegate).
         assert!(
             header_visible.contains('\u{25D0}'),
@@ -3757,11 +3649,8 @@ mod tests {
             spillover_path: None,
         };
         let lines = cell.lines_with_mode(80, true, super::RenderMode::Live);
-        let header_visible: String = lines[0]
-            .spans
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect::<String>();
+        let header_visible: String =
+            lines[0].spans.iter().map(|s| s.content.as_ref()).collect::<String>();
 
         assert!(
             header_visible.contains(" rlm "),
@@ -3845,11 +3734,7 @@ mod tests {
             /*low_motion*/ true,
         );
         let last = lines.last().expect("body line present");
-        let visible: String = last
-            .spans
-            .iter()
-            .map(|s| s.content.as_ref())
-            .collect::<String>();
+        let visible: String = last.spans.iter().map(|s| s.content.as_ref()).collect::<String>();
         assert!(
             !visible.contains(REASONING_CURSOR),
             "low_motion must suppress the streaming cursor: {visible:?}"
@@ -3943,12 +3828,7 @@ mod tests {
         // Plain content stays identical so visible output does not move.
         let visible = lines
             .iter()
-            .map(|l| {
-                l.spans
-                    .iter()
-                    .map(|s| s.content.as_ref())
-                    .collect::<String>()
-            })
+            .map(|l| l.spans.iter().map(|s| s.content.as_ref()).collect::<String>())
             .collect::<Vec<_>>();
         assert_eq!(visible[1].trim_end(), "▏ done: scan repo");
         assert_eq!(visible[2].trim_end(), "▏ live: extract theme");
@@ -4006,10 +3886,7 @@ mod tests {
     // content so users never lose the lede.
 
     fn line_text(line: &ratatui::text::Line<'static>) -> String {
-        line.spans
-            .iter()
-            .map(|span| span.content.as_ref())
-            .collect()
+        line.spans.iter().map(|span| span.content.as_ref()).collect()
     }
 
     fn lines_text(lines: &[ratatui::text::Line<'static>]) -> String {
@@ -4313,10 +4190,7 @@ mod tests {
 
     #[test]
     fn generic_tool_output_live_keeps_tail_and_omitted_count() {
-        let output = (0..24usize)
-            .map(|i| format!("line {i:02}"))
-            .collect::<Vec<_>>()
-            .join("\n");
+        let output = (0..24usize).map(|i| format!("line {i:02}")).collect::<Vec<_>>().join("\n");
         let cell = HistoryCell::Tool(ToolCell::Generic(GenericToolCell {
             name: "exec_shell".to_string(),
             status: ToolStatus::Success,

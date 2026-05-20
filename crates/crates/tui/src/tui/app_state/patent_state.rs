@@ -3,8 +3,7 @@
 use std::time::Instant;
 
 /// Patent workflow specific state
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct PatentWorkflowState {
     pub is_active: bool,
     pub workflow_type: Option<String>,
@@ -33,7 +32,6 @@ pub enum StepStatus {
     Failed,
     WaitingHitl,
 }
-
 
 impl PatentWorkflowState {
     pub fn new() -> Self {

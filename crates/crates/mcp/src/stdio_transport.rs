@@ -4,8 +4,8 @@
 
 use std::collections::HashMap;
 use std::process::Stdio;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
@@ -86,9 +86,9 @@ impl StdioTransport {
             cmd.env(k, v);
         }
 
-        let mut child = cmd.spawn().with_context(|| {
-            format!("failed to spawn MCP server: {command} {args:?}")
-        })?;
+        let mut child = cmd
+            .spawn()
+            .with_context(|| format!("failed to spawn MCP server: {command} {args:?}"))?;
 
         let stdin = child.stdin.take().context("failed to take stdin")?;
         let stdout = child.stdout.take().context("failed to take stdout")?;
@@ -122,13 +122,13 @@ impl StdioTransport {
                 "capabilities": {},
                 "clientInfo": { "name": client_name, "version": client_version }
             }),
-        ).await
+        )
+        .await
     }
 
     /// Send a `initialized` notification (completes the handshake).
     pub async fn send_initialized(&self) -> Result<()> {
-        self.send_notification("notifications/initialized", serde_json::json!({}))
-            .await
+        self.send_notification("notifications/initialized", serde_json::json!({})).await
     }
 }
 
@@ -174,7 +174,11 @@ async fn read_loop(
             };
             if let Some(sender) = sender {
                 let result = if let Some(error) = response.error {
-                    Err(anyhow::anyhow!("MCP error (code {}): {}", error.code, error.message))
+                    Err(anyhow::anyhow!(
+                        "MCP error (code {}): {}",
+                        error.code,
+                        error.message
+                    ))
                 } else {
                     response.result.context("JSON-RPC response missing result")
                 };

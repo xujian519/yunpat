@@ -158,18 +158,27 @@ impl InMemoryKeyringStore {
 
 impl KeyringStore for InMemoryKeyringStore {
     fn get(&self, key: &str) -> Result<Option<String>, SecretsError> {
-        let guard = self.entries.lock().map_err(|e| SecretsError::Keyring(format!("lock poisoned: {e}")))?;
+        let guard = self
+            .entries
+            .lock()
+            .map_err(|e| SecretsError::Keyring(format!("lock poisoned: {e}")))?;
         Ok(guard.get(key).cloned())
     }
 
     fn set(&self, key: &str, value: &str) -> Result<(), SecretsError> {
-        let mut guard = self.entries.lock().map_err(|e| SecretsError::Keyring(format!("lock poisoned: {e}")))?;
+        let mut guard = self
+            .entries
+            .lock()
+            .map_err(|e| SecretsError::Keyring(format!("lock poisoned: {e}")))?;
         guard.insert(key.to_string(), value.to_string());
         Ok(())
     }
 
     fn delete(&self, key: &str) -> Result<(), SecretsError> {
-        let mut guard = self.entries.lock().map_err(|e| SecretsError::Keyring(format!("lock poisoned: {e}")))?;
+        let mut guard = self
+            .entries
+            .lock()
+            .map_err(|e| SecretsError::Keyring(format!("lock poisoned: {e}")))?;
         guard.remove(key);
         Ok(())
     }

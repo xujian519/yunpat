@@ -13,8 +13,8 @@ use crate::localization::resolve_locale;
 use crate::models::{ContentBlock, Message, MessageRequest, MessageResponse, SystemPrompt};
 use crate::settings::Settings;
 use crate::tui::app::{App, AppAction, AppMode, OnboardingState, ReasoningEffort, SidebarFocus};
-use yunpat_protocol::ApprovalMode;
 use anyhow::Result;
+use yunpat_protocol::ApprovalMode;
 
 /// Open the interactive config editor.
 ///
@@ -936,13 +936,13 @@ mod tests {
     use crate::config::Config;
     use crate::test_support::lock_test_env;
     use crate::tui::app::{App, TuiOptions};
-    use yunpat_protocol::ApprovalMode;
     use std::env;
     use std::ffi::OsString;
     use std::fs;
     use std::path::Path;
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
+    use yunpat_protocol::ApprovalMode;
 
     struct EnvGuard {
         home: Option<OsString>,

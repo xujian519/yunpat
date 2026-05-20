@@ -8,14 +8,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::sync::RwLock;
 pub use yunpat_protocol::{
-    ApprovalRequirement, ToolCapability, ToolError, ToolResult, ToolKind, ToolOutput, ToolPayload,
+    ApprovalRequirement, ToolCapability, ToolError, ToolKind, ToolOutput, ToolPayload, ToolResult,
 };
 
 /// Helper to extract a required string field from JSON input.
-pub fn required_str<'a>(
-    input: &'a Value,
-    field: &str,
-) -> std::result::Result<&'a str, ToolError> {
+pub fn required_str<'a>(input: &'a Value, field: &str) -> std::result::Result<&'a str, ToolError> {
     input.get(field).and_then(Value::as_str).ok_or_else(|| {
         // When the field is missing, list the fields the caller *did*
         // supply so the model can spot the mismatch without a retry.
@@ -204,12 +201,10 @@ impl ToolRegistry {
 
         if configured.supports_parallel_tool_calls {
             let _guard = self.runtime.parallel_execution.read().await;
-            self.execute_with_timeout(handler, configured.spec.timeout_ms, invocation)
-                .await
+            self.execute_with_timeout(handler, configured.spec.timeout_ms, invocation).await
         } else {
             let _guard = self.runtime.parallel_execution.write().await;
-            self.execute_with_timeout(handler, configured.spec.timeout_ms, invocation)
-                .await
+            self.execute_with_timeout(handler, configured.spec.timeout_ms, invocation).await
         }
     }
 

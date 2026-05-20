@@ -3,9 +3,7 @@ mod job_manager;
 mod runtime;
 mod thread_manager;
 
-pub use job_manager::{
-    JobHistoryEntry, JobManager, JobRecord, JobRetryMetadata, JobStatus,
-};
+pub use job_manager::{JobHistoryEntry, JobManager, JobRecord, JobRetryMetadata, JobStatus};
 pub use runtime::Runtime;
 pub use thread_manager::ThreadManager;
 

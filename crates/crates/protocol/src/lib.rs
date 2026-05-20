@@ -731,7 +731,6 @@ pub fn next_coherence_state(current: CoherenceState, signal: CoherenceSignal) ->
     }
 }
 
-
 // ============================================================================
 // Tool types (migrated from yunpat-tools to break core ↔ tools cycle)
 // ============================================================================

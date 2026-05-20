@@ -13,7 +13,6 @@ use dotenvy::dotenv;
 use tempfile::NamedTempFile;
 use wait_timeout::ChildExt;
 
-
 use yunpat_tui::config::{Config, MAX_SUBAGENTS};
 use yunpat_tui::eval::{EvalHarness, EvalHarnessConfig, ScenarioStepKind};
 use yunpat_tui::features::{Feature, render_feature_table};
@@ -95,7 +94,9 @@ async fn main() -> Result<()> {
 
     dotenv().ok();
     let cli = Cli::parse();
-    yunpat_tui::logging::set_verbose(cli.verbose || yunpat_tui::logging::env_requests_verbose_logging());
+    yunpat_tui::logging::set_verbose(
+        cli.verbose || yunpat_tui::logging::env_requests_verbose_logging(),
+    );
 
     // Handle subcommands first
     if let Some(command) = cli.command.clone() {
@@ -385,7 +386,10 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
             yunpat_tui::utils::display_path(&config_path)
         );
     }
-    println!("  workspace: {}", yunpat_tui::utils::display_path(workspace));
+    println!(
+        "  workspace: {}",
+        yunpat_tui::utils::display_path(workspace)
+    );
 
     // Check API keys
     println!();
@@ -1810,7 +1814,8 @@ fn collect_diff(args: &ReviewArgs) -> Result<String> {
     }
     let mut diff = String::from_utf8_lossy(&output.stdout).to_string();
     if diff.len() > args.max_chars {
-        diff = yunpat_tui::utils::truncate_with_ellipsis(&diff, args.max_chars, "\n...[truncated]\n");
+        diff =
+            yunpat_tui::utils::truncate_with_ellipsis(&diff, args.max_chars, "\n...[truncated]\n");
     }
     Ok(diff)
 }
@@ -2568,7 +2573,9 @@ async fn run_interactive(
                 path.display()
             )),
             Ok(None) => {}
-            Err(err) => yunpat_tui::logging::warn(format!("Failed to create first-run config file: {err}")),
+            Err(err) => {
+                yunpat_tui::logging::warn(format!("Failed to create first-run config file: {err}"))
+            }
         }
     }
 
@@ -2579,8 +2586,9 @@ async fn run_interactive(
     );
     let use_alt_screen = should_use_alt_screen(cli, config);
     let use_mouse_capture = should_use_mouse_capture(cli, config, use_alt_screen);
-    let use_bracketed_paste =
-        yunpat_tui::settings::Settings::load().map(|s| s.bracketed_paste).unwrap_or(true);
+    let use_bracketed_paste = yunpat_tui::settings::Settings::load()
+        .map(|s| s.bracketed_paste)
+        .unwrap_or(true);
 
     // Auto-install bundled system skills (e.g. skill-creator) on first launch.
     // Errors are non-fatal: log a warning and continue.
@@ -2597,7 +2605,10 @@ async fn run_interactive(
         yunpat_tui::session_manager::prune_workspace_snapshots(&workspace, snapshots.max_age());
         // Also cap the total number of snapshots per project to prevent
         // unbounded disk growth (e.g. 16 snapshots × 6.6GB = 100GB+).
-        yunpat_tui::session_manager::prune_workspace_snapshots_to_count(&workspace, snapshots.max_count);
+        yunpat_tui::session_manager::prune_workspace_snapshots_to_count(
+            &workspace,
+            snapshots.max_count,
+        );
     }
 
     // Prune stale tool-output spillover files (#422). Non-fatal: home
@@ -2605,7 +2616,9 @@ async fn run_interactive(
     // we never block startup. Runs unconditionally because the
     // spillover store is created lazily on first write — there's no
     // user-facing setting to gate.
-    match yunpat_tui::tools::truncate::prune_older_than(yunpat_tui::tools::truncate::SPILLOVER_MAX_AGE) {
+    match yunpat_tui::tools::truncate::prune_older_than(
+        yunpat_tui::tools::truncate::SPILLOVER_MAX_AGE,
+    ) {
         Ok(0) => {}
         Ok(n) => tracing::debug!(
             target: "spillover",
@@ -2644,7 +2657,6 @@ async fn run_interactive(
     )
     .await
 }
-
 
 async fn run_one_shot(config: &Config, model: &str, prompt: &str) -> Result<()> {
     use yunpat_tui::client::DeepSeekClient;
@@ -2747,6 +2759,7 @@ async fn run_exec_agent(
     trust_mode: bool,
     json_output: bool,
 ) -> Result<()> {
+    use yunpat_protocol::AppMode;
     use yunpat_tui::compaction::CompactionConfig;
     use yunpat_tui::core::engine::{EngineConfig, spawn_engine};
     use yunpat_tui::core::events::Event;
@@ -2754,7 +2767,6 @@ async fn run_exec_agent(
     use yunpat_tui::models::compaction_threshold_for_model;
     use yunpat_tui::tools::plan::new_shared_plan_state;
     use yunpat_tui::tools::todo::new_shared_todo_list;
-    use yunpat_protocol::AppMode;
 
     let route = yunpat_tui::cli_setup::resolve_cli_auto_route(config, model, prompt).await;
     let auto_model = route.auto_model;
@@ -2775,7 +2787,9 @@ async fn run_exec_agent(
     };
 
     let network_policy = config.network.clone().map(|toml_cfg| {
-        yunpat_tui::network_policy::NetworkPolicyDecider::with_default_audit(toml_cfg.into_runtime())
+        yunpat_tui::network_policy::NetworkPolicyDecider::with_default_audit(
+            toml_cfg.into_runtime(),
+        )
     });
 
     let lsp_config = config.lsp.clone().map(yunpat_tui::config::LspConfigToml::into_runtime);
@@ -3019,7 +3033,10 @@ mod doctor_endpoint_tests {
         let target = doctor_api_target(&config);
 
         assert_eq!(target.provider, "deepseek-cn");
-        assert_eq!(target.base_url, yunpat_tui::config::DEFAULT_DEEPSEEKCN_BASE_URL);
+        assert_eq!(
+            target.base_url,
+            yunpat_tui::config::DEFAULT_DEEPSEEKCN_BASE_URL
+        );
         assert_eq!(target.model, yunpat_tui::config::DEFAULT_TEXT_MODEL);
     }
 

@@ -515,7 +515,7 @@ export class SAOExtractor {
    */
   private cleanSubject(subject: string): string | null {
     // 移除常见的修饰词
-    let cleaned = subject
+    const cleaned = subject
       .replace(/^(?:该|所述|一个|一种|多个|若干|此|本|其|上述|如下)/, '')
       .replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '')
       .trim()
@@ -533,7 +533,7 @@ export class SAOExtractor {
    */
   private cleanObject(object: string): string | null {
     // 移除标点符号和空格
-    let cleaned = object.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '').trim()
+    const cleaned = object.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '').trim()
 
     // 过滤过短的宾语
     if (cleaned.length < 2) {

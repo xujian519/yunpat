@@ -8,11 +8,13 @@
 
 use std::io::Write;
 use std::path::Path;
+use std::sync::Arc;
 
+use axum::{body::Body, http::{Method, StatusCode}, response::Response, routing::any, Router};
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use tempfile::TempDir;
-use tiny_http::{Method, Response, Server};
+use tokio::sync::oneshot;
 
 // Pull the production source files into this test binary so the test can
 // reach `install`'s public surface without a dedicated library crate.
@@ -84,44 +86,33 @@ fn prompt_all_policy() -> NetworkPolicy {
 /// Spawn a tiny HTTP server that serves `bytes` at any path with 200 OK and
 /// returns the bound URL. The server replies to *every* request (we re-use it
 /// across multiple installs in the same test).
-fn spawn_tarball_server(
+async fn spawn_tarball_server(
     bytes: Vec<u8>,
-) -> (
-    String,
-    std::sync::mpsc::Sender<()>,
-    std::thread::JoinHandle<()>,
-) {
-    let server = Server::http("127.0.0.1:0").expect("bind ephemeral port");
-    let url = format!(
-        "http://{}/skill.tar.gz",
-        server.server_addr().to_ip().expect("ip addr")
+) -> (String, tokio::task::JoinHandle<()>) {
+    let app = Router::new().route(
+        "/{tail:*}",
+        any(move |req: axum::extract::Request| async move {
+            if req.method() != Method::GET {
+                return Err(StatusCode::METHOD_NOT_ALLOWED);
+            }
+            let body = Body::from(bytes.clone());
+            Ok(Response::new(body))
+        }),
     );
-    let (shutdown_tx, shutdown_rx) = std::sync::mpsc::channel::<()>();
-    let handle = std::thread::spawn(move || {
-        loop {
-            // Poll-style with a small recv timeout so we can break out cleanly.
-            match server.recv_timeout(std::time::Duration::from_millis(100)) {
-                Ok(Some(req)) => {
-                    if req.method() != &Method::Get {
-                        continue;
-                    }
-                    let response = Response::from_data(bytes.clone());
-                    let _ = req.respond(response);
-                }
-                Ok(None) => {}
-                Err(_) => break,
-            }
-            if shutdown_rx.try_recv().is_ok() {
-                break;
-            }
-        }
-    });
-    (url, shutdown_tx, handle)
-}
 
-fn shutdown(tx: std::sync::mpsc::Sender<()>, handle: std::thread::JoinHandle<()>) {
-    let _ = tx.send(());
-    let _ = handle.join();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind ephemeral port");
+    let addr = listener.local_addr().expect("local addr");
+    let url = format!("http://{}/skill.tar.gz", addr);
+
+    let handle = tokio::spawn(async move {
+        axum::serve(listener, app)
+            .await
+            .expect("axum serve error");
+    });
+
+    (url, handle)
 }
 
 #[tokio::test]
@@ -133,7 +124,7 @@ async fn install_happy_path_writes_skill_and_marker() {
         ),
         ("test-skill-main/notes.txt", b"hello world"),
     ]);
-    let (url, tx, handle) = spawn_tarball_server(tarball);
+    let (url, _handle) = spawn_tarball_server(tarball).await;
 
     let tmp = TempDir::new().unwrap();
     let policy = allow_all_policy();
@@ -166,7 +157,7 @@ async fn install_happy_path_writes_skill_and_marker() {
         ".installed-from marker present"
     );
 
-    shutdown(tx, handle);
+    drop(_handle);
 }
 
 #[tokio::test]
@@ -200,7 +191,7 @@ async fn install_rejects_path_traversal() {
         builder.finish().unwrap();
     }
     let tarball = gz.finish().unwrap();
-    let (url, tx, handle) = spawn_tarball_server(tarball);
+    let (url, _handle) = spawn_tarball_server(tarball).await;
 
     let tmp = TempDir::new().unwrap();
     let policy = allow_all_policy();
@@ -219,7 +210,7 @@ async fn install_rejects_path_traversal() {
         "expected path-traversal error, got: {msg}"
     );
 
-    shutdown(tx, handle);
+    drop(_handle);
 }
 
 #[tokio::test]
@@ -236,7 +227,7 @@ async fn install_rejects_oversized_tarball() {
     let entry_refs: Vec<(&str, &[u8])> =
         entries.iter().map(|(p, b)| (p.as_str(), b.as_slice())).collect();
     let tarball = make_tarball(&entry_refs);
-    let (url, tx, handle) = spawn_tarball_server(tarball);
+    let (url, _handle) = spawn_tarball_server(tarball).await;
 
     let tmp = TempDir::new().unwrap();
     let policy = allow_all_policy();
@@ -256,13 +247,13 @@ async fn install_rejects_oversized_tarball() {
         "expected size cap error, got: {msg}"
     );
 
-    shutdown(tx, handle);
+    drop(_handle);
 }
 
 #[tokio::test]
 async fn install_rejects_missing_skill_md() {
     let tarball = make_tarball(&[("repo-main/README.md", b"not a skill")]);
-    let (url, tx, handle) = spawn_tarball_server(tarball);
+    let (url, _handle) = spawn_tarball_server(tarball).await;
 
     let tmp = TempDir::new().unwrap();
     let policy = allow_all_policy();
@@ -277,13 +268,13 @@ async fn install_rejects_missing_skill_md() {
     .expect_err("missing SKILL.md must be rejected");
     assert!(format!("{err:#}").contains("missing SKILL.md"), "{err:#}");
 
-    shutdown(tx, handle);
+    drop(_handle);
 }
 
 #[tokio::test]
 async fn install_rejects_missing_required_frontmatter() {
     let tarball = make_tarball(&[("repo-main/SKILL.md", b"---\nname: test\n---\nbody\n")]);
-    let (url, tx, handle) = spawn_tarball_server(tarball);
+    let (url, _handle) = spawn_tarball_server(tarball).await;
 
     let tmp = TempDir::new().unwrap();
     let policy = allow_all_policy();
@@ -298,14 +289,14 @@ async fn install_rejects_missing_required_frontmatter() {
     .expect_err("missing description must be rejected");
     assert!(format!("{err:#}").contains("description"), "{err:#}");
 
-    shutdown(tx, handle);
+    drop(_handle);
 }
 
 #[tokio::test]
 async fn install_idempotent_then_uninstall_then_reinstall() {
     let tarball_bytes =
         make_tarball(&[("repo-main/SKILL.md", &skill_md("idem-skill", "Idempotent"))]);
-    let (url, tx, handle) = spawn_tarball_server(tarball_bytes);
+    let (url, _handle) = spawn_tarball_server(tarball_bytes).await;
 
     let tmp = TempDir::new().unwrap();
     let policy = allow_all_policy();
@@ -351,14 +342,14 @@ async fn install_idempotent_then_uninstall_then_reinstall() {
     .expect("reinstall ok");
 
     assert!(tmp.path().join("idem-skill").join("SKILL.md").is_file());
-    shutdown(tx, handle);
+    drop(_handle);
 }
 
 #[tokio::test]
 async fn update_no_change_returns_nochange_without_overwriting() {
     let tarball_bytes =
         make_tarball(&[("repo-main/SKILL.md", &skill_md("upd-skill", "Update test"))]);
-    let (url, tx, handle) = spawn_tarball_server(tarball_bytes);
+    let (url, _handle) = spawn_tarball_server(tarball_bytes).await;
     let tmp = TempDir::new().unwrap();
     let policy = allow_all_policy();
 
@@ -395,7 +386,7 @@ async fn update_no_change_returns_nochange_without_overwriting() {
 
     let mtime_after = std::fs::metadata(&skill_md_path).unwrap().modified().unwrap();
     assert_eq!(mtime_before, mtime_after, "SKILL.md must not be rewritten");
-    shutdown(tx, handle);
+    drop(_handle);
 }
 
 #[tokio::test]
@@ -473,7 +464,7 @@ async fn install_rejects_symlink_entry() {
         builder.finish().unwrap();
     }
     let tarball = gz.finish().unwrap();
-    let (url, tx, handle) = spawn_tarball_server(tarball);
+    let (url, _handle) = spawn_tarball_server(tarball).await;
 
     let tmp = TempDir::new().unwrap();
     let policy = allow_all_policy();
@@ -488,7 +479,7 @@ async fn install_rejects_symlink_entry() {
     .expect_err("symlinks must be rejected");
     assert!(format!("{err:#}").contains("symlink"), "{err:#}");
 
-    shutdown(tx, handle);
+    drop(_handle);
 }
 
 #[tokio::test]
@@ -534,7 +525,7 @@ async fn install_ignores_symlink_outside_selected_skill_root() {
         builder.finish().unwrap();
     }
     let tarball = gz.finish().unwrap();
-    let (url, tx, handle) = spawn_tarball_server(tarball);
+    let (url, _handle) = spawn_tarball_server(tarball).await;
 
     let tmp = TempDir::new().unwrap();
     let policy = allow_all_policy();
@@ -557,7 +548,7 @@ async fn install_ignores_symlink_outside_selected_skill_root() {
     assert!(installed.path.join("notes.txt").exists());
     assert!(!installed.path.join("AGENTS.md").exists());
 
-    shutdown(tx, handle);
+    drop(_handle);
 }
 
 #[test]

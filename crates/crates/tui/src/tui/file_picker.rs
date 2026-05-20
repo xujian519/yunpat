@@ -17,7 +17,6 @@ use ignore::WalkBuilder;
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Clear, Padding, Paragraph, Widget},
@@ -312,9 +311,7 @@ impl ModalView for FilePickerView {
 
         let title = Line::from(vec![Span::styled(
             " File Picker ",
-            Style::default()
-                .fg(palette::YUNPAT_BLUE)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_BLUE).add_modifier(Modifier::BOLD),
         )]);
         let footer_text = format!(
             " {} match{}  ↑/↓ select  Enter insert @path  Esc close ",
@@ -342,9 +339,7 @@ impl ModalView for FilePickerView {
             Span::raw(self.query.clone()),
             Span::styled(
                 " ",
-                Style::default()
-                    .fg(palette::YUNPAT_INK)
-                    .bg(palette::YUNPAT_SKY),
+                Style::default().fg(palette::YUNPAT_INK).bg(palette::YUNPAT_SKY),
             ),
         ]));
         lines.push(Line::from(""));
@@ -361,9 +356,7 @@ impl ModalView for FilePickerView {
                 let path = &self.candidates[self.filtered[idx]];
                 let selected = idx == self.selected;
                 let style = if selected {
-                    Style::default()
-                        .fg(palette::SELECTION_TEXT)
-                        .bg(palette::SELECTION_BG)
+                    Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
                 } else {
                     Style::default().fg(palette::TEXT_PRIMARY)
                 };
@@ -395,14 +388,8 @@ fn truncate_path(path: &str, max: usize) -> String {
         return path.to_string();
     }
     let take = max.saturating_sub(1);
-    let truncated: String = path
-        .chars()
-        .rev()
-        .take(take)
-        .collect::<Vec<_>>()
-        .into_iter()
-        .rev()
-        .collect();
+    let truncated: String =
+        path.chars().rev().take(take).collect::<Vec<_>>().into_iter().rev().collect();
     format!("…{truncated}")
 }
 
@@ -687,11 +674,7 @@ mod tests {
         fs::write(root.join("skipme.txt"), "").unwrap();
 
         let view = FilePickerView::new_with_relevance(root, FilePickerRelevance::default());
-        let visible: Vec<_> = view
-            .filtered
-            .iter()
-            .map(|i| view.candidates[*i].as_str())
-            .collect();
+        let visible: Vec<_> = view.filtered.iter().map(|i| view.candidates[*i].as_str()).collect();
         assert!(visible.iter().any(|p| p.ends_with("keepme.txt")));
         assert!(
             !visible.iter().any(|p| p.ends_with("skipme.txt")),

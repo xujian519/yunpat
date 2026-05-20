@@ -415,10 +415,7 @@ pub fn resolve_api_key_source(config: &Config) -> ApiKeySource {
         }
     }
 
-    if config
-        .api_key
-        .as_ref()
-        .is_some_and(|k| !k.trim().is_empty())
+    if config.api_key.as_ref().is_some_and(|k| !k.trim().is_empty())
         || config
             .provider_config()
             .and_then(|entry| entry.api_key.as_ref())
@@ -661,10 +658,15 @@ pub struct CliAutoRoute {
 }
 
 /// Resolve the effective model and reasoning effort for a CLI prompt.
-pub async fn resolve_cli_auto_route(config: &crate::config::Config, model: &str, prompt: &str) -> CliAutoRoute {
+pub async fn resolve_cli_auto_route(
+    config: &crate::config::Config,
+    model: &str,
+    prompt: &str,
+) -> CliAutoRoute {
     if model.trim().eq_ignore_ascii_case("auto") {
         let selection =
-            crate::commands::resolve_auto_route_with_flash(config, prompt, "", "auto", "auto").await;
+            crate::commands::resolve_auto_route_with_flash(config, prompt, "", "auto", "auto")
+                .await;
         CliAutoRoute {
             model: selection.model,
             reasoning_effort: selection.reasoning_effort,

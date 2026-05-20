@@ -455,16 +455,12 @@ mod tests {
                 message: "msg".to_string(),
                 mode: "m".to_string(),
             },
-            HookEvent::ResponseStart {
-                response_id: "id".to_string(),
-            },
+            HookEvent::ResponseStart { response_id: "id".to_string() },
             HookEvent::ResponseDelta {
                 response_id: "id".to_string(),
                 delta: "delta".to_string(),
             },
-            HookEvent::ResponseEnd {
-                response_id: "id".to_string(),
-            },
+            HookEvent::ResponseEnd { response_id: "id".to_string() },
             HookEvent::ToolLifecycle {
                 response_id: "id".to_string(),
                 tool_name: "tool".to_string(),

@@ -373,7 +373,7 @@ ${thoughts.map((t, i) => `${i + 1}. ${t.thought}`).join('\n')}
     clarity: number
     total: number
   } {
-    let scores: Record<string, number> = {
+    const scores: Record<string, number> = {
       feasibility: 5.0,
       innovation: 5.0,
       completeness: 5.0,

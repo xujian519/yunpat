@@ -6,7 +6,6 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Clear, Padding, Paragraph, Widget, Wrap},
@@ -184,9 +183,7 @@ fn build_mcp_entries(
         label: "mcp:manager".to_string(),
         description: format!("Open MCP manager ({})", mcp_config_path.display()),
         command: "/mcp".to_string(),
-        action: CommandPaletteAction::ExecuteCommand {
-            command: "/mcp".to_string(),
-        },
+        action: CommandPaletteAction::ExecuteCommand { command: "/mcp".to_string() },
     }];
 
     let Some(snapshot) = snapshot else {
@@ -231,9 +228,7 @@ fn build_mcp_entries(
                 description: format!(
                     "{}{}",
                     tool.model_name,
-                    tool.description
-                        .as_ref()
-                        .map_or(String::new(), |desc| format!(" - {desc}"))
+                    tool.description.as_ref().map_or(String::new(), |desc| format!(" - {desc}"))
                 ),
                 command: tool.model_name.clone(),
                 action: CommandPaletteAction::OpenTextPager {
@@ -260,9 +255,7 @@ fn build_mcp_entries(
                             .map_or(String::new(), |desc| format!(" ({})", desc))
                     ),
                     command: tool.model_name.clone(),
-                    action: CommandPaletteAction::InsertText {
-                        text: tool.model_name.clone(),
-                    },
+                    action: CommandPaletteAction::InsertText { text: tool.model_name.clone() },
                 });
             }
         }
@@ -293,10 +286,7 @@ fn build_mcp_entries(
                 description: format!(
                     "{}{}",
                     prompt.model_name,
-                    prompt
-                        .description
-                        .as_ref()
-                        .map_or(String::new(), |desc| format!(" - {desc}"))
+                    prompt.description.as_ref().map_or(String::new(), |desc| format!(" - {desc}"))
                 ),
                 command: prompt.model_name.clone(),
                 action: CommandPaletteAction::OpenTextPager {
@@ -532,10 +522,7 @@ impl CommandPaletteView {
 
     fn refilter(&mut self) {
         let query = self.query.trim().to_ascii_lowercase();
-        let terms: Vec<&str> = query
-            .split_whitespace()
-            .filter(|term| !term.is_empty())
-            .collect();
+        let terms: Vec<&str> = query.split_whitespace().filter(|term| !term.is_empty()).collect();
 
         let mut filtered = self
             .entries
@@ -558,9 +545,7 @@ impl CommandPaletteView {
         let hint = "scope: c:/cmd: , s:/skill: , t:/tool: , m:/mcp:";
         Line::from(Span::styled(
             hint,
-            Style::default()
-                .fg(palette::TEXT_DIM)
-                .add_modifier(Modifier::ITALIC),
+            Style::default().fg(palette::TEXT_DIM).add_modifier(Modifier::ITALIC),
         ))
     }
 
@@ -573,9 +558,7 @@ impl CommandPaletteView {
         };
         Line::from(vec![Span::styled(
             format!("  {title} ({count})  "),
-            Style::default()
-                .fg(palette::YUNPAT_SKY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(palette::YUNPAT_SKY).add_modifier(Modifier::BOLD),
         )])
     }
 
@@ -612,9 +595,7 @@ impl CommandPaletteView {
     }
 
     fn selected_entry(&self) -> Option<&CommandPaletteEntry> {
-        self.filtered
-            .get(self.selected)
-            .and_then(|idx| self.entries.get(*idx))
+        self.filtered.get(self.selected).and_then(|idx| self.entries.get(*idx))
     }
 }
 
@@ -749,9 +730,7 @@ impl ModalView for CommandPaletteView {
                 }
 
                 let style = if is_selected {
-                    Style::default()
-                        .fg(palette::SELECTION_TEXT)
-                        .bg(palette::SELECTION_BG)
+                    Style::default().fg(palette::SELECTION_TEXT).bg(palette::SELECTION_BG)
                 } else {
                     Style::default().fg(palette::TEXT_PRIMARY)
                 };
@@ -779,13 +758,11 @@ impl ModalView for CommandPaletteView {
             }
         }
 
-        let block = modal_block()
-            .title(" Command Palette ")
-            .title_bottom(Line::from(vec![
-                Span::styled(" ↑/↓/j/k move  ", Style::default().fg(palette::TEXT_MUTED)),
-                Span::styled("Enter run/open  ", Style::default().fg(palette::TEXT_MUTED)),
-                Span::styled("Esc close", Style::default().fg(palette::TEXT_MUTED)),
-            ]));
+        let block = modal_block().title(" Command Palette ").title_bottom(Line::from(vec![
+            Span::styled(" ↑/↓/j/k move  ", Style::default().fg(palette::TEXT_MUTED)),
+            Span::styled("Enter run/open  ", Style::default().fg(palette::TEXT_MUTED)),
+            Span::styled("Esc close", Style::default().fg(palette::TEXT_MUTED)),
+        ]));
 
         Paragraph::new(lines)
             .block(block)
@@ -810,9 +787,7 @@ mod tests {
             label: label.to_string(),
             description: description.to_string(),
             command: command.to_string(),
-            action: CommandPaletteAction::InsertText {
-                text: command.to_string(),
-            },
+            action: CommandPaletteAction::InsertText { text: command.to_string() },
         }
     }
 
@@ -1085,9 +1060,7 @@ mod tests {
             label: "/config".to_string(),
             description: "open config".to_string(),
             command: "/config".to_string(),
-            action: CommandPaletteAction::ExecuteCommand {
-                command: "/config".to_string(),
-            },
+            action: CommandPaletteAction::ExecuteCommand { command: "/config".to_string() },
         }];
         let mut view = CommandPaletteView::new(entries);
 

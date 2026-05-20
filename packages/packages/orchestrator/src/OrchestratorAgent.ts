@@ -143,7 +143,11 @@ export class OrchestratorAgent {
     this.hitlResponseParser = new HITLResponseParser(this.llmClient)
 
     // 初始化执行器，注入 HITLManager
-    this.taskExecutor = new TaskExecutor(this.agentRegistry, this.hitlManager, this.hitlResponseParser)
+    this.taskExecutor = new TaskExecutor(
+      this.agentRegistry,
+      this.hitlManager,
+      this.hitlResponseParser
+    )
     // HITL 跨语言持久化桥（懒初始化，首次使用时创建）
     this._hitlBridge = null
     const domainConfig = config.domainConfig ?? PatentIntentConfig

@@ -20,7 +20,10 @@ use yunpat_state::StateStore;
 use yunpat_tools::{ToolCall, ToolRegistry};
 
 use crate::helpers::*;
-use crate::job_manager::{job_history_to_value, job_retry_to_value, job_status_to_str, JobHistoryEntry, JobManager, JobRecord};
+use crate::job_manager::{
+    JobHistoryEntry, JobManager, JobRecord, job_history_to_value, job_retry_to_value,
+    job_status_to_str,
+};
 use crate::thread_manager::ThreadManager;
 use crate::{InitialHistory, NewThread};
 
@@ -687,4 +690,3 @@ impl Runtime {
         self.jobs.history(job_id)
     }
 }
-

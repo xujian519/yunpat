@@ -30,6 +30,7 @@
   "author": "YunPat Team",
   "license": "MIT",
   "dependencies": {
+    "@yunpat/agent-base": "workspace:*",
     "@yunpat/core": "workspace:*",
     "@yunpat/document-tools": "workspace:*",
     "zod": "^3.25.76"

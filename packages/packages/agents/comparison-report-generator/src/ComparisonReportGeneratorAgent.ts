@@ -1,4 +1,5 @@
-import { Agent, type ExecutionContext, createLogger } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
+import { createLogger } from '@yunpat/core'
 import { NovAScoreEvaluator } from '@yunpat/core/evaluation'
 
 /**
@@ -156,29 +157,21 @@ interface ComparisonReportPlan {
  * 2. 差异识别：结构、功能、效果差异
  * 3. 报告生成：Markdown格式报告
  */
-export class ComparisonReportGeneratorAgent extends Agent<
+export class ComparisonReportGeneratorAgent extends ProfessionalAgent<
   ComparisonReportInput,
   ComparisonReportResult
 > {
   private logger = createLogger('ComparisonReportGeneratorAgent')
 
-  // 可选评估模块（向后兼容）
   private novaScoreEvaluator?: NovAScoreEvaluator
 
-  constructor(config: {
-    name: string
-    description: string
-    eventBus: any
-    memory: any
-    tools: any
-    llm: any
+  constructor(config: ProfessionalAgentConfig & {
     evaluationModules?: {
       novaScoreEvaluator?: NovAScoreEvaluator
     }
   }) {
     super(config)
 
-    // 可选注入评估模块
     if (config.evaluationModules) {
       this.novaScoreEvaluator = config.evaluationModules.novaScoreEvaluator
     }
@@ -186,7 +179,7 @@ export class ComparisonReportGeneratorAgent extends Agent<
 
   public async plan(
     input: ComparisonReportInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<ComparisonReportPlan> {
     this.logger.info('开始规划对比报告生成', {
       inventionTitle: input.application.inventionTitle,
@@ -215,7 +208,7 @@ export class ComparisonReportGeneratorAgent extends Agent<
 
   protected async act(
     plan: ComparisonReportPlan,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<ComparisonReportResult> {
     this.logger.info('开始生成对比报告')
 

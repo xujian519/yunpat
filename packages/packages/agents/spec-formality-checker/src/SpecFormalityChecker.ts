@@ -16,14 +16,13 @@
  */
 
 import {
-  Agent,
-  type EventBus,
+  ProfessionalAgent,
+  type ProfessionalAgentConfig,
+  type ExtendedExecutionContext,
+} from '@yunpat/agent-base'
+import {
   createLogger,
   AgentInputError,
-  type MemoryStore,
-  type ToolRegistry,
-  type LLMAdapter,
-  type ExecutionContext,
 } from '@yunpat/core'
 
 /**
@@ -146,24 +145,17 @@ interface SpecCheckPlan {
 /**
  * 说明书形式检查智能体
  */
-export class SpecFormalityChecker extends Agent<SpecCheckInput, SpecFormalityCheckResult> {
+export class SpecFormalityChecker extends ProfessionalAgent<SpecCheckInput, SpecFormalityCheckResult> {
   private logger = createLogger('SpecFormalityChecker')
 
-  constructor(config: {
-    name: string
-    description: string
-    eventBus: EventBus
-    memory: MemoryStore
-    tools: ToolRegistry
-    llm: LLMAdapter
-  }) {
+  constructor(config: ProfessionalAgentConfig) {
     super(config)
   }
 
   /**
    * 规划阶段：分析说明书
    */
-  protected async plan(input: SpecCheckInput, _context: ExecutionContext): Promise<SpecCheckPlan> {
+  protected async plan(input: SpecCheckInput, _context: ExtendedExecutionContext): Promise<SpecCheckPlan> {
     this.logger.info('开始规划说明书检查', {
       patentType: input.patentType,
     })
@@ -210,7 +202,7 @@ export class SpecFormalityChecker extends Agent<SpecCheckInput, SpecFormalityChe
    */
   protected async act(
     plan: SpecCheckPlan,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<SpecFormalityCheckResult> {
     this.logger.info('开始执行说明书检查')
 

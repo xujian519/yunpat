@@ -1,6 +1,8 @@
 import {
-  KnowledgeEnhancedAgent,
-  ExecutionContext,
+  ProfessionalAgent,
+  type ExtendedExecutionContext,
+} from '@yunpat/agent-base'
+import {
   IncrementalGenerator,
   SemanticCache,
 } from '@yunpat/core'
@@ -29,7 +31,7 @@ export type { WritingTask, WritingPlan, WritingResult, WriterAgentConfig } from 
  * 基础功能：文档生成、格式转换、内容优化、语义缓存、增量生成
  * 增强功能（可选）：智能工具选择、工具使用统计
  */
-export class WriterAgent extends KnowledgeEnhancedAgent<WritingTask, WritingResult> {
+export class WriterAgent extends ProfessionalAgent<WritingTask, WritingResult> {
   private semanticCache: SemanticCache<WritingTask, WritingResult>
   private cachedResult: WritingResult | null = null
   private currentTask: WritingTask | null = null
@@ -100,7 +102,7 @@ export class WriterAgent extends KnowledgeEnhancedAgent<WritingTask, WritingResu
     this.toolUsageStats = { totalSelections: 0, successfulExecutions: 0, failedExecutions: 0 }
   }
 
-  protected async plan(task: WritingTask, context: ExecutionContext): Promise<WritingPlan> {
+  protected async plan(task: WritingTask, context: ExtendedExecutionContext): Promise<WritingPlan> {
     this.currentTask = task
 
     try {
@@ -169,7 +171,7 @@ export class WriterAgent extends KnowledgeEnhancedAgent<WritingTask, WritingResu
     }
   }
 
-  protected async act(plan: WritingPlan, context: ExecutionContext): Promise<WritingResult> {
+  protected async act(plan: WritingPlan, context: ExtendedExecutionContext): Promise<WritingResult> {
     try {
       if (this.cachedResult) {
         console.log('[语义缓存] 返回缓存结果，跳过生成')
@@ -192,7 +194,7 @@ export class WriterAgent extends KnowledgeEnhancedAgent<WritingTask, WritingResu
 
   protected async reflect(
     result: WritingResult,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<{ shouldContinue: boolean; feedback?: string }> {
     if (this.enableTools) {
       console.log('\n🔍 [增强模式] 工具使用统计:')
@@ -226,7 +228,7 @@ export class WriterAgent extends KnowledgeEnhancedAgent<WritingTask, WritingResu
 
   private async selectToolForTask(
     task: WritingTask,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<string | undefined> {
     for (const tool of this.availableTools) {
       const category = tool.metadata.category || ''
@@ -245,7 +247,7 @@ export class WriterAgent extends KnowledgeEnhancedAgent<WritingTask, WritingResu
 
   private async generateWithTool(
     plan: WritingPlan,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<WritingResult | undefined> {
     if (!plan.selectedTool) return undefined
 
@@ -295,7 +297,7 @@ export class WriterAgent extends KnowledgeEnhancedAgent<WritingTask, WritingResu
 
   private async tryIncrementalGeneration(
     task: WritingTask,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<WritingPlan | null> {
     if (task.type === 'generate') return null
 
@@ -344,7 +346,7 @@ export class WriterAgent extends KnowledgeEnhancedAgent<WritingTask, WritingResu
 
   private async generateContent(
     plan: WritingPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<WritingResult> {
     const sectionPromises = plan.structure.sections.map(async (section) => {
       const sectionPrompt = buildSectionPrompt(section.heading, plan)
@@ -405,7 +407,7 @@ export class WriterAgent extends KnowledgeEnhancedAgent<WritingTask, WritingResu
     return result
   }
 
-  private async generateOutline(task: WritingTask, context: ExecutionContext): Promise<string[]> {
+  private async generateOutline(task: WritingTask, context: ExtendedExecutionContext): Promise<string[]> {
     for (let attempt = 0; attempt <= GENERATION_CONFIG.MAX_OUTLINE_RETRIES; attempt++) {
       try {
         const outlinePrompt = buildOutlinePrompt(task)

@@ -15,14 +15,13 @@
  */
 
 import {
-  Agent,
-  type EventBus,
-  type MemoryStore,
+  ProfessionalAgent,
+  type ProfessionalAgentConfig,
+  type ExtendedExecutionContext,
+} from '@yunpat/agent-base'
+import {
   createLogger,
   AgentInputError,
-  type ToolRegistry,
-  type LLMAdapter,
-  type ExecutionContext,
 } from '@yunpat/core'
 
 /**
@@ -161,17 +160,10 @@ interface UnityCheckPlan {
 /**
  * 单一性检查智能体
  */
-export class UnityChecker extends Agent<UnityCheckInput, UnityCheckResult> {
+export class UnityChecker extends ProfessionalAgent<UnityCheckInput, UnityCheckResult> {
   private logger = createLogger('UnityChecker')
 
-  constructor(config: {
-    name: string
-    description: string
-    eventBus: EventBus
-    memory: MemoryStore
-    tools: ToolRegistry
-    llm: LLMAdapter
-  }) {
+  constructor(config: ProfessionalAgentConfig) {
     super(config)
   }
 
@@ -180,7 +172,7 @@ export class UnityChecker extends Agent<UnityCheckInput, UnityCheckResult> {
    */
   protected async plan(
     input: UnityCheckInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<UnityCheckPlan> {
     this.logger.info('开始规划单一性检查', {
       claimsCount: input.claims.length,
@@ -191,7 +183,7 @@ export class UnityChecker extends Agent<UnityCheckInput, UnityCheckResult> {
     const independentClaims = input.claims.filter((c) => c.type === 'independent')
 
     // 输入验证
-    this.validateInput(input)
+    this.checkInput(input)
 
     const dependentClaims = input.claims.filter((c) => c.type === 'dependent')
 
@@ -217,7 +209,7 @@ export class UnityChecker extends Agent<UnityCheckInput, UnityCheckResult> {
   /**
    * 验证输入参数
    */
-  private validateInput(input: UnityCheckInput): void {
+  private checkInput(input: UnityCheckInput): void {
     // 验证权利要求
     if (!input.claims || input.claims.length === 0) {
       throw new AgentInputError('权利要求不能为空', 'claims')
@@ -255,7 +247,7 @@ export class UnityChecker extends Agent<UnityCheckInput, UnityCheckResult> {
   /**
    * 执行阶段：执行单一性检查
    */
-  protected async act(plan: UnityCheckPlan, _context: ExecutionContext): Promise<UnityCheckResult> {
+  protected async act(plan: UnityCheckPlan, _context: ExtendedExecutionContext): Promise<UnityCheckResult> {
     this.logger.info('开始执行单一性检查')
 
     const input = plan.input

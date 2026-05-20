@@ -24,6 +24,7 @@ import {
   TaskPlan,
   TaskStep,
   HITLRequest,
+  HITLResult,
   AgentResult,
   AggregatedResult,
   Attachment,
@@ -137,10 +138,12 @@ export class OrchestratorAgent {
     // 初始化 Agent 注册表
     this.agentRegistry = new AgentRegistry()
 
-    // 初始化执行器和管理器
-    this.taskExecutor = new TaskExecutor(this.agentRegistry)
+    // 初始化 HITL 管理器（需在 TaskExecutor 之前创建）
     this.hitlManager = new HITLManager(this.llmClient, config.planningConfig.defaultTimeout)
     this.hitlResponseParser = new HITLResponseParser(this.llmClient)
+
+    // 初始化执行器，注入 HITLManager
+    this.taskExecutor = new TaskExecutor(this.agentRegistry, this.hitlManager, this.hitlResponseParser)
     // HITL 跨语言持久化桥（懒初始化，首次使用时创建）
     this._hitlBridge = null
     const domainConfig = config.domainConfig ?? PatentIntentConfig
@@ -915,7 +918,7 @@ export class OrchestratorAgent {
     }
   ): Promise<{
     success: boolean
-    status: 'confirmed' | 'rejected' | 'modified' | 'timeout'
+    status: HITLResult['status']
     data?: any // eslint-disable-line @typescript-eslint/no-explicit-any
     feedback?: string
   }> {

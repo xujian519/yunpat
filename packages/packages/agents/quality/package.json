@@ -21,6 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@yunpat/agent-base": "workspace:*",
     "@yunpat/core": "workspace:*",
     "zod": "^3.25.76"
   },

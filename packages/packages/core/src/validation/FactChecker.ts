@@ -11,6 +11,8 @@ import {
   FactCheckResult,
   FactCheckerConfig,
   FactCheckMethod,
+  SourceReference,
+  SourceType,
 } from './hallucination-types.js'
 
 /**
@@ -290,7 +292,7 @@ ${content}
       }
 
       // 找到了相关结果
-      const sources: SourceReference[] = searchResults.map((result) => ({
+      const sources: SourceReference[] = searchResults.map((result: any) => ({
         id: result.entry.id,
         type: SourceType.KNOWLEDGE_ENTRY,
         title: result.entry.title || result.entry.content.substring(0, 50),
@@ -299,7 +301,7 @@ ${content}
       }))
 
       // 计算验证置信度
-      const maxSimilarity = Math.max(...searchResults.map((r) => r.score || 0))
+      const maxSimilarity = Math.max(...searchResults.map((r: any) => r.score || 0))
       const confidence = maxSimilarity
 
       return {

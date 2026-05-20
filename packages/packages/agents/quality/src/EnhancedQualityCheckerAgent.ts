@@ -1,4 +1,4 @@
-import { KnowledgeEnhancedAgent, type ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ExtendedExecutionContext } from '@yunpat/agent-base'
 import type { QualityCheckerInput, QualityCheckResult } from './QualityCheckerAgent.js'
 
 /**
@@ -34,13 +34,13 @@ interface EnhancedQualityCheckPlan {
  *
  * @extends KnowledgeEnhancedAgent
  */
-export class EnhancedQualityCheckerAgent extends KnowledgeEnhancedAgent<
+export class EnhancedQualityCheckerAgent extends ProfessionalAgent<
   QualityCheckerInput,
   QualityCheckResult
 > {
   protected async plan(
     input: QualityCheckerInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<EnhancedQualityCheckPlan> {
     if (!input.claims?.independentClaims?.length) {
       throw new Error('权利要求不能为空')
@@ -93,7 +93,7 @@ export class EnhancedQualityCheckerAgent extends KnowledgeEnhancedAgent<
 
   protected async act(
     plan: EnhancedQualityCheckPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<QualityCheckResult> {
     console.log('\n✅ [增强质量检查] 步骤2: 检查阶段')
 
@@ -144,7 +144,7 @@ export class EnhancedQualityCheckerAgent extends KnowledgeEnhancedAgent<
   private async checkClaims(
     input: QualityCheckerInput,
     qualityStandards: QualityStandardsKnowledge | undefined,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<QualityCheckResult['claimsCheck']> {
     const claimsText = input.claims.independentClaims
       .map((c) => `${c.claimNumber}. ${c.fullText}`)
@@ -210,7 +210,7 @@ export class EnhancedQualityCheckerAgent extends KnowledgeEnhancedAgent<
   private async checkSpecification(
     input: QualityCheckerInput,
     qualityStandards: QualityStandardsKnowledge | undefined,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<QualityCheckResult['specificationCheck']> {
     const specText = `
 技术领域：${input.specification.technicalField}
@@ -366,7 +366,7 @@ export class EnhancedQualityCheckerAgent extends KnowledgeEnhancedAgent<
     claimsCheck: QualityCheckResult['claimsCheck'],
     specificationCheck: QualityCheckResult['specificationCheck'],
     formalCheck: QualityCheckResult['formalCheck'],
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<QualityCheckResult['improvementSuggestions']> {
     const suggestions: QualityCheckResult['improvementSuggestions'] = []
 

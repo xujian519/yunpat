@@ -1,4 +1,4 @@
-import { Agent, type ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
 import type { InventionUnderstandingOutput } from '@yunpat/agent-invention'
 import type { SpecificationContent } from '@yunpat/agent-specification-drafter'
 import type { ClaimsSet } from '@yunpat/agent-claim-generator'
@@ -63,8 +63,8 @@ interface AbstractPlan {
  * - 突出核心：技术方案、有益效果、应用领域
  * - 避免细节：不涉及具体的实施例细节
  */
-export class AbstractDrafterAgent extends Agent<AbstractDrafterInput, AbstractDrafterOutput> {
-  constructor(config: any) {
+export class AbstractDrafterAgent extends ProfessionalAgent<AbstractDrafterInput, AbstractDrafterOutput> {
+  constructor(config: ProfessionalAgentConfig) {
     super({
       ...config,
       name: config.name || 'abstract-drafter',
@@ -74,7 +74,7 @@ export class AbstractDrafterAgent extends Agent<AbstractDrafterInput, AbstractDr
 
   protected async plan(
     input: AbstractDrafterInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<AbstractPlan> {
     if (!input.inventionUnderstanding) {
       throw new Error('发明理解结果不能为空')
@@ -98,7 +98,7 @@ export class AbstractDrafterAgent extends Agent<AbstractDrafterInput, AbstractDr
 
   protected async act(
     plan: AbstractPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<AbstractDrafterOutput> {
     console.log('\n📝 [摘要撰写] 步骤2: 撰写阶段')
 
@@ -210,7 +210,7 @@ ${contextInfo}
   }
 
   private async callLLMWithFallback(
-    llm: NonNullable<ExecutionContext['llm']>,
+    llm: NonNullable<ExtendedExecutionContext['llm']>,
     systemPrompt: string,
     userPrompt: string,
     input: AbstractDrafterInput
@@ -292,7 +292,7 @@ ${contextInfo}
     const keywords = ['方法', '系统', '装置', '包括', '特征']
     return (
       keywords.some((kw) => content.includes(kw)) ||
-      solution.split(' ').some((w) => content.includes(w))
+      solution.split(' ').some((w: string) => content.includes(w))
     )
   }
 
@@ -302,7 +302,7 @@ ${contextInfo}
     const keywords = ['有益效果', '优势', '优点', '提高', '改善', '降低']
     return (
       keywords.some((kw) => content.includes(kw)) ||
-      effects.split(' ').some((w) => content.includes(w))
+      effects.split(' ').some((w: string) => content.includes(w))
     )
   }
 

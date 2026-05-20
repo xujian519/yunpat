@@ -1,4 +1,5 @@
-import { Agent, type ExecutionContext, createLogger } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
+import { createLogger } from '@yunpat/core'
 import type {
   QualityCheckInput,
   QualityCheckResult,
@@ -33,25 +34,18 @@ export type {
 /**
  * 质量检查Agent
  */
-export class QualityCheckerAgent extends Agent<QualityCheckInput, QualityCheckResult> {
+export class QualityCheckerAgent extends ProfessionalAgent<QualityCheckInput, QualityCheckResult> {
   private logger = createLogger('QualityCheckerAgent')
   private rules: QualityRule[]
 
-  constructor(config: {
-    name: string
-    description: string
-    eventBus: any
-    memory: any
-    tools: any
-    llm: any
-  }) {
+  constructor(config: ProfessionalAgentConfig) {
     super(config)
     this.rules = createQualityRules()
   }
 
   protected async plan(
     input: QualityCheckInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<QualityCheckPlan> {
     this.logger.info('开始规划质量检查', {
       inventionTitle: input.inventionTitle,
@@ -71,7 +65,7 @@ export class QualityCheckerAgent extends Agent<QualityCheckInput, QualityCheckRe
 
   protected async act(
     plan: QualityCheckPlan,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<QualityCheckResult> {
     this.logger.info('开始执行质量检查')
 

@@ -1,4 +1,5 @@
-import { KnowledgeEnhancedAgent, SkillLoader, type ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
+import { SkillLoader } from '@yunpat/core'
 import { join } from 'path'
 
 /**
@@ -146,7 +147,7 @@ export class PriorArtAnalysisError extends Error {
  *
  * @extends KnowledgeEnhancedAgent
  */
-export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
+export class PriorArtAnalyzerAgent extends ProfessionalAgent<
   PriorArtAnalyzerInput,
   PriorArtAnalysis
 > {
@@ -155,7 +156,7 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
   private static readonly MAX_RETRIES = 2
   private skillLoader?: SkillLoader
 
-  constructor(config: any = {}) {
+  constructor(config: ProfessionalAgentConfig & { skillLoader?: SkillLoader } = {} as any) {
     super(config)
     this.skillLoader =
       config.skillLoader ||
@@ -166,9 +167,9 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
 
   protected async plan(
     input: PriorArtAnalyzerInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<AnalysisPlan> {
-    this.validateInput(input)
+    this.checkAnalyzerInput(input)
 
     const depth = input.analysisDepth ?? PriorArtAnalyzerAgent.DEFAULT_DEPTH
 
@@ -198,7 +199,7 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
     return { input, knowledgeResults }
   }
 
-  protected async act(plan: AnalysisPlan, context: ExecutionContext): Promise<PriorArtAnalysis> {
+  protected async act(plan: AnalysisPlan, context: ExtendedExecutionContext): Promise<PriorArtAnalysis> {
     console.log('\n🔬 [对比文件分析] 步骤2: 分析阶段')
 
     if (!context.llm) {
@@ -228,7 +229,7 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
   }
 
   private async performAnalysis(
-    llm: NonNullable<ExecutionContext['llm']>,
+    llm: NonNullable<ExtendedExecutionContext['llm']>,
     input: PriorArtAnalyzerInput,
     knowledgeResults?: Array<{ source: string; content: string; score: number }>
   ): Promise<PriorArtAnalysis> {
@@ -400,7 +401,7 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
   }
 
   private async callLLMWithRetry(
-    llm: NonNullable<ExecutionContext['llm']>,
+    llm: NonNullable<ExtendedExecutionContext['llm']>,
     systemPrompt: string,
     userPrompt: string
   ): Promise<{ success: boolean; data?: Record<string, unknown>; error?: string }> {
@@ -569,7 +570,7 @@ export class PriorArtAnalyzerAgent extends KnowledgeEnhancedAgent<
     }
   }
 
-  private validateInput(input: PriorArtAnalyzerInput): void {
+  private checkAnalyzerInput(input: PriorArtAnalyzerInput): void {
     if (!input.document?.title?.trim()) {
       throw new PriorArtAnalysisError('文件标题不能为空', 'missing_title')
     }

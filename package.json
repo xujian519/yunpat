@@ -18,10 +18,6 @@
     "clean": "make clean",
     "install:all": "make install"
   },
-  "workspaces": [
-    "packages/*",
-    "packages/agents/*"
-  ],
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"

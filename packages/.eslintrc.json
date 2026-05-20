@@ -43,8 +43,8 @@
     "*.js",
     "*.d.ts",
     "cli/patent-cli/**",
-    "ai/agents/**/node_modules/**",
-    "ai/agents/**/dist/**"
+    "packages/agents/**/node_modules/**",
+    "packages/agents/**/dist/**"
   ],
   "overrides": [
     {

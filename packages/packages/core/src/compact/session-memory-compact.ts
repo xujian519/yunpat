@@ -108,9 +108,55 @@ function adjustIndexToPreserveToolPairs(
 }
 
 /**
- * Session Memory Compact 主函数（骨架实现）
+ * 从被移除的消息中提取关键事实（无 LLM 调用）
  *
- * TODO: 集成 memory 模块的 Session Memory 提取功能
+ * 提取规则：
+ * - 用户消息中的明确指令/偏好
+ * - 助手消息中的结论性陈述
+ * - 工具调用结果中的数据摘要
+ */
+function extractKeyFacts(
+  messages: Array<{ role: string; content: string }>
+): string[] {
+  const facts: string[] = []
+
+  for (const msg of messages) {
+    const content = msg.content.trim()
+    if (!content) continue
+
+    if (msg.role === 'user') {
+      if (content.length <= 200) {
+        facts.push(`用户要求: ${content}`)
+      } else {
+        facts.push(`用户要求: ${content.substring(0, 150)}...`)
+      }
+    } else if (msg.role === 'assistant') {
+      const lines = content.split('\n')
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (
+          trimmed.startsWith('结论') ||
+          trimmed.startsWith('结果') ||
+          trimmed.startsWith('建议') ||
+          trimmed.startsWith('推荐') ||
+          trimmed.startsWith('-')
+        ) {
+          if (trimmed.length <= 200) {
+            facts.push(trimmed)
+          }
+          if (facts.length >= 20) break
+        }
+      }
+    }
+  }
+
+  return facts.slice(0, 20)
+}
+
+/**
+ * Session Memory Compact 主函数
+ *
+ * 无 LLM 调用：提取关键事实作为摘要替代被移除的消息
  */
 export async function sessionMemoryCompact(
   messages: Array<{ role: string; content: string; metadata?: Record<string, unknown> }>,
@@ -134,11 +180,14 @@ export async function sessionMemoryCompact(
     }
   }
 
-  // TODO: 使用 Session Memory 作为摘要替代被移除的消息
-  // 当前骨架实现：简单地保留最近消息，不生成摘要
+  const keyFacts = extractKeyFacts(removedMessages)
+  const factsSection = keyFacts.length > 0
+    ? `\n\n关键事实:\n${keyFacts.map((f) => `- ${f}`).join('\n')}`
+    : ''
+
   const summaryMessage = {
     role: 'system' as const,
-    content: `[会话记忆] 之前 ${removedMessages.length} 轮对话已压缩。核心事实保留在上下文中。`,
+    content: `[会话记忆] 之前 ${removedMessages.length} 轮对话已压缩。${factsSection}`,
     metadata: {
       compactType: 'session_memory',
       compactedMessageCount: removedMessages.length,
@@ -164,7 +213,9 @@ export async function sessionMemoryCompact(
       {
         originalId: 'session_memory',
         contentType: 'dialogue_history',
-        summary: `已压缩 ${removedMessages.length} 轮对话`,
+        summary: keyFacts.length > 0
+          ? `已压缩 ${removedMessages.length} 轮对话，提取 ${keyFacts.length} 条关键事实`
+          : `已压缩 ${removedMessages.length} 轮对话`,
         originalTokens: estimateMessagesTokens(removedMessages),
         summaryTokens: estimateMessagesTokens([summaryMessage]),
       },

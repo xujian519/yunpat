@@ -16,13 +16,10 @@
  */
 
 import {
-  Agent,
-  type EventBus,
-  type MemoryStore,
-  type ToolRegistry,
-  type LLMAdapter,
-  type ExecutionContext,
-} from '@yunpat/core'
+  ProfessionalAgent,
+  type ProfessionalAgentConfig,
+  type ExtendedExecutionContext,
+} from '@yunpat/agent-base'
 import { ChemicalStructureTool } from '@yunpat/image-tools'
 import { MathFormulaTool } from '@yunpat/image-tools'
 
@@ -92,21 +89,14 @@ interface DrawingRecognitionPlan {
 /**
  * 技术图纸识别智能体
  */
-export class TechnicalDrawingAgent extends Agent<
+export class TechnicalDrawingAgent extends ProfessionalAgent<
   DrawingRecognitionInput,
   DrawingRecognitionOutput
 > {
   private chemicalTool: ChemicalStructureTool
   private mathTool: MathFormulaTool
 
-  constructor(config: {
-    name: string
-    description: string
-    eventBus: EventBus
-    memory: MemoryStore
-    tools: ToolRegistry
-    llm: LLMAdapter
-  }) {
+  constructor(config: ProfessionalAgentConfig) {
     super(config)
     this.chemicalTool = new ChemicalStructureTool()
     this.mathTool = new MathFormulaTool()
@@ -117,7 +107,7 @@ export class TechnicalDrawingAgent extends Agent<
    */
   protected async plan(
     input: DrawingRecognitionInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<DrawingRecognitionPlan> {
     console.log('\n🔍 [图纸识别] 步骤1: 规划阶段')
     console.log(`   图片格式: ${input.imageFormat || 'png'}`)
@@ -139,7 +129,7 @@ export class TechnicalDrawingAgent extends Agent<
    */
   protected async act(
     plan: DrawingRecognitionPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<DrawingRecognitionOutput> {
     console.log('\n🔎 [图纸识别] 步骤2: 执行阶段')
 
@@ -241,7 +231,7 @@ export class TechnicalDrawingAgent extends Agent<
   private async recognizeChemicalStructure(
     input: DrawingRecognitionInput,
     result: DrawingRecognitionOutput,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<void> {
     console.log('\n🧪 [化学结构识别] 正在识别化学结构...')
 
@@ -252,7 +242,7 @@ export class TechnicalDrawingAgent extends Agent<
           imageFormat: input.imageFormat || 'png',
           outputFormat: 'smiles',
         },
-        context
+        context as any
       )
 
       if (chemicalResult.success && chemicalResult.structure) {
@@ -284,7 +274,7 @@ export class TechnicalDrawingAgent extends Agent<
   private async recognizeMathFormula(
     input: DrawingRecognitionInput,
     result: DrawingRecognitionOutput,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<void> {
     console.log('\n📐 [数学公式识别] 正在识别数学公式...')
 
@@ -294,7 +284,7 @@ export class TechnicalDrawingAgent extends Agent<
           imageData: input.imageData,
           imageFormat: input.imageFormat || 'png',
         },
-        context
+        context as any
       )
 
       if (mathResult.success && mathResult.latex) {
@@ -325,7 +315,7 @@ export class TechnicalDrawingAgent extends Agent<
   private async recognizeElectricalSymbols(
     _input: DrawingRecognitionInput,
     result: DrawingRecognitionOutput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<void> {
     console.log('\n⚡ [电学符号识别] 正在识别电学符号...')
 
@@ -380,7 +370,7 @@ export class TechnicalDrawingAgent extends Agent<
   private async recognizeGeneralDrawing(
     input: DrawingRecognitionInput,
     result: DrawingRecognitionOutput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<void> {
     console.log('\n📄 [通用图纸识别] 正在进行OCR识别...')
 

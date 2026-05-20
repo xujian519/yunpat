@@ -6,7 +6,8 @@
  * 编排层通过 agentId 'comparison-report-generator' 调用独立包版本。
  */
 
-import { KnowledgeEnhancedAgent, SkillLoader, type ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
+import { SkillLoader } from '@yunpat/core'
 import { join } from 'path'
 
 export interface ComparisonReportInput {
@@ -85,10 +86,10 @@ interface ReportPlan {
   input: ComparisonReportInput
 }
 
-export class ComparisonReportGeneratorAgent extends KnowledgeEnhancedAgent {
+export class ComparisonReportGeneratorAgent extends ProfessionalAgent {
   private skillLoader?: SkillLoader
 
-  constructor(config: any = {}) {
+  constructor(config: ProfessionalAgentConfig & { skillLoader?: SkillLoader } = {} as any) {
     super(config)
     this.skillLoader =
       config.skillLoader ||
@@ -99,7 +100,7 @@ export class ComparisonReportGeneratorAgent extends KnowledgeEnhancedAgent {
 
   protected async plan(
     input: ComparisonReportInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<ReportPlan> {
     if (!input.inventionUnderstanding?.technicalProblem?.trim()) {
       throw new Error('发明理解结果不能为空')
@@ -115,7 +116,7 @@ export class ComparisonReportGeneratorAgent extends KnowledgeEnhancedAgent {
     return { input }
   }
 
-  protected async act(plan: ReportPlan, context: ExecutionContext): Promise<ComparisonReport> {
+  protected async act(plan: ReportPlan, context: ExtendedExecutionContext): Promise<ComparisonReport> {
     console.log('\n📊 [对比分析报告] 步骤2: 生成阶段')
 
     const { input } = plan

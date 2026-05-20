@@ -1,5 +1,5 @@
-import { KnowledgeEnhancedAgent, type ExecutionContext, createLogger } from '@yunpat/core'
-import { ExternalServiceError } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
+import { ExternalServiceError, createLogger } from '@yunpat/core'
 
 /**
  * Google专利搜索结果
@@ -215,7 +215,7 @@ interface PriorArtSearchPlan {
  * 3. 生成现有技术分析报告
  * 4. 评估新颖性
  */
-export class PriorArtSearchAgent extends KnowledgeEnhancedAgent<
+export class PriorArtSearchAgent extends ProfessionalAgent<
   PriorArtSearchInput,
   PriorArtSearchResult
 > {
@@ -234,7 +234,7 @@ export class PriorArtSearchAgent extends KnowledgeEnhancedAgent<
 
   public async plan(
     input: PriorArtSearchInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<PriorArtSearchPlan> {
     this.logger.info('开始规划检索策略', {
       inventionTitle: input.inventionTitle,
@@ -261,7 +261,7 @@ export class PriorArtSearchAgent extends KnowledgeEnhancedAgent<
 
   protected async act(
     plan: PriorArtSearchPlan,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<PriorArtSearchResult> {
     this.logger.info('开始执行检索')
 

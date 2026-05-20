@@ -638,11 +638,34 @@ export {
 } from './coordinator/types.js'
 
 // ========== 版本信息 ==========
-export const VERSION = '0.2.0'
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+const corePkg = require('../../package.json')
+export const VERSION: string = corePkg.version
 export const ARCHITECTURE = 'five-layer'
 
 // Observability
-export * from './observability/index.js'
+export {
+  register,
+  httpRequestDuration,
+  httpRequestsTotal,
+  agentTasksTotal,
+  agentTaskDuration,
+  agentSuccessRate,
+  llmCallsTotal,
+  llmTokensTotal,
+  llmResponseTime,
+  dbQueryDuration,
+  dbConnectionsActive,
+  cacheHitsTotal,
+  cacheMissesTotal,
+  recordHttpRequest,
+  recordAgentTask,
+  recordLLMCall,
+  getMetrics,
+  metricsMiddleware,
+  metricsHandler,
+} from './observability/index.js'
 
 // ========== Phase 0: Prompt 工程重构 ==========
 export {

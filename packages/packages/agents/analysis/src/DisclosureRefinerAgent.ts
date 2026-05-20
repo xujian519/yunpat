@@ -1,4 +1,4 @@
-import { KnowledgeEnhancedAgent, type ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ExtendedExecutionContext } from '@yunpat/agent-base'
 
 export interface TechnicalFeature {
   feature: string
@@ -85,10 +85,10 @@ interface RefinerPlan {
   input: DisclosureRefinerInput
 }
 
-export class DisclosureRefinerAgent extends KnowledgeEnhancedAgent {
+export class DisclosureRefinerAgent extends ProfessionalAgent {
   protected async plan(
     input: DisclosureRefinerInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<RefinerPlan> {
     if (!input.originalInvention?.technicalProblem?.trim()) {
       throw new Error('原始发明理解不能为空')
@@ -107,7 +107,7 @@ export class DisclosureRefinerAgent extends KnowledgeEnhancedAgent {
 
   protected async act(
     plan: RefinerPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<RefinedInventionUnderstanding> {
     console.log('\n✨ [交底书再分析] 步骤2: 提炼阶段')
 

@@ -273,7 +273,7 @@ export interface HITLResponse {
  */
 export interface HITLResult {
   /** 状态 */
-  status: 'confirmed' | 'rejected' | 'modified' | 'timeout'
+  status: 'confirmed' | 'rejected' | 'modified' | 'timeout' | 'waiting'
   /** 数据 */
   data?: Record<string, any>
   /** 反馈 */

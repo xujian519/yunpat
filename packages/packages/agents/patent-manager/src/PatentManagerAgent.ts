@@ -9,7 +9,7 @@
  * 5. 工作流程协调
  */
 
-import { Agent, type ExecutionContext, type AgentConfig } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
 import { PatentDatabase } from './database/PatentDatabase.js'
 import { PatentStateMachine } from './state/PatentStateMachine.js'
 import { NotificationService } from './notifications/NotificationService.js'
@@ -54,7 +54,7 @@ export interface PatentManagerConfig {
  *
  * 整合数据库、状态机和通知服务，提供完整的专利管理功能
  */
-export class PatentManagerAgent extends Agent<PatentManagerInput, PatentManagerOutput> {
+export class PatentManagerAgent extends ProfessionalAgent<PatentManagerInput, PatentManagerOutput> {
   /** 数据库实例 */
   private database: PatentDatabase
   /** 状态机实例 */
@@ -67,17 +67,8 @@ export class PatentManagerAgent extends Agent<PatentManagerInput, PatentManagerO
   /**
    * 构造函数
    */
-  constructor(config: PatentManagerConfig & AgentConfig) {
-    super({
-      name: config.name ?? 'PatentManagerAgent',
-      description: config.description ?? '专利全生命周期管理智能体',
-      eventBus: config.eventBus,
-      memory: config.memory,
-      tools: config.tools,
-      llm: config.llm,
-      maxIterations: config.maxIterations,
-      timeout: config.timeout,
-    })
+  constructor(config: ProfessionalAgentConfig & PatentManagerConfig) {
+    super(config)
 
     this.database = config.database ?? new PatentDatabase()
     this.stateMachine = config.stateMachine ?? new PatentStateMachine()
@@ -113,13 +104,13 @@ export class PatentManagerAgent extends Agent<PatentManagerInput, PatentManagerO
    */
   protected async plan(
     input: PatentManagerInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<ManagementPlan> {
     console.log('[PatentManager] 步骤1: 规划阶段')
     console.log(`   操作类型: ${input.operation}`)
 
     // 验证输入
-    this.validateInput(input)
+    this.checkManagerInput(input)
 
     return { input, operation: input.operation }
   }
@@ -131,7 +122,7 @@ export class PatentManagerAgent extends Agent<PatentManagerInput, PatentManagerO
    */
   protected async act(
     plan: ManagementPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<PatentManagerOutput> {
     console.log('[PatentManager] 步骤2: 执行阶段')
 
@@ -215,7 +206,7 @@ export class PatentManagerAgent extends Agent<PatentManagerInput, PatentManagerO
   /**
    * 验证输入数据
    */
-  private validateInput(input: PatentManagerInput): void {
+  private checkManagerInput(input: PatentManagerInput): void {
     switch (input.operation) {
       case 'add_patent':
       case 'update_patent':
@@ -592,7 +583,7 @@ export class PatentManagerAgent extends Agent<PatentManagerInput, PatentManagerO
    */
   private async generateReport(
     input: PatentManagerInput,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<string> {
     console.log('   生成管理报告')
 

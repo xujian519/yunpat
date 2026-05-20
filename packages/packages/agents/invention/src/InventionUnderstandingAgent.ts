@@ -10,11 +10,11 @@
  */
 
 import {
-  KnowledgeEnhancedAgent,
-  type ExecutionContext,
-  type AgentConfig,
-  SkillLoader,
-} from '@yunpat/core'
+  ProfessionalAgent,
+  type ProfessionalAgentConfig,
+  type ExtendedExecutionContext,
+} from '@yunpat/agent-base'
+import { SkillLoader } from '@yunpat/core'
 import { join } from 'path'
 import {
   type InventionUnderstandingInput,
@@ -46,11 +46,11 @@ import {
   extractTerminologyMappings,
 } from './OutputProcessor.js'
 
-interface InventionUnderstandingConfig extends AgentConfig {
+interface InventionUnderstandingConfig extends ProfessionalAgentConfig {
   skillLoader?: SkillLoader
 }
 
-export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
+export class InventionUnderstandingAgent extends ProfessionalAgent<
   InventionUnderstandingInput,
   InventionUnderstandingOutput
 > {
@@ -69,9 +69,9 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
 
   protected async plan(
     input: InventionUnderstandingInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<InventionPlan> {
-    this.validateInput(input)
+    this.checkInventionInput(input)
 
     console.log('\n🔍 [发明理解] 步骤1: 规划与知识检索阶段')
     console.log(`   发明名称: ${input.title}`)
@@ -93,7 +93,7 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
 
   protected async act(
     plan: InventionPlan,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<InventionUnderstandingOutput> {
     console.log('\n🧠 [发明理解] 步骤2: 分析与提取阶段')
 
@@ -309,7 +309,7 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
   // --- LLM 交互 ---
 
   private async extractTriplets(
-    llm: NonNullable<ExecutionContext['llm']>,
+    llm: NonNullable<ExtendedExecutionContext['llm']>,
     input: InventionUnderstandingInput,
     knowledge: KnowledgeRetrievalResult
   ): Promise<InventionUnderstandingOutput> {
@@ -529,7 +529,7 @@ export class InventionUnderstandingAgent extends KnowledgeEnhancedAgent<
     return [scenario, params.field || 'general', params.query?.substring(0, 20) || ''].join(':')
   }
 
-  private validateInput(input: InventionUnderstandingInput): void {
+  private checkInventionInput(input: InventionUnderstandingInput): void {
     if (!input.title?.trim()) throw new Error('发明名称不能为空')
     if (!input.field?.trim()) throw new Error('技术领域不能为空')
     if (!input.technicalDisclosure?.trim()) throw new Error('技术交底书不能为空')

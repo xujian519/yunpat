@@ -1,4 +1,4 @@
-import { Agent, type ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ExtendedExecutionContext } from '@yunpat/agent-base'
 
 export interface QualityCheckerInput {
   claims: {
@@ -88,10 +88,10 @@ interface QualityCheckPlan {
   input: QualityCheckerInput
 }
 
-export class QualityCheckerAgent extends Agent {
+export class QualityCheckerAgent extends ProfessionalAgent {
   protected async plan(
     input: QualityCheckerInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<QualityCheckPlan> {
     // 兼容下划线命名格式
     const normalizedInput = this.normalizeInput(input)
@@ -163,7 +163,7 @@ export class QualityCheckerAgent extends Agent {
 
   protected async act(
     plan: QualityCheckPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<QualityCheckResult> {
     console.log('\n✅ [质量检查] 步骤2: 检查阶段')
 
@@ -213,7 +213,7 @@ export class QualityCheckerAgent extends Agent {
 
   private async checkClaims(
     input: QualityCheckerInput,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<QualityCheckResult['claimsCheck']> {
     const claimsText = input.claims.independentClaims
       .map((c) => `${c.claimNumber}. ${c.fullText}`)
@@ -268,7 +268,7 @@ export class QualityCheckerAgent extends Agent {
 
   private async checkSpecification(
     input: QualityCheckerInput,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<QualityCheckResult['specificationCheck']> {
     const specText = `
 技术领域：${input.specification.technicalField}
@@ -445,7 +445,7 @@ export class QualityCheckerAgent extends Agent {
     claimsCheck: QualityCheckResult['claimsCheck'],
     specificationCheck: QualityCheckResult['specificationCheck'],
     formalCheck: QualityCheckResult['formalCheck'],
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<QualityCheckResult['improvementSuggestions']> {
     const suggestions: QualityCheckResult['improvementSuggestions'] = []
 

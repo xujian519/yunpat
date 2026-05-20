@@ -14,13 +14,10 @@
  */
 
 import {
-  Agent,
-  type EventBus,
-  type MemoryStore,
-  type ToolRegistry,
-  type LLMAdapter,
-  type ExecutionContext,
-} from '@yunpat/core'
+  ProfessionalAgent,
+  type ProfessionalAgentConfig,
+  type ExtendedExecutionContext,
+} from '@yunpat/agent-base'
 import {
   PatentApplicationGeneratorTool,
   PatentClaimsGeneratorTool,
@@ -134,18 +131,11 @@ interface FormatConverterPlan {
 /**
  * 专利格式转换智能体
  */
-export class PatentFormatConverterAgent extends Agent<FormatConverterInput, FormatConverterOutput> {
+export class PatentFormatConverterAgent extends ProfessionalAgent<FormatConverterInput, FormatConverterOutput> {
   private applicationGeneratorTool: PatentApplicationGeneratorTool
   private claimsGeneratorTool: PatentClaimsGeneratorTool
 
-  constructor(config: {
-    name: string
-    description: string
-    eventBus: EventBus
-    memory: MemoryStore
-    tools: ToolRegistry
-    llm: LLMAdapter
-  }) {
+  constructor(config: ProfessionalAgentConfig) {
     super(config)
     this.applicationGeneratorTool = new PatentApplicationGeneratorTool()
     this.claimsGeneratorTool = new PatentClaimsGeneratorTool()
@@ -156,7 +146,7 @@ export class PatentFormatConverterAgent extends Agent<FormatConverterInput, Form
    */
   protected async plan(
     input: FormatConverterInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<FormatConverterPlan> {
     console.log('\n📝 [格式转换] 步骤1: 规划阶段')
     console.log(`   输入格式: ${input.inputFormat}`)
@@ -183,7 +173,7 @@ export class PatentFormatConverterAgent extends Agent<FormatConverterInput, Form
    */
   protected async act(
     plan: FormatConverterPlan,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<FormatConverterOutput> {
     console.log('\n🔄 [格式转换] 步骤2: 执行阶段')
 

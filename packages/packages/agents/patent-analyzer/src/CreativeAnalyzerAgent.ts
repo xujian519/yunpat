@@ -9,7 +9,8 @@
  * 5. 优化建议生成
  */
 
-import { Agent, type LLMAdapter, type ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
+import type { LLMAdapter } from '@yunpat/core'
 import { SAOExtractor, SAO2VecEncoder } from '@yunpat/core/evaluation'
 
 /**
@@ -99,20 +100,13 @@ interface AnalysisPlan {
 /**
  * 创造性分析智能体
  */
-export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, CreativeAnalyzerOutput> {
+export class CreativeAnalyzerAgent extends ProfessionalAgent<CreativeAnalyzerInput, CreativeAnalyzerOutput> {
   private agentLlm: LLMAdapter
 
-  // 可选评估模块（向后兼容）
   private saoExtractor?: SAOExtractor
   private sao2vecEncoder?: SAO2VecEncoder
 
-  constructor(config: {
-    name?: string
-    description?: string
-    llm: LLMAdapter
-    eventBus: any
-    memory: any
-    tools: any
+  constructor(config: ProfessionalAgentConfig & {
     evaluationModules?: {
       saoExtractor?: SAOExtractor
       sao2vecEncoder?: SAO2VecEncoder
@@ -134,7 +128,7 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
 
   protected async plan(
     input: CreativeAnalyzerInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<AnalysisPlan> {
     if (!input.patent?.publicationNumber?.trim()) {
       throw new Error('专利公开号不能为空')
@@ -161,7 +155,7 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
     }
   }
 
-  protected async act(plan: unknown, _context: ExecutionContext): Promise<CreativeAnalyzerOutput> {
+  protected async act(plan: unknown, _context: ExtendedExecutionContext): Promise<CreativeAnalyzerOutput> {
     const { input, stages, assessmentStandard } = plan as AnalysisPlan
 
     let problemAnalysis: CreativeAnalyzerOutput['problemAnalysis'] | undefined
@@ -224,7 +218,7 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
     }
   }
 
-  private async callLLM(
+  private async invokeLLM(
     systemPrompt: string,
     userPrompt: string,
     maxTokens = 1000
@@ -253,7 +247,7 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
 请分析：1. 解决的技术问题是什么？2. 问题的难度如何（低/中/高）？3. 是否为本领域技术人员难以预见的？`
 
     try {
-      const content = await this.callLLM('你是一位专业的专利分析师，擅长技术问题分析。', prompt)
+      const content = await this.invokeLLM('你是一位专业的专利分析师，擅长技术问题分析。', prompt)
       return this.parseProblemAnalysis(content)
     } catch {
       return { solvedProblem: '分析失败', problemDifficulty: 'medium', unforeseeable: false }
@@ -273,7 +267,7 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
 请分析：1. 采用了哪些技术手段？2. 技术特征的组合方式？3. 是否存在协同效应？`
 
     try {
-      const content = await this.callLLM(
+      const content = await this.invokeLLM(
         '你是一位专业的专利分析师，擅长技术方案分析。',
         prompt,
         1500
@@ -297,7 +291,7 @@ export class CreativeAnalyzerAgent extends Agent<CreativeAnalyzerInput, Creative
 请分析：1. 产生了哪些技术效果？2. 这些效果是否是预料不到的？3. 是否有量化的效果数据？`
 
     try {
-      const content = await this.callLLM('你是一位专业的专利分析师，擅长技术效果分析。', prompt)
+      const content = await this.invokeLLM('你是一位专业的专利分析师，擅长技术效果分析。', prompt)
       return this.parseEffectAnalysis(content)
     } catch {
       return { technicalEffects: [], unexpected: false }
@@ -372,7 +366,7 @@ ${saoSemanticDifferences.length > 0 ? `基于 SAO 语义分析的差异：\n${sa
 请分析：1. 区别技术特征有哪些？2. 这些区别是否显而易见？3. 现有技术是否有启示？`
 
     try {
-      const content = await this.callLLM(
+      const content = await this.invokeLLM(
         '你是一位专业的专利分析师，擅长现有技术对比。',
         prompt,
         1500
@@ -459,7 +453,7 @@ ${saoSimilarityScore !== undefined ? `SAO 语义新颖性评分: ${saoSimilarity
 请评估：1. 创造性等级 2. 创造性评分（0-100）3. 各维度评分和理由 4. 总体评估理由`
 
     try {
-      const content = await this.callLLM('你是一位专业的专利分析师，擅长创造性评估。', prompt, 2000)
+      const content = await this.invokeLLM('你是一位专业的专利分析师，擅长创造性评估。', prompt, 2000)
       const assessment = this.parseCreativityAssessment(content)
 
       // 如果有 SAO2Vec 评分，调整创造性评分

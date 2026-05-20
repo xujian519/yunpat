@@ -157,7 +157,7 @@ export class PatentCoordinator extends Agent<CoordinatorInput, CoordinatorOutput
       round++
       console.log(`[PatentCoordinator] 理解案件第 ${round} 轮...`)
 
-      const response = await this.llm.chat({
+      const response = await this.callLLMWithRetry({
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -367,7 +367,7 @@ ${criteria.dimensions.map((d) => `- ${d.name}（权重 ${d.weight}）: ${d.descr
   "reworkSuggestion": "如需重做，请..."
 }`
 
-    const response = await this.llm.chat({
+    const response = await this.callLLMWithRetry({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: outputStr.substring(0, 8000) },
@@ -597,8 +597,19 @@ ${criteria.dimensions.map((d) => `- ${d.name}（权重 ${d.weight}）: ${d.descr
           })
           failedSteps.add(step.id)
 
-          // 如果步骤配置了重试，且未达到最大重试次数
-          // TODO: 实现重试逻辑
+          const task = this.tasks.get(step.id)
+          const stepMaxRetries = step.maxRetries ?? this.config.maxRetries ?? 2
+          if (task && task.retryCount < stepMaxRetries) {
+            task.retryCount++
+            const backoff = Math.min(1000 * Math.pow(2, task.retryCount - 1), 10000)
+            console.warn(
+              `[PatentCoordinator] 步骤 ${step.id} 第 ${task.retryCount} 次重试 (${backoff}ms 后)`
+            )
+            await new Promise((r) => setTimeout(r, backoff))
+            pendingSteps.delete(step.id)
+            pendingSteps.add(step.id)
+            continue
+          }
         }
 
         pendingSteps.delete(step.id)
@@ -893,6 +904,26 @@ ${criteria.dimensions.map((d) => `- ${d.name}（权重 ${d.weight}）: ${d.descr
       analyze: '专利分析',
     }
     return names[intent ?? ''] ?? '专利工作流'
+  }
+
+  private async callLLMWithRetry(
+    params: Parameters<NonNullable<ExecutionContext['llm']>['chat']>[0],
+    retries = this.config.maxRetries ?? 2
+  ): Promise<Awaited<ReturnType<NonNullable<ExecutionContext['llm']>['chat']>>> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await this.llm.chat(params)
+      } catch (error) {
+        if (attempt >= retries) throw error
+        const backoff = Math.min(1000 * Math.pow(2, attempt), 10000)
+        console.warn(
+          `[PatentCoordinator] LLM 调用失败 (尝试 ${attempt + 1}/${retries + 1}), ${backoff}ms 后重试:`,
+          error instanceof Error ? error.message : String(error)
+        )
+        await new Promise((r) => setTimeout(r, backoff))
+      }
+    }
+    throw new Error('unreachable')
   }
 }
 

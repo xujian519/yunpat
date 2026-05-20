@@ -21,6 +21,7 @@
   "author": "Xu Jian <xujian519@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@yunpat/agent-base": "workspace:*",
     "@yunpat/core": "workspace:*"
   },
   "devDependencies": {

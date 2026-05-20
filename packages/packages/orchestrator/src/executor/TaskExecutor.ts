@@ -23,6 +23,8 @@ import { errorToAgentError } from '@yunpat/agent-base'
 import type { AgentRegistry } from '../registry/AgentRegistry.js'
 
 import { CritiqueLoop } from './CritiqueLoop.js'
+import { HITLManager } from '../hitl/HITLManager.js'
+import type { HITLResponseParser } from '../hitl/HITLResponseParser.js'
 
 interface DAGLayer {
   layerIndex: number
@@ -36,9 +38,17 @@ interface DAG {
 
 export class TaskExecutor {
   private readonly critiqueLoop: CritiqueLoop
+  private hitlManager?: HITLManager
+  private hitlResponseParser?: HITLResponseParser
 
-  constructor(private agentRegistry?: AgentRegistry) {
+  constructor(
+    private agentRegistry?: AgentRegistry,
+    hitlManager?: HITLManager,
+    hitlResponseParser?: HITLResponseParser
+  ) {
     this.critiqueLoop = new CritiqueLoop(agentRegistry)
+    this.hitlManager = hitlManager
+    this.hitlResponseParser = hitlResponseParser
   }
   /**
    * 执行任务计划
@@ -53,20 +63,12 @@ export class TaskExecutor {
       // 执行
       const results = await this.executeDAG(dag, plan, context)
 
-      // 检查HITL
-      if (this.hasHITLCheckpoints(plan)) {
-        // HITL处理将在主流程中处理
-        return {
-          plan,
-          results,
-          success: true,
-          executionTime: Date.now() - startTime,
-        }
-      }
-
+      // 检查HITL — 如果有检查点，通过 HITLManager 创建检查点
+      const hitlResults = await this.handleHITL(plan, results)
       return {
         plan,
         results,
+        hitlResults,
         success: true,
         executionTime: Date.now() - startTime,
       }
@@ -279,6 +281,11 @@ export class TaskExecutor {
 
   /**
    * 处理HITL检查点
+   *
+   * 对每个 HITL 检查点：
+   * 1. 通过 HITLManager 创建检查点记录
+   * 2. 等待外部响应（通过 OrchestratorAgent.submitHITLResponse 注入）
+   * 3. 返回各检查点的处理结果
    */
   async handleHITL(plan: TaskPlan, results: Map<string, AgentResult>): Promise<HITLResult[]> {
     const hitlResults: HITLResult[] = []
@@ -290,12 +297,31 @@ export class TaskExecutor {
       const result = results.get(checkpointId)
       if (!result) continue
 
-      // TODO: 实际HITL处理
-      // 目前返回自动确认
-      hitlResults.push({
-        status: 'confirmed',
-        data: result.data,
-      })
+      if (this.hitlManager) {
+        try {
+          await this.hitlManager.createCheckpoint(
+            plan.planId,
+            checkpointId,
+            step,
+            result
+          )
+          hitlResults.push({
+            status: 'waiting',
+            data: result.data,
+          })
+        } catch (err) {
+          console.error(`[TaskExecutor] HITL checkpoint creation failed for ${checkpointId}:`, err)
+          hitlResults.push({
+            status: 'confirmed',
+            data: result.data,
+          })
+        }
+      } else {
+        hitlResults.push({
+          status: 'confirmed',
+          data: result.data,
+        })
+      }
     }
 
     return hitlResults

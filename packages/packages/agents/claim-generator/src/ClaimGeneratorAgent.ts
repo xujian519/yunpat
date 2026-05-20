@@ -1,6 +1,9 @@
 import {
-  Agent,
-  type ExecutionContext,
+  ProfessionalAgent,
+  type ProfessionalAgentConfig,
+  type ExtendedExecutionContext,
+} from '@yunpat/agent-base'
+import {
   extractRequiredFeatures,
   isFeatureCoveredInClaim,
   identifyIncludedUnnecessaryFeatures,
@@ -46,7 +49,7 @@ export type {
 /**
  * 权利要求生成智能体
  */
-export class ClaimGeneratorAgent extends Agent<ClaimGeneratorInput, ClaimGeneratorOutput> {
+export class ClaimGeneratorAgent extends ProfessionalAgent<ClaimGeneratorInput, ClaimGeneratorOutput> {
   private templatePath: string
   private skillsDir: string
   private secureProvider: SecureContentProvider
@@ -72,7 +75,7 @@ export class ClaimGeneratorAgent extends Agent<ClaimGeneratorInput, ClaimGenerat
 
   protected async plan(
     input: ClaimGeneratorInput,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<ClaimGeneratorPlan> {
     if (!input.inventionUnderstanding) {
       throw new Error('发明理解结果不能为空')
@@ -103,7 +106,7 @@ export class ClaimGeneratorAgent extends Agent<ClaimGeneratorInput, ClaimGenerat
 
   protected async act(
     plan: ClaimGeneratorPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<ClaimGeneratorOutput> {
     console.log('\n📝 [权利要求生成] 步骤2: 两步撰写阶段')
 
@@ -163,7 +166,7 @@ export class ClaimGeneratorAgent extends Agent<ClaimGeneratorInput, ClaimGenerat
    * 第一步：调用 LLM 执行三步法决策流程
    */
   private async runEssentialAnalysis(
-    context: ExecutionContext,
+    context: ExtendedExecutionContext,
     si: StructuredInput,
     regenCtx?: ClaimRegenerationContext
   ): Promise<EssentialAnalysisResult> {
@@ -338,7 +341,7 @@ ${regenCtx.unnecessaryIncludedFeatures.length > 0 ? `不应在独立权利要求
    */
   protected async reflect(
     result: unknown,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<{ shouldContinue: boolean }> {
     const output = result as ClaimGeneratorOutput
 
@@ -468,7 +471,7 @@ ${regenCtx.unnecessaryIncludedFeatures.length > 0 ? `不应在独立权利要求
   }
 
   private async callLLMWithFallback(
-    llm: NonNullable<ExecutionContext['llm']>,
+    llm: NonNullable<ExtendedExecutionContext['llm']>,
     systemPrompt: string,
     userPrompt: string,
     input: ClaimGeneratorInput,

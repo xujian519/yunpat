@@ -26,6 +26,7 @@
   "author": "Xu Jian <xujian519@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@yunpat/agent-base": "workspace:*",
     "@yunpat/core": "workspace:*",
     "@yunpat/agent-invention": "workspace:*",
     "@yunpat/agent-prior-art-search": "workspace:*",

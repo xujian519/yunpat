@@ -21,6 +21,7 @@
     "test": "vitest --run"
   },
   "dependencies": {
+    "@yunpat/agent-base": "workspace:*",
     "@yunpat/core": "workspace:*",
     "@langchain/core": "^0.2.26"
   },

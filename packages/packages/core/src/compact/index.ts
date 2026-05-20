@@ -41,6 +41,8 @@ export { sessionMemoryCompact, calculateMessagesToKeepIndex } from './session-me
 // API Summary Compact
 export {
   apiSummaryCompact,
+  type LLMChatFn,
+  type APISummaryCompactConfig,
   POST_COMPACT_TOKEN_BUDGET,
   POST_COMPACT_MAX_FILES_TO_RESTORE,
   POST_COMPACT_MAX_TOKENS_PER_FILE,

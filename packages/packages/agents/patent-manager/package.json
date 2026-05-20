@@ -21,6 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@yunpat/agent-base": "workspace:*",
     "@yunpat/core": "workspace:*",
     "@yunpat/patent-core": "workspace:*",
     "drizzle-orm": "^0.45.2",

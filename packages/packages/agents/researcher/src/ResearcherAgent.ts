@@ -1,4 +1,4 @@
-import { KnowledgeEnhancedAgent, AgentConfig, ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
 
 /**
  * 研究查询
@@ -130,8 +130,8 @@ export interface ResearchResult {
  *
  * 专门用于信息搜集、数据整理和分析
  */
-export class ResearcherAgent extends KnowledgeEnhancedAgent<ResearchQuery, ResearchResult> {
-  constructor(config: Omit<AgentConfig, 'name' | 'description'>) {
+export class ResearcherAgent extends ProfessionalAgent<ResearchQuery, ResearchResult> {
+  constructor(config: Omit<ProfessionalAgentConfig, 'name' | 'description'>) {
     super({
       ...config,
       name: 'researcher',
@@ -142,7 +142,7 @@ export class ResearcherAgent extends KnowledgeEnhancedAgent<ResearchQuery, Resea
   /**
    * 规划阶段 - 制定研究策略
    */
-  protected async plan(query: ResearchQuery, context: ExecutionContext): Promise<ResearchPlan> {
+  protected async plan(query: ResearchQuery, context: ExtendedExecutionContext): Promise<ResearchPlan> {
     // 使用 LLM 生成搜索策略
     const strategyPrompt = this.buildStrategyPrompt(query)
     const response = await context.llm.chat({
@@ -168,7 +168,7 @@ export class ResearcherAgent extends KnowledgeEnhancedAgent<ResearchQuery, Resea
   /**
    * 执行阶段 - 搜索和分析信息
    */
-  protected async act(plan: ResearchPlan, context: ExecutionContext): Promise<ResearchResult> {
+  protected async act(plan: ResearchPlan, context: ExtendedExecutionContext): Promise<ResearchResult> {
     const startTime = Date.now()
 
     // 1. 执行搜索（模拟）
@@ -209,7 +209,7 @@ export class ResearcherAgent extends KnowledgeEnhancedAgent<ResearchQuery, Resea
    */
   protected async reflect(
     result: ResearchResult,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<{ shouldContinue: boolean; feedback?: string }> {
     // 检查是否满足质量标准
     const qualityChecks = [
@@ -285,7 +285,7 @@ export class ResearcherAgent extends KnowledgeEnhancedAgent<ResearchQuery, Resea
    */
   private async performSearch(
     plan: ResearchPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<SearchResult[]> {
     // 在实际实现中，这里会调用真实的搜索工具
     // 现在返回模拟数据
@@ -312,7 +312,7 @@ export class ResearcherAgent extends KnowledgeEnhancedAgent<ResearchQuery, Resea
    */
   private async extractInformation(
     results: SearchResult[],
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<any> {
     // 使用 LLM 提取关键信息
     const extractPrompt = `从以下搜索结果中提取关键信息：\n\n${results
@@ -344,7 +344,7 @@ export class ResearcherAgent extends KnowledgeEnhancedAgent<ResearchQuery, Resea
   private async analyzeData(
     info: any,
     plan: ResearchPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<ResearchResult['analysis']> {
     // 使用 LLM 进行分析
     const analysisPrompt = `基于以下信息进行分析：\n\n${JSON.stringify(info)}\n\n`
@@ -387,7 +387,7 @@ export class ResearcherAgent extends KnowledgeEnhancedAgent<ResearchQuery, Resea
    */
   private async generateKeyFindings(
     analysis: ResearchResult['analysis'],
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<string[]> {
     return [
       '核心发现 1：多智能体协作是当前趋势',

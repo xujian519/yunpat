@@ -4,7 +4,7 @@
  * 使用多模态模型理解专利说明书附图
  */
 
-import { Agent, type ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
 
 // ========== 常量定义 ==========
 
@@ -100,9 +100,12 @@ export interface DrawingUnderstanding {
 
 // ========== 智能体实现 ==========
 
-export class DrawingUnderstandingAgent extends Agent<DrawingInput, DrawingUnderstanding> {
-  protected async plan(input: DrawingInput, _context: ExecutionContext) {
-    this.validateInput(input)
+export class DrawingUnderstandingAgent extends ProfessionalAgent<DrawingInput, DrawingUnderstanding> {
+  constructor(config: ProfessionalAgentConfig) {
+    super(config)
+  }
+  protected async plan(input: DrawingInput, _context: ExtendedExecutionContext) {
+    this.checkDrawingInput(input)
 
     const imageBase64 = input.imageBase64 || (await this.loadAndEncodeImage(input.imagePath))
 
@@ -111,7 +114,7 @@ export class DrawingUnderstandingAgent extends Agent<DrawingInput, DrawingUnders
 
   protected async act(
     { input, imageBase64 }: { input: DrawingInput; imageBase64?: string },
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<DrawingUnderstanding> {
     if (!context.llm) {
       throw new Error('LLM 未配置')
@@ -138,7 +141,7 @@ export class DrawingUnderstandingAgent extends Agent<DrawingInput, DrawingUnders
 
   // ========== 私有方法 ==========
 
-  private validateInput(input: DrawingInput): void {
+  private checkDrawingInput(input: DrawingInput): void {
     if (!input.figureNumber?.trim()) {
       throw new Error('附图编号不能为空')
     }

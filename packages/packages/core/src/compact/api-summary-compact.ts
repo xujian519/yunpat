@@ -13,6 +13,10 @@
 import type { CompactResult, CompactConfig, CompactBoundary } from './types.js'
 import { estimateMessagesTokens } from '../token/token-estimator.js'
 
+export interface LLMChatFn {
+  (messages: Array<{ role: string; content: string }>, options?: { temperature?: number; maxTokens?: number }): Promise<{ content: string }>
+}
+
 /**
  * 压缩后重新注入预算
  */
@@ -95,13 +99,14 @@ ${dialogue}
 }
 
 /**
- * API Summary Compact 主函数（骨架实现）
+ * API Summary Compact 主函数
  *
- * TODO: 集成 LLM 调用生成真实摘要
+ * 调用 LLM 生成真实摘要；未提供 llmChatFn 时退化为骨架占位符
  */
 export async function apiSummaryCompact(
   messages: Array<{ role: string; content: string; metadata?: Record<string, unknown> }>,
-  config: APISummaryCompactConfig = {}
+  config: APISummaryCompactConfig = {},
+  llmChatFn?: LLMChatFn
 ): Promise<CompactResult> {
   const cfg = { ...DEFAULT_API_CONFIG, ...config }
 
@@ -124,15 +129,21 @@ export async function apiSummaryCompact(
   // 构建摘要提示词
   const summaryPrompt = buildSummaryPrompt(strippedMessages)
 
-  // TODO: 调用 LLM 生成摘要
-  // const summary = await llm.chat({ messages: [{ role: 'user', content: summaryPrompt }] })
-
-  // 骨架实现：使用占位符摘要
-  const summaryContent = `[对话摘要] 之前 ${messagesToCompact.length} 轮对话已通过 API 摘要压缩。核心决策点：
-- 技术领域已确定
-- 主要创新点已提取
-- 检索策略已制定
-- 权利要求框架已生成`
+  let summaryContent: string
+  if (llmChatFn) {
+    try {
+      const response = await llmChatFn(
+        [{ role: 'user', content: summaryPrompt }],
+        { temperature: 0.3, maxTokens: 2000 }
+      )
+      summaryContent = response.content
+    } catch (err) {
+      console.error('[api-summary-compact] LLM 摘要生成失败，使用兜底摘要:', err)
+      summaryContent = buildFallbackSummary(messagesToCompact.length)
+    }
+  } else {
+    summaryContent = buildFallbackSummary(messagesToCompact.length)
+  }
 
   const summaryMessage = {
     role: 'system' as const,
@@ -140,6 +151,7 @@ export async function apiSummaryCompact(
     metadata: {
       compactType: 'api_summary',
       originalMessageCount: messagesToCompact.length,
+      generatedByLLM: !!llmChatFn,
     },
   }
 
@@ -172,4 +184,12 @@ export async function apiSummaryCompact(
       },
     ],
   }
+}
+
+function buildFallbackSummary(messageCount: number): string {
+  return `[对话摘要] 之前 ${messageCount} 轮对话已压缩。核心决策点：
+- 技术领域已确定
+- 主要创新点已提取
+- 检索策略已制定
+- 权利要求框架已生成`
 }

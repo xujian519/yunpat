@@ -71,14 +71,20 @@ export interface TeamTaskResult {
 /**
  * Agent 团队
  */
+export interface AgentTeamConfig {
+  failFast?: boolean
+}
+
 export class AgentTeam {
   private readonly name: string
   private readonly eventBus: EventBus
   private readonly roles: Map<string, AgentRole> = new Map()
+  private readonly failFast: boolean
 
-  constructor(name: string, eventBus: EventBus) {
+  constructor(name: string, eventBus: EventBus, config?: AgentTeamConfig) {
     this.name = name
     this.eventBus = eventBus
+    this.failFast = config?.failFast ?? false
   }
 
   /**
@@ -241,8 +247,9 @@ export class AgentTeam {
           roleId: task.assigneeRoleId,
         })
 
-        // 顺序执行时，一个任务失败是否继续？默认继续
-        // TODO: 可配置 failFast 选项
+        if (this.failFast) {
+          break
+        }
       }
     }
 

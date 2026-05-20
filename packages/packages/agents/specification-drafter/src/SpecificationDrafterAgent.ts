@@ -1,4 +1,4 @@
-import { Agent, type ExecutionContext } from '@yunpat/core'
+import { ProfessionalAgent, type ProfessionalAgentConfig, type ExtendedExecutionContext } from '@yunpat/agent-base'
 import { readFile } from 'fs/promises'
 import { resolve } from 'path'
 import type {
@@ -35,13 +35,13 @@ export type {
 /**
  * 说明书撰写智能体
  */
-export class SpecificationDrafterAgent extends Agent<
+export class SpecificationDrafterAgent extends ProfessionalAgent<
   SpecificationDrafterInput,
   SpecificationDrafterOutput
 > {
   private templatePath: string
 
-  constructor(config: any) {
+  constructor(config: ProfessionalAgentConfig & { templatePath?: string }) {
     super({
       ...config,
       name: config.name || 'specification-drafter',
@@ -57,9 +57,9 @@ export class SpecificationDrafterAgent extends Agent<
 
   protected async plan(
     input: SpecificationDrafterInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<SpecificationPlan> {
-    this.validateInput(input)
+    this.checkSpecInput(input)
 
     const { inventionUnderstanding } = input
 
@@ -93,7 +93,7 @@ export class SpecificationDrafterAgent extends Agent<
 
   protected async act(
     plan: SpecificationPlan,
-    context: ExecutionContext
+    context: ExtendedExecutionContext
   ): Promise<SpecificationDrafterOutput> {
     console.log('\n📝 [说明书撰写] 步骤2: 撰写阶段')
 
@@ -143,7 +143,7 @@ export class SpecificationDrafterAgent extends Agent<
    * 执行说明书撰写
    */
   private async performDrafting(
-    llm: NonNullable<ExecutionContext['llm']>,
+    llm: NonNullable<ExtendedExecutionContext['llm']>,
     input: SpecificationDrafterInput,
     targetWordCounts: SpecificationPlan['targetWordCounts']
   ): Promise<SpecificationDrafterOutput> {
@@ -571,7 +571,7 @@ ${contextInfo}
    * 带重试的LLM调用
    */
   private async callLLMWithFallback(
-    llm: NonNullable<ExecutionContext['llm']>,
+    llm: NonNullable<ExtendedExecutionContext['llm']>,
     systemPrompt: string,
     userPrompt: string
   ): Promise<{ success: boolean; data?: Record<string, unknown>; error?: string }> {
@@ -615,7 +615,7 @@ ${contextInfo}
     }
   }
 
-  private validateInput(input: SpecificationDrafterInput): void {
+  private checkSpecInput(input: SpecificationDrafterInput): void {
     if (!input.inventionUnderstanding) {
       throw new Error('发明理解结果不能为空')
     }

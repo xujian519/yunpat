@@ -16,14 +16,13 @@
  */
 
 import {
-  KnowledgeEnhancedAgent,
-  type EventBus,
+  ProfessionalAgent,
+  type ProfessionalAgentConfig,
+  type ExtendedExecutionContext,
+} from '@yunpat/agent-base'
+import {
   createLogger,
   AgentInputError,
-  type MemoryStore,
-  type ToolRegistry,
-  type LLMAdapter,
-  type ExecutionContext,
 } from '@yunpat/core'
 
 /**
@@ -166,20 +165,13 @@ interface SubjectMatterCheckPlan {
 /**
  * 保护客体检查智能体
  */
-export class SubjectMatterChecker extends KnowledgeEnhancedAgent<
+export class SubjectMatterChecker extends ProfessionalAgent<
   SubjectMatterCheckInput,
   SubjectMatterCheckResult
 > {
   private logger = createLogger('SubjectMatterChecker')
 
-  constructor(config: {
-    name: string
-    description: string
-    eventBus: EventBus
-    memory: MemoryStore
-    tools: ToolRegistry
-    llm: LLMAdapter
-  }) {
+  constructor(config: ProfessionalAgentConfig) {
     super(config)
   }
 
@@ -188,7 +180,7 @@ export class SubjectMatterChecker extends KnowledgeEnhancedAgent<
    */
   protected async plan(
     input: SubjectMatterCheckInput,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<SubjectMatterCheckPlan> {
     this.logger.info('开始规划保护客体检查', {
       inventionTitle: input.inventionTitle,
@@ -222,7 +214,7 @@ export class SubjectMatterChecker extends KnowledgeEnhancedAgent<
    */
   protected async act(
     plan: SubjectMatterCheckPlan,
-    _context: ExecutionContext
+    _context: ExtendedExecutionContext
   ): Promise<SubjectMatterCheckResult> {
     this.logger.info('开始执行保护客体检查')
 

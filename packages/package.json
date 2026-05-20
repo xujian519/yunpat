@@ -4,10 +4,6 @@
   "description": "通用智能体框架 - 框架笨，智能体专",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "packages/*",
-    "packages/agents/*"
-  ],
   "pnpm": {
     "overrides": {
       "typescript": "^5.6.3",

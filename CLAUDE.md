@@ -111,10 +111,14 @@ cargo clippy -p yunpat-mcp-bridge                 # 单 crate lint
 ### TypeScript 单包操作
 
 ```bash
+# 注意：pnpm workspace 根在 packages/ 目录下（packages/pnpm-workspace.yaml）
+# 所有 pnpm 命令需要在 packages/ 目录下执行
 cd packages
 pnpm --filter @yunpat/core test                   # 单包测试
 pnpm --filter @yunpat/mcp-server dev              # 单包开发
 pnpm --filter @yunpat/patent-writer build         # 单包构建
+pnpm build:tsc                                    # tsc 全量构建所有包
+pnpm build:core                                   # esbuild 快速构建 core
 ```
 
 ### 专利模式开发命令

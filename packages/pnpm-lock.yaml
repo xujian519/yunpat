@@ -106,6 +106,9 @@ importers:
 
   packages/agents/abstract-drafter:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/agent-claim-generator':
         specifier: workspace:*
         version: link:../claim-generator
@@ -131,6 +134,9 @@ importers:
 
   packages/agents/analysis:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -194,6 +200,9 @@ importers:
 
   packages/agents/comparison-report-generator:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -210,6 +219,9 @@ importers:
 
   packages/agents/format-converter:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -232,6 +244,9 @@ importers:
 
   packages/agents/image-understanding:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -291,6 +306,9 @@ importers:
 
   packages/agents/invention:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -357,6 +375,9 @@ importers:
 
   packages/agents/patent-manager:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -422,6 +443,9 @@ importers:
 
   packages/agents/prior-art-search:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/agent-invention':
         specifier: workspace:*
         version: link:../invention
@@ -441,6 +465,9 @@ importers:
 
   packages/agents/quality:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -460,6 +487,9 @@ importers:
 
   packages/agents/quality-checker:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -479,6 +509,9 @@ importers:
       '@langchain/core':
         specifier: ^0.3.80
         version: 0.3.80(@opentelemetry/api@1.9.1)(openai@4.104.0(zod@3.25.76))
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -523,6 +556,9 @@ importers:
 
   packages/agents/spec-formality-checker:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -542,6 +578,9 @@ importers:
 
   packages/agents/specification-drafter:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/agent-claim-generator':
         specifier: workspace:*
         version: link:../claim-generator
@@ -567,6 +606,9 @@ importers:
 
   packages/agents/subject-matter-checker:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -605,6 +647,9 @@ importers:
 
   packages/agents/technical-drawing:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -652,6 +697,9 @@ importers:
 
   packages/agents/unity-checker:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -671,6 +719,9 @@ importers:
 
   packages/agents/writer:
     dependencies:
+      '@yunpat/agent-base':
+        specifier: workspace:*
+        version: link:../base
       '@yunpat/core':
         specifier: workspace:*
         version: link:../../core
@@ -1152,6 +1203,9 @@ importers:
       '@types/node':
         specifier: ^20.11.0
         version: 20.19.39
+      '@yunpat/core':
+        specifier: workspace:*
+        version: link:../core
       vitest:
         specifier: ^4.1.5
         version: 4.1.5(@opentelemetry/api@1.9.1)(@types/node@20.19.39)(@vitest/coverage-v8@4.1.5)(@vitest/ui@4.1.5)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3)

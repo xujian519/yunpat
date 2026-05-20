@@ -116,8 +116,7 @@ async function buildAll() {
   await buildCore();
 
   const duration = ((Date.now() - start) / 1000).toFixed(2);
-  console.log(`\n✨ 所有包构建完成 (${duration}s)`);
-  console.log(`🚀 速度提升: ~30倍 vs tsc`);
+  console.log(`\n✨ 核心包 esbuild 构建完成 (${duration}s)`);
 }
 
 // 类型检查（不生成代码）
@@ -141,25 +140,14 @@ const command = args[0] || 'build';
 
 switch (command) {
   case 'build':
-    await buildAll();
-    console.log('\n🔍 运行类型检查...');
-    try {
-      execSync('pnpm type-check', {
-        stdio: 'inherit'
-      });
-      console.log('✅ 类型检查通过');
-    } catch (error) {
-      console.warn('❌ 类型检查失败（不影响构建产物）');
-      console.warn('\n⚠️  警告: 构建成功但存在类型错误，建议修复后再部署');
-    }
+    await buildCore();
     break;
   case 'check':
     typeCheck();
     break;
   case 'core':
-    buildCore();
+    await buildCore();
     break;
   default:
     console.log('用法: node esbuild.config.mjs [build|check|core]');
-    process.exit(1);
 }

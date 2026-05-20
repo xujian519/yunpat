@@ -26,7 +26,7 @@ fi
 
 # 2) Workspace ↔ npm package.json.
 workspace_version="$(grep -E '^version = "' Cargo.toml | head -n1 | sed -E 's/^version = "([^"]+)".*/\1/')"
-npm_version="$(node -p "require('./npm/yunpat-tui/package.json').version")"
+npm_version="$(node -p "require('./crates/npm/yunpat-tui/package.json').version")"
 if [[ "${workspace_version}" != "${npm_version}" ]]; then
   echo "::error::npm/yunpat-tui/package.json version (${npm_version}) does not match workspace Cargo.toml (${workspace_version})." >&2
   fail=1
